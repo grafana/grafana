@@ -1,8 +1,11 @@
+import { attempt, isError } from 'lodash';
+
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GrafanaPromRulesOptions } from '../../api/prometheusApi';
 import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../../featureToggles';
 import { RulesFilter } from '../../search/rulesSearchParser';
+import { parseMatcher } from '../../utils/matchers';
 
 import { buildTitleSearch, normalizeFilterState } from './filterNormalization';
 import {
@@ -14,6 +17,7 @@ import {
   groupMatches,
   groupNameFilter,
   labelsFilter,
+  mapDataSourceNamesToUids,
   namespaceFilter,
   pluginsFilter,
   ruleMatches,
@@ -63,6 +67,23 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
   // Build title search for backend filtering
   const titleSearch = buildTitleSearch(normalizedFilterState);
 
+  // Check if data source names were provided but none are valid.
+  let hasInvalidDataSourceNames = false;
+  let datasourceUids: string[] | undefined = undefined;
+
+  // Only map datasources if data source filter should be applied on backend (when ruleFilterConfig.dataSourceNames is null).
+  if (ruleFilterConfig.dataSourceNames === null && normalizedFilterState.dataSourceNames.length > 0) {
+    datasourceUids = mapDataSourceNamesToUids(normalizedFilterState.dataSourceNames);
+    // If names were provided but no valid UIDs were found, all names are invalid.
+    hasInvalidDataSourceNames = datasourceUids.length === 0;
+  }
+
+  // Convert labels to JSON-encoded matchers for backend filtering
+  const ruleMatchersBackendFilter: string[] | undefined =
+    ruleFilterConfig.labels || normalizedFilterState.labels.length === 0
+      ? undefined
+      : labelMatchersToBackendFormat(normalizedFilterState.labels);
+
   const backendFilter: GrafanaPromRulesOptions = {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
     health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
@@ -72,6 +93,9 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     type: ruleFilterConfig.ruleType ? undefined : normalizedFilterState.ruleType,
     dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
     searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
+    datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
+    ruleMatchers: ruleMatchersBackendFilter,
+    plugins: ruleFilterConfig.plugins ? undefined : normalizedFilterState.plugins,
   };
 
   return {
@@ -80,6 +104,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
       groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, normalizedFilterState, groupFilterConfig),
       ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, normalizedFilterState, ruleFilterConfig),
     },
+    hasInvalidDataSourceNames,
   };
 }
 
@@ -100,11 +125,11 @@ function buildGrafanaFilterConfigs() {
     ruleName: useBackendFilters ? null : ruleNameFilter,
     ruleState: null,
     ruleType: useBackendFilters || useFullyCompatibleBackendFilters ? null : ruleTypeFilter,
-    dataSourceNames: dataSourceNamesFilter,
-    labels: labelsFilter,
+    dataSourceNames: useBackendFilters || useFullyCompatibleBackendFilters ? null : dataSourceNamesFilter,
+    labels: useBackendFilters ? null : labelsFilter,
     ruleHealth: null,
     dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
-    plugins: pluginsFilter,
+    plugins: useBackendFilters || useFullyCompatibleBackendFilters ? null : pluginsFilter,
     contactPoint: null,
   };
 
@@ -114,4 +139,22 @@ function buildGrafanaFilterConfigs() {
   };
 
   return { ruleFilterConfig, groupFilterConfig };
+}
+
+/**
+ * Converts label matchers to JSON-encoded strings for backend filtering.
+ * Invalid matchers are logged and filtered out.
+ */
+function labelMatchersToBackendFormat(labels: string[]): string[] {
+  return labels.reduce<string[]>((acc, label) => {
+    const result = attempt(() => JSON.stringify(parseMatcher(label)));
+
+    if (isError(result)) {
+      console.warn('Failed to parse label matcher:', label, result);
+    } else {
+      acc.push(result);
+    }
+
+    return acc;
+  }, []);
 }

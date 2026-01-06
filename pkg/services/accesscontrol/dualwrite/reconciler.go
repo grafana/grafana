@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
 
 	claims "github.com/grafana/authlib/types"
@@ -33,12 +35,15 @@ type ZanzanaReconciler struct {
 	store    db.DB
 	client   zanzana.Client
 	lock     *serverlock.ServerLockService
+	metrics  struct {
+		lastSuccess prometheus.Gauge
+	}
 	// reconcilers are migrations that tries to reconcile the state of grafana db to zanzana store.
 	// These are run periodically to try to maintain a consistent state.
 	reconcilers []resourceReconciler
 }
 
-func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
+func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service, reg prometheus.Registerer) *ZanzanaReconciler {
 	zanzanaReconciler := &ZanzanaReconciler{
 		cfg:      cfg,
 		log:      reconcilerLogger,
@@ -92,6 +97,13 @@ func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 		},
 	}
 
+	if reg != nil {
+		zanzanaReconciler.metrics.lastSuccess = promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_zanzana_reconcile_last_success_timestamp_seconds",
+			Help: "Unix timestamp (seconds) when the Zanzana reconciler last completed a reconciliation cycle.",
+		})
+	}
+
 	if cfg.Anonymous.Enabled {
 		zanzanaReconciler.reconcilers = append(zanzanaReconciler.reconcilers,
 			newResourceReconciler(
@@ -134,17 +146,20 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 }
 
 func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
-	run := func(ctx context.Context, namespace string) {
+	run := func(ctx context.Context, namespace string) (ok bool) {
 		now := time.Now()
 		r.log.Debug("Started reconciliation")
+		ok = true
 
 		for _, reconciler := range r.reconcilers {
 			r.log.Debug("Performing zanzana reconciliation", "reconciler", reconciler.name)
 			if err := reconciler.reconcile(ctx, namespace); err != nil {
 				r.log.Warn("Failed to perform reconciliation for resource", "err", err)
+				ok = false
 			}
 		}
 		r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
+		return ok
 	}
 
 	var namespaces []string
@@ -169,16 +184,28 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	}
 
 	if r.lock == nil {
+		allOK := true
 		for _, ns := range namespaces {
-			run(ctx, ns)
+			if !run(ctx, ns) {
+				allOK = false
+			}
+		}
+		if r.metrics.lastSuccess != nil && allOK {
+			r.metrics.lastSuccess.SetToCurrentTime()
 		}
 		return
 	}
 
 	// We ignore the error for now
 	err := r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
+		allOK := true
 		for _, ns := range namespaces {
-			run(ctx, ns)
+			if !run(ctx, ns) {
+				allOK = false
+			}
+		}
+		if r.metrics.lastSuccess != nil && allOK {
+			r.metrics.lastSuccess.SetToCurrentTime()
 		}
 	})
 	if err != nil {

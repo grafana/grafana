@@ -4,7 +4,7 @@ import {
   FieldColorModeId,
   FieldType,
   VisualizationSuggestion,
-  VisualizationSuggestionsSupplierFn,
+  VisualizationSuggestionsSupplier,
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -31,7 +31,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options>): Visualizati
 
 const BAR_LIMIT = 30;
 
-export const barGaugeSugggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
+export const barGaugeSugggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
   if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
     return;
   }

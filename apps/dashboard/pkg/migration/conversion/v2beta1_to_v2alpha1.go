@@ -114,6 +114,11 @@ func convertAnnotationQuery_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardAnnotat
 	out.Spec.Filter = (*dashv2alpha1.DashboardAnnotationPanelFilter)(in.Spec.Filter)
 	out.Spec.LegacyOptions = in.Spec.LegacyOptions
 
+	// Convert mappings
+	if in.Spec.Mappings != nil {
+		out.Spec.Mappings = convertAnnotationMappings_V2beta1_to_V2alpha1(in.Spec.Mappings)
+	}
+
 	// Convert query - move datasource from query back to annotation spec
 	query, datasource, err := convertDataQuery_V2beta1_to_V2alpha1(&in.Spec.Query, scope)
 	if err != nil {
@@ -565,6 +570,7 @@ func convertDashboardLink_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardDashboard
 	out.TargetBlank = in.TargetBlank
 	out.IncludeVars = in.IncludeVars
 	out.KeepTime = in.KeepTime
+	out.Placement = in.Placement
 }
 
 func convertDataLink_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardDataLink, out *dashv2alpha1.DashboardDataLink) {
@@ -800,6 +806,7 @@ func convertQueryVariableSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardQuery
 	out.SkipUrlSync = in.SkipUrlSync
 	out.Description = in.Description
 	out.Regex = in.Regex
+	out.RegexApplyTo = (*dashv2alpha1.DashboardVariableRegexApplyTo)(in.RegexApplyTo)
 	out.Sort = dashv2alpha1.DashboardVariableSort(in.Sort)
 	out.Definition = in.Definition
 	out.Options = convertVariableOptions_V2beta1_to_V2alpha1(in.Options)
@@ -1021,4 +1028,19 @@ func convertRowLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKin
 
 func convertTabLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
 	return convertLayout_V2beta1_to_V2alpha1(in, out, scope)
+}
+
+func convertAnnotationMappings_V2beta1_to_V2alpha1(in map[string]dashv2beta1.DashboardAnnotationEventFieldMapping) map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping, len(in))
+	for key, mapping := range in {
+		out[key] = dashv2alpha1.DashboardAnnotationEventFieldMapping{
+			Source: mapping.Source,
+			Value:  mapping.Value,
+			Regex:  mapping.Regex,
+		}
+	}
+	return out
 }

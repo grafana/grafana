@@ -92,9 +92,321 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"/notification/query": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "createNotificationquery",
+
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"from": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Format:      "date-time",
+																		Description: "From is the starting timestamp for the query.",
+																	},
+																},
+																"groupLabels": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Description: "GroupLabels optionally filters the entries by matching group labels.",
+																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryMatchers"),
+																	},
+																},
+																"limit": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"integer"},
+																		Description: "Limit is the maximum number of entries to return.",
+																	},
+																},
+																"outcome": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Description: "Outcome optionally filters the entries to only either successful or failed attempts.",
+																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationOutcome"),
+																	},
+																},
+																"receiver": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "Receiver optionally filters the entries by receiver title (contact point).",
+																	},
+																},
+																"ruleUID": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Description: "RuleUID optionally filters the entries to a specific alert rule.",
+																	},
+																},
+																"status": {
+																	SchemaProps: spec.SchemaProps{
+
+																		Description: "Status optionally filters the entries to only either firing or resolved.",
+																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
+																	},
+																},
+																"to": {
+																	SchemaProps: spec.SchemaProps{
+																		Type:        []string{"string"},
+																		Format:      "date-time",
+																		Description: "To is the starting timestamp for the query.",
+																	},
+																},
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"entries": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"entries",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
 				},
 				Cluster: map[string]spec3.PathProps{},
-				Schemas: map[string]spec.Schema{},
+				Schemas: map[string]spec.Schema{
+					"createNotificationqueryMatcher": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"label": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+										Enum: []interface{}{
+											"=",
+											"!=",
+											"=~",
+											"!~",
+										},
+									},
+								},
+								"value": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"label",
+								"value",
+							},
+						},
+					},
+					"createNotificationqueryMatchers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+						},
+					},
+					"createNotificationqueryNotificationEntry": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"alerts": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Alerts are the alerts grouped into the notification.",
+									},
+								},
+								"duration": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Duration is the length of time the notification attempt took in nanoseconds.",
+									},
+								},
+								"error": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Error is the message returned by the contact point if delivery failed.",
+									},
+								},
+								"groupKey": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "GroupKey uniquely idenifies the dispatcher alert group.",
+									},
+								},
+								"groupLabels": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"object"},
+										Description: "GroupLabels are the labels uniquely identifying the alert group within a route.",
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"outcome": {
+									SchemaProps: spec.SchemaProps{
+
+										Description: "Outcome indicaes if the notificaion attempt was successful or if it failed.",
+										Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationOutcome"),
+									},
+								},
+								"pipelineTime": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Format:      "date-time",
+										Description: "PipelineTime is the time at which the flush began.",
+									},
+								},
+								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Receiver is the receiver (contact point) title.",
+									},
+								},
+								"retry": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"boolean"},
+										Description: "Retry indicates if the attempt was a retried attempt.",
+									},
+								},
+								"status": {
+									SchemaProps: spec.SchemaProps{
+
+										Description: "Status indicates if the notification contains one or more firing alerts.",
+										Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
+									},
+								},
+								"timestamp": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Format:      "date-time",
+										Description: "Timestamp is the time at which the notification attempt completed.",
+									},
+								},
+							},
+							Required: []string{
+								"timestamp",
+								"receiver",
+								"status",
+								"outcome",
+								"groupLabels",
+								"alerts",
+								"retry",
+								"duration",
+								"pipelineTime",
+								"groupKey",
+							},
+						},
+					},
+					"createNotificationqueryNotificationEntryAlert": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"annotations": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"endsAt": {
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "date-time",
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"startsAt": {
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "date-time",
+									},
+								},
+								"status": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"status",
+								"labels",
+								"annotations",
+								"startsAt",
+								"endsAt",
+							},
+						},
+					},
+					"createNotificationqueryNotificationOutcome": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"string"},
+							Enum: []interface{}{
+								"success",
+								"error",
+							},
+						},
+					},
+					"createNotificationqueryNotificationStatus": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"string"},
+							Enum: []interface{}{
+								"firing",
+								"resolved",
+							},
+						},
+					},
+				},
 			},
 		},
 	},
@@ -120,7 +432,8 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/alertstate/history|GET": v0alpha1.GetAlertstatehistory{},
+	"v0alpha1||<namespace>/alertstate/history|GET":  v0alpha1.GetAlertstatehistory{},
+	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationquery{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -145,7 +458,9 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
-var customRouteToGoRequestBodyType = map[string]any{}
+var customRouteToGoRequestBodyType = map[string]any{
+	"v0alpha1||<namespace>/notification/query|POST": v0alpha1.CreateNotificationqueryRequestBody{},
+}
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {

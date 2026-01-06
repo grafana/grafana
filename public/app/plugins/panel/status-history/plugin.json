@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Status history",
   "id": "status-history",
-
+  "suggestions": true,
   "info": {
     "description": "Periodic status history",
     "author": {

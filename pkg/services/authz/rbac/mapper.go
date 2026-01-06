@@ -279,8 +279,11 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"provisioning.grafana.app": {
 			"repositories": newResourceTranslation("provisioning.repositories", "uid", false, skipScopeOnAllVerbs),
+			"connections":  newResourceTranslation("provisioning.connections", "uid", false, skipScopeOnAllVerbs),
 			"jobs":         newResourceTranslation("provisioning.jobs", "uid", false, skipScopeOnAllVerbs),
 			"historicjobs": newResourceTranslation("provisioning.historicjobs", "uid", false, skipScopeOnAllVerbs),
+			"settings":     newResourceTranslation("provisioning.settings", "", false, skipScopeOnAllVerbs),
+			"stats":        newResourceTranslation("provisioning.stats", "", false, skipScopeOnAllVerbs),
 		},
 		"secret.grafana.app": {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, nil),
@@ -296,6 +299,15 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
+		},
+		"plugins.grafana.app": {
+			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
+			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
+		},
+		"advisor.grafana.app": {
+			"checks":     newResourceTranslation("advisor.checks", "uid", false, nil),
+			"checktypes": newResourceTranslation("advisor.checktypes", "uid", false, nil),
+			"register":   newResourceTranslation("advisor.register", "uid", false, nil),
 		},
 	})
 

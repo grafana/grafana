@@ -31,7 +31,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logsContextDatasourceUi`             | Allow datasource to provide custom UI for context view                                                                                                        | Yes                |
 | `lokiQuerySplitting`                  | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`            | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
-| `unifiedRequestLog`                   | Writes error logs to the request logger                                                                                                                       | Yes                |
 | `logsExploreTableVisualisation`       | A table visualisation for logs in Explore                                                                                                                     | Yes                |
 | `awsDatasourcesTempCredentials`       | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `awsAsyncQueryCaching`                | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
@@ -68,6 +67,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `tabularNumbers`                      | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `tempoSearchBackendMigration`         | Run search queries through the tempo backend                                                                                                                  |                    |
+| `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 
 ## Public preview feature toggles
 

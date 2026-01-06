@@ -31,7 +31,6 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
 import {
   activateSceneObjectAndParentTree,
   getDashboardSceneFor,
@@ -52,6 +51,7 @@ export interface PanelEditorState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
+  editPreview?: VizPanel;
   tableView?: VizPanel;
   pluginLoadErrror?: string;
   /**
@@ -85,6 +85,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(this);
+
+    // Clear any panel selection when entering panel edit mode.
+    // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
+    dashboard.state.editPane.clearSelection();
 
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
       if (config.featureToggles.newVizSuggestions) {
@@ -121,8 +126,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       dataObject.subscribeToState(async () => {
         const { data } = dataObject.state;
         if (hasData(data) && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-          const panelModel = new PanelModelCompatibilityWrapper(panel);
-          const suggestions = await getAllSuggestions(data, panelModel);
+          const { suggestions } = await getAllSuggestions(data);
 
           if (suggestions.length > 0) {
             const defaultFirstSuggestion = suggestions[0];
@@ -146,6 +150,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const layoutItem = this._layoutItem;
     const changedState = layoutItem.state;
     const originalState = this._layoutItemState!;
+
+    this.setState({ editPreview: undefined });
+    this.state.optionsPane?.setState({ editPreviewRef: undefined });
 
     // Temp fix for old edit mode
     if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
@@ -253,15 +260,40 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       );
 
       // Setup options pane
+      const optionsPane = new PanelOptionsPane({
+        panelRef: this.state.panelRef,
+        editPreviewRef: this.state.editPreview?.getRef(),
+        searchQuery: '',
+        listMode: OptionFilter.All,
+        isVizPickerOpen: isUnconfigured,
+        isNewPanel: this.state.isNewPanel,
+      });
+
       this.setState({
-        optionsPane: new PanelOptionsPane({
-          panelRef: this.state.panelRef,
-          searchQuery: '',
-          listMode: OptionFilter.All,
-          isVizPickerOpen: isUnconfigured,
-        }),
+        optionsPane,
         isInitializing: false,
       });
+
+      this._subs.add(
+        optionsPane.subscribeToState((newState, oldState) => {
+          if (newState.isVizPickerOpen !== oldState.isVizPickerOpen) {
+            const panel = this.state.panelRef.resolve();
+            let editPreview: VizPanel | undefined;
+            if (newState.isVizPickerOpen) {
+              // we just "pick" timeseries, viz type will likely be overridden by Suggestions.
+              const editPreviewBuilder = PanelBuilders.timeseries()
+                .setTitle(panel.state.title)
+                .setDescription(panel.state.description);
+              if (panel.state.$data) {
+                editPreviewBuilder.setData(new DataProviderSharer({ source: panel.state.$data.getRef() }));
+              }
+              editPreview = editPreviewBuilder.build();
+            }
+            this.setState({ editPreview });
+            optionsPane.setState({ editPreviewRef: editPreview?.getRef() });
+          }
+        })
+      );
     } else {
       // plugin changed after first time initialization
       // Just update data pane

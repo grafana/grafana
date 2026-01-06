@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -24,6 +23,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/middleware"
 
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -152,7 +152,7 @@ func ProvideStandaloneAuthZClient(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
 
-	zanzanaClient, err := ProvideStandaloneZanzanaClient(cfg, features)
+	zanzanaClient, err := ProvideStandaloneZanzanaClient(cfg, features, reg)
 	if err != nil {
 		return nil, err
 	}
@@ -262,9 +262,11 @@ func RegisterRBACAuthZService(
 		folderStore = store.NewAPIFolderStore(tracer, reg, func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
 				Host: cfg.Folder.Host,
-				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
-					return &tokenExhangeRoundTripper{te: exchangeClient, rt: rt}
-				},
+				WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+					exchangeClient,
+					"folder.grafana.app",
+					clientauth.WildcardNamespace,
+				),
 				TLSClientConfig: rest.TLSClientConfig{
 					Insecure: cfg.Folder.Insecure,
 					CAFile:   cfg.Folder.CAFile,
@@ -289,27 +291,6 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
-}
-
-var _ http.RoundTripper = tokenExhangeRoundTripper{}
-
-type tokenExhangeRoundTripper struct {
-	te authnlib.TokenExchanger
-	rt http.RoundTripper
-}
-
-func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
-	res, err := t.te.Exchange(r.Context(), authnlib.TokenExchangeRequest{
-		Namespace: "*",
-		Audiences: []string{"folder.grafana.app"},
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("create access token: %w", err)
-	}
-
-	r.Header.Set("X-Access-Token", "Bearer "+res.Token)
-	return t.rt.RoundTrip(r)
 }
 
 type NoopCache struct{}

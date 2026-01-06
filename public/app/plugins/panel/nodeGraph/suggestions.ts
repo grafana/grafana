@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplierFn } from '@grafana/data';
+import { DataFrame, FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
 
 import { Options } from './panelcfg.gen';
 
@@ -44,7 +44,7 @@ function frameHasCorrectFields(frames: DataFrame[]): boolean {
   return hasNodesFrame && hasEdgesFrame;
 }
 
-export const nodeGraphSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options> = (dataSummary) => {
+export const nodeGraphSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (dataSummary) => {
   if (!dataSummary.rawFrames) {
     return;
   }

@@ -120,7 +120,15 @@ export const RegressionTransformerEditor = ({
   );
 };
 
-const RegressionField = ({ label, tooltip, children }: { label: string; tooltip?: string; children: ReactElement }) => (
+const RegressionField = ({
+  label,
+  tooltip,
+  children,
+}: {
+  label: string;
+  tooltip?: string;
+  children: ReactElement<Record<string, unknown>>;
+}) => (
   <InlineField labelWidth={LABEL_WIDTH} label={label} tooltip={tooltip}>
     {children}
   </InlineField>

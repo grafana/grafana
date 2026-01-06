@@ -8,7 +8,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
-	"github.com/grafana/grafana/pkg/util/sqlite"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -16,6 +15,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
+
+	"github.com/grafana/grafana/pkg/util/sqlite"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
@@ -67,12 +68,16 @@ func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 
 // NewScopedMigrator should only be used for the transition to a new storage engine
 func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Migrator {
+	return newMigrator(engine, cfg, scope, NewDialect(engine.DriverName()))
+}
+
+func newMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string, dialect Dialect) *Migrator {
 	mg := &Migrator{
 		Cfg:          cfg,
 		DBEngine:     engine,
 		migrations:   make([]Migration, 0),
 		migrationIds: make(map[string]struct{}),
-		Dialect:      NewDialect(engine.DriverName()),
+		Dialect:      dialect,
 		metrics: migratorMetrics{
 			migCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 				Namespace: "grafana_database",
@@ -245,7 +250,7 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 
 	if !migrationLogExists {
 		// Check if dialect can initialize database from a snapshot.
-		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName)
+		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName, logger)
 		if err != nil {
 			return fmt.Errorf("failed to create database from snapshot: %w", err)
 		}

@@ -253,7 +253,7 @@ describe('applyFieldOverrides', () => {
       ],
     });
 
-    it('will apply field overrides to the fields within the frame', () => {
+    it('will apply default field overrides to the fields within the frame', () => {
       const f0 = createDataFrame({
         name: 'A',
         fields: [
@@ -283,6 +283,41 @@ describe('applyFieldOverrides', () => {
       });
 
       expect(withOverrides[0].fields[1].values[0].fields[1].state.range.max).toBe(30);
+    });
+
+    it('will apply targeted field overrides to the fields within the frame', () => {
+      const f0 = createDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['foo'],
+          },
+          {
+            name: 'frame',
+            type: FieldType.frame,
+            values: [f0Internal],
+          },
+        ],
+      });
+      const withOverrides = applyFieldOverrides({
+        data: [f0],
+        fieldConfig: {
+          defaults: {},
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.byName, options: 'frame' },
+              properties: [{ id: 'max', value: 30 }],
+            },
+          ],
+        },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      });
+
+      expect(withOverrides[0].fields[1].values[0].fields[1].config.max).toBe(30);
     });
 
     it('will not crash when some of the nested frames are undefined', () => {

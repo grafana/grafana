@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplierFn, VizOrientation } from '@grafana/data';
+import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier, VizOrientation } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema';
 
@@ -32,7 +32,7 @@ const withDefaults = (suggestion: VisualizationSuggestion<Options, FieldConfig>)
     },
   } satisfies VisualizationSuggestion<Options, FieldConfig>);
 
-export const barchartSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, FieldConfig> = (dataSummary) => {
+export const barchartSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, FieldConfig> = (dataSummary) => {
   if (dataSummary.frameCount !== 1) {
     return;
   }

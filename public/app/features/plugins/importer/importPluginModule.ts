@@ -2,7 +2,7 @@ import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { getResolvedLanguage } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 
-import builtInPlugins from '../built_in_plugins';
+import builtInPlugins, { isBuiltinPluginPath } from '../built_in_plugins';
 import { registerPluginInfoInCache } from '../loader/pluginInfoCache';
 import { SystemJS } from '../loader/systemjs';
 import { resolveModulePath } from '../loader/utils';
@@ -35,8 +35,8 @@ export async function importPluginModule({
     });
   }
 
-  const builtIn = builtInPlugins[path];
-  if (builtIn) {
+  if (isBuiltinPluginPath(path)) {
+    const builtIn = builtInPlugins[path];
     // for handling dynamic imports
     if (typeof builtIn === 'function') {
       return await builtIn();

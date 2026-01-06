@@ -7,7 +7,7 @@ import {
   PanelPluginVisualizationSuggestion,
   VisualizationSuggestion,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplierFn,
+  VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
@@ -45,6 +45,7 @@ const withDefaults = (
     },
     cardOptions: {
       previewModifier: (s) => {
+        s.options!.disableKeyboardEvents = true;
         if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
           s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
         }
@@ -83,7 +84,7 @@ const barChart = (name: string, stacking?: StackingMode) => ({
 
 // TODO: all "gradient color scheme" suggestions have been removed. they will be re-added as part of the "styles" feature.
 
-export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplierFn<Options, GraphFieldConfig> = (
+export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (
   dataSummary
 ) => {
   if (

@@ -85,7 +85,29 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "legend": true,
+                    "styles": [
+                      {
+                        "colors": [
+                          "red",
+                          "yellow",
+                          "green"
+                        ],
+                        "pattern": "/.*/",
+                        "thresholds": [
+                          "10",
+                          "20",
+                          "30"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -131,7 +153,31 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "align": "center",
+                        "pattern": "/.*/"
+                      },
+                      {
+                        "align": "left",
+                        "pattern": "LeftColumn"
+                      },
+                      {
+                        "align": "right",
+                        "pattern": "RightColumn"
+                      },
+                      {
+                        "align": "auto",
+                        "pattern": "AutoColumn"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -177,7 +223,35 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "pattern": "/.*/",
+                        "unit": "short"
+                      },
+                      {
+                        "alias": "Exact Match",
+                        "pattern": "ExactColumnName"
+                      },
+                      {
+                        "alias": "Regex Match",
+                        "pattern": "/Regex.*Pattern/"
+                      },
+                      {
+                        "alias": "Start Pattern",
+                        "pattern": "/^Start/"
+                      },
+                      {
+                        "alias": "End Pattern",
+                        "pattern": "/End$/"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -223,7 +297,37 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "pattern": "/.*/",
+                        "unit": "short"
+                      },
+                      {
+                        "link": true,
+                        "linkTargetBlank": true,
+                        "linkTooltip": "Click to view details",
+                        "linkUrl": "http://example.com/with-tooltip",
+                        "pattern": "LinkWithTooltip"
+                      },
+                      {
+                        "link": true,
+                        "linkTargetBlank": false,
+                        "linkUrl": "http://example.com/no-tooltip",
+                        "pattern": "LinkWithoutTooltip"
+                      },
+                      {
+                        "link": true,
+                        "linkUrl": "http://example.com/minimal",
+                        "pattern": "LinkMinimal"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -269,7 +373,37 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "pattern": "/.*/",
+                        "unit": "short"
+                      },
+                      {
+                        "alias": "ISO Date",
+                        "dateFormat": "YYYY-MM-DD",
+                        "pattern": "DateISO",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "Full DateTime",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "DateTime",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "Time Only",
+                        "dateFormat": "HH:mm:ss",
+                        "pattern": "TimeOnly",
+                        "type": "date"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -315,7 +449,29 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "colors": [
+                          "red",
+                          "yellow",
+                          "green"
+                        ],
+                        "pattern": "/.*/",
+                        "thresholds": [
+                          "10",
+                          "20"
+                        ],
+                        "unit": "short"
+                      }
+                    ],
+                    "table": "table2"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -407,7 +563,12 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -453,7 +614,12 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -499,7 +665,57 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "align": "center",
+                        "colorMode": "cell",
+                        "colors": [
+                          "green",
+                          "yellow",
+                          "red"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [
+                          "100",
+                          "500"
+                        ],
+                        "unit": "bytes"
+                      },
+                      {
+                        "alias": "Current Status",
+                        "align": "left",
+                        "colorMode": "value",
+                        "decimals": 0,
+                        "pattern": "Status",
+                        "unit": "short"
+                      },
+                      {
+                        "colorMode": "row",
+                        "link": true,
+                        "linkTargetBlank": true,
+                        "linkTooltip": "View error details",
+                        "linkUrl": "http://example.com/errors",
+                        "pattern": "/Error.*/"
+                      },
+                      {
+                        "alias": "Timestamp",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "Time",
+                        "type": "date"
+                      },
+                      {
+                        "pattern": "Hidden",
+                        "type": "hidden"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -545,7 +761,47 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [
+                      {
+                        "text": "Average",
+                        "value": "avg"
+                      },
+                      {
+                        "text": "Maximum",
+                        "value": "max"
+                      },
+                      {
+                        "text": "Minimum",
+                        "value": "min"
+                      },
+                      {
+                        "text": "Total",
+                        "value": "total"
+                      },
+                      {
+                        "text": "Current",
+                        "value": "current"
+                      },
+                      {
+                        "text": "Count",
+                        "value": "count"
+                      }
+                    ],
+                    "styles": [
+                      {
+                        "decimals": 1,
+                        "pattern": "/.*/",
+                        "unit": "percent"
+                      }
+                    ],
+                    "transform": "timeseries_aggregations"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -591,7 +847,20 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "pattern": "/.*/",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "timeseries_to_rows"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -637,7 +906,20 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "pattern": "/.*/",
+                        "unit": "bytes"
+                      }
+                    ],
+                    "transform": "timeseries_to_columns"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -683,7 +965,20 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "align": "auto",
+                        "pattern": "/.*/"
+                      }
+                    ],
+                    "transform": "table"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -744,7 +1039,20 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "pattern": "/.*/",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "timeseries_to_rows"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -790,7 +1098,29 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "colors": [
+                          "green",
+                          "yellow",
+                          "orange",
+                          "red"
+                        ],
+                        "pattern": "/.*/",
+                        "thresholds": [
+                          10,
+                          "20",
+                          30.5
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -836,7 +1166,31 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "colorMode": "cell",
+                        "pattern": "/.*/"
+                      },
+                      {
+                        "colorMode": "cell",
+                        "pattern": "CellColumn"
+                      },
+                      {
+                        "colorMode": "row",
+                        "pattern": "RowColumn"
+                      },
+                      {
+                        "colorMode": "value",
+                        "pattern": "ValueColumn"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1101,5 +1455,10 @@
     "title": "No Title",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

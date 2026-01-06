@@ -628,6 +628,20 @@
         }
       ],
       "title": "Only nulls and no user set min \u0026 max",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "number",
+                "targetField": "A-series"
+              }
+            ],
+            "fields": {}
+          }
+        }
+      ],
       "type": "gauge"
     },
     {

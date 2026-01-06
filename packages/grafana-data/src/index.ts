@@ -521,6 +521,7 @@ export {
   VariableRefresh,
   VariableSort,
   VariableHide,
+  type VariableRegexApplyTo,
   type VariableType,
   type VariableModel,
   type TypedVariableModel,
@@ -663,6 +664,7 @@ export {
   type DataSourceGetTagKeysOptions,
   type DataSourceGetTagValuesOptions,
   type DataSourceGetDrilldownsApplicabilityOptions,
+  type DataSourceGetRecommendedDrilldownsOptions,
   type MetadataInspectorProps,
   type LegacyMetricFindQueryOptions,
   type QueryEditorProps,
@@ -680,6 +682,7 @@ export {
   type QueryHint,
   type MetricFindValue,
   type DrilldownsApplicability,
+  type DrilldownRecommendation,
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
@@ -715,11 +718,9 @@ export {
 export {
   type VisualizationSuggestion,
   type VisualizationSuggestionsSupplier,
-  type VisualizationSuggestionsSupplierFn,
   type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestionsBuilder,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestionsListAppender,
 } from './types/suggestions';
 export {
   type MatcherConfig,
