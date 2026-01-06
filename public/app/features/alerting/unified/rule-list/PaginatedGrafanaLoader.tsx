@@ -162,7 +162,8 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
 
   const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
 
-  const groupDisplayName = isUngroupedRuleGroup(group.name) ? `${group.rules[0].name} (Ungrouped)` : group.name;
+  const firstRuleName = group.rules[0]?.name ?? 'Unknown Rule';
+  const groupDisplayName = isUngroupedRuleGroup(group.name) ? `${firstRuleName} (Ungrouped)` : group.name;
 
   return (
     <ListGroup

@@ -168,9 +168,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   if (isListView) {
     groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />;
   } else if (isUngroupedRuleGroup(group.name)) {
-    groupName = (
-      <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={`${group.rules[0].name} (Ungrouped)`} />
-    );
+    const firstRuleName = group.rules[0]?.name ?? 'Unknown Rule';
+    const groupDisplayName = `${firstRuleName} (Ungrouped)`;
+    groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={groupDisplayName} />;
   }
 
   return (
