@@ -204,19 +204,24 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   /**
-   * Called when PanelData changes (query results etc)
-   */
+  * Called when PanelData changes (query results etc)
+  */
   dataChanged(data: PanelData) {
-    // Only update if panel data matches component data
-    if (data === this.props.data) {
-      for (const state of this.layers) {
-        applyLayerFilter(state.handler, state.options, this.props.data);
-      }
+  // Only update if panel data matches component data
+  if (data === this.props.data) {
+    for (const state of this.layers) {
+      applyLayerFilter(state.handler, state.options, this.props.data);
     }
+  }
 
-    // Because data changed, check map view and change if needed (data fit)
-    const v = centerPointRegistry.getIfExists(this.props.options.view.id);
-    if (v && v.id === MapCenterID.Fit && this.isInitialDataLoad) {
+  // Check if we should fit the view based on data
+  const v = centerPointRegistry.getIfExists(this.props.options.view.id);
+  if (v && v.id === MapCenterID.Fit) {
+    // Check the refitOnDataChange option (default false for new behavior)
+    const shouldRefit = this.props.options.view.refitOnDataChange ?? false;
+    
+    // Fit on initial load OR if refitOnDataChange is enabled
+    if (this.isInitialDataLoad || shouldRefit) {
       const view = this.initMapView(this.props.options.view);
 
       if (this.map && view) {
@@ -224,9 +229,10 @@ export class GeomapPanel extends Component<Props, State> {
       }
       this.isInitialDataLoad = false;
     }
+  }
 
-    // Update legends when data changes
-    this.setState({ legends: this.getLegends() });
+  // Update legends when data changes
+  this.setState({ legends: this.getLegends() });
   }
 
   initMapAsync = async (div: HTMLDivElement | null) => {

@@ -202,3 +202,26 @@ export const mapMigrationHandler = (panel: PanelModel): Partial<Options> => {
   }
   return panel.options;
 };
+/**
+ * Migration for refitOnDataChange option
+ * For panels using "fit to data" view without the refitOnDataChange option,
+ * set it to true to maintain existing behavior (v12.4+)
+ */
+export const mapRefitOnDataChangeMigration = (panel: PanelModel): Partial<Options> => {
+  const options = panel.options;
+
+  // Check if this panel uses "fit to data" view
+  if (options?.view?.id === MapCenterID.Fit) {
+    if (options.view.refitOnDataChange === undefined) {
+      return {
+        ...options,
+        view: {
+          ...options.view,
+          refitOnDataChange: true,
+        },
+      };
+    }
+  }
+
+  return options;
+};
