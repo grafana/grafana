@@ -57,6 +57,7 @@ for (const [id, theme] of Object.entries(extraThemes)) {
   themeRegistry.register({
     id,
     name: theme.name ?? '',
+    // TODO zod to verify schema of imported themes here?
     build: () => createTheme(theme),
     isExtra: true,
   });

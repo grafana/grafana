@@ -1,0 +1,51 @@
+{
+  "name": "Gloom",
+  "colors": {
+    "mode": "dark",
+    "border": {
+      "weak": "rgba(210, 210, 220, 0.12)",
+      "medium": "rgba(210, 210, 220, 0.20)",
+      "strong": "rgba(210, 210, 220, 0.30)"
+    },
+    "text": {
+      "primary": "rgb(210, 210, 220)",
+      "secondary": "rgba(210, 210, 220, 0.65)",
+      "disabled": "rgba(210, 210, 220, 0.48)",
+      "link": "#f99a5c",
+      "maxContrast": "#FFF"
+    },
+    "primary": {
+      "main": "#ff934d",
+      "text": "#f99a5c",
+      "border": "#ff934d",
+      "name": "primary"
+    },
+    "secondary": {
+      "main": "rgba(195, 195, 245, 0.10)",
+      "shade": "rgba(195, 195, 245, 0.14)",
+      "transparent": "rgba(195, 195, 245, 0.08)",
+      "text": "rgba(195, 195, 245)",
+      "contrastText": "rgb(195, 195, 245)",
+      "border": "rgba(195, 195, 245, 0.08)"
+    },
+    "background": {
+      "canvas": "#000",
+      "primary": "#121118",
+      "secondary": "#211e28",
+      "elevated": "#211e28"
+    },
+    "action": {
+      "hover": "rgba(195, 195, 245, 0.07)",
+      "selected": "rgba(195, 195, 245, 0.11)",
+      "selectedBorder": "#ff934d",
+      "focus": "rgba(195, 195, 245, 0.07)",
+      "hoverOpacity": 0.05,
+      "disabledText": "rgba(210, 210, 220, 0.48)",
+      "disabledBackground": "rgba(210, 210, 220, 0.04)",
+      "disabledOpacity": 0.38
+    },
+    "contrastThreshold": 3,
+    "hoverFactor": 0.03,
+    "tonalOffset": 0.15
+  }
+}

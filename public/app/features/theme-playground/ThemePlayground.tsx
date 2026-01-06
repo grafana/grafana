@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from '../../types/store';
 
 import schema from './schema.generated.json';
 
+// TODO zod to verify schema of imported themes here?
 const themeMap: Record<string, NewThemeOptions> = {
   dark: {
     name: 'Dark',
