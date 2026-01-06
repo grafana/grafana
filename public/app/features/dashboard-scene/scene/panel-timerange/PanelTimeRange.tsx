@@ -207,9 +207,13 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
           raw: { from: rawFromShifted, to: rawToShifted },
         };
       } else {
-        // For absolute time ranges, use parseDateMath to shift DateTime objects
-        const from = dateMath.parseDateMath(shift, newTimeData.timeRange.from, false)!;
-        const to = dateMath.parseDateMath(shift, newTimeData.timeRange.to, true)!;
+        const from = dateMath.parseDateMath(shift, newTimeData.timeRange.from, false);
+        const to = dateMath.parseDateMath(shift, newTimeData.timeRange.to, true);
+
+        if (!from || !to) {
+          newTimeData.timeInfo = 'invalid timeshift';
+          return newTimeData;
+        }
 
         newTimeData.timeRange = { from, to, raw: { from, to } };
       }

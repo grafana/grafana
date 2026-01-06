@@ -128,7 +128,7 @@ describe('PanelTimeRange', () => {
     expect(panelTime.state.value.to.format('Z')).toBe('+00:00'); // UTC
   });
 
-  it('should handle invalid time reference in timeShift', () => {
+  it('should handle invalid time reference in timeShift with relative time range', () => {
     const panelTime = new PanelTimeRange({ timeShift: 'now-1d' });
 
     buildAndActivateSceneFor(panelTime);
@@ -137,6 +137,22 @@ describe('PanelTimeRange', () => {
     // Should not be affected by invalid timeShift
     expect(panelTime.state.from).toBe('now-6h');
     expect(panelTime.state.to).toBe('now');
+  });
+
+  it('should handle invalid time reference in timeShift with absolute time range', () => {
+    const panelTime = new PanelTimeRange({ timeShift: 'now-1d' });
+    const panel = new SceneCanvasText({ text: 'Hello', $timeRange: panelTime });
+    const absoluteFrom = '2019-02-11T10:00:00.000Z';
+    const absoluteTo = '2019-02-11T16:00:00.000Z';
+    const scene = new SceneFlexLayout({
+      $timeRange: new SceneTimeRange({ from: absoluteFrom, to: absoluteTo }),
+      children: [new SceneFlexItem({ body: panel })],
+    });
+    activateFullSceneTree(scene);
+
+    expect(panelTime.state.timeInfo).toBe('invalid timeshift');
+    expect(panelTime.state.from).toBe(absoluteFrom);
+    expect(panelTime.state.to).toBe(absoluteTo);
   });
 
   it('should handle invalid time reference in timeShift combined with timeFrom', () => {
