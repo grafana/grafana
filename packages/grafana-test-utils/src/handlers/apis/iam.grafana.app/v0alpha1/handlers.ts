@@ -95,9 +95,27 @@ const deleteExternalGroupMapping = () =>
     }
   );
 
+const getExternalGroupMappingsHandler = () =>
+  http.get<{ namespace: string; teamId: string }>(
+    '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/teams/:teamId/groups',
+    ({ params }) => {
+      const teamData = mockTeamsMap.get(params.teamId);
+
+      return HttpResponse.json({
+        items: teamData
+          ? teamData.groups.map((group) => ({
+              externalGroup: group.groupId,
+              name: `mapping-${params.teamId}-${group.groupId}`,
+            }))
+          : [],
+      });
+    }
+  );
+
 export default [
   getDisplayMapping(),
   listExternalGroupMappings(),
   createExternalGroupMapping(),
   deleteExternalGroupMapping(),
+  getExternalGroupMappingsHandler(),
 ];
