@@ -119,7 +119,7 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 		if i == 2 {
 			folder = "test-folder" // Resource 2 has folder annotation
 		}
-		
+
 		opts := PlaylistResourceOptions{
 			Name:       fmt.Sprintf("test-playlist-%d", i),
 			Namespace:  nsPrefix,
@@ -128,7 +128,7 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 			Title:      fmt.Sprintf("My Test Playlist %d", i),
 			Folder:     folder,
 		}
-		
+
 		created := createPlaylistResource(t, server, ctx, opts)
 		currentRVs[i-1] = created.ResourceVersion
 
@@ -147,7 +147,7 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 		if i == 2 {
 			folder = "test-folder" // Resource 2 has folder annotation
 		}
-		
+
 		opts := PlaylistResourceOptions{
 			Name:       fmt.Sprintf("test-playlist-%d", i),
 			Namespace:  nsPrefix,
@@ -156,7 +156,7 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 			Title:      fmt.Sprintf("My Updated Playlist %d", i),
 			Folder:     folder,
 		}
-		
+
 		updated := updatePlaylistResource(t, server, ctx, opts, currentRVs[i-1])
 		currentRVs[i-1] = updated.ResourceVersion // Update to the latest resource version
 
@@ -241,7 +241,6 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 	}
 	require.Equal(t, expectedActionCode, actualAction)
 }
-
 
 // runTestSQLBackendFieldsCompatibility tests that KV backend with RvManager populates all SQL backend legacy fields
 func runTestSQLBackendFieldsCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
@@ -744,8 +743,8 @@ func runWriteToOneReadFromBoth(t *testing.T, writeServer, readServer resource.Re
 		require.Greater(t, readResp.ResourceVersion, int64(0), "Invalid resource version for %s on read backend", resourceName)
 
 		// Validate that both backends return identical payload content
-		require.JSONEq(t, string(writeResp.Value), string(readResp.Value), 
-			"Payload mismatch for resource %s between write and read backends.\nWrite backend: %s\nRead backend: %s", 
+		require.JSONEq(t, string(writeResp.Value), string(readResp.Value),
+			"Payload mismatch for resource %s between write and read backends.\nWrite backend: %s\nRead backend: %s",
 			resourceName, string(writeResp.Value), string(readResp.Value))
 
 		// Validate that both backends return equivalent resource versions using rvmanager compatibility check
@@ -754,7 +753,7 @@ func runWriteToOneReadFromBoth(t *testing.T, writeServer, readServer resource.Re
 			"Resource version mismatch for resource %s between backends.\nWrite backend (%s): %d\nRead backend (%s): %d",
 			resourceName, writerBackend, writeResp.ResourceVersion, getOtherBackendName(writerBackend), readResp.ResourceVersion)
 
-		t.Logf("✓ Resource %s: payload and resource version (%d) consistency verified between %s (write) and %s (read) backends", 
+		t.Logf("✓ Resource %s: payload and resource version (%d) consistency verified between %s (write) and %s (read) backends",
 			resourceName, writeResp.ResourceVersion, writerBackend, getOtherBackendName(writerBackend))
 	}
 
@@ -784,7 +783,7 @@ func runMixedConcurrentOperations(t *testing.T, sqlServer, kvServer resource.Res
 		}
 	}()
 
-	// KV backend operations  
+	// KV backend operations
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -832,7 +831,7 @@ func runBackendOperations(ctx context.Context, server resource.ResourceServer, n
 	for i := 1; i <= 3; i++ {
 		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
-			Resource:  "playlists", 
+			Resource:  "playlists",
 			Namespace: namespace,
 			Name:      fmt.Sprintf("resource-%s-%d", backendType, i),
 		}
@@ -842,7 +841,7 @@ func runBackendOperations(ctx context.Context, server resource.ResourceServer, n
 			"kind": "Playlist",
 			"metadata": {
 				"name": "resource-%s-%d",
-				"namespace": "%s", 
+				"namespace": "%s",
 				"uid": "test-uid-%s-%d",
 				"generation": 1
 			},
@@ -879,7 +878,7 @@ func runBackendOperations(ctx context.Context, server resource.ResourceServer, n
 			"metadata": {
 				"name": "resource-%s-%d",
 				"namespace": "%s",
-				"uid": "test-uid-%s-%d", 
+				"uid": "test-uid-%s-%d",
 				"generation": 2
 			},
 			"spec": {
@@ -947,7 +946,7 @@ func runResourceVersionConsistencyTest(t *testing.T, sqlServer, kvServer resourc
 	require.Nil(t, kvRead.Error)
 	// Note: Resource versions may differ between backends, but content should be the same
 	require.Greater(t, kvRead.ResourceVersion, int64(0), "KV backend should return a valid resource version")
-	
+
 	// Read from SQL backend to compare content
 	sqlReadInitial, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: key})
 	require.NoError(t, err)
@@ -1048,7 +1047,7 @@ func verifyListConsistencyBetweenServersWithRVCheck(t *testing.T, server1, serve
 		require.Greater(t, item1.ResourceVersion, int64(0), "Item1 should have valid resource version for %s", name)
 		require.Greater(t, item2.ResourceVersion, int64(0), "Item2 should have valid resource version for %s", name)
 		require.JSONEq(t, string(item1.Value), string(item2.Value), "Content should match for %s", name)
-		
+
 		// Validate that both backends return equivalent resource versions using rvmanager compatibility check
 		if checkResourceVersions {
 			require.True(t, rvmanager.IsRvEqual(item1.ResourceVersion, item2.ResourceVersion) || rvmanager.IsRvEqual(item2.ResourceVersion, item1.ResourceVersion),
@@ -1139,7 +1138,7 @@ func createPlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 	t.Helper()
 	key := createPlaylistKey(opts.Namespace, opts.Name)
 	value := createPlaylistJSON(opts)
-	
+
 	created, err := server.Create(ctx, &resourcepb.CreateRequest{
 		Key:   key,
 		Value: value,
@@ -1147,7 +1146,7 @@ func createPlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 	require.NoError(t, err)
 	require.Nil(t, created.Error)
 	require.Greater(t, created.ResourceVersion, int64(0))
-	
+
 	return created
 }
 
@@ -1156,7 +1155,7 @@ func updatePlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 	t.Helper()
 	key := createPlaylistKey(opts.Namespace, opts.Name)
 	value := createPlaylistJSON(opts)
-	
+
 	updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
 		Key:             key,
 		Value:           value,
@@ -1165,7 +1164,7 @@ func updatePlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 	require.NoError(t, err)
 	require.Nil(t, updated.Error)
 	require.Greater(t, updated.ResourceVersion, int64(0)) // Just check it's positive, not necessarily greater than input
-	
+
 	return updated
 }
 
@@ -1173,7 +1172,7 @@ func updatePlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 func deletePlaylistResource(t *testing.T, server resource.ResourceServer, ctx context.Context, namespace, name string, resourceVersion int64) *resourcepb.DeleteResponse {
 	t.Helper()
 	key := createPlaylistKey(namespace, name)
-	
+
 	deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
 		Key:             key,
 		ResourceVersion: resourceVersion,
@@ -1181,6 +1180,6 @@ func deletePlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 	require.NoError(t, err)
 	require.Nil(t, deleted.Error)
 	require.Greater(t, deleted.ResourceVersion, int64(0))
-	
+
 	return deleted
 }
