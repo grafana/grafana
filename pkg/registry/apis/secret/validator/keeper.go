@@ -62,7 +62,7 @@ func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secr
 	}
 
 	if keeper.Spec.Aws != nil {
-		// nolint
+		//nolint
 		if !v.features.IsEnabled(context.Background(), featuremgmt.FlagSecretsManagementAppPlatformAwsKeeper) {
 			errs = append(errs,
 				field.Forbidden(field.NewPath("spec", "aws"),
