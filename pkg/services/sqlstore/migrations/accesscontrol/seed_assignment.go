@@ -100,11 +100,11 @@ func (m *seedAssignmentPrimaryKeyMigrator) Exec(sess *xorm.Session, mig *migrato
 		}
 
 		// recreate indexes on new table
-		_, err = sess.Exec("CREATE UNIQUE INDEX UQE_seed_assignment_builtin_role_action_scope ON seed_assignment (builtin_role, action, scope);")
+		_, err = sess.Exec("CREATE UNIQUE INDEX UQE_seed_assignment_builtin_role_role_name ON seed_assignment (builtin_role, role_name);")
 		if err != nil {
 			return err
 		}
-		_, err = sess.Exec("CREATE UNIQUE INDEX UQE_seed_assignment_builtin_role_role_name ON seed_assignment (builtin_role, role_name);")
+		_, err = sess.Exec("CREATE UNIQUE INDEX UQE_seed_assignment_builtin_role_action_scope ON seed_assignment (builtin_role, action, scope);")
 		if err != nil {
 			return err
 		}
