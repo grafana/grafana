@@ -14,7 +14,6 @@ import {
 
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import {
-  NO_GROUP_PREFIX,
   getRuleGroupLocationFromCombinedRule,
   getRuleGroupLocationFromRuleWithLocation,
   getRulePluginOrigin,
