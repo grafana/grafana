@@ -86,7 +86,7 @@ func TestBuildMetric(t *testing.T) {
 			Interval: 30 * time.Second,
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 		require.Equal(t, "30s-avg", metric["downsample"], "should use query interval formatted as seconds")
 	})
 
@@ -104,7 +104,7 @@ func TestBuildMetric(t *testing.T) {
 			),
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 		require.Equal(t, "500ms-avg", metric["downsample"], "should convert 0.5s to 500ms")
 	})
 
@@ -123,7 +123,7 @@ func TestBuildMetric(t *testing.T) {
 			Interval: 500 * time.Millisecond,
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 		require.Equal(t, "500ms-avg", metric["downsample"], "should use query interval formatted as milliseconds")
 	})
 
@@ -142,7 +142,7 @@ func TestBuildMetric(t *testing.T) {
 			Interval: 5 * time.Minute,
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 		require.Equal(t, "5m-sum", metric["downsample"], "should use query interval formatted as minutes")
 	})
 
@@ -161,7 +161,7 @@ func TestBuildMetric(t *testing.T) {
 			Interval: 2 * time.Hour,
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 		require.Equal(t, "2h-max", metric["downsample"], "should use query interval formatted as hours")
 	})
 
@@ -180,7 +180,7 @@ func TestBuildMetric(t *testing.T) {
 			Interval: 48 * time.Hour,
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 		require.Equal(t, "2d-min", metric["downsample"], "should use query interval formatted as days")
 	})
 
@@ -199,7 +199,7 @@ func TestBuildMetric(t *testing.T) {
 			),
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 		require.True(t, metric["explicitTags"].(bool), "explicitTags should be true")
 
 		metricTags := metric["tags"].(map[string]any)
@@ -221,7 +221,7 @@ func TestBuildMetric(t *testing.T) {
 			),
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 		require.Nil(t, metric["explicitTags"], "explicitTags should not be present when false")
 	})
 }
@@ -501,7 +501,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -523,7 +523,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 
 		require.Len(t, metric, 2)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -544,7 +544,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -570,7 +570,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -601,7 +601,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 
 		require.Len(t, metric, 5)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -636,7 +636,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := BuildMetric(query)
+		metric, _ := BuildMetric(query)
 		t.Log(metric)
 
 		require.Len(t, metric, 5)
