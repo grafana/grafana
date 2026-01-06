@@ -84,6 +84,16 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
     [setListMode]
   );
 
+  const handleBackButtonClick = useCallback(() => {
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.BACK_BUTTON,
+      tab: VisualizationSelectPaneTab[listMode],
+      creator_team: 'grafana_plugins_catalog',
+      schema_version: '1.0.0',
+    });
+    onClose();
+  }, [listMode, onClose]);
+
   return (
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabs} hideBorder={true}>
@@ -115,7 +125,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
                     variant="secondary"
                     icon="arrow-left"
                     data-testid={selectors.components.PanelEditor.toggleVizPicker}
-                    onClick={onClose}
+                    onClick={handleBackButtonClick}
                   >
                     <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
                   </Button>
