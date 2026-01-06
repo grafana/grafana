@@ -67,6 +67,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  loki-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/annotations/
   import-dashboard:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/import-dashboards/
@@ -118,7 +123,7 @@ After you configure the Loki data source, you can:
 - Create [visualizations](ref:visualizations) to display your log data
 - Configure and use [templates and variables](ref:variables) for dynamic dashboards
 - Add [transformations](ref:transformations) to process query results
-- Add [annotations](ref:annotate-visualizations) to overlay log events on graphs
+- Add [annotations](ref:loki-annotations) to overlay log events on graphs
 - Set up [alerting](ref:alerting) to monitor your log data
 - Use [Explore](ref:explore) for ad-hoc log queries and analysis
 - Configure [derived fields](configure/#derived-fields) to link logs to traces or other data sources

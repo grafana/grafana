@@ -21,6 +21,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  loki-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/annotations/
   logs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
@@ -258,9 +263,6 @@ For more information about metric queries, refer to the [Loki metric queries doc
 
 ## Apply annotations
 
-[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
-You can add annotation queries in the Dashboard menu's Annotations view.
+[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs. You can use Loki log queries as a source for annotations to display events such as deployments, errors, or other significant occurrences on your visualizations.
 
-You can only use log queries as a source for annotations.
-Grafana automatically uses log content as annotation text and your log stream labels as tags.
-You don't need to create any additional mapping.
+For detailed instructions on creating Loki annotations, including query examples and formatting options, refer to [Loki annotations](ref:loki-annotations).
