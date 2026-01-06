@@ -152,6 +152,67 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 	return resp, nil
 }
 
+// BatchCheck implements claims.AccessClient.
+func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.authzLimitedClient.BatchCheck", trace.WithAttributes(
+		attribute.Int("num_checks", len(req.Checks)),
+		attribute.Bool("fallback_used", FallbackUsed(ctx)),
+	))
+	defer span.End()
+
+	if FallbackUsed(ctx) {
+		span.SetStatus(codes.Error, "BatchCheck not supported with fallback")
+		return claims.BatchCheckResponse{}, fmt.Errorf("BatchCheck not supported when fallback is used")
+	}
+
+	// Filter checks to only those that require RBAC and validate namespace
+	rbacChecks := make([]claims.BatchCheckItem, 0, len(req.Checks))
+	allowedByDefault := make(map[string]bool, len(req.Checks))
+
+	for _, check := range req.Checks {
+		if !claims.NamespaceMatches(id.GetNamespace(), check.Namespace) {
+			span.SetStatus(codes.Error, "Namespace mismatch")
+			span.RecordError(claims.ErrNamespaceMismatch)
+			return claims.BatchCheckResponse{}, claims.ErrNamespaceMismatch
+		}
+
+		if c.IsCompatibleWithRBAC(check.Group, check.Resource) {
+			rbacChecks = append(rbacChecks, check)
+		} else {
+			allowedByDefault[check.CorrelationID] = true
+		}
+	}
+
+	// If all checks are allowed by default, return early
+	if len(rbacChecks) == 0 {
+		results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+		for _, check := range req.Checks {
+			results[check.CorrelationID] = claims.BatchCheckResult{
+				Allowed: true,
+			}
+		}
+		return claims.BatchCheckResponse{Results: results}, nil
+	}
+
+	// Call the underlying client with RBAC checks
+	resp, err := c.client.BatchCheck(ctx, id, claims.BatchCheckRequest{Checks: rbacChecks})
+	if err != nil {
+		c.logger.FromContext(ctx).Error("BatchCheck failed", "error", err, "num_checks", len(rbacChecks))
+		span.SetStatus(codes.Error, fmt.Sprintf("batch check failed: %v", err))
+		span.RecordError(err)
+		return resp, err
+	}
+
+	// Merge results with allowed-by-default checks
+	for correlationID := range allowedByDefault {
+		resp.Results[correlationID] = claims.BatchCheckResult{
+			Allowed: true,
+		}
+	}
+
+	return resp, nil
+}
+
 // Compile implements claims.AccessClient.
 func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
 	t := time.Now()

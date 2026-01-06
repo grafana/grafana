@@ -588,9 +588,8 @@ func BenchmarkBatchCheck(b *testing.B) {
 	// Helper to create batch check requests using the new authzv1 API
 	newBatchCheckReq := func(subject string, items []*authzv1.BatchCheckItem) *authzv1.BatchCheckRequest {
 		return &authzv1.BatchCheckRequest{
-			Subject:   subject,
-			Namespace: benchNamespace,
-			Checks:    items,
+			Subject: subject,
+			Checks:  items,
 		}
 	}
 
@@ -600,6 +599,7 @@ func BenchmarkBatchCheck(b *testing.B) {
 		for i := 0; i < batchCheckSize && i < len(resources); i++ {
 			resource := resources[i]
 			items = append(items, &authzv1.BatchCheckItem{
+				Namespace:     benchNamespace,
 				Verb:          utils.VerbGet,
 				Group:         benchDashboardGroup,
 				Resource:      benchDashboardResource,
@@ -617,6 +617,7 @@ func BenchmarkBatchCheck(b *testing.B) {
 		for _, folder := range folders {
 			if folderDepths[folder] == depth && len(items) < batchCheckSize {
 				items = append(items, &authzv1.BatchCheckItem{
+					Namespace:     benchNamespace,
 					Verb:          utils.VerbGet,
 					Group:         benchDashboardGroup,
 					Resource:      benchDashboardResource,
@@ -630,6 +631,7 @@ func BenchmarkBatchCheck(b *testing.B) {
 		for len(items) < batchCheckSize && len(folders) > 0 {
 			folder := folders[len(items)%len(folders)]
 			items = append(items, &authzv1.BatchCheckItem{
+				Namespace:     benchNamespace,
 				Verb:          utils.VerbGet,
 				Group:         benchDashboardGroup,
 				Resource:      benchDashboardResource,
@@ -732,6 +734,7 @@ func BenchmarkBatchCheck(b *testing.B) {
 		for i := 0; i < batchCheckSize; i++ {
 			folder := data.folders[i%len(data.folders)]
 			items = append(items, &authzv1.BatchCheckItem{
+				Namespace:     benchNamespace,
 				Verb:          utils.VerbGet,
 				Group:         benchDashboardGroup,
 				Resource:      benchDashboardResource,

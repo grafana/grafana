@@ -99,14 +99,24 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 		}, nil
 	}
 
-	namespace := r.GetNamespace()
-	if err := authorize(ctx, namespace, s.cfg); err != nil {
-		return nil, err
+	// Group items by namespace
+	itemsByNamespace := make(map[string][]*authzv1.BatchCheckItem)
+	for _, item := range items {
+		ns := item.GetNamespace()
+		itemsByNamespace[ns] = append(itemsByNamespace[ns], item)
 	}
 
-	store, err := s.getStoreInfo(ctx, namespace)
-	if err != nil {
-		return nil, err
+	// Authorize and get store info for each namespace
+	stores := make(map[string]*storeInfo)
+	for namespace := range itemsByNamespace {
+		if err := authorize(ctx, namespace, s.cfg); err != nil {
+			return nil, err
+		}
+		store, err := s.getStoreInfo(ctx, namespace)
+		if err != nil {
+			return nil, err
+		}
+		stores[namespace] = store
 	}
 
 	contextuals, err := s.getContextuals(r.GetSubject())
@@ -117,30 +127,26 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 	results := make(map[string]*authzv1.BatchCheckResult, len(items))
 	subject := r.GetSubject()
 
-	// Phase 1: Check GroupResource access (broadest permissions)
-	// Example: user has "get" on "dashboards" group_resource → all dashboards allowed
-	s.runGroupResourcePhase(ctx, store, subject, items, contextuals, results)
-	if len(results) == len(items) {
-		return s.buildResponse(results), nil
-	}
+	// Process each namespace separately
+	for namespace, nsItems := range itemsByNamespace {
+		store := stores[namespace]
 
-	// Phase 2: Check folder permission inheritance (can_get, can_create, etc. on parent folder)
-	// Example: user has "can_get" on folder-A → all dashboards in folder-A allowed
-	s.runFolderPermissionPhase(ctx, store, subject, items, contextuals, results)
-	if len(results) == len(items) {
-		return s.buildResponse(results), nil
-	}
+		// Phase 1: Check GroupResource access (broadest permissions)
+		// Example: user has "get" on "dashboards" group_resource → all dashboards allowed
+		s.runGroupResourcePhase(ctx, store, subject, nsItems, contextuals, results)
 
-	// Phase 3: Check folder subresource access (folder_get, folder_create, etc.)
-	// Example: user has "folder_get" on folder-A → dashboards in folder-A allowed via subresource
-	s.runFolderSubresourcePhase(ctx, store, subject, items, contextuals, results)
-	if len(results) == len(items) {
-		return s.buildResponse(results), nil
-	}
+		// Phase 2: Check folder permission inheritance (can_get, can_create, etc. on parent folder)
+		// Example: user has "can_get" on folder-A → all dashboards in folder-A allowed
+		s.runFolderPermissionPhase(ctx, store, subject, nsItems, contextuals, results)
 
-	// Phase 4: Check direct resource access
-	// Example: user has "get" directly on dashboard-123
-	s.runDirectResourcePhase(ctx, store, subject, items, contextuals, results)
+		// Phase 3: Check folder subresource access (folder_get, folder_create, etc.)
+		// Example: user has "folder_get" on folder-A → dashboards in folder-A allowed via subresource
+		s.runFolderSubresourcePhase(ctx, store, subject, nsItems, contextuals, results)
+
+		// Phase 4: Check direct resource access
+		// Example: user has "get" directly on dashboard-123
+		s.runDirectResourcePhase(ctx, store, subject, nsItems, contextuals, results)
+	}
 
 	// Mark any remaining unresolved items as denied
 	for _, item := range items {
