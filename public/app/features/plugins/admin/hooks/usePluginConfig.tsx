@@ -17,5 +17,5 @@ export const usePluginConfig = (plugin?: CatalogPlugin) => {
       return loadPlugin(plugin.id);
     }
     return null;
-  }, [plugin?.id, plugin?.isInstalled, plugin?.isDisabled]);
+  }, [plugin?.id, plugin?.isInstalled, plugin?.isDisabled, plugin?.isFullyInstalled]);
 };
