@@ -2,7 +2,7 @@ import { useId, memo, HTMLAttributes, ReactNode, SVGProps } from 'react';
 
 import { FieldDisplay } from '@grafana/data';
 
-import { getBarEndcapColors, getGradientCss, getEndpointMarkerColors } from './colors';
+import { getBarEndcapColors, getGradientCss, getEndpointMarkerColors, getGuideDotColor } from './colors';
 import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
 import { drawRadialArcPath, toRad } from './utils';
 
@@ -68,65 +68,65 @@ export const RadialArcPath = memo(
     const xEnd = centerX + radius * Math.cos(endRadians);
     const yEnd = centerY + radius * Math.sin(endRadians);
 
-    const dotRadius =
-      endpointMarker === 'point' ? Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS) : barWidth / 2;
-
     const bgDivStyle: HTMLAttributes<HTMLDivElement>['style'] = { width: boxSize, height: vizHeight, marginLeft: boxX };
-
     const pathProps: SVGProps<SVGPathElement> = {};
-    let barEndcapColors: [string, string] | undefined;
-    let endpointMarks: ReactNode = null;
     if (isGradient) {
       bgDivStyle.backgroundImage = getGradientCss(rest.gradient, shape);
-
-      if (endpointMarker && (rest.gradient?.length ?? 0) > 0) {
-        switch (endpointMarker) {
-          case 'point':
-            const [pointColorStart, pointColorEnd] = getEndpointMarkerColors(
-              rest.gradient!,
-              fieldDisplay.display.percent
-            );
-            endpointMarks = (
-              <>
-                {arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE && (
-                  <circle cx={xStart} cy={yStart} r={dotRadius} fill={pointColorStart} opacity={DOT_OPACITY} />
-                )}
-                <circle cx={xEnd} cy={yEnd} r={dotRadius} fill={pointColorEnd} opacity={DOT_OPACITY} />
-              </>
-            );
-            break;
-          case 'glow':
-            const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
-            const xStartMark = centerX + radius * Math.cos(endRadians + offsetAngle);
-            const yStartMark = centerY + radius * Math.sin(endRadians + offsetAngle);
-            endpointMarks =
-              arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE ? (
-                <path
-                  d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
-                  fill="none"
-                  strokeWidth={barWidth}
-                  stroke={endpointMarkerGlowFilter}
-                  strokeLinecap={roundedBars ? 'round' : 'butt'}
-                  filter={glowFilter}
-                />
-              ) : null;
-            break;
-          default:
-            break;
-        }
-      }
-
-      if (barEndcaps) {
-        barEndcapColors = getBarEndcapColors(rest.gradient, fieldDisplay.display.percent);
-      }
-
       pathProps.fill = 'none';
       pathProps.stroke = 'white';
     } else {
       bgDivStyle.backgroundColor = rest.color;
-
       pathProps.fill = 'none';
       pathProps.stroke = rest.color;
+    }
+
+    let barEndcapColors: [string, string] | undefined;
+    if (barEndcaps) {
+      barEndcapColors = isGradient
+        ? getBarEndcapColors(rest.gradient, fieldDisplay.display.percent)
+        : [rest.color, rest.color];
+    }
+
+    let endpointMarks: ReactNode = null;
+    switch (endpointMarker) {
+      case 'point': {
+        const [pointColorStart, pointColorEnd] = isGradient
+          ? getEndpointMarkerColors(rest.gradient, fieldDisplay.display.percent)
+          : [getGuideDotColor(rest.color), getGuideDotColor(rest.color)];
+
+        const dotRadius =
+          endpointMarker === 'point' ? Math.min((barWidth / 2) * DOT_RADIUS_FACTOR, MAX_DOT_RADIUS) : barWidth / 2;
+
+        endpointMarks = (
+          <>
+            {arcLengthDeg > ENDPOINT_MARKER_MIN_ANGLE && (
+              <circle cx={xStart} cy={yStart} r={dotRadius} fill={pointColorStart} opacity={DOT_OPACITY} />
+            )}
+            <circle cx={xEnd} cy={yEnd} r={dotRadius} fill={pointColorEnd} opacity={DOT_OPACITY} />
+          </>
+        );
+        break;
+      }
+      case 'glow':
+        const offsetAngle = toRad(ENDPOINT_MARKER_MIN_ANGLE);
+        const xStartMark = centerX + radius * Math.cos(endRadians + offsetAngle);
+        const yStartMark = centerY + radius * Math.sin(endRadians + offsetAngle);
+        if (arcLengthDeg <= ENDPOINT_MARKER_MIN_ANGLE) {
+          break;
+        }
+        endpointMarks = (
+          <path
+            d={['M', xStartMark, yStartMark, 'A', radius, radius, 0, 0, 1, xEnd, yEnd].join(' ')}
+            fill="none"
+            strokeWidth={barWidth}
+            stroke={endpointMarkerGlowFilter}
+            strokeLinecap={roundedBars ? 'round' : 'butt'}
+            filter={glowFilter}
+          />
+        );
+        break;
+      default:
+        break;
     }
 
     const pathEl = (
