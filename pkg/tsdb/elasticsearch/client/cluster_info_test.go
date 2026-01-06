@@ -181,10 +181,8 @@ func TestClusterInfo_IsServerless(t *testing.T) {
 		assert.False(t, clusterInfo.IsServerless())
 	})
 
-	t.Run("should panic when cluster info is empty", func(t *testing.T) {
+	t.Run("should return false when cluster info is empty", func(t *testing.T) {
 		clusterInfo := ClusterInfo{}
-		assert.Panics(t, func() {
-			clusterInfo.IsServerless()
-		})
+		assert.False(t, clusterInfo.IsServerless())
 	})
 }
