@@ -1,6 +1,8 @@
 package validator
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -9,14 +11,17 @@ import (
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-type keeperValidator struct{}
+type keeperValidator struct {
+	features featuremgmt.FeatureToggles
+}
 
 var _ contracts.KeeperValidator = &keeperValidator{}
 
-func ProvideKeeperValidator() contracts.KeeperValidator {
-	return &keeperValidator{}
+func ProvideKeeperValidator(features featuremgmt.FeatureToggles) contracts.KeeperValidator {
+	return &keeperValidator{features: features}
 }
 
 func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secretv1beta1.Keeper, operation admission.Operation) field.ErrorList {
@@ -57,7 +62,13 @@ func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secr
 	}
 
 	if keeper.Spec.Aws != nil {
-		errs = append(errs, validateAws(keeper.Spec.Aws)...)
+		if !v.features.IsEnabled(context.Background(), featuremgmt.FlagSecretsManagementAppPlatformAwsKeeper) {
+			errs = append(errs,
+				field.Forbidden(field.NewPath("spec", "aws"),
+					fmt.Sprintf("enable aws keeper feature toggle to create aws keepers: %s", featuremgmt.FlagSecretsManagementAppPlatformAwsKeeper)))
+		} else {
+			errs = append(errs, validateAws(keeper.Spec.Aws)...)
+		}
 	}
 
 	if keeper.Spec.Azure != nil {
