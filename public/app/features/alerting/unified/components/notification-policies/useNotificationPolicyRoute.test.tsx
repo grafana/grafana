@@ -131,21 +131,21 @@ describe('isRouteProvisioned', () => {
     expect(isRouteProvisioned(route)).toBeFalsy();
   });
 
-  it('returns true when route has KnownProvenance.None in metadata (provisioned but opted out of read-only)', () => {
+  it('returns true when route has KnownProvenance.Empty in metadata (provisioned but opted out of read-only)', () => {
     const route: Route = {
       receiver: 'test-receiver',
       [ROUTES_META_SYMBOL]: {
-        provenance: KnownProvenance.None,
+        provenance: KnownProvenance.Empty,
       },
     };
 
     expect(isRouteProvisioned(route)).toBeTruthy();
   });
 
-  it('returns true when route has KnownProvenance.None at top level (provisioned but opted out of read-only)', () => {
+  it('returns true when route has KnownProvenance.Empty at top level (provisioned but opted out of read-only)', () => {
     const route: Route = {
       receiver: 'test-receiver',
-      provenance: KnownProvenance.None,
+      provenance: KnownProvenance.Empty,
     };
     expect(isRouteProvisioned(route)).toBeTruthy();
   });

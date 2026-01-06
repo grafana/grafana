@@ -35,7 +35,7 @@ const mockTemplates: NotificationTemplate[] = [
     uid: 'no-provenance-template',
     title: 'no-provenance-template',
     content: '{{ define "no-provenance-template" }}No provenance template{{ end }}',
-    provenance: KnownProvenance.None,
+    provenance: KnownProvenance.Empty,
   },
   {
     uid: 'undefined-provenance-template',
@@ -86,7 +86,7 @@ describe('TemplatesTable', () => {
     });
   });
 
-  it('does not show badge for templates with KnownProvenance.None or empty string provenance', () => {
+  it('does not show badge for templates with KnownProvenance.Empty or empty string provenance', () => {
     // no-provenance-template and undefined-provenance-template
     [mockTemplates[3], mockTemplates[4]].forEach((template) => {
       renderWithProvider([template]);
