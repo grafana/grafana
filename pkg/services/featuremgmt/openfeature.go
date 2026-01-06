@@ -23,7 +23,7 @@ type OpenFeatureConfig struct {
 	ProviderType string
 	// URL is the remote provider's URL (required for features-service + OFREP providers)
 	URL *url.URL
-	// HTTPClient is a pre-configured HTTP client (optional, used for features-service + OFREP providers)
+	// HTTPClient is a pre-configured HTTP client (optional, used by features-service + OFREP providers)
 	HTTPClient *http.Client
 	// StaticFlags are the feature flags to use with static provider
 	StaticFlags map[string]bool
