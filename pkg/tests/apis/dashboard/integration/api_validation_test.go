@@ -141,7 +141,9 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 		AppModeProduction:                   true,
 		DisableAnonymous:                    true,
 		DisableAuthZClientCache:             true,
+		DisableZanzanaCache:                 true,
 		DisableZanzanaServerCheckQueryCache: true,
+		ZanzanaReconciliationInterval:       100 * time.Millisecond,
 		APIServerStorageType:                "unified",
 		DBMaxConns:                          4,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -157,9 +159,7 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 			"zanzanaNoLegacyClient",
 			"kubernetesAuthzZanzanaSync",
 		},
-		UnifiedStorageEnableSearch:    true,
-		ZanzanaReconciliationInterval: 100 * time.Millisecond,
-		DisableZanzanaCache:           true,
+		UnifiedStorageEnableSearch: true,
 	})
 
 	t.Cleanup(func() {
