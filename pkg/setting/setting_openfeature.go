@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	StaticProviderType = "static"
-	GOFFProviderType   = "goff"
-	OFREPProviderType  = "ofrep"
+	StaticProviderType          = "static"
+	FeaturesServiceProviderType = "features-service"
+	OFREPProviderType           = "ofrep"
 )
 
 type OpenFeatureSettings struct {
@@ -34,7 +34,7 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 
 	cfg.OpenFeature.TargetingKey = config.Key("targetingKey").MustString(defaultTargetingKey)
 
-	if strURL != "" && (cfg.OpenFeature.ProviderType == GOFFProviderType || cfg.OpenFeature.ProviderType == OFREPProviderType) {
+	if strURL != "" && (cfg.OpenFeature.ProviderType == FeaturesServiceProviderType || cfg.OpenFeature.ProviderType == OFREPProviderType) {
 		u, err := url.Parse(strURL)
 		if err != nil {
 			return fmt.Errorf("invalid feature provider url: %w", err)

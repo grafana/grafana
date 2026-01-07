@@ -785,4 +785,8 @@ const (
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
+
+	// FlagProfilesExemplars
+	// Enables profiles exemplars support in profiles drilldown
+	FlagProfilesExemplars = "profilesExemplars"
 )
