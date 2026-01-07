@@ -92,7 +92,6 @@ const (
 )
 
 // Internal interval and range variables with {} syntax
-// Repetitive code, we should have functionality to unify these
 const (
 	varIntervalAlt       = "${__interval}"
 	varIntervalMsAlt     = "${__interval_ms}"
@@ -112,7 +111,15 @@ const (
 	UnknownQueryType  TimeSeriesQueryType = "unknown"
 )
 
+// safeResolution is the maximum number of data points to prevent excessive resolution.
+// This ensures queries don't exceed reasonable data point limits, improving performance
+// and preventing potential memory issues. The value of 11000 provides a good balance
+// between resolution and performance for most use cases.
 var safeResolution = 11000
+
+// rateIntervalMultiplier is the minimum multiplier for rate interval calculation.
+// Rate intervals should be at least 4x the scrape interval to ensure accurate rate calculations.
+const rateIntervalMultiplier = 4
 
 // QueryModel includes both the common and specific values
 // NOTE: this struct may have issues when decoding JSON that requires the special handling
@@ -281,6 +288,13 @@ func isRateIntervalVariable(interval string) bool {
 		interval == varRateIntervalMsAlt
 }
 
+// replaceVariable replaces both $__variable and ${__variable} formats in the expression
+func replaceVariable(expr, dollarFormat, altFormat, replacement string) string {
+	expr = strings.ReplaceAll(expr, dollarFormat, replacement)
+	expr = strings.ReplaceAll(expr, altFormat, replacement)
+	return expr
+}
+
 // isManualIntervalOverride checks if the interval is a manually specified non-variable value
 // that should override the calculated interval
 func isManualIntervalOverride(interval string) bool {
@@ -401,7 +415,8 @@ func calculateRateInterval(
 		return time.Duration(0)
 	}
 
-	rateInterval := time.Duration(int64(math.Max(float64(queryInterval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
+	minRateInterval := rateIntervalMultiplier * scrapeIntervalDuration
+	rateInterval := maxDuration(queryInterval+scrapeIntervalDuration, minRateInterval)
 	return rateInterval
 }
 
@@ -436,34 +451,33 @@ func InterpolateVariables(
 		rateInterval = calculateRateInterval(queryInterval, requestedMinStep)
 	}
 
-	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varInterval, gtime.FormatInterval(calculatedStep))
-	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
-	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
-	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
-	expr = strings.ReplaceAll(expr, varRateIntervalMs, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
+	// Replace interval variables (both $__var and ${__var} formats)
+	expr = replaceVariable(expr, varIntervalMs, varIntervalMsAlt, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
+	expr = replaceVariable(expr, varInterval, varIntervalAlt, gtime.FormatInterval(calculatedStep))
 
-	// Repetitive code, we should have functionality to unify these
-	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varIntervalAlt, gtime.FormatInterval(calculatedStep))
-	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
-	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
-	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
-	expr = strings.ReplaceAll(expr, varRateIntervalMsAlt, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varRateIntervalAlt, rateInterval.String())
+	// Replace range variables (both $__var and ${__var} formats)
+	expr = replaceVariable(expr, varRangeMs, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
+	expr = replaceVariable(expr, varRangeS, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
+	expr = replaceVariable(expr, varRange, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
+
+	// Replace rate interval variables (both $__var and ${__var} formats)
+	expr = replaceVariable(expr, varRateIntervalMs, varRateIntervalMsAlt, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
+	expr = replaceVariable(expr, varRateInterval, varRateIntervalAlt, rateInterval.String())
+
 	return expr
 }
 
+// isVariableInterval checks if the interval string is a variable interval
+// (any of $__interval, ${__interval}, $__interval_ms, ${__interval_ms}, $__rate_interval, ${__rate_interval}, etc.)
 func isVariableInterval(interval string) bool {
-	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval || interval == varRateIntervalMs {
-		return true
-	}
-	// Repetitive code, we should have functionality to unify these
-	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt || interval == varRateIntervalMsAlt {
-		return true
-	}
-	return false
+	return interval == varInterval ||
+		interval == varIntervalAlt ||
+		interval == varIntervalMs ||
+		interval == varIntervalMsAlt ||
+		interval == varRateInterval ||
+		interval == varRateIntervalAlt ||
+		interval == varRateIntervalMs ||
+		interval == varRateIntervalMsAlt
 }
 
 // AlignTimeRange aligns query range to step and handles the time offset.

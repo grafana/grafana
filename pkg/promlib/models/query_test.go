@@ -2,7 +2,6 @@ package models_test
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -445,28 +444,6 @@ func TestParse(t *testing.T) {
 	})
 }
 
-func mockQuery(expr string, interval string, intervalMs int64, timeRange *backend.TimeRange) backend.DataQuery {
-	if timeRange == nil {
-		timeRange = &backend.TimeRange{
-			From: now,
-			To:   now.Add(1 * time.Hour),
-		}
-	}
-	return backend.DataQuery{
-		Interval: time.Duration(intervalMs) * time.Millisecond,
-		JSON: []byte(fmt.Sprintf(`{
-			"expr": "%s",
-			"format": "time_series",
-			"interval": "%s",
-			"intervalMs": %v,
-			"intervalFactor": 1,
-			"refId": "A"
-		}`, expr, interval, intervalMs)),
-		TimeRange: *timeRange,
-		RefID:     "A",
-	}
-}
-
 func queryContext(json string, timeRange backend.TimeRange, queryInterval time.Duration) backend.DataQuery {
 	return backend.DataQuery{
 		Interval:  queryInterval,
@@ -476,11 +453,6 @@ func queryContext(json string, timeRange backend.TimeRange, queryInterval time.D
 	}
 }
 
-// AlignTimeRange aligns query range to step and handles the time offset.
-// It rounds start and end down to a multiple of step.
-// Prometheus caching is dependent on the range being aligned with the step.
-// Rounding to the step can significantly change the start and end of the range for larger steps, i.e. a week.
-// In rounding the range to a 1w step the range will always start on a Thursday.
 func TestAlignTimeRange(t *testing.T) {
 	type args struct {
 		t      time.Time
