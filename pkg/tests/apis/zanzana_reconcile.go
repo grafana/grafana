@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -34,6 +36,8 @@ func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
 		return
 	}
 
+	awaitBasicRolePermissionsSeeded(t, helper)
+
 	thresholdSeconds := float64(time.Now().Add(1*time.Second).UnixNano()) / float64(time.Second)
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -44,6 +48,41 @@ func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
 		}
 		assert.Greater(c, ts, thresholdSeconds, "expected %s (%v) > %v", zanzanaReconcileLastSuccessMetric, ts, thresholdSeconds)
 	}, 30*time.Second, 50*time.Millisecond)
+}
+
+func awaitBasicRolePermissionsSeeded(t *testing.T, helper *K8sTestHelper) {
+	t.Helper()
+
+	env := helper.GetEnv()
+	if env.SQLStore == nil {
+		return
+	}
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		var count int64
+		type row struct {
+			Count int64 `xorm:"count"`
+		}
+
+		err := env.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			var rr row
+			_, err := sess.SQL(
+				`SELECT COUNT(*) AS count
+				 FROM role INNER JOIN permission AS p ON p.role_id = role.id
+				 WHERE role.org_id = ? AND role.name LIKE ?`,
+				accesscontrol.GlobalOrgID,
+				accesscontrol.BasicRolePrefix+"%",
+			).Get(&rr)
+			if err != nil {
+				return err
+			}
+			count = rr.Count
+			return nil
+		})
+
+		assert.NoError(c, err)
+		assert.Greater(c, count, int64(0), "expected basic role permissions to be seeded in grafana DB")
+	}, 30*time.Second, 100*time.Millisecond)
 }
 
 func getZanzanaReconcileLastSuccessTimestampSeconds(t *testing.T, helper *K8sTestHelper) (float64, bool) {
