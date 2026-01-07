@@ -88,7 +88,13 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) (err
 	defer func() {
 		if err != nil {
 			if m.autoMigrate {
-				m.log.Warn("Migration error ignored", "error", err)
+				m.log.Warn(
+					`[WARN] Resource migration failed and is currently skipped. 
+This migration will be enforced in the next major Grafana release, where failures will block startup or resource loading.
+
+This warning is intended to help you detect and report issues early. 
+Please investigate the failure and report it to the Grafana team so it can be addressed before the next major release.`,
+					"error", err)
 			}
 			m.hadErrors = true
 		}
@@ -128,7 +134,7 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) (err
 	}
 
 	// Auto-enable mode 5 for resources after successful migration
-	// TODO: remove this before Grafana 13 GA
+	// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
 	if m.autoMigrate {
 		for _, gr := range m.resources {
 			m.log.Info("Auto-enabling mode 5 for resource", "resource", gr.Resource+"."+gr.Group)

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,10 +69,7 @@ func TestIntegrationAutoMigrateThresholdExceeded(t *testing.T) {
 
 	// Step 1: Create resources exceeding the threshold (3 resources, threshold=1)
 	t.Run("Step 1: Create resources exceeding threshold", func(t *testing.T) {
-		unifiedConfig := map[string]setting.UnifiedStorageConfig{
-			dashboardKey: {DualWriterMode: grafanarest.Mode0},
-			folderKey:    {DualWriterMode: grafanarest.Mode0},
-		}
+		unifiedConfig := map[string]setting.UnifiedStorageConfig{}
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:     true,
 			DisableAnonymous:      true,

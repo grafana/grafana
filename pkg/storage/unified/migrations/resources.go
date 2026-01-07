@@ -153,7 +153,7 @@ func registerPlaylistMigration(mg *sqlstoremigrator.Migrator,
 	mg.AddMigration("playlists migration", playlistsMigration)
 }
 
-// TODO: remove this before Grafana 13 GA
+// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
 func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
 	autoMigrate := false
 
@@ -169,12 +169,10 @@ func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *
 		}
 
 		autoMigrate = true
-
-		if config.AutoMigrationThreshold <= 0 {
-			return false
+		threshold := int64(setting.DefaultAutoMigrationThreshold)
+		if config.AutoMigrationThreshold > 0 {
+			threshold = int64(config.AutoMigrationThreshold)
 		}
-
-		threshold := int64(config.AutoMigrationThreshold)
 
 		count, err := countResource(ctx, sqlStore, res)
 		if err != nil {
@@ -239,7 +237,7 @@ func isMigrationEnabled(migration migrationDefinition, cfg *setting.Cfg) (bool, 
 	return allEnabled, nil
 }
 
-// TODO: remove this before Grafana 13 GA
+// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
 func countResource(ctx context.Context, sqlStore db.DB, resourceName string) (int64, error) {
 	var count int64
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {

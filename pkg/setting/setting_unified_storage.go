@@ -26,7 +26,7 @@ var MigratedUnifiedResources = map[string]bool{
 }
 
 // AutoMigratedUnifiedResources maps resources that support auto-migration
-// TODO: remove this before Grafana 13 GA
+// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
 var AutoMigratedUnifiedResources = map[string]bool{
 	FolderResource:    true,
 	DashboardResource: true,
