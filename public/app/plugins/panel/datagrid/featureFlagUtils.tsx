@@ -1,5 +1,5 @@
-import { config } from '@grafana/runtime';
+import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 
 export const isDatagridEnabled = () => {
-  return config.featureToggles.enableDatagridEditing;
+  return evaluateBooleanFlag('enableDatagridEditing', false);
 };

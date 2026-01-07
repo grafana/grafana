@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // GetBootdataAPI returns the same data we currently have rendered into index.html
@@ -150,8 +151,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if panel.ID == "datagrid" && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagEnableDatagridEditing) {
+		evalCtx := openfeature.TransactionContext(c.Req.Context())
+		editingEnabled, err := openfeature.NewDefaultClient().BooleanValueDetails(c.Req.Context(), featuremgmt.FlagEnableDatagridEditing, false, evalCtx)
+		if err != nil {
+			hs.log.Error("flag evaluation error", "flag", featuremgmt.FlagEnableDatagridEditing, "error", err)
+		}
+		if panel.ID == "datagrid" && !editingEnabled.Value {
 			continue
 		}
 
