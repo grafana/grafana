@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/table-data
+aliases:
+  - ../best-practices/table-data/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
+canonical: https://grafana.com/docs/grafana/latest/alerting/examples/table-data
 description: This example shows how to create an alert rule using table data.
 keywords:
   - grafana
@@ -8,7 +10,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Examples of table data
+menuTitle: Table data
 title: Example of alerting on tabular data
 weight: 1102
 refs:

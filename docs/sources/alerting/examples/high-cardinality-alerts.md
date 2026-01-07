@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/high-cardinality-alerts/
+aliases:
+  - ../best-practices/high-cardinality-alerts/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/high-cardinality-alerts/
+canonical: https://grafana.com/docs/grafana/latest/alerting/examples/high-cardinality-alerts/
 description: Learn how to detect and alert on high-cardinality metrics that can overload your metrics backend and increase observability costs.
 keywords:
   - grafana
@@ -8,7 +10,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Examples of high-cardinality alerts
+menuTitle: High-cardinality alerts
 title: Examples of high-cardinality alerts
 weight: 1105
 refs:

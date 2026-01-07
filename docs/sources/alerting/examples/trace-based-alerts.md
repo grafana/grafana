@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/trace-based-alerts/
+aliases:
+  - ../best-practices/trace-based-alerts/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/trace-based-alerts/
+canonical: https://grafana.com/docs/grafana/latest/alerting/examples/trace-based-alerts/
 description: This guide provides introductory examples and distinct approaches for setting up trace-based alerts in Grafana.
 keywords:
   - grafana
@@ -8,7 +10,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Examples of trace-based alerts
+title: Trace-based alerts
 weight: 1103
 refs:
   testdata-data-source:
