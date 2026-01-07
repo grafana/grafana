@@ -94,7 +94,7 @@ func AsStringMap(m map[string]memprovider.InMemoryFlag) map[string]string {
 }
 
 func serializeFlagValue(flag memprovider.InMemoryFlag) string {
-	value, _ := flag.Variants[flag.DefaultVariant]
+	value := flag.Variants[flag.DefaultVariant]
 
 	switch castedValue := value.(type) {
 	case bool:
