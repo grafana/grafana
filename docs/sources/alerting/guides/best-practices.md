@@ -134,7 +134,7 @@ Alerts should be delivered to the right team and channel based on priority, owne
 - Define a parent policy for default routing within the scope.
 - Define nested policies for specific cases or higher-priority issues.
 
-## Grouping prevents notification overload
+## Prevent notification overload with alert grouping
 
 Without alert grouping, responders can receive many notifications for the same underlying problem.
 
