@@ -1,9 +1,8 @@
 package featuremgmt
 
 import (
-	"encoding/json"
 	"fmt"
-	"strconv"
+	"reflect"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -33,15 +32,12 @@ func (p *inMemoryBulkProvider) ListFlags() ([]string, error) {
 	return keys, nil
 }
 
-func newStaticProvider(confFlags map[string]setting.FeatureToggle, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
+func newStaticProvider(confFlags map[string]memprovider.InMemoryFlag, standardFlags []FeatureFlag) (openfeature.FeatureProvider, error) {
 	flags := make(map[string]memprovider.InMemoryFlag, len(standardFlags))
 	index := make(map[string]FeatureFlag, len(standardFlags))
 	// Add standard flags
 	for _, flag := range standardFlags {
-		inMemFlag, err := createTypedFlag(flag)
-		if err != nil {
-			return nil, err
-		}
+		inMemFlag := setting.ParseFlag(flag.Name, flag.Expression)
 
 		flags[flag.Name] = inMemFlag
 		index[flag.Name] = flag
@@ -49,60 +45,18 @@ func newStaticProvider(confFlags map[string]setting.FeatureToggle, standardFlags
 
 	// Add flags from config.ini file
 	for name, flag := range confFlags {
-		standard, exists := index[flag.Name]
+		standard, exists := flags[flag.Key]
 
 		// Fail fast if a flag is declared with a mismatched type
-		if exists && standard.Type.String() != string(flag.Type) {
-			return nil, fmt.Errorf("type mismatch for flag '%s' detected", flag.Name)
+		standardValue, _ := setting.GetDefaultValue(standard)
+		flagValue, _ := setting.GetDefaultValue(flag)
+
+		if exists && reflect.TypeOf(standardValue) != reflect.TypeOf(flagValue) {
+			return nil, fmt.Errorf("type mismatch for flag '%s' detected", flag.Key)
 		}
 
-		flags[name] = createInMemoryFlag(flag)
+		flags[name] = flag
 	}
 
 	return newInMemoryBulkProvider(flags), nil
-}
-
-func createInMemoryFlag(flag setting.FeatureToggle) memprovider.InMemoryFlag {
-	variant := "default"
-
-	return memprovider.InMemoryFlag{
-		Key:            flag.Name,
-		DefaultVariant: variant,
-		Variants: map[string]any{
-			variant: flag.Value,
-		},
-	}
-}
-
-func createTypedFlag(flag FeatureFlag) (memprovider.InMemoryFlag, error) {
-	defaultVariant := "default"
-
-	var value any
-	var err error
-	switch flag.Type {
-	case Boolean:
-		value = flag.Expression == "true"
-	case Integer:
-		value, err = strconv.Atoi(flag.Expression)
-	case Float:
-		value, err = strconv.ParseFloat(flag.Expression, 64)
-	case String:
-		value = flag.Expression
-	case Structure:
-		err = json.Unmarshal([]byte(flag.Expression), &value)
-	default:
-		return memprovider.InMemoryFlag{}, fmt.Errorf("unsupported flag type %s", flag.Type)
-	}
-
-	if err != nil {
-		return memprovider.InMemoryFlag{}, err
-	}
-
-	return memprovider.InMemoryFlag{
-		Key:            flag.Name,
-		DefaultVariant: defaultVariant,
-		Variants: map[string]any{
-			defaultVariant: value,
-		},
-	}, nil
 }

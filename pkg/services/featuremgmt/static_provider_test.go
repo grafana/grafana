@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
@@ -95,16 +96,17 @@ ABCD = true
 }
 
 func Test_StaticProvider_FailfastOnMismatchedType(t *testing.T) {
-	staticFlags := map[string]setting.FeatureToggle{"oldBooleanFlag": {
-		Type:  setting.Boolean,
-		Name:  "oldBooleanFlag",
-		Value: true,
+	staticFlags := map[string]memprovider.InMemoryFlag{"oldBooleanFlag": {
+		Key:            "oldBooleanFlag",
+		DefaultVariant: setting.DefaultVariantName,
+		Variants: map[string]any{
+			setting.DefaultVariantName: true,
+		},
 	}}
 
 	flag := FeatureFlag{
 		Name:       "oldBooleanFlag",
 		Expression: "1.0",
-		Type:       Float,
 	}
 	_, err := newStaticProvider(staticFlags, []FeatureFlag{flag})
 	assert.EqualError(t, err, "type mismatch for flag 'oldBooleanFlag' detected")
@@ -201,7 +203,7 @@ func Test_StaticProvider_ConfigOverride(t *testing.T) {
 			name:          "int",
 			typ:           Integer,
 			originalValue: "0",
-			configValue:   int64(1),
+			configValue:   1,
 		},
 		{
 			name:          "float",
@@ -251,20 +253,26 @@ func makeFlags(tt struct {
 	typ           FeatureFlagType
 	originalValue string
 	configValue   any
-}) (map[string]setting.FeatureToggle, []FeatureFlag) {
+}) (map[string]memprovider.InMemoryFlag, []FeatureFlag) {
 	orig := FeatureFlag{
 		Name:       tt.name,
 		Expression: tt.originalValue,
 		Type:       tt.typ,
 	}
 
-	config := map[string]setting.FeatureToggle{
-		tt.name: {
-			Name:  tt.name,
-			Type:  setting.FeatureFlagType(tt.typ.String()),
-			Value: tt.configValue,
-		},
+	config := map[string]memprovider.InMemoryFlag{
+		tt.name: makeInMemoryFlag(tt.name, tt.configValue),
 	}
 
 	return config, []FeatureFlag{orig}
+}
+
+func makeInMemoryFlag(name string, value any) memprovider.InMemoryFlag {
+	return memprovider.InMemoryFlag{
+		Key:            name,
+		DefaultVariant: setting.DefaultVariantName,
+		Variants: map[string]any{
+			setting.DefaultVariantName: value,
+		},
+	}
 }

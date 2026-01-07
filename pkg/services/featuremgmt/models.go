@@ -129,6 +129,7 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 type FeatureFlagType int
 
 const (
+	// Boolean -- Type of a flag
 	Boolean FeatureFlagType = iota
 	Integer
 	Float

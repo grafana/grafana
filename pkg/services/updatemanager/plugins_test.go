@@ -9,7 +9,9 @@ import (
 	"sync"
 	"testing"
 
+	"cuelang.org/go/pkg/strconv"
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -378,8 +380,8 @@ func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
 
 	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
 		ProviderType: setting.StaticProviderType,
-		StaticFlags: map[string]setting.FeatureToggle{
-			featuremgmt.FlagPluginsAutoUpdate: {Value: flagValue, Type: setting.Boolean},
+		StaticFlags: map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagPluginsAutoUpdate: setting.ParseFlag(featuremgmt.FlagPluginsAutoUpdate, strconv.FormatBool(flagValue)),
 		},
 	})
 	require.NoError(t, err)
