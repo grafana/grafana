@@ -1263,4 +1263,8 @@ export interface FeatureToggles {
   * Enables the creation of keepers that manage secrets stored on AWS secrets manager
   */
   secretsManagementAppPlatformAwsKeeper?: boolean;
+  /**
+  * Enables profiles exemplars support in profiles drilldown
+  */
+  profilesExemplars?: boolean;
 }
