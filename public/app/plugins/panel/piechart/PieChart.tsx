@@ -499,6 +499,9 @@ function PieSlice({
 
   const handleFocus = useCallback(
     (event: React.FocusEvent<SVGGElement>) => {
+      // Clear any pending blur timeout - focus has returned to this element or a related element
+      // This prevents clearing the hover state when focus moves between related UI elements
+      // (e.g., from the pie slice to an opened context menu)
       if (blurTimeoutRef.current) {
         clearTimeout(blurTimeoutRef.current);
         blurTimeoutRef.current = null;
@@ -511,7 +514,13 @@ function PieSlice({
 
   const handleBlur = useCallback(
     (event: React.FocusEvent<SVGGElement>) => {
+      // Delay clearing the hover state to handle focus transitions between related elements.
+      // When a context menu opens, focus may move from the pie slice to the menu, triggering
+      // a blur event. The timeout allows us to check if focus has actually left the component
+      // or just moved to a related element (like the menu). If focus returns within 100ms,
+      // handleFocus will clear this timeout.
       blurTimeoutRef.current = setTimeout(() => {
+        // Only clear hover state if focus has actually left this element
         if (elementRef.current && document.activeElement !== elementRef.current) {
           publishDataHoverClearEvent(event);
         }
