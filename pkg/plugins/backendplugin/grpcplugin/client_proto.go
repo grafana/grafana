@@ -3,6 +3,7 @@ package grpcplugin
 import (
 	"context"
 	"errors"
+	"os/exec"
 
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -52,6 +53,7 @@ type ProtoClientOpts struct {
 	SkipHostEnvVars bool
 	Logger          log.Logger
 	Tracer          trace.Tracer
+	CmdEditor       func(*exec.Cmd)
 }
 
 type ContainerModeOpts struct {
@@ -73,6 +75,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 				image:   opts.ContainerMode.Image,
 				tag:     opts.ContainerMode.Tag,
 			},
+			cmdEditor:       opts.CmdEditor,
 			skipHostEnvVars: opts.SkipHostEnvVars,
 		},
 		opts.Logger,
