@@ -230,10 +230,7 @@ func makeFlags(tt struct {
 	}
 
 	config := map[string]memprovider.InMemoryFlag{
-		tt.name: {
-			Key:      tt.name,
-			Variants: map[string]any{"": tt.configValue},
-		},
+		tt.name: setting.NewInMemoryFlag(tt.name, tt.configValue),
 	}
 
 	return config, []FeatureFlag{orig}

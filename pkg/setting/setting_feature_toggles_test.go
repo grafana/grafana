@@ -22,8 +22,8 @@ func TestFeatureToggles(t *testing.T) {
 				"enable": "feature1,feature2",
 			},
 			expectedToggles: map[string]memprovider.InMemoryFlag{
-				"feature1": {Key: "feature1", Variants: map[string]any{"": true}},
-				"feature2": {Key: "feature2", Variants: map[string]any{"": true}},
+				"feature1": NewInMemoryFlag("feature1", true),
+				"feature2": NewInMemoryFlag("feature2", true),
 			},
 		},
 		{
@@ -33,9 +33,9 @@ func TestFeatureToggles(t *testing.T) {
 				"feature3": "true",
 			},
 			expectedToggles: map[string]memprovider.InMemoryFlag{
-				"feature1": {Key: "feature1", Variants: map[string]any{"": true}},
-				"feature2": {Key: "feature2", Variants: map[string]any{"": true}},
-				"feature3": {Key: "feature3", Variants: map[string]any{"": true}},
+				"feature1": NewInMemoryFlag("feature1", true),
+				"feature2": NewInMemoryFlag("feature2", true),
+				"feature3": NewInMemoryFlag("feature3", true),
 			},
 		},
 		{
@@ -45,8 +45,8 @@ func TestFeatureToggles(t *testing.T) {
 				"feature2": "false",
 			},
 			expectedToggles: map[string]memprovider.InMemoryFlag{
-				"feature1": {Key: "feature1", Variants: map[string]any{"": true}},
-				"feature2": {Key: "feature2", Variants: map[string]any{"": false}},
+				"feature1": NewInMemoryFlag("feature1", true),
+				"feature2": NewInMemoryFlag("feature2", false),
 			},
 		},
 		{
@@ -57,12 +57,12 @@ func TestFeatureToggles(t *testing.T) {
 				"feature5": "t", "feature6": "T",
 			},
 			expectedToggles: map[string]memprovider.InMemoryFlag{
-				"feature1": {Key: "feature1", Variants: map[string]any{"": 1}},
-				"feature2": {Key: "feature2", Variants: map[string]any{"": 1.0}},
-				"feature3": {Key: "feature3", Variants: map[string]any{"": map[string]any{"foo": "bar"}}},
-				"feature4": {Key: "feature4", Variants: map[string]any{"": "bar"}},
-				"feature5": {Key: "feature5", Variants: map[string]any{"": true}},
-				"feature6": {Key: "feature6", Variants: map[string]any{"": true}},
+				"feature1": NewInMemoryFlag("feature1", 1),
+				"feature2": NewInMemoryFlag("feature2", 1.0),
+				"feature3": NewInMemoryFlag("feature3", map[string]any{"foo": "bar"}),
+				"feature4": NewInMemoryFlag("feature4", "bar"),
+				"feature5": NewInMemoryFlag("feature5", true),
+				"feature6": NewInMemoryFlag("feature6", true),
 			},
 		},
 	}
@@ -88,14 +88,14 @@ func TestFeatureToggles(t *testing.T) {
 
 func TestFlagValueSerialization(t *testing.T) {
 	testCases := []memprovider.InMemoryFlag{
-		{Key: "int", Variants: map[string]any{"": 1}},
-		{Key: "1.0f", Variants: map[string]any{"": 1.0}},
-		{Key: "1.01f", Variants: map[string]any{"": 1.01}},
-		{Key: "1.10f", Variants: map[string]any{"": 1.10}},
-		{Key: "struct", Variants: map[string]any{"": map[string]any{"foo": "bar"}}},
-		{Key: "string", Variants: map[string]any{"": "bar"}},
-		{Key: "true", Variants: map[string]any{"": true}},
-		{Key: "false", Variants: map[string]any{"": false}},
+		NewInMemoryFlag("int", 1),
+		NewInMemoryFlag("1.0f", 1.0),
+		NewInMemoryFlag("1.01f", 1.01),
+		NewInMemoryFlag("1.10f", 1.10),
+		NewInMemoryFlag("struct", map[string]any{"foo": "bar"}),
+		NewInMemoryFlag("string", "bar"),
+		NewInMemoryFlag("true", true),
+		NewInMemoryFlag("false", false),
 	}
 
 	for _, tt := range testCases {
