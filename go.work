@@ -33,6 +33,7 @@ use (
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/codegen
+	./pkg/plugins
 	./pkg/plugins/codegen
 	./pkg/promlib
 	./pkg/semconv
