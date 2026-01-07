@@ -224,6 +224,36 @@ function PieSlice({
   const hasDataLinks = Boolean(openMenu) || hasDataLinksDirect;
   const shouldBeFocusable = hasDataLinks && Boolean(openMenu);
 
+  const publishDataHoverEvent = useCallback(
+    (raw: Event | React.SyntheticEvent) => {
+      eventBus?.publish({
+        type: DataHoverEvent.type,
+        payload: {
+          raw,
+          x: 0,
+          y: 0,
+          dataId: arc.data.display.title,
+        },
+      });
+    },
+    [eventBus, arc.data.display.title]
+  );
+
+  const publishDataHoverClearEvent = useCallback(
+    (raw: Event | React.SyntheticEvent) => {
+      eventBus?.publish({
+        type: DataHoverClearEvent.type,
+        payload: {
+          raw,
+          x: 0,
+          y: 0,
+          dataId: arc.data.display.title,
+        },
+      });
+    },
+    [eventBus, arc.data.display.title]
+  );
+
   useEffect(() => {
     if (hasDataLinks && !openMenu && elementRef.current) {
       const parentAnchor = elementRef.current.closest('a');
@@ -246,29 +276,11 @@ function PieSlice({
         }
 
         const handleAnchorFocus = (e: FocusEvent) => {
-          if (eventBus) {
-            eventBus.publish({
-              type: DataHoverEvent.type,
-              payload: {
-                raw: e,
-                x: 0,
-                y: 0,
-                dataId: arc.data.display.title,
-              },
-            });
-          }
+          publishDataHoverEvent(e);
         };
 
         const handleAnchorBlur = (e: FocusEvent) => {
-          eventBus?.publish({
-            type: DataHoverClearEvent.type,
-            payload: {
-              raw: e,
-              x: 0,
-              y: 0,
-              dataId: arc.data.display.title,
-            },
-          });
+          publishDataHoverClearEvent(e);
         };
 
         const handleAnchorKeyDown = (e: KeyboardEvent) => {
@@ -308,35 +320,19 @@ function PieSlice({
       }
     }
     return undefined;
-  }, [hasDataLinks, openMenu, eventBus, arc.data.display.title]);
+  }, [hasDataLinks, openMenu, publishDataHoverEvent, publishDataHoverClearEvent]);
 
   const onMouseOut = useCallback(
     (event: React.MouseEvent<SVGGElement>) => {
-      eventBus?.publish({
-        type: DataHoverClearEvent.type,
-        payload: {
-          raw: event,
-          x: 0,
-          y: 0,
-          dataId: arc.data.display.title,
-        },
-      });
+      publishDataHoverClearEvent(event);
       tooltip.hideTooltip();
     },
-    [eventBus, arc, tooltip]
+    [publishDataHoverClearEvent, tooltip]
   );
 
   const onMouseMoveOverArc = useCallback(
     (event: React.MouseEvent<SVGGElement>) => {
-      eventBus?.publish({
-        type: DataHoverEvent.type,
-        payload: {
-          raw: event,
-          x: 0,
-          y: 0,
-          dataId: arc.data.display.title,
-        },
-      });
+      publishDataHoverEvent(event);
 
       const owner = event.currentTarget.ownerSVGElement;
 
@@ -349,7 +345,7 @@ function PieSlice({
         });
       }
     },
-    [eventBus, arc, tooltip, pie, tooltipOptions]
+    [publishDataHoverEvent, tooltip, pie, tooltipOptions]
   );
 
   const handleKeyDown = useCallback(
@@ -448,39 +444,21 @@ function PieSlice({
         blurTimeoutRef.current = null;
       }
 
-      if (eventBus) {
-        eventBus.publish({
-          type: DataHoverEvent.type,
-          payload: {
-            raw: event,
-            x: 0,
-            y: 0,
-            dataId: arc.data.display.title,
-          },
-        });
-      }
+      publishDataHoverEvent(event);
     },
-    [eventBus, arc]
+    [publishDataHoverEvent]
   );
 
   const handleBlur = useCallback(
     (event: React.FocusEvent<SVGGElement>) => {
       blurTimeoutRef.current = setTimeout(() => {
         if (elementRef.current && document.activeElement !== elementRef.current) {
-          eventBus?.publish({
-            type: DataHoverClearEvent.type,
-            payload: {
-              raw: event,
-              x: 0,
-              y: 0,
-              dataId: arc.data.display.title,
-            },
-          });
+          publishDataHoverClearEvent(event);
         }
         blurTimeoutRef.current = null;
       }, 100);
     },
-    [eventBus, arc]
+    [publishDataHoverClearEvent]
   );
 
   useEffect(() => {
