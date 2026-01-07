@@ -50,7 +50,7 @@ func TestFeatureToggles(t *testing.T) {
 			},
 		},
 		{
-			name: "type of the feature flag is handled correctly",
+			name: "feature flags of different types are handled correctly",
 			conf: map[string]string{
 				"feature1": "1", "feature2": "1.0",
 				"feature3": `{"foo":"bar"}`, "feature4": "bar",
