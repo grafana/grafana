@@ -5295,10 +5295,6 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.MigrateJobOptions": {
         "type": "object",
         "properties": {
-          "history": {
-            "description": "Preserve history (if possible)",
-            "type": "boolean"
-          },
           "message": {
             "description": "Message to use when committing the changes in a single commit",
             "type": "string"
@@ -5828,10 +5824,6 @@
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
-          },
-          "legacyStorage": {
-            "description": "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
-            "type": "boolean"
           }
         }
       },

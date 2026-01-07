@@ -186,13 +186,6 @@ var (
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 		},
 		{
-			Name:        "unifiedRequestLog",
-			Description: "Writes error logs to the request logger",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaBackendGroup,
-			Expression:  "true",
-		},
-		{
 			Name:        "renderAuthJWT",
 			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
 			Stage:       FeatureStagePublicPreview,
@@ -580,13 +573,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:         "kubernetesDashboardsV2",
-			Description:  "Use the v2 kubernetes API in the frontend for dashboards",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
 			Name:         "dashboardUndoRedo",
 			Description:  "Enables undo/redo in dynamic dashboards",
 			Stage:        FeatureStageExperimental,
@@ -596,6 +582,13 @@ var (
 		{
 			Name:         "unlimitedLayoutsNesting",
 			Description:  "Enables unlimited dashboard panel grouping",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "drilldownRecommendations",
+			Description:  "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -658,13 +651,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "kubernetesFeatureToggles",
-			Description:  "Use the kubernetes API for feature toggle management in the frontend",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaOperatorExperienceSquad,
-		},
-		{
 			Name:            "cloudRBACRoles",
 			Description:     "Enabled grafana cloud specific RBAC roles",
 			Stage:           FeatureStagePublicPreview,
@@ -685,6 +671,14 @@ var (
 			FrontendOnly:    false,
 			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaAlertingSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "auditLoggingAppPlatform",
+			Description:     "Enable audit logging with Kubernetes under app platform",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
 			HideFromDocs:    true,
 			RequiresRestart: true,
 		},
@@ -814,6 +808,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "dashboardAdHocAndGroupByWrapper",
+			Description:  "Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "cloudWatchNewLabelParsing",
 			Description:  "Updates CloudWatch label parsing to be more accurate",
 			Stage:        FeatureStageGeneralAvailability,
@@ -875,6 +876,13 @@ var (
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
 			Stage:        FeatureStagePrivatePreview,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "alertingSavedSearches",
+			Description:  "Enables saved searches for alert rules list",
+			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 		},
@@ -1349,6 +1357,13 @@ var (
 		{
 			Name:         "fetchRulesUsingPost",
 			Description:  "Use a POST request to list rules by passing down the namespaces user has access to",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "fetchRulesInCompactMode",
+			Description:  "Add compact=true when fetching rules",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -1908,6 +1923,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "heatmapRowsAxisOptions",
+			Description:  "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "preventPanelChromeOverflow",
 			Description:  "Restrict PanelChrome contents with overflow: hidden;",
 			Stage:        FeatureStagePublicPreview,
@@ -2044,6 +2067,28 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "smoothingTransformation",
+			Description:  "Enables the ASAP smoothing transformation for time series data",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
+		},
+		{
+			Name:         "secretsManagementAppPlatformAwsKeeper",
+			Description:  "Enables the creation of keepers that manage secrets stored on AWS secrets manager",
+			Stage:        FeatureStageExperimental,
+			HideFromDocs: true,
+			FrontendOnly: false,
+			Owner:        grafanaOperatorExperienceSquad,
+		},
+		{
+			Name:         "profilesExemplars",
+			Description:  "Enables profiles exemplars support in profiles drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: false,
 		},
 	}
 )

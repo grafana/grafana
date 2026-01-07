@@ -27,6 +27,10 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests basic migration with default style pattern (/.*/) containing thresholds and colors. Should convert styles to fieldConfig.defaults with threshold steps.",
         "gridPos": {
           "h": 3,
@@ -57,6 +61,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests comprehensive migration including: default style with thresholds/colors/unit/decimals/align/colorMode, column overrides with exact name and regex patterns, date formatting, hidden columns, and links with tooltips.",
         "gridPos": {
           "h": 3,
@@ -80,6 +88,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests migration of timeseries_aggregations transform to reduce transformation with column mappings (avg-\u003emean, max-\u003emax, min-\u003emin, total-\u003esum, current-\u003elastNotNull, count-\u003ecount).",
         "gridPos": {
           "h": 3,
@@ -103,6 +115,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests migration of timeseries_to_rows transform to seriesToRows transformation.",
         "gridPos": {
           "h": 3,
@@ -126,6 +142,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests migration of timeseries_to_columns transform to seriesToColumns transformation.",
         "gridPos": {
           "h": 3,
@@ -149,6 +169,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests migration of table transform to merge transformation. Also tests auto alignment conversion to empty string.",
         "gridPos": {
           "h": 3,
@@ -172,6 +196,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests that existing transformations are preserved and new transformation from old format is appended to the list.",
         "gridPos": {
           "h": 3,
@@ -208,6 +236,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests handling of mixed numeric and string threshold values (int, string, float) with proper type conversion.",
         "gridPos": {
           "h": 3,
@@ -231,6 +263,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests all color mode mappings: cell-\u003ecolor-background, row-\u003ecolor-background, value-\u003ecolor-text.",
         "gridPos": {
           "h": 3,
@@ -254,6 +290,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests all alignment options: left, center, right, and auto (should convert to empty string).",
         "gridPos": {
           "h": 3,
@@ -277,6 +317,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests both field matcher types: byName for exact matches and byRegexp for regex patterns.",
         "gridPos": {
           "h": 3,
@@ -300,6 +344,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests various link configurations: with and without tooltip, with and without target blank.",
         "gridPos": {
           "h": 3,
@@ -323,6 +371,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests various date format patterns and aliases.",
         "gridPos": {
           "h": 3,
@@ -346,6 +398,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "React table (table2) should not be migrated. Properties should remain unchanged.",
         "gridPos": {
           "h": 3,
@@ -369,6 +425,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Angular table without styles property should not be migrated.",
         "gridPos": {
           "h": 3,
@@ -392,6 +452,10 @@
         "type": "table"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Non-table panels should remain completely unchanged.",
         "gridPos": {
           "h": 3,
@@ -415,6 +479,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Other panel types should not be affected by table migration.",
         "gridPos": {
           "h": 3,

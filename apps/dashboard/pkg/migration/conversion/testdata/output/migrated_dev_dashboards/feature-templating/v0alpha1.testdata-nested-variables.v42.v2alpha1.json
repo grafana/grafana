@@ -120,7 +120,7 @@
                         "value": [
                           {
                             "title": "filter",
-                            "url": "http://localhost:3000/d/-Y-tnEDWk/templating-nested-template-variables?var-datacenter=${__data.fields[datacenter]}﻿\u0026var-server=${__value.raw}"
+                            "url": "http://localhost:3000/d/-Y-tnEDWk/templating-nested-template-variables?var-datacenter=${__data.fields[datacenter]}\u0026var-server=${__value.raw}"
                           }
                         ]
                       }
@@ -273,7 +273,15 @@
             "kind": "text",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "text",
+                  "originalOptions": {
+                    "content": "## Data center = $datacenter\n\n### server = $server\n\n#### pod = $pod",
+                    "mode": "markdown"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

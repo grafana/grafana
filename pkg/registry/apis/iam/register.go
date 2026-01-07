@@ -72,7 +72,7 @@ func RegisterAPIService(
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
 	coreRolesStorage CoreRoleStorageBackend,
-	rolesStorage RoleStorageBackend,
+	roleApiInstaller RoleApiInstaller,
 	tracing *tracing.TracingService,
 	roleBindingsStorage RoleBindingStorageBackend,
 	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
@@ -87,7 +87,7 @@ func RegisterAPIService(
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
-	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
+	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller)
 	registerMetrics(reg)
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -106,7 +106,7 @@ func RegisterAPIService(
 		teamBindingLegacyStore:      teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracing),
 		ssoLegacyStore:              sso.NewLegacyStore(ssoService, tracing),
 		coreRolesStorage:            coreRolesStorage,
-		rolesStorage:                rolesStorage,
+		roleApiInstaller:            roleApiInstaller,
 		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
 		roleBindingsStorage:         roleBindingsStorage,
 		externalGroupMappingStorage: externalGroupMappingStorageBackend,
@@ -139,7 +139,7 @@ func NewAPIService(
 	accessClient types.AccessClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
 	coreRoleStorage CoreRoleStorageBackend,
-	roleStorage RoleStorageBackend,
+	roleApiInstaller RoleApiInstaller,
 	features featuremgmt.FeatureToggles,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
@@ -162,7 +162,6 @@ func NewAPIService(
 		store:                      store,
 		display:                    user.NewLegacyDisplayREST(store),
 		resourcePermissionsStorage: resourcePermissionsStorage,
-		rolesStorage:               roleStorage,
 		coreRolesStorage:           coreRoleStorage,
 		roleBindingsStorage:        noopstorage.ProvideStorageBackend(), // TODO: add a proper storage backend
 		logger:                     log.New("iam.apis"),
@@ -172,6 +171,7 @@ func NewAPIService(
 		zClient:                    zClient,
 		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
 		reg:                        reg,
+		roleApiInstaller:           roleApiInstaller,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -384,23 +384,17 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 		if enableZanzanaSync {
 			b.logger.Info("Enabling hooks for CoreRole to sync to Zanzana")
-			coreRoleStore.AfterCreate = b.AfterRoleCreate
-			coreRoleStore.AfterDelete = b.AfterRoleDelete
-			coreRoleStore.BeginUpdate = b.BeginRoleUpdate
+			h := NewRoleHooks(b.zClient, b.zTickets, b.logger)
+			coreRoleStore.AfterCreate = h.AfterRoleCreate
+			coreRoleStore.AfterDelete = h.AfterRoleDelete
+			coreRoleStore.BeginUpdate = h.BeginRoleUpdate
 		}
 		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 
-		roleStore, err := NewLocalStore(iamv0.RoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.rolesStorage)
-		if err != nil {
+		// Role registration is delegated to the RoleApiInstaller
+		if err := b.roleApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
 			return err
 		}
-		if enableZanzanaSync {
-			b.logger.Info("Enabling hooks for Role to sync to Zanzana")
-			roleStore.AfterCreate = b.AfterRoleCreate
-			roleStore.AfterDelete = b.AfterRoleDelete
-			roleStore.BeginUpdate = b.BeginRoleUpdate
-		}
-		storage[iamv0.RoleInfo.StoragePath()] = roleStore
 
 		roleBindingStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
 		if err != nil {
@@ -575,6 +569,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		case *iamv0.ExternalGroupMapping:
 			return externalgroupmapping.ValidateOnCreate(typedObj)
+		case *iamv0.Role:
+			return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
 		}
 		return nil
 	case admission.Update:
@@ -599,9 +595,19 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 				return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldTeamBindingObj)
 			}
 			return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
+		case *iamv0.Role:
+			oldRoleObj, ok := a.GetOldObject().(*iamv0.Role)
+			if !ok {
+				return fmt.Errorf("expected old object to be a Role, got %T", oldRoleObj)
+			}
+			return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
 		}
 		return nil
 	case admission.Delete:
+		switch oldRoleObj := a.GetOldObject().(type) {
+		case *iamv0.Role:
+			return b.roleApiInstaller.ValidateOnDelete(ctx, oldRoleObj)
+		}
 		return nil
 	case admission.Connect:
 		return nil

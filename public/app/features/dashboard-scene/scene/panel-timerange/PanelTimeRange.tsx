@@ -70,8 +70,8 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     // set initial values on activate
     this.setState({
       value: timeRange,
-      from: timeRange.raw.from.toString(),
-      to: timeRange.raw.to.toString(),
+      from: typeof timeRange.raw.from === 'string' ? timeRange.raw.from : timeRange.raw.from.toISOString(),
+      to: typeof timeRange.raw.to === 'string' ? timeRange.raw.to : timeRange.raw.to.toISOString(),
     });
   }
 
