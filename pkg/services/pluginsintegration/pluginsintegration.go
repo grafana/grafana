@@ -10,8 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
@@ -39,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugin"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
@@ -146,8 +145,7 @@ var WireSet = wire.NewSet(
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
 // extended.
 var WireExtensionSet = wire.NewSet(
-	provider.ProvideService,
-	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
+	coreplugin.ProvideCoreProvider,
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	ProvideClientWithMiddlewares,

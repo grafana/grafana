@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/tutorials/
+aliases:
+  - ../best-practices/tutorials/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/tutorials/
+canonical: https://grafana.com/docs/grafana/latest/alerting/examples/tutorials/
 description: This section provides a set of step-by-step tutorials guides to get started with Grafana Aletings.
 keywords:
   - grafana

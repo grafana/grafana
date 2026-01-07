@@ -320,6 +320,7 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
 	require.NoError(t, err)
+
 	if opts.OpenFeatureAPIEnabled {
 		_, err = openFeatureSect.NewKey("provider", "static")
 		require.NoError(t, err)
