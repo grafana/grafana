@@ -3,8 +3,8 @@ import { memo } from 'react';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConnectionConfig } from '@grafana/google-sdk';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { reportInteraction, config } from '@grafana/runtime';
-import { Divider, SecureSocksProxySettings } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Divider, Field, Input, SecureSocksProxySettings, Stack } from '@grafana/ui';
 
 import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types/types';
 
@@ -36,32 +36,32 @@ export const ConfigEditor = memo(({ options, onOptionsChange }: Props) => {
           <Divider />
           <ConfigSection
             title="Additional settings"
-            description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy."
+            description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy and Universe Domain."
             isCollapsible
-            isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
+            isInitiallyOpen={
+              options.jsonData.enableSecureSocksProxy !== undefined || options.jsonData.universeDomain !== undefined
+            }
           >
-            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+            <Stack direction={'column'}>
+              <Field noMargin label="Universe Domain">
+                <Input
+                  width={50}
+                  value={options.jsonData.universeDomain}
+                  onChange={(event) =>
+                    handleOnOptionsChange({
+                      ...options,
+                      jsonData: { ...options.jsonData, universeDomain: event.currentTarget.value },
+                    })
+                  }
+                  placeholder="googleapis.com"
+                ></Input>
+              </Field>
+              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+            </Stack>
           </ConfigSection>
         </>
       )}
       <Divider />
-      <div className="gf-form-group">
-        <h5 className="section-heading">Advanced settings</h5>
-        <div className="gf-form">
-          <label className="gf-form-label width-12">Universe Domain</label>
-          <input
-            className="gf-form-input width-30"
-            value={options.jsonData.universeDomain}
-            onChange={(event) =>
-              this.handleOnOptionsChange({
-                ...options,
-                jsonData: { ...options.jsonData, universeDomain: event.target.value },
-              })
-            }
-            placeholder="googleapis.com"
-          />
-        </div>
-      </div>
     </>
   );
 });
