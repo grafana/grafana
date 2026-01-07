@@ -36,7 +36,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		expectResults      Results
 	}{
 		{
-			desc: "zero valued single instance is single Normal state result",
+			desc: "zero valued single instance is single Alerting state result",
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(0.0)})),
@@ -45,7 +45,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResultLength: 1,
 			expectResults: Results{
 				{
-					State: Normal,
+					State: Alerting,
 				},
 			},
 		},
