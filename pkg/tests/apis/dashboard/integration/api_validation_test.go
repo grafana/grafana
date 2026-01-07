@@ -1186,8 +1186,6 @@ func markDashboardObjectAsProvisioned(t *testing.T, dashboard *unstructured.Unst
 func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string, folderUID *string, uid *string, helper *apis.K8sTestHelper) (*unstructured.Unstructured, error) {
 	t.Helper()
 
-	apis.AwaitZanzanaReconcileNext(t, helper)
-
 	var folderUIDStr string
 	if folderUID != nil {
 		folderUIDStr = *folderUID
@@ -1357,6 +1355,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 				for _, loc := range locations {
 					t.Run(loc.name, func(t *testing.T) {
 						if roleCapabilities.canCreate {
+							apis.AwaitZanzanaReconcileNext(t, ctx.Helper)
 							// Test can create dashboard
 							dash, err := createDashboard(t, identity.DashboardClient, identity.Name+" Dashboard "+loc.name, &loc.folderUID, nil, ctx.Helper)
 							require.NoError(t, err)
@@ -1643,6 +1642,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 
 	// Test creator permissions (new test case)
 	t.Run("Creator of dashboard gets admin permission", func(t *testing.T) {
+		apis.AwaitZanzanaReconcileNext(t, ctx.Helper)
 		// Create a dashboard as an editor user (not admin)
 		editorCreatedDash, err := createDashboard(t, editorClient, "Dashboard Created by Editor", nil, nil, ctx.Helper)
 		require.NoError(t, err)
@@ -2135,6 +2135,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 		for _, userTC := range userTestCases {
 			testName := fmt.Sprintf("%s by %s", locTC.name, userTC.name)
 			t.Run(testName, func(t *testing.T) {
+				apis.AwaitZanzanaReconcileNext(t, ctx.Helper)
 				// Create a unique dashboard UID - ensure it's 40 chars max
 				dashboardUID := fmt.Sprintf("test-%s-%s-%s",
 					"POST",
