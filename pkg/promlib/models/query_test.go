@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 	"github.com/grafana/grafana/pkg/promlib/models"
 )
@@ -23,6 +24,54 @@ var (
 	intervalCalculator = intervalv2.NewCalculator()
 	tracer             = otel.Tracer("instrumentation/package/name")
 )
+
+func TestMinStepParse(t *testing.T) {
+	_, span := tracer.Start(context.Background(), "operation")
+	defer span.End()
+	t.Run("parsing query model with min step 2m and 300000 intervalMs", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		q := queryContext(`{
+			"expr": "test_metric",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"intervalMs": 300000,
+			"interval": "2m",
+			"maxDataPoints": 761,
+			"refId": "A"
+		}`, timeRange, time.Duration(5)*time.Minute)
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, "test_metric", res.Expr)
+		require.Equal(t, 2*time.Minute, res.Step)
+	})
+
+	t.Run("parsing query model with min step 2m and 900000 intervalMs", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		q := queryContext(`{
+			"expr": "test_metric",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"intervalMs": 900000,
+			"interval": "2m",
+			"maxDataPoints": 175,
+			"refId": "A"
+		}`, timeRange, time.Duration(15)*time.Minute)
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, "test_metric", res.Expr)
+		require.Equal(t, 2*time.Minute, res.Step)
+	})
+}
 
 func TestParse(t *testing.T) {
 	_, span := tracer.Start(context.Background(), "operation")
@@ -176,7 +225,7 @@ func TestParse(t *testing.T) {
 
 		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
-		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [1m]})", res.Expr)
 	})
 
 	t.Run("parsing query model with $__interval_ms variable", func(t *testing.T) {

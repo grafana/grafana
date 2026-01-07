@@ -154,7 +154,7 @@ type Query struct {
 // may be either a string or DataSourceRef
 type internalQueryModel struct {
 	PrometheusQueryProperties `json:",inline"`
-	//sdkapi.CommonQueryProperties `json:",inline"`
+	// sdkapi.CommonQueryProperties `json:",inline"`
 	IntervalMS float64 `json:"intervalMs,omitempty"`
 
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
@@ -304,6 +304,14 @@ func calculatePrometheusInterval(
 		// Rate interval is final and is not affected by resolution
 		return calculateRateInterval(adjustedInterval, dsScrapeInterval), nil
 	} else {
+		// if the queryInterval is set manually by setting minStep value in UI, we should use
+		// that value over what we've calculated. because it has precedence.
+		if originalQueryInterval != varInterval && originalQueryInterval != varIntervalAlt && originalQueryInterval != "" {
+			parsedOriginalQueryInterval, err := gtime.ParseIntervalStringToTimeDuration(originalQueryInterval)
+			if err == nil {
+				return parsedOriginalQueryInterval, nil
+			}
+		}
 		queryIntervalFactor := intervalFactor
 		if queryIntervalFactor == 0 {
 			queryIntervalFactor = 1
