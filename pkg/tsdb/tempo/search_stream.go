@@ -67,6 +67,7 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
 	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
 	// append the rest of the headers
+	backend.Logger.Warn("Headers:", "headers", req.Headers)
 	for key, value := range req.Headers {
 		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
 	}
