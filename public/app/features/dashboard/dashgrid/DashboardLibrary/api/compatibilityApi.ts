@@ -1,5 +1,5 @@
+import { getAPINamespace } from '@grafana/api-clients';
 import { getBackendSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 /**
@@ -111,11 +111,9 @@ export async function checkDashboardCompatibility(
   dashboardJson: DashboardJson,
   datasourceMappings: DatasourceMapping[]
 ): Promise<CompatibilityCheckResult> {
-  // Get current organization ID from user context
-  const orgId = contextSrv.user.orgId;
-
-  // Construct namespace in the format expected by the backend: org-{orgID}
-  const namespace = `org-${orgId}`;
+  // Get namespace from global config (typically 'default' in development)
+  // This follows Kubernetes API convention for Grafana app plugins
+  const namespace = getAPINamespace();
 
   // Build request body matching backend schema
   const requestBody: CheckCompatibilityRequest = {
@@ -125,8 +123,9 @@ export async function checkDashboardCompatibility(
 
   try {
     // Make POST request to the dashboard validator app's /check endpoint
+    // Following Kubernetes API path convention: /apis/{group}/{version}/namespaces/{namespace}/{resource}
     const response = await getBackendSrv().post<CompatibilityCheckResult>(
-      `/api/apps/dashvalidator/v1alpha1/${namespace}/check`,
+      `/apis/dashvalidator.grafana.app/v1alpha1/namespaces/${namespace}/check`,
       requestBody,
       {
         // Disable automatic error alerts - we'll handle errors in the UI

@@ -126,6 +126,8 @@ export const CompatibilityModal = ({ isOpen, onDismiss, dashboardJson, datasourc
               <Text element="p" variant="h2">
                 {result.compatibilityScore}%
               </Text>
+
+              <Text element="p">{JSON.stringify(result)}</Text>
             </div>
 
             {/* Feature #12: CompatibilityScoreDisplay with color coding */}

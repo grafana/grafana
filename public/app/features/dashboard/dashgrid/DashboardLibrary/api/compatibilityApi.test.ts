@@ -1,3 +1,4 @@
+import { getAPINamespace } from '@grafana/api-clients';
 import { BackendSrv, getBackendSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
@@ -9,13 +10,12 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn(),
 }));
 
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    user: { orgId: 1 },
-  },
+jest.mock('@grafana/api-clients', () => ({
+  getAPINamespace: jest.fn(),
 }));
 
 const mockGetBackendSrv = getBackendSrv as jest.MockedFunction<typeof getBackendSrv>;
+const mockGetAPINamespace = getAPINamespace as jest.MockedFunction<typeof getAPINamespace>;
 
 // Helper to create mock BackendSrv
 const createMockBackendSrv = (overrides: Partial<BackendSrv> = {}): BackendSrv =>
@@ -94,6 +94,8 @@ describe('compatibilityApi', () => {
         post: mockPost,
       })
     );
+    // Mock getAPINamespace to return 'default' (typical dev environment)
+    mockGetAPINamespace.mockReturnValue('default');
     // Mock console.error to prevent test failures
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
   });
@@ -151,7 +153,7 @@ describe('compatibilityApi', () => {
 
       expect(result).toEqual(mockResponse);
       expect(mockPost).toHaveBeenCalledWith(
-        '/api/apps/dashvalidator/v1alpha1/org-1/check',
+        '/apis/dashvalidator.grafana.app/v1alpha1/namespaces/default/check',
         {
           dashboardJson: dashboard,
           datasourceMappings: mappings,
@@ -297,7 +299,7 @@ describe('compatibilityApi', () => {
       await expect(checkDashboardCompatibility(dashboard, mappings)).rejects.toEqual(networkError);
     });
 
-    it('should construct correct namespace for different orgIds', async () => {
+    it('should use namespace from getAPINamespace()', async () => {
       const mockResponse: CompatibilityCheckResult = {
         compatibilityScore: 100,
         datasourceResults: [],
@@ -305,9 +307,8 @@ describe('compatibilityApi', () => {
 
       mockPost.mockResolvedValue(mockResponse);
 
-      // Change orgId via contextSrv mock
-      const { contextSrv } = require('app/core/services/context_srv');
-      contextSrv.user.orgId = 42;
+      // Change namespace returned by getAPINamespace
+      mockGetAPINamespace.mockReturnValue('custom-namespace');
 
       const dashboard = createMockDashboard();
       const mappings = createMockDatasourceMappings();
@@ -315,13 +316,13 @@ describe('compatibilityApi', () => {
       await checkDashboardCompatibility(dashboard, mappings);
 
       expect(mockPost).toHaveBeenCalledWith(
-        '/api/apps/dashvalidator/v1alpha1/org-42/check',
+        '/apis/dashvalidator.grafana.app/v1alpha1/namespaces/custom-namespace/check',
         expect.any(Object),
         expect.any(Object)
       );
 
-      // Reset orgId for other tests
-      contextSrv.user.orgId = 1;
+      // Reset namespace for other tests
+      mockGetAPINamespace.mockReturnValue('default');
     });
 
     it('should handle generic error without proper structure', async () => {
