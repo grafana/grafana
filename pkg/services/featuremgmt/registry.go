@@ -2090,6 +2090,13 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaOperatorExperienceSquad,
 		},
+		{
+			Name:         "profilesExemplars",
+			Description:  "Enables profiles exemplars support in profiles drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: false,
+		},
 	}
 )
 
