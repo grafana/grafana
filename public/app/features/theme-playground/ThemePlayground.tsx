@@ -60,7 +60,7 @@ export default function ThemePlayground() {
       const theme = createTheme(themeInput);
       setTheme(theme);
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification('Failed to create theme', error)));
+      dispatch(notifyApp(createErrorNotification('Failed to create theme', `${error}`)));
     }
   };
 
@@ -73,7 +73,7 @@ export default function ThemePlayground() {
         updateThemePreview(themeInput.data);
       }
     } catch (error) {
-      dispatch(notifyApp(createErrorNotification('Failed to parse JSON', error)));
+      dispatch(notifyApp(createErrorNotification('Failed to parse JSON', `${error}`)));
     }
   };
 
