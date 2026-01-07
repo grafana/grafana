@@ -1,6 +1,6 @@
 import { Registry, RegistryItem } from '../utils/Registry';
 
-import { createTheme } from './createTheme';
+import { createTheme, NewThemeOptionsSchema } from './createTheme';
 import * as extraThemes from './themeDefinitions';
 import { GrafanaTheme2 } from './types';
 
@@ -53,14 +53,19 @@ const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   ];
 });
 
-for (const [id, theme] of Object.entries(extraThemes)) {
-  themeRegistry.register({
-    id,
-    name: theme.name ?? '',
-    // TODO zod to verify schema of imported themes here?
-    build: () => createTheme(theme),
-    isExtra: true,
-  });
+for (const [id, json] of Object.entries(extraThemes)) {
+  const result = NewThemeOptionsSchema.safeParse(json);
+  if (!result.success) {
+    console.error(`Invalid theme definition for theme id ${id}: ${result.error.message}`);
+  } else {
+    const theme = result.data;
+    themeRegistry.register({
+      id,
+      name: theme.name ?? '',
+      build: () => createTheme(theme),
+      isExtra: true,
+    });
+  }
 }
 
 function getSystemPreferenceTheme() {

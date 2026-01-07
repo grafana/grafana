@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
 import { createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
-import { experimentalThemeDefinitions } from '@grafana/data/internal';
+import { experimentalThemeDefinitions, NewThemeOptionsSchema } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
@@ -66,8 +66,12 @@ export default function ThemePlayground() {
 
   const onEditorBlur = (value: string) => {
     try {
-      const themeInput: NewThemeOptions = JSON.parse(value);
-      updateThemePreview(themeInput);
+      const themeInput = NewThemeOptionsSchema.safeParse(JSON.parse(value));
+      if (!themeInput.success) {
+        dispatch(notifyApp(createErrorNotification('Failed to parse theme', themeInput.error.issues[0].message)));
+      } else {
+        updateThemePreview(themeInput.data);
+      }
     } catch (error) {
       dispatch(notifyApp(createErrorNotification(`Failed to parse JSON: ${error}`)));
     }
