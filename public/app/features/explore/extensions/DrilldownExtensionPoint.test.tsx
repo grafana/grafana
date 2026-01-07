@@ -54,7 +54,7 @@ describe('DrilldownExtensionPoint', () => {
 
     render(<DrilldownExtensionPoint queries={defaultQueries} />);
 
-    expect(screen.getByRole('button', { name: 'Open in Drilldown' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Drilldown' })).toBeVisible();
   });
 
   it('should open the first queryless app link when button is clicked', async () => {
@@ -74,7 +74,7 @@ describe('DrilldownExtensionPoint', () => {
     });
 
     render(<DrilldownExtensionPoint queries={defaultQueries} />);
-    await user.click(screen.getByRole('button', { name: 'Open in Drilldown' }));
+    await user.click(screen.getByRole('button', { name: 'Drilldown' }));
 
     expect(mockGlobalOpen).toHaveBeenCalledTimes(1);
     expect(mockGlobalOpen).toHaveBeenCalledWith('http://localhost/a/grafana-pyroscope-app', '_blank');
@@ -105,7 +105,7 @@ describe('DrilldownExtensionPoint', () => {
     });
 
     render(<DrilldownExtensionPoint queries={defaultQueries} />);
-    await user.click(screen.getByRole('button', { name: 'Open in Drilldown' }));
+    await user.click(screen.getByRole('button', { name: 'Drilldown' }));
 
     expect(mockGlobalOpen).toHaveBeenCalledWith('http://localhost/a/grafana-pyroscope-app', '_blank');
     expect(mockGlobalOpen).toHaveBeenCalledTimes(1);
@@ -156,7 +156,7 @@ describe('DrilldownExtensionPoint', () => {
 
     const { container } = render(<DrilldownExtensionPoint queries={defaultQueries} />);
 
-    expect(screen.queryByRole('button', { name: 'Open in Drilldown' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Drilldown' })).not.toBeInTheDocument();
     expect(container.firstChild).toBeNull();
   });
 
@@ -168,7 +168,7 @@ describe('DrilldownExtensionPoint', () => {
 
     const { container } = render(<DrilldownExtensionPoint queries={defaultQueries} />);
 
-    expect(screen.queryByRole('button', { name: 'Open in Drilldown' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Drilldown' })).not.toBeInTheDocument();
     expect(container.firstChild).toBeNull();
   });
 
@@ -188,7 +188,7 @@ describe('DrilldownExtensionPoint', () => {
     });
 
     render(<DrilldownExtensionPoint queries={defaultQueries} />);
-    await user.click(screen.getByRole('button', { name: 'Open in Drilldown' }));
+    await user.click(screen.getByRole('button', { name: 'Drilldown' }));
 
     expect(mockGlobalOpen).not.toHaveBeenCalled();
   });
