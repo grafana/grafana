@@ -185,5 +185,18 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "UQE_resource_last_import_time_last_import_time",
 	}))
 
+	oldResourceVersionUniqueKey := migrator.Index{Cols: []string{"group", "resource"}, Type: migrator.UniqueIndex}
+	updatedResourceVersionTable := migrator.Table{
+		Name: "resource_version",
+		Columns: []*migrator.Column{
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource_version", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		PrimaryKeys: []string{"group", "resource"},
+	}
+
+	migrator.ConvertUniqueKeyToPrimaryKey(mg, oldResourceVersionUniqueKey, updatedResourceVersionTable)
+
 	return marker
 }
