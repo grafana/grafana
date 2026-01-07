@@ -651,13 +651,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "kubernetesFeatureToggles",
-			Description:  "Use the kubernetes API for feature toggle management in the frontend",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaOperatorExperienceSquad,
-		},
-		{
 			Name:            "cloudRBACRoles",
 			Description:     "Enabled grafana cloud specific RBAC roles",
 			Stage:           FeatureStagePublicPreview,
@@ -2089,6 +2082,13 @@ var (
 			HideFromDocs: true,
 			FrontendOnly: false,
 			Owner:        grafanaOperatorExperienceSquad,
+		},
+		{
+			Name:         "profilesExemplars",
+			Description:  "Enables profiles exemplars support in profiles drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: false,
 		},
 	}
 )
