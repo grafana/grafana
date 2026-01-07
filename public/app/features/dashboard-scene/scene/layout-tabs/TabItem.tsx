@@ -252,6 +252,9 @@ export class TabItem
   public acceptDroppedRow(row: RowItem): void {
     const currentLayout = this.getLayout();
 
+    // Clear the parent reference from the row before adding to new layout
+    row.clearParent();
+
     if (currentLayout instanceof RowsLayoutManager) {
       // Already has a RowsLayoutManager, just add the row
       currentLayout.addNewRow(row);

@@ -16,6 +16,7 @@ import {
 import { createPointerDistance, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
@@ -75,6 +76,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _sourceRowsLayout: RowsLayoutManager | null = null;
   /** Flag to track if row drag offset has been captured */
   private _rowOffsetCaptured = false;
+  /** Current drop position for AutoGrid (index where item will be inserted) */
+  private _currentDropPosition: number | null = null;
+  /** Last hovered AutoGrid item key (to prevent flickering) */
+  private _lastHoveredAutoGridItemKey: string | null = null;
 
   public constructor() {
     super({});
@@ -131,6 +136,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // Capture these before cleanup since setTimeout runs after cleanup
     const sourceDropTarget = this._sourceDropTarget;
     const lastDropTarget = this._lastDropTarget;
+    const dropPosition = this._currentDropPosition;
 
     // Handle cross-layout or cross-tab drop
     if (sourceDropTarget !== lastDropTarget || wasDetached) {
@@ -142,7 +148,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           if (!wasDetached) {
             sourceDropTarget?.draggedGridItemOutside?.(gridItem);
           }
-          lastDropTarget?.draggedGridItemInside?.(gridItem);
+          // Pass drop position for precise placement (AutoGrid uses this)
+          lastDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
         } else {
           const warningMessage = 'No grid item to drag';
           console.warn(warningMessage);
@@ -156,6 +163,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     this._clearTabActivationTimer();
     this._clearDragPreview();
+    this._clearDropPosition();
     this._lastDropTarget?.setIsDropTarget?.(false);
     this._lastDropTarget = null;
     this._sourceDropTarget = null;
@@ -555,10 +563,13 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;
 
     if (!dropTarget) {
+      this._clearDropPosition();
       return;
     }
 
     if (dropTarget !== this._lastDropTarget) {
+      // Clear drop position from previous target
+      this._clearDropPosition();
       this._lastDropTarget?.setIsDropTarget?.(false);
       this._lastDropTarget = dropTarget;
 
@@ -566,6 +577,76 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
         dropTarget.setIsDropTarget?.(true);
       }
     }
+
+    // Update drop position for AutoGrid targets
+    this._updateDropPosition(evt.clientX, evt.clientY, dropTarget);
+  }
+
+  private _updateDropPosition(clientX: number, clientY: number, dropTarget: DashboardDropTarget): void {
+    // Only update position for AutoGridLayoutManager targets
+    if (!(dropTarget instanceof AutoGridLayoutManager)) {
+      return;
+    }
+
+    // Don't show external placeholder when dragging within the same grid
+    // (AutoGrid has its own internal drag placeholder)
+    if (dropTarget === this._sourceDropTarget) {
+      return;
+    }
+
+    // Find which AutoGridItem we're hovering over
+    const elementsUnderPoint = document.elementsFromPoint(clientX, clientY);
+    const targetElement = elementsUnderPoint?.find((el) => el.getAttribute('data-auto-grid-item-drop-target'));
+    const targetKey = targetElement?.getAttribute('data-auto-grid-item-drop-target');
+
+    const children = dropTarget.state.layout.state.children;
+
+    // If not hovering over any item
+    if (!targetKey || !targetElement) {
+      // Only set initial position when first entering the grid
+      if (this._currentDropPosition === null) {
+        this._currentDropPosition = children.length;
+        dropTarget.setDropPosition?.(children.length);
+      }
+      // Otherwise keep the current position (prevents flickering when over placeholder)
+      return;
+    }
+
+    // Determine if we should insert before or after the hovered item
+    // by checking if cursor is in left half or right half
+    const rect = targetElement.getBoundingClientRect();
+    const isRightHalf = clientX > rect.left + rect.width / 2;
+
+    // Create a composite key that includes both item key and side
+    const compositeKey = `${targetKey}-${isRightHalf ? 'after' : 'before'}`;
+
+    // Only update if we're hovering over a different position than before
+    // This prevents flickering when the placeholder shifts items around
+    if (compositeKey === this._lastHoveredAutoGridItemKey) {
+      return;
+    }
+
+    this._lastHoveredAutoGridItemKey = compositeKey;
+
+    // Find the index of the hovered item
+    const hoveredIndex = children.findIndex((child) => child.state.key === targetKey);
+    if (hoveredIndex < 0) {
+      return;
+    }
+
+    // Insert after if in right half, before if in left half
+    const newPosition = isRightHalf ? hoveredIndex + 1 : hoveredIndex;
+
+    this._currentDropPosition = newPosition;
+    dropTarget.setDropPosition?.(newPosition);
+  }
+
+  private _clearDropPosition(): void {
+    if (this._currentDropPosition !== null && this._lastDropTarget) {
+      this._lastDropTarget.setDropPosition?.(null);
+      this._currentDropPosition = null;
+    }
+    this._lastHoveredAutoGridItemKey = null;
   }
 
   private _getDashboard(): DashboardScene {
