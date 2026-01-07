@@ -425,6 +425,9 @@ type DashboardFieldConfig struct {
 	Custom map[string]interface{} `json:"custom,omitempty"`
 	// Calculate min max per field
 	FieldMinMax *bool `json:"fieldMinMax,omitempty"`
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	NullValueMode *DashboardNullValueMode `json:"nullValueMode,omitempty"`
 }
 
 // NewDashboardFieldConfig creates a new DashboardFieldConfig object.
@@ -750,6 +753,16 @@ func NewDashboardActionVariable() *DashboardActionVariable {
 // Action variable type
 // +k8s:openapi-gen=true
 const DashboardActionVariableType = "string"
+
+// How null values should be handled
+// +k8s:openapi-gen=true
+type DashboardNullValueMode string
+
+const (
+	DashboardNullValueModeNull       DashboardNullValueMode = "null"
+	DashboardNullValueModeConnected  DashboardNullValueMode = "connected"
+	DashboardNullValueModeNullAsZero DashboardNullValueMode = "null as zero"
+)
 
 // +k8s:openapi-gen=true
 type DashboardDynamicConfigValue struct {

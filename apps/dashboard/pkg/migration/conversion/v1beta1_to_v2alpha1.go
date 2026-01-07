@@ -2534,6 +2534,11 @@ func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.Da
 		fieldConfigDefaults.FieldMinMax = val
 		hasDefaults = true
 	}
+	if val, ok := defaults["nullValueMode"].(string); ok {
+		nullValueMode := dashv2alpha1.DashboardNullValueMode(val)
+		fieldConfigDefaults.NullValueMode = &nullValueMode
+		hasDefaults = true
+	}
 
 	// Extract array field - strip BOMs from link URLs
 	if linksArray, ok := extractArrayField(defaults, "links"); ok {

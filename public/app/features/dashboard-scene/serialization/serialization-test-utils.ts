@@ -141,10 +141,9 @@ export function removeSchemaGapFieldsFromSpec(spec: DashboardV2Spec): DashboardV
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const normalized = JSON.parse(JSON.stringify(spec)) as DashboardV2Spec;
 
-  // Fields that aren't in the V2 schema - either deprecated or schema gaps
+  // Deprecated fields that aren't in any schema
   // - unitScale: deprecated field
-  // - nullValueMode: V1 field for null value handling, not in V2 schema
-  const fieldsToRemoveFromDefaults = ['unitScale', 'nullValueMode'];
+  const fieldsToRemoveFromDefaults = ['unitScale'];
 
   if (normalized.elements) {
     for (const elementKey of Object.keys(normalized.elements)) {
