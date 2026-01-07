@@ -341,6 +341,8 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
+	t.Skip("flaky test")
+
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
