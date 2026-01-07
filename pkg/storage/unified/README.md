@@ -806,8 +806,10 @@ flowchart TD
 
 #### Setting Dual Writer Mode
 ```ini
-[unified_storage.{resource}.{kind}.{group}]
-dualWriterMode = {0-5}
+; [unified_storage.{resource}.{group}]
+[unified_storage.dashboards.dashboard.grafana.app]
+; modes {0-5}
+dualWriterMode = 0
 ```
 
 #### Background Sync Configuration
@@ -1376,4 +1378,3 @@ disable_data_migrations = false
 ### Documentation
 
 For detailed information about migration architecture, validators, and troubleshooting, refer to [migrations/README.md](./migrations/README.md).
- 
