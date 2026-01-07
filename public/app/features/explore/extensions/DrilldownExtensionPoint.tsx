@@ -8,6 +8,7 @@ import { Button } from '@grafana/ui';
 
 type Props = {
   queries: DataQuery[];
+  onExtensionClick?: () => void;
 };
 
 const QUERYLESS_APPS = [
@@ -22,6 +23,7 @@ const QUERYLESS_APPS = [
  * Only displays when at least one queryless app extension is available.
  */
 export function DrilldownExtensionPoint(props: Props): ReactElement | null {
+  const { onExtensionClick } = props;
   const context = useExtensionPointContext(props);
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
@@ -31,12 +33,13 @@ export function DrilldownExtensionPoint(props: Props): ReactElement | null {
   const querylessLinks = useMemo(() => links.filter((link) => QUERYLESS_APPS.includes(link.pluginId)), [links]);
 
   const onClick = useCallback(() => {
+    onExtensionClick?.();
     const firstLink = querylessLinks[0];
     if (!firstLink?.path) {
       return;
     }
     global.open(locationUtil.assureBaseUrl(firstLink.path), '_blank');
-  }, [querylessLinks]);
+  }, [querylessLinks, onExtensionClick]);
 
   if (!querylessLinks.length) {
     return null;
@@ -44,7 +47,7 @@ export function DrilldownExtensionPoint(props: Props): ReactElement | null {
 
   return (
     <Button variant="secondary" onClick={onClick}>
-      <Trans i18nKey="explore.queryless-apps-extensions.open-in-drilldown">Open in Drilldown</Trans>
+      <Trans i18nKey="explore.queryless-apps-extensions.drilldown">Drilldown</Trans>
     </Button>
   );
 }
