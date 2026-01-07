@@ -110,8 +110,6 @@ Each panel needs at least one query to display a visualization.
 
 ## Create a dashboard
 
-<!-- confirm creation flow!!! -->
-
 To create a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
@@ -154,10 +152,17 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back to dashboard**.
-1. Click **Exit edit**.
+1. (Optional) Continue building your dashboard by doing one of the following:
 
-Now that you've created a basic dashboard, continue building it by going through the following sections.
-We've ordered them as we expect you'll need them, but you can do any of these steps at any time.
+   - Click **+ Add panel** and set the panel options in the edit pane or click **Configure** to complete panel setup.
+   - Click **+ Add variable** and follow the steps to [add a variable to the dashboard](#add-variables).
+   - Click **Group panels** and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Group panels](#group-panels).
+   - Click the **Dashboard options** icon to open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
+
+1. When you've finished making changes, click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**
+1. Click **Exit edit**.
 
 ## Dashboard editing
 
@@ -165,7 +170,7 @@ Now that you've created a basic dashboard, you can augment with more edits.
 You can make several updates to the dashboard without leaving it by using the edit pane.
 Before editing, it's helpful to know more about the edit pane.
 
-### The edit pane and the sidebar
+### The edit pane and sidebar
 
 The edit pane allows you to make changes without leaving the dashboard.
 When the dashboard is in edit mode, the edit pane displays options associated with the part of the dashboard that's in focus.
@@ -205,37 +210,13 @@ When the edit pane is closed, you can resize the sidebar so the icon names are v
 
 ### Edit a dashboard
 
-To edit dashboards, follow these steps:
+To edit a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane or do one of the following:
-
-   - Click **+ Add panel** and set the panel options in the edit pane or click **Configure** to complete all of the panel setup.
-   - Click **+ Add variable** and follow the steps to [add a variable to the dashboard](#add-variables).
-   - Click **Group panels** and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Group panels](#group-panels).
-   - Click the **Dashboard options** icon to open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
-
-1. When you've finished making changes, click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**
-
-## Add panels
-
-To edit dashboards, follow these steps:
-
-1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane or do one of the following:
-
-   - Click **+ Add panel** and set the panel options in the edit pane or click **Configure** to complete all of the panel setup.
-   - Click **+ Add variable** and follow the steps to [add a variable to the dashboard](#add-variables).
-   - Click **Group panels** and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Group panels](#group-panels).
-   - Click the **Dashboard options** icon to open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
-
+1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane or click the **Dashboard options** icon to open the edit pane.
+1. Update the dashboard as needed.
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -267,19 +248,12 @@ There are default parameters to constrain the layout, and you can update these t
 
 To update the panel layout, follow these steps:
 
-To edit dashboards, follow these steps:
-
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane or do one of the following:
-
-   - Click **+ Add panel** and set the panel options in the edit pane or click **Configure** to complete all of the panel setup.
-   - Click **+ Add variable** and follow the steps to [add a variable to the dashboard](#add-variables).
-   - Click **Group panels** and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Group panels](#group-panels).
-   - Click the **Dashboard options** icon to open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
-
-1. When you've finished making changes, click **Save**.
+_1. Click .... bring area into focus
+_1. Update layout option
+1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**
@@ -313,10 +287,12 @@ You can nest up to two levels deep.
 The following sections describe the configuration options for grouping panels into tabs and rows.
 While grouping is meant for multiple panels, you can start a grouping with just one panel.
 
+To group panels, follow these steps:
+
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. At the bottom-left corner of the dashboard, click **Group panels**.
+_1. At the bottom-left corner of the dashboard, click **Group panels**.
 1. Select **Group into row** or **Group into tab**.
 
    A dotted blue line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard.
@@ -397,9 +373,6 @@ To configure repeats, follow these steps:
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-
-   The **Dashboard** edit pane opens on the right side of the dashboard.
-
 1. Click in the panel, row, or tab you want to work with to bring it into focus and display the associated options in the edit pane.
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
