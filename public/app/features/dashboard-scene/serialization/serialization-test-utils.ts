@@ -159,3 +159,37 @@ export function removeSchemaGapFieldsFromSpec(spec: DashboardV2Spec): DashboardV
 
   return normalized;
 }
+
+/**
+ * Recursively removes empty arrays from an object.
+ * This normalizes the difference between frontend (which preserves empty arrays)
+ * and Go backend (which omits empty arrays due to `omitempty`).
+ */
+export function removeEmptyArrays<T>(value: T): T {
+  if (Array.isArray(value)) {
+    // Recursively process array items, but don't remove the array itself here
+    // (parent will handle removal if this array becomes empty after processing)
+    return value.map((item) => removeEmptyArrays(item)) as unknown as T;
+  }
+
+  if (value !== null && typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const key of Object.keys(value)) {
+      const v = (value as Record<string, unknown>)[key];
+      if (Array.isArray(v)) {
+        // Only include non-empty arrays
+        if (v.length > 0) {
+          result[key] = removeEmptyArrays(v);
+        }
+        // Skip empty arrays (don't add to result)
+      } else if (v !== null && typeof v === 'object') {
+        result[key] = removeEmptyArrays(v);
+      } else {
+        result[key] = v;
+      }
+    }
+    return result as T;
+  }
+
+  return value;
+}
