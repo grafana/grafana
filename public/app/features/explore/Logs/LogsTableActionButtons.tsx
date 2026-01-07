@@ -30,7 +30,6 @@ interface Props extends CustomCellRendererProps {
 
 export function LogsTableActionButtons(props: Props) {
   const { exploreId, absoluteRange, logRows, rowIndex, panelState, displayedFields, logsFrame, frame } = props;
-
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
   // Get logId from the table frame (frame), not the original logsFrame, because
