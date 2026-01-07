@@ -443,22 +443,19 @@ For more information, refer to [Add variables using the content outline](#add-va
 
 ### Time range less than rule
 
-<!-- this looks only at the dashboard and the time range that you set for the rule, not the time of the element at all -->
-
 Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range.
-This allows you to toggle between two or more panels, rows, or tabs depending on the size of the time range.
-You can choose sensible time ranges for and only see data that's relevant for the time range.
+This ensures that as you change the time range of the dashboard, you only see data relevant to that time period.
 
-You can select from time ranges from **5 minutes** to **5 years**.
+For example, a dashboard is tracking adoption of a feature over time with the following setup:
 
-For example...:
+- The dashboard has a time of the **Last 7 days**.
+- There are a set of panels that track weekly stats and a set that track daily stats.
 
-Dashboard has time range of last 6 hours.
-Set panels to hide.
-Time range less than show/hide rule is 7 days.
-So when panel's rule time range is less than 7 days this panels don't show up.
+For the panels that track weekly stats, a rule is set up to hide them if the dashboard time range is less than 7 days.
+For the daily stats, a rule is set up to hide them if the dashboard time range is less 24 hours.
+This configuration ensures that these time-sensitive panels are only displayed when enough time has passed to make them relevant.
 
-<!-- waiting for real life example and maybe the UI setting should change name -->
+For this rule type, you can select time ranges from **5 minutes** to **5 years**.
 
 ## Edit a dashboard
 
