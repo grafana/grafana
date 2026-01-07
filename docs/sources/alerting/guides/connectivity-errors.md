@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/best-practices/connectivity-errors/
+aliases:
+  - ../best-practices/connectivity-errors/ # /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/connectivity-errors/
+canonical: https://grafana.com/docs/grafana/latest/alerting/guides/connectivity-errors/
 description: Learn how to detect and handle connectivity issues in alerts using Prometheus, Grafana Alerting, or both.
 keywords:
   - grafana
@@ -14,7 +16,7 @@ labels:
     - oss
 menuTitle: Handle connectivity errors
 title: Handle connectivity errors in alerts
-weight: 1010
+weight: 1020
 refs:
   pending-period:
     - pattern: /docs/grafana/
