@@ -41,14 +41,14 @@ export interface Options {
   onClickFilterLabel?: unknown;
   onClickFilterOutLabel?: unknown;
   setDisplayedFields?: unknown;
-  showControls?: boolean;
   /**
    * 					showLabels:               bool
    * 					showCommonLabels:         bool
    * 					showFieldSelector?:       bool
    * 					showTime:                 bool
+   * 					showLogContextToggle:     bool
    */
-  showLogContextToggle: boolean;
+  showControls?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {

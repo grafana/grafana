@@ -367,8 +367,7 @@ const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => 
   return true;
 };
 
-// TODO: explore if `logsFrame.ts` can help us with getting the right fields
-// TODO Why is typeInfo not defined on the Field interface?
+// @todo move to logsFrame
 export function getLogsExtractFields(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
