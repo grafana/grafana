@@ -1186,6 +1186,8 @@ func markDashboardObjectAsProvisioned(t *testing.T, dashboard *unstructured.Unst
 func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string, folderUID *string, uid *string, helper *apis.K8sTestHelper) (*unstructured.Unstructured, error) {
 	t.Helper()
 
+	apis.AwaitZanzanaReconcileNext(t, helper)
+
 	var folderUIDStr string
 	if folderUID != nil {
 		folderUIDStr = *folderUID
