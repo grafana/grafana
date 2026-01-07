@@ -108,37 +108,6 @@ Each panel needs at least one query to display a visualization.
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source](ref:add-a-data-source) if you need instructions.
 
-## The edit pane
-
-<!-- if the creation flow has changed, this should probably be a sub-section of edit and edit should be the second section -->
-
-The edit pane allows you to make changes to the dashboard without leaving it.
-You can stay on the dashboard longer and only have to enter panel edit mode when you're ready to configure more granular settings.
-You can also [create and edit variables at this level using the content outline](#add-variables-using-the-content-outline).
-
-<!-- screenshot here with annotations for sidebar options including which ones are only in edit mode
-
-| Option | View mode | Edit mode |
-| ------ | --------- | --------- |
-| Settings | | x |
-| Feedback | | x |
-| Export | x | x |
-| Content outline | x | x |
-| Dashboard insights | x | x | -->
-
-The sidebar includes the following options:
-
-- Settings (edit mode only)
-- Feedback (edit mode only)
-- Export
-- Content outline
-- Dashboard insights
-
-You can dock, undock, and resize the edit pane.
-When the edit pane is closed, you can resize the sidebar so the icon names are visible.
-
-<!-- Screen recording here -->
-
 ## Create a dashboard
 
 <!-- confirm creation flow!!! -->
@@ -190,25 +159,87 @@ To create a dashboard, follow these steps:
 Now that you've created a basic dashboard, continue building it by going through the following sections.
 We've ordered them as we expect you'll need them, but you can do any of these steps at any time.
 
-## What is this next step - Add panels, update layout, group
-1. To add more panels to the dashboard, click **Back to dashboard** and at the bottom-left corner of the dashboard, click **+ Add panel**.
+## Dashboard editing
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-panel-v12.png" max-width="500px" alt="Add panel button" >}}
+Now that you've created a basic dashboard, you can augment with more edits.
+You can make several updates to the dashboard without leaving it by using the edit pane.
+Before editing, it's helpful to know more about the edit pane.
 
-1. (Optional) In the edit pane, enter a title and description for the panel and set the panel transparency and repeat options, if applicable.
-1. Click **Configure** in either the edit pane or on the panel to the configuration process.
-1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
-1. Click **Exit edit**.
+### The edit pane and the sidebar
 
+The edit pane allows you to make changes without leaving the dashboard.
+When the dashboard is in edit mode, the edit pane displays options associated with the part of the dashboard that's in focus.
+For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for that area:
 
+{{< figure src="/media/docs/grafana/dashboards/screenshot-edit-pane-focus-v12.png" max-width="750px" alt="Dashboard with a panel in focus" >}}
 
-1. In the edit pane, enter the dashboard title and description.
+The sidebar includes options that you want to have handy all the time.
+The following image shows the parts of the edit pane and the sidebar:
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
+<!-- screenshot here with annotations for sidebar options including which ones are only in edit mode
 
-1. Under [**Layout**](#panel-layouts), choose one of the following options:
-   - **Custom** - Position and size panels individually. The default selection.
-   - **Auto grid** - Panels automatically resize and fit to create a uniform grid, based on the column and row settings.
+| Option | View mode | Edit mode |
+| ------ | --------- | --------- |
+| Settings | | x |
+| Feedback | | x |
+| Export | x | x |
+| Content outline | x | x |
+| Dashboard insights | x | x | -->
+
+The sidebar includes the following options:
+
+- Settings (edit mode only)
+- Feedback (edit mode only)
+- Export
+- Content outline
+- Dashboard insights
+
+You can dock, undock, and resize the edit pane.
+When the edit pane is closed, you can resize the sidebar so the icon names are visible.
+
+<!-- Screen recording here -->
+
+<!-- - For rows and tabs, all of the available options are in the edit pane.
+- For panels, high-level options are in the edit pane and further configuration options are in the **Edit panel** view.
+- For dashboards, high-level options are in the edit pane and further configuration options are in the **Settings** page.-->
+
+### Edit a dashboard
+
+To edit dashboards, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane or do one of the following:
+
+   - Click **+ Add panel** and set the panel options in the edit pane or click **Configure** to complete all of the panel setup.
+   - Click **+ Add variable** and follow the steps to [add a variable to the dashboard](#add-variables).
+   - Click **Group panels** and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Group panels](#group-panels).
+   - Click the **Dashboard options** icon to open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
+
+1. When you've finished making changes, click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**
+
+## Add panels
+
+To edit dashboards, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane or do one of the following:
+
+   - Click **+ Add panel** and set the panel options in the edit pane or click **Configure** to complete all of the panel setup.
+   - Click **+ Add variable** and follow the steps to [add a variable to the dashboard](#add-variables).
+   - Click **Group panels** and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Group panels](#group-panels).
+   - Click the **Dashboard options** icon to open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
+
+1. When you've finished making changes, click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**
 
 ## Panel layouts
 
@@ -231,6 +262,27 @@ There are default parameters to constrain the layout, and you can update these t
 
    {{< video-embed src="layout-fillscreen.mp4" >}}
    <!-- TBA -->
+
+### Update panel layout
+
+To update the panel layout, follow these steps:
+
+To edit dashboards, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane or do one of the following:
+
+   - Click **+ Add panel** and set the panel options in the edit pane or click **Configure** to complete all of the panel setup.
+   - Click **+ Add variable** and follow the steps to [add a variable to the dashboard](#add-variables).
+   - Click **Group panels** and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Group panels](#group-panels).
+   - Click the **Dashboard options** icon to open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
+
+1. When you've finished making changes, click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**
 
 ## Group panels
 
@@ -462,38 +514,6 @@ This configuration ensures that these time-sensitive panels are only displayed w
 
 For this rule type, you can select time ranges from **5 minutes** to **5 years**.
 
-## Edit a dashboard
-
-<!-- should this move to the last position just before copy? or after create -->
-
-When the dashboard is in edit mode, the edit pane that opens displays options associated with the part of the dashboard that it's in focus.
-For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for that area:
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-edit-pane-focus-v12.png" max-width="750px" alt="Dashboard with a panel in focus" >}}
-
-- For rows and tabs, all of the available options are in the edit pane.
-- For panels, high-level options are in the edit pane and further configuration options are in the **Edit panel** view.
-- For dashboards, high-level options are in the edit pane and further configuration options are in the **Settings** page.
-
-To edit dashboards, follow these steps:
-
-1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-
-   The **Dashboard** edit pane opens on the right side of the dashboard.
-
-1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane.
-1. Do one of the following:
-   - For rows or tabs, make the required changes using the edit pane.
-   - For panels, update the panel title, description, repeat options or show/hide rules in the edit pane. For more changes, click **Configure** and continue in **Edit panel** view.
-   - For dashboards, update the dashboard title, description, grouping or panel layout. For more changes, click the settings (gear) icon in the top-right corner.
-
-1. When you've finished making changes, click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**
-
 ## Move or resize a panel
 
 When you're dashboard has a **Custom** layout, you can resize or move a panel to any location on the dashboard.
@@ -507,6 +527,23 @@ To move or resize, follow these steps:
    - Click the panel title and drag the panel to the new location such as a new tab or row or to a new position in a custom layout.
    - Click and drag the lower-right corner of the panel to change the size of the panel.
 
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**
+
+## Add variables
+
+You can add variables without leaving the dashboard.
+
+To add variables, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click the **+ Add variable** button at the top of the dashboard.
+1. Choose a variable type from the list.
+1. Set the options for the variable.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -554,20 +591,3 @@ To make a copy of a dashboard, follow these steps:
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
 
 1. Click **Save**.
-
-## Add variables
-
-You can add variables without leaving the dashboard.
-
-To add variables, follow these steps:
-
-1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Click the **+ Add variable** button at the top of the dashboard.
-1. Choose a variable type from the list.
-1. Set the options for the variable.
-1. Click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**
