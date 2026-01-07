@@ -14,6 +14,8 @@ type DataSourceRetrieverImpl struct {
 	store Store
 }
 
+var _ DataSourceRetriever = (*DataSourceRetrieverImpl)(nil)
+
 // ProvideDataSourceRetriever creates a DataSourceRetriever for wire injection.
 func ProvideDataSourceRetriever(db db.DB, features featuremgmt.FeatureToggles) DataSourceRetriever {
 	dslogger := log.New("datasources-retriever")
