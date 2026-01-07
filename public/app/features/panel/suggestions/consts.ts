@@ -16,4 +16,5 @@ export const panelsToCheckFirst = [
   'heatmap',
   'histogram',
   'geomap',
+  'text',
 ];

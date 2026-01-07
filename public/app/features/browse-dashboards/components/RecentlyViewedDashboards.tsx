@@ -25,6 +25,7 @@ export function RecentlyViewedDashboards() {
     value: recentDashboards = [],
     loading,
     retry,
+    error,
   } = useAsyncRetry(async () => {
     if (!evaluateBooleanFlag('recentlyViewedDashboards', false)) {
       return [];
@@ -62,7 +63,18 @@ export function RecentlyViewedDashboards() {
       className={styles.title}
       contentClassName={styles.content}
     >
-      {/* placeholder */}
+      {error && (
+        <>
+          <Text color="secondary">
+            <Trans i18nKey="browse-dashboards.recently-viewed.error">
+              Recently viewed dashboards couldn’t be loaded.
+            </Trans>
+          </Text>
+          <Button onClick={retry} size="xs" fill="text">
+            {t('browse-dashboards.recently-viewed.retry', 'Retry')}
+          </Button>
+        </>
+      )}
       {loading && <Spinner />}
       {/* TODO: Better empty state https://github.com/grafana/grafana/issues/114804 */}
       {!loading && recentDashboards.length === 0 && (

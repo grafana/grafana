@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Inhalt der benutzerdefinierten Anmerkung eingeben …"
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Die Regeln wurden erfolgreich aus dem Ordner gelöscht"
@@ -2203,11 +2208,15 @@
       "min-interval": "Mind. Intervall = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Die ausgewählten Abfragen und Ausdrücke können nicht in die Standardeinstellung konvertiert werden. Wenn Sie die erweiterten Optionen deaktivieren, werden Ihre Abfrage und Bedingung auf die Standardeinstellungen zurückgesetzt."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Vorschau",
-      "previewCondition": "Vorschau der Warnregelbedingung"
+      "previewCondition": "Vorschau der Warnregelbedingung",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Nach Kontaktpunkten filtern",
@@ -2666,6 +2675,35 @@
       "text-federated": "Verbunden",
       "text-provisioned": "Bereitgestellt"
     },
+    "saved-searches": {
+      "actions-aria-label": "",
+      "apply-aria-label": "",
+      "apply-tooltip": "",
+      "button-label": "",
+      "cancel": "",
+      "default-indicator": "",
+      "delete": "",
+      "delete-button": "",
+      "dropdown-aria-label": "",
+      "empty-state": "",
+      "error-load-description": "",
+      "error-load-title": "",
+      "error-name-duplicate": "",
+      "error-name-required": "",
+      "error-rename-description": "",
+      "error-rename-title": "",
+      "error-save-description": "",
+      "error-save-title": "",
+      "list-aria-label": "",
+      "name-placeholder": "",
+      "remove-default": "",
+      "rename": "",
+      "rename-button": "",
+      "save-button": "",
+      "save-current-search": "",
+      "save-disabled-tooltip": "",
+      "set-default": ""
+    },
     "search": {
       "property": {
         "data-source": "Datenquelle",
@@ -3097,9 +3135,12 @@
       "table": "Tabelle"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Legen Sie die Bedingung fest, die erfüllt sein muss, bevor eine Warnregel ausgelöst wird",
       "description-configure-firing-alert-instances-routed-contact": "Konfigurieren Sie, wie ausgelöste Warnungsinstanzen an Kontaktpunkte weitergeleitet werden",
       "description-configure-receives-notifications": "Konfigurieren Sie, wer Benachrichtigungen erhält und wie sie gesendet werden",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Warnregeln",
       "title-contact-points": "Kontaktpunkte",
       "title-notification-policies": "Benachrichtigungsrichtlinien"
@@ -3717,7 +3758,10 @@
       "text": "Keine Ergebnisse für deine Abfrage gefunden"
     },
     "recently-viewed": {
+      "clear": "",
       "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -5926,6 +5970,9 @@
       "name-values-separated-comma": "Werte werden durch Komma getrennt",
       "selection-options": "Auswahloptionen"
     },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Zurück zur Liste",
       "label-icon": "Symbol",
@@ -6180,7 +6227,7 @@
         "title-someone-else-has-updated-this-dashboard": "Eine andere Person hat dieses Dashboard aktualisiert",
         "would-still-dashboard": "Möchten Sie dieses Dashboard trotzdem speichern?"
       },
-      "save-and-overwrite": "'Speichern und überschreiben'"
+      "save-and-overwrite": ""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -7165,6 +7212,9 @@
       "time-range-label": "Zeitbereich sperren"
     }
   },
+  "embedded-panel": {
+    "powered-by": ""
+  },
   "empty-list-cta": {
     "pro-tip": "Profitipp: {{proTip}}"
   },
@@ -7641,39 +7691,6 @@
       },
       "share-span": "Teilen"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Höchstspannen-Operator auswählen",
-      "aria-label-select-min-span-operator": "Mindestspannen-Operator auswählen",
-      "aria-label-select-service-name": "Dienstname auswählen",
-      "aria-label-select-service-name-operator": "Dienstnamen-Operator auswählen",
-      "aria-label-select-span-name": "Spannen-Name auswählen",
-      "aria-label-select-span-name-operator": "Spannen-Namen-Operator auswählen",
-      "ariaLabel-select-max-span-duration": "Dauer der max. Spanne auswählen",
-      "ariaLabel-select-min-span-duration": "Dauer der min. Spanne auswählen",
-      "label-collapse": "Spannenfilter",
-      "label-duration": "Dauer",
-      "label-service-name": "Dienstname",
-      "label-span-name": "Spannen-Name",
-      "label-tags": "Tags",
-      "placeholder-all-service-names": "Alle Dienstnamen",
-      "placeholder-all-span-names": "Alle Spannen-Namen",
-      "tooltip-collapse": "Filtern Sie unten Ihre Spannen. Sie können weiterhin Filter anwenden, bis Sie Ihre resultierenden Spannen auf die wenigen eingegrenzt haben, die für Sie am meisten von Interesse sind.",
-      "tooltip-duration": "Nach Dauer filtern. Zulässige Einheiten sind {{units}}",
-      "tooltip-tags": "Filtern Sie in Ihren Spannen nach Tags, Prozess-Tags oder Log-Feldern."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Tag hinzufügen",
-      "aria-label-input-tag-value": "Tag-Wert eingeben",
-      "aria-label-remove-tag": "Tag entfernen",
-      "aria-label-select-tag-key": "Tag-Key auswählen",
-      "aria-label-select-tag-operator": "Tag-Operator auswählen",
-      "aria-label-select-tag-value": "Tag-Wert auswählen",
-      "placeholder-select-tag": "Tag auswählen",
-      "placeholder-select-value": "Wert auswählen",
-      "placeholder-tag-value": "Tag-Wert",
-      "tooltip-add-tag": "Tag hinzufügen",
-      "tooltip-remove-tag": "Tag entfernen"
-    },
     "span-flame-graph": {
       "flame-graph": "Flammendiagramm"
     },
@@ -7872,23 +7889,18 @@
       "label-upsample": "Upsample",
       "tooltip-s-m-h": "10 s, 1 min., 30 min., 1 h"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": ""
-    },
     "sql-expr": {
       "button-run-query": "Abfrage ausführen",
-      "modal-title": "SQL Editor",
       "tooltip-experimental": "Die Integration des SQL Expressions LLM ist experimentell. Bitte melden Sie Probleme dem Grafana-Team."
     },
     "sql-schema": {
-      "close-schema-inspector": "",
       "error-title": "",
-      "inspect-button": "",
       "loading": "",
       "no-data-title": "",
       "no-fields-desc": "",
       "no-fields-title": "",
-      "query-error-title": ""
+      "query-error-title": "",
+      "schema-inspector": ""
     },
     "threshold": {
       "label-input": "Eingabe"
@@ -7963,11 +7975,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
-      "no-thresholds": "",
-      "style": {
-        "circular": "",
-        "simple": ""
-      }
+      "no-thresholds": ""
     },
     "threshold": ""
   },
@@ -9393,6 +9401,7 @@
     "name-unit": "Einheit",
     "name-value-name": "Wertname",
     "name-y-axis-scale": "Y-Achsenskala",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Auto",
     "placeholder-axis-width": "Auto",
     "placeholder-decimals": "Auto",
@@ -9422,6 +9431,18 @@
       "label-all": "Alles",
       "label-hidden": "Ausgeblendet",
       "label-single": "Einzeln"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "",
+      "linear-threshold-label": "",
+      "linear-threshold-placeholder": "",
+      "log-base-label": "",
+      "scale-options": {
+        "label-auto": "",
+        "label-linear": "",
+        "label-log": "",
+        "label-symlog": ""
+      }
     }
   },
   "help-modal": {
@@ -11203,9 +11224,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-some-suggestions": {
+        "message": ""
+      },
       "error-loading-suggestions": {
         "message": "",
-        "title": ""
+        "plugin-failed": "",
+        "title": "",
+        "try-again-button": ""
       },
       "unknown-viz-type": "",
       "use-this-suggestion": ""
@@ -11972,7 +11998,10 @@
       "resource-not-found": "",
       "unsupported-repository-type": ""
     },
-    "inline-secure-values-warning": "",
+    "instance-sync-deprecation": {
+      "message": "",
+      "title": ""
+    },
     "job-status": {
       "label-view-details": "Details anzeigen",
       "loading-finished-job": "Fertiger Auftrag wird geladen …",
@@ -12078,6 +12107,9 @@
       "webhook-last-event": "Letztes Ereignis:",
       "webhook-url": "Webhook anzeigen"
     },
+    "repository-status": {
+      "error": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
       "cleaning-up-resources": "Bereinigen von Repository-Ressourcen",
@@ -12182,6 +12214,9 @@
       "tooltip-unhealthy-repository": "Ein fehlerhaftes Repository kann nicht abgerufen werden"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "",
+      "migrate-resources-description": "",
+      "options": "",
       "repository-error": "",
       "repository-error-message": "",
       "repository-unhealthy": ""
@@ -12201,10 +12236,15 @@
     },
     "warning-title-default": "Warnung",
     "wizard": {
+      "alert-intro": "",
       "alert-point-1": "",
-      "alert-point-2": "",
       "alert-point-3": "Die Dauer dieses Prozesses hängt von der Anzahl der betroffenen Ressourcen ab.",
       "alert-point-4": "",
+      "alert-point-folder-cleanup": "",
+      "alert-point-folder-structure": "",
+      "alert-point-instance-alerts": "",
+      "alert-point-permissions": "",
+      "alert-point-unsupported": "",
       "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
@@ -12223,6 +12263,7 @@
       "step-finish": "Zusätzliche Einstellungen auswählen",
       "step-synchronize": "Mit externem Speicher synchronisieren",
       "sync-description": "Synchronisieren Sie Ressourcen mit externem Speicher. Nach diesem einmaligen Schritt werden alle zukünftigen Updates automatisch im Repository gespeichert und wieder in der Instanz bereitgestellt.",
+      "sync-option-migrate-resources": "",
       "title-bootstrap": "Wählen Sie aus, was synchronisiert wird",
       "title-connect": "Mit externem Speicher verbinden",
       "title-finish": "Zusätzliche Einstellungen auswählen",
@@ -12460,22 +12501,33 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
       "bar-width": "",
       "effects": {
         "bar-glow": "",
         "center-glow": "",
         "gradient": "",
-        "label": "",
-        "rounded-bars": "",
-        "spotlight": "",
-        "spotlight-tooltip": ""
+        "label": ""
       },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14345,6 +14397,17 @@
       },
       "name": {
         "series-to-rows": "Reihen zu Zeilen"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

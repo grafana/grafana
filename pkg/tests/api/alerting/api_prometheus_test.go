@@ -910,6 +910,87 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 	}
 }
 
+func TestIntegrationPrometheusPluginsFilter(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
+	apiClient.CreateFolder(t, "folder1", "folder1")
+
+	// Create a regular alert rule
+	createRule(t, apiClient, "folder1", withRuleGroup("group1"))
+	// Create a rule from plugin
+	createRule(t, apiClient, "folder1", withRuleGroup("group2"), withLabels(map[string]string{"__grafana_origin": "plugin/grafana-slo-app"}))
+
+	verifyRulesResponse := func(t *testing.T, b []byte, expectedGroupName string, shouldHaveOriginLabel bool) {
+		t.Helper()
+
+		var result apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(b, &result))
+		require.Equal(t, "success", result.Status)
+
+		require.Len(t, result.Data.RuleGroups, 1)
+		group := result.Data.RuleGroups[0]
+		require.Equal(t, expectedGroupName, group.Name)
+
+		require.Len(t, group.Rules, 1)
+		rule := group.Rules[0]
+		_, hasOriginLabel := rule.Labels.Map()["__grafana_origin"]
+		require.Equal(t, shouldHaveOriginLabel, hasOriginLabel)
+	}
+
+	t.Run("plugins=hide returns only non-plugin rules", func(t *testing.T) {
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?plugins=hide", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(promRulesURL)
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		verifyRulesResponse(t, b, "group1", false)
+	})
+
+	t.Run("plugins=only returns only plugin rules", func(t *testing.T) {
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules?plugins=only", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(promRulesURL)
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		verifyRulesResponse(t, b, "group2", true)
+	})
+}
+
 func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

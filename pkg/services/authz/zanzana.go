@@ -78,6 +78,9 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 			ctx = types.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "*",
+					Permissions: []string{
+						zanzana.TokenPermissionUpdate,
+					},
 				},
 			}))
 			return ctx, nil

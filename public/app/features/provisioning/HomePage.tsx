@@ -9,7 +9,6 @@ import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
-import { InlineSecureValueWarning } from './components/InlineSecureValueWarning';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
 enum TabSelection {
@@ -67,7 +66,6 @@ export default function HomePage() {
       actions={activeTab === TabSelection.Repositories && <ConnectRepositoryButton items={items} />}
     >
       <Page.Contents isLoading={isLoading}>
-        <InlineSecureValueWarning items={items} />
         <ConfirmModal
           isOpen={showDeleteModal}
           title={t(

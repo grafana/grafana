@@ -79,10 +79,6 @@ const (
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
 
-	// FlagUnifiedRequestLog
-	// Writes error logs to the request logger
-	FlagUnifiedRequestLog = "unifiedRequestLog"
-
 	// FlagRenderAuthJWT
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
@@ -263,10 +259,6 @@ const (
 	// Enables experimental new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
-	// FlagKubernetesDashboardsV2
-	// Use the v2 kubernetes API in the frontend for dashboards
-	FlagKubernetesDashboardsV2 = "kubernetesDashboardsV2"
-
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
@@ -282,6 +274,10 @@ const (
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
+
+	// FlagAuditLoggingAppPlatform
+	// Enable audit logging with Kubernetes under app platform
+	FlagAuditLoggingAppPlatform = "auditLoggingAppPlatform"
 
 	// FlagSecretsManagementAppPlatform
 	// Enable the secrets management API and services under app platform
@@ -338,6 +334,10 @@ const (
 	// FlagNewDashboardWithFiltersAndGroupBy
 	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
 	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
+
+	// FlagDashboardAdHocAndGroupByWrapper
+	// Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
+	FlagDashboardAdHocAndGroupByWrapper = "dashboardAdHocAndGroupByWrapper"
 
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
@@ -781,4 +781,8 @@ const (
 	// FlagKubernetesAlertingHistorian
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
+
+	// FlagSecretsManagementAppPlatformAwsKeeper
+	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
+	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
 )

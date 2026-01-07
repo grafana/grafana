@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	gofeatureflag "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
+	ofrep "github.com/open-feature/go-sdk-contrib/providers/ofrep"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -61,6 +62,15 @@ func TestCreateProvider(t *testing.T) {
 			failSigning:      true,
 		},
 		{
+			name: "ofrep provider",
+			cfg: setting.OpenFeatureSettings{
+				ProviderType: setting.OFREPProviderType,
+				URL:          u,
+				TargetingKey: "grafana",
+			},
+			expectedProvider: setting.OFREPProviderType,
+		},
+		{
 			name: "invalid provider",
 			cfg: setting.OpenFeatureSettings{
 				ProviderType: "some_provider",
@@ -96,20 +106,24 @@ func TestCreateProvider(t *testing.T) {
 			}
 
 			tokenExchangeMiddleware := middleware.TestingTokenExchangeMiddleware(tokenExchangeClient)
-			goffClient, err := goffHTTPClient(tokenExchangeMiddleware)
+			httpClient, err := createHTTPClient(tokenExchangeMiddleware)
 			require.NoError(t, err, "failed to create goff http client")
-			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, goffClient)
+			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, httpClient)
 			require.NoError(t, err)
 
 			err = openfeature.SetProviderAndWait(provider)
 			require.NoError(t, err, "failed to set provider")
 
-			if tc.expectedProvider == setting.GOFFProviderType {
+			switch tc.expectedProvider {
+			case setting.GOFFProviderType:
 				_, ok := provider.(*gofeatureflag.Provider)
 				assert.True(t, ok, "expected provider to be of type goff.Provider")
 
 				testGoFFProvider(t, tc.failSigning)
-			} else {
+			case setting.OFREPProviderType:
+				_, ok := provider.(*ofrep.Provider)
+				assert.True(t, ok, "expected provider to be of type ofrep.Provider")
+			default:
 				_, ok := provider.(*inMemoryBulkProvider)
 				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
 			}

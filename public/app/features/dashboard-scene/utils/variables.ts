@@ -164,6 +164,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       useQueriesAsFilterForOptions: true,
       drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+      collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
       ),
@@ -289,6 +290,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       text: variable.current?.text || [],
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,

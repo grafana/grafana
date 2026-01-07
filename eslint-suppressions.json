@@ -1911,11 +1911,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/JsonModelEditView.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 4
@@ -4334,7 +4329,7 @@
   },
   "public/app/plugins/panel/heatmap/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 16
+      "count": 14
     }
   },
   "public/app/plugins/panel/histogram/Histogram.tsx": {
