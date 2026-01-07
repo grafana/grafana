@@ -25,7 +25,6 @@ import (
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
-	bolterrors "go.etcd.io/bbolt/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/atomic"
@@ -45,7 +44,6 @@ import (
 const (
 	indexStorageMemory = "memory"
 	indexStorageFile   = "file"
-	boltTimeout        = "500ms"
 )
 
 // Keys used to store internal data in index.
@@ -417,25 +415,14 @@ func (b *bleveBackend) BuildIndex(
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
 		if cachedIndex == nil && !rebuild {
-			result := b.findPreviousFileBasedIndex(resourceDir)
-			if result != nil && result.IsOpen {
-				// Index file exists but is opened by another process, fallback to memory.
-				// Keep the name so we can skip cleanup of that directory.
-				newIndexType = indexStorageMemory
-				fileIndexName = result.Name
-			} else if result != nil && result.Index != nil {
-				// Found and opened existing index successfully
-				index = result.Index
-				fileIndexName = result.Name
-				indexRV = result.RV
-			}
+			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir)
 		}
 
-		if newIndexType == indexStorageFile && index != nil {
+		if index != nil {
 			build = false
 			logWithDetails.Debug("Existing index found on filesystem", "indexRV", indexRV, "directory", filepath.Join(resourceDir, fileIndexName))
 			defer closeIndexOnExit(index, "") // Close index, but don't delete directory.
-		} else if newIndexType == indexStorageFile {
+		} else {
 			// Building index from scratch. Index name has a time component in it to be unique, but if
 			// we happen to create non-unique name, we bump the time and try again.
 
@@ -462,9 +449,7 @@ func (b *bleveBackend) BuildIndex(
 			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
-	}
-
-	if newIndexType == indexStorageMemory {
+	} else {
 		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
@@ -567,30 +552,30 @@ func cleanFileSegment(input string) string {
 	return input
 }
 
-// cleanOldIndexes deletes all subdirectories inside resourceDir, skipping directory with "skipName".
+// cleanOldIndexes deletes all subdirectories inside dir, skipping directory with "skipName".
 // "skipName" can be empty.
-func (b *bleveBackend) cleanOldIndexes(resourceDir string, skipName string) {
-	entries, err := os.ReadDir(resourceDir)
+func (b *bleveBackend) cleanOldIndexes(dir string, skipName string) {
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return
 		}
-		b.log.Warn("error cleaning folders from", "directory", resourceDir, "error", err)
+		b.log.Warn("error cleaning folders from", "directory", dir, "error", err)
 		return
 	}
-	for _, ent := range entries {
-		if ent.IsDir() && ent.Name() != skipName {
-			indexDir := filepath.Join(resourceDir, ent.Name())
-			if !isPathWithinRoot(indexDir, b.opts.Root) {
-				b.log.Warn("Skipping cleanup of directory", "directory", indexDir)
+	for _, file := range files {
+		if file.IsDir() && file.Name() != skipName {
+			fpath := filepath.Join(dir, file.Name())
+			if !isPathWithinRoot(fpath, b.opts.Root) {
+				b.log.Warn("Skipping cleanup of directory", "directory", fpath)
 				continue
 			}
 
-			err = os.RemoveAll(indexDir)
+			err = os.RemoveAll(fpath)
 			if err != nil {
-				b.log.Error("Unable to remove old index folder", "directory", indexDir, "error", err)
+				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
 			} else {
-				b.log.Info("Removed old index folder", "directory", indexDir)
+				b.log.Info("Removed old index folder", "directory", fpath)
 			}
 		}
 	}
@@ -637,17 +622,10 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-type fileIndex struct {
-	Index  bleve.Index
-	Name   string
-	RV     int64
-	IsOpen bool
-}
-
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) *fileIndex {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
-		return nil
+		return nil, "", 0
 	}
 
 	for _, ent := range entries {
@@ -657,13 +635,8 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) *fileIndex
 
 		indexName := ent.Name()
 		indexDir := filepath.Join(resourceDir, indexName)
-
-		idx, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+		idx, err := bleve.Open(indexDir)
 		if err != nil {
-			if errors.Is(err, bolterrors.ErrTimeout) {
-				b.log.Debug("Index is opened by another process (timeout), skipping", "indexDir", indexDir)
-				return &fileIndex{Name: indexName, IsOpen: true}
-			}
 			b.log.Debug("error opening index", "indexDir", indexDir, "err", err)
 			continue
 		}
@@ -675,14 +648,10 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) *fileIndex
 			continue
 		}
 
-		return &fileIndex{
-			Index: idx,
-			Name:  indexName,
-			RV:    indexRV,
-		}
+		return idx, indexName, indexRV
 	}
 
-	return nil
+	return nil, "", 0
 }
 
 // Stop closes all indexes and stops background tasks.
