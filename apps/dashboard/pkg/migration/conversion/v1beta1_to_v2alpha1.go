@@ -2221,6 +2221,11 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 				},
 			}
 
+			// Extract disabled if present (optional, transformations are enabled by default)
+			if disabled, ok := tMap["disabled"].(bool); ok && disabled {
+				transformationKind.Spec.Disabled = &disabled
+			}
+
 			// Extract filter if present (optional frame matcher for transformations)
 			if filterMap, ok := tMap["filter"].(map[string]interface{}); ok {
 				transformationKind.Spec.Filter = &dashv2alpha1.DashboardMatcherConfig{

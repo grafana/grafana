@@ -1090,6 +1090,17 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 				"id":      t.Spec.Id,
 				"options": t.Spec.Options,
 			}
+			// Add disabled if set
+			if t.Spec.Disabled != nil {
+				transformation["disabled"] = *t.Spec.Disabled
+			}
+			// Add filter if set
+			if t.Spec.Filter != nil {
+				transformation["filter"] = map[string]interface{}{
+					"id":      t.Spec.Filter.Id,
+					"options": t.Spec.Filter.Options,
+				}
+			}
 			transformations = append(transformations, transformation)
 		}
 		panel["transformations"] = transformations
