@@ -174,17 +174,13 @@ export const useGetExternalGroupMappings = (args: { teamId: string }) => {
   const { data: newApiData, ...newApiRest } = useListExternalGroupMappingQuery({});
 
   const groups: TeamGroupDto[] = useMemo(() => {
+    // FIXME: Consider using the search API which has sorting support
     return (newApiData?.items || [])
       .filter((item) => item.spec.teamRef.name === args.teamId)
-      .map(
-        (item) =>
-          // eslint-disable-next-line
-          ({
-            groupId: item.spec.externalGroupId,
-            teamId: item.spec.teamRef.name,
-            uid: item.metadata.name,
-          }) as unknown as TeamGroupDto
-      );
+      .map((item) => ({
+        groupId: item.spec.externalGroupId,
+        uid: item.metadata.name,
+      }));
   }, [newApiData, args.teamId]);
 
   return {
@@ -203,8 +199,6 @@ export const useAddExternalGroupMapping = () => {
   const add = async (args: { teamId: string; teamGroupMapping: { groupId: string } }) => {
     return addNew({
       externalGroupMapping: {
-        apiVersion: 'iam.grafana.app/v0alpha1',
-        kind: 'ExternalGroupMapping',
         metadata: {
           generateName: 'external-group-mapping-',
         },
@@ -228,11 +222,8 @@ export const useRemoveExternalGroupMapping = () => {
 
   const [deleteMapping, deleteResult] = useDeleteExternalGroupMappingMutation();
 
-  const remove = async (args: { teamId: string; groupId: string; uid?: string }) => {
-    if (args.uid) {
-      return deleteMapping({ name: args.uid });
-    }
-    return { data: {} };
+  const remove = async (args: { teamId: string; groupId: string; uid: string }) => {
+    return deleteMapping({ name: args.uid });
   };
 
   return [remove, deleteResult] as const;

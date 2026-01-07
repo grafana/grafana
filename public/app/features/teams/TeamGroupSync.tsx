@@ -47,8 +47,8 @@ export const TeamGroupSync = ({ isReadOnly, teamUid }: Props) => {
     if (!group.groupId) {
       return;
     }
-    // @ts-ignore
-    await removeTeamGroup({ teamId: teamUid, groupId: group.groupId, uid: group.uid });
+    // group.uid is always defined here because it comes from the API
+    await removeTeamGroup({ teamId: teamUid, groupId: group.groupId, uid: group.uid! });
   };
 
   const isNewGroupValid = () => {
