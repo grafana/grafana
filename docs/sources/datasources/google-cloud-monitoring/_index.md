@@ -83,6 +83,7 @@ The following documents will help you get started with the Google Cloud Monitori
 - [Configure the data source](configure/) - Set up authentication and connect to Google Cloud
 - [Query editor](query-editor/) - Create and edit Metric and SLO queries
 - [Template variables](template-variables/) - Create dynamic dashboards with Google Cloud Monitoring variables
+- [Annotations](annotations/) - Overlay Google Cloud Monitoring events on graphs
 - [Google authentication](google-authentication/) - Configure authentication methods for GCP access
 - [Troubleshooting](troubleshooting/) - Solve common configuration and query errors
 
