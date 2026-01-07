@@ -31,3 +31,8 @@ export const shouldUseFullyCompatibleBackendFilters = () =>
  * Saved searches feature - allows users to save and apply search queries on the Alert Rules page.
  */
 export const shouldUseSavedSearches = () => config.featureToggles.alertingSavedSearches ?? false;
+
+/**
+ * New grouped navigation structure for Alerting
+ */
+export const shouldUseAlertingNavigationV2 = () => config.featureToggles.alertingNavigationV2 ?? false;

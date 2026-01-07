@@ -547,6 +547,11 @@ export interface FeatureToggles {
   */
   alertingCentralAlertHistory?: boolean;
   /**
+  * Enable new grouped navigation structure for Alerting
+  * @default false
+  */
+  alertingNavigationV2?: boolean;
+  /**
   * Preserve plugin proxy trailing slash.
   * @default false
   */

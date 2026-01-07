@@ -350,6 +350,19 @@
     },
     {
       "metadata": {
+        "name": "alertingNavigationV2",
+        "resourceVersion": "1767827323622",
+        "creationTimestamp": "2026-01-07T23:08:43Z"
+      },
+      "spec": {
+        "description": "Enable new grouped navigation structure for Alerting",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationHistory",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-17T13:26:26Z"

@@ -379,6 +379,10 @@ const (
 	// Enables the new central alert history.
 	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
 
+	// FlagAlertingNavigationV2
+	// Enable new grouped navigation structure for Alerting
+	FlagAlertingNavigationV2 = "alertingNavigationV2"
+
 	// FlagPluginProxyPreserveTrailingSlash
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"

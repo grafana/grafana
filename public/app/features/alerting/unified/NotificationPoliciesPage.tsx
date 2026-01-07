@@ -12,6 +12,7 @@ import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alertin
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
+import { useNotificationConfigNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
@@ -107,8 +108,9 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap, defaultTab: ActiveTab): Q
 }
 
 function NotificationPoliciesPage() {
+  const { navId, pageNav } = useNotificationConfigNav();
   return (
-    <AlertmanagerPageWrapper navId="am-routes" accessType="notification">
+    <AlertmanagerPageWrapper navId={navId || 'am-routes'} pageNav={pageNav} accessType="notification">
       <NotificationPoliciesTabs />
     </AlertmanagerPageWrapper>
   );

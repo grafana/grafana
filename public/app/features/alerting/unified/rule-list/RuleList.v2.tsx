@@ -13,6 +13,7 @@ import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelecto
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
+import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
@@ -119,10 +120,12 @@ export function RuleListActions() {
 
 export default function RuleListPage() {
   const { isApplying } = useApplyDefaultSearch();
+  const { navId, pageNav } = useAlertRulesNav();
 
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={navId}
+      pageNav={pageNav}
       renderTitle={(title) => <RuleListPageTitle title={title} />}
       isLoading={isApplying}
       actions={<RuleListActions />}
