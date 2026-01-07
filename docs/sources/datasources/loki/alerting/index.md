@@ -8,6 +8,7 @@ keywords:
   - alerting
   - alerts
   - logs
+  - recording rules
 labels:
   products:
     - cloud
@@ -32,6 +33,21 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/
+  recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
+  grafana-managed-recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
+  data-source-managed-recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-data-source-managed-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-data-source-managed-recording-rules/
 ---
 
 # Loki alerting
@@ -147,6 +163,38 @@ sum by (service) (rate({namespace="production"} |= "error" [5m])) > 0.05
 ```
 
 This query calculates error rates per service and alerts when any service exceeds the threshold.
+
+## Recording rules
+
+Recording rules pre-compute frequently used or expensive LogQL queries and save the results as new time series metrics. This improves query performance and reduces load on your Loki instance.
+
+For detailed information about recording rules, refer to [Create recording rules](ref:recording-rules).
+
+### Use cases for Loki recording rules
+
+Recording rules are useful when you need to:
+
+- **Pre-aggregate expensive queries:** Convert complex log aggregations into simple metric queries.
+- **Track trends over time:** Create metrics from log data that would otherwise be too expensive to query repeatedly.
+- **Reuse queries across dashboards:** Compute a metric once and reference it in multiple dashboards and alerts.
+- **Reduce query latency:** Query precomputed results instead of scanning logs in real time.
+
+### Types of recording rules
+
+Loki supports two types of recording rules:
+
+- **Grafana-managed recording rules:** Query Loki using LogQL and store results in a Prometheus-compatible data source. This is the recommended option. Refer to [Create Grafana-managed recording rules](ref:grafana-managed-recording-rules).
+- **Data source-managed recording rules:** Define recording rules directly in Loki using the Loki ruler. Refer to [Create data source-managed recording rules](ref:data-source-managed-recording-rules).
+
+### Example recording rule
+
+The following example creates a metric that tracks the error rate per service:
+
+```logql
+sum by (service) (rate({namespace="production"} |= "error" [5m]))
+```
+
+This query runs on a schedule (for example, every minute) and stores the result as a new metric. You can then query this precomputed metric in dashboards and alert rules instead of running the full LogQL query each time.
 
 ## Limitations
 
