@@ -1,16 +1,13 @@
 import { within } from '@testing-library/react';
-import { produce } from 'immer';
-import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
-import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
   __clearRuleViewTabsForTests,
@@ -26,6 +23,7 @@ import {
   mockPluginLinkExtension,
   mockPromAlertingRule,
   mockRulerGrafanaRecordingRule,
+  mockRulerGrafanaRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { grantPermissionsHelper } from '../../test/test-utils';
@@ -134,6 +132,8 @@ const dataSources = {
 };
 
 describe('RuleViewer', () => {
+  const api = mockAlertRuleApi(server);
+
   beforeEach(() => {
     setupDataSources(...Object.values(dataSources));
   });
@@ -253,19 +253,22 @@ describe('RuleViewer', () => {
 
         expect(screen.getAllByRole('row')).toHaveLength(7);
         expect(screen.getAllByRole('row')[1]).toHaveTextContent(/6Provisioning2025-01-18 04:35:17/i);
-        expect(screen.getAllByRole('row')[1]).toHaveTextContent('+3-3Latest');
+        expect(screen.getAllByRole('row')[1]).toHaveTextContent('Updated by provisioning service');
+        expect(screen.getAllByRole('row')[1]).toHaveTextContent('+4-3Latest');
 
         expect(screen.getAllByRole('row')[2]).toHaveTextContent(/5Alerting2025-01-17 04:35:17/i);
-        expect(screen.getAllByRole('row')[2]).toHaveTextContent('+5-5');
+        expect(screen.getAllByRole('row')[2]).toHaveTextContent('+5-6');
 
         expect(screen.getAllByRole('row')[3]).toHaveTextContent(/4different user2025-01-16 04:35:17/i);
-        expect(screen.getAllByRole('row')[3]).toHaveTextContent('+5-5');
+        expect(screen.getAllByRole('row')[3]).toHaveTextContent('Changed alert title and thresholds');
+        expect(screen.getAllByRole('row')[3]).toHaveTextContent('+6-5');
 
         expect(screen.getAllByRole('row')[4]).toHaveTextContent(/3user12025-01-15 04:35:17/i);
-        expect(screen.getAllByRole('row')[4]).toHaveTextContent('+5-9');
+        expect(screen.getAllByRole('row')[4]).toHaveTextContent('+5-10');
 
         expect(screen.getAllByRole('row')[5]).toHaveTextContent(/2User ID foo2025-01-14 04:35:17/i);
-        expect(screen.getAllByRole('row')[5]).toHaveTextContent('+11-7');
+        expect(screen.getAllByRole('row')[5]).toHaveTextContent('Updated evaluation interval and routing');
+        expect(screen.getAllByRole('row')[5]).toHaveTextContent('+12-7');
 
         expect(screen.getAllByRole('row')[6]).toHaveTextContent(/1Unknown 2025-01-13 04:35:17/i);
 
@@ -279,9 +282,10 @@ describe('RuleViewer', () => {
         await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
-        expect(screen.getByRole('cell', { name: /provisioning/i })).toBeInTheDocument();
-        expect(screen.getByRole('cell', { name: /alerting/i })).toBeInTheDocument();
-        expect(screen.getByRole('cell', { name: /Unknown/i })).toBeInTheDocument();
+        // Check for special updated_by values - use getAllByRole since some text appears in multiple columns
+        expect(screen.getAllByRole('cell', { name: /provisioning/i }).length).toBeGreaterThan(0);
+        expect(screen.getByRole('cell', { name: /^alerting$/i })).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: /^Unknown$/i })).toBeInTheDocument();
         expect(screen.getByRole('cell', { name: /user id foo/i })).toBeInTheDocument();
       });
 
@@ -326,49 +330,44 @@ describe('RuleViewer', () => {
         expect(screen.queryByText('Labels')).not.toBeInTheDocument();
       });
 
-      const createVersionHistoryMock = (includeMessage: boolean) => [
-        produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
-          draft.grafana_alert.version = 2;
-          draft.grafana_alert.updated = '2025-01-14T09:35:17.000Z';
-          draft.grafana_alert.updated_by = {
-            uid: 'foo',
-            name: '',
-          };
-          if (includeMessage) {
-            draft.grafana_alert.message = 'Updated evaluation interval and routing';
-          }
-        }),
-        produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
-          draft.grafana_alert.version = 1;
-          draft.grafana_alert.updated = '2025-01-13T09:35:17.000Z';
-          draft.grafana_alert.updated_by = null;
-        }),
-      ];
-
       it('shows Notes column when versions have messages', async () => {
-        server.use(
-          http.get<{ uid: string }>(`/api/ruler/grafana/api/v1/rule/:uid/versions`, () => {
-            return HttpResponse.json(createVersionHistoryMock(true));
-          })
-        );
-
         await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
 
         expect(await screen.findByRole('columnheader', { name: /Notes/i })).toBeInTheDocument();
+        expect(screen.getAllByRole('row')).toHaveLength(7); // 1 header + 6 data rows
+        expect(screen.getByRole('cell', { name: /Updated by provisioning service/i })).toBeInTheDocument();
+        expect(screen.getByRole('cell', { name: /Changed alert title and thresholds/i })).toBeInTheDocument();
         expect(screen.getByRole('cell', { name: /Updated evaluation interval and routing/i })).toBeInTheDocument();
       });
 
       it('does not show Notes column when no versions have messages', async () => {
-        server.use(
-          http.get<{ uid: string }>(`/api/ruler/grafana/api/v1/rule/:uid/versions`, () => {
-            return HttpResponse.json(createVersionHistoryMock(false));
-          })
-        );
+        const versionsWithoutMessages = [
+          mockRulerGrafanaRule(
+            {},
+            {
+              uid: grafanaRulerRule.grafana_alert.uid,
+              version: 2,
+              updated: '2025-01-14T09:35:17.000Z',
+              updated_by: { uid: 'foo', name: '' },
+            }
+          ),
+          mockRulerGrafanaRule(
+            {},
+            {
+              uid: grafanaRulerRule.grafana_alert.uid,
+              version: 1,
+              updated: '2025-01-13T09:35:17.000Z',
+              updated_by: null,
+            }
+          ),
+        ];
+        api.getAlertRuleVersionHistory(grafanaRulerRule.grafana_alert.uid, versionsWithoutMessages);
 
         await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
 
         await screen.findByRole('button', { name: /Compare versions/i });
 
+        expect(screen.getAllByRole('row')).toHaveLength(3); // 1 header + 2 data rows
         expect(screen.queryByRole('columnheader', { name: /Notes/i })).not.toBeInTheDocument();
       });
     });
