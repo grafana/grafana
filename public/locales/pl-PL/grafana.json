@@ -3157,9 +3157,12 @@
       "table": "Tabela"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Zdefiniuj warunek, który musi zostać spełniony przed uruchomieniem reguły alertu",
       "description-configure-firing-alert-instances-routed-contact": "Skonfiguruj, w jaki sposób uruchamiane instancje alertów są kierowane do punktów kontaktu",
       "description-configure-receives-notifications": "Skonfiguruj, kto otrzymuje powiadomienia i jak są one wysyłane",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Reguły alertu",
       "title-contact-points": "Punkty kontaktowe",
       "title-notification-policies": "Zasady powiadamiania"
@@ -14506,6 +14509,17 @@
       },
       "name": {
         "series-to-rows": "Szeregi do wierszy"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

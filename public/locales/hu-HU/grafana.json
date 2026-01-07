@@ -3135,9 +3135,12 @@
       "table": "Táblázat"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Határozza meg azt a feltételt, amelynek teljesülnie kell, mielőtt egy riasztási szabály aktiválódik",
       "description-configure-firing-alert-instances-routed-contact": "Konfigurálja, hogyan történjen az aktív riasztáspéldányok továbbítása a kapcsolattartási pontokhoz",
       "description-configure-receives-notifications": "Állítsa be, hogy ki kapjon értesítéseket, és hogyan legyenek elküldve",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Riasztási szabályok",
       "title-contact-points": "Kapcsolattartási pontok",
       "title-notification-policies": "Értesítési irányelvek"
@@ -14394,6 +14397,17 @@
       },
       "name": {
         "series-to-rows": "Sorozatok sorokká alakítása"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

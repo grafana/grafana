@@ -5799,7 +5799,8 @@
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
     "community-error": "Failed to load community dashboards. Please try again.",
-    "community-error-title": "Error loading community dashboards",
+    "community-error-description": "Failed to load community dashboard.",
+    "community-error-title": "Error loading community dashboard",
     "community-mapping-form": {
       "auto-mapped_one": "{{count}} datasources were automatically configured:",
       "auto-mapped_other": "{{count}} datasources were automatically configured:",
@@ -6577,6 +6578,7 @@
           "label": "Controls menu"
         },
         "hidden": {
+          "description": "Only visible in edit mode",
           "label": "Hidden"
         },
         "hidden-label": {
@@ -14397,6 +14399,17 @@
       },
       "name": {
         "series-to-rows": "Series to rows"
+      }
+    },
+    "smoothing": {
+      "description": "Reduce noise in time series data through adaptive downsampling.",
+      "effective-resolution": "Effective: {{value}}",
+      "effective-resolution-tooltip": "Resolution is limited to 2× the number of data points ({{points}}).",
+      "is-applicable-description": "The Smoothing transformation requires at least one time series frame to function. You currently have none.",
+      "name": "Smoothing",
+      "resolution": {
+        "label": "Resolution",
+        "tooltip": "Controls smoothing intensity. Lower values create more aggressive smoothing. Both original and smoothed data are displayed."
       }
     },
     "sort-by-transformer-editor": {

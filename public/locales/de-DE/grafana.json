@@ -3135,9 +3135,12 @@
       "table": "Tabelle"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Legen Sie die Bedingung fest, die erfüllt sein muss, bevor eine Warnregel ausgelöst wird",
       "description-configure-firing-alert-instances-routed-contact": "Konfigurieren Sie, wie ausgelöste Warnungsinstanzen an Kontaktpunkte weitergeleitet werden",
       "description-configure-receives-notifications": "Konfigurieren Sie, wer Benachrichtigungen erhält und wie sie gesendet werden",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Warnregeln",
       "title-contact-points": "Kontaktpunkte",
       "title-notification-policies": "Benachrichtigungsrichtlinien"
@@ -14394,6 +14397,17 @@
       },
       "name": {
         "series-to-rows": "Reihen zu Zeilen"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

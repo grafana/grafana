@@ -3135,9 +3135,12 @@
       "table": "Tabla"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Define la condición que debe cumplirse antes de que se active una regla de alerta",
       "description-configure-firing-alert-instances-routed-contact": "Configurar cómo se enrutan las instancias de alerta de activación a los puntos de contacto",
       "description-configure-receives-notifications": "Configurar quién recibe las notificaciones y cómo se envían",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Reglas de alerta",
       "title-contact-points": "Puntos de contacto",
       "title-notification-policies": "Políticas de notificación"
@@ -14394,6 +14397,17 @@
       },
       "name": {
         "series-to-rows": "Series a filas"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {
