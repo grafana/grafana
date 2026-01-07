@@ -15,16 +15,38 @@ export interface WithContextMenuProps {
 export const WithContextMenu = ({ children, renderMenuItems, focusOnOpen = true }: WithContextMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  
+  const handleOpenMenu = React.useCallback(
+    (e: React.MouseEvent<HTMLElement> | { x: number; y: number } | HTMLElement | SVGElement) => {
+      setIsMenuOpen(true);
+      if (e && 'pageX' in e && 'pageY' in e) {
+        // Mouse event
+        setMenuPosition({
+          x: e.pageX,
+          y: e.pageY - window.scrollY,
+        });
+      } else if (e && 'x' in e && 'y' in e && typeof e.x === 'number') {
+        // Position object
+        setMenuPosition({
+          x: e.x,
+          y: e.y,
+        });
+      } else if (e && 'getBoundingClientRect' in e) {
+        // Element - calculate position from element's bounding rect
+        const rect = (e as HTMLElement | SVGElement).getBoundingClientRect();
+        setMenuPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2 + window.scrollY,
+        });
+      }
+    },
+    []
+  );
+
   return (
     <>
       {children({
-        openMenu: (e) => {
-          setIsMenuOpen(true);
-          setMenuPosition({
-            x: e.pageX,
-            y: e.pageY - window.scrollY,
-          });
-        },
+        openMenu: handleOpenMenu as React.MouseEventHandler<HTMLElement>,
       })}
 
       {isMenuOpen && (

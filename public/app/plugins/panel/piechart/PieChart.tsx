@@ -367,6 +367,7 @@ function PieSliceWithDataLinks({
           pie={pie}
           fill={fill}
           openMenu={api.openMenu}
+          getMenuPosition={api.getMenuPosition}
           tooltipOptions={tooltipOptions}
           outerRadius={outerRadius}
           innerRadius={innerRadius}
@@ -382,6 +383,7 @@ function PieSlice({
   pie,
   highlightState,
   openMenu,
+  getMenuPosition,
   fill,
   tooltip,
   tooltipOptions,
@@ -462,7 +464,8 @@ function PieSlice({
         event.preventDefault();
         event.stopPropagation();
 
-        if (elementRef.current) {
+        if (elementRef.current && openMenu) {
+          // Calculate position from arc center for pie chart
           const arcCenterAngle = (arc.startAngle + arc.endAngle) / 2;
           const arcRadius = (outerRadius + innerRadius) / 2;
           const centerX = Math.cos(arcCenterAngle - Math.PI / 2) * arcRadius;
@@ -472,77 +475,26 @@ function PieSlice({
           const svgRect = svgElement?.getBoundingClientRect();
 
           if (svgRect) {
-            const actualX = svgRect.left + svgRect.width / 2 + centerX;
-            const actualY = svgRect.top + svgRect.height / 2 + centerY;
+            const position = {
+              x: svgRect.left + svgRect.width / 2 + centerX,
+              y: svgRect.top + svgRect.height / 2 + centerY + window.scrollY,
+            };
 
-            if (openMenu) {
-              const syntheticEvent = {
-                currentTarget: elementRef.current,
-                target: elementRef.current,
-                preventDefault: () => event.preventDefault(),
-                stopPropagation: () => event.stopPropagation(),
-                isDefaultPrevented: () => false,
-                isPropagationStopped: () => false,
-                persist: () => {},
-                nativeEvent: new MouseEvent('click', {
-                  bubbles: true,
-                  cancelable: true,
-                  view: window,
-                  button: 0,
-                  buttons: 0,
-                  clientX: actualX,
-                  clientY: actualY,
-                  screenX: actualX,
-                  screenY: actualY,
-                }),
-                clientX: actualX,
-                clientY: actualY,
-                pageX: actualX,
-                pageY: actualY,
-                screenX: actualX,
-                screenY: actualY,
-                button: 0,
-                buttons: 0,
-                type: 'click',
-                bubbles: true,
-                cancelable: true,
-                defaultPrevented: false,
-                eventPhase: 0,
-                isTrusted: false,
-                timeStamp: Date.now(),
-                altKey: false,
-                ctrlKey: false,
-                shiftKey: false,
-                metaKey: false,
-                getModifierState: () => false,
-                movementX: 0,
-                movementY: 0,
-                relatedTarget: null,
-                detail: 0,
-                view: window,
-                which: 0,
-              } as unknown as React.MouseEvent<SVGGElement>;
-
-              openMenu(syntheticEvent);
-            } else {
-              const nativeMouseEvent = new MouseEvent('click', {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-                button: 0,
-                buttons: 0,
-                clientX: actualX,
-                clientY: actualY,
-                screenX: actualX,
-                screenY: actualY,
-              });
-              elementRef.current.dispatchEvent(nativeMouseEvent);
+            // Use the updated API that supports position objects
+            if (typeof openMenu === 'function' && openMenu.length === 1) {
+              openMenu(position);
+            } else if (getMenuPosition && elementRef.current) {
+              // Fallback: use getMenuPosition if available
+              const calculatedPosition = getMenuPosition(elementRef.current);
+              if (typeof openMenu === 'function') {
+                openMenu(calculatedPosition);
+              }
             }
           }
         }
       }
     },
-    [hasDataLinks, openMenu, arc, outerRadius, innerRadius]
+    [hasDataLinks, openMenu, getMenuPosition, arc, outerRadius, innerRadius]
   );
 
   const handleFocus = useCallback(

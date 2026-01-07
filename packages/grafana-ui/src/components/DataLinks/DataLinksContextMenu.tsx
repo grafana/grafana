@@ -22,8 +22,10 @@ export interface DataLinksContextMenuProps {
 }
 
 export interface DataLinksContextMenuApi {
-  openMenu?: React.MouseEventHandler<HTMLOrSVGElement>;
+  openMenu?: React.MouseEventHandler<HTMLOrSVGElement> | ((position?: { x: number; y: number }) => void);
   targetClassName?: string;
+  /** Function to calculate menu position from an element (for keyboard events) */
+  getMenuPosition?: (element: HTMLElement | SVGElement) => { x: number; y: number };
 }
 
 export const DataLinksContextMenu = ({ children, links, style }: DataLinksContextMenuProps) => {
@@ -62,7 +64,24 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
     return (
       <WithContextMenu renderMenuItems={renderMenuGroupItems}>
         {({ openMenu }) => {
-          return children({ openMenu, targetClassName });
+          // Wrapper that handles both mouse events and position/element for keyboard events
+          const handleOpenMenu: React.MouseEventHandler<HTMLOrSVGElement> | ((positionOrElement?: { x: number; y: number } | HTMLElement | SVGElement) => void) = (
+            e: React.MouseEvent<HTMLOrSVGElement> | { x: number; y: number } | HTMLElement | SVGElement | undefined
+          ) => {
+            if (openMenu) {
+              openMenu(e as any);
+            }
+          };
+
+          const getMenuPosition = (element: HTMLElement | SVGElement) => {
+            const rect = element.getBoundingClientRect();
+            return {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2 + window.scrollY,
+            };
+          };
+
+          return children({ openMenu: handleOpenMenu, targetClassName, getMenuPosition });
         }}
       </WithContextMenu>
     );
