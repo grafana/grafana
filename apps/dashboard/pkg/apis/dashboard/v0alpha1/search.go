@@ -72,6 +72,8 @@ type DashboardHit struct {
 	Folder string `json:"folder,omitempty"`
 	// The resource is managed
 	ManagedBy ManagedBy `json:"managedBy,omitzero,omitempty"`
+	// Owner references set on the resource metadata
+	OwnerReferences []metav1.OwnerReference `json:"ownerReferences,omitempty"`
 	// Stick untyped extra fields in this object (including the sort value)
 	Field *common.Unstructured `json:"field,omitzero,omitempty"`
 	// When using "real" search, this is the score

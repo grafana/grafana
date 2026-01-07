@@ -7,7 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { IconButton, useStyles2, Text } from '@grafana/ui';
+import { Avatar, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { Indent } from 'app/core/components/Indent/Indent';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -19,10 +19,11 @@ import { FolderRepo } from './FolderRepo';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
+const TEAM_FOLDERS_UID = 'teamfolders';
 
 export const getDOMId = (idPrefix: string, id: string) => `${idPrefix}-${id || 'root'}`;
 
-interface NestedFolderListProps {
+export interface NestedFolderListProps {
   items: DashboardsTreeItem[];
   focusedItemIndex: number;
   foldersAreOpenable: boolean;
@@ -33,6 +34,7 @@ interface NestedFolderListProps {
   isItemLoaded: (itemIndex: number) => boolean;
   requestLoadMore: (folderUid: string | undefined) => void;
   emptyFolders: Set<string>;
+  teamFolderOwnersByUid?: Record<string, { name: string; avatarUrl?: string }>;
 }
 
 export function NestedFolderList({
@@ -46,6 +48,7 @@ export function NestedFolderList({
   isItemLoaded,
   requestLoadMore,
   emptyFolders,
+  teamFolderOwnersByUid,
 }: NestedFolderListProps) {
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
@@ -60,6 +63,7 @@ export function NestedFolderList({
       onFolderSelect,
       idPrefix,
       emptyFolders,
+      teamFolderOwnersByUid,
     }),
     [
       items,
@@ -70,6 +74,7 @@ export function NestedFolderList({
       onFolderSelect,
       idPrefix,
       emptyFolders,
+      teamFolderOwnersByUid,
     ]
   );
 
@@ -140,13 +145,14 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     onFolderSelect,
     idPrefix,
     emptyFolders,
+    teamFolderOwnersByUid,
   } = data;
   const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
   const rootCollection = useSelector(rootItemsSelector);
   const childrenCollections = useSelector(childrenByParentUIDSelector);
-  const children = (item.uid ? childrenCollections[item.uid] : rootCollection)?.items ?? [];
+  let children = (item.uid ? childrenCollections[item.uid] : rootCollection)?.items ?? [];
   let siblings: DashboardViewItem[] = [];
   // only look for siblings if we're not at the root
   if (item.uid) {
@@ -168,6 +174,10 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
   const handleSelect = useCallback(() => {
     if (item.kind === 'folder') {
+      // Virtual container folder
+      if (item.uid === TEAM_FOLDERS_UID) {
+        return;
+      }
       onFolderSelect(item);
     }
   }, [item, onFolderSelect]);
@@ -197,6 +207,30 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   // approximation as when searching all items will be at top level, while things that are actually in the top level
   // when just looking at a folders tree should not have parent.
   const isSearchItem = level === 0 && item.parentUID !== undefined;
+  const teamOwner = teamFolderOwnersByUid?.[item.uid];
+
+  // Fix up aria and sibling info for the virtual "Team folders" group, as it's not part of browse-dashboards redux state.
+  const teamFoldersParentIndex = items.findIndex((it) => it.item.kind === 'folder' && it.item.uid === TEAM_FOLDERS_UID);
+  if (teamFoldersParentIndex >= 0) {
+    const parentLevel = items[teamFoldersParentIndex].level;
+    const teamFoldersChildren: DashboardViewItem[] = [];
+    for (let i = teamFoldersParentIndex + 1; i < items.length; i++) {
+      const candidate = items[i];
+      if (candidate.level <= parentLevel) {
+        break;
+      }
+      if (candidate.level === parentLevel + 1 && candidate.item.kind === 'folder') {
+        teamFoldersChildren.push(candidate.item);
+      }
+    }
+
+    if (item.kind === 'folder' && item.uid === TEAM_FOLDERS_UID) {
+      children = teamFoldersChildren;
+    }
+    if (parentUID === TEAM_FOLDERS_UID) {
+      siblings = teamFoldersChildren;
+    }
+  }
 
   return (
     // don't need a key handler here, it's handled at the input level in NestedFolderPicker
@@ -247,6 +281,14 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <Text truncate>{item.title}</Text>
           <FolderRepo folder={item} />
         </label>
+        {teamOwner && (
+          <div className={styles.teamOwner}>
+            <Avatar src={teamOwner.avatarUrl ?? ''} alt={teamOwner.name} />
+            <Text truncate color="secondary" variant="bodySmall">
+              {teamOwner.name}
+            </Text>
+          </div>
+        )}
         {isSearchItem && <FolderParent item={items[index]} />}
       </div>
     </div>
@@ -255,6 +297,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   const rowBody = css({
+    label: 'rowBody',
     height: ROW_HEIGHT,
     display: 'flex',
     position: 'relative',
@@ -310,6 +353,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     rowBody,
 
     label: css({
+      label: 'label',
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
@@ -322,6 +366,18 @@ const getStyles = (theme: GrafanaTheme2) => {
         textDecoration: 'underline',
         cursor: 'pointer',
       },
+    }),
+    teamOwner: css({
+      label: 'teamOwner',
+      display: 'flex',
+      marginLeft: theme.spacing(1),
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      flex: '0 1 auto',
+      pointerEvents: 'none', // avoid interfering with folder selection
     }),
   };
 };
