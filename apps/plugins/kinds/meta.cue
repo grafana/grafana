@@ -217,6 +217,13 @@ metaV0Alpha1: {
 		title:        string
 		description?: string
 	}]
+	// +listType=atomic
+	addedFunctions?: [...{
+		// +listType=set
+		targets: [...string]
+		title:        string
+		description?: string
+	}]
 	// +listType=set
 	// +listMapKey=id
 	exposedComponents?: [...{

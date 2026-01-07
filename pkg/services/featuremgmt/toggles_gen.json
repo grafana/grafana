@@ -2044,7 +2044,8 @@
       "metadata": {
         "name": "kubernetesFeatureToggles",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-01-18T05:32:44Z"
+        "creationTimestamp": "2024-01-18T05:32:44Z",
+        "deletionTimestamp": "2026-01-07T12:02:51Z"
       },
       "spec": {
         "description": "Use the kubernetes API for feature toggle management in the frontend",
@@ -2864,6 +2865,18 @@
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "profilesExemplars",
+        "resourceVersion": "1767777507980",
+        "creationTimestamp": "2026-01-07T09:18:27Z"
+      },
+      "spec": {
+        "description": "Enables profiles exemplars support in profiles drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling"
       }
     },
     {

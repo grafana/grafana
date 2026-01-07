@@ -184,6 +184,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
       allowCustomValue: variable.allowCustomValue,
+      valuesFormat: variable.valuesFormat ?? 'csv',
     });
     // Query variable
   } else if (variable.type === 'query') {

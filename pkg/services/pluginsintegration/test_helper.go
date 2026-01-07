@@ -8,8 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -27,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugin"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsources"
@@ -52,7 +51,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	disc := pipeline.ProvideDiscoveryStage(pCfg, reg)
 	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), pluginassets.NewLocalProvider())
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector)
-	init := pipeline.ProvideInitializationStage(pCfg, reg, provider.ProvideService(coreRegistry), proc, &pluginfakes.FakeAuthService{}, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
+	init := pipeline.ProvideInitializationStage(pCfg, reg, coreplugin.ProvideCoreProvider(coreRegistry), proc, &pluginfakes.FakeAuthService{}, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
 	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
 	require.NoError(t, err)
 
@@ -98,7 +97,7 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts Lo
 	if opts.Initializer == nil {
 		reg := registry.ProvideService()
 		coreRegistry := coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))
-		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, provider.ProvideService(coreRegistry), process.ProvideService(), &pluginfakes.FakeAuthService{}, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
+		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, coreplugin.ProvideCoreProvider(coreRegistry), process.ProvideService(), &pluginfakes.FakeAuthService{}, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest(), provisionedplugins.NewNoop())
 	}
 
 	if opts.Terminator == nil {

@@ -7,7 +7,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
-func newGOFFProvider(url string, client *http.Client) (openfeature.FeatureProvider, error) {
+func newFeaturesServiceProvider(url string, client *http.Client) (openfeature.FeatureProvider, error) {
 	options := gofeatureflag.ProviderOptions{
 		Endpoint: url,
 		// consider using github.com/grafana/grafana/pkg/infra/httpclient/provider.go
