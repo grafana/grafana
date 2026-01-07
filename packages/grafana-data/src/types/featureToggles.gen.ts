@@ -400,10 +400,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Use the kubernetes API for feature toggle management in the frontend
-  */
-  kubernetesFeatureToggles?: boolean;
-  /**
   * Enabled grafana cloud specific RBAC roles
   */
   cloudRBACRoles?: boolean;
@@ -1255,4 +1251,16 @@ export interface FeatureToggles {
   * Enables support for variables whose values can have multiple properties
   */
   multiPropsVariables?: boolean;
+  /**
+  * Enables the ASAP smoothing transformation for time series data
+  */
+  smoothingTransformation?: boolean;
+  /**
+  * Enables the creation of keepers that manage secrets stored on AWS secrets manager
+  */
+  secretsManagementAppPlatformAwsKeeper?: boolean;
+  /**
+  * Enables profiles exemplars support in profiles drilldown
+  */
+  profilesExemplars?: boolean;
 }
