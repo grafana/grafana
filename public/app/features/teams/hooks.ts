@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 
 import {
   useCreateExternalGroupMappingMutation,
-  useGetTeamGroupsQuery,
+  useListExternalGroupMappingQuery,
   useDeleteExternalGroupMappingMutation,
 } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import {
@@ -171,18 +171,20 @@ export const useGetExternalGroupMappings = (args: { teamId: string }) => {
     return useGetTeamGroupsApiQuery(args);
   }
 
-  const { data: newApiData, ...newApiRest } = useGetTeamGroupsQuery({ name: args.teamId });
+  const { data: newApiData, ...newApiRest } = useListExternalGroupMappingQuery({});
 
   const groups: TeamGroupDto[] = useMemo(() => {
-    return (newApiData?.items || []).map(
-      (item) =>
-        // eslint-disable-next-line
-        ({
-          groupId: item.externalGroup,
-          teamId: args.teamId,
-          uid: item.name,
-        }) as unknown as TeamGroupDto
-    );
+    return (newApiData?.items || [])
+      .filter((item) => item.spec.teamRef.name === args.teamId)
+      .map(
+        (item) =>
+          // eslint-disable-next-line
+          ({
+            groupId: item.spec.externalGroupId,
+            teamId: item.spec.teamRef.name,
+            uid: item.metadata.name,
+          }) as unknown as TeamGroupDto
+      );
   }, [newApiData, args.teamId]);
 
   return {
@@ -201,6 +203,8 @@ export const useAddExternalGroupMapping = () => {
   const add = async (args: { teamId: string; teamGroupMapping: { groupId: string } }) => {
     return addNew({
       externalGroupMapping: {
+        apiVersion: 'iam.grafana.app/v0alpha1',
+        kind: 'ExternalGroupMapping',
         metadata: {
           generateName: 'external-group-mapping-',
         },
