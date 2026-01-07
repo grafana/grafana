@@ -2220,6 +2220,15 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 					Options: options,
 				},
 			}
+
+			// Extract filter if present (optional frame matcher for transformations)
+			if filterMap, ok := tMap["filter"].(map[string]interface{}); ok {
+				transformationKind.Spec.Filter = &dashv2alpha1.DashboardMatcherConfig{
+					Id:      schemaversion.GetStringValue(filterMap, "id"),
+					Options: filterMap["options"],
+				}
+			}
+
 			result = append(result, transformationKind)
 		}
 	}

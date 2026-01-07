@@ -1,8 +1,39 @@
+import { readdirSync, statSync } from 'fs';
+import path from 'path';
+
 import {
   Spec as DashboardV2Spec,
   GridLayoutItemKind,
   RowsLayoutRowKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+
+/**
+ * Recursively gets all JSON files from a directory.
+ * Returns an array of objects containing the full file path and relative path from the base directory.
+ */
+export function getFilesRecursively(
+  dir: string,
+  baseDir: string = dir
+): Array<{ filePath: string; relativePath: string }> {
+  const files: Array<{ filePath: string; relativePath: string }> = [];
+  const entries = readdirSync(dir);
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry);
+    const stat = statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      files.push(...getFilesRecursively(fullPath, baseDir));
+    } else if (entry.endsWith('.json')) {
+      files.push({
+        filePath: fullPath,
+        relativePath: path.relative(baseDir, fullPath),
+      });
+    }
+  }
+
+  return files;
+}
 
 /**
  * Normalizes backend output to match frontend behavior.
