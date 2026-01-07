@@ -8267,11 +8267,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/core@npm:8.6.2":
-  version: 8.6.2
-  resolution: "@storybook/core@npm:8.6.2"
+"@storybook/core@npm:8.6.15":
+  version: 8.6.15
+  resolution: "@storybook/core@npm:8.6.15"
   dependencies:
-    "@storybook/theming": "npm:8.6.2"
+    "@storybook/theming": "npm:8.6.15"
     better-opn: "npm:^3.0.2"
     browser-assert: "npm:^1.2.1"
     esbuild: "npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0"
@@ -8287,15 +8287,15 @@ __metadata:
   peerDependenciesMeta:
     prettier:
       optional: true
-  checksum: 10/57d8af6d822c4cbeab201aec813830d632165c2411bf8708481ad0daa2fa942ce6a912e0ef764e6acb9bd2053baf0614b7726e5827b071f3f845d459ac1f3d3a
+  checksum: 10/d268d6fa00c38b35e5c363ee33779c2e087ab8e4681e0e205baa2fdb2780ea9feda3c9f6db35d60092778878d2782b2093c744bdf1af173c5688c3e1e0e960ac
   languageName: node
   linkType: hard
 
-"@storybook/core@patch:@storybook/core@npm%3A8.6.2#~/.yarn/patches/@storybook-core-npm-8.6.2-8c752112c0.patch":
-  version: 8.6.2
-  resolution: "@storybook/core@patch:@storybook/core@npm%3A8.6.2#~/.yarn/patches/@storybook-core-npm-8.6.2-8c752112c0.patch::version=8.6.2&hash=f4cc1f"
+"@storybook/core@patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch":
+  version: 8.6.15
+  resolution: "@storybook/core@patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch::version=8.6.15&hash=c479fb"
   dependencies:
-    "@storybook/theming": "npm:8.6.2"
+    "@storybook/theming": "npm:8.6.15"
     better-opn: "npm:^3.0.2"
     browser-assert: "npm:^1.2.1"
     esbuild: "npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0"
@@ -8311,7 +8311,7 @@ __metadata:
   peerDependenciesMeta:
     prettier:
       optional: true
-  checksum: 10/cd95a51437135dd3c4333b14acefd528d8064b2cea7789f859ba80783c115c92ed4be51d4a7bd6236888fdd5f46f488a379e0c71bc1a712ffe6dc1353fb4e648
+  checksum: 10/fd635098effe4ae87122ac706394dc89a26b3cae74d7d126897852a9da1960d617c76dc1be6d6d8a4c2d02c19e694c7222a3cfe7a6beb7daa605b30ffbf41644
   languageName: node
   linkType: hard
 
@@ -8628,15 +8628,6 @@ __metadata:
   peerDependencies:
     storybook: ^8.2.0 || ^8.3.0-0 || ^8.4.0-0 || ^8.5.0-0 || ^8.6.0-0
   checksum: 10/f02760831a13d7af9dbfeb6feea949f4c13c897861cbc75253a6776d133891567889c8d99c7e91a99124d0772c3bde1f978984c83b19117d1d7c908ed7eb8409
-  languageName: node
-  linkType: hard
-
-"@storybook/theming@npm:8.6.2":
-  version: 8.6.2
-  resolution: "@storybook/theming@npm:8.6.2"
-  peerDependencies:
-    storybook: ^8.2.0 || ^8.3.0-0 || ^8.4.0-0 || ^8.5.0-0 || ^8.6.0-0
-  checksum: 10/81ff1f740edaa000d6abaab5a47b038b46cfc54ddad308335b8d26d7a6f1ee100f617f52d51cd6596f424a534dbda0d9801e3928b4b6f758d9a3e8da6f9d40f5
   languageName: node
   linkType: hard
 

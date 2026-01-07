@@ -1,8 +1,8 @@
 diff --git a/dist/builder-manager/index.js b/dist/builder-manager/index.js
-index 3d7f9b213dae1801bda62b31db31b9113e382ccd..212501c63d20146c29db63fb0f6300c6779eecb5 100644
+index ac8ac6a5f6a3b7852c4064e93dc9acd3201289e6..34a0a5a5c38dd7fe525c9ebd382a10a451d4d4f3 100644
 --- a/dist/builder-manager/index.js
 +++ b/dist/builder-manager/index.js
-@@ -1970,7 +1970,7 @@ var pa = /^\/($|\?)/, G, C, xt = /* @__PURE__ */ o(async (e) => {
+@@ -1974,7 +1974,7 @@ var pa = /^\/($|\?)/, G, C, xt = /* @__PURE__ */ o(async (e) => {
      bundle: !0,
      minify: !0,
      sourcemap: !1,
