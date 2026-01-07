@@ -62,22 +62,17 @@ function UnconfiguredPanelComp(props: PanelProps) {
   };
 
   const onUseSavedQuery = useCallback(async () => {
-    if (!dashboard || !(dashboard instanceof DashboardScene)) {
-      throw new Error('DashboardScene not found');
-    }
-
-    if (!panel) {
-      throw new Error('Panel not found');
-    }
-
     if (!queryLibraryEnabled) {
+      return;
+    }
+
+    if (!dashboard || !(dashboard instanceof DashboardScene) || !panel) {
       return;
     }
 
     openQueryLibraryDrawer({
       onSelectQuery: async (query: DataQuery) => {
         try {
-          // Get or create the query runner for the panel BEFORE opening the editor
           let queryRunner = getQueryRunnerFor(panel);
 
           // If panel doesn't have a query runner yet, create one
@@ -102,7 +97,6 @@ function UnconfiguredPanelComp(props: PanelProps) {
             return;
           }
 
-          // Ensure query has datasource set
           const enrichedQuery = query.datasource
             ? query
             : {
@@ -110,8 +104,7 @@ function UnconfiguredPanelComp(props: PanelProps) {
                 datasource: queryRunner.state.datasource || { uid: config.defaultDatasource },
               };
 
-          // Set the query in the panel BEFORE opening the editor
-          // The editor will pick up this query when it initializes
+          // Set the query in the panel
           queryRunner.setState({ queries: [enrichedQuery] });
 
           // Update datasource if needed
@@ -120,10 +113,8 @@ function UnconfiguredPanelComp(props: PanelProps) {
             queryRunner.setState({ datasource: { uid: dsSettings.uid, type: dsSettings.type } });
           }
 
-          // Now open the panel editor - it will pick up the query we just set
           locationService.partial({ editPanel: props.id });
 
-          // Run the query after opening the editor
           queryRunner.runQueries();
         } catch (error) {
           console.error('Failed to set query from library:', error);
@@ -154,18 +145,18 @@ function UnconfiguredPanelComp(props: PanelProps) {
         label={t('dashboard.new-panel.menu-open-panel-editor', 'Configure')}
         onClick={onConfigure}
       ></Menu.Item>
+      {queryLibraryEnabled && (
+        <Menu.Item
+          icon="book-open"
+          label={t('dashboard.new-panel.menu-use-saved-query', 'Use saved query')}
+          onClick={onUseSavedQuery}
+        ></Menu.Item>
+      )}
       <Menu.Item
         icon="library-panel"
         label={t('dashboard.new-panel.menu-use-library-panel', 'Use library panel')}
         onClick={onUseLibraryPanel}
       ></Menu.Item>
-      {queryLibraryEnabled && (
-        <Menu.Item
-          icon="book-open"
-          label={t('dashboard.new-panel.use-saved-query', 'Use saved query')}
-          onClick={onUseSavedQuery}
-        ></Menu.Item>
-      )}
     </Menu>
   );
 
