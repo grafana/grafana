@@ -18,6 +18,7 @@ import {
   DataHoverEvent,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { SortOrder, VizTooltipOptions } from '@grafana/schema';
 import {
   useTheme2,
@@ -500,7 +501,7 @@ function PieSlice({
       onClick={openMenu}
       tabIndex={shouldBeFocusable ? 0 : -1}
       role={shouldBeFocusable ? 'link' : undefined}
-      aria-label={shouldBeFocusable ? `${arc.data.display.title} - Data link` : undefined}
+      aria-label={t('piechart.data-link-label', '{{title}} - Data link', { title: arc.data.display.title })}
       onKeyDown={shouldBeFocusable ? handleKeyDown : undefined}
       onFocus={hasDataLinks ? handleFocus : undefined}
       onBlur={hasDataLinks ? handleBlur : undefined}
