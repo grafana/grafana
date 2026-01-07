@@ -126,64 +126,6 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-type FeatureFlagType int
-
-const (
-	// Boolean -- Type of a flag
-	Boolean FeatureFlagType = iota
-	Integer
-	Float
-	String
-	Structure
-)
-
-func (t FeatureFlagType) String() string {
-	switch t {
-	case Boolean:
-		return "boolean"
-	case Integer:
-		return "integer"
-	case Float:
-		return "float"
-	case String:
-		return "string"
-	case Structure:
-		return "structure"
-	}
-
-	return "unknown"
-}
-
-// MarshalJSON marshals the enum as a quoted json string
-func (t FeatureFlagType) MarshalJSON() ([]byte, error) {
-	buffer := bytes.NewBufferString(`"`)
-	buffer.WriteString(t.String())
-	buffer.WriteString(`"`)
-	return buffer.Bytes(), nil
-}
-
-func (t *FeatureFlagType) UnmarshalJSON(b []byte) error {
-	var j string
-	err := json.Unmarshal(b, &j)
-	if err != nil {
-		return err
-	}
-
-	switch j {
-	case "boolean":
-		*t = Boolean
-	case "integer":
-		*t = Integer
-	case "float":
-		*t = Float
-	case "string":
-		*t = String
-	case "structure":
-		*t = Structure
-	}
-	return nil
-}
-
 // These are properties about the feature, but not the current state or value for it
 type FeatureFlag struct {
 	Name        string           `json:"name" yaml:"name"` // Unique name
@@ -193,8 +135,6 @@ type FeatureFlag struct {
 
 	// CEL-GO expression.  Using the value "true" will mean this is on by default
 	Expression string `json:"expression,omitempty"`
-	// Type of the feature flag (boolean, number, string, structure),
-	Type FeatureFlagType `json:"type,omitempty"`
 
 	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production

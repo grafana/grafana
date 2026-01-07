@@ -95,23 +95,6 @@ ABCD = true
 	assert.Equal(t, openFeatureEnabledFlags, enabledFeatureManager)
 }
 
-func Test_StaticProvider_FailfastOnMismatchedType(t *testing.T) {
-	staticFlags := map[string]memprovider.InMemoryFlag{"oldBooleanFlag": {
-		Key:            "oldBooleanFlag",
-		DefaultVariant: setting.DefaultVariantName,
-		Variants: map[string]any{
-			setting.DefaultVariantName: true,
-		},
-	}}
-
-	flag := FeatureFlag{
-		Name:       "oldBooleanFlag",
-		Expression: "1.0",
-	}
-	_, err := newStaticProvider(staticFlags, []FeatureFlag{flag})
-	assert.EqualError(t, err, "type mismatch for flag 'oldBooleanFlag' detected")
-}
-
 func Test_StaticProvider_TypedFlags(t *testing.T) {
 	tests := []struct {
 		flags         FeatureFlag
@@ -122,7 +105,6 @@ func Test_StaticProvider_TypedFlags(t *testing.T) {
 			flags: FeatureFlag{
 				Name:       "Flag",
 				Expression: "true",
-				Type:       Boolean,
 			},
 			defaultValue:  false,
 			expectedValue: true,
@@ -131,7 +113,6 @@ func Test_StaticProvider_TypedFlags(t *testing.T) {
 			flags: FeatureFlag{
 				Name:       "Flag",
 				Expression: "1.0",
-				Type:       Float,
 			},
 			defaultValue:  0.0,
 			expectedValue: 1.0,
@@ -140,7 +121,6 @@ func Test_StaticProvider_TypedFlags(t *testing.T) {
 			flags: FeatureFlag{
 				Name:       "Flag",
 				Expression: "blue",
-				Type:       String,
 			},
 			defaultValue:  "red",
 			expectedValue: "blue",
@@ -149,7 +129,6 @@ func Test_StaticProvider_TypedFlags(t *testing.T) {
 			flags: FeatureFlag{
 				Name:       "Flag",
 				Expression: "1",
-				Type:       Integer,
 			},
 			defaultValue:  int64(0),
 			expectedValue: int64(1),
@@ -158,9 +137,7 @@ func Test_StaticProvider_TypedFlags(t *testing.T) {
 			flags: FeatureFlag{
 				Name:       "Flag",
 				Expression: `{ "foo": "bar" }`,
-				Type:       Structure,
 			},
-			defaultValue:  nil,
 			expectedValue: map[string]any{"foo": "bar"},
 		},
 	}
@@ -170,16 +147,16 @@ func Test_StaticProvider_TypedFlags(t *testing.T) {
 		assert.NoError(t, err)
 
 		var result any
-		switch tt.flags.Type {
-		case Boolean:
+		switch tt.expectedValue.(type) {
+		case bool:
 			result = provider.BooleanEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(bool), openfeature.FlattenedContext{}).Value
-		case Float:
+		case float64:
 			result = provider.FloatEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(float64), openfeature.FlattenedContext{}).Value
-		case String:
+		case string:
 			result = provider.StringEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(string), openfeature.FlattenedContext{}).Value
-		case Integer:
+		case int64:
 			result = provider.IntEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(int64), openfeature.FlattenedContext{}).Value
-		case Structure:
+		case map[string]any:
 			result = provider.ObjectEvaluation(t.Context(), tt.flags.Name, tt.defaultValue, openfeature.FlattenedContext{}).Value
 		}
 
@@ -189,37 +166,31 @@ func Test_StaticProvider_TypedFlags(t *testing.T) {
 func Test_StaticProvider_ConfigOverride(t *testing.T) {
 	tests := []struct {
 		name          string
-		typ           FeatureFlagType
 		originalValue string
 		configValue   any
 	}{
 		{
 			name:          "bool",
-			typ:           Boolean,
 			originalValue: "false",
 			configValue:   true,
 		},
 		{
 			name:          "int",
-			typ:           Integer,
 			originalValue: "0",
-			configValue:   1,
+			configValue:   int64(1),
 		},
 		{
 			name:          "float",
-			typ:           Float,
 			originalValue: "0.0",
 			configValue:   1.0,
 		},
 		{
 			name:          "string",
-			typ:           String,
 			originalValue: "foo",
 			configValue:   "bar",
 		},
 		{
 			name:          "structure",
-			typ:           Structure,
 			originalValue: "{}",
 			configValue:   make(map[string]any),
 		},
@@ -231,16 +202,16 @@ func Test_StaticProvider_ConfigOverride(t *testing.T) {
 		assert.NoError(t, err)
 
 		var result any
-		switch tt.typ {
-		case Boolean:
+		switch tt.configValue.(type) {
+		case bool:
 			result = provider.BooleanEvaluation(t.Context(), tt.name, false, openfeature.FlattenedContext{}).Value
-		case Float:
+		case float64:
 			result = provider.FloatEvaluation(t.Context(), tt.name, 0.0, openfeature.FlattenedContext{}).Value
-		case String:
+		case string:
 			result = provider.StringEvaluation(t.Context(), tt.name, "foo", openfeature.FlattenedContext{}).Value
-		case Integer:
+		case int64:
 			result = provider.IntEvaluation(t.Context(), tt.name, 1, openfeature.FlattenedContext{}).Value
-		case Structure:
+		case map[string]any:
 			result = provider.ObjectEvaluation(t.Context(), tt.name, make(map[string]any), openfeature.FlattenedContext{}).Value
 		}
 
@@ -250,29 +221,20 @@ func Test_StaticProvider_ConfigOverride(t *testing.T) {
 
 func makeFlags(tt struct {
 	name          string
-	typ           FeatureFlagType
 	originalValue string
 	configValue   any
 }) (map[string]memprovider.InMemoryFlag, []FeatureFlag) {
 	orig := FeatureFlag{
 		Name:       tt.name,
 		Expression: tt.originalValue,
-		Type:       tt.typ,
 	}
 
 	config := map[string]memprovider.InMemoryFlag{
-		tt.name: makeInMemoryFlag(tt.name, tt.configValue),
+		tt.name: {
+			Key:      tt.name,
+			Variants: map[string]any{"": tt.configValue},
+		},
 	}
 
 	return config, []FeatureFlag{orig}
-}
-
-func makeInMemoryFlag(name string, value any) memprovider.InMemoryFlag {
-	return memprovider.InMemoryFlag{
-		Key:            name,
-		DefaultVariant: setting.DefaultVariantName,
-		Variants: map[string]any{
-			setting.DefaultVariantName: value,
-		},
-	}
 }

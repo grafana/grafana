@@ -2,32 +2,18 @@ package setting
 
 import (
 	"encoding/json"
-	"errors"
+	"math"
 	"strconv"
 
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"gopkg.in/ini.v1"
+
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type FeatureFlagType string
-
-const (
-	Structure FeatureFlagType = "structure"
-	Integer   FeatureFlagType = "integer"
-	Float     FeatureFlagType = "float"
-	Boolean   FeatureFlagType = "boolean"
-	String    FeatureFlagType = "string"
-)
-
+// DefaultVariantName a placeholder name for config-based Feature Flags
 const DefaultVariantName = ""
-
-type FeatureToggle struct {
-	Type  FeatureFlagType `json:"type"`
-	Name  string          `json:"name"`
-	Value any             `json:"value"`
-}
 
 // Deprecated: should use `featuremgmt.FeatureToggles`
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
@@ -36,7 +22,6 @@ func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 	if err != nil {
 		return err
 	}
-
 	// TODO IsFeatureToggleEnabled has been deprecated for 2 years now, we should remove this function completely
 	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = func(key string) bool {
@@ -45,9 +30,9 @@ func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 			return false
 		}
 
-		return IsEnabled(toggle)
+		value, ok := toggle.Variants[toggle.DefaultVariant].(bool)
+		return value && ok
 	}
-
 	return nil
 }
 
@@ -57,7 +42,7 @@ func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[str
 	// parse the comma separated list in `enable`.
 	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
 	for _, feature := range util.SplitString(featuresTogglesStr) {
-		featureToggles[feature] = createFlag(feature, true)
+		featureToggles[feature] = memprovider.InMemoryFlag{Key: feature, Variants: map[string]any{DefaultVariantName: true}}
 	}
 
 	// read all other settings under [feature_toggles]. If a toggle is
@@ -67,32 +52,36 @@ func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[str
 			continue
 		}
 
-		b := ParseFlag(v.Name(), v.Value())
+		b, err := ParseFlag(v.Name(), v.Value())
+		if err != nil {
+			return featureToggles, err
+		}
+
 		featureToggles[v.Name()] = b
 	}
 	return featureToggles, nil
 }
 
-func ParseFlag(name, value string) memprovider.InMemoryFlag {
+func ParseFlag(name, value string) (memprovider.InMemoryFlag, error) {
 	var structure map[string]any
 
 	if integer, err := strconv.Atoi(value); err == nil {
-		return createFlag(name, integer)
+		return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: integer}}, nil
 	}
 	if float, err := strconv.ParseFloat(value, 64); err == nil {
-		return createFlag(name, float)
+		return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: float}}, nil
 	}
 	if err := json.Unmarshal([]byte(value), &structure); err == nil {
-		return createFlag(name, structure)
+		return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: structure}}, nil
 	}
 	if boolean, err := strconv.ParseBool(value); err == nil {
-		return createFlag(name, boolean)
+		return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: boolean}}, nil
 	}
 
-	return createFlag(name, value)
+	return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: value}}, nil
 }
 
-func SerializeFlag(flag memprovider.InMemoryFlag) string {
+func SerializeFlagValue(flag memprovider.InMemoryFlag) string {
 	value, _ := flag.Variants[DefaultVariantName]
 
 	switch castedValue := value.(type) {
@@ -101,7 +90,12 @@ func SerializeFlag(flag memprovider.InMemoryFlag) string {
 	case int64:
 		return strconv.FormatInt(castedValue, 10)
 	case float64:
-		return strconv.FormatFloat(castedValue, 'f', -1, 64)
+		// handle cases with a single or no zeros after the decimal point
+		if math.Trunc(castedValue) == castedValue {
+			return strconv.FormatFloat(castedValue, 'f', 1, 64)
+		}
+
+		return strconv.FormatFloat(castedValue, 'g', -1, 64)
 	case string:
 		return castedValue
 	default:
@@ -120,18 +114,4 @@ func createFlag(name string, value any) memprovider.InMemoryFlag {
 	}
 }
 
-func GetDefaultValue(flag memprovider.InMemoryFlag) (any, error) {
-	if value, ok := flag.Variants[flag.DefaultVariant]; !ok {
-		return nil, errors.New("no default variant found")
-	} else {
-		return value, nil
-	}
-}
-
-func IsEnabled(flag memprovider.InMemoryFlag) bool {
-	if value, ok := flag.Variants[flag.DefaultVariant]; !ok {
-		return false
-	} else {
-		return value == true
-	}
-}
+//
