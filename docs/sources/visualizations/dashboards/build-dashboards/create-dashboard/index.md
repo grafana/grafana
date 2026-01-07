@@ -147,14 +147,6 @@ To create a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
-1. In the edit pane, enter the dashboard title and description.
-
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
-
-1. Under [**Layout**](#panel-layouts), choose one of the following options:
-   - **Custom** - Position and size panels individually. The default selection.
-   - **Auto grid** - Panels automatically resize and fit to create a uniform grid, based on the column and row settings.
-
 1. Click **+ Add visualization**.
 1. In the dialog box that opens, do one of the following:
    - Select one of your existing data sources.
@@ -189,13 +181,19 @@ To create a dashboard, follow these steps:
    - [Configure standard options](ref:configure-standard-options)
 
 1. When you've finished editing your panel, click **Save**.
+1. Enter a title and description for your dashboard if you haven't already or have Grafana create them using [generative AI features](ref:generative-ai-features).
+1. Select a folder, if applicable.
+1. Click **Save**
+
+Now that you've created a basic dashboard, continue building it by going through the following sections.
+We've ordered them as we expect you'll need them, but you can do any of these steps at any time.
+
+
 
    Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save** when you're ready.
 
-1. Enter a title and description for your dashboard if you haven't already or have Grafana create them using [generative AI features](ref:generative-ai-features).
-1. Select a folder, if applicable.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
+
+## What is this next step - Add panels, update layout, group
 1. To add more panels to the dashboard, click **Back to dashboard** and at the bottom-left corner of the dashboard, click **+ Add panel**.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-add-panel-v12.png" max-width="500px" alt="Add panel button" >}}
@@ -204,6 +202,16 @@ To create a dashboard, follow these steps:
 1. Click **Configure** in either the edit pane or on the panel to the configuration process.
 1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
 1. Click **Exit edit**.
+
+
+
+1. In the edit pane, enter the dashboard title and description.
+
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
+
+1. Under [**Layout**](#panel-layouts), choose one of the following options:
+   - **Custom** - Position and size panels individually. The default selection.
+   - **Auto grid** - Panels automatically resize and fit to create a uniform grid, based on the column and row settings.
 
 ## Panel layouts
 
@@ -377,7 +385,7 @@ You can configure panels, rows, and tabs to be shown or hidden based on rules.
 For example, you might want to set a panel to be hidden if there's no data returned by a query, or for a tab to only be shown based on a variable being present.
 
 {{< admonition type="note" >}}
-You can only configure show/hide rules for panels in the **Auto grid** layout.
+You can only configure show/hide rules for panels in the **Auto grid** layout. Set the panel layout at the dashboard, row, or tab-level.
 {{< /admonition >}}
 
 To configure show/hide rules, follow these steps:
