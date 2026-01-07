@@ -59,6 +59,7 @@ import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers
 import { getElement } from '../serialization/layoutSerializers/utils';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
+import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history/HistorySrv';
@@ -89,7 +90,6 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
-import { getIsLazy } from './layouts-shared/utils';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
 
@@ -198,7 +198,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([], getIsLazy(state.preload)),
+      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([]),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
@@ -855,22 +855,45 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this.serializer.getSaveModel(this);
   }
 
-  // Get the dashboard in native K8s form (using the appropriate apiVersion)
-  getSaveResource(options: SaveDashboardAsOptions): ResourceForCreate<unknown> {
+  // Helper method to build K8s resource structure
+  private buildResourceForCreate(spec: Dashboard | DashboardV2Spec, isNew: boolean): ResourceForCreate<unknown> {
     const { meta } = this.state;
-    const spec = this.getSaveAsModel(options);
-
-    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2beta1' : 'v1beta1'; // get from the dashboard?
+    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2beta1' : 'v1beta1';
     return {
       apiVersion: `dashboard.grafana.app/${apiVersion}`,
       kind: 'Dashboard',
       metadata: {
         ...meta.k8s,
-        name: options.isNew ? undefined : (meta.uid ?? meta.k8s?.name),
-        generateName: options.isNew ? 'd' : undefined,
+        name: isNew ? undefined : (meta.uid ?? meta.k8s?.name),
+        generateName: isNew ? 'd' : undefined,
       },
       spec,
     };
+  }
+
+  // Get the dashboard in native K8s form (using the appropriate apiVersion)
+  getSaveResource(options: SaveDashboardAsOptions): ResourceForCreate<unknown> {
+    const spec = this.getSaveAsModel(options);
+    return this.buildResourceForCreate(spec, options.isNew ?? false);
+  }
+
+  // Wrap a raw dashboard spec in K8s resource format
+  // Used by JSON model editor for Git sync dashboards
+  getSaveResourceFromSpec(rawSpec: Dashboard | DashboardV2Spec): ResourceForCreate<unknown> {
+    return this.buildResourceForCreate(rawSpec, false);
+  }
+
+  // Get raw JSON from JSON model editor if currently active
+  // Returns undefined if not in JSON editor mode or if JSON is invalid
+  getRawJsonFromEditor(): Dashboard | DashboardV2Spec | undefined {
+    if (this.state.editview instanceof JsonModelEditView) {
+      try {
+        return JSON.parse(this.state.editview.state.jsonText);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
   }
 
   getSaveAsModel(options: SaveDashboardAsOptions): Dashboard | DashboardV2Spec {
@@ -878,7 +901,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
-    return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
+    const rawJson = this.getRawJsonFromEditor();
+    return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh, rawJson });
   }
 
   getManagerKind(): ManagerKind | undefined {

@@ -97,6 +97,44 @@
         },
         "missing_series_evals_to_resolve": 2
       }
+    },
+    {
+      "expr": "",
+      "for": "0s",
+      "keep_firing_for": "0s",
+      "grafana_alert": {
+        "title": "RecordingRule1",
+        "data": [
+          {
+            "refId": "A",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 0,
+              "to": 0
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "1 + 1",
+              "intervalMs": 1000,
+              "maxDataPoints": 43200,
+              "type": "math"
+            }
+          }
+        ],
+        "updated": "2023-09-29T17:37:19Z",
+        "intervalSeconds": 60,
+        "version": 1,
+        "uid": "<dynamic>",
+        "namespace_uid": "<dynamic>",
+        "rule_group": "Group1",
+        "is_paused": false,
+        "record": {
+          "metric": "test_metric",
+          "from": "A",
+          "target_datasource_uid": "test-datasource-uid"
+        },
+        "metadata": {}
+      }
     }
   ]
 }

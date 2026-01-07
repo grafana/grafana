@@ -103,6 +103,84 @@ describe('getResourceDimension', () => {
     expect(getResourceDimension(frame, config).value()).toEqual('');
   });
 
+  it('should handle numeric field values with icon from value mapping', () => {
+    const publicPath = 'https://grafana.fake/public/';
+    const frame = createDataFrame({
+      fields: [
+        {
+          name: 'status_field',
+          values: [1, 2, 3],
+          display: (v) => ({
+            text: v === 1 ? 'Success' : v === 2 ? 'Warning' : 'Error',
+            numeric: Number(v),
+            icon:
+              v === 1
+                ? 'img/icons/unicons/check-circle.svg'
+                : v === 2
+                  ? 'img/icons/unicons/exclamation-triangle.svg'
+                  : 'img/icons/unicons/times-circle.svg',
+          }),
+        },
+      ],
+    });
+    const config = { mode: ResourceDimensionMode.Field, field: 'status_field', fixed: '' };
+
+    expect(getResourceDimension(frame, config).get(0)).toEqual(`${publicPath}build/img/icons/unicons/check-circle.svg`);
+    expect(getResourceDimension(frame, config).get(1)).toEqual(
+      `${publicPath}build/img/icons/unicons/exclamation-triangle.svg`
+    );
+    expect(getResourceDimension(frame, config).get(2)).toEqual(`${publicPath}build/img/icons/unicons/times-circle.svg`);
+  });
+
+  it('should return empty string for unmapped numeric values without icon', () => {
+    const frame = createDataFrame({
+      fields: [
+        {
+          name: 'status_field',
+          values: [14],
+          display: (v) => ({
+            text: String(v),
+            numeric: Number(v),
+            icon: undefined,
+          }),
+        },
+      ],
+    });
+    const config = { mode: ResourceDimensionMode.Field, field: 'status_field', fixed: '' };
+
+    expect(getResourceDimension(frame, config).get(0)).toEqual('');
+    expect(getResourceDimension(frame, config).value()).toEqual('');
+  });
+
+  it('should handle mixed numeric values with partial mappings', () => {
+    const publicPath = 'https://grafana.fake/public/';
+    const frame = createDataFrame({
+      fields: [
+        {
+          name: 'status_field',
+          values: [1, 99, 2],
+          display: (v) => ({
+            text: v === 1 ? 'Success' : v === 2 ? 'Warning' : String(v),
+            numeric: Number(v),
+            icon:
+              v === 1
+                ? 'img/icons/unicons/check-circle.svg'
+                : v === 2
+                  ? 'img/icons/unicons/exclamation-triangle.svg'
+                  : undefined,
+          }),
+        },
+      ],
+    });
+    const config = { mode: ResourceDimensionMode.Field, field: 'status_field', fixed: '' };
+
+    expect(getResourceDimension(frame, config).get(0)).toEqual(`${publicPath}build/img/icons/unicons/check-circle.svg`);
+    expect(getResourceDimension(frame, config).get(1)).toEqual('');
+    expect(getResourceDimension(frame, config).get(2)).toEqual(
+      `${publicPath}build/img/icons/unicons/exclamation-triangle.svg`
+    );
+  });
+
   // TODO: write tests for mapping modes
 });
 
@@ -124,5 +202,26 @@ describe('getPublicOrAbsoluteUrl', () => {
     expect(getPublicOrAbsoluteUrl(undefined)).toEqual('');
     expect(getPublicOrAbsoluteUrl({ path: 'icon.png' })).toEqual('');
     expect(getPublicOrAbsoluteUrl(['icon.png'])).toEqual('');
+  });
+
+  it('should handle undefined publicPath gracefully', () => {
+    const originalPath = window.__grafana_public_path__;
+
+    // @ts-ignore - Intentionally testing runtime edge case
+    window.__grafana_public_path__ = undefined;
+
+    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual('/build/icon.png');
+
+    window.__grafana_public_path__ = originalPath;
+  });
+
+  it('should handle empty string publicPath gracefully', () => {
+    const originalPath = window.__grafana_public_path__;
+
+    window.__grafana_public_path__ = '';
+
+    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual('/build/icon.png');
+
+    window.__grafana_public_path__ = originalPath;
   });
 });

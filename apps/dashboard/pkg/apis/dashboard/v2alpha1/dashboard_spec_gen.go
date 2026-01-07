@@ -1703,18 +1703,19 @@ func NewDashboardCustomVariableKind() *DashboardCustomVariableKind {
 // Custom variable specification
 // +k8s:openapi-gen=true
 type DashboardCustomVariableSpec struct {
-	Name             string                    `json:"name"`
-	Query            string                    `json:"query"`
-	Current          DashboardVariableOption   `json:"current"`
-	Options          []DashboardVariableOption `json:"options"`
-	Multi            bool                      `json:"multi"`
-	IncludeAll       bool                      `json:"includeAll"`
-	AllValue         *string                   `json:"allValue,omitempty"`
-	Label            *string                   `json:"label,omitempty"`
-	Hide             DashboardVariableHide     `json:"hide"`
-	SkipUrlSync      bool                      `json:"skipUrlSync"`
-	Description      *string                   `json:"description,omitempty"`
-	AllowCustomValue bool                      `json:"allowCustomValue"`
+	Name             string                                   `json:"name"`
+	Query            string                                   `json:"query"`
+	Current          DashboardVariableOption                  `json:"current"`
+	Options          []DashboardVariableOption                `json:"options"`
+	Multi            bool                                     `json:"multi"`
+	IncludeAll       bool                                     `json:"includeAll"`
+	AllValue         *string                                  `json:"allValue,omitempty"`
+	Label            *string                                  `json:"label,omitempty"`
+	Hide             DashboardVariableHide                    `json:"hide"`
+	SkipUrlSync      bool                                     `json:"skipUrlSync"`
+	Description      *string                                  `json:"description,omitempty"`
+	AllowCustomValue bool                                     `json:"allowCustomValue"`
+	ValuesFormat     *DashboardCustomVariableSpecValuesFormat `json:"valuesFormat,omitempty"`
 }
 
 // NewDashboardCustomVariableSpec creates a new DashboardCustomVariableSpec object.
@@ -2096,6 +2097,14 @@ const (
 	DashboardQueryVariableSpecStaticOptionsOrderBefore DashboardQueryVariableSpecStaticOptionsOrder = "before"
 	DashboardQueryVariableSpecStaticOptionsOrderAfter  DashboardQueryVariableSpecStaticOptionsOrder = "after"
 	DashboardQueryVariableSpecStaticOptionsOrderSorted DashboardQueryVariableSpecStaticOptionsOrder = "sorted"
+)
+
+// +k8s:openapi-gen=true
+type DashboardCustomVariableSpecValuesFormat string
+
+const (
+	DashboardCustomVariableSpecValuesFormatCsv  DashboardCustomVariableSpecValuesFormat = "csv"
+	DashboardCustomVariableSpecValuesFormatJson DashboardCustomVariableSpecValuesFormat = "json"
 )
 
 // +k8s:openapi-gen=true

@@ -1,12 +1,13 @@
 SELECT
   "created",
+  "created_by",
   "version",
   "active",
   "namespace",
   "name"
 FROM
   "secret_secure_value"
-WHERE 
+WHERE
   "namespace" = 'ns' AND
   "name" = 'name'
 ORDER BY "version" DESC

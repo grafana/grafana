@@ -474,6 +474,7 @@
       },
       "id": 12,
       "options": {
+        "displayName": "My gauge",
         "minVizHeight": 75,
         "minVizWidth": 75,
         "orientation": "auto",
@@ -956,8 +957,6 @@
         "effects": {
           "barGlow": false,
           "centerGlow": false,
-          "rounded": false,
-          "spotlight": false,
           "gradient": false
         }
       }
