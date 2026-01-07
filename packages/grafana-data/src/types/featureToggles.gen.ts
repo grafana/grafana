@@ -1263,4 +1263,8 @@ export interface FeatureToggles {
   * Enables the creation of keepers that manage secrets stored on AWS secrets manager
   */
   secretsManagementAppPlatformAwsKeeper?: boolean;
+  /**
+  * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+  */
+  alertingSyncDispatchTimer?: boolean;
 }

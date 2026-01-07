@@ -82,6 +82,7 @@ type Alertmanager interface {
 type ExternalState struct {
 	Silences []byte
 	Nflog    []byte
+	FlushLog []byte
 }
 
 // StateMerger describes a type that is able to merge external state (nflog, silences) with its own.

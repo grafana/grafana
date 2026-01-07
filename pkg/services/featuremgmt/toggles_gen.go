@@ -785,4 +785,8 @@ const (
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
+
+	// FlagAlertingSyncDispatchTimer
+	// Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+	FlagAlertingSyncDispatchTimer = "alertingSyncDispatchTimer"
 )
