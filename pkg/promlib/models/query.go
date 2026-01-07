@@ -300,13 +300,13 @@ func calculatePrometheusInterval(
 	}
 
 	// here is where we compare for $__rate_interval or ${__rate_interval}
-	if originalQueryInterval == varRateInterval || originalQueryInterval == varRateIntervalAlt {
+	if originalQueryInterval == varRateInterval || originalQueryInterval == varRateIntervalAlt || originalQueryInterval == varRateIntervalMs || originalQueryInterval == varRateIntervalMsAlt {
 		// Rate interval is final and is not affected by resolution
 		return calculateRateInterval(adjustedInterval, dsScrapeInterval), nil
 	} else {
 		// if the queryInterval is set manually by setting minStep value in UI, we should use
 		// that value over what we've calculated. because it has precedence.
-		if originalQueryInterval != varInterval && originalQueryInterval != varIntervalAlt && originalQueryInterval != "" {
+		if originalQueryInterval != varInterval && originalQueryInterval != varIntervalAlt && originalQueryInterval != varIntervalMs && originalQueryInterval != varIntervalMsAlt && originalQueryInterval != "" {
 			parsedOriginalQueryInterval, err := gtime.ParseIntervalStringToTimeDuration(originalQueryInterval)
 			if err == nil {
 				return parsedOriginalQueryInterval, nil
