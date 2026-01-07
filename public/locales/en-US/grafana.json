@@ -3759,7 +3759,6 @@
     },
     "recently-viewed": {
       "clear": "Clear history",
-      "empty": "Nothing viewed yet",
       "error": "Recently viewed dashboards couldn’t be loaded.",
       "retry": "Retry",
       "title": "Recently viewed"
@@ -4416,6 +4415,7 @@
       },
       "no-properties-changed": "No relevant properties changed",
       "table": {
+        "notes": "Notes",
         "updated": "Date",
         "updatedBy": "Updated By",
         "version": "Version"

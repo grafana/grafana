@@ -39,7 +39,7 @@ export function RecentlyViewedDashboards() {
     retry();
   };
 
-  if (!evaluateBooleanFlag('recentlyViewedDashboards', false)) {
+  if (!evaluateBooleanFlag('recentlyViewedDashboards', false) || recentDashboards.length === 0) {
     return null;
   }
 
@@ -76,10 +76,6 @@ export function RecentlyViewedDashboards() {
         </>
       )}
       {loading && <Spinner />}
-      {/* TODO: Better empty state https://github.com/grafana/grafana/issues/114804 */}
-      {!loading && recentDashboards.length === 0 && (
-        <Text>{t('browse-dashboards.recently-viewed.empty', 'Nothing viewed yet')}</Text>
-      )}
 
       {!loading && recentDashboards.length > 0 && (
         <ul className={styles.list}>
