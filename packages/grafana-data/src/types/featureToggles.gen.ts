@@ -400,10 +400,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Use the kubernetes API for feature toggle management in the frontend
-  */
-  kubernetesFeatureToggles?: boolean;
-  /**
   * Enabled grafana cloud specific RBAC roles
   */
   cloudRBACRoles?: boolean;
