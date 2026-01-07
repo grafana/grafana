@@ -4,7 +4,6 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/hashicorp/go-hclog"
 	goplugin "github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/go-plugin/runner"
@@ -14,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace/embedded"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -73,7 +73,7 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 	cmd := exec.Command(executablePath, descriptor.executableArgs...)
 	cmd.Env = env
 
-	return &goplugin.ClientConfig{
+	cfg := &goplugin.ClientConfig{
 		Cmd:              cmd,
 		HandshakeConfig:  handshake,
 		VersionedPlugins: versionedPlugins,
@@ -90,6 +90,12 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler(otelgrpc.WithTracerProvider(newClientTracerProvider(tracer)))),
 		},
 	}
+
+	if descriptor.cmdEditor != nil {
+		descriptor.cmdEditor(cfg.Cmd)
+	}
+
+	return cfg
 }
 
 func containerClientConfig(executablePath, containerImage, containerTag string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet, skipHostEnvVars bool, tracer trace.Tracer) *goplugin.ClientConfig {
@@ -127,6 +133,7 @@ type PluginDescriptor struct {
 	skipHostEnvVars  bool
 	managed          bool
 	containerMode    containerModeOpts
+	cmdEditor        func(*exec.Cmd)
 	versionedPlugins map[int]goplugin.PluginSet
 	startRendererFn  StartRendererFunc
 }
