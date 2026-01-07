@@ -462,7 +462,7 @@
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
     "nodemailer": "7.0.11",
-    "@storybook/core@npm:8.6.2": "patch:@storybook/core@npm%3A8.6.2#~/.yarn/patches/@storybook-core-npm-8.6.2-8c752112c0.patch"
+    "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.2#~/.yarn/patches/@storybook-core-npm-8.6.2-8c752112c0.patch"
   },
   "workspaces": {
     "packages": [
