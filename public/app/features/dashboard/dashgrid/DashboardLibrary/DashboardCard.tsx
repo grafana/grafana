@@ -7,7 +7,7 @@ import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyle
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard } from './types';
+import { GnetDashboard, isGnetDashboard } from './types';
 
 interface Details {
   id: string;
@@ -28,7 +28,7 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   kind: 'template_dashboard' | 'suggested_dashboard';
-  onCheckCompatibility?: (dashboard: PluginDashboard | GnetDashboard) => void;
+  onCheckCompatibility?: (dashboard: PluginDashboard | GnetDashboard) => void | Promise<void>;
   showCompatibilityButton?: boolean;
 }
 
@@ -116,7 +116,12 @@ function DashboardCardComponent({
               icon="check-circle"
               onClick={(e) => {
                 e.stopPropagation();
-                onCheckCompatibility(dashboard);
+                // Only call compatibility check for GnetDashboards (community dashboards)
+                if (isGnetDashboard(dashboard)) {
+                  onCheckCompatibility(dashboard);
+                } else {
+                  console.warn('Compatibility check is only supported for community dashboards (GnetDashboard)');
+                }
               }}
               aria-label={t('dashboard-library.card.check-compatibility-button', 'Check compatibility')}
             />
