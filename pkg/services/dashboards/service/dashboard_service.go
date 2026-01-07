@@ -877,16 +877,24 @@ func (dr *DashboardServiceImpl) waitForSearchQuery(ctx context.Context, query *d
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
-	// cleanup duplicate provisioned dashboards first (this will have the same name and external_id)
-	// note: only works in modes 1-3
-	if err := dr.DeleteDuplicateProvisionedDashboards(ctx); err != nil {
-		dr.log.Error("Failed to delete duplicate provisioned dashboards", "error", err)
-	}
-
 	// check each org for orphaned provisioned dashboards
 	orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
 		return err
+	}
+
+	orgIDs := make([]int64, 0, len(orgs))
+	for _, org := range orgs {
+		orgIDs = append(orgIDs, org.ID)
+	}
+
+	if err := dr.DeleteDuplicateProvisionedDashboards(ctx, orgIDs, cmd.Config); err != nil {
+		dr.log.Error("Failed to delete duplicate provisioned dashboards", "error", err)
+	}
+
+	currentNames := make([]string, 0, len(cmd.Config))
+	for _, cfg := range cmd.Config {
+		currentNames = append(currentNames, cfg.Name)
 	}
 
 	for _, org := range orgs {
@@ -894,7 +902,7 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 		// find all dashboards in the org that have a file repo set that is not in the given readers list
 		foundDashs, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 			ManagedBy:            utils.ManagerKindClassicFP, //nolint:staticcheck
-			ManagerIdentityNotIn: cmd.ReaderNames,
+			ManagerIdentityNotIn: currentNames,
 			OrgId:                org.ID,
 		})
 		if err != nil {
@@ -921,7 +929,129 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 	return nil
 }
 
-func (dr *DashboardServiceImpl) DeleteDuplicateProvisionedDashboards(ctx context.Context) error {
+// searchExistingProvisionedData fetches provisioned data for the purposes of
+// duplication cleanup. Returns the set of folder UIDs for folders with the
+// given title, and the set of resources contained in those folders.
+func (dr *DashboardServiceImpl) searchExistingProvisionedData(
+	ctx context.Context, orgID int64, folderTitle string,
+) ([]string, []dashboards.DashboardSearchProjection, error) {
+	ctx, user := identity.WithServiceIdentity(ctx, orgID)
+	cmd := folder.SearchFoldersQuery{
+		OrgID:           orgID,
+		SignedInUser:    user,
+		Title:           folderTitle,
+		TitleExactMatch: true,
+	}
+
+	searchResults, err := dr.folderService.SearchFolders(ctx, cmd)
+	if err != nil {
+		return nil, nil, fmt.Errorf("checking if provisioning reset is required: %w", err)
+	}
+
+	var matchingFolders []string //nolint:prealloc
+	for _, result := range searchResults {
+		f, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID:        orgID,
+			UID:          &result.UID,
+			SignedInUser: user,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// We are only interested in folders at the top-level of the folder hierarchy.
+		// Cleanup is not performed for provisioned folders that were moved to
+		// a different location.
+		if f.ParentUID != "" {
+			continue
+		}
+
+		matchingFolders = append(matchingFolders, f.UID)
+	}
+
+	if len(matchingFolders) == 0 {
+		// If there are no folders with the same title as the provisioned folder we
+		// are looking for, there is nothing to be cleaned up.
+		return nil, nil, nil
+	}
+
+	resources, err := dr.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+		OrgId:        orgID,
+		SignedInUser: user,
+		FolderUIDs:   matchingFolders,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return matchingFolders, resources, nil
+}
+
+// maybeResetProvisioning will check for duplicated provisioned dashboards in the database. These duplications
+// happen when multiple provisioned dashboards of the same title are found, or multiple provisioned
+// folders are found. In this case, provisioned resources are deleted, allowing the provisioning
+// process to start from scratch after this function returns.
+func (dr *DashboardServiceImpl) maybeResetProvisioning(ctx context.Context, orgs []int64, configs []dashboards.ProvisioningConfig) {
+	if skipReason := canBeAutomaticallyCleanedUp(configs); skipReason != "" {
+		dr.log.Info("not eligible for automated cleanup", "reason", skipReason)
+		return
+	}
+
+	folderTitle := configs[0].Folder
+	provisionedNames := map[string]bool{}
+	for _, c := range configs {
+		provisionedNames[c.Name] = true
+	}
+
+	for _, orgID := range orgs {
+		ctx, user := identity.WithServiceIdentity(ctx, orgID)
+		provFolders, resources, err := dr.searchExistingProvisionedData(ctx, orgID, folderTitle)
+		if err != nil {
+			dr.log.Error("failed to search for provisioned data for cleanup", "org", orgID, "error", err)
+			continue
+		}
+
+		steps, err := cleanupSteps(provFolders, resources, provisionedNames)
+		if err != nil {
+			dr.log.Warn("not possible to perform automated duplicate cleanup", "org", orgID, "error", err)
+			continue
+		}
+
+		for _, step := range steps {
+			var err error
+
+			switch step.Type {
+			case searchstore.TypeDashboard:
+				err = dr.deleteDashboard(ctx, 0, step.UID, orgID, false)
+			case searchstore.TypeFolder:
+				err = dr.folderService.Delete(ctx, &folder.DeleteFolderCommand{
+					OrgID:        orgID,
+					SignedInUser: user,
+					UID:          step.UID,
+				})
+			}
+
+			if err == nil {
+				dr.log.Info("deleted duplicated provisioned resource",
+					"type", step.Type, "uid", step.UID,
+				)
+			} else {
+				dr.log.Error("failed to delete duplicated provisioned resource",
+					"type", step.Type, "uid", step.UID, "error", err,
+				)
+			}
+		}
+	}
+}
+
+func (dr *DashboardServiceImpl) DeleteDuplicateProvisionedDashboards(ctx context.Context, orgs []int64, configs []dashboards.ProvisioningConfig) error {
+	// Start from scratch if duplications that cannot be fixed by the logic
+	// below are found in the database.
+	dr.maybeResetProvisioning(ctx, orgs, configs)
+
+	// cleanup duplicate provisioned dashboards (i.e., with the same name and external_id).
+	// Note: only works in modes 1-3. This logic can be removed once mode5 is
+	// enabled everywhere.
 	duplicates, err := dr.dashboardStore.GetDuplicateProvisionedDashboards(ctx)
 	if err != nil {
 		return err
@@ -1511,6 +1641,8 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 			FolderTitle: folderTitle,
 			FolderID:    folderID,
 			FolderSlug:  slugify.Slugify(folderTitle),
+			ManagedBy:   hit.ManagedBy.Kind,
+			ManagerId:   hit.ManagedBy.ID,
 			Tags:        hit.Tags,
 		}
 
