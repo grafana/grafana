@@ -33,6 +33,21 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+  google-authentication:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
+  google-authentication-jwt:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#create-a-gcp-service-account-and-key-file
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#create-a-gcp-service-account-and-key-file
+  google-authentication-gce:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-gce-default-service-account
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-gce-default-service-account
 ---
 
 # Configure the Google Cloud Monitoring data source
@@ -54,19 +69,19 @@ Grafana includes a built-in Google Cloud Monitoring data source plugin, so you d
 Before you can request data from Google Cloud Monitoring, you must configure authentication.
 All requests to Google APIs are performed on the server-side by the Grafana backend.
 
-For authentication options and configuration details, refer to [Google authentication](../google-authentication/).
+For authentication options and configuration details, refer to [Google authentication](ref:google-authentication).
 
 When you configure Google authentication, note the following requirements specific to Google Cloud Monitoring.
 
 ### Configure a GCP Service Account
 
-When you [create a Google Cloud Platform (GCP) Service Account and key file](../google-authentication/#create-a-gcp-service-account-and-key-file), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
+When you [create a Google Cloud Platform (GCP) Service Account and key file](ref:google-authentication-jwt), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
 
 {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
 ### Grant the GCE Default Service Account scope
 
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, when you [configure a GCE Default Service Account](../google-authentication/#configure-a-gce-default-service-account), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
+If Grafana is running on a Google Compute Engine (GCE) virtual machine, when you [configure a GCE Default Service Account](ref:google-authentication-gce), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
 
 ## Enable Google Cloud Platform APIs
 

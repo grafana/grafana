@@ -11,6 +11,7 @@ keywords:
   - alerts
   - metrics
   - slo
+  - recording rules
 labels:
   products:
     - cloud
@@ -50,6 +51,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/troubleshooting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/troubleshooting/
+  recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
 ---
 
 # Google Cloud Monitoring alerting
@@ -206,6 +212,22 @@ Always verify your query returns expected data before creating an alert:
 1. Confirm the data format and values are correct.
 1. Verify the query returns numeric data suitable for threshold evaluation.
 
+## Recording rules
+
+The Google Cloud Monitoring data source supports [Grafana-managed recording rules](ref:recording-rules). Recording rules periodically pre-compute frequently used or computationally expensive queries, saving the results as a new time series metric.
+
+Use recording rules to:
+
+- Reduce query load on Google Cloud Monitoring by pre-computing complex aggregations.
+- Create derived metrics from GCP data for use in alerts and dashboards.
+- Import Google Cloud Monitoring data into a Prometheus-compatible database.
+
+{{< admonition type="note" >}}
+Grafana-managed recording rules write results to a Prometheus-compatible database (such as Grafana Mimir or the Grafana Cloud managed Prometheus). You must configure a target data source for storing the recorded metrics.
+{{< /admonition >}}
+
+For instructions on creating recording rules, refer to [Create recording rules](ref:recording-rules).
+
 ## Troubleshooting
 
 If your Google Cloud Monitoring alerts aren't working as expected, use the following sections to diagnose and resolve common issues.
@@ -238,5 +260,6 @@ For additional troubleshooting help, refer to [Troubleshoot Google Cloud Monitor
 
 - [Grafana Alerting documentation](ref:alerting)
 - [Create alert rules](ref:create-alert-rule)
+- [Create recording rules](ref:recording-rules)
 - [Google Cloud Monitoring query editor](ref:query-editor)
 

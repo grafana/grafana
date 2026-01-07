@@ -68,6 +68,41 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
+  configure-gcm:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/
+  query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
+  template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
+  annotations-gcm:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/
+  alerting-gcm:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/
+  google-authentication:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/
+  troubleshooting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/troubleshooting/
 ---
 
 # Google Cloud Monitoring data source
@@ -80,13 +115,13 @@ Grafana includes native support for the Google Cloud Monitoring plugin, so you d
 
 The following documents will help you get started with the Google Cloud Monitoring data source:
 
-- [Configure the data source](configure/) - Set up authentication and connect to Google Cloud
-- [Query editor](query-editor/) - Create and edit Metric and SLO queries
-- [Template variables](template-variables/) - Create dynamic dashboards with Google Cloud Monitoring variables
-- [Annotations](annotations/) - Overlay Google Cloud Monitoring events on graphs
-- [Alerting](alerting/) - Create alert rules based on GCP metrics and SLOs
-- [Google authentication](google-authentication/) - Configure authentication methods for GCP access
-- [Troubleshooting](troubleshooting/) - Solve common configuration and query errors
+- [Configure the data source](ref:configure-gcm) - Set up authentication and connect to Google Cloud
+- [Query editor](ref:query-editor) - Create and edit Metric and SLO queries
+- [Template variables](ref:template-variables) - Create dynamic dashboards with Google Cloud Monitoring variables
+- [Annotations](ref:annotations-gcm) - Overlay Google Cloud Monitoring events on graphs
+- [Alerting](ref:alerting-gcm) - Create alert rules based on GCP metrics and SLOs
+- [Google authentication](ref:google-authentication) - Configure authentication methods for GCP access
+- [Troubleshooting](ref:troubleshooting) - Solve common configuration and query errors
 
 ## Supported query types
 
@@ -121,7 +156,7 @@ To import a pre-configured dashboard:
 1. Click the **Dashboards** tab.
 1. Click **Import** next to the dashboard you want to use.
 
-The dashboards include a [template variable](template-variables/) populated with the projects accessible by the configured [service account](google-authentication/) each time you load the dashboard. After Grafana loads the dashboard, you can select a project from the dropdown list.
+The dashboards include a [template variable](ref:template-variables) populated with the projects accessible by the configured [service account](ref:google-authentication) each time you load the dashboard. After Grafana loads the dashboard, you can select a project from the dropdown list.
 
 To customize an imported dashboard, save it under a different name. Otherwise, Grafana upgrades can overwrite your customizations with the new version.
 
