@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
@@ -167,11 +166,11 @@ export const useCreateTeam = () => {
 };
 
 export const useGetExternalGroupMappings = (args: { teamId: string }) => {
-  if (!config.featureToggles.kubernetesExternalGroupMapping) {
-    return useGetTeamGroupsApiQuery(args);
-  }
+  const shouldUseAppPlatform = Boolean(config.featureToggles.kubernetesExternalGroupMapping);
 
-  const { data: newApiData, ...newApiRest } = useListExternalGroupMappingQuery({});
+  const legacyResult = useGetTeamGroupsApiQuery(args, { skip: shouldUseAppPlatform });
+
+  const { data: newApiData, ...newApiRest } = useListExternalGroupMappingQuery({}, { skip: !shouldUseAppPlatform });
 
   const groups: TeamGroupDto[] = useMemo(() => {
     // FIXME: Consider using the search API which has sorting support
@@ -183,16 +182,17 @@ export const useGetExternalGroupMappings = (args: { teamId: string }) => {
       }));
   }, [newApiData, args.teamId]);
 
-  return {
-    ...newApiRest,
-    data: groups,
-  };
+  if (shouldUseAppPlatform) {
+    return {
+      ...newApiRest,
+      data: groups,
+    };
+  }
+  return legacyResult;
 };
 
 export const useAddExternalGroupMapping = () => {
-  if (!config.featureToggles.kubernetesExternalGroupMapping) {
-    return useAddTeamGroupApiMutation();
-  }
+  const legacyMutation = useAddTeamGroupApiMutation();
 
   const [addNew, newResult] = useCreateExternalGroupMappingMutation();
 
@@ -212,13 +212,14 @@ export const useAddExternalGroupMapping = () => {
     });
   };
 
+  if (!config.featureToggles.kubernetesExternalGroupMapping) {
+    return legacyMutation;
+  }
   return [add, newResult] as const;
 };
 
 export const useRemoveExternalGroupMapping = () => {
-  if (!config.featureToggles.kubernetesExternalGroupMapping) {
-    return useRemoveTeamGroupApiQueryMutation();
-  }
+  const legacyMutation = useRemoveTeamGroupApiQueryMutation();
 
   const [deleteMapping, deleteResult] = useDeleteExternalGroupMappingMutation();
 
@@ -226,5 +227,8 @@ export const useRemoveExternalGroupMapping = () => {
     return deleteMapping({ name: args.uid });
   };
 
+  if (!config.featureToggles.kubernetesExternalGroupMapping) {
+    return legacyMutation;
+  }
   return [remove, deleteResult] as const;
 };
