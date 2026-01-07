@@ -2,15 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
-import { usePluginLinks } from '@grafana/runtime';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { DrilldownExtensionPoint } from './DrilldownExtensionPoint';
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  usePluginLinks: jest.fn(),
-}));
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -23,17 +18,24 @@ jest.mock('@grafana/data', () => ({
   },
 }));
 
-const usePluginLinksMock = jest.mocked(usePluginLinks);
-
 const mockGlobalOpen = jest.fn();
 global.open = mockGlobalOpen;
 
+let usePluginLinksMock: jest.Mock;
+
+beforeAll(() => {
+  usePluginLinksMock = jest.fn().mockReturnValue({ links: [], isLoading: false });
+  setPluginLinksHook(usePluginLinksMock);
+});
+
+afterEach(() => {
+  usePluginLinksMock.mockClear();
+  usePluginLinksMock.mockReturnValue({ links: [], isLoading: false });
+  mockGlobalOpen.mockClear();
+});
+
 describe('DrilldownExtensionPoint', () => {
   const defaultQueries: DataQuery[] = [{ refId: 'A' }];
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
 
   it('should render the button when queryless app links are available', () => {
     usePluginLinksMock.mockReturnValue({
