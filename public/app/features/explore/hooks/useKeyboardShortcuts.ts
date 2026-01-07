@@ -16,7 +16,6 @@ import { useDispatch } from 'app/types/store';
 
 import { runQueries } from '../state/query';
 import { selectPanesEntries } from '../state/selectors';
-
 import {
   copyTimeRangeToClipboard,
   makeAbsoluteTime,
