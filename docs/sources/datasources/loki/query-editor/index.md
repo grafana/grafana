@@ -138,11 +138,11 @@ You can type while the operations dropdown is open to search and filter the list
 
 Each operation appears as a box in the query editor. Hover over an operation's header to reveal action buttons:
 
-| Button | Action |
-| ------ | ------ |
-| {{< figure src="/static/img/docs/v95/loki_operation_replace.png" class="docs-image--no-shadow" max-width="30px" >}} | Replace the operation with a different operation of the same type. |
-| {{< figure src="/static/img/docs/v95/loki_operation_description.png" class="docs-image--no-shadow" max-width="30px" >}} | Open the operation's description tooltip. |
-| {{< figure src="/static/img/docs/v95/loki_operation_remove.png" class="docs-image--no-shadow" max-width="30px" >}} | Remove the operation. |
+| Button                                                                                                                  | Action                                                             |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| {{< figure src="/static/img/docs/v95/loki_operation_replace.png" class="docs-image--no-shadow" max-width="30px" >}}     | Replace the operation with a different operation of the same type. |
+| {{< figure src="/static/img/docs/v95/loki_operation_description.png" class="docs-image--no-shadow" max-width="30px" >}} | Open the operation's description tooltip.                          |
+| {{< figure src="/static/img/docs/v95/loki_operation_remove.png" class="docs-image--no-shadow" max-width="30px" >}}      | Remove the operation.                                              |
 
 Some operations only make sense in a specific order. If adding an operation would result in an invalid query, the editor automatically places it in the correct position. To re-order operations manually, drag the operation box by its name and drop it in the desired location.
 
@@ -178,13 +178,13 @@ The autocompletion dropdown includes documentation for suggested items where ava
 
 The following options are available in both Builder and Code mode. Expand the **Options** section to configure them.
 
-| Option | Description |
-| ------ | ----------- |
-| **Legend** | Controls the time series name using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`. |
-| **Type** | Selects the query type. `instant` queries a single point in time (uses the "To" time from the time range). `range` queries over the selected time range. |
-| **Line limit** | Defines the maximum number of log lines returned by a query. Default is `1000`. |
-| **Direction** | Determines the search order. **Backward** searches from the end of the time range (default). **Forward** searches from the beginning. |
-| **Step** | Sets the step parameter for metric queries. Default is `$__auto`, calculated using the time range and graph width. |
+| Option         | Description                                                                                                                                              |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Legend**     | Controls the time series name using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.            |
+| **Type**       | Selects the query type. `instant` queries a single point in time (uses the "To" time from the time range). `range` queries over the selected time range. |
+| **Line limit** | Defines the maximum number of log lines returned by a query. Default is `1000`.                                                                          |
+| **Direction**  | Determines the search order. **Backward** searches from the end of the time range (default). **Forward** searches from the beginning.                    |
+| **Step**       | Sets the step parameter for metric queries. Default is `$__auto`, calculated using the time range and graph width.                                       |
 
 ### Query stats
 
@@ -232,12 +232,12 @@ Metric queries use LogQL to extract numeric data from logs. You wrap a log query
 
 ### Common metric query patterns
 
-| Function | Description | Example |
-| -------- | ----------- | ------- |
-| `rate()` | Calculates the number of log entries per second | `rate({job="app"}[5m])` |
-| `count_over_time()` | Counts log entries over the specified interval | `count_over_time({job="app"}[1h])` |
-| `bytes_rate()` | Calculates bytes per second of log entries | `bytes_rate({job="app"}[5m])` |
-| `sum_over_time()` | Sums extracted numeric values | `sum_over_time({job="app"} \| unwrap duration [5m])` |
+| Function            | Description                                     | Example                                              |
+| ------------------- | ----------------------------------------------- | ---------------------------------------------------- |
+| `rate()`            | Calculates the number of log entries per second | `rate({job="app"}[5m])`                              |
+| `count_over_time()` | Counts log entries over the specified interval  | `count_over_time({job="app"}[1h])`                   |
+| `bytes_rate()`      | Calculates bytes per second of log entries      | `bytes_rate({job="app"}[5m])`                        |
+| `sum_over_time()`   | Sums extracted numeric values                   | `sum_over_time({job="app"} \| unwrap duration [5m])` |
 
 ### Build a metric query
 

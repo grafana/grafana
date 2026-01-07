@@ -62,13 +62,13 @@ Use the query field to enter a LogQL expression that filters the log events to d
 
 **Examples:**
 
-| Query                                               | Description                                         |
-| --------------------------------------------------- | --------------------------------------------------- |
-| `{job="app"}`                                       | Shows all logs from the "app" job.                  |
-| `{job="app"} \|= "error"`                           | Shows logs containing "error" from the "app" job.   |
-| `{namespace="production"} \|= "deployed"`           | Shows deployment events in production.              |
-| `{job="app"} \| logfmt \| level="error"`            | Shows error-level logs using logfmt parsing.        |
-| `{job="$job"}`                                      | Uses a template variable to filter by job.          |
+| Query                                     | Description                                       |
+| ----------------------------------------- | ------------------------------------------------- |
+| `{job="app"}`                             | Shows all logs from the "app" job.                |
+| `{job="app"} \|= "error"`                 | Shows logs containing "error" from the "app" job. |
+| `{namespace="production"} \|= "deployed"` | Shows deployment events in production.            |
+| `{job="app"} \| logfmt \| level="error"`  | Shows error-level logs using logfmt parsing.      |
+| `{job="$job"}`                            | Uses a template variable to filter by job.        |
 
 You can use template variables in your annotation queries to make them dynamic based on dashboard selections.
 
@@ -141,4 +141,3 @@ To create dynamic annotations that respond to dashboard variable selections:
    - **Tags:** `severity`
 
 This configuration displays only alerts for the selected job, making the annotations relevant to the current dashboard context.
-

@@ -127,12 +127,12 @@ The following errors occur when there are issues with LogQL query syntax or exec
 
 **Common syntax issues:**
 
-| Issue | Incorrect | Correct |
-| ----- | --------- | ------- |
-| Missing quotes | `{job=app}` | `{job="app"}` |
-| Wrong operator | `{job=="app"}` | `{job="app"}` |
-| Unbalanced braces | `{job="app"` | `{job="app"}` |
-| Invalid regex | `{job=~"["}` | `{job=~"\\["}` |
+| Issue             | Incorrect      | Correct        |
+| ----------------- | -------------- | -------------- |
+| Missing quotes    | `{job=app}`    | `{job="app"}`  |
+| Wrong operator    | `{job=="app"}` | `{job="app"}`  |
+| Unbalanced braces | `{job="app"`   | `{job="app"}`  |
+| Invalid regex     | `{job=~"["}`   | `{job=~"\\["}` |
 
 ### Query limits exceeded
 
@@ -240,11 +240,11 @@ The following issues don't always produce specific error messages but are common
 
 **Query optimization tips:**
 
-| Slow | Fast |
-| ---- | ---- |
+| Slow                                      | Fast                                              |
+| ----------------------------------------- | ------------------------------------------------- |
 | `{namespace="prod"} \|~ "error.*timeout"` | `{namespace="prod", level="error"} \|= "timeout"` |
-| `{job=~".+"}` (matches all) | `{job="specific-job"}` |
-| Wide time range, no filters | Narrow time range with label filters |
+| `{job=~".+"}` (matches all)               | `{job="specific-job"}`                            |
+| Wide time range, no filters               | Narrow time range with label filters              |
 
 ### Labels not appearing in dropdown
 
@@ -383,4 +383,3 @@ When reporting issues, include the following information:
 - Sample LogQL query (if applicable, with sensitive data redacted)
 - Time range of the query
 - Approximate volume of logs being queried
-

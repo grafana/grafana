@@ -55,25 +55,25 @@ Loki alerting requires **metric queries** that return numeric time series data. 
 
 ### Query types and alerting compatibility
 
-| Query type    | Alerting support | Notes                                            |
-| ------------- | ---------------- | ------------------------------------------------ |
-| Metric query  | ✅ Full support  | Use range aggregation functions like `rate()`    |
-| Log query     | ❌ Not supported | Convert to metric query using aggregations       |
-| Instant query | ⚠️ Limited       | Range queries recommended for time-based alerts  |
+| Query type    | Alerting support | Notes                                           |
+| ------------- | ---------------- | ----------------------------------------------- |
+| Metric query  | ✅ Full support  | Use range aggregation functions like `rate()`   |
+| Log query     | ❌ Not supported | Convert to metric query using aggregations      |
+| Instant query | ⚠️ Limited       | Range queries recommended for time-based alerts |
 
 ### Common metric functions for alerting
 
 Use these LogQL functions to convert log queries into metric queries suitable for alerting:
 
-| Function            | Description                                      | Example                                              |
-| ------------------- | ------------------------------------------------ | ---------------------------------------------------- |
-| `rate()`            | Rate of log entries per second                   | `rate({job="app"}[5m])`                              |
-| `count_over_time()` | Count of log entries in the specified interval   | `count_over_time({job="app"}[5m])`                   |
-| `sum_over_time()`   | Sum of extracted numeric values                  | `sum_over_time({job="app"} \| unwrap latency [5m])`  |
-| `avg_over_time()`   | Average of extracted numeric values              | `avg_over_time({job="app"} \| unwrap latency [5m])` |
-| `max_over_time()`   | Maximum extracted value in the interval          | `max_over_time({job="app"} \| unwrap latency [5m])` |
-| `bytes_rate()`      | Rate of bytes per second                         | `bytes_rate({job="app"}[5m])`                        |
-| `absent_over_time()`| Returns 1 if no logs exist in the interval       | `absent_over_time({job="app"}[5m])`                  |
+| Function             | Description                                    | Example                                             |
+| -------------------- | ---------------------------------------------- | --------------------------------------------------- |
+| `rate()`             | Rate of log entries per second                 | `rate({job="app"}[5m])`                             |
+| `count_over_time()`  | Count of log entries in the specified interval | `count_over_time({job="app"}[5m])`                  |
+| `sum_over_time()`    | Sum of extracted numeric values                | `sum_over_time({job="app"} \| unwrap latency [5m])` |
+| `avg_over_time()`    | Average of extracted numeric values            | `avg_over_time({job="app"} \| unwrap latency [5m])` |
+| `max_over_time()`    | Maximum extracted value in the interval        | `max_over_time({job="app"} \| unwrap latency [5m])` |
+| `bytes_rate()`       | Rate of bytes per second                       | `bytes_rate({job="app"}[5m])`                       |
+| `absent_over_time()` | Returns 1 if no logs exist in the interval     | `absent_over_time({job="app"}[5m])`                 |
 
 ## Create an alert rule
 
@@ -176,4 +176,3 @@ Follow these best practices when creating Loki alerts:
 - **Test queries first:** Verify your query returns expected numeric results in Explore before creating an alert.
 - **Use meaningful thresholds:** Base alert thresholds on historical patterns in your log data.
 - **Add context with labels:** Include relevant labels in your alert to help with triage.
-

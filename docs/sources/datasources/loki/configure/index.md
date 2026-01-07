@@ -93,45 +93,45 @@ You are taken to the **Settings** tab where you will set up your Loki configurat
 
 The following are the configuration options for Loki.
 
-| Name | Description |
-| ---- | ----------- |
-| **Name** | The data source name. This is how you refer to the data source in panels and queries. Examples: `loki-1`, `loki_logs`. |
-| **Default** | Toggle to set this data source as the default. When enabled, new panels automatically use this data source. |
+| Name        | Description                                                                                                            |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Name**    | The data source name. This is how you refer to the data source in panels and queries. Examples: `loki-1`, `loki_logs`. |
+| **Default** | Toggle to set this data source as the default. When enabled, new panels automatically use this data source.            |
 
 ### Connection section
 
-| Name | Description |
-| ---- | ----------- |
+| Name    | Description                                                                                                                                          |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **URL** | The URL of your Loki server, including the port. The default Loki port is `3100`. Examples: `http://localhost:3100`, `http://loki.example.org:3100`. |
 
 ### Authentication section
 
 Select an authentication method from the **Authentication** dropdown.
 
-| Setting | Description |
-| ---- | ----------- |
-| **No authentication** | No authentication is required to access the data source. |
-| **Basic authentication** | Authenticate using a username and password. Enter the credentials in the **User** and **Password** fields. |
-| **Forward OAuth identity** | Forward the OAuth access token (and the OIDC ID token if available) of the user querying the data source. |
+| Setting                    | Description                                                                                                |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **No authentication**      | No authentication is required to access the data source.                                                   |
+| **Basic authentication**   | Authenticate using a username and password. Enter the credentials in the **User** and **Password** fields. |
+| **Forward OAuth identity** | Forward the OAuth access token (and the OIDC ID token if available) of the user querying the data source.  |
 
 ### TLS settings
 
 Use TLS (Transport Layer Security) for an additional layer of security when working with Loki. For more information on setting up TLS encryption with Loki, refer to [Grafana Loki configuration parameters](https://grafana.com/docs/loki/latest/configuration/).
 
-| Setting | Description |
-| ---- | ----------- |
-| **Add self-signed certificate** | Enable to add a self-signed CA certificate. When enabled, enter the certificate in the **CA Certificate** field. The certificate must begin with `-----BEGIN CERTIFICATE-----`. |
-| **TLS Client Authentication** | Enable to use client certificate authentication. When enabled, enter the **ServerName** (for example, `domain.example.com`), **Client Certificate** (begins with `-----BEGIN CERTIFICATE-----`), and **Client Key** (begins with `-----BEGIN RSA PRIVATE KEY-----`). |
-| **Skip TLS certificate validation** | Enable to bypass TLS certificate validation. Use this option only for testing or when connecting to Loki instances with self-signed certificates. |
+| Setting                             | Description                                                                                                                                                                                                                                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Add self-signed certificate**     | Enable to add a self-signed CA certificate. When enabled, enter the certificate in the **CA Certificate** field. The certificate must begin with `-----BEGIN CERTIFICATE-----`.                                                                                      |
+| **TLS Client Authentication**       | Enable to use client certificate authentication. When enabled, enter the **ServerName** (for example, `domain.example.com`), **Client Certificate** (begins with `-----BEGIN CERTIFICATE-----`), and **Client Key** (begins with `-----BEGIN RSA PRIVATE KEY-----`). |
+| **Skip TLS certificate validation** | Enable to bypass TLS certificate validation. Use this option only for testing or when connecting to Loki instances with self-signed certificates.                                                                                                                    |
 
 ### HTTP headers
 
 Use HTTP headers to pass along additional context and metadata about the request/response.
 
-| Setting | Description |
-| ---- | ----------- |
+| Setting    | Description                                                    |
+| ---------- | -------------------------------------------------------------- |
 | **Header** | The name of the custom header. For example, `X-Custom-Header`. |
-| **Value** | The value of the custom header. For example, `Header value`. |
+| **Value**  | The value of the custom header. For example, `Header value`.   |
 
 Click **+ Add another header** to add additional headers.
 
@@ -141,25 +141,25 @@ Additional settings are optional settings that you can configure for more contro
 
 ### Advanced HTTP settings
 
-| Setting | Description |
-| ------- | ----------- |
+| Setting             | Description                                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | **Allowed cookies** | Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default. |
-| **Timeout** | The HTTP request timeout in seconds. If not set, the default Grafana timeout is used. |
+| **Timeout**         | The HTTP request timeout in seconds. If not set, the default Grafana timeout is used.                                            |
 
 ### Alerting
 
 Manage alert rules for the Loki data source. For more information, refer to [Alerting](ref:alerting).
 
-| Setting | Description |
-| ------- | ----------- |
+| Setting                               | Description                                                                        |
+| ------------------------------------- | ---------------------------------------------------------------------------------- |
 | **Manage alert rules in Alerting UI** | Toggle to manage alert rules for this Loki data source in the Grafana Alerting UI. |
 
 ### Queries
 
 Configure options to customize your querying experience.
 
-| Setting | Description |
-| ------- | ----------- |
+| Setting           | Description                                                                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Maximum lines** | The maximum number of log lines returned by Loki. The default is `1000`. Increase for larger result sets during ad-hoc analysis. Decrease if your browser is sluggish when displaying log results. |
 
 ### Derived fields
@@ -168,15 +168,15 @@ Derived fields can be used to extract new fields from a log message and create a
 
 Click **+ Add** to add a derived field. Each derived field has the following settings:
 
-| Setting | Description |
-| ------- | ----------- |
-| **Name** | The field name. Displayed as a label in the log details. |
-| **Type** | The type of derived field. Select **Regex in log line** to extract values using a regular expression, or **Label** to use an existing label value. |
-| **Regex** | A regular expression to parse a part of the log message and capture it as the value of the new field. Can contain only one capture group. |
-| **URL** | The full link URL if the link is external, or a query for the target data source if the link is internal. You can interpolate the value from the field with the `${__value.raw}` macro. For example, `http://example.com/${__value.raw}`. |
-| **URL Label** | A custom display label for the link. This setting overrides the link label, which defaults to the full external URL or name of the linked internal data source. |
-| **Internal link** | Toggle to define an internal link. When enabled, you can select the target data source from a selector. This supports only tracing data sources. |
-| **Open in new tab** | Toggle to open the link in a new browser tab or window. |
+| Setting             | Description                                                                                                                                                                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**            | The field name. Displayed as a label in the log details.                                                                                                                                                                                  |
+| **Type**            | The type of derived field. Select **Regex in log line** to extract values using a regular expression, or **Label** to use an existing label value.                                                                                        |
+| **Regex**           | A regular expression to parse a part of the log message and capture it as the value of the new field. Can contain only one capture group.                                                                                                 |
+| **URL**             | The full link URL if the link is external, or a query for the target data source if the link is internal. You can interpolate the value from the field with the `${__value.raw}` macro. For example, `http://example.com/${__value.raw}`. |
+| **URL Label**       | A custom display label for the link. This setting overrides the link label, which defaults to the full external URL or name of the linked internal data source.                                                                           |
+| **Internal link**   | Toggle to define an internal link. When enabled, you can select the target data source from a selector. This supports only tracing data sources.                                                                                          |
+| **Open in new tab** | Toggle to open the link in a new browser tab or window.                                                                                                                                                                                   |
 
 {{< admonition type="caution" >}}
 Using complex regular expressions can impact browser performance when processing large volumes of logs. Consider using simpler patterns when possible.
