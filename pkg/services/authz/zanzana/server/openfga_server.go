@@ -58,7 +58,7 @@ func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADa
 		server.WithContextPropagationToDatastore(true),
 	}
 
-	// ListObjects settings (new)
+	// ListObjects settings
 	if cfg.OpenFgaServerSettings.MaxConcurrentReadsForListObjects != 0 {
 		opts = append(opts, server.WithMaxConcurrentReadsForListObjects(cfg.OpenFgaServerSettings.MaxConcurrentReadsForListObjects))
 	}
@@ -153,7 +153,6 @@ func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADa
 		opts = append(opts, server.WithShadowListObjectsQueryMaxDeltaItems(cfg.OpenFgaServerSettings.ShadowListObjectsQueryMaxDeltaItems))
 	}
 
-	// Request settings
 	if cfg.OpenFgaServerSettings.RequestTimeout != 0 {
 		opts = append(opts, server.WithRequestTimeout(cfg.OpenFgaServerSettings.RequestTimeout))
 	}

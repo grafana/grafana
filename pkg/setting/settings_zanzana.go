@@ -290,7 +290,6 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.OpenFgaServerSettings.ShadowListObjectsQueryTimeout = openfgaSec.Key("shadow_list_objects_query_timeout").MustDuration(0)
 	zs.OpenFgaServerSettings.ShadowListObjectsQueryMaxDeltaItems = openfgaSec.Key("shadow_list_objects_query_max_delta_items").MustInt(0)
 
-	// Request settings
 	zs.OpenFgaServerSettings.RequestTimeout = openfgaSec.Key("request_timeout").MustDuration(0)
 	zs.OpenFgaServerSettings.MaxAuthorizationModelSizeInBytes = openfgaSec.Key("max_authorization_model_size_in_bytes").MustInt(0)
 	zs.OpenFgaServerSettings.AuthorizationModelCacheSize = openfgaSec.Key("authorization_model_cache_size").MustInt(0)
