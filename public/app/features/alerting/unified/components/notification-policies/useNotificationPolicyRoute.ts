@@ -3,7 +3,7 @@ import memoize from 'micro-memoize';
 
 import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ROUTES_META_SYMBOL, Route, RouteWithID, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAPINamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -12,8 +12,9 @@ import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNe
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefaults,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
+  generatedRoutesApi as routingTreeApi,
 } from '../../openapi/routesApi.gen';
-import { routesApi as routingTreeApi, routeToK8sSubRoute } from '../../api/routesApi';
 import {
   addRouteAction,
   deleteRouteAction,
@@ -22,7 +23,7 @@ import {
 import { FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
-import { shouldUseK8sApi } from '../../utils/k8s/utils';
+import { isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { routeAdapter } from '../../utils/routeAdapter';
 import {
   InsertPosition,
@@ -57,11 +58,21 @@ export const useNotificationPolicyRoute = (
     {
       skip: skip || !k8sApiSupported,
       selectFromResult: (result) => {
-        return {
-          ...result,
-          currentData: result.currentData,
-          data: result.data,
-        };
+          const { data, currentData, ...rest } = result;
+
+          const transformed = useMemo(() => {
+            return data ? k8sRouteToRoute(data) : data;
+          }, [data]);
+
+          const transformedCurrent = useMemo(() => {
+            return currentData ? k8sRouteToRoute(currentData) : currentData;
+          }, [currentData]);
+
+          return {
+            ...rest,
+            data: transformed,
+            currentData: transformedCurrent,
+          };
       },
     }
   );
@@ -90,10 +101,20 @@ export const useListNotificationPolicyRoutes = ({ skip }: Skippable = {}) => {
     {
       skip: skip,
       selectFromResult: (result) => {
+        const { data, currentData, ...rest } = result;
+
+        const transformed = useMemo(() => {
+          return data ? data.items.map(k8sRouteToRoute) : data;
+        }, [data]);
+
+        const transformedCurrent = useMemo(() => {
+          return currentData ? currentData.items.map(k8sRouteToRoute) : currentData;
+        }, [currentData]);
+
         return {
-          ...result,
-          currentData: result.currentData,
-          data: result.data,
+          ...rest,
+          data: transformed,
+          currentData: transformedCurrent,
         };
       },
     }
@@ -125,7 +146,7 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
       throw new Error(`no root route found for namespace ${namespace} and name ${name}`);
     }
 
-    const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
+    const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(k8sRouteToRoute(rootTree));
     const newRouteTree = mergePartialAmRouteWithRouteTree(alertmanager, update, rootRouteWithIdentifiers);
 
     // Create the K8s route object
@@ -162,7 +183,7 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
       throw new Error(`no root route found for namespace ${namespace}`);
     }
 
-    const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
+    const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(k8sRouteToRoute(rootTree));
     const newRouteTree = omitRouteFromRouteTree(route.id, rootRouteWithIdentifiers);
 
     // Create the K8s route object
@@ -208,7 +229,7 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
         throw new Error(`no root route found for namespace ${namespace}`);
       }
 
-      const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
+      const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(k8sRouteToRoute(rootTree));
       const newRouteTree = addRouteToReferenceRoute(
         alertmanager ?? '',
         partialRoute,
@@ -367,5 +388,65 @@ export function createKubernetesRoutingTreeSpec(
       name: name,
       resourceVersion: rootRoute[ROUTES_META_SYMBOL]?.resourceVersion,
     },
+  };
+}
+
+
+export const NAMED_ROOT_LABEL_NAME = '__grafana_managed_route__';
+
+function k8sRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree): Route {
+  return {
+    ...route.spec.defaults,
+    name: route.metadata.name,
+    routes: route.spec.routes?.map((subroute) => k8sSubRouteToRoute(subroute, route.metadata.name)),
+    // This assumes if a `NAMED_ROOT_LABEL_NAME` label exists, it will NOT go to the default route, which is a fair but
+    // not perfect assumption since we don't yet protect the label.
+    object_matchers:
+      route.metadata.name == ROOT_ROUTE_NAME || !route.metadata.name
+        ? [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, '']]
+        : [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, route.metadata.name]],
+    [ROUTES_META_SYMBOL]: {
+      provisioned: isK8sEntityProvisioned(route),
+      resourceVersion: route.metadata.resourceVersion,
+      name: route.metadata.name,
+      metadata: route.metadata,
+    },
+  };
+}
+
+/** Helper to provide type safety for matcher operators from API */
+function isValidMatcherOperator(type: string): type is MatcherOperator {
+  return Object.values<string>(MatcherOperator).includes(type);
+}
+
+export function k8sSubRouteToRoute(
+  route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
+  rootName?: string
+): Route {
+  return {
+    ...route,
+    name: rootName,
+    routes: route.routes?.map((subroute) => k8sSubRouteToRoute(subroute, rootName)),
+    matchers: undefined,
+    object_matchers: route.matchers?.map(({ label, type, value }) => {
+      if (!isValidMatcherOperator(type)) {
+        throw new Error(`Invalid matcher operator from API: ${type}`);
+      }
+      return [label, type, value];
+    }),
+  };
+}
+
+export function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route {
+  const { object_matchers, ...rest } = route;
+  return {
+    ...rest,
+    receiver: route.receiver ?? undefined,
+    matchers: object_matchers?.map(([label, type, value]) => ({
+      label,
+      type,
+      value,
+    })),
+    routes: route.routes?.map(routeToK8sSubRoute),
   };
 }
