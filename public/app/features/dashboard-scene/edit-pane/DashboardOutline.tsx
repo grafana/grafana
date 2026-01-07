@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
-import { Box, Icon, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -24,12 +24,14 @@ export function DashboardOutline({ editPane, isEditing }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
 
   return (
-    <>
+    <Box display="flex" direction="column" flex={1} height="100%">
       <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
-      <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
-        <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
-      </Box>
-    </>
+      <ScrollContainer showScrollIndicators={true}>
+        <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
+          <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
+        </Box>
+      </ScrollContainer>
+    </Box>
   );
 }
 

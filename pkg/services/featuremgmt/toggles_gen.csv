@@ -280,3 +280,6 @@ rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,t
 kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
 useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
 multiPropsVariables,experimental,@grafana/dashboards-squad,false,false,true
+smoothingTransformation,experimental,@grafana/datapro,false,false,true
+secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
+profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false

@@ -321,7 +321,7 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
 	require.NoError(t, err)
 	if !opts.OpenFeatureAPIEnabled {
-		_, err = openFeatureSect.NewKey("provider", "static") // in practice, APIEnabled being false goes with goff type, but trying to make tests work
+		_, err = openFeatureSect.NewKey("provider", "static") // in practice, APIEnabled being false goes with features-service type, but trying to make tests work
 		require.NoError(t, err)
 		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
 		require.NoError(t, err)

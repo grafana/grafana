@@ -3124,9 +3124,12 @@
       "table": "表格"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "定義警報規則觸發前必須滿足的條件",
       "description-configure-firing-alert-instances-routed-contact": "設定如何將觸發的警報執行個體傳送至聯絡點",
       "description-configure-receives-notifications": "設定接收通知的對象以及傳送方式",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "警報規則",
       "title-contact-points": "聯絡點",
       "title-notification-policies": "通知政策"
@@ -5776,6 +5779,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -14338,6 +14342,17 @@
       },
       "name": {
         "series-to-rows": "將序列轉為列"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

@@ -3124,9 +3124,12 @@
       "table": "テーブル"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "アラートルールが発生される前に満たすべき条件を定義します",
       "description-configure-firing-alert-instances-routed-contact": "発生中のアラートインスタンスを連絡先にルーティングする方法を設定",
       "description-configure-receives-notifications": "通知の受信者と送信方法を設定",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "アラートルール",
       "title-contact-points": "コンタクトポイント",
       "title-notification-policies": "通知ポリシー"
@@ -5776,6 +5779,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -14338,6 +14342,17 @@
       },
       "name": {
         "series-to-rows": "系列を行に変換"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

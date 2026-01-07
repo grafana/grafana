@@ -3135,9 +3135,12 @@
       "table": "Tabela"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Definir a condição que deve ser cumprida antes de uma regra de alerta ser acionada",
       "description-configure-firing-alert-instances-routed-contact": "Configurar como as instâncias de alerta de ativação são encaminhadas para os pontos de contacto",
       "description-configure-receives-notifications": "Configurar quem recebe notificações e como são enviadas",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Regras de alerta",
       "title-contact-points": "Pontos de contacto",
       "title-notification-policies": "Políticas de notificação"
@@ -5796,6 +5799,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -14394,6 +14398,17 @@
       },
       "name": {
         "series-to-rows": "Série para linhas"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {
