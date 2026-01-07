@@ -3256,6 +3256,22 @@
     },
     {
       "metadata": {
+        "name": "secretsManagementAppPlatformAwsKeeper",
+        "resourceVersion": "1767706420889",
+        "creationTimestamp": "2026-01-06T12:55:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-06 13:33:40.889447 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the creation of keepers that manage secrets stored on AWS secrets manager",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "secretsManagementAppPlatformUI",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-31T22:56:50Z",
