@@ -33,26 +33,27 @@ export function RadialBarPanel({
 
     return (
       <RadialGauge
-        values={[value]}
-        width={width}
-        height={height}
+        alignmentFactors={valueProps.alignmentFactors}
         barWidthFactor={options.barWidthFactor}
-        gradient={options.effects?.gradient}
+        endpointMarker={options.endpointMarker !== 'none' ? options.endpointMarker : undefined}
         glowBar={options.effects?.barGlow}
         glowCenter={options.effects?.centerGlow}
+        gradient={options.effects?.gradient}
+        height={height}
+        nameManualFontSize={options.text?.titleSize}
+        neutral={options.neutral}
+        onClick={menuProps.openMenu}
         roundedBars={options.barShape === 'rounded'}
-        vizCount={valueProps.count}
-        shape={options.shape}
         segmentCount={options.segmentCount}
         segmentSpacing={options.segmentSpacing}
-        thresholdsBar={options.showThresholdMarkers}
+        shape={options.shape}
         showScaleLabels={options.showThresholdLabels}
-        alignmentFactors={valueProps.alignmentFactors}
-        valueManualFontSize={options.text?.valueSize}
-        nameManualFontSize={options.text?.titleSize}
-        endpointMarker={options.endpointMarker !== 'none' ? options.endpointMarker : undefined}
-        onClick={menuProps.openMenu}
         textMode={options.textMode}
+        thresholdsBar={options.showThresholdMarkers}
+        valueManualFontSize={options.text?.valueSize}
+        values={[value]}
+        vizCount={valueProps.count}
+        width={width}
       />
     );
   }

@@ -28,19 +28,30 @@ export function getValueAngleForValue(
   fieldDisplay: FieldDisplay,
   startAngle: number,
   endAngle: number,
-  value = fieldDisplay.display.numeric
+  neutral?: number
 ) {
   const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
+  const value = fieldDisplay.display.numeric;
 
-  let angle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
+  const valueAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
 
-  if (angle > angleRange) {
-    angle = angleRange;
-  } else if (angle < 0) {
-    angle = 0;
+  let endValueAngle = valueAngle;
+
+  let startValueAngle = 0;
+  if (typeof neutral === 'number') {
+    const neutralAngle = getValuePercentageForValue(fieldDisplay, neutral) * angleRange;
+    if (neutralAngle <= valueAngle) {
+      startValueAngle = neutralAngle;
+      endValueAngle = valueAngle - neutralAngle;
+    } else {
+      startValueAngle = valueAngle;
+      endValueAngle = neutralAngle - valueAngle;
+    }
   }
 
-  return { angleRange, angle };
+  const clampedEndValueAngle = Math.min(Math.max(endValueAngle, 0), angleRange);
+
+  return { angleRange, startValueAngle, endValueAngle: clampedEndValueAngle };
 }
 
 /**

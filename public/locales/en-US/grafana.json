@@ -12528,6 +12528,11 @@
       "endpoint-marker-glow": "Glow",
       "endpoint-marker-none": "None",
       "endpoint-marker-point": "Point",
+      "neutral": {
+        "description": "Leave empty to use Min as neutral point",
+        "placeholder": "none",
+        "title": "Neutral value"
+      },
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
       "shape": "Style",

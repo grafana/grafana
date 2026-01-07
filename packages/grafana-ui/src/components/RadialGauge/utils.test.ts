@@ -233,7 +233,8 @@ describe('RadialGauge utils', () => {
       const fieldDisplay = createFieldDisplay(50, 0, 100);
       const result = getValueAngleForValue(fieldDisplay, 0, 360);
 
-      expect(result.angle).toBe(180); // 50% of 360°
+      expect(result.startValueAngle).toBe(0);
+      expect(result.endValueAngle).toBe(180); // 50% of 360°
       expect(result.angleRange).toBe(360);
     });
 
@@ -241,7 +242,8 @@ describe('RadialGauge utils', () => {
       const fieldDisplay = createFieldDisplay(50, 0, 100);
       const result = getValueAngleForValue(fieldDisplay, 90, 270);
 
-      expect(result.angle).toBe(135); // 50% of 360° range
+      expect(result.startValueAngle).toBe(0);
+      expect(result.endValueAngle).toBe(135); // 50% of 360° range
       expect(result.angleRange).toBe(270);
     });
 
@@ -249,28 +251,28 @@ describe('RadialGauge utils', () => {
       const fieldDisplay = createFieldDisplay(150, 0, 100); // value exceeds max
       const result = getValueAngleForValue(fieldDisplay, 0, 360);
 
-      expect(result.angle).toBe(360); // clamped to angleRange
+      expect(result.endValueAngle).toBe(360); // clamped to angleRange
     });
 
     it('should handle minimum values', () => {
       const fieldDisplay = createFieldDisplay(0, 0, 100);
       const result = getValueAngleForValue(fieldDisplay, 0, 360);
 
-      expect(result.angle).toBe(0);
+      expect(result.endValueAngle).toBe(0);
     });
 
     it('should handle maximum values', () => {
       const fieldDisplay = createFieldDisplay(100, 0, 100);
       const result = getValueAngleForValue(fieldDisplay, 0, 360);
 
-      expect(result.angle).toBe(360);
+      expect(result.endValueAngle).toBe(360);
     });
 
     it('should handle values lower than min', () => {
       const fieldDisplay = createFieldDisplay(-50, 0, 100);
       const result = getValueAngleForValue(fieldDisplay, 240, 120);
 
-      expect(result.angle).toBe(0);
+      expect(result.endValueAngle).toBe(0);
     });
 
     it('should handle values higher than max', () => {
@@ -278,8 +280,10 @@ describe('RadialGauge utils', () => {
       const result = getValueAngleForValue(fieldDisplay, 240, 120);
 
       // Expect the angle to be clamped to the maximum range
-      expect(result.angle).toBe(240);
+      expect(result.endValueAngle).toBe(240);
     });
+
+    // TODO add tests for neutral handling once implemented
   });
 
   describe('drawRadialArcPath', () => {
