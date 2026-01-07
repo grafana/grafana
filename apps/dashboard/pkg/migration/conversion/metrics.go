@@ -76,29 +76,38 @@ func convertAPIVersionToFuncName(apiVersion string) string {
 // It optionally runs a data loss check function after successful conversion
 func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversionFunc func(a, b interface{}, scope conversion.Scope) error) func(a, b interface{}, scope conversion.Scope) error {
 	return func(a, b interface{}, scope conversion.Scope) error {
-		// Extract dashboard UID and schema version from source
+		// Extract dashboard UID, title, and schema version from source
 		var dashboardUID string
+		var dashboardTitle string
 		var sourceSchemaVersion interface{}
 		var targetSchemaVersion interface{}
 
-		// Try to extract UID and schema version from source dashboard
+		// Try to extract UID, title, and schema version from source dashboard
 		// Only track schema versions for v0/v1 dashboards (v2+ info is redundant with API version)
 		switch source := a.(type) {
 		case *dashv0.Dashboard:
 			dashboardUID = source.Name
 			if source.Spec.Object != nil {
 				sourceSchemaVersion = schemaversion.GetSchemaVersion(source.Spec.Object)
+				if title, ok := source.Spec.Object["title"].(string); ok {
+					dashboardTitle = title
+				}
 			}
 		case *dashv1.Dashboard:
 			dashboardUID = source.Name
 			if source.Spec.Object != nil {
 				sourceSchemaVersion = schemaversion.GetSchemaVersion(source.Spec.Object)
+				if title, ok := source.Spec.Object["title"].(string); ok {
+					dashboardTitle = title
+				}
 			}
 		case *dashv2alpha1.Dashboard:
 			dashboardUID = source.Name
+			dashboardTitle = source.Spec.Title
 			// Don't track schema version for v2+ (redundant with API version)
 		case *dashv2beta1.Dashboard:
 			dashboardUID = source.Name
+			dashboardTitle = source.Spec.Title
 			// Don't track schema version for v2+ (redundant with API version)
 		}
 
@@ -167,6 +176,7 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 				"targetVersionAPI", targetVersionAPI,
 				"erroredConversionFunc", getErroredConversionFunc(err),
 				"dashboardUID", dashboardUID,
+				"dashboardTitle", dashboardTitle,
 			}
 
 			// Add schema version fields only if we have them (v0/v1 dashboards)
@@ -227,6 +237,7 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 				"sourceVersionAPI", sourceVersionAPI,
 				"targetVersionAPI", targetVersionAPI,
 				"dashboardUID", dashboardUID,
+				"dashboardTitle", dashboardTitle,
 			}
 
 			// Add schema version fields only if we have them (v0/v1 dashboards)
