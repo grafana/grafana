@@ -10,7 +10,7 @@ export function setStore(newStore: Store<StoreState>) {
 
 export function getState(): StoreState {
   if (!store || !store.getState) {
-    return { defaultReducer: () => ({}), templating: { lastKey: 'key' } }  // used by tests
+    return { defaultReducer: () => ({}), templating: { lastKey: 'key' } }; // used by tests
   }
 
   return store.getState();
