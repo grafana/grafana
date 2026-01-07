@@ -505,7 +505,6 @@ function PieSlice({
       onKeyDown={shouldBeFocusable ? handleKeyDown : undefined}
       onFocus={hasDataLinks ? handleFocus : undefined}
       onBlur={hasDataLinks ? handleBlur : undefined}
-      style={{ outline: 'none' }}
       data-testid={selectors.components.Panels.Visualization.PieChart.svgSlice}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
@@ -692,17 +691,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     svgArg: {
       normal: css({
+        outline: 'none',
         [theme.transitions.handleMotion('no-preference')]: {
           transition: 'all 200ms ease-in-out',
         },
       }),
       highlighted: css({
+        outline: 'none',
         [theme.transitions.handleMotion('no-preference')]: {
           transition: 'all 200ms ease-in-out',
         },
         transform: 'scale3d(1.03, 1.03, 1)',
       }),
       deemphasized: css({
+        outline: 'none',
         [theme.transitions.handleMotion('no-preference')]: {
           transition: 'all 200ms ease-in-out',
         },
