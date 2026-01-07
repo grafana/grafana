@@ -2,7 +2,6 @@ package search
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/Masterminds/semver"
 
@@ -10,6 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+// defaultBleveIndexPath is the default path for the search index files.
+const defaultBleveIndexPath = "/var/lib/grafana-search/bleve"
 
 func NewSearchOptions(
 	features featuremgmt.FeatureToggles,
@@ -22,7 +24,7 @@ func NewSearchOptions(
 	if cfg.EnableSearch || features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		root := cfg.IndexPath
 		if root == "" {
-			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
+			root = defaultBleveIndexPath
 		}
 		err := os.MkdirAll(root, 0750)
 		if err != nil {
