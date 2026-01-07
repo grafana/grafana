@@ -13,7 +13,7 @@ import (
 )
 
 // DefaultVariantName a placeholder name for config-based Feature Flags
-const DefaultVariantName = ""
+const DefaultVariantName = "default"
 
 // Deprecated: should use `featuremgmt.FeatureToggles`
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
@@ -42,7 +42,7 @@ func ReadFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[str
 	// parse the comma separated list in `enable`.
 	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
 	for _, feature := range util.SplitString(featuresTogglesStr) {
-		featureToggles[feature] = memprovider.InMemoryFlag{Key: feature, Variants: map[string]any{DefaultVariantName: true}}
+		featureToggles[feature] = memprovider.InMemoryFlag{Key: feature, DefaultVariant: DefaultVariantName, Variants: map[string]any{DefaultVariantName: true}}
 	}
 
 	// read all other settings under [feature_toggles]. If a toggle is
@@ -66,19 +66,23 @@ func ParseFlag(name, value string) (memprovider.InMemoryFlag, error) {
 	var structure map[string]any
 
 	if integer, err := strconv.Atoi(value); err == nil {
-		return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: integer}}, nil
+		return NewInMemoryFlag(name, integer), nil
 	}
 	if float, err := strconv.ParseFloat(value, 64); err == nil {
-		return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: float}}, nil
+		return NewInMemoryFlag(name, float), nil
 	}
 	if err := json.Unmarshal([]byte(value), &structure); err == nil {
-		return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: structure}}, nil
+		return NewInMemoryFlag(name, structure), nil
 	}
 	if boolean, err := strconv.ParseBool(value); err == nil {
-		return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: boolean}}, nil
+		return NewInMemoryFlag(name, boolean), nil
 	}
 
-	return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: value}}, nil
+	return NewInMemoryFlag(name, value), nil
+}
+
+func NewInMemoryFlag(name string, value any) memprovider.InMemoryFlag {
+	return memprovider.InMemoryFlag{Key: name, DefaultVariant: DefaultVariantName, Variants: map[string]any{DefaultVariantName: value}}
 }
 
 func AsStringMap(m map[string]memprovider.InMemoryFlag) map[string]string {
@@ -90,7 +94,7 @@ func AsStringMap(m map[string]memprovider.InMemoryFlag) map[string]string {
 }
 
 func serializeFlagValue(flag memprovider.InMemoryFlag) string {
-	value, _ := flag.Variants[DefaultVariantName]
+	value, _ := flag.Variants[flag.DefaultVariant]
 
 	switch castedValue := value.(type) {
 	case bool:
