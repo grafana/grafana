@@ -152,12 +152,12 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back to dashboard**.
-1. (Optional) Continue building your dashboard by doing one of the following:
+1. (Optional) Continue building your dashboard by doing one or more of the following:
 
-   - Click **+ Add panel** and set the panel options in the edit pane or click **Configure** to complete panel setup.
-   - Click **+ Add variable** and follow the steps to [add a variable to the dashboard](#add-variables).
-   - Click **Group panels** and choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Group panels](#group-panels).
-   - Click the **Dashboard options** icon to open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
+   - **+ Add panel**: Set panel options in the edit pane or click **Configure** to do full panel setup.
+   - **+ Add variable**: Follow the steps to [add a variable to the dashboard](#add-variables).
+   - **Group panels**: Choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
+   - **Dashboard options** icon: Open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -166,19 +166,18 @@ To create a dashboard, follow these steps:
 
 ## Dashboard editing
 
-Now that you've created a basic dashboard, you can augment with more edits.
-You can make several updates to the dashboard without leaving it by using the edit pane.
-Before editing, it's helpful to know more about the edit pane.
+Now that you've created a basic dashboard, you can augment it with more options.
+You can make several updates without leaving the dashboard by using the edit pane, which is explained in the next section.
 
 ### The edit pane and sidebar
 
-The edit pane allows you to make changes without leaving the dashboard.
+The _edit pane_ allows you to make changes without leaving the dashboard.
 When the dashboard is in edit mode, the edit pane displays options associated with the part of the dashboard that's in focus.
-For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for that area:
+For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for it:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-edit-pane-focus-v12.png" max-width="750px" alt="Dashboard with a panel in focus" >}}
 
-The sidebar includes options that you want to have handy all the time.
+The _sidebar_ is on the right side of the edit pane, and it includes options that are useful to have available all the time.
 The following image shows the parts of the edit pane and the sidebar:
 
 <!-- screenshot here with annotations for sidebar options including which ones are only in edit mode
@@ -193,20 +192,25 @@ The following image shows the parts of the edit pane and the sidebar:
 
 The sidebar includes the following options:
 
-- Settings (edit mode only)
-- Feedback (edit mode only)
+- Settings
+- Feedback
 - Export
 - Content outline
 - Dashboard insights
+
+{{< admonition type="note" >}}
+The sidebar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** options aren't available in view mode.
+{{< /admonition >}}
 
 You can dock, undock, and resize the edit pane.
 When the edit pane is closed, you can resize the sidebar so the icon names are visible.
 
 <!-- Screen recording here -->
 
-<!-- - For rows and tabs, all of the available options are in the edit pane.
+All of the available configuration options for groupings (rows and tabs) are available in the edit pane.
+
 - For panels, high-level options are in the edit pane and further configuration options are in the **Edit panel** view.
-- For dashboards, high-level options are in the edit pane and further configuration options are in the **Settings** page.-->
+- For dashboards, high-level options are in the edit pane and further configuration options are in the **Settings** page.
 
 ### Edit a dashboard
 
@@ -215,31 +219,32 @@ To edit a dashboard, follow these steps:
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane or click the **Dashboard options** icon to open the edit pane.
+1. Click the area you want to work with or click the **Dashboard options** icon to open the edit pane with the relevant options displayed.
 1. Update the dashboard as needed.
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
+1. Click **Back to dashboard** if needed.
 1. Click **Exit edit**
 
 ## Panel layouts
 
 There are two panel layout options available:
 
-- **Custom** - You can position and size panels individually. This is the default selection. **Show/hide rules** are not supported.
-- **Auto grid** - Panels resize and fit to create a uniform grid. You can't make manual changes to this layout. **Show/hide rules** are supported.
+- **Custom**: You can position and size panels individually. This is the default selection. **Show/hide rules** are not supported.
+- **Auto grid**: Panels resize and fit automatically to create a uniform grid. You can't make manual changes to this layout. **Show/hide rules** are supported.
 
-Both layout options are supported in rows and tabs.
+Both layout options are supported in row and tab groupings.
 
 ### Auto grid layout
 
-With the auto grid layout, the system updates the layout of the dashboard as you add panels.
+With the auto grid layout, the layout of the dashboard is automatically adjusted as you add panels.
 There are default parameters to constrain the layout, and you can update these to have more control over the display:
 
-- **Min column width** - Set the minimum width of the columns in the layout grid. Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
-- **Max columns** - Set the maximum number of columns that layout can have from 1-10.
-- **Row height** - Set the height of the rows in the layout grid. Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the minimum width in pixels..
-- **Fill screen** - Toggle the switch on to have the dashboard fill the entire screen, as shown in the following screen recording:
+- **Min column width**: Set the minimum width of the columns in the layout grid. Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
+- **Max columns**: Set the maximum number of columns that layout can have up to 10.
+- **Row height**: Set the height of the rows in the layout grid. Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the minimum width in pixels.
+- **Fill screen**: Toggle the switch on to have the dashboard fill the entire screen, as shown in the following screen recording:
 
    {{< video-embed src="layout-fillscreen.mp4" >}}
    <!-- TBA -->
@@ -251,58 +256,73 @@ To update the panel layout, follow these steps:
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-_1. Click .... bring area into focus
-_1. Update layout option
+1. Do one of the following:
+
+   - If the panel layout you want to change isn't contained in a grouping, click the dashboard outside of a grouping, and then click the **Dashboard options** icon to open the edit pane.
+   - Click the **Content outline** icon to open it and navigate to the grouping that contains the panel layout you want to update to open the edit pane with the relevant options displayed.
+
+1. Under **Layout**, select **Custom** or **Auto grid**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**
 
-## Group panels
+## Panel groupings
 
-To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
-
-Think of the dashboard as a series of nested containers: the dashboard is the largest container and it can contain panels, rows, or tabs.
-Rows and tabs are the next largest containers, and those containers can contain grids of panels.
-Rows and tabs—let you break up big dashboards or make one dashboard out of several smaller ones.
-
-Also, tabs are included in the dashboard URL. <!-- this feels like an orphan statement that needs to live elsewhere or just be an admoonition -->
-
-<!-- previous version - not sure if the containers analogy is actually helpful since it maybe bumps into the grouping language
 To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
 Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
-Also, tabs are included in the dashboard URL.
--->
 
-Because both panel layout options are supported in rows and tabs, each of your groupings can have a different panel layout, allowing for maximum flexibility in your dashboards.
+You can think of the dashboard as a series of nested containers: the dashboard is the largest container and it can contain panels, rows, or tabs.
+Rows and tabs are the next largest containers, and they can contain panels.
 
-You can nest:
+You can also nest:
 
 - Rows in rows
 - Rows in tabs
 - Tabs in rows
 
-You can nest up to two levels deep.
+You can nest up to two levels deep, which means your dashboard can have a maximum of four configuration levels:
 
-The following sections describe the configuration options for grouping panels into tabs and rows.
-While grouping is meant for multiple panels, you can start a grouping with just one panel.
+- Dashboard
+- Grouping 1
+- Grouping 2
+- Panels
+
+When you choose the grouping type at Grouping 1-level, you can only add more of that grouping type at that level.
+Inside of those groupings however, you have to freedom to add rows, tabs (as long as it's not a tab), and panels.
+
+<!--maybe a video here -->
+
+Because both panel layouts, custom and auto grid, are supported in rows and tabs, each of your groupings can have a different panel layout, allowing for maximum flexibility in your dashboards.
+
+The following sections describe the configuration options and layouts for grouping panels into tabs and rows, as well as how remove groupings.
+While grouping is typically used for multiple panels, you can start a grouping with just one panel.
+
+### Group panels
 
 To group panels, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-_1. At the bottom-left corner of the dashboard, click **Group panels**.
+1. On the dashboard beneath any of the panels, click **Group panels**.
 1. Select **Group into row** or **Group into tab**.
 
-   A dotted blue line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard.
+   All of the panels on the dashboard are placed in the selected grouping type and a dotted blue line surrounds the panels and the **Row** or **Tab**.
+   The edit pane displays the relevant options.
 
 1. Set the [grouping configuration options](#grouping-configuration-options).
-1. When you're finished, click **Save** at the top-right corner of the dashboard.
+1. (Optional) Add more groupings of the same type at the same level by clicking **New row** or **New tab**.
+1. (Optional) Click **Group panels** to add a nested grouping.
+  
+   The new grouping is added, with the panels inside it, within the first grouping.
+
+1. Set the grouping configuration options.
+1. (Optional) Add more first-level groupings of the same type.
+1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-
-Select the grouping level to access the options to add more elements or to remove the grouping.
+1. Click **Exit edit**.
 
 <!-- Screenshot here of a 2-level nest with area highlighted -->
 
@@ -315,9 +335,9 @@ The following table describes the options you can set for a row or tab.
 | Option                   | Description                                                                 |
 | -------------------------| --------------------------------------------------------------------------- |
 | Title                    | Title of the row or tab.                                                    |
-| Fill screen              | Toggle the switch on to make the row fill the screen. Only applies to rows. |
-| Hide row header          | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. |
-| Layout                   | Select the layout of the grouping. Choose from **Rows** or **Tabs**. For more information, refer to [Grouping layouts](#grouping-layouts). |
+| Fill screen (rows only)  | Toggle the switch on to make the row fill the screen. Only applies to rows. |
+| Hide row header (rows only) | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. |
+| Layout                   | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](#panel-layouts) [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
 | Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variables or a time range. |
 
