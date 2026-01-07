@@ -5,6 +5,7 @@ import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { Box, Menu, useStyles2 } from '@grafana/ui';
 
+import { sortDefaultLinksFirst, sortDefaultVarsFirst } from '../../utils/dashboardControls';
 import { DashboardLinkRenderer } from '../DashboardLinkRenderer';
 import { DataLayerControl } from '../DataLayerControl';
 import { VariableValueSelectWrapper } from '../VariableControls';
@@ -36,7 +37,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
       }}
     >
       {/* Variables */}
-      {variables.map((variable, index) => (
+      {sortDefaultVarsFirst(variables).map((variable, index) => (
         <div key={variable.state.key}>
           <VariableValueSelectWrapper variable={variable} inMenu />
         </div>
@@ -54,7 +55,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
       {links.length > 0 && dashboardUID && (
         <>
           {(variables.length > 0 || annotations.length > 0) && <MenuDivider />}
-          {links.map((link, index) => (
+          {sortDefaultLinksFirst(links).map((link, index) => (
             <div key={`${link.title}-${index}`}>
               <DashboardLinkRenderer link={link} dashboardUID={dashboardUID} inMenu />
             </div>

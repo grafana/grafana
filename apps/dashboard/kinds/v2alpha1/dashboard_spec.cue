@@ -127,6 +127,8 @@ DashboardLink: {
 	keepTime: bool | *false
 	// Placement can be used to display the link somewhere else on the dashboard other than above the visualisations.
 	placement?: DashboardLinkPlacement
+	// The source that registered the link (if any)
+	source?: ControlSourceRef
 }
 
 // Dashboard Link placement. Defines where the link should be displayed. 
@@ -790,6 +792,13 @@ VariableOption: {
 	text: string | [...string]
 	// Value of the option
 	value: string | [...string]
+}
+
+// Source information for controls (e.g. variables or links)
+ControlSourceRef: {
+  uid: string
+  sourceId: string // E.g. "prometheus"
+  sourceType: string // E.g. "datasource"
 }
 
 // Query variable specification
