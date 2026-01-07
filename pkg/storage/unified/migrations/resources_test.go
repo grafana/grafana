@@ -17,19 +17,27 @@ func TestRegisterMigrations(t *testing.T) {
 	origRegistry := migrationRegistry
 	t.Cleanup(func() { migrationRegistry = origRegistry })
 
+	// Use fake resource names that are NOT in setting.AutoMigratedUnifiedResources
+	// to avoid triggering the auto-migrate code path which requires a non-nil sqlStore.
+	const (
+		fakePlaylistResource  = "fake.playlists.resource"
+		fakeFolderResource    = "fake.folders.resource"
+		fakeDashboardResource = "fake.dashboards.resource"
+	)
+
 	// helper to build a fake registry with custom register funcs that bump counters
 	makeFakeRegistry := func(migrationCalls map[string]int) []migrationDefinition {
 		return []migrationDefinition{
 			{
 				name:      "playlists",
-				resources: []string{setting.PlaylistResource},
+				resources: []string{fakePlaylistResource},
 				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption) {
 					migrationCalls["playlists"]++
 				},
 			},
 			{
 				name:      "folders and dashboards",
-				resources: []string{setting.FolderResource, setting.DashboardResource},
+				resources: []string{fakeFolderResource, fakeDashboardResource},
 				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption) {
 					migrationCalls["folders and dashboards"]++
 				},
@@ -76,9 +84,9 @@ func TestRegisterMigrations(t *testing.T) {
 			migrationRegistry = makeFakeRegistry(migrationCalls)
 
 			cfg := makeCfg(map[string]bool{
-				setting.PlaylistResource:  tt.enablePlaylist,
-				setting.FolderResource:    tt.enableFolder,
-				setting.DashboardResource: tt.enableDashboard,
+				fakePlaylistResource:  tt.enablePlaylist,
+				fakeFolderResource:    tt.enableFolder,
+				fakeDashboardResource: tt.enableDashboard,
 			})
 
 			// We pass nils for migrator dependencies because our fake registerFuncs don't use them
