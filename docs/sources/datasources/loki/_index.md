@@ -17,31 +17,11 @@ menuTitle: Loki
 title: Loki data source
 weight: 800
 refs:
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   explore:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  logs-integration-labels-and-detected-fields:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
   visualizations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
@@ -57,21 +37,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
   loki-alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/alerting/
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
   loki-annotations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/annotations/
@@ -87,6 +57,26 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/troubleshooting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/troubleshooting/
+  configure-loki:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/
+  loki-query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/
+  loki-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/template-variables/
+  configure-loki-derived-fields:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#derived-fields
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#derived-fields
 ---
 
 # Loki data source
@@ -114,10 +104,10 @@ The Loki data source provides the following capabilities:
 
 The following documentation helps you get started with the Loki data source:
 
-- [Configure the Loki data source](configure/)
-- [Loki query editor](query-editor/)
-- [Loki template variables](template-variables/)
-- [Troubleshoot the Loki data source](troubleshooting/)
+- [Configure the Loki data source](ref:configure-loki)
+- [Loki query editor](ref:loki-query-editor)
+- [Loki template variables](ref:loki-template-variables)
+- [Troubleshoot the Loki data source](ref:loki-troubleshooting)
 
 For more information about Loki itself, refer to the [Loki documentation](https://grafana.com/docs/loki/latest/):
 
@@ -136,7 +126,7 @@ After you configure the Loki data source, you can:
 - Add [annotations](ref:loki-annotations) to overlay log events on graphs
 - Set up [alerting](ref:loki-alerting) to monitor your log data
 - Use [Explore](ref:explore) for ad-hoc log queries and analysis
-- Configure [derived fields](configure/#derived-fields) to link logs to traces or other data sources
+- Configure [derived fields](ref:configure-loki-derived-fields) to link logs to traces or other data sources
 
 If you encounter issues, refer to [Troubleshoot issues with the Loki data source](ref:loki-troubleshooting).
 
@@ -157,7 +147,7 @@ For more information, refer to [Import a dashboard](ref:import-dashboard).
 
 Loki integrates with other Grafana data sources to provide full observability across logs, metrics, and traces:
 
-- **Tempo:** Use [derived fields](configure/#derived-fields) to create links from log lines to traces in Tempo, enabling seamless navigation from logs to distributed traces.
+- **Tempo:** Use [derived fields](ref:configure-loki-derived-fields) to create links from log lines to traces in Tempo, enabling seamless navigation from logs to distributed traces.
 - **Prometheus and Mimir:** Display logs alongside metrics on the same dashboard to correlate application behavior with performance data.
 
 For more information about building observability workflows, refer to the [Grafana Tempo documentation](https://grafana.com/docs/tempo/latest/) and [Grafana Mimir documentation](https://grafana.com/docs/mimir/latest/).

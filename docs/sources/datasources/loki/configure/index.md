@@ -1,8 +1,6 @@
 ---
 aliases:
-  - ../data-sources/loki/
-  - ../features/datasources/loki/
-  - ../configure-loki-data-source/
+  - ../../data-sources/loki/configure/
 description: Configure the Loki data source
 keywords:
   - grafana
@@ -44,6 +42,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  loki-query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/
+  loki-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/loki/template-variables/
 ---
 
 # Configure the Loki data source
@@ -350,6 +358,6 @@ For all available configuration options, refer to the [Grafana provider data sou
 
 After configuring your Loki data source, explore these resources:
 
-- [Query the Loki data source](../query-editor/) to learn how to build LogQL queries in Grafana
-- [Use template variables](../template-variables/) to create dynamic, reusable dashboards
+- [Query the Loki data source](ref:loki-query-editor) to learn how to build LogQL queries in Grafana
+- [Use template variables](ref:loki-template-variables) to create dynamic, reusable dashboards
 - [LogQL documentation](https://grafana.com/docs/loki/latest/query/) to learn more about the Loki query language
