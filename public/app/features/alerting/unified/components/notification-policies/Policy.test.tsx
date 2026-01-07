@@ -383,7 +383,7 @@ describe('Policy', () => {
       />
     );
 
-    const badge = screen.getByText('Provisioned from Prometheus/Mimir');
+    const badge = screen.getByText('Imported from Prometheus/Mimir');
     expect(badge).toBeInTheDocument();
   });
 });

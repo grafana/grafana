@@ -68,7 +68,7 @@ describe('ContactPointHeader', () => {
         <ContactPointHeader contactPoint={contactPointWithConvertedPrometheus} onDelete={jest.fn()} />
       );
 
-      expect(screen.getByText('Provisioned from Prometheus/Mimir')).toBeInTheDocument();
+      expect(screen.getByText('Imported from Prometheus/Mimir')).toBeInTheDocument();
     });
   });
 
@@ -100,7 +100,7 @@ describe('ContactPointHeader', () => {
         VANILLA_ALERTMANAGER_DATASOURCE_UID
       );
 
-      expect(screen.getByText('Provisioned from Prometheus/Mimir')).toBeInTheDocument();
+      expect(screen.getByText('Imported from Prometheus/Mimir')).toBeInTheDocument();
     });
   });
 });

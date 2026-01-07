@@ -50,7 +50,7 @@ export const ProvisioningBadge = ({
 }) => {
   const isConvertedPrometheus = provenance === KnownProvenance.ConvertedPrometheus;
   const badgeText = isConvertedPrometheus
-    ? t('alerting.provisioning-badge.badge.text-converted-prometheus', 'Provisioned from Prometheus/Mimir')
+    ? t('alerting.provisioning-badge.badge.text-converted-prometheus', 'Imported from Prometheus/Mimir')
     : t('alerting.provisioning-badge.badge.text-provisioned', 'Provisioned');
   const badgeColor = isConvertedPrometheus ? 'blue' : 'purple';
   const badge = <Badge text={badgeText} color={badgeColor} />;

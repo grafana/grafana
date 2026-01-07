@@ -10,7 +10,7 @@ describe('ProvisioningBadge', () => {
       render(<ProvisioningBadge provenance={KnownProvenance.File} />);
 
       expect(screen.getByText('Provisioned')).toBeInTheDocument();
-      expect(screen.queryByText('Provisioned from Prometheus/Mimir')).not.toBeInTheDocument();
+      expect(screen.queryByText('Imported from Prometheus/Mimir')).not.toBeInTheDocument();
     });
 
     it('should render correct tooltip text', async () => {
@@ -29,14 +29,14 @@ describe('ProvisioningBadge', () => {
     it('should render the badge with the correct text', () => {
       render(<ProvisioningBadge provenance={KnownProvenance.ConvertedPrometheus} />);
 
-      expect(screen.getByText('Provisioned from Prometheus/Mimir')).toBeInTheDocument();
+      expect(screen.getByText('Imported from Prometheus/Mimir')).toBeInTheDocument();
       expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
     });
 
     it('should render correct tooltip text', async () => {
       const { user } = render(<ProvisioningBadge tooltip provenance={KnownProvenance.ConvertedPrometheus} />);
 
-      const badge = screen.getByText('Provisioned from Prometheus/Mimir');
+      const badge = screen.getByText('Imported from Prometheus/Mimir');
       await user.hover(badge);
 
       expect(
@@ -50,7 +50,7 @@ describe('ProvisioningBadge', () => {
       render(<ProvisioningBadge provenance={KnownProvenance.API} />);
 
       expect(screen.getByText('Provisioned')).toBeInTheDocument();
-      expect(screen.queryByText('Provisioned from Prometheus/Mimir')).not.toBeInTheDocument();
+      expect(screen.queryByText('Imported from Prometheus/Mimir')).not.toBeInTheDocument();
     });
 
     it('should render correct tooltip text', async () => {
@@ -70,7 +70,7 @@ describe('ProvisioningBadge', () => {
       render(<ProvisioningBadge provenance={KnownProvenance.Empty} />);
 
       expect(screen.getByText('Provisioned')).toBeInTheDocument();
-      expect(screen.queryByText('Provisioned from Prometheus/Mimir')).not.toBeInTheDocument();
+      expect(screen.queryByText('Imported from Prometheus/Mimir')).not.toBeInTheDocument();
     });
 
     it('should render correct tooltip text', async () => {
