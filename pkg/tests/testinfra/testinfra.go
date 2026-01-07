@@ -576,6 +576,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = section.NewKey("disable_data_migrations", "true")
 		require.NoError(t, err)
 	}
+	// Set index_path to a writable temp directory for tests
+	section, err := getOrCreateSection("unified_storage")
+	require.NoError(t, err)
+	_, err = section.NewKey("index_path", filepath.Join(tmpDir, "search", "bleve"))
+	require.NoError(t, err)
+
 	if opts.PermittedProvisioningPaths != "" {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
