@@ -233,14 +233,16 @@ function PieSlice({
         }
 
         if (elementRef.current) {
+          // Ensure the SVG element is not focusable when parent anchor handles focus
+          // Use setTimeout(0) to ensure this runs after React has applied JSX attributes
           const ensureNotFocusable = () => {
             if (elementRef.current && elementRef.current.getAttribute('tabIndex') !== '-1') {
               elementRef.current.setAttribute('tabIndex', '-1');
             }
           };
+          // Run immediately and after React's render cycle to catch any timing issues
           ensureNotFocusable();
           setTimeout(ensureNotFocusable, 0);
-          setTimeout(ensureNotFocusable, 100);
         }
 
         const handleAnchorFocus = (e: FocusEvent) => {
