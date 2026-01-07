@@ -10,12 +10,13 @@ export function setStore(newStore: Store<StoreState>) {
 
 export function getState(): StoreState {
   if (!store || !store.getState) {
-    return { templating: { lastKey: 'key' } } as StoreState; // used by tests
+    return { defaultReducer: () => ({}), templating: { lastKey: 'key' } }  // used by tests
   }
 
   return store.getState();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function dispatch(action: any) {
   if (!store || !store.getState) {
     return;
