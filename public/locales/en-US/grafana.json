@@ -6578,6 +6578,7 @@
           "label": "Controls menu"
         },
         "hidden": {
+          "description": "Only visible in edit mode",
           "label": "Hidden"
         },
         "hidden-label": {
