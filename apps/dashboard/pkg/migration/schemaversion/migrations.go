@@ -1,9 +1,8 @@
 package schemaversion
 
 import (
+	"context"
 	"strconv"
-
-	"golang.org/x/net/context"
 )
 
 const (
