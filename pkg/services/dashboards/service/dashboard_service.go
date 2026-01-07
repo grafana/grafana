@@ -2146,7 +2146,14 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	request.Limit = query.Limit
 	request.Page = query.Page
 	request.Offset = (query.Page - 1) * query.Limit // only relevant when running in modes 3+
-	request.Fields = dashboardsearch.IncludeFields
+	request.Fields = append(
+		dashboardsearch.IncludeFields,
+		// Include the dashboard legacy ID in the results, as it is needed when
+		// determining whether a provisioned dashboard exists or not, see
+		// `(*DashboardServiceImpl).searchProvisionedDashboardsThroughK8s`.
+		resource.SEARCH_FIELD_LEGACY_ID,
+		resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID,
+	)
 
 	namespace := dr.k8sclient.GetNamespace(query.OrgId)
 	var err error
