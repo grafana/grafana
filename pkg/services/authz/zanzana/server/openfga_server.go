@@ -58,51 +58,22 @@ func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADa
 		server.WithContextPropagationToDatastore(true),
 	}
 
-	// ListObjects settings
-	if cfg.OpenFgaServerSettings.MaxConcurrentReadsForListObjects != 0 {
-		opts = append(opts, server.WithMaxConcurrentReadsForListObjects(cfg.OpenFgaServerSettings.MaxConcurrentReadsForListObjects))
-	}
-	if cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingEnabled {
-		opts = append(opts, server.WithListObjectsDispatchThrottlingEnabled(cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingEnabled))
-	}
-	if cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingFrequency != 0 {
-		opts = append(opts, server.WithListObjectsDispatchThrottlingFrequency(cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingFrequency))
-	}
-	if cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingThreshold != 0 {
-		opts = append(opts, server.WithListObjectsDispatchThrottlingThreshold(cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingThreshold))
-	}
-	if cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingMaxThreshold != 0 {
-		opts = append(opts, server.WithListObjectsDispatchThrottlingMaxThreshold(cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingMaxThreshold))
-	}
-	if cfg.OpenFgaServerSettings.ListObjectsDatabaseThrottleThreshold != 0 || cfg.OpenFgaServerSettings.ListObjectsDatabaseThrottleDuration != 0 {
-		opts = append(opts, server.WithListObjectsDatabaseThrottle(cfg.OpenFgaServerSettings.ListObjectsDatabaseThrottleThreshold, cfg.OpenFgaServerSettings.ListObjectsDatabaseThrottleDuration))
+	openfgaOpts := withOpenFGAOptions(cfg)
+	opts = append(opts, openfgaOpts...)
+
+	srv, err := server.NewServerWithOpts(opts...)
+	if err != nil {
+		return nil, err
 	}
 
-	// ListUsers settings
-	if cfg.OpenFgaServerSettings.ListUsersDeadline != 0 {
-		opts = append(opts, server.WithListUsersDeadline(cfg.OpenFgaServerSettings.ListUsersDeadline))
-	}
-	if cfg.OpenFgaServerSettings.ListUsersMaxResults != 0 {
-		opts = append(opts, server.WithListUsersMaxResults(cfg.OpenFgaServerSettings.ListUsersMaxResults))
-	}
-	if cfg.OpenFgaServerSettings.MaxConcurrentReadsForListUsers != 0 {
-		opts = append(opts, server.WithMaxConcurrentReadsForListUsers(cfg.OpenFgaServerSettings.MaxConcurrentReadsForListUsers))
-	}
-	if cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingEnabled {
-		opts = append(opts, server.WithListUsersDispatchThrottlingEnabled(cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingEnabled))
-	}
-	if cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingFrequency != 0 {
-		opts = append(opts, server.WithListUsersDispatchThrottlingFrequency(cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingFrequency))
-	}
-	if cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingThreshold != 0 {
-		opts = append(opts, server.WithListUsersDispatchThrottlingThreshold(cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingThreshold))
-	}
-	if cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingMaxThreshold != 0 {
-		opts = append(opts, server.WithListUsersDispatchThrottlingMaxThreshold(cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingMaxThreshold))
-	}
-	if cfg.OpenFgaServerSettings.ListUsersDatabaseThrottleThreshold != 0 || cfg.OpenFgaServerSettings.ListUsersDatabaseThrottleDuration != 0 {
-		opts = append(opts, server.WithListUsersDatabaseThrottle(cfg.OpenFgaServerSettings.ListUsersDatabaseThrottleThreshold, cfg.OpenFgaServerSettings.ListUsersDatabaseThrottleDuration))
-	}
+	return srv, nil
+}
+
+func withOpenFGAOptions(cfg setting.ZanzanaServerSettings) []server.OpenFGAServiceV1Option {
+	opts := make([]server.OpenFGAServiceV1Option, 0)
+
+	listOpts := withListOptions(cfg)
+	opts = append(opts, listOpts...)
 
 	// Check settings
 	if cfg.OpenFgaServerSettings.MaxConcurrentReadsForCheck != 0 {
@@ -166,12 +137,59 @@ func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADa
 		opts = append(opts, server.WithChangelogHorizonOffset(cfg.OpenFgaServerSettings.ChangelogHorizonOffset))
 	}
 
-	srv, err := server.NewServerWithOpts(opts...)
-	if err != nil {
-		return nil, err
+	return opts
+}
+
+func withListOptions(cfg setting.ZanzanaServerSettings) []server.OpenFGAServiceV1Option {
+	opts := make([]server.OpenFGAServiceV1Option, 0)
+
+	// ListObjects settings
+	if cfg.OpenFgaServerSettings.MaxConcurrentReadsForListObjects != 0 {
+		opts = append(opts, server.WithMaxConcurrentReadsForListObjects(cfg.OpenFgaServerSettings.MaxConcurrentReadsForListObjects))
+	}
+	if cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingEnabled {
+		opts = append(opts, server.WithListObjectsDispatchThrottlingEnabled(cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingEnabled))
+	}
+	if cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingFrequency != 0 {
+		opts = append(opts, server.WithListObjectsDispatchThrottlingFrequency(cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingFrequency))
+	}
+	if cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingThreshold != 0 {
+		opts = append(opts, server.WithListObjectsDispatchThrottlingThreshold(cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingThreshold))
+	}
+	if cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingMaxThreshold != 0 {
+		opts = append(opts, server.WithListObjectsDispatchThrottlingMaxThreshold(cfg.OpenFgaServerSettings.ListObjectsDispatchThrottlingMaxThreshold))
+	}
+	if cfg.OpenFgaServerSettings.ListObjectsDatabaseThrottleThreshold != 0 || cfg.OpenFgaServerSettings.ListObjectsDatabaseThrottleDuration != 0 {
+		opts = append(opts, server.WithListObjectsDatabaseThrottle(cfg.OpenFgaServerSettings.ListObjectsDatabaseThrottleThreshold, cfg.OpenFgaServerSettings.ListObjectsDatabaseThrottleDuration))
 	}
 
-	return srv, nil
+	// ListUsers settings
+	if cfg.OpenFgaServerSettings.ListUsersDeadline != 0 {
+		opts = append(opts, server.WithListUsersDeadline(cfg.OpenFgaServerSettings.ListUsersDeadline))
+	}
+	if cfg.OpenFgaServerSettings.ListUsersMaxResults != 0 {
+		opts = append(opts, server.WithListUsersMaxResults(cfg.OpenFgaServerSettings.ListUsersMaxResults))
+	}
+	if cfg.OpenFgaServerSettings.MaxConcurrentReadsForListUsers != 0 {
+		opts = append(opts, server.WithMaxConcurrentReadsForListUsers(cfg.OpenFgaServerSettings.MaxConcurrentReadsForListUsers))
+	}
+	if cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingEnabled {
+		opts = append(opts, server.WithListUsersDispatchThrottlingEnabled(cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingEnabled))
+	}
+	if cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingFrequency != 0 {
+		opts = append(opts, server.WithListUsersDispatchThrottlingFrequency(cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingFrequency))
+	}
+	if cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingThreshold != 0 {
+		opts = append(opts, server.WithListUsersDispatchThrottlingThreshold(cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingThreshold))
+	}
+	if cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingMaxThreshold != 0 {
+		opts = append(opts, server.WithListUsersDispatchThrottlingMaxThreshold(cfg.OpenFgaServerSettings.ListUsersDispatchThrottlingMaxThreshold))
+	}
+	if cfg.OpenFgaServerSettings.ListUsersDatabaseThrottleThreshold != 0 || cfg.OpenFgaServerSettings.ListUsersDatabaseThrottleDuration != 0 {
+		opts = append(opts, server.WithListUsersDatabaseThrottle(cfg.OpenFgaServerSettings.ListUsersDatabaseThrottleThreshold, cfg.OpenFgaServerSettings.ListUsersDatabaseThrottleDuration))
+	}
+
+	return opts
 }
 
 func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Provider) (*http.Server, error) {
