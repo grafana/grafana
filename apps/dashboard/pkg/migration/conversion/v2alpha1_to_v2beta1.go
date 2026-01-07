@@ -310,6 +310,7 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 		Links:             in.Links,
 		NoValue:           in.NoValue,
 		Custom:            in.Custom,
+		FieldMinMax:       in.FieldMinMax,
 	}
 
 	// Convert thresholds

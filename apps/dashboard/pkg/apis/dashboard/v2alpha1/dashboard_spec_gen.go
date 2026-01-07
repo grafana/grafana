@@ -419,6 +419,8 @@ type DashboardFieldConfig struct {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	Custom map[string]interface{} `json:"custom,omitempty"`
+	// Calculate min max per field
+	FieldMinMax *bool `json:"fieldMinMax,omitempty"`
 }
 
 // NewDashboardFieldConfig creates a new DashboardFieldConfig object.

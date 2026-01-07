@@ -125,3 +125,38 @@ export function normalizeBackendOutputForFrontendComparison(
 
   return normalized;
 }
+
+/**
+ * Removes deprecated fields from fieldConfig.defaults that are not in any schema.
+ * This normalizes both frontend and backend outputs for comparison.
+ *
+ * - unitScale: deprecated field not in any schema
+ *
+ * Note: fieldMinMax was added to V2 schema and is now properly handled.
+ *
+ * This should be applied to both outputs before comparison.
+ */
+export function removeSchemaGapFieldsFromSpec(spec: DashboardV2Spec): DashboardV2Spec {
+  // Deep clone the spec to avoid mutating the original
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const normalized = JSON.parse(JSON.stringify(spec)) as DashboardV2Spec;
+
+  // Fields that aren't in the V2 schema - either deprecated or schema gaps
+  // - unitScale: deprecated field
+  // - nullValueMode: V1 field for null value handling, not in V2 schema
+  const fieldsToRemoveFromDefaults = ['unitScale', 'nullValueMode'];
+
+  if (normalized.elements) {
+    for (const elementKey of Object.keys(normalized.elements)) {
+      const element = normalized.elements[elementKey];
+      if (element?.kind === 'Panel' && element.spec?.vizConfig?.spec?.fieldConfig?.defaults) {
+        const defaults = element.spec.vizConfig.spec.fieldConfig.defaults as Record<string, unknown>;
+        for (const field of fieldsToRemoveFromDefaults) {
+          delete defaults[field];
+        }
+      }
+    }
+  }
+
+  return normalized;
+}

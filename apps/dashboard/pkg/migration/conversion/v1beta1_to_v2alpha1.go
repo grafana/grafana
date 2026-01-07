@@ -2530,6 +2530,10 @@ func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.Da
 		fieldConfigDefaults.Writeable = val
 		hasDefaults = true
 	}
+	if val, ok := extractBoolField(defaults, "fieldMinMax"); ok {
+		fieldConfigDefaults.FieldMinMax = val
+		hasDefaults = true
+	}
 
 	// Extract array field - strip BOMs from link URLs
 	if linksArray, ok := extractArrayField(defaults, "links"); ok {

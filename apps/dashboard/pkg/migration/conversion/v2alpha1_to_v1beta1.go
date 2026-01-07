@@ -1955,6 +1955,9 @@ func convertFieldConfigDefaultsToV1(defaults *dashv2alpha1.DashboardFieldConfig)
 	if defaults.Writeable != nil {
 		result["writeable"] = *defaults.Writeable
 	}
+	if defaults.FieldMinMax != nil {
+		result["fieldMinMax"] = *defaults.FieldMinMax
+	}
 	if defaults.Links != nil {
 		result["links"] = defaults.Links
 	}

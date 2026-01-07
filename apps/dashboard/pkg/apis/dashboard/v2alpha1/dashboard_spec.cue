@@ -258,6 +258,9 @@ FieldConfig: {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: {...}
+
+	// Calculate min max per field
+	fieldMinMax?: bool
 }
 
 DynamicConfigValue: {
