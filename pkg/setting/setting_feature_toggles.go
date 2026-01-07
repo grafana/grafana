@@ -81,7 +81,15 @@ func ParseFlag(name, value string) (memprovider.InMemoryFlag, error) {
 	return memprovider.InMemoryFlag{Key: name, Variants: map[string]any{DefaultVariantName: value}}, nil
 }
 
-func SerializeFlagValue(flag memprovider.InMemoryFlag) string {
+func AsStringMap(m map[string]memprovider.InMemoryFlag) map[string]string {
+	var res = map[string]string{}
+	for k, v := range m {
+		res[k] = serializeFlagValue(v)
+	}
+	return res
+}
+
+func serializeFlagValue(flag memprovider.InMemoryFlag) string {
 	value, _ := flag.Variants[DefaultVariantName]
 
 	switch castedValue := value.(type) {
@@ -103,15 +111,3 @@ func SerializeFlagValue(flag memprovider.InMemoryFlag) string {
 		return string(val)
 	}
 }
-
-func createFlag(name string, value any) memprovider.InMemoryFlag {
-	return memprovider.InMemoryFlag{
-		Key:            name,
-		DefaultVariant: DefaultVariantName,
-		Variants: map[string]any{
-			DefaultVariantName: value,
-		},
-	}
-}
-
-//

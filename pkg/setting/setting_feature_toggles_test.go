@@ -99,9 +99,11 @@ func TestFlagValueSerialization(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		serialized := SerializeFlagValue(tt)
-		deserialized, err := ParseFlag(tt.Key, serialized)
+		asStringMap := AsStringMap(map[string]memprovider.InMemoryFlag{tt.Key: tt})
+
+		deserialized, err := ParseFlag(tt.Key, asStringMap[tt.Key])
 		assert.NoError(t, err)
+
 		if diff := cmp.Diff(tt, deserialized); diff != "" {
 			t.Errorf("(-want, +got) = %v", diff)
 		}
