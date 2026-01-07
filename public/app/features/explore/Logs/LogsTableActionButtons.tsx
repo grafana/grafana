@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, memo } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -28,7 +28,7 @@ interface Props extends CustomCellRendererProps {
   index?: number;
 }
 
-export function LogsTableActionButtons(props: Props) {
+export const LogsTableActionButtons = memo((props: Props) => {
   const { exploreId, absoluteRange, logRows, rowIndex, panelState, displayedFields, logsFrame, frame } = props;
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
@@ -140,9 +140,11 @@ export function LogsTableActionButtons(props: Props) {
       )}
     </>
   );
-}
+});
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+LogsTableActionButtons.displayName = 'LogsTableActionButtons';
+
+const getStyles = (theme: GrafanaTheme2) => ({
   iconWrapper: css({
     background: theme.colors.background.secondary,
     boxShadow: theme.shadows.z2,
