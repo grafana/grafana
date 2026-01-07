@@ -272,52 +272,114 @@ func (query *Query) TimeRange() TimeRange {
 	}
 }
 
+// isRateIntervalVariable checks if the interval string is a rate interval variable
+// ($__rate_interval, ${__rate_interval}, $__rate_interval_ms, or ${__rate_interval_ms})
+func isRateIntervalVariable(interval string) bool {
+	return interval == varRateInterval ||
+		interval == varRateIntervalAlt ||
+		interval == varRateIntervalMs ||
+		interval == varRateIntervalMsAlt
+}
+
+// isManualIntervalOverride checks if the interval is a manually specified non-variable value
+// that should override the calculated interval
+func isManualIntervalOverride(interval string) bool {
+	return interval != "" &&
+		interval != varInterval &&
+		interval != varIntervalAlt &&
+		interval != varIntervalMs &&
+		interval != varIntervalMsAlt
+}
+
+// maxDuration returns the maximum of two durations
+func maxDuration(a, b time.Duration) time.Duration {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// normalizeIntervalFactor ensures intervalFactor is at least 1
+func normalizeIntervalFactor(factor int64) int64 {
+	if factor == 0 {
+		return 1
+	}
+	return factor
+}
+
+// calculatePrometheusInterval calculates the optimal step interval for a Prometheus query.
+//
+// The function determines the query step interval by considering multiple factors:
+//   - The minimum step specified in the query (queryInterval)
+//   - The data source scrape interval (dsScrapeInterval)
+//   - The requested interval in milliseconds (intervalMs)
+//   - The time range and maximum data points from the query
+//   - The interval factor multiplier
+//
+// Special handling:
+//   - Variable intervals ($__interval, $__rate_interval, etc.) are replaced with calculated values
+//   - Rate interval variables ($__rate_interval, ${__rate_interval}) use calculateRateInterval for proper rate() function support
+//   - Manual interval overrides (non-variable strings) take precedence over calculated values
+//   - The final interval ensures safe resolution limits are not exceeded
+//
+// Parameters:
+//   - queryInterval: The minimum step interval string (may contain variables like $__interval or $__rate_interval)
+//   - dsScrapeInterval: The data source scrape interval (e.g., "15s", "30s")
+//   - intervalMs: The requested interval in milliseconds
+//   - intervalFactor: Multiplier for the calculated interval (defaults to 1 if 0)
+//   - query: The backend data query containing time range and max data points
+//   - intervalCalculator: Calculator for determining optimal intervals
+//
+// Returns:
+//   - The calculated step interval as a time.Duration
+//   - An error if the interval cannot be calculated (e.g., invalid interval string)
 func calculatePrometheusInterval(
 	queryInterval, dsScrapeInterval string,
 	intervalMs, intervalFactor int64,
 	query backend.DataQuery,
 	intervalCalculator intervalv2.Calculator,
 ) (time.Duration, error) {
-	// we need to compare the original query model after it is overwritten below to variables so that we can
-	// calculate the rateInterval if it is equal to $__rate_interval or ${__rate_interval}
+	// Preserve the original interval for later comparison, as it may be modified below
 	originalQueryInterval := queryInterval
 
-	// If we are using variable for interval/step, we will replace it with calculated interval
+	// If we are using a variable for minStep, replace it with empty string
+	// so that the interval calculation proceeds with the default logic
 	if isVariableInterval(queryInterval) {
 		queryInterval = ""
 	}
 
+	// Get the minimum interval from various sources (dsScrapeInterval, queryInterval, intervalMs)
 	minInterval, err := gtime.GetIntervalFrom(dsScrapeInterval, queryInterval, intervalMs, 15*time.Second)
 	if err != nil {
 		return time.Duration(0), err
 	}
+
+	// Calculate the optimal interval based on time range and max data points
 	calculatedInterval := intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
+	// Calculate the safe interval to prevent too many data points
 	safeInterval := intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeResolution))
 
-	adjustedInterval := safeInterval.Value
-	if calculatedInterval.Value > safeInterval.Value {
-		adjustedInterval = calculatedInterval.Value
-	}
+	// Use the larger of calculated or safe interval to ensure we don't exceed resolution limits
+	adjustedInterval := maxDuration(calculatedInterval.Value, safeInterval.Value)
 
-	// here is where we compare for $__rate_interval or ${__rate_interval}
-	if originalQueryInterval == varRateInterval || originalQueryInterval == varRateIntervalAlt || originalQueryInterval == varRateIntervalMs || originalQueryInterval == varRateIntervalMsAlt {
+	// Handle rate interval variables: these require special calculation
+	if isRateIntervalVariable(originalQueryInterval) {
 		// Rate interval is final and is not affected by resolution
 		return calculateRateInterval(adjustedInterval, dsScrapeInterval), nil
-	} else {
-		// if the queryInterval is set manually by setting minStep value in UI, we should use
-		// that value over what we've calculated. because it has precedence.
-		if originalQueryInterval != varInterval && originalQueryInterval != varIntervalAlt && originalQueryInterval != varIntervalMs && originalQueryInterval != varIntervalMsAlt && originalQueryInterval != "" {
-			parsedOriginalQueryInterval, err := gtime.ParseIntervalStringToTimeDuration(originalQueryInterval)
-			if err == nil {
-				return parsedOriginalQueryInterval, nil
-			}
-		}
-		queryIntervalFactor := intervalFactor
-		if queryIntervalFactor == 0 {
-			queryIntervalFactor = 1
-		}
-		return time.Duration(int64(adjustedInterval) * queryIntervalFactor), nil
 	}
+
+	// Handle manual interval override: if user specified a non-variable interval,
+	// it takes precedence over calculated values
+	if isManualIntervalOverride(originalQueryInterval) {
+		if parsedInterval, err := gtime.ParseIntervalStringToTimeDuration(originalQueryInterval); err == nil {
+			return parsedInterval, nil
+		}
+		// If parsing fails, fall through to calculated interval with factor
+	}
+
+	// Apply interval factor to the adjusted interval
+	normalizedFactor := normalizeIntervalFactor(intervalFactor)
+	return time.Duration(int64(adjustedInterval) * normalizedFactor), nil
 }
 
 // calculateRateInterval calculates the $__rate_interval value
@@ -418,7 +480,7 @@ func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 //go:embed query.types.json
 var f embed.FS
 
-// QueryTypeDefinitionsJSON returns the query type definitions
+// QueryTypeDefinitionListJSON returns the query type definitions
 func QueryTypeDefinitionListJSON() (json.RawMessage, error) {
 	return f.ReadFile("query.types.json")
 }
