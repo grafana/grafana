@@ -206,10 +206,10 @@ After configuring the data source, click **Save & test** to save your settings a
 
 If the test fails, verify:
 
-- The Loki URL is correct and accessible from the Grafana server
-- Any required authentication credentials are correct
-- Network connectivity and firewall rules allow the connection
-- TLS certificates are valid (if using HTTPS)
+- The Loki URL is correct and accessible from the Grafana server.
+- Any required authentication credentials are correct.
+- Network connectivity and firewall rules allow the connection.
+- TLS certificates are valid (if using HTTPS).
 
 ## Provision the data source
 
