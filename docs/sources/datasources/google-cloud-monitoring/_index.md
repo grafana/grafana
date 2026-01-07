@@ -43,53 +43,88 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  transformations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+  visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
 ---
 
 # Google Cloud Monitoring data source
 
-Grafana ships with built-in support for Google Cloud Monitoring.
-This topic describes queries, templates, variables, and other configuration specific to the Google Cloud Monitoring data source.
+Google Cloud Monitoring (formerly Stackdriver) is Google Cloud Platform's native monitoring and observability service that collects metrics, events, and metadata from GCP resources, hosted uptime probes, and application instrumentation. The Google Cloud Monitoring data source in Grafana allows you to query and visualize this data alongside metrics from other systems, creating unified dashboards for comprehensive infrastructure and application monitoring.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
-Only users with the organization administrator role can add data sources.
+Grafana includes native support for the Google Cloud Monitoring plugin, so you don't need to install a plugin.
 
-Once you've added the Google Cloud Monitoring data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) and apply [annotations](#annotations) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+## Get started
+
+The following documents will help you get started with the Google Cloud Monitoring data source:
+
+- [Configure the data source](configure/) - Set up authentication and connect to Google Cloud
+- [Query editor](query-editor/) - Create and edit Metric and SLO queries
+- [Template variables](template-variables/) - Create dynamic dashboards with Google Cloud Monitoring variables
+- [Google authentication](google-authentication/) - Configure authentication methods for GCP access
+
+## Supported query types
+
+The Google Cloud Monitoring data source supports the following query types:
+
+| Query type                          | Description                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Metrics**                         | Query time series data from GCP resources using the Monitoring Query Language (MQL) or the visual builder.   |
+| **Service Level Objectives (SLOs)** | Query SLO data defined in Google Cloud Monitoring to track service reliability and error budgets.            |
+
+## Additional features
+
+After you configure the Google Cloud Monitoring data source, you can:
+
+- Create a wide variety of [visualizations](ref:visualizations) using GCP metrics.
+- Configure and use [template variables](ref:variables) for dynamic dashboards.
+- Add [transformations](ref:transformations) to manipulate query results.
+- Add [annotations](ref:annotate-visualizations) to overlay events on your graphs.
+- Set up [alerting](ref:alerting) based on GCP metrics.
+- Use [Explore](ref:explore) to investigate your Google Cloud data without building a dashboard.
 
 ## Pre-configured dashboards
 
-The Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services.
-These curated dashboards are based on similar dashboards in the GCP dashboard samples repository.
+The Google Cloud Monitoring data source includes pre-configured dashboards for popular GCP services. These curated dashboards are based on similar dashboards in the GCP dashboard samples repository.
 
 {{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" class="docs-image--no-shadow" max-width="650px" caption="Curated dashboards for Google Cloud Monitoring" >}}
 
-**To import curated dashboards:**
+To import a pre-configured dashboard:
 
-1. Navigate to the data source's [configuration page](#configure-the-data-source).
-1. Select the **Dashboards** tab.
+1. Go to **Connections** > **Data sources**.
+1. Select your Google Cloud Monitoring data source.
+1. Click the **Dashboards** tab.
+1. Click **Import** next to the dashboard you want to use.
 
-   This displays the curated selection of importable dashboards.
+The dashboards include a [template variable](template-variables/) populated with the projects accessible by the configured [service account](google-authentication/) each time you load the dashboard. After Grafana loads the dashboard, you can select a project from the dropdown list.
 
-1. Select **Import** for the dashboard to import.
+To customize an imported dashboard, save it under a different name. Otherwise, Grafana upgrades can overwrite your customizations with the new version.
 
-The dashboards include a [template variable](template-variables/) populated with the projects accessible by the configured [Service Account](google-authentication/) each time you load the dashboard.
-After Grafana loads the dashboard, you can select a project from the dropdown list.
+## Related resources
 
-**To customize an imported dashboard:**
-
-To customize one of these dashboards, we recommend that you save it under a different name.
-If you don't, upgrading Grafana can overwrite the customized dashboard with the new version.
-
-
-## Query the data source
-
-The Google Cloud Monitoring query editor helps you build two types of queries: **Metric** and **Service Level Objective (SLO)**.
-
-For details, refer to the [query editor documentation](query-editor/).
-
-## Use template variables
-
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
-Grafana refers to such variables as template variables.
-
-For details, see the [template variables documentation](template-variables/).
+- [Google Cloud Monitoring documentation](https://cloud.google.com/monitoring/docs)
+- [Monitoring Query Language (MQL) reference](https://cloud.google.com/monitoring/mql/reference)
+- [Google Cloud metrics list](https://cloud.google.com/monitoring/api/metrics_gcp)
+- [Grafana community forum](https://community.grafana.com/)
