@@ -5,7 +5,8 @@ import (
 	"path"
 	"slices"
 
-	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/Machiel/slugify"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"

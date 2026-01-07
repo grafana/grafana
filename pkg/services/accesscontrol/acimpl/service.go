@@ -475,7 +475,7 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 func (s *Service) getBasicRolePermissionsLocked() map[string][]accesscontrol.Permission {
 	desired := map[accesscontrol.SeedPermission]struct{}{}
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
-		seeding.AppendDesiredPermissions(desired, s.log, &registration.Role, registration.Grants, registration.Exclude, true)
+		seeding.AppendDesiredPermissions(desired, s.log, &registration.Role, registration.Grants, registration.Exclude)
 		return true
 	})
 

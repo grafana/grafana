@@ -9,7 +9,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
-import { Button, LoadingPlaceholder, ConfirmModal, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, LoadingPlaceholder, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -68,6 +68,8 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
   const onDisplayChange = (display: VariableHide) => variable.setState({ hide: display });
 
   const isHasVariableOptions = hasVariableOptions(variable);
+  const optionsForSelect = isHasVariableOptions ? variable.getOptionsForSelect(false) : [];
+  const hasMultiProps = 'valuesFormat' in variable.state && variable.state.valuesFormat === 'json';
 
   const onDeleteVariable = (hideModal: () => void) => () => {
     reportInteraction('Delete variable');
@@ -123,7 +125,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
-      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
+      {isHasVariableOptions && <VariableValuesPreview options={optionsForSelect} hasMultiProps={hasMultiProps} />}
 
       <div className={styles.buttonContainer}>
         <Stack gap={2}>

@@ -3135,9 +3135,12 @@
       "table": "Tablo"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Bir uyarı kuralının tetiklenmesi için karşılanması gereken koşulu tanımlayın",
       "description-configure-firing-alert-instances-routed-contact": "Tetiklenen uyarı örneklerinin iletişim noktalarına nasıl yönlendirileceğini yapılandırın",
       "description-configure-receives-notifications": "Bildirimlerin kime gönderileceğini ve nasıl gönderileceğini yapılandırın",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Uyarı kuralları",
       "title-contact-points": "İletişim noktaları",
       "title-notification-policies": "Bildirim politikaları"
@@ -5796,6 +5799,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -14394,6 +14398,17 @@
       },
       "name": {
         "series-to-rows": "Seriden satırlara"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {
