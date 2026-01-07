@@ -278,6 +278,67 @@ The following issues don't always produce specific error messages but are common
 1. Ensure the derived field has a valid URL or internal data source configured.
 1. Check that the log lines contain text matching the regex pattern.
 
+## Live tailing issues
+
+The following issues occur when using the live log tailing feature.
+
+### Live tailing not working
+
+**Cause:** Live tailing relies on WebSocket connections that may be blocked by proxies or firewalls.
+
+**Solution:**
+
+1. Verify WebSocket connections are allowed through your network infrastructure.
+1. Check that your reverse proxy is configured to support WebSocket connections.
+1. Ensure the Grafana server can establish a WebSocket connection to Loki.
+
+### Configure reverse proxies for live tailing
+
+If you use reverse proxies, configure them to support WebSocket connections for live tailing.
+
+**Apache2 configuration:**
+
+Add the following to proxy WebSocket connections:
+
+```apache
+ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
+```
+
+**NGINX configuration:**
+
+This example assumes the Grafana server is available at `http://localhost:3000/`, the Loki server is running locally without a proxy, and your external site uses HTTPS. If you also host Loki behind NGINX, repeat this configuration for Loki.
+
+In the `http` section of your NGINX configuration, add the following map definition:
+
+```nginx
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  '' close;
+}
+```
+
+In your `server` section, add the following configuration:
+
+```nginx
+location ~ /(api/datasources/proxy/\d+/loki/api/v1/tail) {
+    proxy_pass          http://localhost:3000$request_uri;
+    proxy_set_header    Host              $host;
+    proxy_set_header    X-Real-IP         $remote_addr;
+    proxy_set_header    X-Forwarded-for   $proxy_add_x_forwarded_for;
+    proxy_set_header    X-Forwarded-Proto "https";
+    proxy_set_header    Connection        $connection_upgrade;
+    proxy_set_header    Upgrade           $http_upgrade;
+}
+
+location / {
+    proxy_pass          http://localhost:3000/;
+    proxy_set_header    Host              $host;
+    proxy_set_header    X-Real-IP         $remote_addr;
+    proxy_set_header    X-Forwarded-for   $proxy_add_x_forwarded_for;
+    proxy_set_header    X-Forwarded-Proto "https";
+}
+```
+
 ## Multi-tenancy issues
 
 ### No org id
