@@ -123,6 +123,7 @@ logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,fa
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingSavedSearches,experimental,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
+alertingDisableDMAlerts,experimental,@grafana/alerting-squad,false,false,true
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,false
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false

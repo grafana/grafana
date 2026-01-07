@@ -894,6 +894,14 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "alertingDisableDMAlerts",
+			Description:  "Disables data source-managed alerts and hides related UI options.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "preserveDashboardStateWhenNavigating",
 			Description:  "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
 			Stage:        FeatureStageExperimental,

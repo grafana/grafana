@@ -539,6 +539,10 @@ export interface FeatureToggles {
   */
   alertingDisableSendAlertsExternal?: boolean;
   /**
+  * Disables data source-managed alerts and hides related UI options.
+  */
+  alertingDisableDMAlerts?: boolean;
+  /**
   * Enables possibility to preserve dashboard variables and time range when navigating between dashboards
   */
   preserveDashboardStateWhenNavigating?: boolean;
