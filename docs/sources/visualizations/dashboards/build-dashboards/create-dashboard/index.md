@@ -184,14 +184,11 @@ To create a dashboard, follow these steps:
 1. Enter a title and description for your dashboard if you haven't already or have Grafana create them using [generative AI features](ref:generative-ai-features).
 1. Select a folder, if applicable.
 1. Click **Save**
+1. Click **Back to dashboard**.
+1. Click **Exit edit**.
 
 Now that you've created a basic dashboard, continue building it by going through the following sections.
 We've ordered them as we expect you'll need them, but you can do any of these steps at any time.
-
-
-
-   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save** when you're ready.
-
 
 ## What is this next step - Add panels, update layout, group
 1. To add more panels to the dashboard, click **Back to dashboard** and at the bottom-left corner of the dashboard, click **+ Add panel**.
