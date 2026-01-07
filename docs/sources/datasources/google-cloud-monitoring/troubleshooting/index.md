@@ -17,7 +17,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Troubleshoot
+menuTitle: Troubleshooting
 title: Troubleshoot Google Cloud Monitoring data source issues
 weight: 500
 refs:
