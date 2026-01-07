@@ -23,7 +23,7 @@ func TestJsonEquals(t *testing.T) {
 			column:   "labels",
 			key:      "team",
 			value:    "alerting",
-			wantSQL:  "JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) = ?",
+			wantSQL:  `JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"'))) = ?`,
 			wantArgs: []any{"team", "alerting"},
 		},
 		{
@@ -62,7 +62,7 @@ func TestJsonNotEquals(t *testing.T) {
 			column:   "labels",
 			key:      "team",
 			value:    "alerting",
-			wantSQL:  "(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) != ?)",
+			wantSQL:  `(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"'))) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"'))) != ?)`,
 			wantArgs: []any{"team", "team", "alerting"},
 		},
 		{
@@ -99,7 +99,7 @@ func TestJsonKeyMissing(t *testing.T) {
 			dialect:  migrator.NewMysqlDialect(),
 			column:   "labels",
 			key:      "team",
-			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NULL",
+			wantSQL:  `JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"')) IS NULL`,
 			wantArgs: []any{"team"},
 		},
 		{
@@ -136,7 +136,7 @@ func TestJsonKeyExists(t *testing.T) {
 			dialect:  migrator.NewMysqlDialect(),
 			column:   "labels",
 			key:      "__grafana_origin",
-			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NOT NULL",
+			wantSQL:  `JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"')) IS NOT NULL`,
 			wantArgs: []any{"__grafana_origin"},
 		},
 		{

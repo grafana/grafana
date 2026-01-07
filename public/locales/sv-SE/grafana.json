@@ -3135,9 +3135,12 @@
       "table": "Tabell"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Definiera villkoret som måste uppfyllas innan en larmregel utlöses",
       "description-configure-firing-alert-instances-routed-contact": "Konfigurera hur utlösta larminstanser dirigeras till kontaktpunkter",
       "description-configure-receives-notifications": "Konfigurera vem som tar emot aviseringar och hur de skickas",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Varningsregler",
       "title-contact-points": "Kontaktpunkter",
       "title-notification-policies": "Aviseringspolicyer"
@@ -5796,6 +5799,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -14394,6 +14398,17 @@
       },
       "name": {
         "series-to-rows": "Serie till rader"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {
