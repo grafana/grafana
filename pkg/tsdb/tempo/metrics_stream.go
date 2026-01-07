@@ -27,6 +27,7 @@ type PartialTempoQuery struct {
 func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *DatasourceInfo) error {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runMetricsStream")
 	defer span.End()
+	backend.Logger.Warn("runMetricsStream called heeer")
 
 	response := &backend.DataResponse{}
 
@@ -58,7 +59,7 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 	}
 
 	if qrr.GetQuery() == "" {
-		return backend.DownstreamErrorf("tempo search query cannot be empty")
+		return backend.DownstreamErrorf("tempo metrics stream search query cannot be empty")
 	}
 
 	qrr.Start = uint64(backendQuery.TimeRange.From.UnixNano())
@@ -68,7 +69,9 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 	// changes or updates, so we have to get it from context.
 	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
 	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
-
+	for key, value := range req.Headers {
+		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
+	}
 	if isInstantQuery(tempoQuery.MetricsQueryType) {
 		instantQuery := &tempopb.QueryInstantRequest{
 			Query: qrr.Query,

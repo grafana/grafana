@@ -34,7 +34,7 @@ type StreamSender interface {
 func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *DatasourceInfo) error {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runSearchStream")
 	defer span.End()
-
+	backend.Logger.Warn("runSearchStream called heeer")
 	response := &backend.DataResponse{}
 
 	var backendQuery *backend.DataQuery
@@ -56,7 +56,7 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	}
 
 	if sr.GetQuery() == "" {
-		return backend.DownstreamErrorf("tempo search query cannot be empty")
+		return backend.DownstreamErrorf("tempo run search query cannot be empty")
 	}
 
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
@@ -66,7 +66,10 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	// changes or updates, so we have to get it from context.
 	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
 	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
-
+	// append the rest of the headers
+	for key, value := range req.Headers {
+		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
+	}
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {
 		span.RecordError(err)

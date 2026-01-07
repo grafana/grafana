@@ -40,7 +40,15 @@ func (s *Service) PublishStream(_ context.Context, _ *backend.PublishStreamReque
 func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	s.logger.Debug("New stream call", "path", request.Path)
 	tempoDatasource, err := s.getDSInfo(ctx, request.PluginContext)
-
+	plugin := backend.PluginConfigFromContext(ctx)
+	opts, err := plugin.DataSourceInstanceSettings.HTTPClientOptions(ctx)
+	headers := map[string]string{}
+	for name, values := range opts.Header {
+		for _, value := range values {
+			headers[name] = value
+		}
+	}
+	request.Headers = headers
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
 		if err != nil {
 			return backend.DownstreamErrorf("failed to get datasource information: %w", err)
