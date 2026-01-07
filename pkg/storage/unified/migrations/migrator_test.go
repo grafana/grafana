@@ -280,7 +280,7 @@ const (
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
-	foldersAndDashboardsID: false,
+	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {

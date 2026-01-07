@@ -71,8 +71,6 @@ func registerMigrations(ctx context.Context,
 ) error {
 	for _, migration := range migrationRegistry {
 		if shouldAutoMigrate(ctx, migration, cfg, sqlStore) {
-			logger.Info("Auto-migration enabled for migration", "migration", migration.name)
-			enableMode5IfMigrated(ctx, migration, cfg, sqlStore)
 			migration.registerFunc(mg, migrator, client, WithAutoMigrate(cfg))
 			continue
 		}
@@ -168,6 +166,14 @@ func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *
 			continue
 		}
 
+		if checkIfAlreadyMigrated(ctx, migration, sqlStore) {
+			for _, res := range migration.resources {
+				cfg.EnableMode5(res)
+			}
+			logger.Info("Auto-migration already completed, enabling mode 5 for resources", "migration", migration.name)
+			return true
+		}
+
 		autoMigrate = true
 		threshold := int64(setting.DefaultAutoMigrationThreshold)
 		if config.AutoMigrationThreshold > 0 {
@@ -191,29 +197,22 @@ func shouldAutoMigrate(ctx context.Context, migration migrationDefinition, cfg *
 		return false
 	}
 
-	logger.Info("Migration resource(s) below auto migration threshold", "migration", migration.name)
+	logger.Info("Auto-migration enabled for migration", "migration", migration.name)
 	return true
 }
 
-func enableMode5IfMigrated(ctx context.Context, migration migrationDefinition, cfg *setting.Cfg, sqlStore db.DB) {
+func checkIfAlreadyMigrated(ctx context.Context, migration migrationDefinition, sqlStore db.DB) bool {
 	if migration.migrationID == "" {
-		return
+		return false
 	}
 
 	exists, err := migrationExists(ctx, sqlStore, migration.migrationID)
 	if err != nil {
 		logger.Warn("Failed to check if migration exists", "migration", migration.name, "error", err)
-		return
+		return false
 	}
 
-	if !exists {
-		return
-	}
-
-	for _, res := range migration.resources {
-		cfg.EnableMode5(res)
-		logger.Info("Migration already completed, enabling mode 5 for resource", "resource", res)
-	}
+	return exists
 }
 
 func isMigrationEnabled(migration migrationDefinition, cfg *setting.Cfg) (bool, error) {
