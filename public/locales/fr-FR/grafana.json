@@ -3135,9 +3135,12 @@
       "table": "Tableau"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Définir la condition qui doit être remplie avant qu’une règle d’alerte ne se déclenche",
       "description-configure-firing-alert-instances-routed-contact": "Configurer la façon dont les instances d’alerte de déclenchement sont acheminées vers les points de contact",
       "description-configure-receives-notifications": "Configurer les destinataires des notifications et la manière dont elles sont envoyées",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Règles d'alerte",
       "title-contact-points": "Points de contact",
       "title-notification-policies": "Règles de notification"
@@ -5796,6 +5799,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -14394,6 +14398,17 @@
       },
       "name": {
         "series-to-rows": "Convertir la série en lignes"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

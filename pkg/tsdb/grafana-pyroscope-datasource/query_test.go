@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
@@ -487,10 +488,21 @@ func Test_seriesToDataFrame(t *testing.T) {
 		require.Nil(t, frames[0].Meta.Custom)
 	})
 
-	t.Run("CPU time conversion to cores", func(t *testing.T) {
+	t.Run("CPU time conversion to cores with exemplars", func(t *testing.T) {
 		series := &SeriesResponse{
 			Series: []*Series{
-				{Labels: []*LabelPair{}, Points: []*Point{{Timestamp: int64(1000), Value: 3000000000}, {Timestamp: int64(2000), Value: 1500000000}}}, // 3s and 1.5s in nanoseconds
+				{
+					Labels: []*LabelPair{}, Points: []*Point{
+						{
+							Timestamp: int64(1000), Value: 3000000000, // 3s in nanoseconds
+							Exemplars: []*Exemplar{{Value: 300000000, Timestamp: 1000}}, // 0.3s in nanoseconds
+						},
+						{
+							Timestamp: int64(2000), Value: 1500000000, // 1.5s in nanoseconds
+							Exemplars: []*Exemplar{{Value: 150000000, Timestamp: 1000}}, // 0.15s in nanoseconds
+						},
+					},
+				},
 			},
 			Units: "ns",
 			Label: "cpu",
@@ -498,19 +510,32 @@ func Test_seriesToDataFrame(t *testing.T) {
 		// should convert nanoseconds to cores and set unit to "cores"
 		frames, err := seriesToDataFrames(series, false, 15.0, "process_cpu:cpu:nanoseconds:cpu:nanoseconds")
 		require.NoError(t, err)
-		require.Equal(t, 1, len(frames))
+		require.Equal(t, 2, len(frames))
 
 		require.Equal(t, "cores", frames[0].Fields[1].Config.Unit)
 
 		// Check values were converted: 3000000000/15/1e9 = 0.2 cores/sec, 1500000000/15/1e9 = 0.1 cores/sec
 		values := fieldValues[float64](frames[0].Fields[1])
 		require.Equal(t, []float64{0.2, 0.1}, values)
+		// Check exemplar values were converted: 300000000/15/1e9 = 0.02 cores/sec, 150000000/15/1e9 = 0.01 cores/sec
+		exemplarValues := fieldValues[float64](frames[1].Fields[1])
+		require.Equal(t, []float64{0.02, 0.01}, exemplarValues)
 	})
 
 	t.Run("Memory allocation unit conversion to bytes/sec", func(t *testing.T) {
 		series := &SeriesResponse{
 			Series: []*Series{
-				{Labels: []*LabelPair{}, Points: []*Point{{Timestamp: int64(1000), Value: 150000000}, {Timestamp: int64(2000), Value: 300000000}}}, // 150 MB, 300 MB
+				{
+					Labels: []*LabelPair{}, Points: []*Point{
+						{
+							Timestamp: int64(1000), Value: 150000000, // 150 MB
+							Exemplars: []*Exemplar{{Value: 15000000, Timestamp: 1000}}, // 15 MB
+						}, {
+							Timestamp: int64(2000), Value: 300000000, // 300 MB
+							Exemplars: []*Exemplar{{Value: 30000000, Timestamp: 1000}}, // 30 MB
+						},
+					},
+				},
 			},
 			Units: "bytes",
 			Label: "memory_alloc",
@@ -518,19 +543,33 @@ func Test_seriesToDataFrame(t *testing.T) {
 		// should convert bytes to binBps and apply rate calculation
 		frames, err := seriesToDataFrames(series, false, 15.0, "memory:alloc_space:bytes:space:bytes")
 		require.NoError(t, err)
-		require.Equal(t, 1, len(frames))
+		require.Equal(t, 2, len(frames))
 
 		require.Equal(t, "binBps", frames[0].Fields[1].Config.Unit)
 
 		// Check values were rate calculated: 150000000/15 = 10000000, 300000000/15 = 20000000
 		values := fieldValues[float64](frames[0].Fields[1])
 		require.Equal(t, []float64{10000000, 20000000}, values)
+		// Check exemplar values were rate calculated: 15000000/15 = 1000000, 30000000/15 = 2000000
+		exemplarValues := fieldValues[float64](frames[1].Fields[1])
+		require.Equal(t, []float64{1000000, 2000000}, exemplarValues)
 	})
 
 	t.Run("Count-based profile unit conversion to ops/sec", func(t *testing.T) {
 		series := &SeriesResponse{
 			Series: []*Series{
-				{Labels: []*LabelPair{}, Points: []*Point{{Timestamp: int64(1000), Value: 1500}, {Timestamp: int64(2000), Value: 3000}}}, // 1500, 3000 contentions
+				{
+					Labels: []*LabelPair{}, Points: []*Point{
+						{
+							Timestamp: int64(1000), Value: 1500, // 1500 contentions
+							Exemplars: []*Exemplar{{Value: 150, Timestamp: 1000}}, // 150 contentions
+
+						}, {
+							Timestamp: int64(2000), Value: 3000, // 3000 contentions
+							Exemplars: []*Exemplar{{Value: 300, Timestamp: 1000}}, // 300 contentions
+						},
+					},
+				},
 			},
 			Units: "short",
 			Label: "contentions",
@@ -538,13 +577,16 @@ func Test_seriesToDataFrame(t *testing.T) {
 		// should convert short to ops and apply rate calculation
 		frames, err := seriesToDataFrames(series, false, 15.0, "mutex:contentions:count:contentions:count")
 		require.NoError(t, err)
-		require.Equal(t, 1, len(frames))
+		require.Equal(t, 2, len(frames))
 
 		require.Equal(t, "ops", frames[0].Fields[1].Config.Unit)
 
 		// Check values were rate calculated: 1500/15 = 100, 3000/15 = 200
 		values := fieldValues[float64](frames[0].Fields[1])
 		require.Equal(t, []float64{100, 200}, values)
+		// Check exemplar values were rate calculated: 150/15 = 10, 300/15 = 20
+		exemplarValues := fieldValues[float64](frames[1].Fields[1])
+		require.Equal(t, []float64{10, 20}, exemplarValues)
 	})
 }
 
@@ -605,7 +647,7 @@ func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSel
 	}, nil
 }
 
-func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, error) {
+func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, limit *int64, step float64, exemplarType typesv1.ExemplarType) (*SeriesResponse, error) {
 	f.Args = []any{profileTypeID, labelSelector, start, end, groupBy, step}
 	return &SeriesResponse{
 		Series: []*Series{

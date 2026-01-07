@@ -1336,6 +1336,17 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 		customVar.Spec.AllValue = &allValue
 	}
 
+	if valuesFormat := schemaversion.GetStringValue(varMap, "valuesFormat"); valuesFormat != "" {
+		switch valuesFormat {
+		case string(dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson):
+			format := dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson
+			customVar.Spec.ValuesFormat = &format
+		case string(dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv):
+			format := dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv
+			customVar.Spec.ValuesFormat = &format
+		}
+	}
+
 	return dashv2alpha1.DashboardVariableKind{
 		CustomVariableKind: customVar,
 	}, nil
