@@ -79,10 +79,22 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		pluginsSettings = &pluginsettings.FakePluginSettings{}
 	}
 
+	pluginReg := registry.ProvideService()
+	for _, plugin := range pluginStore.Plugins(t.Context()) {
+		p := asRegistryPlugin(plugin)
+		if plugin.Parent != nil {
+			pp, ok := pluginStore.Plugin(t.Context(), plugin.Parent.ID)
+			require.True(t, ok)
+			p.Parent = asRegistryPlugin(pp)
+		}
+		err := pluginReg.Add(t.Context(), p)
+		require.NoError(t, err)
+	}
+
 	var pluginsAssets = passets
 	if pluginsAssets == nil {
 		sig := signature.ProvideService(pluginsCfg, statickey.New())
-		pluginAssetsService := pluginassetsmoduleinfo.ProvideService(pluginsCfg, pluginsCDN, sig, registry.ProvideService())
+		pluginAssetsService := pluginassetsmoduleinfo.ProvideService(pluginsCfg, pluginsCDN, sig, pluginReg)
 		pluginsAssets = pluginassets.NewService(pluginAssetsService)
 	}
 
@@ -279,7 +291,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", false),
 				}
 			},
-			pluginAssets: newPluginAssets(),
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -317,7 +329,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssets(),
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -355,7 +367,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssets(),
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -391,13 +403,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssetsWithConfig(&config.PluginManagementCfg{
-				PluginSettings: map[string]map[string]string{
-					"test-app": {
-						pluginassetsmoduleinfo.CreatePluginVersionCfgKey: pluginassetsmoduleinfo.CreatePluginVersionScriptSupportEnabled,
-					},
-				},
-			}),
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -436,7 +442,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssets(),
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -454,6 +460,14 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
+			// Set plugin settings for the "app plugin with create plugin version compatible with script loading strategy" test
+			if test.desc == "app plugin with create plugin version compatible with script loading strategy" {
+				cfg.PluginSettings = map[string]map[string]string{
+					"test-app": {
+						pluginassetsmoduleinfo.CreatePluginVersionCfgKey: pluginassetsmoduleinfo.CreatePluginVersionScriptSupportEnabled,
+					},
+				}
+			}
 			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings(), test.pluginAssets())
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
@@ -719,5 +733,25 @@ func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *plugina
 	return func() *pluginassets.Service {
 		pluginAssetsService := pluginassetsmoduleinfo.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), signature.ProvideService(pCfg, statickey.New()), registry.ProvideService())
 		return pluginassets.NewService(pluginAssetsService)
+	}
+}
+
+func asRegistryPlugin(ps pluginstore.Plugin) *plugins.Plugin {
+	return &plugins.Plugin{
+		JSONData:        ps.JSONData,
+		FS:              ps.FS,
+		Class:           ps.Class,
+		IncludedInAppID: ps.IncludedInAppID,
+		DefaultNavURL:   ps.DefaultNavURL,
+		Pinned:          ps.Pinned,
+		Signature:       ps.Signature,
+		SignatureType:   ps.SignatureType,
+		SignatureOrg:    ps.SignatureOrg,
+		Error:           ps.Error,
+		Module:          ps.Module,
+		BaseURL:         ps.BaseURL,
+		Angular:         ps.Angular,
+		ExternalService: ps.ExternalService,
+		Translations:    ps.Translations,
 	}
 }
