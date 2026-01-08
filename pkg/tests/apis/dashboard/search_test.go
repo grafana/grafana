@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -125,6 +126,12 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		raw, err := res.Raw()
 		require.NoError(t, err)
 		require.NoError(t, json.Unmarshal(raw, &sr))
+
+		// Normalize scores and query cost for snapshot comparison
+		sr.QueryCost = 0 // this depends on the hardware
+		for i := range sr.Hits {
+			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
+		}
 		return sr
 	}
 
@@ -436,4 +443,12 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	}, &struct{}{})
 
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
+}
+
+// roundTo rounds a float64 to a specified number of decimal places.
+func roundTo(n float64, decimals uint32) float64 {
+	// Calculate the power of 10 for the desired number of decimals
+	scale := math.Pow(10, float64(decimals))
+	// Multiply, round to the nearest integer, and then divide back
+	return math.Round(n*scale) / scale
 }
