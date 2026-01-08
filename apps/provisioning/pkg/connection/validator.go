@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )

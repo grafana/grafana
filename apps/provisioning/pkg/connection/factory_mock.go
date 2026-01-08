@@ -5,7 +5,7 @@ package connection
 import (
 	context "context"
 
-	github "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	github "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	mock "github.com/stretchr/testify/mock"
 
 	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
