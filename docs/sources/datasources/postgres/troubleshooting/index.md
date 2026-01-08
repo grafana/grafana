@@ -13,11 +13,11 @@ labels:
     - enterprise
     - oss
 menuTitle: Troubleshooting
-title: Troubleshoot issues with the PostgreSQL data source
+title: Troubleshoot PostgreSQL data source issues
 weight: 600
 ---
 
-# Troubleshoot issues with the PostgreSQL data source
+# Troubleshoot PostgreSQL data source issues
 
 This document provides troubleshooting information for common errors you may encounter when using the PostgreSQL data source in Grafana.
 
@@ -240,7 +240,7 @@ The following errors occur when there are issues with SQL syntax or query execut
 
 ### Macro expansion error
 
-**Error message:** "macro '$__timeFilter' not found" or incorrect query results with macros
+**Error message:** "macro '$\_\_timeFilter' not found" or incorrect query results with macros
 
 **Cause:** Grafana macros are not being properly expanded.
 
