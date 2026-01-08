@@ -5,17 +5,17 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError, reportInteraction } from '@grafana/runtime';
-import { Button, Field, Input, RadioButtonGroup, SecretInput, Stack } from '@grafana/ui';
+import { Button, Combobox, Field, Input, Stack } from '@grafana/ui';
 import { Connection, ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { SecretTextArea } from '../Shared/SecretTextArea';
 import { CONNECTIONS_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
 interface ConnectionFormData {
-  name: string;
   type: 'github' | 'gitlab' | 'bitbucket';
   appID: string;
   installationID: string;
@@ -26,12 +26,7 @@ interface ConnectionFormProps {
   data?: Connection;
 }
 
-const providerOptions = [
-  { value: 'github', label: 'GitHub' },
-  // Disabled for now:
-  // { value: 'gitlab', label: 'GitLab', disabled: true },
-  // { value: 'bitbucket', label: 'Bitbucket', disabled: true },
-];
+const providerOptions = [{ value: 'github', label: 'GitHub' }];
 
 export function ConnectionForm({ data }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
@@ -51,7 +46,6 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     getValues,
   } = useForm<ConnectionFormData>({
     defaultValues: {
-      name: data?.metadata?.name || '',
       type: data?.spec?.type || 'github',
       appID: data?.spec?.github?.appID || '',
       installationID: data?.spec?.github?.installationID || '',
@@ -64,7 +58,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       const formData = getValues();
 
       reportInteraction('grafana_provisioning_connection_saved', {
-        connectionName: connectionName ?? formData.name,
+        connectionName: connectionName ?? 'unknown',
         connectionType: formData.type,
       });
 
@@ -115,23 +109,6 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       <Stack direction="column" gap={2}>
         <Field
           noMargin
-          label={t('provisioning.connection-form.label-name', 'Connection name')}
-          description={t('provisioning.connection-form.description-name', 'A unique identifier for this connection')}
-          invalid={!!errors.name}
-          error={errors?.name?.message}
-          required
-        >
-          <Input
-            {...register('name', {
-              required: t('provisioning.connection-form.error-required', 'This field is required'),
-            })}
-            placeholder={t('provisioning.connection-form.placeholder-name', 'my-github-connection')}
-            disabled={isEdit}
-          />
-        </Field>
-
-        <Field
-          noMargin
           label={t('provisioning.connection-form.label-provider', 'Provider')}
           description={t('provisioning.connection-form.description-provider', 'Select the provider type')}
         >
@@ -139,7 +116,12 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             name="type"
             control={control}
             render={({ field: { ref, onChange, ...field } }) => (
-              <RadioButtonGroup options={providerOptions} onChange={onChange} disabled {...field} />
+              <Combobox
+                disabled // TODO enable when other providers are supported
+                options={providerOptions}
+                onChange={(option) => onChange(option?.value || 'github')}
+                {...field}
+              />
             )}
           />
         </Field>
@@ -197,9 +179,8 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
               required: isEdit ? false : t('provisioning.connection-form.error-required', 'This field is required'),
             }}
             render={({ field: { ref, ...field } }) => (
-              <SecretInput
+              <SecretTextArea
                 {...field}
-                invalid={!!errors.privateKey}
                 id="privateKey"
                 placeholder={t(
                   'provisioning.connection-form.placeholder-private-key',
