@@ -28,6 +28,8 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
       });
 
       // Make the editor resize itself so that the content fits (grows taller when necessary)
+      // this code comes from the Prometheus query editor.
+      // We may wish to consider abstracting it into the grafana/ui repo in the future
       const updateElementHeight = () => {
         const containerDiv = containerRef.current;
         if (containerDiv !== null) {
