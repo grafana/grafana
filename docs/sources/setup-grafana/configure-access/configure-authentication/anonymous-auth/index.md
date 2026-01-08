@@ -13,7 +13,7 @@ title: Configure anonymous access
 weight: 250
 ---
 
-# Anonymous access
+# Anonymous authentication
 
 You can make Grafana accessible without any login required by enabling anonymous access in the configuration file.
 
