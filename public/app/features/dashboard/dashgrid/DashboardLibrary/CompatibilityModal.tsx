@@ -128,7 +128,7 @@ export const CompatibilityModal = ({ isOpen, onDismiss, dashboardJson, datasourc
               </Text>
 
               <Text element="p">
-                <pre>{JSON.stringify(result, null, 2)}</pre>
+                <pre className={styles.jsonPreview}>{JSON.stringify(result, null, 2)}</pre>
               </Text>
             </div>
 
@@ -185,6 +185,16 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+    }),
+    jsonPreview: css({
+      maxHeight: '400px',
+      overflow: 'auto',
+      padding: theme.spacing(2),
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      fontSize: theme.typography.bodySmall.fontSize,
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
     }),
   };
 }
