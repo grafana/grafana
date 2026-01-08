@@ -501,7 +501,7 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func () {
+	defer func() {
 		_ = rows.Close()
 	}()
 
@@ -580,7 +580,7 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	// For KV backend operations, resource versions are stored as snowflake format
 	// but expectedPrevRV is in microsecond format, so we need to use IsRvEqual for comparison
 	if strings.Contains(record.Namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(record.PreviousResourceVersion, expectedPrevRV), 
+		require.True(t, rvmanager.IsRvEqual(record.PreviousResourceVersion, expectedPrevRV),
 			"Previous resource version should match (KV backend snowflake format)")
 	} else {
 		require.Equal(t, expectedPrevRV, record.PreviousResourceVersion)
@@ -592,7 +592,7 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	// Validate resource_version
 	// For KV backend operations, resource versions are stored as snowflake format
 	if strings.Contains(record.Namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV), 
+		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV),
 			"Resource version should match (KV backend snowflake format)")
 	} else {
 		require.Equal(t, expectedRV, record.ResourceVersion)
@@ -612,7 +612,7 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func () {
+	defer func() {
 		_ = rows.Close()
 	}()
 
@@ -659,7 +659,7 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 	// Resource version should match the expected version for test-resource-3 (updated version)
 	expectedRV := resourceVersions[2][1] // test-resource-3's update version
 	if strings.Contains(namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV), 
+		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV),
 			"Resource version should match (KV backend snowflake format)")
 	} else {
 		require.Equal(t, expectedRV, record.ResourceVersion)
@@ -678,7 +678,7 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	// Check that we have exactly one entry for playlist.grafana.app/playlists
 	rows, err := db.QueryContext(ctx, query, "playlist.grafana.app", "playlists")
 	require.NoError(t, err)
-	defer func () {
+	defer func() {
 		_ = rows.Close()
 	}()
 
