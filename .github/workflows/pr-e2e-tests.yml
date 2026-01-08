@@ -212,7 +212,7 @@ jobs:
         run: |
           set -euo pipefail
           LOADED_IMAGE_NAME=$(docker load -i grafana.docker.tar.gz | sed 's/Loaded image: //g')
-          DOCKER_IMAGE="grafana/grafana:12.4.0-react19"
+          DOCKER_IMAGE="grafana/grafana:dev-preview-react19"
           docker tag "${LOADED_IMAGE_NAME}" "${DOCKER_IMAGE}"
           docker push "${DOCKER_IMAGE}"
 
