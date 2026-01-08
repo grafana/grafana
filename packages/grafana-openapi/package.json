@@ -45,8 +45,8 @@
     "format": "prettier \"**/*.json\" --write --log-level=warn",
     "generate:openapi": "make -C ../../ all-openapi3-gen",
     "typecheck": "",
-    "prepack": "yarn build",
-    "postpack": "",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json",
     "process-specs": "node src/scripts/process-specs.ts && yarn copy:api && yarn format"
   },
   "engines": {
