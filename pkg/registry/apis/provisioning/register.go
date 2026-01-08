@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,7 +31,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
-	connectionvalidation "github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -105,20 +106,21 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistoryConfig *JobHistoryConfig
-	jobHistoryLoki   *jobs.LokiJobHistory
-	resourceLister   resources.ResourceLister
-	dashboardAccess  legacy.MigrationDashboardAccessor
-	unified          resource.ResourceClient
-	repoFactory      repository.Factory
-	client           client.ProvisioningV0alpha1Interface
-	access           auth.AccessChecker
+	jobHistoryConfig    *JobHistoryConfig
+	jobHistoryLoki      *jobs.LokiJobHistory
+	resourceLister      resources.ResourceLister
+	dashboardAccess     legacy.MigrationDashboardAccessor
+	unified             resource.ResourceClient
+	repoFactory         repository.Factory
+	client              client.ProvisioningV0alpha1Interface
+	access              auth.AccessChecker
 	accessWithAdmin  auth.AccessChecker
 	accessWithEditor auth.AccessChecker
 	accessWithViewer auth.AccessChecker
-	statusPatcher    *appcontroller.RepositoryStatusPatcher
-	healthChecker    *controller.HealthChecker
-	repoValidator    repository.RepositoryValidator
+	statusPatcher       *appcontroller.RepositoryStatusPatcher
+	healthChecker       *controller.HealthChecker
+	repoValidator       repository.RepositoryValidator
+	connectionValidator connection.Validator
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
@@ -193,6 +195,7 @@ func NewAPIBuilder(
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
 		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		connectionValidator:                 connection.NewValidator(github.ProvideFactory()),
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 	}
 
@@ -685,7 +688,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	// TODO: complete this as part of https://github.com/grafana/git-ui-sync-project/issues/700
 	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		return connectionvalidation.MutateConnection(c)
+		return connection.MutateConnection(c)
 	}
 
 	r, ok := obj.(*provisioning.Repository)
@@ -736,9 +739,10 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return nil
 	}
 
-	connection, ok := obj.(*provisioning.Connection)
+	// Validate connections
+	conn, ok := obj.(*provisioning.Connection)
 	if ok {
-		return connectionvalidation.ValidateConnection(connection)
+		return b.connectionValidator.ValidateConnection(ctx, conn)
 	}
 
 	// Validate Jobs
