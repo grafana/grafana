@@ -3135,9 +3135,12 @@
       "table": "Tabella"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Definisci la condizione che deve essere soddisfatta prima che venga attivata una regola di avviso",
       "description-configure-firing-alert-instances-routed-contact": "Configura il modo in cui le istanze di avviso attivate vengono instradate ai punti di contatto",
       "description-configure-receives-notifications": "Configura chi riceve le notifiche e come vengono inviate",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Regole di avviso",
       "title-contact-points": "Punti di contatto",
       "title-notification-policies": "Politiche di notifica"
@@ -3756,7 +3759,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4413,6 +4415,7 @@
       },
       "no-properties-changed": "Nessuna proprietà rilevante modificata",
       "table": {
+        "notes": "",
         "updated": "Data",
         "updatedBy": "Aggiornato da",
         "version": "Versione"
@@ -4871,7 +4874,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Valori separati da virgola"
         },
         "datasource-options": {
           "name-filter": "Filtro nome",
@@ -5796,6 +5800,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5964,6 +5969,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Opzioni personalizzate",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Valori separati da virgola",
       "selection-options": "Seleziona opzioni"
     },
@@ -6551,6 +6559,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
     },
@@ -6574,6 +6587,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6633,8 +6647,9 @@
       "tooltip-show-usages": "Mostra utilizzi"
     },
     "variable-values-preview": {
-      "preview-of-values": "Anteprima dei valori",
-      "show-more": "Mostra di più"
+      "show-more": "Mostra di più",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -14394,6 +14409,17 @@
       },
       "name": {
         "series-to-rows": "Serie a righe"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

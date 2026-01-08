@@ -5,7 +5,7 @@ INSERT INTO {{ .Ident .TableName }}
 )
 VALUES (
   {{ .Arg .KeyPath }},
-  COALESCE({{ .Arg .Value }}, "")
+  {{ .Arg .Value }}
 )
 {{- if eq .DialectName "mysql" }}
 ON DUPLICATE KEY UPDATE {{ .Ident "value" }} = {{ .Arg .Value }}
