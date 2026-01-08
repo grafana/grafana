@@ -530,8 +530,12 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 			return false
 		}, 10*time.Second, 500*time.Millisecond, "connection should be initially reconciled")
 
-		// Update the connection spec using unstructured
-		updatedUnstructured := createdUnstructured.DeepCopy()
+		// Get the latest version before updating to avoid conflicts with controller updates
+		latestUnstructured, err := helper.Connections.Resource.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Update the connection spec using the latest version
+		updatedUnstructured := latestUnstructured.DeepCopy()
 		githubSpec := updatedUnstructured.Object["spec"].(map[string]any)["github"].(map[string]any)
 		githubSpec["appID"] = "99999"
 		_, err = helper.Connections.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
