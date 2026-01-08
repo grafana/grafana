@@ -2,7 +2,6 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
 import { shouldUseAlertingNavigationV2 } from '../featureToggles';
@@ -30,7 +29,7 @@ export function useAlertRulesNav() {
   }
 
   // All available tabs
-  const allTabs: NavModelItem[] = [
+  const allTabs = [
     {
       id: 'alert-rules-list',
       text: t('alerting.navigation.alert-rules', 'Alert rules'),
@@ -56,7 +55,8 @@ export function useAlertRulesNav() {
   // Create pageNav that represents the Alert rules page with tabs as children
   const pageNav: NavModelItem = {
     ...alertRulesNav,
-    children: allTabs,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    children: allTabs as NavModelItem[],
   };
 
   return {

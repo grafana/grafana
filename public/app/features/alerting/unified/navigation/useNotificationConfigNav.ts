@@ -59,7 +59,7 @@ export function useNotificationConfigNav() {
     : location.pathname === '/alerting/routes' && location.search.includes('tab=time_intervals');
 
   // All available tabs
-  const allTabs: NavModelItem[] = [
+  const allTabs = [
     {
       id: 'notification-config-contact-points',
       text: t('alerting.navigation.contact-points', 'Contact points'),
@@ -101,7 +101,8 @@ export function useNotificationConfigNav() {
   // Create pageNav that represents the Notification configuration page with tabs as children
   const pageNav: NavModelItem = {
     ...notificationConfigNav,
-    children: allTabs,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    children: allTabs as NavModelItem[],
   };
 
   return {

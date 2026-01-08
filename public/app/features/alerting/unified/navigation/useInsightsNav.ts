@@ -42,7 +42,7 @@ export function useInsightsNav() {
   }
 
   // All available tabs
-  const allTabs: NavModelItem[] = [
+  const allTabs = [
     {
       id: 'insights-system',
       text: t('alerting.navigation.system-insights', 'System Insights'),
@@ -68,7 +68,8 @@ export function useInsightsNav() {
   // Create pageNav that represents the Insights page with tabs as children
   const pageNav: NavModelItem = {
     ...insightsNav,
-    children: allTabs,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    children: allTabs as NavModelItem[],
   };
 
   return {

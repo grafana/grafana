@@ -6,7 +6,7 @@ import TimeIntervalsPage from './TimeIntervalsPage';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { setupDataSources } from './testSetup/datasources';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { DataSourceType } from './utils/datasource';
 
 setupMswServer();
 
@@ -23,7 +23,7 @@ describe('TimeIntervalsPage', () => {
       setupDataSources(alertManager);
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsTimeIntervalsRead,
+        AccessControlAction.AlertingTimeIntervalsRead,
       ]);
     });
 
