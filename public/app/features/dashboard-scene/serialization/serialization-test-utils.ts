@@ -127,40 +127,6 @@ export function normalizeBackendOutputForFrontendComparison(
 }
 
 /**
- * Removes deprecated fields from fieldConfig.defaults that are not in any schema.
- * This normalizes both frontend and backend outputs for comparison.
- *
- * - unitScale: deprecated field not in any schema
- *
- * Note: fieldMinMax was added to V2 schema and is now properly handled.
- *
- * This should be applied to both outputs before comparison.
- */
-export function removeSchemaGapFieldsFromSpec(spec: DashboardV2Spec): DashboardV2Spec {
-  // Deep clone the spec to avoid mutating the original
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const normalized = JSON.parse(JSON.stringify(spec)) as DashboardV2Spec;
-
-  // Deprecated fields that aren't in any schema
-  // - unitScale: deprecated field
-  const fieldsToRemoveFromDefaults = ['unitScale'];
-
-  if (normalized.elements) {
-    for (const elementKey of Object.keys(normalized.elements)) {
-      const element = normalized.elements[elementKey];
-      if (element?.kind === 'Panel' && element.spec?.vizConfig?.spec?.fieldConfig?.defaults) {
-        const defaults = element.spec.vizConfig.spec.fieldConfig.defaults as Record<string, unknown>;
-        for (const field of fieldsToRemoveFromDefaults) {
-          delete defaults[field];
-        }
-      }
-    }
-  }
-
-  return normalized;
-}
-
-/**
  * Recursively removes empty arrays from an object.
  * This normalizes the difference between frontend (which preserves empty arrays)
  * and Go backend (which omits empty arrays due to `omitempty`).
@@ -169,12 +135,14 @@ export function removeEmptyArrays<T>(value: T): T {
   if (Array.isArray(value)) {
     // Recursively process array items, but don't remove the array itself here
     // (parent will handle removal if this array becomes empty after processing)
-    return value.map((item) => removeEmptyArrays(item)) as unknown as T;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return value.map((item) => removeEmptyArrays(item)) as T;
   }
 
   if (value !== null && typeof value === 'object') {
     const result: Record<string, unknown> = {};
     for (const key of Object.keys(value)) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const v = (value as Record<string, unknown>)[key];
       if (Array.isArray(v)) {
         // Only include non-empty arrays
@@ -188,6 +156,7 @@ export function removeEmptyArrays<T>(value: T): T {
         result[key] = v;
       }
     }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return result as T;
   }
 

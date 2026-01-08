@@ -991,7 +991,7 @@
             "mode": "thresholds"
           },
           "custom": {},
-          "decimals": "2",
+          "decimals": 2,
           "mappings": [],
           "max": 100,
           "min": 0,
@@ -1071,7 +1071,7 @@
             "mode": "thresholds"
           },
           "custom": {},
-          "decimals": "2",
+          "decimals": 2,
           "mappings": [],
           "max": 100,
           "min": 0,
@@ -1152,7 +1152,7 @@
             "mode": "thresholds"
           },
           "custom": {},
-          "decimals": "2",
+          "decimals": 2,
           "mappings": [],
           "max": 100,
           "min": 0,
@@ -1233,7 +1233,7 @@
             "mode": "thresholds"
           },
           "custom": {},
-          "decimals": "2",
+          "decimals": 2,
           "mappings": [],
           "max": 100,
           "min": 0,

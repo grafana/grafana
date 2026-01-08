@@ -5,7 +5,6 @@ import {
   getFilesRecursively,
   normalizeBackendOutputForFrontendComparison,
   removeEmptyArrays,
-  removeSchemaGapFieldsFromSpec,
 } from './serialization-test-utils';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
@@ -256,14 +255,12 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       // Get input panels from appropriate location based on file format
       const inputPanels = hasApiVersion ? jsonInput.spec?.panels || [] : jsonInput.panels || [];
       const normalizedBackendOutput = removeEmptyArrays(
-        removeSchemaGapFieldsFromSpec(
-          normalizeBackendOutputForFrontendComparison(backendOutputAfterLoadedByScene, inputPanels)
-        )
+        normalizeBackendOutputForFrontendComparison(backendOutputAfterLoadedByScene, inputPanels)
       );
 
       // Also normalize frontend output to remove schema gap fields and empty arrays
       // (Go backend omits empty arrays due to omitempty, frontend preserves them)
-      const normalizedFrontendOutput = removeEmptyArrays(removeSchemaGapFieldsFromSpec(frontendOutput));
+      const normalizedFrontendOutput = removeEmptyArrays(frontendOutput);
 
       // Compare only the spec structures - this is the core transformation
       expect(normalizedBackendOutput).toEqual(normalizedFrontendOutput);
@@ -339,14 +336,12 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       // For migrated dashboards, panels are in the root level, not in spec.panels
       const inputPanels = jsonInput.panels || jsonInput.spec?.panels || [];
       const normalizedBackendOutput = removeEmptyArrays(
-        removeSchemaGapFieldsFromSpec(
-          normalizeBackendOutputForFrontendComparison(backendOutputAfterLoadedByScene, inputPanels)
-        )
+        normalizeBackendOutputForFrontendComparison(backendOutputAfterLoadedByScene, inputPanels)
       );
 
       // Also normalize frontend output to remove schema gap fields and empty arrays
       // (Go backend omits empty arrays due to omitempty, frontend preserves them)
-      const normalizedFrontendOutput = removeEmptyArrays(removeSchemaGapFieldsFromSpec(frontendOutput));
+      const normalizedFrontendOutput = removeEmptyArrays(frontendOutput);
 
       // Compare only the spec structures - this is the core transformation
       expect(normalizedBackendOutput).toEqual(normalizedFrontendOutput);

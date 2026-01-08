@@ -2353,14 +2353,6 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		}
 	}
 
-	// Add frontend-style default options to match frontend behavior
-	if legend, ok := options["legend"].(map[string]interface{}); ok {
-		// Add showLegend: true to match frontend behavior
-		showLegend := getBoolField(legend, "showLegend", true)
-		legend["showLegend"] = showLegend
-		options["legend"] = legend
-	}
-
 	// Handle Angular panel migrations
 	// This replicates the v0→v1 migration logic for panels that weren't migrated yet.
 	// We check two cases:
