@@ -257,93 +257,21 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		MaximumNameLength: 80,
 	})
 
-	teamResource := iamv0.TeamResourceInfo
-	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
-	if err != nil {
+	if err := b.UpdateTeamsAPIGroup(opts, storage); err != nil {
 		return err
 	}
-	storage[teamResource.StoragePath()] = teamUniStore
 
-	if b.legacyTeamStore != nil {
-		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
-		if err != nil {
-			return err
-		}
-
-		storage[teamResource.StoragePath()] = dw
-	}
-
-	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
-	if b.teamGroupsHandler != nil {
-		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
-	}
-
-	teamBindingResource := iamv0.TeamBindingResourceInfo
-	teamBindingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
-	if err != nil {
+	if err := b.UpdateTeamBindingsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
 		return err
 	}
-	storage[teamBindingResource.StoragePath()] = teamBindingUniStore
 
-	// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
-	if enableZanzanaSync {
-		b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
-		teamBindingUniStore.AfterCreate = b.AfterTeamBindingCreate
-		teamBindingUniStore.AfterDelete = b.AfterTeamBindingDelete
-		teamBindingUniStore.BeginUpdate = b.BeginTeamBindingUpdate
-	}
-
-	if b.teamBindingLegacyStore != nil {
-		dw, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), b.teamBindingLegacyStore, teamBindingUniStore)
-		if err != nil {
-			return err
-		}
-		storage[teamBindingResource.StoragePath()] = dw
-	}
-
-	// User store registration
-	userResource := iamv0.UserResourceInfo
-	userUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
-	if err != nil {
+	if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync); err != nil {
 		return err
 	}
-	storage[userResource.StoragePath()] = userUniStore
 
-	if enableZanzanaSync {
-		b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
-		userUniStore.AfterCreate = b.AfterUserCreate
-		userUniStore.BeginUpdate = b.BeginUserUpdate
-		userUniStore.AfterDelete = b.AfterUserDelete
-	}
-
-	if b.userLegacyStore != nil {
-		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), b.userLegacyStore, userUniStore)
-		if err != nil {
-			return err
-		}
-
-		storage[userResource.StoragePath()] = dw
-	}
-
-	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
-
-	// Service Accounts store registration
-	saResource := iamv0.ServiceAccountResourceInfo
-	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
-	if err != nil {
+	if err := b.UpdateServiceAccountsAPIGroup(opts, storage); err != nil {
 		return err
 	}
-	storage[saResource.StoragePath()] = saUniStore
-
-	if b.saLegacyStore != nil {
-		dw, err := opts.DualWriteBuilder(saResource.GroupResource(), b.saLegacyStore, saUniStore)
-		if err != nil {
-			return err
-		}
-		storage[saResource.StoragePath()] = dw
-	}
-
-	storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
@@ -380,11 +308,108 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateExternalGroupMappingAPIGroup(
-	apiGroupInfo *genericapiserver.APIGroupInfo,
-	opts builder.APIGroupOptions,
-	storage map[string]rest.Storage,
-) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
+	teamResource := iamv0.TeamResourceInfo
+	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[teamResource.StoragePath()] = teamUniStore
+
+	if b.legacyTeamStore != nil {
+		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
+		if err != nil {
+			return err
+		}
+
+		storage[teamResource.StoragePath()] = dw
+	}
+
+	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
+	if b.teamGroupsHandler != nil {
+		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
+	}
+
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
+	teamBindingResource := iamv0.TeamBindingResourceInfo
+	teamBindingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[teamBindingResource.StoragePath()] = teamBindingUniStore
+
+	// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for TeamBinding to sync to Zanzana")
+		teamBindingUniStore.AfterCreate = b.AfterTeamBindingCreate
+		teamBindingUniStore.AfterDelete = b.AfterTeamBindingDelete
+		teamBindingUniStore.BeginUpdate = b.BeginTeamBindingUpdate
+	}
+
+	if b.teamBindingLegacyStore != nil {
+		dw, err := opts.DualWriteBuilder(teamBindingResource.GroupResource(), b.teamBindingLegacyStore, teamBindingUniStore)
+		if err != nil {
+			return err
+		}
+		storage[teamBindingResource.StoragePath()] = dw
+	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
+	userResource := iamv0.UserResourceInfo
+	userUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[userResource.StoragePath()] = userUniStore
+
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
+		userUniStore.AfterCreate = b.AfterUserCreate
+		userUniStore.BeginUpdate = b.BeginUserUpdate
+		userUniStore.AfterDelete = b.AfterUserDelete
+	}
+
+	if b.userLegacyStore != nil {
+		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), b.userLegacyStore, userUniStore)
+		if err != nil {
+			return err
+		}
+
+		storage[userResource.StoragePath()] = dw
+	}
+
+	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
+
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
+	saResource := iamv0.ServiceAccountResourceInfo
+	saUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, saResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[saResource.StoragePath()] = saUniStore
+
+	if b.saLegacyStore != nil {
+		dw, err := opts.DualWriteBuilder(saResource.GroupResource(), b.saLegacyStore, saUniStore)
+		if err != nil {
+			return err
+		}
+		storage[saResource.StoragePath()] = dw
+	}
+
+	storage[saResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
+
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateExternalGroupMappingAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
 	extGroupMappingResource := iamv0.ExternalGroupMappingResourceInfo
 	extGroupMappingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, extGroupMappingResource, opts.OptsGetter)
 	if err != nil {
