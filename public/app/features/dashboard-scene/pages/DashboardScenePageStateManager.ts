@@ -119,10 +119,11 @@ export function getSceneCreationOptions(
   meta?: { isSnapshot?: boolean }
 ): SceneCreationOptions | undefined {
   const isReport = loadOptions?.route === DashboardRoutes.Report;
+  const isTemplate = loadOptions?.route === DashboardRoutes.Template;
   const isSnapshot = meta?.isSnapshot ?? false;
 
   // Don't use v2 layout for reports or snapshots
-  if (isReport || isSnapshot) {
+  if (isReport || isSnapshot || isTemplate) {
     return undefined;
   }
 
