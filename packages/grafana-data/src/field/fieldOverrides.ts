@@ -352,6 +352,7 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
       unset(config, item.path);
     }
   } else {
+    // Merge arrays (e.g. mappings) when multiple overrides target the same field
     if (Array.isArray(val)) {
       const existingValue = item.isCustom ? get(config.custom, item.path) : get(config, item.path);
 
