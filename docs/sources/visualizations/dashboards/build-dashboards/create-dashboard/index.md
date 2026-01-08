@@ -16,6 +16,7 @@ title: Create a dashboard
 description: Create and edit a dashboard
 weight: 1
 ---
+
 ## Create a dashboard
 
 Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
