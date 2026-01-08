@@ -242,6 +242,10 @@ export function mockDashboardApi(server: SetupServer) {
   };
 }
 
+export function setupBackendSrv() {
+  setBackendSrv(backendSrv);
+}
+
 /**
  * Sets up MSW server with additional handlers for Alerting tests
  */
@@ -249,7 +253,7 @@ export function setupMswServer() {
   setupMockServer(allHandlers);
 
   beforeAll(() => {
-    setBackendSrv(backendSrv);
+    setupBackendSrv();
   });
 
   afterEach(() => {
