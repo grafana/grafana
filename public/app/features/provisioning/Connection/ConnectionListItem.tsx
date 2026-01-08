@@ -8,7 +8,6 @@ import { CONNECTIONS_URL } from '../constants';
 import { getRepositoryTypeConfigs } from '../utils/repositoryTypes';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
-import { DeleteConnectionButton } from './DeleteConnectionButton';
 
 interface Props {
   connection: Connection;
@@ -45,7 +44,9 @@ export function ConnectionListItem({ connection }: Props) {
           <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}`} variant="primary" size="md">
             <Trans i18nKey="provisioning.connections.view">View</Trans>
           </LinkButton>
-          <DeleteConnectionButton name={name} connection={connection} />
+          <LinkButton variant="secondary" icon="cog" href={`${CONNECTIONS_URL}/${name}/edit`} size="md">
+            <Trans i18nKey="provisioning.connections.settings">Settings</Trans>
+          </LinkButton>
         </Stack>
       </Card.Actions>
     </Card>
