@@ -10,7 +10,7 @@ INSERT INTO {{ .Ident "resource_history" }}
   {{ .Ident "folder" }}
 )
 VALUES (
-  COALESCE({{ .Arg .Value }}, ""),
+  {{ .Arg .Value }},
   {{ .Arg .GUID }},
   {{ .Arg .Group }},
   {{ .Arg .Resource }},
