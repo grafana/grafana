@@ -11,7 +11,6 @@ import { StoreState } from 'app/types/store';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
-// import {logsdrilldowndefaultcolumnsApi} from 'app/api/clients/'
 
 import { setStore } from './store';
 
