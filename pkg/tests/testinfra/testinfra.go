@@ -320,8 +320,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
 	require.NoError(t, err)
-	if !opts.OpenFeatureAPIEnabled {
-		_, err = openFeatureSect.NewKey("provider", "static") // in practice, APIEnabled being false goes with features-service type, but trying to make tests work
+
+	if opts.OpenFeatureAPIEnabled {
+		_, err = openFeatureSect.NewKey("provider", "static")
 		require.NoError(t, err)
 		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
 		require.NoError(t, err)
@@ -555,6 +556,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			_, err = section.NewKey("dualWriterMode", fmt.Sprintf("%d", v.DualWriterMode))
 			require.NoError(t, err)
 			_, err = section.NewKey("enableMigration", fmt.Sprintf("%t", v.EnableMigration))
+			require.NoError(t, err)
+			_, err = section.NewKey("autoMigrationThreshold", fmt.Sprintf("%d", v.AutoMigrationThreshold))
 			require.NoError(t, err)
 		}
 	}

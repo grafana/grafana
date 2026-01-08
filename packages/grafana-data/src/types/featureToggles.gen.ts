@@ -207,6 +207,10 @@ export interface FeatureToggles {
   */
   reportingRetries?: boolean;
   /**
+  * Enables CSV encoding options in the reporting feature
+  */
+  reportingCsvEncodingOptions?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
   sseGroupByDatasource?: boolean;
@@ -399,10 +403,6 @@ export interface FeatureToggles {
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
-  /**
-  * Use the kubernetes API for feature toggle management in the frontend
-  */
-  kubernetesFeatureToggles?: boolean;
   /**
   * Enabled grafana cloud specific RBAC roles
   */
@@ -790,11 +790,6 @@ export interface FeatureToggles {
   * @default true
   */
   lokiLabelNamesQueryApi?: boolean;
-  /**
-  * Enable the investigations backend API
-  * @default false
-  */
-  investigationsBackend?: boolean;
   /**
   * Enable folder's api server counts
   * @default false
@@ -1263,4 +1258,8 @@ export interface FeatureToggles {
   * Enables the creation of keepers that manage secrets stored on AWS secrets manager
   */
   secretsManagementAppPlatformAwsKeeper?: boolean;
+  /**
+  * Enables profiles exemplars support in profiles drilldown
+  */
+  profilesExemplars?: boolean;
 }

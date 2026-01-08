@@ -10039,6 +10039,9 @@
       },
       "ReportOptions": {
         "properties": {
+          "csvEncoding": {
+            "type": "string"
+          },
           "layout": {
             "type": "string"
           },

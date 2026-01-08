@@ -135,6 +135,10 @@ const (
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
 
+	// FlagReportingCsvEncodingOptions
+	// Enables CSV encoding options in the reporting feature
+	FlagReportingCsvEncodingOptions = "reportingCsvEncodingOptions"
+
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
@@ -539,10 +543,6 @@ const (
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
 
-	// FlagInvestigationsBackend
-	// Enable the investigations backend API
-	FlagInvestigationsBackend = "investigationsBackend"
-
 	// FlagK8SFolderCounts
 	// Enable folder&#39;s api server counts
 	FlagK8SFolderCounts = "k8SFolderCounts"
@@ -785,4 +785,8 @@ const (
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
+
+	// FlagProfilesExemplars
+	// Enables profiles exemplars support in profiles drilldown
+	FlagProfilesExemplars = "profilesExemplars"
 )

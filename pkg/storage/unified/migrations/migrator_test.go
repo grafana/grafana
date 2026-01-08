@@ -214,8 +214,18 @@ func runMigrationTestSuite(t *testing.T, testCases []resourceMigratorTestCase) {
 
 		for _, state := range testStates {
 			t.Run(state.tc.name(), func(t *testing.T) {
-				// Verify resources now exist in unified storage after migration
-				state.tc.verify(t, helper, true)
+				shouldExist := true
+				for _, gvr := range state.tc.resources() {
+					resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
+					// Resources exist if they're either:
+					// 1. In MigratedUnifiedResources (enabled by default), OR
+					// 2. In AutoMigratedUnifiedResources (auto-migrated because count is below threshold)
+					if !setting.MigratedUnifiedResources[resourceKey] && !setting.AutoMigratedUnifiedResources[resourceKey] {
+						shouldExist = false
+						break
+					}
+				}
+				state.tc.verify(t, helper, shouldExist)
 			})
 		}
 
@@ -270,7 +280,7 @@ const (
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
-	foldersAndDashboardsID: false,
+	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
