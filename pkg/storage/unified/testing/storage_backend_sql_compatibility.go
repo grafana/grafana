@@ -577,13 +577,26 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	}
 
 	// Validate previous_resource_version
-	require.Equal(t, expectedPrevRV, record.PreviousResourceVersion)
+	// For KV backend operations, resource versions are stored as snowflake format
+	// but expectedPrevRV is in microsecond format, so we need to use IsRvEqual for comparison
+	if strings.Contains(record.Namespace, "-kv") {
+		require.True(t, rvmanager.IsRvEqual(record.PreviousResourceVersion, expectedPrevRV), 
+			"Previous resource version should match (KV backend snowflake format)")
+	} else {
+		require.Equal(t, expectedPrevRV, record.PreviousResourceVersion)
+	}
 
 	// Validate generation: 1 for create, 2 for update, 0 for delete
 	require.Equal(t, expectedGeneration, record.Generation)
 
 	// Validate resource_version
-	require.Equal(t, expectedRV, record.ResourceVersion)
+	// For KV backend operations, resource versions are stored as snowflake format
+	if strings.Contains(record.Namespace, "-kv") {
+		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV), 
+			"Resource version should match (KV backend snowflake format)")
+	} else {
+		require.Equal(t, expectedRV, record.ResourceVersion)
+	}
 }
 
 // verifyResourceTable validates the resource table (latest state only)
