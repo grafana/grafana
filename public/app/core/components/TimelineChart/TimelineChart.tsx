@@ -56,7 +56,6 @@ export const TimelineChart = (props: TimelineProps) => {
 
   const prepConfig = useCallback(
     (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-
       const { seriesFrame } = getSeriesAndRest(alignedFrame);
 
       return preparePlotConfigBuilder({
