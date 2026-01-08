@@ -20,9 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	pluginassetsmoduleinfo "github.com/grafana/grafana/pkg/plugins/pluginassets"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -80,7 +82,8 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	var pluginsAssets = passets
 	if pluginsAssets == nil {
 		sig := signature.ProvideService(pluginsCfg, statickey.New())
-		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, sig, pluginStore)
+		pluginAssetsService := pluginassetsmoduleinfo.ProvideService(pluginsCfg, pluginsCDN, sig, registry.ProvideService())
+		pluginsAssets = pluginassets.NewService(pluginAssetsService)
 	}
 
 	hs := &HTTPServer{
@@ -391,7 +394,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			pluginAssets: newPluginAssetsWithConfig(&config.PluginManagementCfg{
 				PluginSettings: map[string]map[string]string{
 					"test-app": {
-						pluginassets.CreatePluginVersionCfgKey: pluginassets.CreatePluginVersionScriptSupportEnabled,
+						pluginassetsmoduleinfo.CreatePluginVersionCfgKey: pluginassetsmoduleinfo.CreatePluginVersionScriptSupportEnabled,
 					},
 				},
 			}),
@@ -714,6 +717,7 @@ func newPluginAssets() func() *pluginassets.Service {
 
 func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *pluginassets.Service {
 	return func() *pluginassets.Service {
-		return pluginassets.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), signature.ProvideService(pCfg, statickey.New()), &pluginstore.FakePluginStore{})
+		pluginAssetsService := pluginassetsmoduleinfo.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), signature.ProvideService(pCfg, statickey.New()), registry.ProvideService())
+		return pluginassets.NewService(pluginAssetsService)
 	}
 }
