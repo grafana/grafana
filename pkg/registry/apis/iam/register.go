@@ -246,6 +246,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enableZanzanaSync := b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzZanzanaSync)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	enableAuthzApis := b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis)
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -348,6 +350,41 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[ssoResource.StoragePath()] = b.ssoLegacyStore
 	}
 
+	if err := b.UpdateExternalGroupMappingAPIGroup(apiGroupInfo, opts, storage); err != nil {
+		return err
+	}
+
+	if enableAuthzApis {
+		// v0alpha1
+		if err := b.UpdateCoreRolesAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
+			return err
+		}
+
+		// Role registration is delegated to the RoleApiInstaller
+		if err := b.roleApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
+			return err
+		}
+
+		if err := b.UpdateRoleBindingsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
+			return err
+		}
+	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+		if err := b.UpdateResourcePermissionsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
+			return err
+		}
+	}
+
+	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateExternalGroupMappingAPIGroup(
+	apiGroupInfo *genericapiserver.APIGroupInfo,
+	opts builder.APIGroupOptions,
+	storage map[string]rest.Storage,
+) error {
 	extGroupMappingResource := iamv0.ExternalGroupMappingResourceInfo
 	extGroupMappingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, extGroupMappingResource, opts.OptsGetter)
 	if err != nil {
@@ -376,48 +413,47 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	authzWrapper := storewrapper.New(extGroupMappingStore, iamauthorizer.NewExternalGroupMappingAuthorizer(b.accessClient))
 	storage[extGroupMappingResource.StoragePath()] = authzWrapper
+	return nil
+}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis) {
-		// v0alpha1
-		coreRoleStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
-		if err != nil {
-			return err
-		}
-		if enableZanzanaSync {
-			b.logger.Info("Enabling hooks for CoreRole to sync to Zanzana")
-			h := NewRoleHooks(b.zClient, b.zTickets, b.logger)
-			coreRoleStore.AfterCreate = h.AfterRoleCreate
-			coreRoleStore.AfterDelete = h.AfterRoleDelete
-			coreRoleStore.BeginUpdate = h.BeginRoleUpdate
-		}
-		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
-
-		// Role registration is delegated to the RoleApiInstaller
-		if err := b.roleApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
-			return err
-		}
-
-		roleBindingStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
-		if err != nil {
-			return err
-		}
-		if enableZanzanaSync {
-			b.logger.Info("Enabling hooks for RoleBinding to sync to Zanzana")
-			roleBindingStore.AfterCreate = b.AfterRoleBindingCreate
-			roleBindingStore.AfterDelete = b.AfterRoleBindingDelete
-			roleBindingStore.BeginUpdate = b.BeginRoleBindingUpdate
-		}
-		storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
+func (b *IdentityAccessManagementAPIBuilder) UpdateCoreRolesAPIGroup(
+	apiGroupInfo *genericapiserver.APIGroupInfo,
+	opts builder.APIGroupOptions,
+	storage map[string]rest.Storage,
+	enableZanzanaSync bool,
+) error {
+	coreRoleStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+	if err != nil {
+		return err
 	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
-		if err := b.UpdateResourcePermissionsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
-			return err
-		}
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for CoreRole to sync to Zanzana")
+		h := NewRoleHooks(b.zClient, b.zTickets, b.logger)
+		coreRoleStore.AfterCreate = h.AfterRoleCreate
+		coreRoleStore.AfterDelete = h.AfterRoleDelete
+		coreRoleStore.BeginUpdate = h.BeginRoleUpdate
 	}
+	storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
+	return nil
+}
 
-	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
+func (b *IdentityAccessManagementAPIBuilder) UpdateRoleBindingsAPIGroup(
+	apiGroupInfo *genericapiserver.APIGroupInfo,
+	opts builder.APIGroupOptions,
+	storage map[string]rest.Storage,
+	enableZanzanaSync bool,
+) error {
+	roleBindingStore, err := NewLocalStore(iamv0.RoleBindingInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.roleBindingsStorage)
+	if err != nil {
+		return err
+	}
+	if enableZanzanaSync {
+		b.logger.Info("Enabling hooks for RoleBinding to sync to Zanzana")
+		roleBindingStore.AfterCreate = b.AfterRoleBindingCreate
+		roleBindingStore.AfterDelete = b.AfterRoleBindingDelete
+		roleBindingStore.BeginUpdate = b.BeginRoleBindingUpdate
+	}
+	storage[iamv0.RoleBindingInfo.StoragePath()] = roleBindingStore
 	return nil
 }
 
