@@ -18,6 +18,8 @@ import (
 	"github.com/prometheus/prometheus/promql/parser"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 )
 
 var (
@@ -31,7 +33,7 @@ type ProfilingClient interface {
 	ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error)
 	LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error)
 	LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error)
-	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, error)
+	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64, exemplarType typesv1.ExemplarType) (*SeriesResponse, error)
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 }

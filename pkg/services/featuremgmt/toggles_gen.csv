@@ -43,6 +43,7 @@ configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 dashgpt,GA,@grafana/dashboards-squad,false,false,true
 aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
 reportingRetries,preview,@grafana/grafana-operator-experience-squad,false,true,false
+reportingCsvEncodingOptions,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
@@ -79,7 +80,6 @@ dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,false
-kubernetesDashboardsV2,experimental,@grafana/dashboards-squad,false,false,false
 dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
@@ -91,10 +91,10 @@ pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 timeComparison,experimental,@grafana/dataviz-squad,false,false,true
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
-kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
+auditLoggingAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatformUI,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
@@ -180,7 +180,6 @@ unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,fals
 elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
 unifiedHistory,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
-investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,false,false
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
@@ -281,3 +280,6 @@ rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,t
 kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
 useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
 multiPropsVariables,experimental,@grafana/dashboards-squad,false,false,true
+smoothingTransformation,experimental,@grafana/datapro,false,false,true
+secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
+profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false

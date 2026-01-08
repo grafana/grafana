@@ -112,6 +112,37 @@ describe('PanelEditor', () => {
     });
   });
 
+  describe('Entering panel edit', () => {
+    it('should clear edit pane selection', () => {
+      pluginPromise = Promise.resolve(getPanelPlugin({ id: 'text', skipDataQuery: true }));
+
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+        title: 'original title',
+      });
+      const gridItem = new DashboardGridItem({ body: panel });
+      const panelEditor = buildPanelEditScene(panel);
+      const dashboard = new DashboardScene({
+        editPanel: panelEditor,
+        isEditing: true,
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [gridItem],
+          }),
+        }),
+      });
+
+      dashboard.state.editPane.selectObject(panel, panel.state.key!, { force: true });
+      expect(dashboard.state.editPane.getSelection()).toBe(panel);
+
+      deactivate = activateFullSceneTree(dashboard);
+
+      expect(dashboard.state.editPane.getSelection()).toBeUndefined();
+    });
+  });
+
   describe('When discarding', () => {
     it('should discard changes revert all changes', async () => {
       const { panelEditor, panel, dashboard } = await setup();

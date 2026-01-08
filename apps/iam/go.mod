@@ -24,8 +24,6 @@ replace github.com/grafana/grafana/apps/alerting/historian => ../alerting/histor
 
 replace github.com/grafana/grafana/apps/correlations => ../correlations
 
-replace github.com/grafana/grafana/apps/investigations => ../investigations
-
 replace github.com/grafana/grafana/apps/logsdrilldown => ../logsdrilldown
 
 replace github.com/grafana/grafana/apps/playlist => ../playlist
@@ -89,6 +87,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.53.0 // indirect
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/IBM/pgxpoolprometheus v1.1.2 // indirect
+	github.com/Machiel/slugify v1.0.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
@@ -105,25 +104,25 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
 	github.com/aws/aws-sdk-go v1.55.7 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.39.1 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.40.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.11 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.31.10 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.14 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.8 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.31.17 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.21 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.13 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.84 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.14 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.14 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.36 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.84.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.29.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.38.5 // indirect
-	github.com/aws/smithy-go v1.23.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.30.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.39.1 // indirect
+	github.com/aws/smithy-go v1.23.2 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
@@ -223,12 +222,12 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20251223160021-926c74910196 // indirect
+	github.com/grafana/alerting v0.0.0-20251231150637-b7821017d69f // indirect
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // indirect
 	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect
-	github.com/grafana/grafana-aws-sdk v1.3.0 // indirect
+	github.com/grafana/grafana-aws-sdk v1.4.2 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.284.0 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
@@ -241,7 +240,7 @@ require (
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
-	github.com/grafana/sqlds/v4 v4.2.7 // indirect
+	github.com/grafana/sqlds/v5 v5.0.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // indirect
