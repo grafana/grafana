@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { FloatingFocusManager, useFloating } from '@floating-ui/react';
 import RcDrawer from '@rc-component/drawer';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -79,6 +79,7 @@ export function Drawer({
   const styles = useStyles2(getStyles);
   const wrapperStyles = useStyles2(getWrapperStyles, size);
   const dragStyles = useStyles2(getDragStyles);
+  const titleId = useId();
 
   const { context, refs } = useFloating({
     open: true,
@@ -113,6 +114,8 @@ export function Drawer({
           minWidth,
         },
       }}
+      aria-label={typeof title === 'string' ? selectors.components.Drawer.General.title(title) : undefined}
+      aria-labelledby={typeof title !== 'string' ? titleId : undefined}
       width={''}
       motion={{
         motionAppear: true,
@@ -163,7 +166,7 @@ export function Drawer({
                 )}
               </Stack>
             ) : (
-              title
+              <div id={titleId}>{title}</div>
             )}
             {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
           </div>
