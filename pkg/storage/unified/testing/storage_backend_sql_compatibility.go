@@ -68,14 +68,13 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 	}
 
 	for _, tc := range cases {
-		if shouldSkip := opts.SkipTests[tc.name]; shouldSkip {
-			t.Logf("Skipping test: %s", tc.name)
-			continue
-		}
-
 		t.Run(tc.name, func(t *testing.T) {
-			kvbackend, db := newKvBackend(context.Background())
-			sqlbackend, _ := newSqlBackend(context.Background())
+			if opts.SkipTests[tc.name] {
+				t.Skip()
+			}
+
+			kvbackend, db := newKvBackend(t.Context())
+			sqlbackend, _ := newSqlBackend(t.Context())
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
 	}
@@ -237,8 +236,10 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 
 	err = rows.Scan(&keyPath, &actualRV, &actualAction, &actualFolder)
 	require.NoError(t, err)
-	err = rows.Close()
-	require.NoError(t, err)
+	
+	// Ensure there's exactly one row and no errors
+	require.False(t, rows.Next())
+	require.NoError(t, rows.Err())
 
 	// Verify basic key_path format
 	require.Contains(t, keyPath, "unified/data/")
@@ -252,7 +253,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 
 	// Verify snowflake calculation
 	expectedSnowflake := (((resourceVersion / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (resourceVersion % 1000)
-	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), fmt.Sprintf("actual RV: %d", actualRV))
+	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), "actual RV: %d", actualRV)
 
 	// Verify folder if specified
 	if expectedFolder != "" {
