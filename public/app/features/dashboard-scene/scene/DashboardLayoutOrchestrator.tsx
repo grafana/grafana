@@ -13,7 +13,7 @@ import {
   VizPanel,
   SceneGridItemLike,
 } from '@grafana/scenes';
-import { createPointerDistance, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
@@ -53,8 +53,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private _sourceDropTarget: DashboardDropTarget | null = null;
   private _lastDropTarget: DashboardDropTarget | null = null;
-  private _pointerDistance = createPointerDistance();
-  private _isSelectedObject = false;
   private _tabActivationTimer: ReturnType<typeof setTimeout> | null = null;
   private _lastHoveredTabKey: string | null = null;
   /** Track if item was detached from source during cross-tab drag */
@@ -117,9 +115,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   public startDraggingSync(evt: ReactPointerEvent, gridItem: SceneGridItemLike): void {
-    this._pointerDistance.set(evt);
-    this._isSelectedObject = false;
-
     const dropTarget = sceneGraph.findObject(gridItem, isDashboardDropTarget);
 
     if (!dropTarget || !isDashboardDropTarget(dropTarget)) {
@@ -574,15 +569,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // Store cursor position early so it's available for immediate preview on tab switch
     this._lastCursorX = evt.clientX;
     this._lastCursorY = evt.clientY;
-
-    if (!this._isSelectedObject && this.state.draggingGridItem && this._pointerDistance.check(evt)) {
-      this._isSelectedObject = true;
-      const gridItem = this.state.draggingGridItem?.resolve();
-      if (gridItem && 'state' in gridItem && 'body' in gridItem.state && gridItem.state.body instanceof VizPanel) {
-        const panel = gridItem.state.body;
-        this._getDashboard().state.editPane.selectObject(panel, panel.state.key!, { force: true, multi: false });
-      }
-    }
 
     // Check for tab hover to enable tab switching during drag
     this._checkTabHover(evt.clientX, evt.clientY);
