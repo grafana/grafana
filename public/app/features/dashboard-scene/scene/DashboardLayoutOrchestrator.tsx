@@ -344,7 +344,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   private _captureDragOffset(cursorX: number, cursorY: number, gridItem: SceneGridItemLike): void {
-    // Try to use containerRef if available
+    // Both DashboardGridItem and AutoGridItem have containerRef
     if ('containerRef' in gridItem) {
       const containerRef = gridItem.containerRef;
       if (
@@ -361,22 +361,13 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       }
     }
 
-    // Fallback: try to find by data attribute
-    const element = document.querySelector(`[data-griditem-key="${gridItem.state.key}"]`);
-    if (element) {
-      const rect = element.getBoundingClientRect();
-      this._dragOffsetX = cursorX - rect.left;
-      this._dragOffsetY = cursorY - rect.top;
-      return;
-    }
-
     // Fallback: center the preview on cursor
     this._dragOffsetX = 0;
     this._dragOffsetY = 0;
   }
 
   private _captureItemDimensions(gridItem: SceneGridItemLike): void {
-    // Try to use containerRef if available (both DashboardGridItem and AutoGridItem have it)
+    // Both DashboardGridItem and AutoGridItem have containerRef
     if ('containerRef' in gridItem) {
       const containerRef = gridItem.containerRef;
       if (
@@ -390,15 +381,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
         this._previewHeight = rect.height;
         return;
       }
-    }
-
-    // Fallback: try to find the DOM element by data attribute
-    const element = document.querySelector(`[data-griditem-key="${gridItem.state.key}"]`);
-    if (element) {
-      const rect = element.getBoundingClientRect();
-      this._previewWidth = rect.width;
-      this._previewHeight = rect.height;
-      return;
     }
 
     // Fallback to reasonable default
