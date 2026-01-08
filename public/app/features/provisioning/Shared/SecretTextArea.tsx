@@ -10,23 +10,23 @@ export type SecretTextAreaProps = React.ComponentProps<typeof TextArea> & {
   onReset: () => void;
 };
 
-const CONFIGURED_TEXT = t('provisioning.secret-textarea.configured', 'configured');
-const RESET_BUTTON_TEXT = t('provisioning.secret-textarea.reset', 'Reset');
-
 /**
  * Used for secret/password input that needs multi-line support (e.g., PEM files).
  * Based on SecretInput pattern from @grafana/ui and SecretValueInput from extensions.
  */
 export const SecretTextArea = React.forwardRef<HTMLTextAreaElement, SecretTextAreaProps>(
   ({ isConfigured, onReset, rows = 8, ...props }, ref) => {
+    const configuredText = t('provisioning.secret-textarea.configured', 'configured');
+    const resetButtonText = t('provisioning.secret-textarea.reset', 'Reset');
+
     return (
       <Stack>
         {!isConfigured && <TextArea ref={ref} rows={rows} {...props} />}
         {isConfigured && (
           <>
-            <Input type="text" disabled value={CONFIGURED_TEXT} id={props.id} />
+            <Input type="text" disabled value={configuredText} id={props.id} />
             <Button onClick={onReset} variant="secondary">
-              {RESET_BUTTON_TEXT}
+              {resetButtonText}
             </Button>
           </>
         )}

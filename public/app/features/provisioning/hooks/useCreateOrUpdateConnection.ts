@@ -19,7 +19,7 @@ export function useCreateOrUpdateConnection(name?: string) {
         : undefined;
 
       const connection: Connection = {
-        metadata: { name: name || '' },
+        metadata: name ? { name } : { generateName: 'c' },
         spec: data,
         secure,
       };
