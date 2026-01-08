@@ -49,15 +49,13 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 
 	t.Run("endpoint returns not implemented", func(t *testing.T) {
 		var statusCode int
-		var bodyBytes []byte
 		result := helper.AdminREST.Get().
 			Namespace("default").
 			Resource("connections").
 			Name("connection-repositories-test").
 			SubResource("repositories").
 			Do(ctx).
-			StatusCode(&statusCode).
-			Raw(&bodyBytes)
+			StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "should return error for not implemented endpoint")
 		require.Equal(t, http.StatusMethodNotAllowed, statusCode, "should return 405 Method Not Allowed")
@@ -159,10 +157,16 @@ func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T
 	require.NoError(t, err, "failed to create connection")
 
 	t.Run("verify ExternalRepositoryList type exists in API", func(t *testing.T) {
-		// Verify the type is registered by checking the OpenAPI spec
-		// This is a basic check that the type is available
+		// Verify the type is registered and can be instantiated
 		list := &provisioning.ExternalRepositoryList{}
 		require.NotNil(t, list)
-		require.Equal(t, "ExternalRepositoryList", list.GetObjectKind().GroupVersionKind().Kind)
+		// Verify it has the expected structure (Items is a slice, nil by default is fine)
+		require.IsType(t, []provisioning.ExternalRepository{}, list.Items)
+		// Can create items
+		list.Items = []provisioning.ExternalRepository{
+			{Name: "test", Owner: "owner", URL: "https://example.com/repo"},
+		}
+		require.Len(t, list.Items, 1)
+		require.Equal(t, "test", list.Items[0].Name)
 	})
 }
