@@ -10,7 +10,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Troubleshoot
+menuTitle: Troubleshooting
 title: Troubleshoot Graphite data source issues
 weight: 400
 refs:
