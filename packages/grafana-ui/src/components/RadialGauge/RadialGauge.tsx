@@ -17,7 +17,7 @@ import { ThresholdsBar } from './ThresholdsBar';
 import { buildGradientColors } from './colors';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { RadialShape, RadialTextMode } from './types';
-import { calculateDimensions, getFieldConfigMinMax, getValueAngleForValue } from './utils';
+import { calculateDimensions, getValueAngleForValue } from './utils';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];

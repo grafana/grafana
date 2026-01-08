@@ -50,6 +50,7 @@ const meta: Meta<StoryProps> = {
     thresholdsBar: false,
     colorScheme: FieldColorModeId.Thresholds,
     decimals: 0,
+    neutral: undefined,
   },
   argTypes: {
     barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
@@ -75,6 +76,7 @@ const meta: Meta<StoryProps> = {
       ],
     },
     decimals: { control: { type: 'range', min: 0, max: 7 } },
+    neutral: { control: { type: 'number' } },
   },
 };
 
@@ -270,6 +272,23 @@ export const Examples: StoryFn<StoryProps> = (args) => {
           barWidthFactor={0.7}
         />
       </Stack>
+      <div>
+        Neutral <em>(range -50 to 50, neutral = 0)</em>
+      </div>
+      <Stack direction={'row'} gap={3}>
+        <RadialGaugeExample
+          min={-50}
+          max={50}
+          value={-20}
+          colorScheme={FieldColorModeId.Thresholds}
+          gradient
+          shape="gauge"
+          glowCenter={true}
+          roundedBars={false}
+          barWidthFactor={0.7}
+          neutral={0}
+        />
+      </Stack>
     </Stack>
   );
 };
@@ -330,6 +349,7 @@ interface ExampleProps {
   endpointMarker?: RadialGaugeProps['endpointMarker'];
   decimals?: number;
   showScaleLabels?: boolean;
+  neutral?: number;
 }
 
 export function RadialGaugeExample({
@@ -357,6 +377,7 @@ export function RadialGaugeExample({
   endpointMarker = 'glow',
   decimals = 0,
   showScaleLabels,
+  neutral,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -442,6 +463,7 @@ export function RadialGaugeExample({
       thresholdsBar={thresholdsBar}
       showScaleLabels={showScaleLabels}
       endpointMarker={endpointMarker}
+      neutral={neutral}
     />
   );
 }

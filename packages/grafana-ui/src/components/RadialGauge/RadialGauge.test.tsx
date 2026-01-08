@@ -16,6 +16,7 @@ describe('RadialGauge', () => {
     { description: 'with endpoint marker point', props: { roundedBars: true, endpointMarker: 'point' } },
     { description: 'with thresholds bar', props: { thresholdsBar: true } },
     { description: 'with sparkline', props: { sparkline: true } },
+    { description: 'with neutral value', props: { neutral: 50 } },
   ] satisfies Array<{ description: string; props?: ComponentProps<typeof RadialGaugeExample> }>)(
     'should render $description without throwing',
     ({ props }) => {
