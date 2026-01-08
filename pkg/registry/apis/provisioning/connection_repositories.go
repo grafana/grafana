@@ -42,7 +42,6 @@ func (*connectionRepositoriesConnector) NewConnectOptions() (runtime.Object, boo
 
 func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "connection-repositories-connector", "connection_name", name)
-	ctx = logging.Context(ctx, logger)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -50,9 +49,11 @@ func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name stri
 			return
 		}
 
+		logger.Debug("repositories endpoint called but not yet implemented")
+
 		// TODO: Implement repository listing from external git provider
 		// This will require:
-		// 1. Get the Connection object
+		// 1. Get the Connection object using logging.Context(r.Context(), logger)
 		// 2. Use the connection credentials to authenticate with the git provider
 		// 3. List repositories from the provider (GitHub, GitLab, Bitbucket)
 		// 4. Return ExternalRepositoryList with Name, Owner, and URL for each repository
