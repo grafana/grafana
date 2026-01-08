@@ -236,7 +236,10 @@ To edit a dashboard, follow these steps:
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the area you want to work with or click the **Dashboard options** icon to open the edit pane with the relevant options displayed.
+1. Click the part of the dashboard you want to work with to open the edit pane with the relevant options displayed or click **Dashboard options** to open the edit pane.
+
+   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+
 1. Update the dashboard as needed.
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -290,7 +293,7 @@ To help create meaningful sections in your dashboard, you can group panels into 
 Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
 
 You can think of the dashboard as a series of nested containers: the dashboard is the largest container and it can contain panels, rows, or tabs.
-Rows and tabs are the next largest containers, and they can contain panels.
+Rows and tabs are the next largest containers, and they contain panels.
 
 You can also nest:
 
@@ -301,19 +304,49 @@ You can also nest:
 You can nest up to two levels deep, which means your dashboard can have a maximum of four configuration levels:
 
 - Dashboard
-- Grouping 1
-- Grouping 2
+- Grouping 1 - Row or tab
+- Grouping 2 - Row or tab
 - Panels
 
-When you choose the grouping type at Grouping 1-level, you can only add more of that grouping type at that level.
+When you choose the grouping type, row or tab, at Grouping 1-level, you can only add more of that grouping type at that level.
 Inside of those groupings however, you have to freedom to add rows, tabs (as long as it's not a tab), and panels.
 
-<!--maybe a video here -->
+<!--maybe a video or screenshot with limitations here -->
 
-Because both panel layouts, custom and auto grid, are supported in rows and tabs, each of your groupings can have a different panel layout, allowing for maximum flexibility in your dashboards.
+Because both panel layouts, custom and auto grid, are supported for rows and tabs, each of your groupings can have a different panel layout, allowing for a great deal of flexibility in your dashboard.
 
-The following sections describe the configuration options and layouts for grouping panels into tabs and rows, as well as how remove groupings.
+The following sections describe the configuration options and layouts for grouping panels into tabs and rows, as well as how add and remove groupings.
 While grouping is typically used for multiple panels, you can start a grouping with just one panel.
+
+### Grouping configuration options
+
+The following table describes the options you can set for a row or tab.
+
+<!-- prettier-ignore-start -->
+
+| Option                   | Description                                                                 |
+| -------------------------| --------------------------------------------------------------------------- |
+| Title                    | Title of the row or tab.                                                    |
+| Fill screen (rows only)  | Toggle the switch on to make the row fill the screen. Only applies to rows. |
+| Hide row header (rows only) | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. |
+| Layout                   | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](#panel-layouts) and [Grouping layouts](#grouping-layouts). |
+| Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
+| Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variables or a time range. |
+
+<!-- prettier-ignore-end -->
+
+### Grouping layouts
+
+When you have panels grouped into rows or tabs, the **Layout** options available depend on what element in the dashboard you have selected and the nesting level.
+
+You can nest up to two levels deep, which means your dashboard can have a maximum of four configuration levels, with the following layout options:
+
+- **Dashboard**: Layout options allow you to choose between rows or tabs.
+- **Grouping 1 (outer)**: Layout options allow you to choose between rows or tabs.
+- **Grouping 2 (inner)**: Layout options allow you to choose between custom and auto grid (refer to [Panel layouts](#panel-layouts)).
+- **Panels**: No layout options
+
+You can switch between rows and tabs or update the panel layout by selecting the parent container, or next level up, and changing the layout selection.
 
 ### Group panels
 
@@ -342,35 +375,6 @@ To group panels, follow these steps:
 1. Click **Exit edit**.
 
 <!-- Screenshot here of a 2-level nest with area highlighted -->
-
-### Grouping configuration options
-
-The following table describes the options you can set for a row or tab.
-
-<!-- prettier-ignore-start -->
-
-| Option                   | Description                                                                 |
-| -------------------------| --------------------------------------------------------------------------- |
-| Title                    | Title of the row or tab.                                                    |
-| Fill screen (rows only)  | Toggle the switch on to make the row fill the screen. Only applies to rows. |
-| Hide row header (rows only) | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. |
-| Layout                   | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](#panel-layouts) [Grouping layouts](#grouping-layouts). |
-| Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
-| Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variables or a time range. |
-
-<!-- prettier-ignore-end -->
-
-### Grouping layouts
-
-When you have panels grouped into rows or tabs, the **Layout** options available depend on what element in the dashboard you have selected and the nesting level.
-You can only nest two levels so at most your dashboard four levels, which have the following layout options:
-
-- **Panels**: No layout options
-- **Inner grouping**: Layout options are related to how you arrange the panels: **Custom** and **Auto grid** (refer to [Panel layouts](#panel-layouts)).
-- **Outer grouping**: Layout options allow you to choose between rows or tabs.
-- **Dashboard**: Layout options allow you to choose between rows or tabs.
-
-You can switch between rows and tabs or update the panel layout by selecting the parent container, or next level up, and changing the layout selection.
 
 ### Ungroup panels
 
