@@ -36,7 +36,6 @@ import (
 type provisioningControllerConfig struct {
 	provisioningClient  *client.Clientset
 	resyncInterval      time.Duration
-	repoFactory         repository.Factory
 	unified             resources.ResourceStore
 	clients             resources.ClientFactory
 	tokenExchangeClient *authn.TokenExchangeClient
@@ -129,15 +128,8 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	decrypter, err := setupDecrypter(cfg, tracer, tokenExchangeClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
-	}
-
-	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient, registry)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
-	}
+	// Repository factory and decrypter are not set up here - they're set up separately in operators that need them
+	// (repo_operator.go and enterprise_jobs_operator.go)
 
 	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
 	// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
@@ -195,7 +187,6 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 
 	return &provisioningControllerConfig{
 		provisioningClient:  provisioningClient,
-		repoFactory:         repoFactory,
 		unified:             unified,
 		clients:             clients,
 		resyncInterval:      operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
@@ -243,6 +234,7 @@ func setupRepoFactory(
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 	repoTypes := provisioningSec.Key("repository_types").Strings("|")
 	if len(repoTypes) == 0 {
+		// Default to github if repository_types is not set (for backward compatibility)
 		repoTypes = []string{"github"}
 	}
 
