@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 
 import { createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
 import { experimentalThemeDefinitions, NewThemeOptionsSchema } from '@grafana/data/internal';
+import { themeJsonSchema } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
@@ -16,9 +17,6 @@ import { getNavModel } from '../../core/selectors/navModel';
 import { ThemeProvider } from '../../core/utils/ConfigProvider';
 import { useDispatch, useSelector } from '../../types/store';
 
-import schema from './schema.generated.json';
-
-// TODO zod to verify schema of imported themes here?
 const themeMap: Record<string, NewThemeOptions> = {
   dark: {
     name: 'Dark',
@@ -32,8 +30,17 @@ const themeMap: Record<string, NewThemeOptions> = {
       mode: 'light',
     },
   },
-  ...experimentalThemeDefinitions,
 };
+
+// Add additional themes
+for (const [id, json] of Object.entries(experimentalThemeDefinitions)) {
+  const result = NewThemeOptionsSchema.safeParse(json);
+  if (!result.success) {
+    console.error(`Invalid theme definition for theme id ${id}: ${result.error.message}`);
+  } else {
+    themeMap[id] = result.data;
+  }
+}
 
 const themeOptions = Object.entries(themeMap).map(([key, theme]) => ({
   label: theme.name,
@@ -120,7 +127,7 @@ export default function ThemePlayground() {
                   {
                     uri: 'theme-schema',
                     fileMatch: ['*'],
-                    schema,
+                    schema: themeJsonSchema,
                   },
                 ],
               });
