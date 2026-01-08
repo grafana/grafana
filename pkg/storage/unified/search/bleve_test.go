@@ -1583,3 +1583,55 @@ func docCount(t *testing.T, idx resource.ResourceIndex) int {
 	require.NoError(t, err)
 	return int(cnt)
 }
+
+func TestBuildIndexHandlesFileOpenError(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	// First, create a file-based index with one backend and keep it open
+	backend1, reg1 := setupBleveBackend(t, withRootDir(tmpDir))
+	index1, err := backend1.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+	require.NotNil(t, index1)
+
+	// Verify first index is file-based
+	bleveIdx1, ok := index1.(*bleveIndex)
+	require.True(t, ok)
+	require.Equal(t, indexStorageFile, bleveIdx1.indexStorage)
+	checkOpenIndexes(t, reg1, 0, 1)
+
+	// Now create a second backend using the same directory
+	// This simulates another instance trying to open the same index
+	backend2, reg2 := setupBleveBackend(t, withRootDir(tmpDir))
+
+	// BuildIndex should detect the file is locked and create a newer index file after timeout
+	now := time.Now()
+	timeout, err := time.ParseDuration(boltTimeout)
+	require.NoError(t, err)
+	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+	require.NotNil(t, index2)
+	require.GreaterOrEqual(t, time.Since(now).Milliseconds(), timeout.Milliseconds(), "BuildIndex should have retried for at least boltTimeout duration")
+
+	// Verify second index uses filesystem storage
+	bleveIdx2, ok := index2.(*bleveIndex)
+	require.True(t, ok)
+	require.Equal(t, indexStorageFile, bleveIdx2.indexStorage)
+
+	// Verify second index name has a newer timestamp suffix
+	require.Greater(t, bleveIdx2.index.Name(), bleveIdx1.index.Name(), "second index should have a later timestamp in its name")
+
+	// Verify metrics show 1 memory index and 0 file indexes for backend2
+	checkOpenIndexes(t, reg2, 0, 1)
+
+	// Verify the index works correctly
+	require.Equal(t, 10, docCount(t, index2))
+
+	// Clean up: close first backend to release the file lock
+	backend1.Stop()
+}
