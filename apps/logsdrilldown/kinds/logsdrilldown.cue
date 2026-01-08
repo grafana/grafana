@@ -1,7 +1,8 @@
 package kinds
 
 import (
-	"github.com/grafana/grafana/apps/logsdrilldown/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/logsdrilldown/kinds/v0alpha1",
+	"github.com/grafana/grafana/apps/logsdrilldown/kinds/v1beta1",
 )
 
 LogsDrilldownSpecv1alpha1: {
@@ -26,11 +27,20 @@ logsdrilldownDefaultsv1alpha1: {
 	}
 }
 
-// Default columns API
+// Default columns API (alpha)
 logsdrilldownDefaultColumnsv0alpha1: {
 	kind: "LogsDrilldownDefaultColumns"
 	pluralName: "LogsDrilldownDefaultColumns"
 	schema: {
 		spec: v0alpha1.LogsDefaultColumns
+	}
+}
+
+// Default columns API (beta)
+logsdrilldownDefaultColumnsv1beta1: {
+	kind: "LogsDrilldownDefaultColumns"
+	pluralName: "LogsDrilldownDefaultColumns"
+	schema: {
+		spec: v1beta1.LogsDefaultColumns
 	}
 }

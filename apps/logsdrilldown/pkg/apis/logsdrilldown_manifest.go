@@ -17,6 +17,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1alpha1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1alpha1"
+	v1beta1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1beta1"
 )
 
 var (
@@ -29,12 +30,15 @@ var (
 	rawSchemaLogsDrilldownDefaultColumnsv1alpha1     = []byte(`{"LogsDefaultColumnsLabel":{"additionalProperties":false,"properties":{"key":{"type":"string"},"value":{"type":"string"}},"required":["key","value"],"type":"object"},"LogsDefaultColumnsLabels":{"items":{"$ref":"#/components/schemas/LogsDefaultColumnsLabel"},"type":"array"},"LogsDefaultColumnsRecord":{"additionalProperties":false,"properties":{"columns":{"items":{"type":"string"},"type":"array"},"labels":{"$ref":"#/components/schemas/LogsDefaultColumnsLabels"}},"required":["columns","labels"],"type":"object"},"LogsDefaultColumnsRecords":{"items":{"$ref":"#/components/schemas/LogsDefaultColumnsRecord"},"type":"array"},"LogsDrilldownDefaultColumns":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"records":{"$ref":"#/components/schemas/LogsDefaultColumnsRecords"}},"required":["records"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaLogsDrilldownDefaultColumnsv1alpha1 app.VersionSchema
 	_                                                = json.Unmarshal(rawSchemaLogsDrilldownDefaultColumnsv1alpha1, &versionSchemaLogsDrilldownDefaultColumnsv1alpha1)
+	rawSchemaLogsDrilldownDefaultColumnsv1beta1      = []byte(`{"LogsDefaultColumnsLabel":{"additionalProperties":false,"properties":{"key":{"type":"string"},"value":{"type":"string"}},"required":["key","value"],"type":"object"},"LogsDefaultColumnsLabels":{"items":{"$ref":"#/components/schemas/LogsDefaultColumnsLabel"},"type":"array"},"LogsDefaultColumnsRecord":{"additionalProperties":false,"properties":{"columns":{"items":{"type":"string"},"type":"array"},"labels":{"$ref":"#/components/schemas/LogsDefaultColumnsLabels"}},"required":["columns","labels"],"type":"object"},"LogsDefaultColumnsRecords":{"items":{"$ref":"#/components/schemas/LogsDefaultColumnsRecord"},"type":"array"},"LogsDrilldownDefaultColumns":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"records":{"$ref":"#/components/schemas/LogsDefaultColumnsRecords"}},"required":["records"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaLogsDrilldownDefaultColumnsv1beta1  app.VersionSchema
+	_                                                = json.Unmarshal(rawSchemaLogsDrilldownDefaultColumnsv1beta1, &versionSchemaLogsDrilldownDefaultColumnsv1beta1)
 )
 
 var appManifestData = app.ManifestData{
 	AppName:          "logsdrilldown",
 	Group:            "logsdrilldown.grafana.app",
-	PreferredVersion: "v1alpha1",
+	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1alpha1",
@@ -70,6 +74,25 @@ var appManifestData = app.ManifestData{
 				Schemas:    map[string]spec.Schema{},
 			},
 		},
+
+		{
+			Name:   "v1beta1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "LogsDrilldownDefaultColumns",
+					Plural:     "LogsDrilldownDefaultColumns",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaLogsDrilldownDefaultColumnsv1beta1,
+				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
+			},
+		},
 	},
 }
 
@@ -85,6 +108,7 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"LogsDrilldown/v1alpha1":               v1alpha1.LogsDrilldownKind(),
 	"LogsDrilldownDefaults/v1alpha1":       v1alpha1.LogsDrilldownDefaultsKind(),
 	"LogsDrilldownDefaultColumns/v1alpha1": v1alpha1.LogsDrilldownDefaultColumnsKind(),
+	"LogsDrilldownDefaultColumns/v1beta1":  v1beta1.LogsDrilldownDefaultColumnsKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
