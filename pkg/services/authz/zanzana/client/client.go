@@ -26,7 +26,6 @@ type Client struct {
 	authz          authzv1.AuthzServiceClient
 	authzext       authzextv1.AuthzExtentionServiceClient
 	authzlibclient *authzlib.ClientImpl
-	reg            prometheus.Registerer
 	metrics        *clientMetrics
 }
 
