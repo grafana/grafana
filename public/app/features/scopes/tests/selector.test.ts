@@ -1,4 +1,7 @@
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { MOCK_SCOPES } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { ScopesService } from '../ScopesService';
@@ -25,8 +28,7 @@ import {
   expectResultApplicationsGrafanaSelected,
   expectScopesSelectorValue,
 } from './utils/assertions';
-import { mocksScopes } from './utils/mockData';
-import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 import { getListOfScopes } from './utils/selectors';
 
@@ -34,12 +36,12 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
-jest.mock('../ScopesApiClient', () => require('./utils/mockScopesApiClient'));
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('Selector', () => {
   let fetchSelectedScopesSpy: jest.SpyInstance;
@@ -70,7 +72,7 @@ describe('Selector', () => {
     await selectResultCloud();
     await applyScopes();
     expect(fetchSelectedScopesSpy).toHaveBeenCalled();
-    expect(getListOfScopes(scopesService)).toEqual(mocksScopes.filter(({ metadata: { name } }) => name === 'cloud'));
+    expect(getListOfScopes(scopesService)).toEqual(MOCK_SCOPES.filter(({ metadata: { name } }) => name === 'cloud'));
   });
 
   it('Does not save the scopes on close', async () => {
