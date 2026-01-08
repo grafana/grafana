@@ -386,24 +386,19 @@ Variables dynamically change your queries across all rows in a dashboard.
 
 This only applies to queries that include a multi-value variable.
 
-<!-- To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows).
-The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
-Might be good to update this Play example -->
-
 To configure repeats, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click in the panel, row, or tab you want to work with to bring it into focus and display the associated options in the edit pane.
+1. Click the panel, row, or tab you want to work with to bring it into focus and display its options in the edit pane.
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
-1. For panels only, set the following options:
-   - Under **Repeat direction**, choose one of the following:
-     - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can’t mix other panels on a row with a repeated panel.
-     - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
-
-   - If you selected **Horizontal**, select a value in the **Max per row** drop-down list to control the maximum number of panels that can be in a row.
+1. For panels in a custom layout, set the following options:
+   1. Under **Repeat direction**, choose one of the following:
+      - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can’t mix other panels on a row with a repeated panel.
+      - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
+   1. If you selected **Horizontal**, select a value in the **Max per row** drop-down list to control the maximum number of panels that can be in a row.
 
 1. (Optional) To provide context to dashboard users, add the variable name to the panel, row, or tab title.
 1. When you've finished setting the repeat option, click **Save**.
