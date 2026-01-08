@@ -259,7 +259,7 @@ To update the panel layout, follow these steps:
 1. Do one of the following:
 
    - If the panel layout you want to change isn't contained in a grouping, click the dashboard outside of a grouping, and then click the **Dashboard options** icon to open the edit pane.
-   - Click the **Content outline** icon to open it and navigate to the grouping that contains the panel layout you want to update to open the edit pane with the relevant options displayed.
+   - Open the **Content outline** and use it to navigate to the grouping that contains the panel layout you want to update. Click the grouping to open the edit pane with the relevant options displayed.
 
 1. Under **Layout**, select **Custom** or **Auto grid**.
 1. Click **Save**.
@@ -391,7 +391,10 @@ To configure repeats, follow these steps:
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the panel, row, or tab you want to work with to bring it into focus and display its options in the edit pane.
+1. Click the panel, row, or tab you want to work with to open the edit pane with the relevant options displayed.
+
+   If the dashboard is large, open the **Content outline** and use it to navigate to the panel, row, or tab.
+
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
 1. For panels in a custom layout, set the following options:
@@ -418,46 +421,22 @@ For example, in a dashboard:
 - Repeating row, `Row 2`, includes `Panel 2A` and `Panel 2B`
 - `Panel 2B` references `Panel 1A`, not `Panel 2A`
 
-## Configure show/hide rules
+## Show/hide rules
 
 You can configure panels, rows, and tabs to be shown or hidden based on rules.
 For example, you might want to set a panel to be hidden if there's no data returned by a query, or for a tab to only be shown based on a variable being present.
 
+There are three types of show/hide rules to choose from, which are described in the following sections:
+
+- [Query result](#query-result-rule)
+- [Template variable](#template-variable-rule)
+- [Time range less than](#time-range-less-than-rule)
+
+For steps on how to create show/hide rules, refer to [Configure show/hide rules](#configure-showhide-rules).
+
 {{< admonition type="note" >}}
 You can only configure show/hide rules for panels in the **Auto grid** layout. Set the panel layout at the dashboard, row, or tab-level.
 {{< /admonition >}}
-
-To configure show/hide rules, follow these steps:
-
-1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-
-   The **Dashboard** edit pane opens on the right side of the dashboard.
-
-1. Click in the panel, row, or tab you want to work with to bring it into focus and display the associated options in the edit pane.
-1. Expand the **Show / hide rules** section.
-1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
-1. Click **+ Add rule**.
-1. Select a rule type:
-   - **Query result** - Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
-   - **Template variable** - Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
-   - **Time range less than** - Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
-
-1. Configure the rule.
-
-   If you've set a hide rule, the panel, row, or tab isn't visible when the dashboard is in view mode. In edit mode, an icon indicating the panel, row, or tab isn't visible is displayed on the dashboard element.
-
-1. Under **Match rules**, select one of the following:
-   - **Match all** - The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
-   - **Match any** - The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
-
-   This option is only displayed if you add multiple rules.
-
-1. When you've finished setting rules, click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**
 
 ### Query result rule
 
@@ -504,17 +483,56 @@ This configuration ensures that these time-sensitive panels are only displayed w
 
 For this rule type, you can select time ranges from **5 minutes** to **5 years**.
 
+### Configure show/hide rules
+
+To configure show/hide rules, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click the panel, row, or tab you want to work with to open the edit pane with the relevant options displayed.
+
+   If the dashboard is large, open the **Content outline** and use it to navigate to the panel, row, or tab.
+
+1. Expand the **Show / hide rules** section.
+1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
+1. Click **+ Add rule**.
+1. Select a rule type:
+   - **Query result** - Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
+   - **Template variable** - Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
+   - **Time range less than** - Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
+
+1. Configure the rule.
+
+   If you've set a hide rule, the panel, row, or tab isn't visible when the dashboard is in view mode. In edit mode, an icon indicating the panel, row, or tab isn't visible is displayed on the dashboard element.
+
+1. Under **Match rules**, select one of the following:
+   - **Match all** - The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
+   - **Match any** - The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
+
+   This option is only displayed if you add multiple rules.
+
+1. When you've finished setting rules, click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**
+
 ## Move or resize a panel
 
-When you're dashboard has a **Custom** layout, you can resize or move a panel to any location on the dashboard.
+When your dashboard has a **Custom** layout, you can manually resize or move a panel.
+If the dashboard has rows or tabs, you can only move panels to other rows or tabs; panels can't be placed on the dashboard outside of a grouping.
 
 To move or resize, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
+1. Navigate to the panel you want to move or resize.
+
+   If the dashboard is large, open the **Content outline** and use it to navigate to the panel, row, or tab.
+
 1. Do one of the following:
-   - Click the panel title and drag the panel to the new location such as a new tab or row or to a new position in a custom layout.
+   - Click the panel title and drag the panel to another row or tab, or to a new position on the dashboard.
    - Click and drag the lower-right corner of the panel to change the size of the panel.
 
 1. Click **Save**.
