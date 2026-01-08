@@ -170,8 +170,6 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	org1Ctx := createTestContext(t, helper, helper.Org1, rest.Mode5)
 	org2Ctx := createTestContext(t, helper, helper.OrgB, rest.Mode5)
 
-	apis.AwaitZanzanaReconcileNext(t, helper)
-
 	t.Run("Dashboard permission tests", func(t *testing.T) {
 		runDashboardPermissionTests(t, org1Ctx, true)
 	})
@@ -220,7 +218,6 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 	})
 
 	org1Ctx := createTestContext(t, helper, helper.Org1, rest.Mode5)
-	apis.AwaitZanzanaReconcileNext(t, helper)
 
 	runDashboardListTests(t, org1Ctx)
 }

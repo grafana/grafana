@@ -19,8 +19,8 @@ import (
 const zanzanaReconcileLastSuccessMetric = "grafana_zanzana_reconcile_last_success_timestamp_seconds"
 
 // AwaitZanzanaReconcileNext waits for a Zanzana reconciliation cycle whose last-success timestamp
-// is greater than "now + 2s" (the metrics report to the nearest second).
-// This avoids races where a reconcile completed just before the call (and we'd otherwise treat it as "the next" reconcile).
+// has been incremented from its current value. This ensures a reconciliation has occurred after
+// this function is called.
 //
 // It is a no-op unless the `zanzana` feature toggle is enabled for the running test env.
 func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
@@ -34,15 +34,14 @@ func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
 		return
 	}
 
-	thresholdSeconds := float64(time.Now().Add(2*time.Second).UnixNano()) / float64(time.Second)
-
+	baselineTimestamp, _ := getZanzanaReconcileLastSuccessTimestampSeconds(t, helper)
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		ts, ok := getZanzanaReconcileLastSuccessTimestampSeconds(t, helper)
 		assert.True(c, ok, "expected to find %s in /metrics", zanzanaReconcileLastSuccessMetric)
 		if !ok {
 			return
 		}
-		assert.Greater(c, ts, thresholdSeconds, "expected %s (%v) > %v", zanzanaReconcileLastSuccessMetric, ts, thresholdSeconds)
+		assert.Greater(c, ts, baselineTimestamp, "expected %s (%v) > baseline (%v)", zanzanaReconcileLastSuccessMetric, ts, baselineTimestamp)
 	}, 30*time.Second, 50*time.Millisecond)
 }
 
