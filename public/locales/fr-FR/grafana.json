@@ -3759,7 +3759,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4416,6 +4415,7 @@
       },
       "no-properties-changed": "Aucune propriété pertinente n’a été modifiée",
       "table": {
+        "notes": "",
         "updated": "Date",
         "updatedBy": "Mis à jour par",
         "version": "Version"
@@ -4874,7 +4874,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Valeurs séparées par une virgule"
         },
         "datasource-options": {
           "name-filter": "Nom du filtre",
@@ -5968,6 +5969,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Personnaliser les options",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Valeurs séparées par des virgules",
       "selection-options": "Options de sélection"
     },
@@ -6555,6 +6559,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Tableau de bord enregistré"
     },
@@ -6578,6 +6587,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6637,8 +6647,9 @@
       "tooltip-show-usages": "Afficher les usages"
     },
     "variable-values-preview": {
-      "preview-of-values": "Aperçu des valeurs",
-      "show-more": "Afficher plus"
+      "show-more": "Afficher plus",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {

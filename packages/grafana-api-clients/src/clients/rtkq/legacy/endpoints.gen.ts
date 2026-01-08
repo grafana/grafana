@@ -5554,6 +5554,7 @@ export type ReportDashboard = {
 };
 export type Type = string;
 export type ReportOptions = {
+  csvEncoding?: string;
   layout?: string;
   orientation?: string;
   pdfCombineOneFile?: boolean;
