@@ -87,7 +87,6 @@
     "@grafana/data": ">=11.6 <= 12.x",
     "@grafana/runtime": ">=11.6 <= 12.x",
     "@grafana/ui": ">=11.6 <= 12.x",
-    "@reduxjs/toolkit": "^2.10.1",
     "msw": "^2.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
@@ -97,6 +96,7 @@
     "@faker-js/faker": "^9.8.0",
     "@grafana/api-clients": "12.4.0-pre",
     "@grafana/i18n": "12.4.0-pre",
+    "@reduxjs/toolkit": "2.10.1",
     "fishery": "^2.3.1",
     "lodash": "^4.17.21",
     "tinycolor2": "^1.6.0"
