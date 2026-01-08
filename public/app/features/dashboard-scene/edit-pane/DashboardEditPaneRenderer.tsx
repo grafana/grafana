@@ -36,7 +36,11 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const hasUid = Boolean(uid);
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
-  const [selectedLayoutElement, setSelectedLayoutElement] = useState(selectedObject);
+  // the layout element that was selected when opening the 'add' pane
+  // used when adding new panel from the sidebar
+  const [selectedLayoutElement, setSelectedLayoutElement] = useState<DashboardScene | SceneObject<SceneObjectState>>(
+    dashboard
+  );
 
   const editableElement = useMemo(() => {
     if (selection) {
@@ -46,7 +50,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
     return undefined;
   }, [selection]);
 
-  // saves the row or tab selected when opening the 'add' pane, so new panels can later be added to it
+  
   const onSetLayoutElement = (obj: SceneObject<SceneObjectState> | undefined) => {
     if (obj instanceof RowItem || obj instanceof TabItem) {
       setSelectedLayoutElement(obj);
@@ -80,7 +84,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       )}
       {openPane === 'add' && (
         <Sidebar.OpenPane>
-          <DashboardSidePaneNew onAddPanel={onAddNewPanel} />
+          <DashboardSidePaneNew onAddPanel={onAddNewPanel} dashboard={dashboard} />
         </Sidebar.OpenPane>
       )}
       {openPane === 'outline' && (

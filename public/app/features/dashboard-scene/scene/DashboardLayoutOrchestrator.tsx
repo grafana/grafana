@@ -11,11 +11,16 @@ import {
 } from '@grafana/scenes';
 import { createPointerDistance } from '@grafana/ui';
 
+import { getDefaultVizPanel } from '../utils/utils';
+
 import { DashboardScene } from './DashboardScene';
+import { RowItem } from './layout-rows/RowItem';
+import { TabItem } from './layout-tabs/TabItem';
 import { DashboardDropTarget, isDashboardDropTarget } from './types/DashboardDropTarget';
 
 interface DashboardLayoutOrchestratorState extends SceneObjectState {
   draggingGridItem?: SceneObjectRef<SceneGridItemLike>;
+  isDraggingNewPanel?: boolean;
 }
 
 export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayoutOrchestratorState> {
@@ -59,10 +64,19 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this.setState({ draggingGridItem: gridItem.getRef() });
   }
 
+  public startDraggingNewPanel(): void {
+    document.body.addEventListener('pointermove', this._onPointerMove);
+    document.body.addEventListener('pointerup', this._stopDraggingSync, true);
+
+    this.setState({ isDraggingNewPanel: true });
+  }
+
   private _stopDraggingSync(_evt: PointerEvent) {
     const gridItem = this.state.draggingGridItem?.resolve();
 
-    if (this._sourceDropTarget !== this._lastDropTarget) {
+    if (this.state.isDraggingNewPanel) {
+      this._dropNewPanel(_evt);
+    } else if (this._sourceDropTarget !== this._lastDropTarget) {
       // Wrapped in setTimeout to ensure that any event handlers are called
       // Useful for allowing react-grid-layout to remove placeholders, etc.
       setTimeout(() => {
@@ -76,12 +90,35 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           logWarning(warningMessage);
         }
       });
+      document.body.removeEventListener('pointermove', this._onPointerMove);
+      document.body.removeEventListener('pointerup', this._stopDraggingSync);
+
+      this.setState({ draggingGridItem: undefined });
+    }
+  }
+
+  private _dropNewPanel(_evt: PointerEvent) {
+    const elementsUnderPoint = document.elementsFromPoint(_evt.clientX, _evt.clientY);
+
+    // if the cursor is in the sidebar, don't add panel
+    const isInSidebar = elementsUnderPoint.some((el) => el.closest('[data-testid="dashboard-edit-pane-sidebar"]') !== null);
+
+    if (isInSidebar) {
+      return;
+    }
+    const panel = getDefaultVizPanel();
+    if (!this._lastDropTarget) {
+      // if no lastDropTarget and not in Sidebar, treat the dashboard itself as the drop target
+      this._getDashboard().addPanel(panel);
     }
 
+    if (this._lastDropTarget instanceof RowItem || this._lastDropTarget instanceof TabItem) {
+      this._lastDropTarget.getLayout().addPanel(panel);
+    }
     document.body.removeEventListener('pointermove', this._onPointerMove);
-    document.body.removeEventListener('pointerup', this._stopDraggingSync);
+    document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
 
-    this.setState({ draggingGridItem: undefined });
+    this.setState({ isDraggingNewPanel: false });
   }
 
   private _onPointerMove(evt: PointerEvent) {
