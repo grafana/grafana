@@ -97,6 +97,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       document.body.removeEventListener('pointerup', this._stopDraggingSync);
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp);
       this._clearTabActivationTimer();
+      this._clearDragPreview();
     };
   }
 
@@ -105,6 +106,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
    */
   public isDragging(): boolean {
     return !!(this.state.draggingGridItem || this.state.draggingRow);
+  }
+
+  /**
+   * Returns true if the current drag operation will drop the item to a different layout
+   * than where it started. Used by AutoGridLayout to know whether to clear draggingKey.
+   */
+  public isDroppedElsewhere(): boolean {
+    return this._lastDropTarget !== null && this._lastDropTarget !== this._sourceDropTarget;
   }
 
   public startDraggingSync(evt: ReactPointerEvent, gridItem: SceneGridItemLike): void {
@@ -137,9 +146,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const sourceDropTarget = this._sourceDropTarget;
     const lastDropTarget = this._lastDropTarget;
     const dropPosition = this._currentDropPosition;
+    const isCrossLayoutDrop = sourceDropTarget !== lastDropTarget || wasDetached;
 
     // Handle cross-layout or cross-tab drop
-    if (sourceDropTarget !== lastDropTarget || wasDetached) {
+    if (isCrossLayoutDrop) {
       // Wrapped in setTimeout to ensure that any event handlers are called
       // Useful for allowing react-grid-layout to remove placeholders, etc.
       setTimeout(() => {
@@ -149,7 +159,16 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
             sourceDropTarget?.draggedGridItemOutside?.(gridItem);
           }
           // Pass drop position for precise placement (AutoGrid uses this)
+          // Note: draggedGridItemInside also clears isDropTarget and dropPosition
           lastDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
+
+          // Clean up source grid's drag state (CSS variables and draggingKey) after item is moved.
+          // This is done here (after movement) to prevent flickering where the item
+          // would momentarily appear at wrong position (CSS vars cleared but draggingKey set
+          // = absolute positioning with no valid position values).
+          if (sourceDropTarget instanceof AutoGridLayoutManager) {
+            sourceDropTarget.state.layout.endExternalDrag();
+          }
         } else {
           const warningMessage = 'No grid item to drag';
           console.warn(warningMessage);
@@ -163,8 +182,19 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     this._clearTabActivationTimer();
     this._clearDragPreview();
-    this._clearDropPosition();
-    this._lastDropTarget?.setIsDropTarget?.(false);
+
+    // For cross-layout drops, don't clear drop position/target state synchronously.
+    // The placeholder should remain visible until the item is added by draggedGridItemInside,
+    // which also clears isDropTarget and dropPosition. This prevents flickering where the
+    // grid would momentarily shrink (placeholder removed) before expanding again (item added).
+    if (!isCrossLayoutDrop) {
+      this._clearDropPosition();
+      this._lastDropTarget?.setIsDropTarget?.(false);
+    }
+
+    // Clear internal tracking state (but not the visual state on the target for cross-layout drops)
+    this._currentDropPosition = null;
+    this._lastHoveredAutoGridItemKey = null;
     this._lastDropTarget = null;
     this._sourceDropTarget = null;
     this._itemDetachedFromSource = false;

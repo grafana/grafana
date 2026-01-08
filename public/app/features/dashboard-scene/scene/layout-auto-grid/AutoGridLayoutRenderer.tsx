@@ -101,6 +101,6 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
     border: `1px dashed ${theme.colors.primary.main}`,
     borderRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.primary.transparent,
-    minHeight: state.autoRows || '320px',
+    minHeight: '100px',
   }),
 });
