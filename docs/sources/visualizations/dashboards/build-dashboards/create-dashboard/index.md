@@ -164,7 +164,7 @@ To create a dashboard, follow these steps:
 1. Click **Save**
 1. Click **Exit edit**.
 
-## Dashboard editing
+## Dashboard edit
 
 Now that you've created a basic dashboard, you can augment it with more options.
 You can make several updates without leaving the dashboard by using the edit pane, which is explained in the next section.
@@ -195,7 +195,7 @@ The sidebar includes the following options:
 - Settings
 - Feedback
 - Export
-- Content outline
+- [Content outline](#navigate-using-the-content-outline)
 - Dashboard insights
 
 {{< admonition type="note" >}}
@@ -224,9 +224,9 @@ By default, the outline is collapsed.
 To navigate the dashboard using the outline, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to view.
-1. In the sidebar on the right side of the dashboard, click the **Content outline** icon to open it.
-1. Expand the outline to find the dashboard part to which you want to navigate.
+1. Navigate to the dashboard you want to view or update.
+1. In the right sidebar, click the **Content outline** icon to open it.
+1. Expand the outline to find the part of the dashboard you want to view or update.
 1. Click the tree item to navigate that part of the dashboard.
 
 ### Edit a dashboard
