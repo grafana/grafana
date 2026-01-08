@@ -40,7 +40,7 @@ If the data source test fails, verify the following:
 
 - The URL in your data source configuration is correct and accessible from the Grafana server.
 - The Graphite server is running and accepting connections.
-- Any firewalls or network policies allow traffic between Grafana and the Graphite server.
+- Any firewall rules or network policies allow traffic between Grafana and the Graphite server.
 - If using TLS, ensure your certificates are valid and properly configured.
 
 To test connectivity, run the following command from the Grafana server:
