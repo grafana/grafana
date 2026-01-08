@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Test RSA private key (generated for testing purposes only)
+//nolint:gosec // Test RSA private key (generated for testing purposes only)
 const testPrivateKeyPEM = `-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAoInVbLY9io2Q/wHvUIXlEHg2Qyvd8eRzBAVEJ92DS6fx9H10
 06V0VRm78S0MXyo6i+n8ZAbZ0/R+GWpP2Ephxm0Gs2zo+iO2mpB19xQFI4o6ZTOw
@@ -87,7 +87,35 @@ func TestMutateConnection(t *testing.T) {
 		assert.False(t, c.Secure.Token.Create.IsZero(), "JWT token should be generated")
 	})
 
-	t.Run("should fail when private key is invalid", func(t *testing.T) {
+	t.Run("should do nothing for Gitlab connection", func(t *testing.T) {
+		c := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+			Spec: provisioning.ConnectionSpec{
+				Type: provisioning.GitlabConnectionType,
+				Gitlab: &provisioning.GitlabConnectionConfig{
+					ClientID: "clientID",
+				},
+			},
+		}
+
+		require.NoError(t, connection.MutateConnection(c))
+	})
+
+	t.Run("should do nothing for BitBucket connection", func(t *testing.T) {
+		c := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+			Spec: provisioning.ConnectionSpec{
+				Type: provisioning.BitbucketConnectionType,
+				Bitbucket: &provisioning.BitbucketConnectionConfig{
+					ClientID: "clientID",
+				},
+			},
+		}
+
+		require.NoError(t, connection.MutateConnection(c))
+	})
+
+	t.Run("should fail when private key is not base64", func(t *testing.T) {
 		c := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 			Spec: provisioning.ConnectionSpec{
@@ -107,30 +135,29 @@ func TestMutateConnection(t *testing.T) {
 		err := connection.MutateConnection(c)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to generate JWT token")
+		assert.Contains(t, err.Error(), "failed to decode base64 private key")
 	})
 
-	t.Run("should fail when app ID is invalid", func(t *testing.T) {
-		// Base64 encode the test private key
-		privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
-
+	t.Run("should fail when private key is invalid", func(t *testing.T) {
 		c := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 			Spec: provisioning.ConnectionSpec{
 				Type: provisioning.GithubConnectionType,
 				GitHub: &provisioning.GitHubConnectionConfig{
-					AppID:          "invalid",
+					AppID:          "123",
 					InstallationID: "456",
 				},
 			},
 			Secure: provisioning.ConnectionSecure{
 				PrivateKey: common.InlineSecureValue{
-					Create: common.NewSecretValue(privateKeyBase64),
+					Create: common.NewSecretValue(base64.StdEncoding.EncodeToString([]byte("invalid-key"))),
 				},
 			},
 		}
 
 		err := connection.MutateConnection(c)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid app ID")
+		assert.Contains(t, err.Error(), "failed to generate JWT token")
+		assert.Contains(t, err.Error(), "failed to parse private key")
 	})
 }

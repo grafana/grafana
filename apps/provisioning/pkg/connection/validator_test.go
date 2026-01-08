@@ -1,22 +1,25 @@
 package connection_test
 
 import (
-	"encoding/base64"
+	"context"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestValidateConnection(t *testing.T) {
+func TestValidateGithubConnection(t *testing.T) {
 	tests := []struct {
-		name       string
-		connection *provisioning.Connection
-		wantErr    bool
-		errMsg     string
+		name           string
+		connection     *provisioning.Connection
+		setupMock      func(*connection.MockGithubFactory)
+		wantErr        bool
+		errMsgContains []string
 	}{
 		{
 			name: "empty type returns error",
@@ -24,8 +27,8 @@ func TestValidateConnection(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec:       provisioning.ConnectionSpec{},
 			},
-			wantErr: true,
-			errMsg:  "spec.type",
+			wantErr:        true,
+			errMsgContains: []string{"spec.type"},
 		},
 		{
 			name: "invalid type returns error",
@@ -35,8 +38,8 @@ func TestValidateConnection(t *testing.T) {
 					Type: "invalid",
 				},
 			},
-			wantErr: true,
-			errMsg:  "spec.type",
+			wantErr:        true,
+			errMsgContains: []string{"spec.type"},
 		},
 		{
 			name: "github type without github config returns error",
@@ -46,8 +49,8 @@ func TestValidateConnection(t *testing.T) {
 					Type: provisioning.GithubConnectionType,
 				},
 			},
-			wantErr: true,
-			errMsg:  "spec.github",
+			wantErr:        true,
+			errMsgContains: []string{"spec.github"},
 		},
 		{
 			name: "github type without private key returns error",
@@ -61,8 +64,28 @@ func TestValidateConnection(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
-			errMsg:  "secure.privateKey",
+			wantErr:        true,
+			errMsgContains: []string{"secure.privateKey"},
+		},
+		{
+			name: "github type without token returns error",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-private-key"),
+					},
+				},
+			},
+			wantErr:        true,
+			errMsgContains: []string{"secure.token"},
 		},
 		{
 			name: "github type with client secret returns error",
@@ -76,35 +99,13 @@ func TestValidateConnection(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Name: "test-private-key",
-					},
 					ClientSecret: common.InlineSecureValue{
-						Name: "test-client-secret",
+						Create: common.NewSecretValue("test-client-secret"),
 					},
 				},
 			},
-			wantErr: true,
-			errMsg:  "secure.clientSecret",
-		},
-		{
-			name: "github type with github config is valid",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Name: "test-private-key",
-					},
-				},
-			},
-			wantErr: false,
+			wantErr:        true,
+			errMsgContains: []string{"secure.clientSecret"},
 		},
 		{
 			name: "github type without appID returns error",
@@ -118,12 +119,15 @@ func TestValidateConnection(t *testing.T) {
 				},
 				Secure: provisioning.ConnectionSecure{
 					PrivateKey: common.InlineSecureValue{
-						Name: "test-private-key",
+						Create: common.NewSecretValue("test-private-key"),
+					},
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
 					},
 				},
 			},
-			wantErr: true,
-			errMsg:  "spec.github.appID",
+			wantErr:        true,
+			errMsgContains: []string{"spec.github.appID"},
 		},
 		{
 			name: "github type without installationID returns error",
@@ -139,13 +143,163 @@ func TestValidateConnection(t *testing.T) {
 					PrivateKey: common.InlineSecureValue{
 						Name: "test-private-key",
 					},
+					Token: common.InlineSecureValue{
+						Name: "test-token",
+					},
 				},
 			},
-			wantErr: true,
-			errMsg:  "spec.github.installationID",
+			wantErr:        true,
+			errMsgContains: []string{"spec.github.installationID"},
 		},
 		{
-			name: "bitbucket type without bitbucket config returns error",
+			name: "github type with valid config without private key create is valid",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-private-key"),
+					},
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			wantErr: false,
+			setupMock: func(mockFactory *connection.MockGithubFactory) {
+				mockClient := github.NewMockClient(t)
+
+				mockFactory.EXPECT().New(mock.Anything, common.NewSecretValue("")).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything, "test-token").Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "test-token", "456").Return(github.AppInstallation{ID: 456}, nil)
+			},
+		},
+		{
+			name: "problem getting app returns error",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-private-key"),
+					},
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			wantErr:        true,
+			errMsgContains: []string{"spec.token", "[REDACTED]"},
+			setupMock: func(mockFactory *connection.MockGithubFactory) {
+				mockClient := github.NewMockClient(t)
+
+				mockFactory.EXPECT().New(mock.Anything, common.NewSecretValue("")).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything, "test-token").Return(github.App{}, assert.AnError)
+			},
+		},
+		{
+			name: "mismatched app ID returns error",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-private-key"),
+					},
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			wantErr:        true,
+			errMsgContains: []string{"spec.appID"},
+			setupMock: func(mockFactory *connection.MockGithubFactory) {
+				mockClient := github.NewMockClient(t)
+
+				mockFactory.EXPECT().New(mock.Anything, common.NewSecretValue("")).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything, "test-token").Return(github.App{ID: 444, Slug: "test-app"}, nil)
+			},
+		},
+		{
+			name: "problem when getting installation returns error",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-private-key"),
+					},
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			wantErr:        true,
+			errMsgContains: []string{"spec.token", "[REDACTED]"},
+			setupMock: func(mockFactory *connection.MockGithubFactory) {
+				mockClient := github.NewMockClient(t)
+
+				mockFactory.EXPECT().New(mock.Anything, common.NewSecretValue("")).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything, "test-token").Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "test-token", "456").Return(github.AppInstallation{}, assert.AnError)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ghFactory := connection.NewMockGithubFactory(t)
+			if tt.setupMock != nil {
+				tt.setupMock(ghFactory)
+			}
+
+			validator := connection.NewValidator(ghFactory)
+			err := validator.ValidateConnection(context.Background(), tt.connection)
+			if tt.wantErr {
+				assert.Error(t, err)
+				for _, msg := range tt.errMsgContains {
+					assert.Contains(t, err.Error(), msg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateBitbucketConnection(t *testing.T) {
+	tests := []struct {
+		name       string
+		connection *provisioning.Connection
+		wantErr    bool
+		errMsg     string
+	}{
+		{
+			name: "bitbucket connection without bitbucket config",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -156,7 +310,7 @@ func TestValidateConnection(t *testing.T) {
 			errMsg:  "spec.bitbucket",
 		},
 		{
-			name: "bitbucket type without client secret returns error",
+			name: "bitbucket connection without client secret",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -170,7 +324,7 @@ func TestValidateConnection(t *testing.T) {
 			errMsg:  "secure.clientSecret",
 		},
 		{
-			name: "bitbucket type with private key returns error",
+			name: "bitbucket connection with forbidden private key",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -180,11 +334,11 @@ func TestValidateConnection(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Name: "test-private-key",
-					},
 					ClientSecret: common.InlineSecureValue{
 						Name: "test-client-secret",
+					},
+					PrivateKey: common.InlineSecureValue{
+						Name: "test-private-key",
 					},
 				},
 			},
@@ -192,7 +346,7 @@ func TestValidateConnection(t *testing.T) {
 			errMsg:  "secure.privateKey",
 		},
 		{
-			name: "bitbucket type with bitbucket config is valid",
+			name: "valid bitbucket connection",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -209,8 +363,34 @@ func TestValidateConnection(t *testing.T) {
 			},
 			wantErr: false,
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ghFactory := connection.NewMockGithubFactory(t)
+			validator := connection.NewValidator(ghFactory)
+			err := validator.ValidateConnection(context.Background(), tt.connection)
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateGitlabConnection(t *testing.T) {
+	tests := []struct {
+		name       string
+		connection *provisioning.Connection
+		wantErr    bool
+		errMsg     string
+	}{
 		{
-			name: "gitlab type without gitlab config returns error",
+			name: "gitlab connection without gitlab config",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -221,7 +401,7 @@ func TestValidateConnection(t *testing.T) {
 			errMsg:  "spec.gitlab",
 		},
 		{
-			name: "gitlab type without client secret returns error",
+			name: "gitlab connection without client secret",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -235,7 +415,7 @@ func TestValidateConnection(t *testing.T) {
 			errMsg:  "secure.clientSecret",
 		},
 		{
-			name: "gitlab type with private key returns error",
+			name: "gitlab connection with forbidden private key",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -245,19 +425,19 @@ func TestValidateConnection(t *testing.T) {
 					},
 				},
 				Secure: provisioning.ConnectionSecure{
+					ClientSecret: common.InlineSecureValue{
+						Name: "test-client-secret",
+					},
 					PrivateKey: common.InlineSecureValue{
 						Name: "test-private-key",
 					},
-					ClientSecret: common.InlineSecureValue{
-						Name: "test-client-secret",
-					},
 				},
 			},
 			wantErr: true,
 			errMsg:  "secure.privateKey",
 		},
 		{
-			name: "gitlab type with gitlab config is valid",
+			name: "valid gitlab connection",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -273,91 +453,14 @@ func TestValidateConnection(t *testing.T) {
 				},
 			},
 			wantErr: false,
-		},
-		{
-			name: "github type with valid private key and app ID",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))),
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "github type with invalid private key base64",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("not-valid-base64!@#$%"),
-					},
-				},
-			},
-			wantErr: true,
-			errMsg:  "secure.privateKey",
-		},
-		{
-			name: "github type with invalid private key PEM",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(base64.StdEncoding.EncodeToString([]byte("not a valid PEM"))),
-					},
-				},
-			},
-			wantErr: true,
-			errMsg:  "secure.privateKey",
-		},
-		{
-			name: "github type with invalid app ID format",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "not-a-number",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))),
-					},
-				},
-			},
-			wantErr: true,
-			errMsg:  "secure.privateKey",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := connection.ValidateConnection(tt.connection)
+			ghFactory := connection.NewMockGithubFactory(t)
+			validator := connection.NewValidator(ghFactory)
+			err := validator.ValidateConnection(context.Background(), tt.connection)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.errMsg != "" {

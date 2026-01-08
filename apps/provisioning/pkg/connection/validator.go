@@ -1,19 +1,31 @@
 package connection
 
 import (
-	"encoding/base64"
+	"context"
 	"fmt"
-	"strconv"
 
-	"github.com/golang-jwt/jwt/v4"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func ValidateConnection(connection *provisioning.Connection) error {
+//go:generate mockery --name GithubFactory --structname MockGithubFactory --inpackage --filename factory_mock.go --with-expecter
+type GithubFactory interface {
+	New(ctx context.Context, ghToken common.RawSecureValue) github.Client
+}
+
+type Validator struct {
+	githubClientFactory GithubFactory
+}
+
+func NewValidator(githubClientFactory GithubFactory) Validator {
+	return Validator{githubClientFactory: githubClientFactory}
+}
+
+func (v *Validator) ValidateConnection(ctx context.Context, connection *provisioning.Connection) error {
 	list := field.ErrorList{}
 
 	if connection.Spec.Type == "" {
@@ -22,7 +34,7 @@ func ValidateConnection(connection *provisioning.Connection) error {
 
 	switch connection.Spec.Type {
 	case provisioning.GithubConnectionType:
-		list = append(list, validateGithubConnection(connection)...)
+		list = append(list, v.validateGithubConnection(ctx, connection)...)
 	case provisioning.BitbucketConnectionType:
 		list = append(list, validateBitbucketConnection(connection)...)
 	case provisioning.GitlabConnectionType:
@@ -43,7 +55,7 @@ func ValidateConnection(connection *provisioning.Connection) error {
 	return toError(connection.GetName(), list)
 }
 
-func validateGithubConnection(connection *provisioning.Connection) field.ErrorList {
+func (v *Validator) validateGithubConnection(ctx context.Context, connection *provisioning.Connection) field.ErrorList {
 	list := field.ErrorList{}
 
 	if connection.Spec.GitHub == nil {
@@ -56,6 +68,9 @@ func validateGithubConnection(connection *provisioning.Connection) field.ErrorLi
 	if connection.Secure.PrivateKey.IsZero() {
 		list = append(list, field.Required(field.NewPath("secure", "privateKey"), "privateKey must be specified for GitHub connection"))
 	}
+	if connection.Secure.Token.IsZero() {
+		list = append(list, field.Required(field.NewPath("secure", "token"), "token must be specified for GitHub connection"))
+	}
 	if !connection.Secure.ClientSecret.IsZero() {
 		list = append(list, field.Forbidden(field.NewPath("secure", "clientSecret"), "clientSecret is forbidden in GitHub connection"))
 	}
@@ -64,19 +79,54 @@ func validateGithubConnection(connection *provisioning.Connection) field.ErrorLi
 	if connection.Spec.GitHub.AppID == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "appID"), "appID must be specified for GitHub connection"))
 	}
-
 	if connection.Spec.GitHub.InstallationID == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "installationID"), "installationID must be specified for GitHub connection"))
 	}
 
-	// If we have a private key being created, validate it can generate a JWT
-	if !connection.Secure.PrivateKey.Create.IsZero() && connection.Spec.GitHub.AppID != "" {
-		if err := validatePrivateKeyAndAppID(connection.Spec.GitHub.AppID, connection.Secure.PrivateKey.Create); err != nil {
-			list = append(list, field.Invalid(field.NewPath("secure", "privateKey"), "[REDACTED]", err.Error()))
-		}
+	// In case we have any error above, we don't go forward with the validation, and return the errors.
+	if len(list) > 0 {
+		return list
+	}
+
+	if err := v.validateAppAndInstallation(
+		ctx,
+		connection.Spec.GitHub.AppID,
+		connection.Spec.GitHub.InstallationID,
+		connection.Secure.Token.Create,
+	); err != nil {
+		list = append(list, err)
 	}
 
 	return list
+}
+
+// validateAppAndInstallation validates the appID and installationID against the given github token.
+func (v *Validator) validateAppAndInstallation(
+	ctx context.Context,
+	appID string,
+	installationID string,
+	token common.RawSecureValue,
+) *field.Error {
+	ghClient := v.githubClientFactory.New(ctx, "")
+
+	app, err := ghClient.GetApp(ctx, string(token))
+	if err != nil {
+		// TODO(ferruvich): what to do when service is unavailable? Should we retry?
+		return field.Invalid(field.NewPath("spec", "token"), "[REDACTED]", "invalid token")
+	}
+
+	if fmt.Sprintf("%d", app.ID) != appID {
+		//TODO(ferruvich): should we better explain why the app ID is invalid? Or should we
+		return field.Invalid(field.NewPath("spec", "appID"), appID, "invalid app ID")
+	}
+
+	_, err = ghClient.GetAppInstallation(ctx, string(token), installationID)
+	if err != nil {
+		// TODO(ferruvich): what to do when service is unavailable? Should we retry?
+		return field.Invalid(field.NewPath("spec", "token"), "[REDACTED]", "invalid token")
+	}
+
+	return nil
 }
 
 func validateBitbucketConnection(connection *provisioning.Connection) field.ErrorList {
@@ -125,25 +175,4 @@ func toError(name string, list field.ErrorList) error {
 		name,
 		list,
 	)
-}
-
-// validatePrivateKeyAndAppID validates the private key and app ID by attempting to parse them
-func validatePrivateKeyAndAppID(appID string, privateKeyBase64 common.RawSecureValue) error {
-	// Validate appID is a valid number
-	if _, err := strconv.ParseInt(appID, 10, 64); err != nil {
-		return fmt.Errorf("invalid app ID format: must be a number")
-	}
-
-	// Decode base64-encoded private key
-	privateKeyPEM, err := base64.StdEncoding.DecodeString(string(privateKeyBase64))
-	if err != nil {
-		return fmt.Errorf("failed to decode base64 private key: must be a valid base64-encoded string")
-	}
-
-	// Try to parse the private key
-	if _, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM); err != nil {
-		return fmt.Errorf("invalid RSA private key: must be a valid PEM-encoded RSA private key")
-	}
-
-	return nil
 }
