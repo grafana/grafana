@@ -313,10 +313,9 @@ Inside of those groupings however, you have to freedom to add rows, tabs (as lon
 
 <!--maybe a video or screenshot with limitations here -->
 
-Because both panel layouts, custom and auto grid, are supported for rows and tabs, each of your groupings can have a different panel layout, allowing for a great deal of flexibility in your dashboard.
+Custom and auto grid panel layouts are supported for rows and tabs, so each of your groupings can have a different panel layout.
 
-The following sections describe the configuration options and layouts for grouping panels into tabs and rows, as well as how add and remove groupings.
-While grouping is typically used for multiple panels, you can start a grouping with just one panel.
+The following sections describe the configuration options and layouts for grouping panels into tabs and rows, as well as how to add and remove groupings.
 
 ### Grouping configuration options
 
@@ -355,20 +354,46 @@ To group panels, follow these steps:
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. On the dashboard beneath any of the panels, click **Group panels**.
+1. On the dashboard beneath a panel, click **Group panels**.
+
+   While grouping is typically used for multiple panels, you can start a grouping with just one panel.
+
 1. Select **Group into row** or **Group into tab**.
 
-   All of the panels on the dashboard are placed in the selected grouping type and a dotted blue line surrounds the panels and the **Row** or **Tab**.
+   All of the panels on the dashboard are placed in the selected grouping type and a dotted blue line surrounds row or tab.
    The edit pane displays the relevant options.
 
-1. Set the [grouping configuration options](#grouping-configuration-options).
-1. (Optional) Add more groupings of the same type at the same level by clicking **New row** or **New tab**.
-1. (Optional) Click **Group panels** to add a nested grouping.
-  
-   The new grouping is added, with the panels inside it, within the first grouping.
+1. Set the [grouping configuration options](#grouping-configuration-options) in the edit pane.
+1. (Optional) Add a [nested grouping](#add-nested-groupings).
+1. (Optional) Add other [groupings at the same level](#add-more-groupings-at-the-same-level).
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
+
+#### Add nested groupings
+
+To nest the panels in a second-level grouping, follow these steps:
+
+1. In the existing first-level grouping, beneath the panels, click **Group panels**.
+1. Click **Group into row** or **Group into tab** (**Group into tab** is only available if the parent grouping is a row).
+
+   The new grouping is added inside the first grouping, and the panels are moved into the nested grouping.
 
 1. Set the grouping configuration options.
-1. (Optional) Add more first-level groupings of the same type.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
+
+#### Add more groupings at the same level
+
+To add more first-level groupings, follow these steps:
+
+1. On the dashboard, outside the existing first-level grouping, click **New row** or **New tab** (only one option will be available).
+1. Set the grouping configuration options.
+1. Click **+ Add panel** to begin adding panels
+1. Click **Group panels** beneath the panels to add a nested grouping, if needed (refer to the previous set of directions).
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -399,6 +424,7 @@ To remove grouping, follow these steps:
 1. Click **Save**.
 
 <!-- you gotta ungroup everything -->
+Note that if you delete a grouping, then the panels are lost.
 
 ## Configure repeat options
 
