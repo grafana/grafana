@@ -76,7 +76,7 @@ export interface SaveModelToSceneOptions {
   isEmbedded?: boolean;
 }
 
-export type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
+type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
 
 export interface SceneCreationOptions {
   /**
@@ -92,7 +92,7 @@ export interface SceneCreationOptions {
 }
 
 // Rows as SceneGridRow within the grid.
-export const createDefaultGridLayout: LayoutCreator = (panels, preload) => {
+const createDefaultGridLayout: LayoutCreator = (panels, preload) => {
   return new DefaultGridLayoutManager({
     grid: new SceneGridLayout({
       isLazy: getIsLazy(preload),
@@ -134,7 +134,7 @@ export function transformSaveModelToScene(
   return scene;
 }
 
-export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
+function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
   const rowItems: RowItem[] = [];
 
   let currentLegacyRow: PanelModel | null = null;
@@ -185,7 +185,7 @@ export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager
   });
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
+function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
   // collects all panels and rows
   const panels: SceneGridItemLike[] = [];
 
