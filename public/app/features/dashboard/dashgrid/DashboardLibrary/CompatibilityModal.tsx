@@ -123,11 +123,13 @@ export const CompatibilityModal = ({ isOpen, onDismiss, dashboardJson, datasourc
               <Text element="h3">
                 <Trans i18nKey="compatibility-modal.score-title">Compatibility Score</Trans>
               </Text>
-              <Text element="p" variant="h2">
-                {result.compatibilityScore}%
+              <Text element="p">
+                <pre>{result.compatibilityScore}%</pre>
               </Text>
 
-              <Text element="p">{JSON.stringify(result)}</Text>
+              <Text element="p">
+                <pre>{JSON.stringify(result, null, 2)}</pre>
+              </Text>
             </div>
 
             {/* Feature #12: CompatibilityScoreDisplay with color coding */}

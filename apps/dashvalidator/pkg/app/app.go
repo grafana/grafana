@@ -135,6 +135,16 @@ func handleCheckRoute(
 			})
 		}
 
+		// MVP: Only support single datasource validation
+		if len(req.DatasourceMappings) != 1 {
+			logger.Error("MVP only supports single datasource validation", "numDatasources", len(req.DatasourceMappings))
+			w.WriteHeader(http.StatusBadRequest)
+			return json.NewEncoder(w).Encode(map[string]string{
+				"error": fmt.Sprintf("MVP only supports single datasource validation, got %d datasources", len(req.DatasourceMappings)),
+				"code":  "invalid_request",
+			})
+		}
+
 		// Step 2: Build validator request
 		validatorReq := validator.DashboardCompatibilityRequest{
 			DashboardJSON:      req.DashboardJSON,
