@@ -43,7 +43,6 @@ const (
 	TestCreateNewResource         = "create new resource"
 	TestGetResourceLastImportTime = "get resource last import time"
 	TestOptimisticLocking         = "optimistic locking on concurrent writes"
-	TestKeyPathGeneration         = "key_path generation"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
