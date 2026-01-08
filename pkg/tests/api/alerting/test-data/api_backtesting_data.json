@@ -12,6 +12,9 @@
     },
     "condition": "A",
     "no_data_state": "Alerting",
+    "title": "test-rule-backtesting-data",
+    "rule_group": "test-group",
+    "namespace_uid": "test-namespace",
     "data": [
       {
         "refId": "A",
@@ -193,6 +196,9 @@
     },
     "condition": "C",
     "no_data_state": "Alerting",
+    "title": "test-rule-backtesting-data",
+    "rule_group": "test-group",
+    "namespace_uid": "test-namespace",
     "data": [
       {
         "refId": "A",

@@ -1,97 +1,64 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { FALLBACK_COLOR, FieldDisplay } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialColorDefs } from './RadialColorDefs';
-import { GaugeDimensions, toRad } from './utils';
+import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
 
 export interface RadialBarProps {
-  dimensions: GaugeDimensions;
-  colorDefs: RadialColorDefs;
-  angleRange: number;
   angle: number;
-  startAngle: number;
+  angleRange: number;
+  dimensions: RadialGaugeDimensions;
+  fieldDisplay: FieldDisplay;
+  gradient?: GradientStop[];
   roundedBars?: boolean;
-  spotlightStroke: string;
+  endpointMarker?: 'point' | 'glow';
+  shape: RadialShape;
+  startAngle: number;
   glowFilter?: string;
+  endpointMarkerGlowFilter?: string;
 }
 export function RadialBar({
-  dimensions,
-  colorDefs,
-  angleRange,
   angle,
-  startAngle,
+  angleRange,
+  dimensions,
+  fieldDisplay,
+  gradient,
   roundedBars,
-  spotlightStroke,
+  endpointMarker,
+  shape,
+  startAngle,
   glowFilter,
+  endpointMarkerGlowFilter,
 }: RadialBarProps) {
   const theme = useTheme2();
-
+  const colorProps = gradient ? { gradient } : { color: fieldDisplay.display.color ?? FALLBACK_COLOR };
   return (
     <>
-      <g>
-        {/** Track */}
-        <RadialArcPath
-          startAngle={startAngle + angle}
-          dimensions={dimensions}
-          arcLengthDeg={angleRange - angle}
-          color={theme.colors.action.hover}
-          roundedBars={roundedBars}
-        />
-        {/** The colored bar */}
-        <RadialArcPath
-          dimensions={dimensions}
-          startAngle={startAngle}
-          arcLengthDeg={angle}
-          color={colorDefs.getMainBarColor()}
-          roundedBars={roundedBars}
-          glowFilter={glowFilter}
-        />
-        {spotlightStroke && angle > 8 && (
-          <SpotlightSquareEffect
-            dimensions={dimensions}
-            angle={startAngle + angle}
-            glowFilter={glowFilter}
-            spotlightStroke={spotlightStroke}
-            theme={theme}
-            roundedBars={roundedBars}
-          />
-        )}
-      </g>
-      <defs>{colorDefs.getDefs()}</defs>
+      {/** Track */}
+      <RadialArcPath
+        arcLengthDeg={angleRange - angle}
+        fieldDisplay={fieldDisplay}
+        color={theme.colors.action.hover}
+        dimensions={dimensions}
+        roundedBars={roundedBars}
+        shape={shape}
+        startAngle={startAngle + angle}
+      />
+      {/** The colored bar */}
+      <RadialArcPath
+        arcLengthDeg={angle}
+        barEndcaps={shape === 'circle' && roundedBars}
+        dimensions={dimensions}
+        endpointMarker={roundedBars ? endpointMarker : undefined}
+        endpointMarkerGlowFilter={endpointMarkerGlowFilter}
+        fieldDisplay={fieldDisplay}
+        glowFilter={glowFilter}
+        roundedBars={roundedBars}
+        shape={shape}
+        startAngle={startAngle}
+        {...colorProps}
+      />
     </>
-  );
-}
-
-interface SpotlightEffectProps {
-  dimensions: GaugeDimensions;
-  angle: number;
-  glowFilter?: string;
-  spotlightStroke: string;
-  theme: GrafanaTheme2;
-  roundedBars?: boolean;
-}
-
-function SpotlightSquareEffect({ dimensions, angle, glowFilter, spotlightStroke, roundedBars }: SpotlightEffectProps) {
-  const { radius, centerX, centerY, barWidth } = dimensions;
-
-  const angleRadian = toRad(angle);
-  const x1 = centerX + radius * Math.cos(angleRadian - 0.2);
-  const y1 = centerY + radius * Math.sin(angleRadian - 0.2);
-  const x2 = centerX + radius * Math.cos(angleRadian);
-  const y2 = centerY + radius * Math.sin(angleRadian);
-
-  const path = ['M', x1, y1, 'A', radius, radius, 0, 0, 1, x2, y2].join(' ');
-
-  return (
-    <path
-      d={path}
-      fill="none"
-      strokeWidth={barWidth}
-      stroke={spotlightStroke}
-      strokeLinecap={roundedBars ? 'round' : 'butt'}
-      filter={glowFilter}
-    />
   );
 }

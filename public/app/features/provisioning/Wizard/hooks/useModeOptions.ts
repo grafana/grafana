@@ -10,7 +10,7 @@ import { ModeOption } from '../types';
  */
 function filterModeOptions(modeOptions: ModeOption[], repoName: string, settings?: RepositoryViewList): ModeOption[] {
   const folderConnected = settings?.items?.some((item) => item.target === 'folder' && item.name !== repoName);
-  const allowedTargets = settings?.allowedTargets || ['instance', 'folder'];
+  const allowedTargets = settings?.allowedTargets || ['folder'];
 
   return modeOptions.map((option) => {
     if (option.disabled) {

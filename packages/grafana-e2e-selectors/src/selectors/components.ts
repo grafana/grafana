@@ -535,6 +535,11 @@ export const versionedComponents = {
           '12.3.0': 'data-testid viz-tooltip-wrapper',
         },
       },
+      Gauge: {
+        Container: {
+          '12.4.0': 'data-testid gauge container',
+        },
+      },
     },
   },
   VizLegend: {
@@ -1288,6 +1293,9 @@ export const versionedComponents = {
     card: {
       [MIN_GRAFANA_VERSION]: (name: string) => `data-testid suggestion-${name}`,
     },
+    confirm: {
+      '12.4.0': (name: string) => `data-testid suggestion-${name} confirm button`,
+    },
   },
   ColorSwatch: {
     name: {
@@ -1332,6 +1340,7 @@ export const versionedComponents = {
   },
   DebugOverlay: {
     wrapper: {
+      '12.3.0': 'data-testid debug-overlay-wrapper',
       '9.2.0': 'debug-overlay',
     },
   },

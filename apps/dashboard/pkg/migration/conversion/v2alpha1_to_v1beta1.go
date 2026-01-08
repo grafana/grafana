@@ -1072,10 +1072,14 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 	}
 	panel["targets"] = targets
 
-	// Detect mixed datasource - set panel.datasource to "mixed" if queries use different datasources
-	// This matches the frontend behavior in getPanelDataSource (layoutSerializers/utils.ts)
-	if mixedDS := detectMixedDatasource(spec.Data.Spec.Queries); mixedDS != nil {
-		panel["datasource"] = mixedDS
+	// Set panel-level datasource from queries.
+	// - If queries use different datasources, set to "mixed"
+	// - If all queries use the same datasource, set to that datasource
+	// This is required because the frontend's legacy PanelModel.PanelQueryRunner.run uses panel.datasource
+	// and some components like CSVExportPage rely on it to resolve the datasource. If undefined, it falls back to the default datasource
+	// which would overwrite the query's datasource.
+	if panelDS := getPanelDatasource(spec.Data.Spec.Queries); panelDS != nil {
+		panel["datasource"] = panelDS
 	}
 
 	// Convert transformations
@@ -1188,12 +1192,15 @@ func getDataSourceForQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef, quer
 	return nil
 }
 
-// detectMixedDatasource checks if panel queries use different datasources.
-// Returns a mixed datasource reference if queries use different datasources, nil otherwise.
+// getPanelDatasource determines the panel-level datasource for V1.
+// Returns:
+// - Mixed datasource reference if queries use different datasources
+// - First query's datasource if all queries use the same datasource
+// - nil if no queries exist
 // Compares based on V2 input without runtime resolution:
 // - If query has explicit datasource.uid → use that UID and type
 // - Else → use query.Kind as type (empty UID)
-func detectMixedDatasource(queries []dashv2alpha1.DashboardPanelQueryKind) map[string]interface{} {
+func getPanelDatasource(queries []dashv2alpha1.DashboardPanelQueryKind) map[string]interface{} {
 	if len(queries) == 0 {
 		return nil
 	}
@@ -1232,8 +1239,21 @@ func detectMixedDatasource(queries []dashv2alpha1.DashboardPanelQueryKind) map[s
 		}
 	}
 
-	// Not mixed - don't set panel-level datasource
-	return nil
+	// Not mixed - return the first query's datasource so the panel has a datasource set.
+	// This is required because the frontend's legacy PanelModel.PanelQueryRunner.run uses panel.datasource
+	// to resolve the datasource, and if undefined, it falls back to the default datasource
+	// which then overwrites the query's datasource.
+	if firstType == "" && firstUID == "" {
+		return nil
+	}
+	result := make(map[string]interface{})
+	if firstType != "" {
+		result["type"] = firstType
+	}
+	if firstUID != "" {
+		result["uid"] = firstUID
+	}
+	return result
 }
 
 func convertLibraryPanelKindToV1(libPanelKind *dashv2alpha1.DashboardLibraryPanelKind, panel map[string]interface{}) (map[string]interface{}, error) {

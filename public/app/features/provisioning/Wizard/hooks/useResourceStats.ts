@@ -100,7 +100,7 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
 /**
  * Hook that provides resource statistics and sync logic
  */
-export function useResourceStats(repoName?: string, syncTarget?: RepositoryView['target']) {
+export function useResourceStats(repoName?: string, syncTarget?: RepositoryView['target'], migrateResources?: boolean) {
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
   const filesQuery = useGetRepositoryFilesQuery(repoName ? { name: repoName } : skipToken);
 
@@ -121,7 +121,10 @@ export function useResourceStats(repoName?: string, syncTarget?: RepositoryView[
     };
   }, [resourceStatsQuery.data]);
 
-  const requiresMigration = resourceCount > 0 && syncTarget === 'instance';
+  // Calculate requiresMigration based on sync target and user selection
+  // For instance sync: migrate if there are resources (checkbox is disabled and always true)
+  // For folder sync: only migrate if user explicitly opts in via checkbox
+  const requiresMigration = syncTarget === 'instance' ? resourceCount > 0 : (migrateResources ?? false);
   const shouldSkipSync = (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
 
   // Format display strings
