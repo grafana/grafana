@@ -1,0 +1,41 @@
+// OpenTelemetry receiver for logs via gRPC
+otelcol.receiver.otlp "default" {
+	grpc {
+		endpoint = "0.0.0.0:4317"
+	}
+	http {
+		endpoint = "0.0.0.0:4318"
+	}
+
+	output {
+		logs = [otelcol.processor.filter.audit_filter.input]
+	}
+}
+
+// Filter processor - only forward logs with audit=true attribute
+otelcol.processor.filter "audit_filter" {
+	error_mode = "ignore"
+
+	logs {
+		// Drop logs that don't have audit=true
+		log_record = [
+			"attributes[\"audit\"] != true",
+		]
+	}
+
+	output {
+		logs = [otelcol.exporter.otlphttp.auditlog.input]
+	}
+}
+
+// Export filtered logs to the audit log service
+otelcol.exporter.otlphttp "auditlog" {
+	client {
+		endpoint = "http://auditlog:8080"
+		// Use the /auditlog path for logs
+		tls {
+			insecure = true
+		}
+	}
+}
+

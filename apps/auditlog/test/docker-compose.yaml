@@ -1,0 +1,37 @@
+services:
+  # Grafana Alloy - receives OTLP logs, filters audit=true, forwards to auditlog service
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "12345:12345" # Alloy UI
+    volumes:
+      - ./alloy-config.alloy:/etc/alloy/config.alloy:ro
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    depends_on:
+      - auditlog
+    networks:
+      - auditlog-network
+
+  # Audit log server
+  auditlog:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile
+    container_name: auditlog
+    ports:
+      - "8080:8080"
+    environment:
+      - LOG_LEVEL=debug
+    networks:
+      - auditlog-network
+
+networks:
+  auditlog-network:
+    driver: bridge
+

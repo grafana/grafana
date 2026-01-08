@@ -1,0 +1,5 @@
+# Build artifacts
+bin/
+
+# Test binaries
+test/logemitter/logemitter
