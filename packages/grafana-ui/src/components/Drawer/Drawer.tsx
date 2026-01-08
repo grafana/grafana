@@ -1,8 +1,6 @@
 import { css, cx } from '@emotion/css';
+import { FloatingFocusManager, useFloating } from '@floating-ui/react';
 import RcDrawer from '@rc-component/drawer';
-import { useDialog } from '@react-aria/dialog';
-import { FocusScope } from '@react-aria/focus';
-import { useOverlay } from '@react-aria/overlays';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
@@ -82,16 +80,14 @@ export function Drawer({
   const wrapperStyles = useStyles2(getWrapperStyles, size);
   const dragStyles = useStyles2(getDragStyles);
 
-  const overlayRef = React.useRef(null);
-  const { dialogProps, titleProps } = useDialog({}, overlayRef);
-  const { overlayProps } = useOverlay(
-    {
-      isDismissable: false,
-      isOpen: true,
-      onClose,
+  const { context, refs } = useFloating({
+    open: true,
+    onOpenChange: (open) => {
+      if (!open) {
+        onClose?.();
+      }
     },
-    overlayRef
-  );
+  });
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
@@ -129,7 +125,7 @@ export function Drawer({
         motionName: styles.maskMotion,
       }}
     >
-      <FocusScope restoreFocus contain autoFocus>
+      <FloatingFocusManager context={context} modal>
         <div
           aria-label={
             typeof title === 'string'
@@ -137,9 +133,7 @@ export function Drawer({
               : selectors.components.Drawer.General.title('no title')
           }
           className={styles.container}
-          {...overlayProps}
-          {...dialogProps}
-          ref={overlayRef}
+          ref={refs.setFloating}
         >
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
@@ -159,7 +153,7 @@ export function Drawer({
             </div>
             {typeof title === 'string' ? (
               <Stack direction="column">
-                <Text element="h3" truncate {...titleProps}>
+                <Text element="h3" truncate>
                   {title}
                 </Text>
                 {subtitle && (
@@ -175,7 +169,7 @@ export function Drawer({
           </div>
           {!scrollableContent ? content : <ScrollContainer showScrollIndicators>{content}</ScrollContainer>}
         </div>
-      </FocusScope>
+      </FloatingFocusManager>
     </RcDrawer>
   );
 }

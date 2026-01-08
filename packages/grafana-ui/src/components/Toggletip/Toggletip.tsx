@@ -47,10 +47,6 @@ export interface ToggletipProps {
   show?: boolean;
   /** Callback function to be called when the toggletip is opened */
   onOpen?: () => void;
-  /** Optional root element for the portal. Use when Toggletip is inside a focus-trapped container like Drawer.
-   *  When provided, the Toggletip will render inside this element and disable its own modal focus trap,
-   *  deferring focus management to the parent container. */
-  portalRoot?: HTMLElement;
 }
 
 /**
@@ -71,7 +67,6 @@ export const Toggletip = memo(
     fitContent = false,
     onOpen,
     show,
-    portalRoot,
   }: ToggletipProps) => {
     const arrowRef = useRef(null);
     const grafanaTheme = useTheme2();
@@ -124,7 +119,7 @@ export const Toggletip = memo(
           ...getReferenceProps(),
         })}
         {isOpen && (
-          <Portal root={portalRoot}>
+          <Portal>
             <FloatingFocusManager context={context} modal={true}>
               <div
                 data-testid="toggletip-content"
