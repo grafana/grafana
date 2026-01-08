@@ -53,7 +53,7 @@ export const RadialBarSegmented = memo(
     for (let i = 0; i < segmentCountAdjusted; i++) {
       const value = min + ((max - min) / segmentCountAdjusted) * i;
       const segmentAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
-      const isTrack = segmentAngle < startValueAngle || segmentAngle > startValueAngle + endValueAngle;
+      const isTrack = segmentAngle < startValueAngle || segmentAngle >= startValueAngle + endValueAngle;
       const segmentStartAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
       const segmentColor = isTrack ? theme.colors.border.medium : (displayProcessor(value).color ?? FALLBACK_COLOR);
       const colorProps = !isTrack && gradient ? { gradient } : { color: segmentColor };
