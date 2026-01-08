@@ -3009,7 +3009,6 @@ __metadata:
     "@grafana/api-clients": "npm:12.4.0-pre"
     "@grafana/i18n": "npm:12.4.0-pre"
     "@grafana/test-utils": "workspace:*"
-    "@reduxjs/toolkit": "npm:^2.9.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.3.0"
     "@testing-library/user-event": "npm:^14.6.1"
@@ -3035,6 +3034,7 @@ __metadata:
     "@grafana/data": ">=11.6 <= 12.x"
     "@grafana/runtime": ">=11.6 <= 12.x"
     "@grafana/ui": ">=11.6 <= 12.x"
+    "@reduxjs/toolkit": ^2.10.1
     msw: ^2.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -7294,7 +7294,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:2.10.1, @reduxjs/toolkit@npm:^2.9.0":
+"@reduxjs/toolkit@npm:2.10.1":
   version: 2.10.1
   resolution: "@reduxjs/toolkit@npm:2.10.1"
   dependencies:
