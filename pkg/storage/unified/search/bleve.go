@@ -25,6 +25,7 @@ import (
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
+	bolterrors "go.etcd.io/bbolt/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/atomic"
@@ -416,7 +417,11 @@ func (b *bleveBackend) BuildIndex(
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
 		if cachedIndex == nil && !rebuild {
-			index, fileIndexName, indexRV = b.findPreviousFileBasedIndex(resourceDir)
+			var findErr error
+			index, fileIndexName, indexRV, findErr = b.findPreviousFileBasedIndex(resourceDir)
+			if findErr != nil {
+				return nil, findErr
+			}
 		}
 
 		if index != nil {
@@ -623,10 +628,12 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64) {
+var errIndexLocked = errors.New("index is locked by another process")
+
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64, error) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
-		return nil, "", 0
+		return nil, "", 0, nil
 	}
 
 	for _, ent := range entries {
@@ -638,7 +645,13 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 		indexDir := filepath.Join(resourceDir, indexName)
 		idx, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
 		if err != nil {
-			b.log.Debug("error opening index", "indexDir", indexDir, "err", err)
+			// On timeout, the file probably is locked by another process.
+			// This indicates a setup issue that should be fixed rather than worked around by creating a new index file.
+			if errors.Is(err, bolterrors.ErrTimeout) {
+				b.log.Error("index is locked by another process", "indexDir", indexDir, "err", err)
+				return nil, "", 0, fmt.Errorf("%w: %s: %w", errIndexLocked, indexDir, err)
+			}
+			b.log.Error("error opening index", "indexDir", indexDir, "err", err)
 			continue
 		}
 
@@ -649,10 +662,10 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 			continue
 		}
 
-		return idx, indexName, indexRV
+		return idx, indexName, indexRV, nil
 	}
 
-	return nil, "", 0
+	return nil, "", 0, nil
 }
 
 // Stop closes all indexes and stops background tasks.
