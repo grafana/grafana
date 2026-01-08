@@ -1,6 +1,14 @@
 import { MemoryHistoryBuildOptions } from 'history';
 import { ComponentProps, ReactNode } from 'react';
-import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
+import {
+  render,
+  screen,
+  testWithFeatureToggles,
+  userEvent,
+  waitFor,
+  waitForElementToBeRemoved,
+  within,
+} from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
@@ -167,6 +175,30 @@ describe('contact points', () => {
         renderWithProvider(<ContactPointsPageContents />);
 
         expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+      });
+    });
+
+    describe('V2 Navigation Mode', () => {
+      testWithFeatureToggles({ enable: ['alertingNavigationV2'] });
+
+      test('shows only contact points without internal tabs', async () => {
+        renderWithProvider(<ContactPointsPageContents />);
+
+        // Should show contact points directly
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+
+        // Should not have tabs
+        expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+      });
+
+      test('does not show templates tab in V2 mode', async () => {
+        renderWithProvider(<ContactPointsPageContents />);
+
+        // Should show contact points
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+
+        // Should not show templates tab
+        expect(screen.queryByText(/notification templates/i)).not.toBeInTheDocument();
       });
     });
 

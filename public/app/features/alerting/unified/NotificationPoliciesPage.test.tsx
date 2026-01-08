@@ -1,6 +1,6 @@
 import { produce } from 'immer';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, within } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -140,6 +140,39 @@ const getRootRoute = async () => {
 };
 
 describe('NotificationPolicies', () => {
+  describe('V2 Navigation Mode', () => {
+    testWithFeatureToggles({ enable: ['alertingNavigationV2'] });
+
+    beforeEach(() => {
+      setupDataSources(dataSources.am);
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsWrite,
+        ...PERMISSIONS_NOTIFICATION_POLICIES,
+      ]);
+    });
+
+    it('shows only notification policies without internal tabs', async () => {
+      renderNotificationPolicies();
+
+      // Should show notification policies directly
+      expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
+
+      // Should not have tabs
+      expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    });
+
+    it('does not show time intervals tab in V2 mode', async () => {
+      renderNotificationPolicies();
+
+      // Should show notification policies
+      expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
+
+      // Should not show time intervals tab
+      expect(screen.queryByText(/time intervals/i)).not.toBeInTheDocument();
+    });
+  });
+
   // combobox hack :/
   beforeAll(() => {
     const mockGetBoundingClientRect = jest.fn(() => ({

@@ -52,8 +52,11 @@ export function useNotificationConfigNav() {
     };
   }
 
-  // Check if we're on the routes page with time_intervals tab
-  const isTimeIntervalsTab = location.pathname === '/alerting/routes' && location.search.includes('tab=time_intervals');
+  // Check if we're on the time intervals page
+  // In V2 mode, check for dedicated route; in legacy mode, check for query param
+  const isTimeIntervalsTab = useV2Nav
+    ? location.pathname === '/alerting/time-intervals'
+    : location.pathname === '/alerting/routes' && location.search.includes('tab=time_intervals');
 
   // All available tabs
   const allTabs: NavModelItem[] = [
@@ -84,7 +87,7 @@ export function useNotificationConfigNav() {
     {
       id: 'notification-config-time-intervals',
       text: t('alerting.navigation.time-intervals', 'Time intervals'),
-      url: '/alerting/routes?tab=time_intervals',
+      url: useV2Nav ? '/alerting/time-intervals' : '/alerting/routes?tab=time_intervals',
       active: isTimeIntervalsTab,
       icon: 'clock-nine',
       parentItem: notificationConfigNav,

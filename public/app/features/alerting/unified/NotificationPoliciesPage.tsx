@@ -12,6 +12,7 @@ import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alertin
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
+import { shouldUseAlertingNavigationV2 } from './featureToggles';
 import { useNotificationConfigNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
@@ -107,8 +108,30 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap, defaultTab: ActiveTab): Q
   };
 }
 
+const NotificationPoliciesContent = () => {
+  const { selectedAlertmanager = '' } = useAlertmanager();
+  return (
+    <>
+      <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
+      <NotificationPoliciesList />
+    </>
+  );
+};
+
 function NotificationPoliciesPage() {
+  const useV2Nav = shouldUseAlertingNavigationV2();
   const { navId, pageNav } = useNotificationConfigNav();
+
+  // In V2 mode, show only notification policies (no internal tabs)
+  if (useV2Nav) {
+    return (
+      <AlertmanagerPageWrapper navId={navId || 'am-routes'} pageNav={pageNav} accessType="notification">
+        <NotificationPoliciesContent />
+      </AlertmanagerPageWrapper>
+    );
+  }
+
+  // Legacy mode: Show internal tabs (backward compatible)
   return (
     <AlertmanagerPageWrapper navId={navId || 'am-routes'} pageNav={pageNav} accessType="notification">
       <NotificationPoliciesTabs />
