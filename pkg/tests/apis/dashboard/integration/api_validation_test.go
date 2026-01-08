@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -1225,34 +1224,6 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 	return createdDash, nil
 }
 
-// createDashboardExpectedSuccess retries dashboard creation if it fails with a transient 403.
-//
-// In Zanzana-backed tests, authorization state can be briefly inconsistent while reconciliation converges.
-// Only use this helper in cases where creation is expected to succeed.
-func createDashboardExpectedSuccess(t *testing.T, client *apis.K8sResourceClient, title string, folderUID *string, uid *string, helper *apis.K8sTestHelper) (*unstructured.Unstructured, error) {
-	t.Helper()
-
-	var (
-		lastDash *unstructured.Unstructured
-		lastErr  error
-	)
-
-	require.Eventually(t, func() bool {
-		lastDash, lastErr = createDashboard(t, client, title, folderUID, uid, helper)
-		if lastErr == nil {
-			return true
-		}
-		if apierrors.IsForbidden(lastErr) {
-			apis.AwaitZanzanaReconcileNext(t, helper)
-			return false
-		}
-		t.Fatalf("unexpected error creating dashboard: %v", lastErr)
-		return false
-	}, 25*time.Second, 100*time.Millisecond, "timed out waiting for dashboard create to stop returning 403 Forbidden: %v", lastErr)
-
-	return lastDash, lastErr
-}
-
 // Update a dashboard
 func updateDashboard(t *testing.T, client *apis.K8sResourceClient, dashboard *unstructured.Unstructured, newTitle string, updateMessage *string) (*unstructured.Unstructured, error) {
 	t.Helper()
@@ -1384,7 +1355,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 					t.Run(loc.name, func(t *testing.T) {
 						if roleCapabilities.canCreate {
 							// Test can create dashboard
-							dash, err := createDashboardExpectedSuccess(t, identity.DashboardClient, identity.Name+" Dashboard "+loc.name, &loc.folderUID, nil, ctx.Helper)
+							dash, err := createDashboard(t, identity.DashboardClient, identity.Name+" Dashboard "+loc.name, &loc.folderUID, nil, ctx.Helper)
 							require.NoError(t, err)
 							require.NotNil(t, dash)
 
@@ -1670,7 +1641,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 	// Test creator permissions (new test case)
 	t.Run("Creator of dashboard gets admin permission", func(t *testing.T) {
 		// Create a dashboard as an editor user (not admin)
-		editorCreatedDash, err := createDashboardExpectedSuccess(t, editorClient, "Dashboard Created by Editor", nil, nil, ctx.Helper)
+		editorCreatedDash, err := createDashboard(t, editorClient, "Dashboard Created by Editor", nil, nil, ctx.Helper)
 		require.NoError(t, err)
 		require.NotNil(t, editorCreatedDash)
 		dashUID := editorCreatedDash.GetName()
