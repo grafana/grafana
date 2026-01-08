@@ -501,7 +501,9 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer rows.Close()
+	defer func () {
+		_ = rows.Close()
+	}()
 
 	var records []ResourceHistoryRecord
 	for rows.Next() {
@@ -597,7 +599,9 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer rows.Close()
+	defer func () {
+		_ = rows.Close()
+	}()
 
 	var records []ResourceRecord
 	for rows.Next() {
@@ -655,7 +659,9 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	// Check that we have exactly one entry for playlist.grafana.app/playlists
 	rows, err := db.QueryContext(ctx, query, "playlist.grafana.app", "playlists")
 	require.NoError(t, err)
-	defer rows.Close()
+	defer func () {
+		_ = rows.Close()
+	}()
 
 	var records []ResourceVersionRecord
 	for rows.Next() {
