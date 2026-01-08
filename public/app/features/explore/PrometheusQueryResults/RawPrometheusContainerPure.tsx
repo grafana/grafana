@@ -1,56 +1,58 @@
 import { css } from '@emotion/css';
 import { memo, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen } from '@grafana/data';
-import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
-import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
+import { DataFrame, GrafanaTheme2, LoadingState, SelectableValue } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
-import { ExploreItemState, TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
-import { StoreState } from 'app/types/store';
+import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';
-import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
-interface RawPrometheusContainerProps {
-  ariaLabel?: string;
-  exploreId: string;
+const getStyles = (_theme: GrafanaTheme2) => ({
+  spacing: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    flex: '1',
+  }),
+});
+
+/**
+ * Props for the pure RawPrometheusContainer component.
+ * This component expects pre-processed DataFrames (caller should apply applyFieldOverrides).
+ */
+export interface RawPrometheusContainerPureProps {
+  /** Pre-processed DataFrames to display */
+  tableResult: DataFrame[];
+  /** Width of the container in pixels */
   width: number;
-  timeZone: TimeZone;
-  onCellFilterAdded?: (filter: AdHocFilterItem) => void;
+  /** Loading state for panel chrome indicator */
+  loading?: LoadingState;
+  /** Aria label for accessibility */
+  ariaLabel?: string;
+  /** Start in Raw view instead of Table view. When true, shows toggle. When false/undefined, shows table only. */
   showRawPrometheus?: boolean;
-  splitOpenFn: SplitOpen;
+  /** Callback when user adds a cell filter */
+  onCellFilterAdded?: (filter: AdHocFilterItem) => void;
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: RawPrometheusContainerProps) {
-  const explore = state.explore;
-  const item: ExploreItemState = explore.panes[exploreId]!;
-  const { rawPrometheusResult, range, queryResponse } = item;
-  const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
-  const loading = queryResponse.state;
-
-  return { loading, tableResult: rawPrometheusFrame, range };
-}
-
-const connector = connect(mapStateToProps, {});
-
-type Props = RawPrometheusContainerProps & ConnectedProps<typeof connector>;
-
-export const RawPrometheusContainer = memo(
+/**
+ * Pure component for displaying Prometheus query results with Table/Raw toggle.
+ * This component does NOT connect to Redux and expects pre-processed data.
+ */
+export const RawPrometheusContainerPure = memo(
   ({
     loading,
     onCellFilterAdded,
     tableResult,
     width,
-    splitOpenFn,
-    range,
     ariaLabel,
-    timeZone,
     showRawPrometheus,
-  }: Props) => {
+  }: RawPrometheusContainerPureProps) => {
+    const styles = useStyles2(getStyles);
+
     // If resultsStyle is undefined we won't render the toggle, and the default table will be rendered
     const [resultsStyle, setResultsStyle] = useState<TableResultsStyle | undefined>(
       showRawPrometheus ? TABLE_RESULTS_STYLE.raw : undefined
@@ -70,11 +72,6 @@ export const RawPrometheusContainer = memo(
     };
 
     const renderLabel = () => {
-      const spacing = css({
-        display: 'flex',
-        justifyContent: 'space-between',
-        flex: '1',
-      });
       const ALL_GRAPH_STYLE_OPTIONS: Array<SelectableValue<TableResultsStyle>> = TABLE_RESULTS_STYLES.map((style) => ({
         value: style,
         // capital-case it and switch `_` to ` `
@@ -82,7 +79,7 @@ export const RawPrometheusContainer = memo(
       }));
 
       return (
-        <div className={spacing}>
+        <div className={styles.spacing}>
           <RadioButtonGroup
             onClick={() => {
               const props = {
@@ -102,25 +99,7 @@ export const RawPrometheusContainer = memo(
     const height = getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
 
-    let dataFrames = tableResult;
-
-    const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
-
-    if (dataFrames?.length) {
-      dataFrames = applyFieldOverrides({
-        data: dataFrames,
-        timeZone,
-        theme: config.theme2,
-        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-        fieldConfig: {
-          defaults: {},
-          overrides: [],
-        },
-        dataLinkPostProcessor,
-      });
-    }
-
-    const frames = dataFrames?.filter(
+    const frames = tableResult?.filter(
       (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
     );
 
@@ -152,6 +131,4 @@ export const RawPrometheusContainer = memo(
   }
 );
 
-RawPrometheusContainer.displayName = 'RawPrometheusContainer';
-
-export default connector(RawPrometheusContainer);
+RawPrometheusContainerPure.displayName = 'RawPrometheusContainerPure';

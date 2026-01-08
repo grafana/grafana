@@ -245,6 +245,7 @@ export enum PluginExtensionPointPatterns {
 export enum PluginExtensionExposedComponents {
   CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
   AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
+  PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',
 }
 
 export type PluginExtensionPanelContext = {

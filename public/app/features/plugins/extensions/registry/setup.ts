@@ -1,6 +1,7 @@
 import { PluginExtensionExposedComponents } from '@grafana/data';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
+import { PrometheusQueryResultsContainer } from 'app/features/explore/PrometheusQueryResults/PrometheusQueryResultsContainer';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -42,6 +43,12 @@ exposedComponentsRegistry.register({
       title: 'Add to dashboard form',
       description: 'Add to dashboard form',
       component: AddToDashboardFormExposedComponent,
+    },
+    {
+      id: PluginExtensionExposedComponents.PrometheusQueryResultsV1,
+      title: 'Prometheus query results',
+      description: 'Display Prometheus query results with Table/Raw toggle',
+      component: PrometheusQueryResultsContainer,
     },
   ],
 });
