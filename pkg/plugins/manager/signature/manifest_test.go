@@ -751,8 +751,8 @@ func createV2Manifest(t *testing.T, cbs ...func(*PluginManifest)) *PluginManifes
 		Files: map[string]string{
 			"plugin.json": "55556b845e91935cc48fae3aa67baf0f22694c3f",
 		},
-		ManifestVer:   "2.0.0",
-		SignatureType: plugins.SignatureTypeGrafana,
+		ManifestVer:     "2.0.0",
+		SignatureType:   plugins.SignatureTypeGrafana,
 		SignedByOrg:     "grafana",
 		SignedByOrgName: "grafana",
 	}
