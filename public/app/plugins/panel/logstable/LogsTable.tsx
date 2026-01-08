@@ -1,10 +1,28 @@
-import { useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import { useEffect, useState, useMemo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { DataFrame, PanelProps, transformDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  DataFrame,
+  GrafanaTheme2,
+  PanelProps,
+  transformDataFrame,
+  useDataLinksContext,
+} from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 
+import { config } from '../../../core/config';
 import { getLogsExtractFields } from '../../../features/explore/Logs/LogsTable';
-import { LogsFrame, parseLogsFrame } from '../../../features/logs/logsFrame';
+import { FieldNameMetaStore } from '../../../features/explore/Logs/LogsTableWrap';
+import { LogsTableFieldSelector } from '../../../features/logs/components/fieldSelector/FieldSelector';
+import {
+  LOGS_DATAPLANE_BODY_NAME,
+  LOGS_DATAPLANE_TIMESTAMP_NAME,
+  LogsFrame,
+  parseLogsFrame,
+} from '../../../features/logs/logsFrame';
 import { TablePanel } from '../table/TablePanel';
 import type { Options as TableOptions } from '../table/panelcfg.gen';
 
@@ -14,6 +32,8 @@ interface LogsTablePanelProps extends PanelProps<Options> {
   frameIndex?: number;
   showHeader?: boolean;
 }
+
+const sidebarWidth = 200;
 
 export const LogsTable = ({
   data,
@@ -35,13 +55,21 @@ export const LogsTable = ({
   id,
   renderCounter,
 }: LogsTablePanelProps) => {
-  const logsFrame: LogsFrame | null = parseLogsFrame(data.series[frameIndex]);
-  if (!logsFrame?.timeField.name || !logsFrame?.bodyField.name) {
-    throw new Error(`Invalid logsFrame frame name: ${frameIndex}`);
-  }
+  const dataFrame = data.series[frameIndex];
+  const logsFrame: LogsFrame | null = useMemo(() => parseLogsFrame(dataFrame), [dataFrame]);
+  const defaultDisplayedFields = useMemo(
+    () => [
+      logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME,
+      logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME,
+    ],
+    [logsFrame?.timeField.name, logsFrame?.bodyField.name]
+  );
 
-  const [extractedFrame, setExtractedFrame] = useState<DataFrame | null>(null);
-  const [organizedFrame, setOrganizedFrame] = useState<DataFrame | null>(null);
+  const [extractedFrame, setExtractedFrame] = useState<DataFrame[] | null>(null);
+  const [organizedFrame, setOrganizedFrame] = useState<DataFrame[] | null>(null);
+  const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? defaultDisplayedFields);
+  const styles = useStyles2(getStyles, sidebarWidth, height, width);
+  const dataLinksContext = useDataLinksContext();
 
   const onTableOptionsChange = (options: TableOptions) => {
     onOptionsChange({});
@@ -60,9 +88,21 @@ export const LogsTable = ({
     };
 
     extractFields().then((frame) => {
-      setExtractedFrame(frame[0]);
+      setExtractedFrame(
+        applyFieldOverrides({
+          data: frame,
+          fieldConfig: {
+            defaults: {},
+            overrides: [],
+          },
+          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+          theme: config.theme2,
+          timeZone: timeZone,
+          dataLinkPostProcessor: dataLinksContext.dataLinkPostProcessor,
+        })
+      );
     });
-  }, [unTransformedDataFrame]);
+  }, [dataLinksContext.dataLinkPostProcessor, timeZone, unTransformedDataFrame]);
 
   /**
    * Organize fields transform
@@ -93,42 +133,102 @@ export const LogsTable = ({
               },
             },
           ],
-          [extractedFrame]
+          extractedFrame
         )
       );
     };
 
-    organizeFields(options.displayedFields ?? [logsFrame.timeField.name, logsFrame.bodyField.name]).then((frame) => {
+    organizeFields(displayedFields).then((frame) => {
       if (frame) {
-        setOrganizedFrame(frame[0]);
+        setOrganizedFrame(frame);
       }
     });
-  }, [extractedFrame, options.displayedFields, logsFrame.timeField.name, logsFrame.bodyField.name]);
+  }, [extractedFrame, displayedFields]);
 
-  if (extractedFrame === null || organizedFrame === null) {
+  if (extractedFrame === null || organizedFrame === null || logsFrame === null) {
     return;
   }
 
   console.log('render::LogsTable', { extractedFrame });
 
   return (
-    <TablePanel
-      data={{ ...data, series: [organizedFrame] }}
-      width={width}
-      height={height}
-      id={id}
-      timeRange={timeRange}
-      timeZone={timeZone}
-      options={{ ...options, frameIndex: 0, showHeader }}
-      transparent={transparent}
-      fieldConfig={fieldConfig}
-      renderCounter={renderCounter}
-      title={title}
-      eventBus={eventBus}
-      onOptionsChange={onTableOptionsChange}
-      onFieldConfigChange={onFieldConfigChange}
-      replaceVariables={replaceVariables}
-      onChangeTimeRange={onChangeTimeRange}
-    />
+    <div className={styles.wrapper}>
+      <div className={styles.sidebarWrapper}>
+        <LogsTableFieldSelector
+          clear={() => {}}
+          columnsWithMeta={displayedFieldsToColumns(displayedFields, logsFrame)}
+          dataFrames={extractedFrame}
+          logs={[]}
+          reorder={(columns: string[]) => {}}
+          setSidebarWidth={(width) => {}}
+          sidebarWidth={sidebarWidth}
+          toggle={(key: string) => {
+            if (displayedFields.includes(key)) {
+              setDisplayedFields(displayedFields.filter((f) => f !== key));
+            } else {
+              setDisplayedFields([...displayedFields, key]);
+            }
+          }}
+        />
+      </div>
+      <div className={styles.tableWrapper}>
+        <TablePanel
+          data={{ ...data, series: organizedFrame }}
+          width={width - sidebarWidth}
+          height={height}
+          id={id}
+          timeRange={timeRange}
+          timeZone={timeZone}
+          options={{ ...options, frameIndex, showHeader }}
+          transparent={transparent}
+          fieldConfig={fieldConfig}
+          renderCounter={renderCounter}
+          title={title}
+          eventBus={eventBus}
+          onOptionsChange={onTableOptionsChange}
+          onFieldConfigChange={onFieldConfigChange}
+          replaceVariables={replaceVariables}
+          onChangeTimeRange={onChangeTimeRange}
+        />
+      </div>
+    </div>
   );
+};
+
+function displayedFieldsToColumns(displayedFields: string[], logsFrame: LogsFrame): FieldNameMetaStore {
+  const columns: FieldNameMetaStore = {};
+  for (const [idx, field] of displayedFields.entries()) {
+    columns[field] = {
+      percentOfLinesWithLabel: 0,
+      type:
+        field === logsFrame.bodyField.name
+          ? 'BODY_FIELD'
+          : field === logsFrame.timeField.name
+            ? 'TIME_FIELD'
+            : undefined,
+      active: true,
+      index: idx,
+    };
+  }
+
+  return columns;
+}
+
+const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, width: number) => {
+  return {
+    tableWrapper: css({
+      paddingLeft: sidebarWidth,
+      height,
+      width,
+    }),
+    sidebarWrapper: css({
+      position: 'absolute',
+      height: height,
+      width: sidebarWidth,
+    }),
+    wrapper: css({
+      height,
+      width,
+    }),
+  };
 };

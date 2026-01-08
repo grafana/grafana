@@ -29,11 +29,11 @@ function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldW
   return field.type === fieldType ? field : undefined;
 }
 
-const DATAPLANE_TIMESTAMP_NAME = 'timestamp';
-const DATAPLANE_BODY_NAME = 'body';
-const DATAPLANE_SEVERITY_NAME = 'severity';
-const DATAPLANE_ID_NAME = 'id';
-const DATAPLANE_LABELS_NAME = 'labels';
+export const LOGS_DATAPLANE_TIMESTAMP_NAME = 'timestamp';
+export const LOGS_DATAPLANE_BODY_NAME = 'body';
+const LOGS_DATAPLANE_SEVERITY_NAME = 'severity';
+const LOGS_DATAPLANE_ID_NAME = 'id';
+const LOGS_DATAPLANE_LABELS_NAME = 'labels';
 
 // NOTE: this is a hot fn, we need to avoid allocating new objects here
 export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
@@ -66,17 +66,17 @@ export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
 export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
   const cache = new FieldCache(frame);
 
-  const timestampField = getField(cache, DATAPLANE_TIMESTAMP_NAME, FieldType.time);
-  const bodyField = getField(cache, DATAPLANE_BODY_NAME, FieldType.string);
+  const timestampField = getField(cache, LOGS_DATAPLANE_TIMESTAMP_NAME, FieldType.time);
+  const bodyField = getField(cache, LOGS_DATAPLANE_BODY_NAME, FieldType.string);
 
   // these two are mandatory
   if (timestampField === undefined || bodyField === undefined) {
     return null;
   }
 
-  const severityField = getField(cache, DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
-  const idField = getField(cache, DATAPLANE_ID_NAME, FieldType.string) ?? null;
-  const labelsField = getField(cache, DATAPLANE_LABELS_NAME, FieldType.other) ?? null;
+  const severityField = getField(cache, LOGS_DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
+  const idField = getField(cache, LOGS_DATAPLANE_ID_NAME, FieldType.string) ?? null;
+  const labelsField = getField(cache, LOGS_DATAPLANE_LABELS_NAME, FieldType.other) ?? null;
 
   const labels = labelsField === null ? null : labelsField.values;
 
