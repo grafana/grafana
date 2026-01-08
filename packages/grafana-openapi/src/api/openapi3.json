@@ -3279,12 +3279,6 @@
       },
       "BacktestConfig": {
         "properties": {
-          "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
           "condition": {
             "type": "string"
           },
@@ -3294,8 +3288,12 @@
             },
             "type": "array"
           },
+          "exec_err_state": {
+            "enum": ["OK", "Alerting", "Error"],
+            "type": "string"
+          },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "from": {
             "format": "date-time",
@@ -3304,14 +3302,27 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "keep_firing_for": {
+            "type": "string"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
           },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "namespace_uid": {
+            "type": "string"
+          },
           "no_data_state": {
             "enum": ["Alerting", "NoData", "OK"],
+            "type": "string"
+          },
+          "rule_group": {
             "type": "string"
           },
           "title": {
@@ -3319,6 +3330,9 @@
           },
           "to": {
             "format": "date-time",
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           }
         },
@@ -6177,6 +6191,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -6186,6 +6206,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -8619,6 +8645,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -8628,6 +8660,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -9653,6 +9691,14 @@
         },
         "type": "object"
       },
+      "RemoteWriteConfig": {
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "Report": {
         "properties": {
           "created": {
@@ -10329,6 +10375,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -10338,6 +10390,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
