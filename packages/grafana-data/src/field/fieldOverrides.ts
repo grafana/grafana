@@ -356,7 +356,7 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
     if (Array.isArray(val)) {
       const existingValue = item.isCustom ? get(config.custom, item.path) : get(config, item.path);
 
-      if (Array.isArray(existingValue) && existingValue.length > 0) {
+      if (Array.isArray(existingValue)) {
         val = [...existingValue, ...val];
       }
     }
