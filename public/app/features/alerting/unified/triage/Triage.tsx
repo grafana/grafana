@@ -3,23 +3,15 @@ import { UrlSyncContextProvider } from '@grafana/scenes';
 import { withErrorBoundary } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import { shouldUseAlertingNavigationV2 } from '../featureToggles';
+import { useAlertActivityNav } from '../navigation/useAlertActivityNav';
 
 import { TriageScene, triageScene } from './scene/TriageScene';
 
 export const TriagePage = () => {
-  const useV2Nav = shouldUseAlertingNavigationV2();
-  const navId = useV2Nav ? 'alert-activity' : 'alert-alerts';
+  const { navId, pageNav } = useAlertActivityNav();
 
   return (
-    <AlertingPageWrapper
-      navId={navId}
-      subTitle={t(
-        'alerting.pages.triage.subtitle',
-        'See what is currently alerting and explore historical data to investigate current or past issues.'
-      )}
-      renderTitle={() => t('alerting.pages.triage.title', 'Alert Activity')}
-    >
+    <AlertingPageWrapper navId={navId || 'alert-alerts'} pageNav={pageNav}>
       <UrlSyncContextProvider scene={triageScene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
         <TriageScene key={triageScene.state.key} />
       </UrlSyncContextProvider>

@@ -35,11 +35,18 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
 
     if (shouldAddCrumb) {
       const activeChildIndex = node.children?.findIndex((child) => child.active) ?? -1;
-      // Add tab to breadcrumbs if it's not the first active child
-      if (activeChildIndex > 0) {
+      // Add active tab to breadcrumbs if it exists and its URL is different from the node's URL
+      // This ensures tabs show in breadcrumbs (including the first tab) while preventing duplication
+      if (activeChildIndex >= 0) {
         const activeChild = node.children?.[activeChildIndex];
         if (activeChild) {
-          crumbs.unshift({ text: activeChild.text, href: activeChild.url ?? '' });
+          // Only add the active child if its URL doesn't match the node's URL
+          // This prevents duplication when the pageNav is the active tab
+          const nodeUrl = node.url?.split('?')[0] ?? '';
+          const childUrl = activeChild.url?.split('?')[0] ?? '';
+          if (nodeUrl !== childUrl) {
+            crumbs.unshift({ text: activeChild.text, href: activeChild.url ?? '' });
+          }
         }
       }
       crumbs.unshift({ text: node.text, href: node.url ?? '' });

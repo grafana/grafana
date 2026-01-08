@@ -14,6 +14,7 @@ import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { useAlertActivityNav } from './navigation/useAlertActivityNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { fetchAlertGroupsAction } from './state/actions';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
@@ -113,8 +114,9 @@ const AlertGroups = () => {
 };
 
 function AlertGroupsPage() {
+  const { navId, pageNav } = useAlertActivityNav();
   return (
-    <AlertmanagerPageWrapper navId="groups" accessType="instance">
+    <AlertmanagerPageWrapper navId={navId || 'groups'} pageNav={pageNav} accessType="instance">
       <AlertGroups />
     </AlertmanagerPageWrapper>
   );

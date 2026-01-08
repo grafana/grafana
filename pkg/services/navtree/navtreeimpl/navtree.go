@@ -559,12 +559,31 @@ func (s *ServiceImpl) buildAlertNavLinksV2(c *contextmodel.ReqContext) *navtree.
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
-	// 1. Alert activity (renamed from "Alerts")
+	// 1. Alert activity (parent with tabs: Alerts, Active notifications)
 	//nolint:staticcheck // not yet migrated to OpenFeature
+	var alertActivityChildren []*navtree.NavLink
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
+		// Alerts tab
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
+			alertActivityChildren = append(alertActivityChildren, &navtree.NavLink{
+				Text: "Alerts", SubTitle: "Visualize active and pending alerts", Id: "alert-activity-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell",
+			})
+		}
+		// Active notifications tab
+		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
+			alertActivityChildren = append(alertActivityChildren, &navtree.NavLink{
+				Text: "Active notifications", SubTitle: "See grouped alerts with active notifications", Id: "alert-activity-groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group",
+			})
+		}
+		if len(alertActivityChildren) > 0 {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-activity", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
+				Text:     "Alert activity",
+				SubTitle: "Visualize active and pending alerts",
+				Id:       "alert-activity",
+				Url:      s.cfg.AppSubURL + "/alerting/alerts",
+				Icon:     "bell",
+				IsNew:    true,
+				Children: alertActivityChildren,
 			})
 		}
 	}
