@@ -212,6 +212,23 @@ All of the available configuration options for groupings (rows and tabs) are ava
 - For panels, high-level options are in the edit pane and further configuration options are in the **Edit panel** view.
 - For dashboards, high-level options are in the edit pane and further configuration options are in the **Settings** page.
 
+### Navigate using the content outline
+
+The **Content outline** provides a tree-like structure that shows you all of the parts of your dashboard and their relationships to each other including panels, rows, tabs, and variables.
+The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element to work with it.
+By default, the outline is collapsed.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-outline-v12.png" max-width="750px" alt="Dashboard with outline open showing panel in focus" >}}
+<!-- update this -->
+
+To navigate the dashboard using the outline, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to view.
+1. In the sidebar on the right side of the dashboard, click the **Content outline** icon to open it.
+1. Expand the outline to find the dashboard part to which you want to navigate.
+1. Click the tree item to navigate that part of the dashboard.
+
 ### Edit a dashboard
 
 To edit a dashboard, follow these steps:
@@ -542,9 +559,7 @@ To move or resize, follow these steps:
 
 ## Add variables
 
-You can add variables without leaving the dashboard.
-
-To add variables, follow these steps:
+To add variables without leaving the dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
@@ -557,29 +572,14 @@ To add variables, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**
 
-## Navigate using the content outline
-
-The dashboard **Outline** provides a tree-like structure that shows you all of the parts of your dashboard and their relationships to each other including panels, rows, tabs, and variables.
-The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element to work with it.
-By default, the outline is collapsed.
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-outline-v12.png" max-width="750px" alt="Dashboard with outline open showing panel in focus" >}}
-<!-- update this -->
-
-To navigate the dashboard using the outline, follow these steps:
-
-1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to view.
-1. In the sidebar on the right side of the dashboard, click the **Content outline** icon to open it.
-1. Expand the outline to find the dashboard part to which you want to navigate.
-1. Click the tree item to navigate that part of the dashboard.
-
 ### Add variables using the content outline
 
-You can add variables without leaving the dashboard using the content outline.
+You can also add variables without leaving the dashboard using the content outline.
 
 To access the variables addition flow, follow these steps:
 
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the **Content outline** icon to open it.
 1. Click **Variables** in the outline.
@@ -592,8 +592,8 @@ To make a copy of a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
-1. Toggle on the edit mode switch.
-1. Click the **Save** drop-down and select **Save as copy**.
+1. Click **Edit**.
+1. Click the **Save** drop-down list and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
