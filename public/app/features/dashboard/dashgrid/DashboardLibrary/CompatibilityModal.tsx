@@ -124,7 +124,7 @@ export const CompatibilityModal = ({ isOpen, onDismiss, dashboardJson, datasourc
                 <Trans i18nKey="compatibility-modal.score-title">Compatibility Score</Trans>
               </Text>
               <Text element="p">
-                <pre>{result.compatibilityScore}%</pre>
+                <pre>{result.compatibilityScore * 100}%</pre>
               </Text>
 
               <Text element="p">

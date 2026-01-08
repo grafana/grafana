@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
@@ -42,21 +43,13 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 		).WithCause(err).WithDetail("url", datasourceURL)
 	}
 
-	// Prometheus metrics endpoint
-	apiPath, err := url.Parse("/api/v1/label/__name__/values")
-	if err != nil {
-		// This should never happen with a hardcoded path, but handle it anyway
-		return nil, validator.NewValidationError(
-			validator.ErrCodeInternal,
-			"failed to parse API path",
-			http.StatusInternalServerError,
-		).WithCause(err)
-	}
-
-	fullURL := baseURL.ResolveReference(apiPath)
+	// Append Prometheus API endpoint to base URL path using path.Join
+	// This correctly handles datasources with existing paths (e.g., /api/prom)
+	endpoint := "api/v1/label/__name__/values"
+	baseURL.Path = path.Join(baseURL.Path, endpoint)
 
 	// Create the request
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL.String(), nil)
 	if err != nil {
 		return nil, validator.NewValidationError(
 			validator.ErrCodeInternal,
@@ -70,7 +63,7 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 	if err != nil {
 		// Check if it's a timeout error
 		if errors.Is(err, context.DeadlineExceeded) || strings.Contains(err.Error(), "timeout") {
-			return nil, validator.NewAPITimeoutError(fullURL.String(), err)
+			return nil, validator.NewAPITimeoutError(baseURL.String(), err)
 		}
 		// Network or connection error - datasource is unreachable
 		return nil, validator.NewDatasourceUnreachableError("", datasourceURL, err)
@@ -90,7 +83,7 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 	case http.StatusUnauthorized, http.StatusForbidden:
 		// Authentication or authorization failure
 		return nil, validator.NewDatasourceAuthError("", resp.StatusCode).
-			WithDetail("url", fullURL.String()).
+			WithDetail("url", baseURL.String()).
 			WithDetail("responseBody", string(body))
 	case http.StatusNotFound:
 		// Endpoint not found - might not be a valid Prometheus instance
@@ -98,22 +91,22 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 			resp.StatusCode,
 			string(body),
 			fmt.Errorf("endpoint not found - this may not be a valid Prometheus datasource"),
-		).WithDetail("url", fullURL.String())
+		).WithDetail("url", baseURL.String())
 	case http.StatusTooManyRequests:
 		// Rate limiting
 		return nil, validator.NewValidationError(
 			validator.ErrCodeAPIRateLimit,
 			"Prometheus API rate limit exceeded",
 			http.StatusTooManyRequests,
-		).WithDetail("url", fullURL.String()).WithDetail("responseBody", string(body))
+		).WithDetail("url", baseURL.String()).WithDetail("responseBody", string(body))
 	case http.StatusServiceUnavailable, http.StatusBadGateway, http.StatusGatewayTimeout:
 		// Upstream service is down or unavailable
 		return nil, validator.NewAPIUnavailableError(resp.StatusCode, string(body), nil).
-			WithDetail("url", fullURL.String())
+			WithDetail("url", baseURL.String())
 	default:
 		// Other error status codes
 		return nil, validator.NewAPIUnavailableError(resp.StatusCode, string(body), nil).
-			WithDetail("url", fullURL.String())
+			WithDetail("url", baseURL.String())
 	}
 
 	// Parse the response JSON
@@ -122,7 +115,7 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 		return nil, validator.NewAPIInvalidResponseError(
 			"response is not valid JSON",
 			err,
-		).WithDetail("url", fullURL.String()).WithDetail("responseBody", string(body))
+		).WithDetail("url", baseURL.String()).WithDetail("responseBody", string(body))
 	}
 
 	// Check Prometheus API status field
@@ -134,7 +127,7 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 		return nil, validator.NewAPIInvalidResponseError(
 			fmt.Sprintf("Prometheus API returned error status: %s", errorMsg),
 			nil,
-		).WithDetail("url", fullURL.String()).WithDetail("prometheusError", errorMsg)
+		).WithDetail("url", baseURL.String()).WithDetail("prometheusError", errorMsg)
 	}
 
 	// Validate that we got data
@@ -142,7 +135,7 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 		return nil, validator.NewAPIInvalidResponseError(
 			"response missing 'data' field",
 			nil,
-		).WithDetail("url", fullURL.String()).WithDetail("responseBody", string(body))
+		).WithDetail("url", baseURL.String()).WithDetail("responseBody", string(body))
 	}
 
 	return promResp.Data, nil
