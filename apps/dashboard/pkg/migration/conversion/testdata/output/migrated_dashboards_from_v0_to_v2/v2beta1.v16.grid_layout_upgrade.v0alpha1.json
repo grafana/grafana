@@ -39,6 +39,10 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 7,
           "w": 12,
@@ -61,6 +65,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 7,
           "w": 12,
@@ -151,6 +159,10 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 6,
           "w": 8,
@@ -173,6 +185,10 @@
         "type": "gauge"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 6,
           "w": 8,
@@ -195,6 +211,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 6,
           "w": 8,
@@ -229,6 +249,10 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 4,
           "w": 16,
@@ -251,6 +275,10 @@
         "type": "text"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 8,
@@ -286,6 +314,10 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 7,
           "w": 24,

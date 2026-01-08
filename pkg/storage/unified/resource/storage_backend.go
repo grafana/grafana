@@ -332,9 +332,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		dataKey.GUID = uuid.New().String()
 		var err error
 		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
-			err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value))
-			if err != nil {
+			if err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
 				return "", fmt.Errorf("failed to write data: %w", err)
+			}
+
+			if err := k.dataStore.applyBackwardsCompatibleChanges(ctx, tx, event, dataKey); err != nil {
+				return "", fmt.Errorf("failed to apply backwards compatible updates: %w", err)
 			}
 
 			return dataKey.GUID, nil

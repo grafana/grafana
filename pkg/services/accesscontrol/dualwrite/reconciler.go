@@ -201,20 +201,20 @@ func (r *ZanzanaReconciler) waitForBasicRolesSeeded(ctx context.Context) {
 }
 
 func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
-	run := func(ctx context.Context, namespace string) {
+	run := func(ctx context.Context, namespace string) (ok bool) {
 		now := time.Now()
 		r.log.Debug("Started reconciliation")
+		ok = true
 
 		for _, reconciler := range r.reconcilers {
 			r.log.Debug("Performing zanzana reconciliation", "reconciler", reconciler.name)
 			if err := reconciler.reconcile(ctx, namespace); err != nil {
 				r.log.Warn("Failed to perform reconciliation for resource", "err", err)
+				ok = false
 			}
 		}
-		if r.metrics.lastSuccess != nil {
-			r.metrics.lastSuccess.SetToCurrentTime()
-		}
 		r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
+		return ok
 	}
 
 	var namespaces []string
@@ -239,16 +239,28 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	}
 
 	if r.lock == nil {
+		allOK := true
 		for _, ns := range namespaces {
-			run(ctx, ns)
+			if !run(ctx, ns) {
+				allOK = false
+			}
+		}
+		if r.metrics.lastSuccess != nil && allOK {
+			r.metrics.lastSuccess.SetToCurrentTime()
 		}
 		return
 	}
 
 	// We ignore the error for now
 	err := r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
+		allOK := true
 		for _, ns := range namespaces {
-			run(ctx, ns)
+			if !run(ctx, ns) {
+				allOK = false
+			}
+		}
+		if r.metrics.lastSuccess != nil && allOK {
+			r.metrics.lastSuccess.SetToCurrentTime()
 		}
 	})
 	if err != nil {
