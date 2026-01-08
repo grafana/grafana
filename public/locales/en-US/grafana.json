@@ -1243,6 +1243,9 @@
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
     },
+    "folder": {
+      "failed-to-load-groups": "Failed to load groups:"
+    },
     "folder-bulk-actions": {
       "delete": {
         "button": {
