@@ -377,6 +377,8 @@ To remove grouping, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 
+<!-- you gotta ungroup everything -->
+
 ## Configure repeat options
 
 You can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of that variable.
