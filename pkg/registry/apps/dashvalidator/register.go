@@ -9,6 +9,7 @@ import (
 
 	validatorapis "github.com/grafana/grafana/apps/dashvalidator/pkg/apis/manifestdata"
 	validatorapp "github.com/grafana/grafana/apps/dashvalidator/pkg/app"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -24,11 +25,13 @@ type DashValidatorAppInstaller struct {
 func RegisterAppInstaller(
 	datasourceSvc datasources.DataSourceService,
 	pluginCtx *plugincontext.Provider,
+	httpClientProvider httpclient.Provider,
 ) (*DashValidatorAppInstaller, error) {
 	// Create specific config for the app
 	specificConfig := &validatorapp.DashValidatorConfig{
-		DatasourceSvc: datasourceSvc,
-		PluginCtx:     pluginCtx,
+		DatasourceSvc:      datasourceSvc,
+		PluginCtx:          pluginCtx,
+		HTTPClientProvider: httpClientProvider,
 	}
 
 	// Create the app provider

@@ -7,7 +7,7 @@ import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyle
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard } from './types';
+import { GnetDashboard, isGnetDashboard } from './types';
 
 interface Details {
   id: string;
@@ -28,6 +28,8 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   kind: 'template_dashboard' | 'suggested_dashboard';
+  onCheckCompatibility?: (dashboard: PluginDashboard | GnetDashboard) => void | Promise<void>;
+  showCompatibilityButton?: boolean;
 }
 
 function DashboardCardComponent({
@@ -40,6 +42,8 @@ function DashboardCardComponent({
   showDatasourceProvidedBadge,
   dimThumbnail,
   kind,
+  onCheckCompatibility,
+  showCompatibilityButton,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -96,6 +100,30 @@ function DashboardCardComponent({
               name="info-circle"
               size="xl"
               aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
+            />
+          </Tooltip>
+        )}
+        {showCompatibilityButton && onCheckCompatibility && (
+          <Tooltip
+            content={t(
+              'dashboard-library.card.check-compatibility-tooltip',
+              'Check dashboard compatibility with your datasource'
+            )}
+            placement="top"
+          >
+            <Button
+              variant="secondary"
+              icon="check-circle"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Only call compatibility check for GnetDashboards (community dashboards)
+                if (isGnetDashboard(dashboard)) {
+                  onCheckCompatibility(dashboard);
+                } else {
+                  console.warn('Compatibility check is only supported for community dashboards (GnetDashboard)');
+                }
+              }}
+              aria-label={t('dashboard-library.card.check-compatibility-button', 'Check compatibility')}
             />
           </Tooltip>
         )}

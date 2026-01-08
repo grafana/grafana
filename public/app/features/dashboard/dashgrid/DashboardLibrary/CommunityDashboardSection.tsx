@@ -7,7 +7,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, useStyles2, Stack, Grid, EmptyState, Alert, FilterInput, Box } from '@grafana/ui';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { PluginDashboard } from 'app/types/plugins';
 
+import { CompatibilityModal } from './CompatibilityModal';
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
@@ -18,12 +21,13 @@ import {
   EVENT_LOCATIONS,
   SOURCE_ENTRY_POINTS,
 } from './interactions';
-import { GnetDashboard } from './types';
+import { GnetDashboard, isGnetDashboard } from './types';
 import {
   getThumbnailUrl,
   getLogoUrl,
   buildDashboardDetails,
   onUseCommunityDashboard,
+  interpolateDashboardForCompatibilityCheck,
   COMMUNITY_PAGE_SIZE_QUERY,
   COMMUNITY_RESULT_SIZE,
 } from './utils/communityDashboardHelpers';
@@ -44,6 +48,8 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
+  const [selectedDashboardJson, setSelectedDashboardJson] = useState<DashboardJson | null>(null);
+  const [isCompatibilityModalOpen, setIsCompatibilityModalOpen] = useState(false);
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   useDebounce(
@@ -151,6 +157,31 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
     [response, datasourceUid, debouncedSearchQuery, onShowMapping]
   );
 
+  const [{ error: fetchError }, handleCheckCompatibility] = useAsyncFn(
+    async (dashboard: PluginDashboard | GnetDashboard): Promise<void> => {
+      // Type guard: Only GnetDashboards (community dashboards) are supported
+      if (!isGnetDashboard(dashboard)) {
+        console.warn('Compatibility check is only supported for community dashboards (GnetDashboard)');
+        return;
+      }
+
+      if (!datasourceUid || !response?.datasourceType) {
+        return;
+      }
+
+      try {
+        const interpolatedDashboard = await interpolateDashboardForCompatibilityCheck(dashboard.id, datasourceUid);
+
+        setSelectedDashboardJson(interpolatedDashboard);
+        setIsCompatibilityModalOpen(true);
+      } catch (err) {
+        console.error('Error preparing dashboard for compatibility check:', err);
+        throw err;
+      }
+    },
+    [datasourceUid, response]
+  );
+
   return (
     <Stack direction="column" gap={2} height="100%">
       {isPreviewDashboardError && (
@@ -160,6 +191,20 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
             severity="error"
           >
             <Trans i18nKey="dashboard-library.community-error-description">Failed to load community dashboard.</Trans>
+          </Alert>
+        </div>
+      )}
+      {fetchError && (
+        <div>
+          <Alert
+            title={t('dashboard-library.compatibility-check-error-title', 'Error loading dashboard')}
+            severity="error"
+          >
+            {fetchError.message ||
+              t(
+                'dashboard-library.compatibility-check-error-description',
+                'Failed to load dashboard for compatibility check. Please try again.'
+              )}
           </Alert>
         </div>
       )}
@@ -263,6 +308,8 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
                     isLogo={isLogo}
                     details={details}
                     kind="suggested_dashboard"
+                    showCompatibilityButton={!!datasourceUid && response?.datasourceType === 'prometheus'}
+                    onCheckCompatibility={handleCheckCompatibility}
                   />
                 );
               })}
@@ -278,6 +325,19 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
           </Stack>
         )}
       </div>
+
+      {/* Compatibility Modal - conditionally rendered */}
+      {isCompatibilityModalOpen && selectedDashboardJson && datasourceUid && (
+        <CompatibilityModal
+          isOpen={isCompatibilityModalOpen}
+          onDismiss={() => {
+            setIsCompatibilityModalOpen(false);
+            setSelectedDashboardJson(null);
+          }}
+          dashboardJson={selectedDashboardJson}
+          datasourceUid={datasourceUid}
+        />
+      )}
     </Stack>
   );
 };
