@@ -945,7 +945,7 @@
           "expr": "histogram_quantile(0.99, sum(rate(prometheus_tsdb_compaction_duration_bucket{job=\"${job}\"}[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
-          "legendFormat": "duration-{{p99}}",
+          "legendFormat": "duration-p99",
           "refId": "A"
         },
         {
@@ -1336,7 +1336,7 @@
   "tags": ["prometheus"],
   "templating": {
     "list": [
-       {
+      {
         "name": "job",
         "type": "query",
         "label": "Prometheus Job",
