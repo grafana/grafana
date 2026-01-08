@@ -11,13 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type store interface {
-	Create(name, email string, orgID int64) (team.Team, error)
+	Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error)
 	Update(ctx context.Context, cmd *team.UpdateTeamCommand) error
 	Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
@@ -71,22 +72,26 @@ func getTeamSelectSQLBase(db db.DB, filteredUsers []string) string {
 		team.uid,
 		team.org_id,
 		team.name as name,
-		team.email as email, ` +
+		team.email as email,
+		team.external_uid as external_uid,
+		team.is_provisioned as is_provisioned, ` +
 		getTeamMemberCount(db, filteredUsers) +
 		` FROM team as team `
 }
 
-func (ss *xormStore) Create(name, email string, orgID int64) (team.Team, error) {
+func (ss *xormStore) Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	t := team.Team{
-		UID:     util.GenerateShortUID(),
-		Name:    name,
-		Email:   email,
-		OrgID:   orgID,
-		Created: time.Now(),
-		Updated: time.Now(),
+		UID:           util.GenerateShortUID(),
+		Name:          cmd.Name,
+		Email:         cmd.Email,
+		OrgID:         cmd.OrgID,
+		ExternalUID:   cmd.ExternalUID,
+		IsProvisioned: cmd.IsProvisioned,
+		Created:       time.Now(),
+		Updated:       time.Now(),
 	}
-	err := ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-		if isNameTaken, err := isTeamNameTaken(orgID, name, 0, sess); err != nil {
+	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if isNameTaken, err := isTeamNameTaken(cmd.OrgID, cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return team.ErrTeamNameTaken
@@ -107,9 +112,10 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 		}
 
 		t := team.Team{
-			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Updated: time.Now(),
+			Name:        cmd.Name,
+			Email:       cmd.Email,
+			ExternalUID: cmd.ExternalUID,
+			Updated:     time.Now(),
 		}
 
 		sess.MustCols("email")
@@ -182,8 +188,6 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		Teams: make([]*team.TeamDTO, 0),
 	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		queryWithWildcards := "%" + query.Query + "%"
-
 		var sql bytes.Buffer
 		params := make([]any, 0)
 
@@ -197,8 +201,9 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		params = append(params, query.OrgID)
 
 		if query.Query != "" {
-			sql.WriteString(` and team.name ` + ss.db.GetDialect().LikeStr() + ` ?`)
-			params = append(params, queryWithWildcards)
+			like, param := ss.db.GetDialect().LikeOperator("team.name", true, query.Query, true)
+			sql.WriteString(" and " + like)
+			params = append(params, param)
 		}
 
 		if query.Name != "" {
@@ -246,7 +251,8 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		countSess.Where("team.org_id=?", query.OrgID)
 
 		if query.Query != "" {
-			countSess.Where(`name `+ss.db.GetDialect().LikeStr()+` ?`, queryWithWildcards)
+			like, param := ss.db.GetDialect().LikeOperator("name", true, query.Query, true)
+			countSess.Where(like, param)
 		}
 
 		if query.Name != "" {
@@ -418,6 +424,7 @@ func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal boo
 	}
 
 	entity := team.TeamMember{
+		UID:        util.GenerateShortUID(),
 		OrgID:      orgID,
 		TeamID:     teamID,
 		UserID:     userID,
@@ -521,7 +528,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		sess.Join("INNER", "team", "team.id=team_member.team_id")
 
 		// explicitly check for serviceaccounts
-		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.db.GetDialect().Quote("user")), ss.db.GetDialect().BooleanStr(false))
+		sess.Where(fmt.Sprintf("%s.is_service_account=?", ss.db.GetDialect().Quote("user")), ss.db.GetDialect().BooleanValue(false))
 
 		if acUserFilter != nil {
 			sess.Where(acUserFilter.Where, acUserFilter.Args...)
@@ -549,20 +556,20 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			sess.Where("team_member.user_id=?", query.UserID)
 		}
 		if query.External {
-			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanStr(true))
+			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanValue(true))
 		}
-		sess.Cols(
-			"team_member.org_id",
-			"team_member.team_id",
-			"team_member.user_id",
-			"user.email",
-			"user.name",
-			"user.login",
-			"team_member.external",
-			"team_member.permission",
-			"user_auth.auth_module",
-			"team.uid",
-		)
+		sess.Select(fmt.Sprintf(`team_member.org_id,
+			team_member.team_id,
+			team_member.user_id,
+			team_member.uid,
+			%[1]s.email,
+			%[1]s.name,
+			%[1]s.login,
+			%[1]s.uid as user_uid,
+			team_member.external,
+			team_member.permission,
+			user_auth.auth_module,
+			team.uid as team_uid`, ss.db.GetDialect().Quote("user")))
 		sess.Asc("user.login", "user.email")
 
 		err := sess.Find(&queryResult)
@@ -577,4 +584,26 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 // RegisterDelete registers a delete query to be executed when the transaction is committed
 func (ss *xormStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
+}
+
+// teamMemberUidMigration ensures that all team members have a valid uid.
+// To protect against upgrade / downgrade we need to run this for a couple of releases.
+// FIXME: Remove this migration around Q2 2026
+func (ss *xormStore) teamMemberUidMigration() error {
+	return ss.db.WithDbSession(context.Background(), func(sess *db.Session) error {
+		switch ss.db.GetDBType() {
+		case migrator.SQLite:
+			_, err := sess.Exec("UPDATE team_member SET uid=printf('tm%09d',id) WHERE uid IS NULL OR uid = '';")
+			return err
+		case migrator.Postgres:
+			_, err := sess.Exec("UPDATE team_member SET uid='tm' || lpad('' || id::text,9,'0') WHERE uid IS NULL OR uid = '';")
+			return err
+		case migrator.MySQL:
+			_, err := sess.Exec("UPDATE team_member SET uid=concat('tm',lpad(id,9,'0')) WHERE uid IS NULL OR uid = '';")
+			return err
+		default:
+			// this branch should be unreachable
+			return nil
+		}
+	})
 }

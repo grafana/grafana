@@ -16,6 +16,7 @@ vendor/
 /requests
 tsconfig.tsbuildinfo
 __debug_bin*
+*.cov
 
 # yarn
 .yarn/cache
@@ -40,6 +41,8 @@ __debug_bin*
 # This is the new place of the block, but I leave the previous here for a while
 /devenv/docker/blocks/auth/saml-enterprise
 /devenv/docker/blocks/auth/signer
+/devenv/docker/blocks/mt-db
+/devenv/mt-tilt
 
 /tmp
 tools/phantomjs/phantomjs
@@ -66,6 +69,10 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
+.cursor/
+.devcontainer/
+.claude/
+
 .eslintcache
 .stylelintcache
 
@@ -89,9 +96,14 @@ example-apiserver/
 /devenv/docker/blocks/auth/openldap/certs/
 
 conf/custom.ini
+conf/operator.ini
+conf/storage.ini
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
+
+# sample yaml files
+!/conf/provisioning/sample/*.yaml
 
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
@@ -103,14 +115,26 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
-/pkg/extensions/*
+
+# Extensions
+/pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
+/pkg/server/wireexts_enterprise.go
+/pkg/server/enterprise_wire_gen.go
+/pkg/build/cmd/enterprise.go
 /pkg/build/cmd/artifactspage.go
 /pkg/build/cmd/artifactspage.tmpl.html
 /pkg/build/cmd/exportversion.go
-/pkg/server/wireexts_enterprise.go
-/pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
+/pkg/extensions/*
+!/pkg/extensions/.keep
 !/pkg/extensions/main.go
+!/pkg/extensions/enterprise_imports.go
 /public/app/extensions
+!/public/app/extensions/.keep
+
+# Enterprise operators
+/pkg/operators/enterprise_*
+/pkg/operators/**/enterprise_*
+
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -141,6 +165,8 @@ pkg/services/quota/quotaimpl/storage/storage.json
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
 /packages/grafana-ui/.storybook/static
+/packages/grafana-ui/unstable
+/packages/grafana-flamegraph/.storybook/static
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
@@ -170,13 +196,15 @@ compilation-stats.json
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
 /e2e/extensions
+!/e2e/extensions/.keep
+/e2e-playwright/extensions
+!/e2e-playwright/extensions/.keep
 /e2e/extensions-suite
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
 # grafana server
 /scripts/grafana-server/server.log
 
@@ -190,9 +218,6 @@ compilation-stats.json
 # auto generated frontend docs
 /docs/sources/packages_api
 
-# wire generated files
-**/wire_gen.go
-
 # Auto-generated internationalization files
 public/locales/_build/
 public/locales/*/*.js
@@ -203,7 +228,6 @@ public/api-spec.json
 
 deployment_tools_config.json
 
-.betterer.cache
 .nx
 
 # Temporary file for backporting PRs
@@ -225,4 +249,16 @@ public/app/plugins/**/dist/
 # Mock service worker used for fake API responses in frontend development
 public/mockServiceWorker.js
 
-/e2e/test-plugins/*/dist
+/e2e-playwright/test-plugins/*/dist
+/apps/provisioning/cmd/job-controller/bin/
+
+# Ignore unified storage kv store files
+/grafana-kv-data
+
+# Ignore debug output from test library
+/pkg/storage/secret/metadata/testdata/rapid/TestStateMachine/
+
+/codeowners-manifest/
+
+# Ignore grafana/hippocampus local cache folder
+.hippo

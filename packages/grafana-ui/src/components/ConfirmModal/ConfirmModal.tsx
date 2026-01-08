@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
+import type { JSX } from 'react';
 
 import { IconName } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { ButtonVariant } from '../Button';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { ButtonVariant } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
 
 import { ConfirmContent } from './ConfirmContent';
@@ -48,6 +49,11 @@ export interface ConfirmModalProps {
   disabled?: boolean;
 }
 
+/**
+ * Used to request user for action confirmation, e.g. deleting items. Triggers provided `onConfirm` callback.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-confirmmodal--docs
+ */
 export const ConfirmModal = ({
   isOpen,
   title,

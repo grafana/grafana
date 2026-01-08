@@ -7,7 +7,7 @@ import {
   ValidateAndUpdateResult,
   VariableDependencyConfig,
   VariableValueOption,
-  renderSelectForVariable,
+  MultiOrSingleValueSelect,
   sceneGraph,
   VariableGetOptionsArgs,
 } from '@grafana/scenes';
@@ -64,7 +64,7 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable<SnapshotVariableState>>) => {
-    return renderSelectForVariable(model);
+    return <MultiOrSingleValueSelect model={model} />;
   };
   // we will always preserve the current value and text for snapshots
   private _updateValueGivenNewOptions(options: VariableValueOption[]) {

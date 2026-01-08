@@ -1,14 +1,15 @@
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { saveAndRefreshLibraryPanel } from '../utils';
 
 export const usePanelSave = () => {
   const notifyApp = useAppNotification();
+
   const [state, saveLibraryPanel] = useAsyncFn(async (panel: PanelModel, folderUid: string) => {
     try {
       const libEl = await saveAndRefreshLibraryPanel(panel, folderUid);

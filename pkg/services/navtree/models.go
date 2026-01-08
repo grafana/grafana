@@ -11,19 +11,23 @@ const (
 	// are negative to ensure that the default items are placed above
 	// any items with default weight.
 
-	WeightHome = (iota - 20) * 100
+	WeightHome = (iota - 40) * 100
 	WeightBookmarks
 	WeightSavedItems
 	WeightDashboard
 	WeightExplore
+	WeightDrilldown
+	WeightAssistant
 	WeightAlerting
 	WeightAlertsAndIncidents
+	WeightAIAndML
+	WeightAdaptiveTelemetry
+	WeightCMAB
 	WeightTestingAndSynthetics
-	WeightMonitoring
+	WeightObservability
 	WeightCloudServiceProviders
 	WeightInfrastructure
 	WeightApplication
-	WeightFrontend
 	WeightAsserts
 	WeightDataConnections
 	WeightApps
@@ -37,13 +41,14 @@ const (
 	NavIDRoot                 = "root"
 	NavIDDashboards           = "dashboards/browse"
 	NavIDExplore              = "explore"
+	NavIDDrilldown            = "drilldown"
+	NavIDAdaptiveTelemetry    = "adaptive-telemetry"
 	NavIDCfg                  = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAlertsAndIncidents   = "alerts-and-incidents"
 	NavIDTestingAndSynthetics = "testing-and-synthetics"
 	NavIDAlerting             = "alerting"
-	NavIDMonitoring           = "monitoring"
+	NavIDObservability        = "observability"
 	NavIDInfrastructure       = "infrastructure"
-	NavIDFrontend             = "frontend"
 	NavIDReporting            = "reports"
 	NavIDApps                 = "apps"
 	NavIDCfgGeneral           = "cfg/general"
@@ -70,6 +75,7 @@ type NavLink struct {
 	EmptyMessageId string     `json:"emptyMessageId,omitempty"`
 	PluginID       string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
 	IsCreateAction bool       `json:"isCreateAction,omitempty"`
+	IsNew          bool       `json:"isNew,omitempty"` // (Optional) Adds "New!" badge to the nav link and expands it by default
 	Keywords       []string   `json:"keywords,omitempty"`
 	ParentItem     *NavLink   `json:"parentItem,omitempty"` // (Optional) The parent item of the nav link
 }
@@ -149,77 +155,6 @@ func Sort(nodes []*NavLink) {
 
 	for _, child := range nodes {
 		child.Sort()
-	}
-}
-
-func (root *NavTreeRoot) ApplyHelpVersion(version string) {
-	helpNode := root.FindById("help")
-
-	if helpNode != nil {
-		helpNode.SubTitle = version
-	}
-}
-
-func (root *NavTreeRoot) ApplyCostManagementIA() {
-	orgAdminNode := root.FindById(NavIDCfg)
-	var costManagementApp *NavLink
-	var adaptiveMetricsApp *NavLink
-	var adaptiveLogsApp *NavLink
-	var adaptiveTracesApp *NavLink
-	var attributionsApp *NavLink
-	var logVolumeExplorerApp *NavLink
-
-	if orgAdminNode != nil {
-		adminNodeLinks := []*NavLink{}
-		for _, element := range orgAdminNode.Children {
-			switch navId := element.Id; navId {
-			case "plugin-page-grafana-costmanagementui-app":
-				costManagementApp = element
-			case "plugin-page-grafana-adaptive-metrics-app":
-				adaptiveMetricsApp = element
-			case "plugin-page-grafana-adaptivelogs-app":
-				adaptiveLogsApp = element
-			case "plugin-page-grafana-adaptivetraces-app":
-				adaptiveTracesApp = element
-			case "plugin-page-grafana-attributions-app":
-				attributionsApp = element
-			case "plugin-page-grafana-logvolumeexplorer-app":
-				logVolumeExplorerApp = element
-			default:
-				adminNodeLinks = append(adminNodeLinks, element)
-			}
-		}
-
-		if costManagementApp != nil {
-			costManagementMetricsNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/metrics")
-			if costManagementMetricsNode != nil {
-				if adaptiveMetricsApp != nil {
-					costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsApp)
-				}
-				if attributionsApp != nil {
-					costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, attributionsApp)
-				}
-			}
-
-			costManagementLogsNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/logs")
-			if costManagementLogsNode != nil {
-				if adaptiveLogsApp != nil {
-					costManagementLogsNode.Children = append(costManagementLogsNode.Children, adaptiveLogsApp)
-				}
-				if logVolumeExplorerApp != nil {
-					costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerApp)
-				}
-			}
-
-			costManagementTracesNode := FindByURL(costManagementApp.Children, "/a/grafana-costmanagementui-app/traces")
-			if costManagementTracesNode != nil {
-				if adaptiveTracesApp != nil {
-					costManagementTracesNode.Children = append(costManagementTracesNode.Children, adaptiveTracesApp)
-				}
-			}
-			adminNodeLinks = append(adminNodeLinks, costManagementApp)
-		}
-		orgAdminNode.Children = adminNodeLinks
 	}
 }
 

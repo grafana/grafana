@@ -23,13 +23,16 @@ export type TypedVariableModel =
   | UserVariableModel
   | OrgVariableModel
   | DashboardVariableModel
-  | SnapshotVariableModel;
+  | SnapshotVariableModel
+  | SwitchVariableModel;
 
 export enum VariableRefresh {
   never, // removed from the UI
   onDashboardLoad,
   onTimeRangeChanged,
 }
+
+export type VariableRegexApplyTo = 'value' | 'text';
 
 export enum VariableSort {
   disabled,
@@ -47,6 +50,7 @@ export enum VariableHide {
   dontHide,
   hideLabel,
   hideVariable,
+  inControlsMenu,
 }
 
 export interface AdHocVariableFilter {
@@ -54,6 +58,7 @@ export interface AdHocVariableFilter {
   operator: string;
   value: string;
   values?: string[];
+  origin?: 'dashboard' | string;
   /** @deprecated  */
   condition?: string;
 }
@@ -78,6 +83,7 @@ export interface GroupByVariableModel extends VariableWithOptions {
   datasource: DataSourceRef | null;
   multi: true;
   allowCustomValue?: boolean;
+  defaultValue?: VariableOption;
 }
 
 export interface VariableOption {
@@ -97,6 +103,7 @@ export interface IntervalVariableModel extends VariableWithOptions {
 
 export interface CustomVariableModel extends VariableWithMultiSupport {
   type: 'custom';
+  valuesFormat?: 'csv' | 'json';
 }
 
 export interface DataSourceVariableModel extends VariableWithMultiSupport {
@@ -113,7 +120,10 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
   queryValue?: string;
   query: any;
   regex: string;
+  regexApplyTo?: VariableRegexApplyTo;
   refresh: VariableRefresh;
+  staticOptions?: VariableOption[];
+  staticOptionsOrder?: 'before' | 'after' | 'sorted';
 }
 
 export interface TextBoxVariableModel extends VariableWithOptions {
@@ -123,6 +133,10 @@ export interface TextBoxVariableModel extends VariableWithOptions {
 
 export interface ConstantVariableModel extends VariableWithOptions {
   type: 'constant';
+}
+
+export interface SwitchVariableModel extends VariableWithOptions {
+  type: 'switch';
 }
 
 export interface VariableWithMultiSupport extends VariableWithOptions {

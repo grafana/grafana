@@ -1,6 +1,33 @@
 # Grafana frontend packages
 
-This document contains information about Grafana frontend package versioning and releases.
+## Exporting code conventions
+
+All the `@grafana` packages in this repo (except `@grafana/schema`) make use of `exports` in package.json to define entrypoints that Grafana core and Grafana plugins can access. Exports can also be used to restrict access to internal files in packages.
+
+Package authors are free to create as many exports as they like but should consider the following points:
+
+1. Resolution of source code within this repo is handled by the [customCondition](https://www.typescriptlang.org/tsconfig/#customConditions) `@grafana-app/source`. This allows the frontend tooling in this repo to resolve to the source code preventing the need to build all the packages up front. When adding exports it is important to add an entry for the custom condition as the first item. All other entries should point to the built, bundled files. For example:
+
+   ```json
+   "exports": {
+     ".": {
+       "@grafana-app/source": "./src/index.ts",
+       "types": "./dist/types/index.d.ts",
+       "import": "./dist/esm/index.mjs",
+       "require": "./dist/cjs/index.cjs"
+     }
+   }
+   ```
+
+2. If you add exports to your package you must export the `package.json` file.
+
+3. Before exposing anything in these packages please consider the table below to better understand the conventions we have put in place for most of the packages in this repository.
+
+| Export Name  | Import Path            | Description                                                                                                                                                                                                           | Available to Grafana | Available to plugins |
+| ------------ | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------------- |
+| `./`         | `@grafana/ui`          | The public API entrypoint. If the code is stable and you want to share it everywhere, this is the place to export it.                                                                                                 | ✅                   | ✅                   |
+| `./unstable` | `@grafana/ui/unstable` | The public API entrypoint for all experimental code. If you want to iterate and test code from Grafana and plugins, this is the place to export it.                                                                   | ✅                   | ✅                   |
+| `./internal` | `@grafana/ui/internal` | The private API entrypoint for internal code shared with Grafana. If you want to co-locate code in a package with it's public API but only want the Grafana application to access it, this is the place to export it. | ✅                   | ❌                   |
 
 ## Versioning
 
@@ -12,7 +39,7 @@ All packages are versioned according to the current Grafana version:
 - Grafana v6.2.5 -> @grafana/\* packages @ 6.2.5
 - Grafana - main branch version (based on package.json, i.e. 6.4.0-pre) -> @grafana/\* packages @ 6.4.0-pre-<COMMIT-SHA> (see details below about packages publishing channels)
 
-> Please note that @grafana/ui, @grafana/data, and @grafana/runtime packages are considered ALPHA even though they are not released as alpha versions.
+> Please note that the @grafana/api-clients package is considered ALPHA even though it is not released as an alpha version.
 
 ### Stable releases
 
@@ -45,7 +72,6 @@ Every commit to main that has changes within the `packages` directory is a subje
 3. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
 4. Run `yarn packages:pack` script to compress each package into `npm-artifacts/*.tgz` files. This is required for yarn to replace properties in the package.json files declared in the `publishConfig` property.
 5. Depending on whether or not it's a prerelease:
-
    - When releasing a prerelease run `./scripts/publish-npm-packages.sh --dist-tag 'next' --registry 'https://registry.npmjs.org/'` to publish new versions.
    - When releasing a stable version run `./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'` to publish new versions.
    - When releasing a test version run `./scripts/publish-npm-packages.sh --dist-tag 'test' --registry 'https://registry.npmjs.org/'` to publish test versions.

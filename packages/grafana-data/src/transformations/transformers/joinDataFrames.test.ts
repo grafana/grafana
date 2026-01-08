@@ -142,20 +142,20 @@ describe('align frames', () => {
         {
           name: 'gender',
           type: FieldType.string,
-          values: ['NON-BINARY', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY'],
+          values: ['NON-BINARY', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY', 'COW'],
         },
         {
           name: 'day',
           type: FieldType.string,
-          values: ['Wednesday', 'Tuesday', 'Monday', 'Wednesday', 'Tuesday', 'Monday'],
+          values: ['Wednesday', 'Tuesday', 'Monday', 'Wednesday', 'Tuesday', 'Monday', 'Monday'],
         },
-        { name: 'count', type: FieldType.number, values: [18, 72, 13, 17, 71, 7] },
+        { name: 'count', type: FieldType.number, values: [18, 72, 13, 17, 71, 7, 1] },
       ],
     });
     const tableData2 = toDataFrame({
       fields: [
-        { name: 'gender', type: FieldType.string, values: ['MALE', 'NON-BINARY', 'FEMALE'] },
-        { name: 'count', type: FieldType.number, values: [103, 95, 201] },
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'NON-BINARY', 'FEMALE', 'DOG'] },
+        { name: 'count', type: FieldType.number, values: [103, 95, 201, 6] },
       ],
     });
 
@@ -181,6 +181,8 @@ describe('align frames', () => {
               "FEMALE",
               "FEMALE",
               "NON-BINARY",
+              "COW",
+              "DOG",
             ],
           },
           {
@@ -192,6 +194,8 @@ describe('align frames', () => {
               "Wednesday",
               "Tuesday",
               "Monday",
+              "Monday",
+              null,
             ],
           },
           {
@@ -203,6 +207,8 @@ describe('align frames', () => {
               17,
               71,
               7,
+              1,
+              null,
             ],
           },
           {
@@ -214,6 +220,8 @@ describe('align frames', () => {
               201,
               201,
               95,
+              null,
+              6,
             ],
           },
         ]

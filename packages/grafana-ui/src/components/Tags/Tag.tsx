@@ -5,10 +5,10 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
-import { getTagColor, getTagColorsFromName } from '../../utils';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
+import { getTagColor, getTagColorsFromName } from '../../utils/tags';
 import { Icon } from '../Icon/Icon';
 
 /**
@@ -57,6 +57,11 @@ const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
   return <Skeleton width={60} height={22} containerClassName={styles.container} {...rootProps} />;
 };
 
+/**
+ * Used for displaying metadata, for example to add more details to search results. Background and border colors are generated from the tag name.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-tag--docs
+ */
 export const Tag = attachSkeleton(TagComponent, TagSkeleton);
 
 const getSkeletonStyles = () => ({
@@ -85,7 +90,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
       whiteSpace: 'pre',
       textShadow: 'none',
       padding: '3px 6px',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
     }),
     hover: css({
       '&:hover': {

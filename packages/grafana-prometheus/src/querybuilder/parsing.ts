@@ -12,6 +12,7 @@ import {
   GroupingLabels,
   Identifier,
   LabelName,
+  QuotedLabelName,
   MatchingModifierClause,
   MatchOp,
   NumberDurationLiteral,
@@ -19,10 +20,13 @@ import {
   ParenExpr,
   parser,
   StringLiteral,
+  QuotedLabelMatcher,
   UnquotedLabelMatcher,
   VectorSelector,
   Without,
 } from '@prometheus-io/lezer-promql';
+
+import { t } from '@grafana/i18n';
 
 import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
@@ -30,9 +34,12 @@ import {
   getAllByType,
   getLeftMostChild,
   getString,
+  isFunctionOrAggregation,
   makeBinOp,
   makeError,
+  replaceBuiltInVariable,
   replaceVariables,
+  returnBuiltInVariable,
 } from './parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery, PromVisualQueryBinary } from './types';
@@ -40,13 +47,12 @@ import { PromVisualQuery, PromVisualQueryBinary } from './types';
 /**
  * Parses a PromQL query into a visual query model.
  *
- * It traverses the tree and uses sort of state machine to update the query model. The query model is modified
- * during the traversal and sent to each handler as context.
- *
- * @param expr
+ * It traverses the tree and uses sort of state machine to update the query model.
+ * The query model is modified during the traversal and sent to each handler as context.
  */
-export function buildVisualQueryFromString(expr: string): Context {
-  const replacedExpr = replaceVariables(expr);
+export function buildVisualQueryFromString(expr: string): Omit<Context, 'replacements'> {
+  expr = replaceBuiltInVariable(expr);
+  const { replacedExpr, replacedVariables } = replaceVariables(expr);
   const tree = parser.parse(replacedExpr);
   const node = tree.topNode;
 
@@ -59,6 +65,7 @@ export function buildVisualQueryFromString(expr: string): Context {
   const context: Context = {
     query: visQuery,
     errors: [],
+    replacements: replacedVariables,
   };
 
   try {
@@ -78,10 +85,8 @@ export function buildVisualQueryFromString(expr: string): Context {
     context.errors = [];
   }
 
-  // We don't want parsing errors related to Grafana global variables
-  if (isValidPromQLMinusGrafanaGlobalVariables(expr)) {
-    context.errors = [];
-  }
+  // No need to return replaced variables
+  delete context.replacements;
 
   return context;
 }
@@ -96,36 +101,7 @@ interface ParsingError {
 interface Context {
   query: PromVisualQuery;
   errors: ParsingError[];
-}
-
-// TODO find a better approach for grafana global variables
-function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
-  const context: Context = {
-    query: {
-      metric: '',
-      labels: [],
-      operations: [],
-    },
-    errors: [],
-  };
-
-  expr = expr.replace(/\$__interval/g, '1s');
-  expr = expr.replace(/\$__interval_ms/g, '1000');
-  expr = expr.replace(/\$__rate_interval/g, '1s');
-  expr = expr.replace(/\$__range_ms/g, '1000');
-  expr = expr.replace(/\$__range_s/g, '1');
-  expr = expr.replace(/\$__range/g, '1s');
-
-  const tree = parser.parse(expr);
-  const node = tree.topNode;
-
-  try {
-    handleExpression(expr, node, context);
-  } catch (err) {
-    return false;
-  }
-
-  return context.errors.length === 0;
+  replacements?: Record<string, string>;
 }
 
 /**
@@ -135,7 +111,7 @@ function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
  * @param node
  * @param context
  */
-export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
+function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
 
   switch (node.type.id) {
@@ -145,9 +121,33 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    case QuotedLabelName: {
+      // Usually we got the metric name above in the Identifier case.
+      // If we didn't get the name that's potentially we have it in curly braces as quoted string.
+      // It must be quoted because that's how utf8 metric names should be defined
+      // See proposal https://github.com/prometheus/proposals/blob/main/proposals/2023-08-21-utf8.md
+      if (visQuery.metric === '') {
+        const strLiteral = node.getChild(StringLiteral);
+        const quotedMetric = getString(expr, strLiteral);
+        visQuery.metric = quotedMetric.slice(1, -1);
+      }
+      break;
+    }
+
+    case QuotedLabelMatcher: {
+      const quotedLabel = getLabel(expr, node, QuotedLabelName);
+      quotedLabel.label = quotedLabel.label.slice(1, -1);
+      visQuery.labels.push(quotedLabel);
+      const err = node.getChild(ErrorId);
+      if (err) {
+        context.errors.push(makeError(expr, err));
+      }
+      break;
+    }
+
     case UnquotedLabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
-      visQuery.labels.push(getLabel(expr, node));
+      visQuery.labels.push(getLabel(expr, node, LabelName));
       const err = node.getChild(ErrorId);
       if (err) {
         context.errors.push(makeError(expr, err));
@@ -202,8 +202,12 @@ function isIntervalVariableError(node: SyntaxNode) {
   return node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
 
-function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
-  const label = getString(expr, node.getChild(LabelName));
+function getLabel(
+  expr: string,
+  node: SyntaxNode,
+  labelType: typeof LabelName | typeof QuotedLabelName
+): QueryBuilderLabelFilter {
+  const label = getString(expr, node.getChild(labelType));
   const op = getString(expr, node.getChild(MatchOp));
   const value = getString(expr, node.getChild(StringLiteral)).replace(/^["'`]|["'`]$/g, '');
   return {
@@ -226,6 +230,18 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const nameNode = node.getChild(FunctionIdentifier);
   const funcName = getString(expr, nameNode);
 
+  // Visual query builder doesn't support nested queries and so info function.
+  if (funcName === 'info') {
+    context.errors.push({
+      text: t(
+        'grafana-prometheus.querybuilder.handle-function.text.query-parsing-is-ambiguous',
+        'Query parsing is ambiguous.'
+      ),
+      from: node.from,
+      to: node.to,
+    });
+  }
+
   const body = node.getChild(FunctionCallBody);
   const params = [];
   let interval = '';
@@ -238,7 +254,9 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
     let match = getString(expr, node).match(/\[(.+)\]/);
     if (match?.[1]) {
       interval = match[1];
-      params.push(match[1]);
+      // We were replaced the builtin variables to prevent errors
+      // Here we return those back
+      params.push(returnBuiltInVariable(match[1]));
     }
   }
 
@@ -281,7 +299,7 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
       funcName = `__${funcName}_without`;
     }
 
-    labels.push(...getAllByType(expr, modifier, LabelName));
+    labels.push(...getAllByType(expr, modifier, LabelName), ...getAllByType(expr, modifier, QuotedLabelName));
   }
 
   const body = node.getChild(FunctionCallBody);
@@ -313,21 +331,6 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       let child = node.firstChild;
 
       while (child) {
-        let binaryExpressionWithinFunctionArgs: SyntaxNode | null;
-        if (child.type.id === BinaryExpr) {
-          binaryExpressionWithinFunctionArgs = child;
-        } else {
-          binaryExpressionWithinFunctionArgs = child.getChild(BinaryExpr);
-        }
-
-        if (binaryExpressionWithinFunctionArgs) {
-          context.errors.push({
-            text: 'Query parsing is ambiguous.',
-            from: binaryExpressionWithinFunctionArgs.from,
-            to: binaryExpressionWithinFunctionArgs.to,
-          });
-        }
-
         updateFunctionArgs(expr, child, context, op);
         child = child.nextSibling;
       }
@@ -342,6 +345,19 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
     case StringLiteral: {
       op.params.push(getString(expr, node).replace(/"/g, ''));
       break;
+    }
+
+    case VectorSelector: {
+      // When we replace a custom variable to prevent errors during parsing we receive VectorSelector and Identifier in it.
+      // But this is also a normal case for a normal function body. i.e. topk(5, http_requests_total{})
+      // In such cases we got identifier as http_requests_total. So we shouldn't push this as param.
+      // So we check whether the given VectorSelector is something we replaced earlier.
+      if (context.replacements?.[expr.substring(node.from, node.to)]) {
+        const identifierNode = node.getChild(Identifier);
+        const customVarName = getString(expr, identifierNode);
+        op.params.push(customVarName);
+        break;
+      }
     }
 
     default: {
@@ -359,7 +375,7 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
  * @param node
  * @param context
  */
-function handleBinary(expr: string, node: SyntaxNode, context: Context) {
+function handleBinary(expr: string, node: SyntaxNode, context: Context, idx = 0) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
@@ -374,6 +390,16 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const rightBinary = right.type.id === BinaryExpr;
 
+  // binary operations that are part of a function argument do not get processed and added to the query until the end, this index helps keep track
+  // of where to add the operation in the list rather than just appending it to the end. If the binary operation is just part of a nested binary exp,
+  // we append at the end
+  const parent = node.parent;
+  const child = node.firstChild;
+  const shouldOffsetTail =
+    parent && !parent.type.isTop && (isFunctionOrAggregation(parent) || (child && isFunctionOrAggregation(child)));
+  if (shouldOffsetTail) {
+    idx += 1;
+  }
   if (leftNumber) {
     // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
     //  if query starts with a number that isn't handled now.
@@ -383,14 +409,18 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     handleExpression(expr, left, context);
   }
 
+  // in the case we have an expression like func(...) / 2 or func(...) + 5, the binary expression will be at the top of the tree
+  // in which case, the idx will be 0. In this case it means that the binary operation must be added to the end of the array, and
+
+  const newIdx = idx === 0 ? visQuery.operations.length : -idx;
   if (rightNumber) {
-    visQuery.operations.push(makeBinOp(opDef, expr, right, !!binModifier?.isBool));
+    visQuery.operations.splice(newIdx, 0, makeBinOp(opDef, expr, right, !!binModifier?.isBool));
   } else if (rightBinary) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
     if (leftMostChild?.type.id === NumberDurationLiteral) {
-      visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
+      visQuery.operations.splice(newIdx, 0, makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
     // If we added the first number literal as operation here we still can continue and handle the rest as the first
@@ -414,6 +444,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     handleExpression(expr, right, {
       query: binQuery.query,
       errors: context.errors,
+      replacements: context.replacements,
     });
   }
 }

@@ -1,5 +1,6 @@
-import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { DataSourceRef, getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
   CustomVariable,
@@ -7,21 +8,35 @@ import {
   SceneDataTransformer,
   sceneGraph,
   SceneObject,
+  SceneObjectState,
   SceneQueryRunner,
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { Dashboard, Panel, RowPanel } from '@grafana/schema';
+import { createLogger } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
+import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
+import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
+
+const V1_PANEL_PROPERTIES = {
+  LIBRARY_PANEL: 'libraryPanel',
+  COLLAPSED: 'collapsed',
+} as const;
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -83,6 +98,23 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   return null;
 }
 
+export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
+  if (!key) {
+    return null;
+  }
+
+  let panel: SceneObject | null = findVizPanelByKey(scene, key);
+  if (!panel || !panel.state.key) {
+    return null;
+  }
+
+  if (!(panel instanceof VizPanel)) {
+    return null;
+  }
+
+  return panel;
+}
+
 /**
  * Force re-render children. This is useful in some edge case scenarios when
  * children deep down the scene graph needs to be re-rendered when some parent state change.
@@ -120,7 +152,11 @@ export function getMultiVariableValues(variable: MultiValueVariable | CustomVari
 }
 
 // used to transform old interval model to new interval model from scenes
-export function getIntervalsFromQueryString(query: string): string[] {
+export function getIntervalsFromQueryString(query: string | undefined): string[] {
+  if (!query) {
+    return initialIntervalVariableModelState.query?.split(',') ?? [];
+  }
+
   // separate intervals by quotes either single or double
   const matchIntervals = query.match(/(["'])(.*?)\1|\w+/g);
 
@@ -155,10 +191,22 @@ export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): stri
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableModel, intervals: string[]): string {
-  const selectedInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
+  // Handle missing current object or value
+  const currentValue = variable.current?.value;
+  const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
+
+  // If no intervals are available, return empty string (will use default from IntervalVariable)
+  if (intervals.length === 0) {
+    return '';
+  }
+
+  // If no selected interval, return the first valid interval
+  if (!selectedInterval) {
+    return intervals[0];
+  }
 
   // If the interval is the old auto format, return the new auto interval from scenes.
-  if (selectedInterval.startsWith('$__auto_interval_')) {
+  if (selectedInterval.startsWith('$__auto_interval_') || selectedInterval === '$__auto') {
     return '$__auto';
   }
 
@@ -189,6 +237,26 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
   return undefined;
 }
 
+/**
+ * Gets the datasource from a query runner.
+ * When no panel-level datasource is set, it means all queries use the same datasource,
+ * so we extract the datasource from the first query.
+ */
+export function getDatasourceFromQueryRunner(queryRunner: SceneQueryRunner): DataSourceRef | null | undefined {
+  // Panel-level datasource is set for mixed datasource panels
+  if (queryRunner.state.datasource) {
+    return queryRunner.state.datasource;
+  }
+
+  // No panel-level datasource means all queries share the same datasource
+  const firstQuery = queryRunner.state.queries?.[0];
+  if (firstQuery?.datasource) {
+    return firstQuery.datasource;
+  }
+
+  return undefined;
+}
+
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
 
@@ -211,19 +279,33 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
-export function isPanelClone(key: string) {
-  return key.includes('clone');
-}
-
 export function getDefaultVizPanel(): VizPanel {
+  const defaultPluginId =
+    config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
+      ? UNCONFIGURED_PANEL_PLUGIN_ID
+      : 'timeseries';
+
+  const newPanelTitle =
+    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
+      ? ''
+      : t('dashboard.new-panel-title', 'New panel');
+
   return new VizPanel({
-    title: 'Panel Title',
-    pluginId: 'timeseries',
+    title: newPanelTitle,
+    pluginId: defaultPluginId,
+    seriesLimit: config.panelSeriesLimit,
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
     $behaviors: [],
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
+    extendPanelContext: setDashboardPanelContext,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
+    }),
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
     }),
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({
@@ -248,6 +330,14 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
   }
 
   return undefined;
+}
+
+export function calculateGridItemDimensions(repeater: DashboardGridItem) {
+  const rowCount = Math.ceil(repeater.getChildCount() / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.getChildCount() / rowCount);
+  const w = 24 / columnCount;
+  const h = repeater.state.itemHeight ?? 10;
+  return { h, w, columnCount };
 }
 
 /**
@@ -276,6 +366,34 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
 }
 
 /**
+ * Adaptation of activateSceneObjectAndParentTree specific for PanelSearchLayout use case with
+ *   with panelSearch and panelsPerRow custom panel filtering logic.
+ *
+ * Activating the whole tree because dashboard does not react to variable updates such as panel repeats
+ */
+export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHandler | undefined {
+  let cancel: CancelActivationHandler | undefined;
+  let parentCancel: CancelActivationHandler | undefined;
+
+  if (so.parent) {
+    parentCancel = forceActivateFullSceneObjectTree(so.parent);
+  }
+
+  if (!so.isActive) {
+    cancel = so.activate();
+    return () => {
+      parentCancel?.();
+      cancel?.();
+    };
+  }
+
+  return () => {
+    parentCancel?.();
+    cancel?.();
+  };
+}
+
+/**
  * @deprecated use activateSceneObjectAndParentTree instead.
  * Activates any inactive ancestors of the scene object.
  * Useful when rendering a scene object out of context of it's parent
@@ -293,4 +411,79 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
   }
 
   throw new Error('Could not find layout manager for scene object');
+}
+
+export function getGridItemKeyForPanelId(panelId: number): string {
+  return `grid-item-${panelId}`;
+}
+
+export function useDashboard(scene: SceneObject): DashboardScene {
+  return getDashboardSceneFor(scene);
+}
+
+export function useDashboardState(scene: SceneObject): DashboardSceneState {
+  const dashboard = useDashboard(scene);
+  return dashboard.useState();
+}
+
+export function useInterpolatedTitle<T extends SceneObjectState & { title?: string }>(scene: SceneObject<T>): string {
+  const { title } = scene.useState();
+
+  if (!title) {
+    return '';
+  }
+
+  return sceneGraph.interpolate(scene, title, undefined, 'text');
+}
+
+export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
+  return getDashboardSceneFor(scene).state.layoutOrchestrator;
+}
+
+// @returns true if the panel is a valid library panel reference
+// a valid library panel reference is a panel with this
+// property: `libraryPanel: {name: string, uid: string}`
+
+export function isValidLibraryPanelRef(panel: Panel): boolean {
+  return (
+    (V1_PANEL_PROPERTIES.LIBRARY_PANEL in panel &&
+      panel.libraryPanel &&
+      Boolean(panel.libraryPanel?.uid && panel.libraryPanel?.name)) ||
+    false
+  );
+}
+
+/**
+ * Checks if a V1 dashboard contains library panels
+ * @returns true if the dashboard contains library panels
+ */
+export function hasLibraryPanelsInV1Dashboard(dashboard: Dashboard | undefined): boolean {
+  if (!dashboard?.panels) {
+    return false;
+  }
+
+  return dashboard.panels.some((panel: Panel | RowPanel) => {
+    if (isValidLibraryPanelRef(panel)) {
+      return true;
+    }
+    // Check if this is a collapsed row containing library panels
+    const isCollapsedRow =
+      V1_PANEL_PROPERTIES.COLLAPSED in panel && panel.collapsed && 'panels' in panel && panel.panels;
+
+    if (!isCollapsedRow) {
+      return false;
+    }
+
+    return panel.panels.some(isValidLibraryPanelRef);
+  });
+}
+
+export const dashboardLog = createLogger('Dashboard');
+
+/**
+ * Checks if there are save changes but not counting time range, refresh rate and default variable value change
+ */
+export function hasActualSaveChanges(dashboard: DashboardScene) {
+  const changes = dashboard.getDashboardChanges();
+  return !!changes.diffCount;
 }

@@ -57,14 +57,17 @@ const plugin: CatalogPlugin = {
     ],
     grafanaDependency: '>=9.0.0',
     statusContext: 'stable',
+    changelog: 'Test changelog',
   },
   angularDetected: false,
   isFullyInstalled: true,
   accessControl: {},
+  insights: { id: 1, name: 'test-plugin', version: '1.0.0', insights: [] },
 };
 
 jest.mock('../state/hooks', () => ({
   useGetSingle: jest.fn(),
+  useGetPluginInsights: jest.fn(),
   useFetchStatus: jest.fn().mockReturnValue({ isLoading: false }),
   useFetchDetailsStatus: () => ({ isLoading: false }),
   useIsRemotePluginsAvailable: () => false,
@@ -76,7 +79,12 @@ jest.mock('../state/hooks', () => ({
   useFetchDetailsLazy: () => jest.fn(),
 }));
 
+jest.mock('../hooks/usePluginConfig', () => ({
+  usePluginConfig: jest.fn().mockReturnValue({ value: {}, loading: false }),
+}));
+
 const mockUseGetSingle = jest.requireMock('../state/hooks').useGetSingle;
+const mockUsePluginConfig = jest.requireMock('../hooks/usePluginConfig').usePluginConfig;
 
 describe('PluginDetailsPage', () => {
   beforeEach(() => {
@@ -100,20 +108,7 @@ describe('PluginDetailsPage', () => {
     expect(screen.getByText('Plugin not found')).toBeInTheDocument();
   });
 
-  it('should show angular deprecation notice when angular is detected', () => {
-    mockUseGetSingle.mockReturnValue({ ...plugin, angularDetected: true });
-    render(<PluginDetailsPage pluginId="test-plugin" />);
-    expect(screen.getByText(/legacy platform based on AngularJS/i)).toBeInTheDocument();
-  });
-
-  it('should not show right panel when feature toggle is disabled', () => {
-    config.featureToggles.pluginsDetailsRightPanel = false;
-    render(<PluginDetailsPage pluginId="test-plugin" />);
-    expect(screen.queryByTestId('plugin-details-panel')).not.toBeInTheDocument();
-  });
-
-  it('should show right panel when feature toggle is enabled and screen is wide', () => {
-    config.featureToggles.pluginsDetailsRightPanel = true;
+  it('should show right panel when screen is wide', () => {
     window.matchMedia = jest.fn().mockImplementation((query) => ({
       matches: query !== '(max-width: 600px)',
       media: query,
@@ -128,7 +123,6 @@ describe('PluginDetailsPage', () => {
   });
 
   it('should show "Plugin details" tab when screen is narrow', () => {
-    config.featureToggles.pluginsDetailsRightPanel = true;
     window.matchMedia = jest.fn().mockImplementation((query) => ({
       matches: query === '(max-width: 600px)',
       media: query,
@@ -140,5 +134,36 @@ describe('PluginDetailsPage', () => {
 
     render(<PluginDetailsPage pluginId="test-plugin" />);
     expect(screen.getByRole('tab', { name: 'Plugin details' })).toBeInTheDocument();
+  });
+
+  it('should show "Datasource connections" tab when plugin is type of datasource', () => {
+    config.featureToggles.datasourceConnectionsTab = true;
+    mockUseGetSingle.mockReturnValue({ ...plugin, type: PluginType.datasource });
+    mockUsePluginConfig.mockReturnValue({ value: {}, loading: false });
+    render(<PluginDetailsPage pluginId={plugin.id} />);
+    expect(screen.getByRole('tab', { name: 'Data source connections' })).toBeVisible();
+  });
+
+  it('should not show version and changelog tabs when plugin is core', () => {
+    mockUseGetSingle.mockReturnValue({ ...plugin, isCore: true });
+    render(<PluginDetailsPage pluginId={plugin.id} />);
+    expect(screen.queryByRole('tab', { name: 'Version history' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Changelog' })).not.toBeInTheDocument();
+  });
+
+  it('should not show last version in plugin details panel when plugin is core', () => {
+    window.matchMedia = jest.fn().mockImplementation((query) => ({
+      matches: query !== '(max-width: 600px)',
+      media: query,
+      onchange: null,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
+
+    mockUseGetSingle.mockReturnValue({ ...plugin, isCore: true, latestVersion: '1.2.0' });
+
+    render(<PluginDetailsPage pluginId={plugin.id} />);
+    expect(screen.queryByText('Latest Version:')).not.toBeInTheDocument();
   });
 });

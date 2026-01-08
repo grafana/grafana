@@ -4,22 +4,20 @@ import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState, PanelData, PanelProps } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, getPluginLinkExtensions, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import { setupLoadDashboardMock } from '../utils/test-utils';
+import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { PublicDashboardScenePage, Props as PublicDashboardSceneProps } from './PublicDashboardScenePage';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  setPluginExtensionGetter: jest.fn(),
-  getPluginLinkExtensions: jest.fn(),
   getDataSourceSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({}),
@@ -27,8 +25,6 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
 }));
-
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 function setup(token = 'an-access-token') {
   const pubdashProps: PublicDashboardSceneProps = {
@@ -126,8 +122,6 @@ describe('PublicDashboardScenePage', () => {
     // // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
-    getPluginLinkExtensionsMock.mockRestore();
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
   });
 
   it('can render public dashboard', async () => {
@@ -192,10 +186,27 @@ describe('given unavailable public dashboard', () => {
   it('renders public dashboard paused screen when it is paused', async () => {
     const accessToken = 'paused-pubdash-access-token';
     config.publicDashboardAccessToken = accessToken;
-    setupLoadDashboardMock({
-      dashboard: simpleDashboard,
-      meta: { publicDashboardEnabled: false, dashboardNotFound: false },
+
+    setupLoadDashboardMockReject({
+      status: 403,
+      statusText: 'Forbidden',
+      data: {
+        statusCode: 403,
+        messageId: 'publicdashboards.notEnabled',
+        message: 'Dashboard paused',
+      },
+      config: {
+        method: 'GET',
+        url: 'api/public/dashboards/ce159fe139fc4d238a7d9c3ae33fb82b',
+        retry: 0,
+        headers: {
+          'X-Grafana-Org-Id': 1,
+          'X-Grafana-Device-Id': 'da48fad0e58ba327fd7d1e6bd17e9c63',
+        },
+        hideFromInspector: true,
+      },
     });
+
     setup(accessToken);
 
     await waitForElementToBeRemoved(screen.getByTestId(publicDashboardSceneSelector.loadingPage));
@@ -208,10 +219,26 @@ describe('given unavailable public dashboard', () => {
   it('renders public dashboard not available screen when it is deleted', async () => {
     const accessToken = 'deleted-pubdash-access-token';
     config.publicDashboardAccessToken = accessToken;
-    setupLoadDashboardMock({
-      dashboard: simpleDashboard,
-      meta: { dashboardNotFound: true },
+
+    setupLoadDashboardMockReject({
+      status: 404,
+      statusText: 'Not Found',
+      data: {
+        statusCode: 404,
+        messageId: 'publicdashboards.notFound',
+        message: 'Dashboard not found',
+      },
+      config: {
+        method: 'GET',
+        url: 'api/public/dashboards/ce159fe139fc4d238a7d9c3ae33fb82b',
+        retry: 0,
+        hideFromInspector: true,
+        headers: {
+          'X-Grafana-Device-Id': 'da48fad0e58ba327fd7d1e6bd17e9c63',
+        },
+      },
     });
+
     setup(accessToken);
 
     await waitForElementToBeRemoved(screen.getByTestId(publicDashboardSceneSelector.loadingPage));

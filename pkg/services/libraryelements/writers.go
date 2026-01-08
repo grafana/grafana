@@ -23,7 +23,7 @@ func selectLibraryElementByParam(params []Pair) (string, []any) {
 		conditions = append(conditions, "le."+p.key+"=?")
 		values = append(values, p.value)
 	}
-	return ` WHERE ` + strings.Join(conditions, " AND "), values
+	return strings.Join(conditions, " AND "), values
 }
 
 func writeParamSelectorSQL(builder *db.SQLBuilder, params ...Pair) {
@@ -41,7 +41,7 @@ func writePerPageSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, bui
 }
 
 func writeKindSQL(query model.SearchLibraryElementsQuery, builder *db.SQLBuilder) {
-	if model.LibraryElementKind(query.Kind) == model.PanelElement || model.LibraryElementKind(query.Kind) == model.VariableElement {
+	if model.LibraryElementKind(query.Kind) == model.PanelElement {
 		builder.Write(" AND le.kind = ?", query.Kind)
 	}
 }
@@ -58,10 +58,28 @@ func writeTypeFilterSQL(typeFilter []string, builder *db.SQLBuilder) {
 	}
 }
 
-func writeSearchStringSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder) {
+func writeSearchStringSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder, foldersWithMatchingTitles []string) {
 	if len(strings.TrimSpace(query.SearchString)) > 0 {
-		builder.Write(" AND (le.name "+sqlStore.GetDialect().LikeStr()+" ?", "%"+query.SearchString+"%")
-		builder.Write(" OR le.description "+sqlStore.GetDialect().LikeStr()+" ?)", "%"+query.SearchString+"%")
+		// Search element names across all accessible folders
+		sql, param := sqlStore.GetDialect().LikeOperator("le.name", true, query.SearchString, true)
+		builder.Write(" AND ("+sql, param)
+
+		// Search element descriptions across all accessible folders
+		sql, param = sqlStore.GetDialect().LikeOperator("le.description", true, query.SearchString, true)
+		builder.Write(" OR "+sql, param)
+
+		// Include ALL elements from folders whose titles match the search string
+		hasFolderFilter := len(strings.TrimSpace(query.FolderFilterUIDs)) > 0
+		if !hasFolderFilter && len(foldersWithMatchingTitles) > 0 {
+			folderUIDsSQL := "?" + strings.Repeat(",?", len(foldersWithMatchingTitles)-1)
+			params := make([]any, 0, len(foldersWithMatchingTitles))
+			for _, folderUID := range foldersWithMatchingTitles {
+				params = append(params, folderUID)
+			}
+			builder.Write(" OR le.folder_uid IN ("+folderUIDsSQL+")", params...)
+		}
+
+		builder.Write(")")
 	}
 }
 
@@ -147,7 +165,7 @@ func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *db.SQL
 		if !includeGeneral && isGeneralFolder(folderID) {
 			continue
 		}
-		params = append(params, filter)
+		params = append(params, folderID)
 	}
 	if len(params) > 0 {
 		sql.WriteString(` AND le.folder_id IN (?` + strings.Repeat(",?", len(params)-1) + ")")
@@ -162,7 +180,7 @@ func (f *FolderFilter) writeFolderFilterSQL(includeGeneral bool, builder *db.SQL
 		paramsUIDs = append(paramsUIDs, folderUID)
 	}
 	if len(paramsUIDs) > 0 {
-		sql.WriteString(` AND dashboard.uid IN (?` + strings.Repeat(",?", len(paramsUIDs)-1) + ")")
+		sql.WriteString(` AND le.folder_uid IN (?` + strings.Repeat(",?", len(paramsUIDs)-1) + ")")
 		builder.Write(sql.String(), paramsUIDs...)
 	}
 

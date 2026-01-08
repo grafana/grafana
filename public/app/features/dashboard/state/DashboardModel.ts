@@ -24,14 +24,18 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
-import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
-import { CoreEvents, DashboardMeta } from 'app/types';
-import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
+import { DashboardMeta } from 'app/types/dashboard';
+import {
+  DashboardMetaChangedEvent,
+  DashboardPanelsChangedEvent,
+  RenderEvent,
+  templateVariableValueUpdated,
+} from 'app/types/events';
 
-import { appEvents } from '../../../core/core';
+import { appEvents } from '../../../core/app_events';
 import { dispatch } from '../../../store/store';
 import {
   VariablesChanged,
@@ -44,7 +48,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { explicitlyControlledMigrationPanels, PanelModel } from './PanelModel';
+import { PanelModel } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -55,6 +59,12 @@ export interface CloneOptions {
 }
 
 export type DashboardLinkType = 'link' | 'dashboards';
+
+/** @experimental */
+export interface ScopeMeta {
+  trait: string;
+  groups: string[];
+}
 
 export class DashboardModel implements TimeModel {
   /** @deprecated use UID */
@@ -71,6 +81,7 @@ export class DashboardModel implements TimeModel {
   graphTooltip: DashboardCursorSync;
   time: any;
   liveNow?: boolean;
+  preload?: boolean;
   private originalTime: any;
   timepicker: any;
   templating: { list: any[] };
@@ -87,6 +98,7 @@ export class DashboardModel implements TimeModel {
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
+  scopeMeta?: ScopeMeta;
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
@@ -127,13 +139,15 @@ export class DashboardModel implements TimeModel {
     options?: {
       // By default this uses variables from redux state
       getVariablesFromState?: GetVariables;
+      // Target schema version for migration (defaults to latest)
+      targetSchemaVersion?: number;
     }
   ) {
     this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // UID is not there for newly created dashboards
-    this.uid = data.uid || null;
+    this.uid = data.uid || meta?.uid || null;
     this.revision = data.revision ?? undefined;
     this.title = data.title ?? 'No Title';
     this.description = data.description;
@@ -141,6 +155,7 @@ export class DashboardModel implements TimeModel {
     this.timezone = data.timezone ?? '';
     this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;
+    this.preload = data.preload;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};
@@ -155,6 +170,8 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData) => new PanelModel(panelData));
+    // @ts-expect-error - experimental and it's not included in the schema
+    this.scopeMeta = data.scopeMeta;
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);
     this.originalTemplating = cloneDeep(this.templating);
@@ -164,8 +181,7 @@ export class DashboardModel implements TimeModel {
     this.formatDate = this.formatDate.bind(this);
 
     this.initMeta(meta);
-    this.updateSchema(data);
-
+    this.updateSchema(data, options?.targetSchemaVersion);
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
     this.panelsAffectedByVariableChange = null;
@@ -277,6 +293,8 @@ export class DashboardModel implements TimeModel {
    *
    * @internal and experimental
    */
+  // TODO: remove this as it's not being used anymore
+  // Also remove public/app/features/dashboard/utils/panelMerge.ts
   updatePanels(panels: IPanelModel[]): PanelMergeInfo {
     const info = mergePanels(this.panels, panels ?? []);
     if (info.changed) {
@@ -1105,9 +1123,9 @@ export class DashboardModel implements TimeModel {
     return this.timezone ? this.timezone : contextSrv?.user?.timezone;
   }
 
-  private updateSchema(old: any) {
+  private updateSchema(old: any, targetVersion?: number) {
     const migrator = new DashboardMigrator(this);
-    migrator.updateSchema(old);
+    migrator.updateSchema(old, targetVersion);
   }
 
   hasTimeChanged() {
@@ -1145,7 +1163,7 @@ export class DashboardModel implements TimeModel {
 
   templateVariableValueUpdated() {
     this.processRepeats();
-    this.events.emit(CoreEvents.templateVariableValueUpdated);
+    this.events.emit(templateVariableValueUpdated);
   }
 
   getPanelByUrlId(panelUrlId: string) {
@@ -1178,7 +1196,14 @@ export class DashboardModel implements TimeModel {
   toggleExemplarsForAll() {
     for (const panel of this.panels) {
       for (const target of panel.targets) {
-        if (!(target.datasource && target.datasource.type === 'prometheus')) {
+        if (
+          !(
+            target.datasource &&
+            (target.datasource.type === 'prometheus' ||
+              target.datasource.type === 'grafana-amazonprometheus-datasource' ||
+              target.datasource.type === 'grafana-azureprometheus-datasource')
+          )
+        ) {
           continue;
         }
 
@@ -1243,6 +1268,10 @@ export class DashboardModel implements TimeModel {
 
   canEditDashboard() {
     return Boolean(this.meta.canEdit || this.meta.canMakeEditable);
+  }
+
+  canExecuteActions() {
+    return this.canEditDashboard();
   }
 
   shouldUpdateDashboardPanelFromJSON(updatedPanel: PanelModel, panel: PanelModel) {
@@ -1310,22 +1339,6 @@ export class DashboardModel implements TimeModel {
 
   getOriginalDashboard() {
     return this.originalDashboard;
-  }
-
-  hasAngularPlugins(): boolean {
-    return this.panels.some((panel) => {
-      // Return false for plugins that are angular but have angular.hideDeprecation = false
-      // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
-      // We also have to check for old core angular plugins (explicitlyControlledMigrationPanels).
-      const isAngularPanel =
-        (config.panels[panel.type]?.angular?.detected || explicitlyControlledMigrationPanels.includes(panel.type)) &&
-        !config.panels[panel.type]?.angular?.hideDeprecation;
-      let isAngularDs = false;
-      if (panel.datasource?.uid) {
-        isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);
-      }
-      return isAngularPanel || isAngularDs;
-    });
   }
 }
 

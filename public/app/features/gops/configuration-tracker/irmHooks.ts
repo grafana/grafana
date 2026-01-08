@@ -1,10 +1,18 @@
 import { useMemo } from 'react';
 
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useGrafanaContactPoints } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { useNotificationPolicyRoute } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
+import {
+  getIrmIfPresentOrIncidentPluginId,
+  getIrmIfPresentOrOnCallPluginId,
+  getIsIrmPluginPresent,
+} from 'app/features/alerting/unified/utils/config';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
-import { isOnCallContactPointReady, useGetDefaultContactPoint, useIsCreateAlertRuleDone } from './alerting/hooks';
+import { isOnCallContactPointReady, useIsCreateAlertRuleDone } from './alerting/hooks';
 import { isContactPointReady } from './alerting/utils';
 import { ConfigurationStepsEnum, DataSourceConfigurationData, IrmCardConfiguration } from './components/ConfigureIRM';
 import { useGetIncidentPluginConfig } from './incidents/hooks';
@@ -50,8 +58,10 @@ export interface EssentialsConfigurationData {
 function useGetConfigurationForApps() {
   // configuration checks for alerting
   const { contactPoints, isLoading: isLoadingContactPoints } = useGrafanaContactPoints();
-  // TODO: Switch to k8s API/refactored notification policies hook when available
-  const { defaultContactpoint, isLoading: isLoadingDefaultContactPoint } = useGetDefaultContactPoint();
+  const { data: rootRoute, isLoading: isLoadingDefaultContactPoint } = useNotificationPolicyRoute({
+    alertmanager: GRAFANA_RULES_SOURCE_NAME,
+  });
+  const defaultContactpoint = rootRoute?.[0].receiver || '';
   const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
   // configuration checks for incidents
   const {
@@ -112,199 +122,346 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
 
   function onIntegrationClick(integrationId: string, url: RelativeUrl) {
     const urlToGoWithIntegration = createRelativeUrl(`${url} + ${integrationId}`, {
-      returnTo: location.pathname + location.search,
+      returnTo: window.location.pathname + window.location.search,
     });
     locationService.push(urlToGoWithIntegration);
+  }
+
+  function getGrafanaAlertingConfigSteps(): SectionDtoStep[] {
+    let steps: SectionDtoStep[] = [
+      {
+        title: t(
+          'gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.steps.title.update-default-contact-point',
+          'Update default contact point'
+        ),
+        description: 'Update the default contact point to a method other than the example email address.',
+        button: {
+          type: 'openLink',
+          urlLink: {
+            url: `/alerting/notifications`,
+            queryParams: { search: defaultContactpoint, alertmanager: 'grafana' },
+          },
+          label: t('gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.steps.label.edit', 'Edit'),
+          labelOnDone: 'View',
+          urlLinkOnDone: {
+            url: `/alerting/notifications`,
+          },
+        },
+        done: isContactPointReady(defaultContactpoint, contactPoints),
+      },
+    ];
+
+    if (!getIsIrmPluginPresent()) {
+      steps = [
+        ...steps,
+        {
+          title: t(
+            'gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.title.connect-alerting-to-on-call',
+            'Connect alerting to OnCall'
+          ),
+          description: t(
+            'gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.description.create-on-call-integration-alerting-contact-point',
+            'Create an OnCall integration for an alerting contact point.'
+          ),
+          button: {
+            type: 'openLink',
+            urlLink: {
+              url: '/alerting/notifications/receivers/new',
+            },
+            label: t(
+              'gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.label.connect',
+              'Connect'
+            ),
+            urlLinkOnDone: {
+              url: '/alerting/notifications',
+            },
+            labelOnDone: 'View',
+          },
+          done: isOnCallContactPointReady(contactPoints),
+        },
+      ];
+    }
+
+    steps = [
+      ...steps,
+      {
+        title: t(
+          'gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.title.create-alert-rule',
+          'Create alert rule'
+        ),
+        description: t(
+          'gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.description.create-alert-monitor-system',
+          'Create an alert rule to monitor your system.'
+        ),
+        button: {
+          type: 'openLink',
+          urlLink: {
+            url: '/alerting/new',
+          },
+          label: t('gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.label.create', 'Create'),
+          urlLinkOnDone: {
+            url: '/alerting/list',
+          },
+          labelOnDone: 'View',
+        },
+        done: isCreateAlertRuleDone,
+      },
+      {
+        title: t(
+          'gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.title.create-slo',
+          'Create SLO'
+        ),
+        description: t(
+          'gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.description.create-slos-to-monitor-your-service',
+          'Create SLOs to monitor your service.'
+        ),
+        button: {
+          type: 'openLink',
+          urlLink: {
+            url: '/a/grafana-slo-app/wizard/new',
+          },
+          label: t('gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.label.create', 'Create'),
+          urlLinkOnDone: {
+            url: '/a/grafana-slo-app/manage-slos',
+          },
+          labelOnDone: 'View',
+        },
+        done: hasSlo,
+      },
+      {
+        title: t(
+          'gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.title.enable-slo-alerting',
+          'Enable SLO alerting'
+        ),
+        description: 'Configure SLO alerting to receive notifications when your SLOs are breached.',
+        button: {
+          type: 'openLink',
+          urlLink: {
+            queryParams: { alertsEnabled: 'disabled' },
+            url: '/a/grafana-slo-app/manage-slos',
+          },
+          label: t('gops.use-get-essentials-configuration.get-grafana-alerting-config-steps.label.enable', 'Enable'),
+          urlLinkOnDone: {
+            queryParams: { alertsEnabled: 'enabled' },
+            url: '/a/grafana-slo-app/manage-slos',
+          },
+          labelOnDone: 'View',
+        },
+        done: hasSloWithAlert,
+      },
+    ];
+
+    return steps;
   }
 
   const essentialContent: SectionsDto = {
     sections: [
       {
-        title: 'Detect',
-        description: 'Configure Grafana Alerting',
-        steps: [
-          {
-            title: 'Update default email contact point',
-            description: 'Add a valid email to the default email contact point.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: `/alerting/notifications`,
-                queryParams: { search: defaultContactpoint, alertmanager: 'grafana' },
-              },
-              label: 'Edit',
-              labelOnDone: 'View',
-              urlLinkOnDone: {
-                url: `/alerting/notifications`,
-              },
-            },
-            done: isContactPointReady(defaultContactpoint, contactPoints),
-          },
-          {
-            title: 'Connect alerting to OnCall',
-            description: 'Create an OnCall integration for an alerting contact point.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/alerting/notifications/receivers/new',
-              },
-              label: 'Connect',
-              urlLinkOnDone: {
-                url: '/alerting/notifications',
-              },
-              labelOnDone: 'View',
-            },
-            done: isOnCallContactPointReady(contactPoints),
-          },
-          {
-            title: 'Create alert rule',
-            description: 'Create an alert rule to monitor your system.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/alerting/new',
-              },
-              label: 'Create',
-              urlLinkOnDone: {
-                url: '/alerting/list',
-              },
-              labelOnDone: 'View',
-            },
-            done: isCreateAlertRuleDone,
-          },
-          {
-            title: 'Create your first SLO',
-            description: 'Create SLOs to monitor your service.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/a/grafana-slo-app/wizard/new',
-              },
-              label: 'Create',
-              urlLinkOnDone: {
-                url: '/a/grafana-slo-app/manage-slos',
-              },
-              labelOnDone: 'View',
-            },
-            done: hasSlo,
-          },
-          {
-            title: 'Enable SLO alerting',
-            description: 'Configure SLO alerting to receive notifications when your SLOs are breached.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                queryParams: { alertsEnabled: 'disabled' },
-                url: '/a/grafana-slo-app/manage-slos',
-              },
-              label: 'Enable',
-              urlLinkOnDone: {
-                queryParams: { alertsEnabled: 'enabled' },
-                url: '/a/grafana-slo-app/manage-slos',
-              },
-              labelOnDone: 'View',
-            },
-            done: hasSloWithAlert,
-          },
-        ],
+        title: t('gops.use-get-essentials-configuration.essential-content.title.detect', 'Detect'),
+        description: t(
+          'gops.use-get-essentials-configuration.essential-content.description.configure-grafana-alerting',
+          'Configure Grafana Alerting'
+        ),
+        steps: getGrafanaAlertingConfigSteps(),
       },
       {
-        title: 'Respond',
-        description: 'Configure OnCall and Incident',
-        steps: [
-          {
-            title: 'Initialize Incident plugin',
-            description: 'Initialize the Incident plugin to declare and manage incidents.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/a/grafana-incident-app/walkthrough/generate-key',
+        title: t('gops.use-get-essentials-configuration.essential-content.title.respond', 'Respond'),
+        description: getIsIrmPluginPresent() ? 'Configure IRM' : 'Configure OnCall and Incident',
+        steps: getIsIrmPluginPresent()
+          ? [
+              {
+                title: t(
+                  'gops.use-get-essentials-configuration.essential-content.title.connect-alerting-to-irm',
+                  'Connect alerting to IRM'
+                ),
+                description: t(
+                  'gops.use-get-essentials-configuration.essential-content.description.create-integration-alerting-contact-point',
+                  'Create an IRM integration for an alerting contact point.'
+                ),
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: '/alerting/notifications/receivers/new',
+                  },
+                  label: t('gops.use-get-essentials-configuration.essential-content.label.connect', 'Connect'),
+                  urlLinkOnDone: {
+                    url: '/alerting/notifications',
+                  },
+                  labelOnDone: 'View',
+                },
+                done: isOnCallContactPointReady(contactPoints),
               },
-              label: 'Initialize',
-              urlLinkOnDone: {
-                url: '/a/grafana-incident-app',
+              {
+                title: t(
+                  'gops.use-get-essentials-configuration.essential-content.title.connect-irm-to-your-slack-workspace',
+                  'Connect IRM to your Slack workspace'
+                ),
+                description:
+                  'Receive alerts and oncall notifications, or automatically create an incident channel and manage incidents directly within your chat environment.',
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/apps/grate.irm.slack`,
+                  },
+                  label: t('gops.use-get-essentials-configuration.essential-content.label.connect', 'Connect'),
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/apps/grate.irm.slack`,
+                  },
+                  labelOnDone: 'View',
+                },
+                done: isChatOpsInstalled,
               },
-              labelOnDone: 'View',
-            },
-            done: isIncidentsInstalled,
-          },
-          {
-            title: 'Connect your Messaging workspace to OnCall',
-            description: 'Receive alerts and oncall notifications within your chat environment.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/a/grafana-oncall-app/settings',
-                queryParams: { tab: 'ChatOps', chatOpsTab: 'Slack' },
+              {
+                title: t(
+                  'gops.use-get-essentials-configuration.essential-content.title.add-slack-notifications-to-irm-integrations',
+                  'Add Slack notifications to IRM integrations'
+                ),
+                description: t(
+                  'gops.use-get-essentials-configuration.essential-content.description.select-chat-ops-channels-to-route-notifications',
+                  'Select ChatOps channels to route notifications'
+                ),
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
+                  },
+                  label: t('gops.use-get-essentials-configuration.essential-content.label.add', 'Add'),
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
+                  },
+                  labelOnDone: 'View',
+                },
+                done: is_integration_chatops_connected,
               },
-              label: 'Connect',
-              urlLinkOnDone: {
-                url: '/a/grafana-oncall-app/settings',
-                queryParams: { tab: 'ChatOps' },
+            ]
+          : [
+              {
+                title: t(
+                  'gops.use-get-essentials-configuration.essential-content.title.initialize-incident-plugin',
+                  'Initialize Incident plugin'
+                ),
+                description: t(
+                  'gops.use-get-essentials-configuration.essential-content.description.initialize-incident-plugin-declare-manage-incidents',
+                  'Initialize the Incident plugin to declare and manage incidents.'
+                ),
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/walkthrough/generate-key`,
+                  },
+                  label: t('gops.use-get-essentials-configuration.essential-content.label.initialize', 'Initialize'),
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}`,
+                  },
+                  labelOnDone: 'View',
+                },
+                done: isIncidentsInstalled,
               },
-              labelOnDone: 'View',
-            },
-            done: is_chatops_connected,
-          },
-          {
-            title: 'Connect your Messaging workspace to Incident',
-            description:
-              'Automatically create an incident channel and manage incidents directly within your chat environment.',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/a/grafana-incident-app/integrations/grate.slack',
+              {
+                title: t(
+                  'gops.use-get-essentials-configuration.essential-content.title.connect-your-messaging-workspace-to-on-call',
+                  'Connect your Messaging workspace to OnCall'
+                ),
+                description: t(
+                  'gops.use-get-essentials-configuration.essential-content.description.receive-alerts-oncall-notifications-within-environment',
+                  'Receive alerts and oncall notifications within your chat environment.'
+                ),
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
+                    queryParams: { tab: 'ChatOps', chatOpsTab: 'Slack' },
+                  },
+                  label: t('gops.use-get-essentials-configuration.essential-content.label.connect', 'Connect'),
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
+                    queryParams: { tab: 'ChatOps' },
+                  },
+                  labelOnDone: 'View',
+                },
+                done: is_chatops_connected,
               },
-              label: 'Connect',
-              urlLinkOnDone: {
-                url: '/a/grafana-incident-app/integrations',
+              {
+                title: t(
+                  'gops.use-get-essentials-configuration.essential-content.title.connect-your-messaging-workspace-to-incident',
+                  'Connect your Messaging workspace to Incident'
+                ),
+                description:
+                  'Automatically create an incident channel and manage incidents directly within your chat environment.',
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/grate.slack`,
+                  },
+                  label: t('gops.use-get-essentials-configuration.essential-content.label.connect', 'Connect'),
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations`,
+                  },
+                },
+                done: isChatOpsInstalled,
               },
-            },
-            done: isChatOpsInstalled,
-          },
-          {
-            title: 'Add Messaging workspace channel to OnCall Integration',
-            description: 'Select ChatOps channels to route notifications',
-            button: {
-              type: 'openLink',
-              urlLink: {
-                url: '/a/grafana-oncall-app/integrations/',
+              {
+                title: t(
+                  'gops.use-get-essentials-configuration.essential-content.title.messaging-workspace-channel-on-call-integration',
+                  'Add Messaging workspace channel to OnCall Integration'
+                ),
+                description: t(
+                  'gops.use-get-essentials-configuration.essential-content.description.select-chat-ops-channels-to-route-notifications',
+                  'Select ChatOps channels to route notifications'
+                ),
+                button: {
+                  type: 'openLink',
+                  urlLink: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
+                  },
+                  label: t('gops.use-get-essentials-configuration.essential-content.label.add', 'Add'),
+                  urlLinkOnDone: {
+                    url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
+                  },
+                  labelOnDone: 'View',
+                },
+                done: is_integration_chatops_connected,
               },
-              label: 'Add',
-              urlLinkOnDone: {
-                url: '/a/grafana-oncall-app/integrations/',
-              },
-              labelOnDone: 'View',
-            },
-            done: is_integration_chatops_connected,
-          },
-        ],
+            ],
       },
       {
-        title: 'Test your configuration',
+        title: t(
+          'gops.use-get-essentials-configuration.essential-content.title.test-your-configuration',
+          'Test your configuration'
+        ),
         description: '',
         steps: [
           {
-            title: 'Send OnCall demo alert via Alerting integration',
+            title: getIsIrmPluginPresent() ? 'Send test alert' : 'Send OnCall demo alert via Alerting integration',
             description: 'In the integration page, click Send demo alert, to review your notification',
             button: {
               type: 'dropDown',
-              label: 'Select integration',
+              label: t(
+                'gops.use-get-essentials-configuration.essential-content.label.select-integration',
+                'Select integration'
+              ),
               options: onCallOptions,
-              onClickOption: (value) => onIntegrationClick(value, '/a/grafana-oncall-app/integrations/'),
+              onClickOption: (value) =>
+                onIntegrationClick(value, `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`),
               stepNotAvailableText: 'No integrations available',
             },
           },
           {
-            title: 'Create Incident drill',
-            description: 'Practice solving an Incident',
+            title: t(
+              'gops.use-get-essentials-configuration.essential-content.title.create-incident-drill',
+              'Create Incident drill'
+            ),
+            description: t(
+              'gops.use-get-essentials-configuration.essential-content.description.practice-solving-an-incident',
+              'Practice solving an Incident'
+            ),
             button: {
               type: 'openLink',
               urlLink: {
-                url: '/a/grafana-incident-app',
+                url: `/a/${getIrmIfPresentOrIncidentPluginId()}`,
                 queryParams: { declare: 'new', drill: '1' },
               },
-              label: 'Start drill',
+              label: t('gops.use-get-essentials-configuration.essential-content.label.start-drill', 'Start drill'),
             },
           },
         ],
@@ -341,7 +498,10 @@ export const useGetConfigurationForUI = ({
       const actionButtonTitle = dataSourceCompatibleWithAlerting ? 'View' : 'Connect';
       return {
         id: ConfigurationStepsEnum.CONNECT_DATASOURCE,
-        title: 'Connect data source',
+        title: t(
+          'gops.use-get-configuration-for-ui.get-connect-data-source-configuration.title.connect-data-source',
+          'Connect data source'
+        ),
         description,
         actionButtonTitle,
         isDone: dataSourceCompatibleWithAlerting,
@@ -351,7 +511,7 @@ export const useGetConfigurationForUI = ({
       getConnectDataSourceConfiguration(),
       {
         id: ConfigurationStepsEnum.ESSENTIALS,
-        title: 'Essentials',
+        title: t('gops.use-get-configuration-for-ui.title.essentials', 'Essentials'),
         titleIcon: 'star',
         description: 'Set up the necessary features to start using Grafana IRM workflows',
         actionButtonTitle: stepsDone === totalStepsToDo ? 'View' : 'Configure',

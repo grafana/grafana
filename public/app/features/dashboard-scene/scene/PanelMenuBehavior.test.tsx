@@ -8,8 +8,8 @@ import {
   toDataFrame,
   urlUtil,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
+import { getPanelPlugin } from '@grafana/data/test';
+import { config, locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -23,7 +23,7 @@ import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
@@ -47,24 +47,17 @@ jest.mock('app/core/utils/explore', () => ({
 
 jest.mock('app/core/services/context_srv');
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  setPluginExtensionGetter: jest.fn(),
-  getPluginLinkExtensions: jest.fn(),
-}));
-
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));
 
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+const getPluginExtensionsMock = jest.fn().mockReturnValue({ extensions: [] });
+jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
+  ...jest.requireActual('app/features/plugins/extensions/getPluginExtensions'),
+  createPluginExtensionsGetter: () => getPluginExtensionsMock,
+}));
 
 describe('panelMenuBehavior', () => {
-  beforeEach(() => {
-    getPluginLinkExtensionsMock.mockRestore();
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
-  });
-
   beforeAll(() => {
     locationService.push('/d/dash-1?from=now-5m&to=now');
   });
@@ -83,7 +76,7 @@ describe('panelMenuBehavior', () => {
 
     expect(menu.state.items?.length).toBe(6);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
-    expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=panel-12');
+    expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=a$panel-12');
     // verify edit url keeps url time range
     expect(menu.state.items?.[1].href).toBe('/d/dash-1?from=now-5m&to=now&editPanel=12');
     // verify share
@@ -97,8 +90,7 @@ describe('panelMenuBehavior', () => {
     expect(getExploreArgs.queries).toEqual([{ query: 'QueryA', refId: 'A' }]);
     expect(getExploreArgs.scopedVars?.__sceneObject?.value).toBe(panel);
 
-    // verify inspect url keeps url params and adds inspect=<panel-key>
-    expect(menu.state.items?.[4].href).toBe('/d/dash-1?from=now-5m&to=now&inspect=panel-12');
+    expect(menu.state.items?.[4].text).toBe('Inspect');
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
@@ -133,7 +125,7 @@ describe('panelMenuBehavior', () => {
 
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -172,7 +164,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate menu item title to 25 chars', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -210,10 +202,51 @@ describe('panelMenuBehavior', () => {
       );
     });
 
+    it('should show icons for link extensions (if they provide it)', async () => {
+      getPluginExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident when pressing this amazing menu item',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            icon: 'external-link-alt',
+          },
+        ],
+      });
+
+      const { menu, panel } = await buildTestScene({});
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.length).toBe(7);
+
+      const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Declare incident when...',
+            href: '/a/grafana-basic-app/declare-incident',
+            iconClassName: 'external-link-alt',
+          }),
+        ])
+      );
+    });
+
     it('should pass onClick from plugin extension link to menu item', async () => {
       const expectedOnClick = jest.fn();
 
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -299,7 +332,7 @@ describe('panelMenuBehavior', () => {
         data,
       };
 
-      expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(getPluginExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
     it('should pass context with default time zone values when configuring extension', async () => {
@@ -356,11 +389,11 @@ describe('panelMenuBehavior', () => {
         data,
       };
 
-      expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(getPluginExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
     it('should contain menu item with category', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -405,7 +438,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate category to 25 chars', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -450,7 +483,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should contain menu item with category and append items without category after divider', async () => {
-      getPluginLinkExtensionsMock.mockReturnValue({
+      getPluginExtensionsMock.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -542,7 +575,7 @@ describe('panelMenuBehavior', () => {
       expect(menu.state.items?.find((i) => i.text === 'Remove')).toBeDefined();
       const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
       expect(moreMenu?.find((i) => i.text === 'Duplicate')).toBeDefined();
-      expect(moreMenu?.find((i) => i.text === 'Create library panel')).toBeDefined();
+      expect(moreMenu?.find((i) => i.text === 'New library panel')).toBeDefined();
     });
 
     it('should only contain explore when embedded', async () => {
@@ -559,6 +592,155 @@ describe('panelMenuBehavior', () => {
 
       expect(menu.state.items?.length).toBe(1);
       expect(menu.state.items?.[0].text).toBe('Explore');
+    });
+
+    describe('plugin links', () => {
+      it('should not show Metrics Drilldown menu when no Metrics Drilldown links exist', async () => {
+        getPluginExtensionsMock.mockReturnValue({
+          extensions: [
+            {
+              id: '1',
+              pluginId: '...',
+              type: PluginExtensionTypes.link,
+              title: 'Other Extension',
+              description: 'Some other extension',
+              path: '/a/other-app/action',
+            },
+          ],
+        });
+
+        const { menu, panel } = await buildTestScene({});
+
+        panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+        mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+        mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+        menu.activate();
+
+        await new Promise((r) => setTimeout(r, 1));
+
+        const metricsDrilldownMenu = menu.state.items?.find((i) => i.text === 'Metrics drilldown');
+        const extensionsMenu = menu.state.items?.find((i) => i.text === 'Extensions');
+
+        expect(metricsDrilldownMenu).toBeUndefined();
+        expect(extensionsMenu).toBeDefined();
+        expect(extensionsMenu?.subMenu).toEqual([
+          expect.objectContaining({
+            text: 'Other Extension',
+            href: '/a/other-app/action',
+          }),
+        ]);
+      });
+
+      it('should separate Metrics Drilldown links into their own menu', async () => {
+        getPluginExtensionsMock.mockReturnValue({
+          extensions: [
+            {
+              id: '1',
+              pluginId: '...',
+              type: PluginExtensionTypes.link,
+              title: 'Open in Metrics Drilldown',
+              description: 'Open current query in Metrics Drilldown',
+              path: '/a/grafana-metricsdrilldown-app/trail',
+              category: 'metrics-drilldown',
+            },
+            {
+              id: '2',
+              pluginId: '...',
+              type: PluginExtensionTypes.link,
+              title: 'Other Extension',
+              description: 'Some other extension',
+              path: '/a/other-app/action',
+            },
+          ],
+        });
+
+        const { menu, panel } = await buildTestScene({});
+
+        panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+        mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+        mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+        menu.activate();
+
+        await new Promise((r) => setTimeout(r, 1));
+
+        expect(menu.state.items?.length).toBe(8); // 6 base items + 2 extension menus
+
+        const metricsDrilldownMenu = menu.state.items?.find((i) => i.text === 'Metrics drilldown');
+        const extensionsMenu = menu.state.items?.find((i) => i.text === 'Extensions');
+
+        expect(metricsDrilldownMenu).toBeDefined();
+        expect(metricsDrilldownMenu?.iconClassName).toBe('code-branch');
+        expect(metricsDrilldownMenu?.subMenu).toEqual([
+          expect.objectContaining({
+            text: 'metrics-drilldown',
+            type: 'group',
+            subMenu: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Open in Metrics Drilld...',
+                href: '/a/grafana-metricsdrilldown-app/trail',
+              }),
+            ]),
+          }),
+        ]);
+
+        expect(extensionsMenu).toBeDefined();
+        expect(extensionsMenu?.iconClassName).toBe('plug');
+        expect(extensionsMenu?.subMenu).toEqual([
+          expect.objectContaining({
+            text: 'Other Extension',
+            href: '/a/other-app/action',
+          }),
+        ]);
+      });
+
+      it('should not show extensions menu when no non-Metrics Drilldown links exist', async () => {
+        getPluginExtensionsMock.mockReturnValue({
+          extensions: [
+            {
+              id: '1',
+              pluginId: '...',
+              type: PluginExtensionTypes.link,
+              title: 'Open in Metrics Drilldown',
+              description: 'Open current query in Metrics Drilldown',
+              path: '/a/grafana-metricsdrilldown-app/trail',
+              category: 'metrics-drilldown',
+            },
+          ],
+        });
+
+        const { menu, panel } = await buildTestScene({});
+
+        panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+        mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+        mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+        menu.activate();
+
+        await new Promise((r) => setTimeout(r, 1));
+
+        const metricsDrilldownMenu = menu.state.items?.find((i) => i.text === 'Metrics drilldown');
+        const extensionsMenu = menu.state.items?.find((i) => i.text === 'Extensions');
+
+        expect(metricsDrilldownMenu).toBeDefined();
+        expect(extensionsMenu).toBeUndefined();
+        expect(metricsDrilldownMenu?.subMenu).toEqual([
+          expect.objectContaining({
+            text: 'metrics-drilldown',
+            type: 'group',
+            subMenu: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Open in Metrics Drilld...',
+                href: '/a/grafana-metricsdrilldown-app/trail',
+              }),
+            ]),
+          }),
+        ]);
+      });
     });
   });
 

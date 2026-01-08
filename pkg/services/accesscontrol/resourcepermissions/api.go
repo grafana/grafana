@@ -11,8 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -23,20 +26,39 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/resourcepermissions")
 
 type api struct {
-	cfg         *setting.Cfg
-	ac          accesscontrol.AccessControl
-	router      routing.RouteRegister
-	service     *Service
-	permissions []string
+	cfg                *setting.Cfg
+	ac                 accesscontrol.AccessControl
+	router             routing.RouteRegister
+	service            *Service
+	permissions        []string
+	features           featuremgmt.FeatureToggles
+	restConfigProvider apiserver.RestConfigProvider
+	logger             log.Logger
 }
 
-func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service) *api {
+func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, features featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) *api {
 	permissions := make([]string, 0, len(manager.permissions))
 	// reverse the permissions order for display
 	for i := len(manager.permissions) - 1; i >= 0; i-- {
 		permissions = append(permissions, manager.permissions[i])
 	}
-	return &api{cfg, ac, router, manager, permissions}
+	return &api{
+		cfg:                cfg,
+		ac:                 ac,
+		router:             router,
+		service:            manager,
+		permissions:        permissions,
+		features:           features,
+		restConfigProvider: restConfigProvider,
+		logger:             log.New("resource-permissions-api"),
+	}
+}
+
+// shouldUseK8sAPIs returns true if both feature flags for K8s API redirect are enabled
+func (a *api) shouldUseK8sAPIs() bool {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	return a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZHandlerRedirect) &&
+		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis)
 }
 
 func (a *api) registerEndpoints() {
@@ -176,6 +198,21 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZHandlerRedirect) &&
+		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+		k8sPermissions, err := a.getResourcePermissionsFromK8s(c.Req.Context(), c.Namespace, resourceID)
+		if err == nil {
+			return response.JSON(http.StatusOK, k8sPermissions)
+		}
+		span.RecordError(err)
+		if errors.Is(err, ErrRestConfigNotAvailable) {
+			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		} else {
+			a.logger.Warn("Failed to get resource permissions from k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		}
+	}
+
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get permissions", err)
@@ -273,12 +310,30 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	}
 	resourceID := web.Params(c.Req)[":resourceID"]
 
+	resp := a.validateTeamResource(c, resourceID)
+	if resp != nil {
+		return resp
+	}
+
 	var cmd setPermissionCommand
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetUserPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
+	if a.shouldUseK8sAPIs() {
+		err := a.setUserPermissionToK8s(c.Req.Context(), c.Namespace, resourceID, userID, cmd.Permission)
+		if err == nil {
+			return permissionSetResponse(cmd)
+		}
+		span.RecordError(err)
+		if errors.Is(err, ErrRestConfigNotAvailable) {
+			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		} else {
+			a.logger.Warn("Failed to set user permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		}
+	}
+
+	_, err = a.service.SetUserPermission(c.Req.Context(), c.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -335,7 +390,20 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetTeamPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, resourceID, cmd.Permission)
+	if a.shouldUseK8sAPIs() {
+		err := a.setTeamPermissionToK8s(c.Req.Context(), c.Namespace, resourceID, teamID, cmd.Permission)
+		if err == nil {
+			return permissionSetResponse(cmd)
+		}
+		span.RecordError(err)
+		if errors.Is(err, ErrRestConfigNotAvailable) {
+			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		} else {
+			a.logger.Warn("Failed to set team permission in k8s API, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		}
+	}
+
+	_, err = a.service.SetTeamPermission(c.Req.Context(), c.GetOrgID(), teamID, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -389,7 +457,18 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.SignedInUser.GetOrgID(), builtInRole, resourceID, cmd.Permission)
+	if a.shouldUseK8sAPIs() {
+		err := a.setBuiltInRolePermissionToK8s(c.Req.Context(), c.Namespace, resourceID, builtInRole, cmd.Permission)
+		if err == nil {
+			return permissionSetResponse(cmd)
+		}
+		span.RecordError(err)
+		if errors.Is(err, ErrRestConfigNotAvailable) {
+			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		}
+	}
+
+	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.GetOrgID(), builtInRole, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -437,12 +516,53 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Bad request data: "+err.Error(), err)
 	}
 
-	_, err := a.service.SetPermissions(ctx, c.SignedInUser.GetOrgID(), resourceID, cmd.Permissions...)
+	if a.shouldUseK8sAPIs() {
+		err := a.setResourcePermissionsToK8s(c.Req.Context(), c.Namespace, resourceID, cmd.Permissions)
+		if err == nil {
+			return response.Success("Permissions updated")
+		}
+		span.RecordError(err)
+		if errors.Is(err, ErrRestConfigNotAvailable) {
+			a.logger.Debug("k8s API not available for resource permissions, falling back to legacy", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+		}
+	}
+
+	_, err := a.service.SetPermissions(ctx, c.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
 		return response.Err(err)
 	}
 
 	return response.Success("Permissions updated")
+}
+
+func (a *api) validateTeamResource(c *contextmodel.ReqContext, resourceID string) response.Response {
+	if a.service.options.Resource != "teams" {
+		return nil
+	}
+
+	teamID, err := strconv.ParseInt(resourceID, 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid ResourceID", err)
+	}
+
+	existingTeam, err := a.service.teamService.GetTeamByID(c.Req.Context(), &team.GetTeamByIDQuery{
+		OrgID:        c.GetOrgID(),
+		ID:           teamID,
+		SignedInUser: c.SignedInUser,
+	})
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	if existingTeam.IsProvisioned {
+		return response.Error(http.StatusBadRequest, "Team permissions cannot be updated for provisioned teams", nil)
+	}
+
+	return nil
 }
 
 func permissionSetResponse(cmd setPermissionCommand) response.Response {

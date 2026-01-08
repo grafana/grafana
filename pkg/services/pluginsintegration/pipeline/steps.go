@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"slices"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -19,8 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -57,7 +59,7 @@ func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.P
 
 	ctxLogger := r.log.FromContext(ctx)
 
-	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, pfs.Type(p.Type), p.IAM)
+	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, string(p.Type), p.IAM)
 	if err != nil {
 		ctxLogger.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
 		span.SetStatus(codes.Error, fmt.Sprintf("could not register external service: %v", err))
@@ -122,9 +124,9 @@ func (r *RegisterActionSets) Register(ctx context.Context, p *plugins.Plugin) (*
 	return p, nil
 }
 
-// ReportBuildMetrics reports build information for all plugins, except core and bundled plugins.
+// ReportBuildMetrics reports build information for all plugins, except core plugins.
 func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if !p.IsCorePlugin() && !p.IsBundledPlugin() {
+	if !p.IsCorePlugin() {
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
 
@@ -138,6 +140,65 @@ func ReportTargetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin,
 	}
 
 	return p, nil
+}
+
+// ReportFSMetrics reports plugin filesystem information for all non-core plugins.
+func ReportFSMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if p.IsCorePlugin() {
+		// No metrics for core plugins
+		return p, nil
+	}
+
+	metrics.SetPluginFSInformation(p.ID, string(p.FS.Type()))
+	return p, nil
+}
+
+// ReportAssetMetrics reports plugin asset information for all non-core plugins.
+func ReportAssetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if p.IsCorePlugin() {
+		// No metrics for core plugins
+		return p, nil
+	}
+
+	u, err := url.ParseRequestURI(p.BaseURL)
+	if err == nil && u.Host != "" {
+		metrics.SetPluginAssetInformation(p.ID, "remote")
+		return p, nil
+	}
+
+	metrics.SetPluginAssetInformation(p.ID, "local")
+	return p, nil
+}
+
+// ReportCloudProvisioningMetrics reports plugin cloud provisioning information for all non-core plugins.
+func ReportCloudProvisioningMetrics(ppManaged provisionedplugins.Manager) initialization.InitializeFunc {
+	cloudProvisioningMethod := plugins.CloudProvisioningMethodNone
+	pps, err := ppManaged.ProvisionedPlugins(context.Background())
+	if err != nil {
+		cloudProvisioningMethod = plugins.CloudProvisioningMethodUnknown
+		logger.Warn("Failed to get provisioned plugins", "error", err)
+	}
+
+	return func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		if p.IsCorePlugin() {
+			// No metrics for core plugins
+			return p, nil
+		}
+
+		for _, pp := range pps {
+			if pp.ID != p.ID {
+				continue
+			}
+			if pp.URL == "" {
+				cloudProvisioningMethod = plugins.CloudProvisioningMethodCatalog
+			} else {
+				cloudProvisioningMethod = plugins.CloudProvisioningMethodURL
+			}
+			metrics.SetPluginProvisioningInformation(p.ID, string(cloudProvisioningMethod))
+		}
+
+		return p, nil
+	}
 }
 
 // SignatureValidation implements a ValidateFunc for validating plugin signatures.
@@ -224,10 +285,6 @@ func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 
 // Filter will filter out any plugins that are marked to be disabled.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	if !c.cfg.Features.ExternalCorePluginsEnabled {
-		return bundles, nil
-	}
-
 	if cl == plugins.ClassCore {
 		res := []*plugins.FoundBundle{}
 		for _, bundle := range bundles {

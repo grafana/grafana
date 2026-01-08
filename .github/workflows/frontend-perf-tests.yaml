@@ -1,0 +1,133 @@
+name: Frontend performance tests
+
+on:
+  schedule:
+    - cron: "0 * * * *" # Run hourly
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  performance-tests:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-x64-large
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - id: get-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@62722333225a1fae03ae27a63d638f9bc2176edb #get-vault-secrets-v1.2.0
+        with:
+          repo_secrets: |
+            PROMETHEUS_URL=frontend_perf_tests:prometheus_push_url
+            PROMETHEUS_USER=frontend_perf_tests:prometheus_user
+            PROMETHEUS_TOKEN=frontend_perf_tests:prometheus_token
+            FSPERFBASELINE_USERNAME=frontend_perf_tests:fsperfbaseline_username
+            FSPERFBASELINE_PASSWORD=frontend_perf_tests:fsperfbaseline_password
+            FSPERF_USERNAME=frontend_perf_tests:fsperf_username
+            FSPERF_PASSWORD=frontend_perf_tests:fsperf_password
+
+      - name: Authenticate Docker
+        uses: grafana/shared-workflows/actions/login-to-gar@main
+        id: login-to-gar
+        with:
+          registry: 'us-docker.pkg.dev'
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Yarn install
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Install Playwright browsers
+        run: yarn playwright install chromium --with-deps
+
+      - name: Run Playwright tests (fsperfbaseline)
+        id: pw-fsperfbaseline
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ./fsperfbaseline-pw-results.json
+          METRICS_OUTPUT_PATH: ./fsperfbaseline-metrics.txt
+          GRAFANA_URL: https://fsperfbaseline.grafana-dev.net
+          GRAFANA_ADMIN_USER: ${{ env.FSPERFBASELINE_USERNAME }}
+          GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERFBASELINE_PASSWORD }}
+        run: yarn e2e:playwright --grep @performance --reporter json
+
+      - name: Run Playwright tests (fsperf)
+        id: pw-fsperf
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ./fsperf-pw-results.json
+          METRICS_OUTPUT_PATH: ./fsperf-metrics.txt
+          GRAFANA_URL: https://fsperf.grafana-dev.net
+          GRAFANA_ADMIN_USER: ${{ env.FSPERF_USERNAME }}
+          GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERF_PASSWORD }}
+        run: yarn e2e:playwright --grep @performance --reporter json
+
+      - name: Bench report (fsperfbaseline)
+        id: bench-fsperfbaseline
+        if: always()
+        continue-on-error: true
+        run: |
+          docker run \
+            --rm \
+            --volume="./fsperfbaseline-pw-results.json:/pw-results.json" \
+            --volume="./fsperfbaseline-metrics.txt:/metrics.txt" \
+            -e PROMETHEUS_URL="$PROMETHEUS_URL" \
+            -e PROMETHEUS_USER="$PROMETHEUS_USER" \
+            -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.1 report \
+              --grafana-url "http://fsperfbaseline.grafana-dev.net" \
+              --test-suite-name "FrontendPerfTests" \
+              --report-input playwright \
+              --report-output log \
+              --prometheus-metrics \
+              --run-metrics-file "/metrics.txt" \
+              --log-level DEBUG \
+              /pw-results.json
+
+      - name: Bench report (fsperf)
+        id: bench-fsperf
+        if: always()
+        continue-on-error: true
+        run: |
+          docker run \
+            --rm \
+            --volume="./fsperf-pw-results.json:/pw-results.json" \
+            --volume="./fsperf-metrics.txt:/metrics.txt" \
+            -e PROMETHEUS_URL="$PROMETHEUS_URL" \
+            -e PROMETHEUS_USER="$PROMETHEUS_USER" \
+            -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.1 report \
+              --grafana-url "http://fsperf.grafana-dev.net" \
+              --test-suite-name "FrontendPerfTests" \
+              --report-input playwright \
+              --report-output log \
+              --prometheus-metrics \
+              --run-metrics-file "/metrics.txt" \
+              --log-level DEBUG \
+              /pw-results.json
+
+      - name: Check status
+        env:
+          FSPERF_PW_OUTCOME: ${{ steps.pw-fsperf.outcome }}
+          FSPERF_PW_BASELINE_OUTCOME: ${{ steps.pw-fsperfbaseline.outcome }}
+          FSPERF_BENCH_OUTCOME: ${{ steps.bench-fsperf.outcome }}
+          FSPERF_BENCH_BASELINE_OUTCOME: ${{ steps.bench-fsperfbaseline.outcome }}
+
+        run: |
+          echo "FSPERF_PW_OUTCOME: $FSPERF_PW_OUTCOME"
+          echo "FSPERF_PW_BASELINE_OUTCOME: $FSPERF_PW_BASELINE_OUTCOME"
+          echo "FSPERF_BENCH_OUTCOME: $FSPERF_BENCH_OUTCOME"
+          echo "FSPERF_BENCH_BASELINE_OUTCOME: $FSPERF_BENCH_BASELINE_OUTCOME"
+
+          if [[ "$FSPERF_PW_OUTCOME" != "success" || "$FSPERF_PW_BASELINE_OUTCOME" != "success" || "$FSPERF_BENCH_OUTCOME" != "success" || "$FSPERF_BENCH_BASELINE_OUTCOME" != "success" ]]; then
+            echo "One or more test steps failed."
+            exit 1
+          fi

@@ -23,11 +23,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -156,7 +156,9 @@ func TestMetrics(t *testing.T) {
 	})
 }
 
-func TestGetUsageReport_IncludesMetrics(t *testing.T) {
+func TestIntegrationGetUsageReport_IncludesMetrics(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, sqlStore, true)
 	metricName := "stats.test_metric.count"
@@ -248,7 +250,7 @@ func createService(t *testing.T, sqlStore db.DB, withDB bool) *UsageStats {
 		kvstore.ProvideService(sqlStore),
 		routing.NewRouteRegister(),
 		tracing.InitializeTracerForTest(),
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		supportbundlestest.NewFakeBundleService(),
 	)
 

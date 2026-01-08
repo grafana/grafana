@@ -1,9 +1,10 @@
 import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
+import { ElasticsearchDataQuery } from './dataquery.gen';
 import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
 import pluginJson from './plugin.json';
-import { ElasticsearchAnnotationQuery, ElasticsearchQuery } from './types';
+import { ElasticsearchAnnotationQuery } from './types';
 import { variableRegex } from './utils';
 
 type ElasticSearchOnDashboardLoadedTrackingEvent = {
@@ -38,7 +39,7 @@ type ElasticSearchOnDashboardLoadedTrackingEvent = {
 
 export const onDashboardLoadedHandler = ({
   payload: { dashboardId, orgId, grafanaVersion, queries },
-}: DashboardLoadedEvent<ElasticsearchQuery>) => {
+}: DashboardLoadedEvent<ElasticsearchDataQuery>) => {
   try {
     // We only want to track visible ElasticSearch queries
     const elasticsearchQueries = queries[pluginJson.id]?.filter((query) => !query.hide);
@@ -74,7 +75,7 @@ export const onDashboardLoadedHandler = ({
   }
 };
 
-const getQueryType = (query: ElasticsearchQuery): string | undefined => {
+const getQueryType = (query: ElasticsearchDataQuery): string | undefined => {
   if (!query.metrics || !query.metrics.length) {
     return undefined;
   }
@@ -85,7 +86,7 @@ const getQueryType = (query: ElasticsearchQuery): string | undefined => {
   return 'metric';
 };
 
-const getLineLimit = (query: ElasticsearchQuery): number | undefined => {
+const getLineLimit = (query: ElasticsearchDataQuery): number | undefined => {
   if (query.metrics?.[0]?.type !== 'logs') {
     return undefined;
   }
@@ -94,12 +95,12 @@ const getLineLimit = (query: ElasticsearchQuery): number | undefined => {
   return lineLimit ? parseInt(lineLimit, 10) : undefined;
 };
 
-const isQueryWithChangedLineLimit = (query: ElasticsearchQuery): boolean => {
+const isQueryWithChangedLineLimit = (query: ElasticsearchDataQuery): boolean => {
   const lineLimit = getLineLimit(query);
   return lineLimit !== undefined && lineLimit !== 500;
 };
 
-const isQueryWithTemplateVariables = (query: ElasticsearchQuery): boolean => {
+const isQueryWithTemplateVariables = (query: ElasticsearchDataQuery): boolean => {
   return variableRegex.test(query.query ?? '');
 };
 
@@ -112,7 +113,7 @@ const shouldNotReportBasedOnRefId = (refId: string): boolean => {
 
 export function trackQuery(
   response: DataQueryResponse,
-  request: DataQueryRequest<ElasticsearchQuery> & { targets: ElasticsearchQuery[] },
+  request: DataQueryRequest<ElasticsearchDataQuery> & { targets: ElasticsearchDataQuery[] },
   startTime: Date
 ): void {
   const { targets: queries, app } = request;

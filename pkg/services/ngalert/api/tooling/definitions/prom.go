@@ -89,6 +89,8 @@ type RuleGroup struct {
 	Name string `json:"name"`
 	// required: true
 	File string `json:"file"`
+	// required: true
+	FolderUID string `json:"folderUid"`
 	// In order to preserve rule ordering, while exposing type (alerting or recording)
 	// specific properties, both alerting and recording rules are exposed in the
 	// same array.
@@ -150,8 +152,10 @@ type AlertingRule struct {
 	// required: true
 	Name string `json:"name,omitempty"`
 	// required: true
-	Query    string  `json:"query,omitempty"`
-	Duration float64 `json:"duration,omitempty"`
+	Query                 string   `json:"query,omitempty"`
+	QueriedDatasourceUIDs []string `json:"queriedDatasourceUIDs,omitempty"`
+	Duration              float64  `json:"duration,omitempty"`
+	KeepFiringFor         float64  `json:"keepFiringFor,omitempty"`
 	// required: true
 	Annotations promlabels.Labels `json:"annotations,omitempty"`
 	// required: true
@@ -165,8 +169,10 @@ type AlertingRule struct {
 // adapted from cortex
 // swagger:model
 type Rule struct {
+	UID string `json:"uid,omitempty"`
 	// required: true
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	FolderUID string `json:"folderUid,omitempty"`
 	// required: true
 	Query  string            `json:"query"`
 	Labels promlabels.Labels `json:"labels,omitempty"`
@@ -174,9 +180,12 @@ type Rule struct {
 	Health    string `json:"health"`
 	LastError string `json:"lastError,omitempty"`
 	// required: true
-	Type           string    `json:"type"`
-	LastEvaluation time.Time `json:"lastEvaluation"`
-	EvaluationTime float64   `json:"evaluationTime"`
+	Type                 string                         `json:"type"`
+	LastEvaluation       time.Time                      `json:"lastEvaluation"`
+	EvaluationTime       float64                        `json:"evaluationTime"`
+	IsPaused             bool                           `json:"isPaused"`
+	NotificationSettings *AlertRuleNotificationSettings `json:"notificationSettings,omitempty"`
+	Provenance           Provenance                     `json:"provenance,omitempty"`
 }
 
 // Alert has info for an alert.
@@ -368,10 +377,95 @@ type GetGrafanaRuleStatusesParams struct {
 	// Filter the list of rules to those that belong to the specified dashboard UID.
 	// in: query
 	// required: false
-	DashboardUID string
+	DashboardUID string `json:"dashboard_uid"`
 
 	// Filter the list of rules to those that belong to the specified panel ID. Dashboard UID must be specified.
 	// in: query
 	// required: false
-	PanelID int64
+	PanelID int64 `json:"panel_id"`
+
+	// Filter the list of rules to those that belong to the specified folder UID.
+	// in: query
+	// required: false
+	FolderUID string `json:"folder_uid"`
+
+	// Filter the list of rules to those that belong to the specified rule group(s). Can be specified multiple times.
+	// in: query
+	// required: false
+	RuleGroup []string `json:"rule_group"`
+
+	// Filter the list of rules to those that reference the specified receiver/contact point.
+	// in: query
+	// required: false
+	ReceiverName string `json:"receiver_name"`
+
+	// Search rules by title (case insensitive substring match).
+	// in: query
+	// required: false
+	SearchRuleName string `json:"search.rule_name"`
+
+	// Search rules by rule group name (case insensitive substring match).
+	// in: query
+	// required: false
+	SearchRuleGroup string `json:"search.rule_group"`
+
+	// Filter the list of rules to those whose titles exactly match the specified values. Can be specified multiple times.
+	// in: query
+	// required: false
+	RuleName []string `json:"rule_name"`
+
+	// Filter by rule type: "alerting" or "recording".
+	// in: query
+	// required: false
+	RuleType string `json:"rule_type"`
+
+	// Filter by alert state: "normal" (or "inactive"), "pending", "alerting" (or "firing"), "nodata", "error", "recovering".
+	// in: query
+	// required: false
+	State []string `json:"state"`
+
+	// Filter by rule health: "ok", "error", "nodata".
+	// in: query
+	// required: false
+	Health []string `json:"health"`
+
+	// Limit the number of alert instances per rule.
+	// in: query
+	// required: false
+	// default: -1
+	LimitAlerts int64 `json:"limit_alerts"`
+
+	// Limit the number of rules per group.
+	// in: query
+	// required: false
+	// default: -1
+	LimitRules int64 `json:"limit_rules"`
+
+	// Limit the number of rule groups returned.
+	// in: query
+	// required: false
+	// default: -1
+	GroupLimit int64 `json:"group_limit"`
+
+	// Limit the total number of rules returned across all groups. Returns complete groups until the limit is met or exceeded.
+	// in: query
+	// required: false
+	// default: -1
+	RuleLimit int64 `json:"rule_limit"`
+
+	// Continuation token for pagination. Use the value returned in the previous response's "groupNextToken" field.
+	// in: query
+	// required: false
+	GroupNextToken string `json:"group_next_token"`
+
+	// Filter by label matchers encoded as JSON representations of Prometheus matchers (for example, {"type":0,"name":"severity","value":"critical"}). Provide one matcher per query string value.
+	// in: query
+	// required: false
+	Matchers []string `json:"matcher"`
+
+	// Filter rules by their static labels (not alert instance labels). Each value is a JSON-encoded Prometheus-like matcher (for example, {"type":0,"name":"severity","value":"critical"}).
+	// For equality matchers with empty string values (e.g., name=""), rules that have the label with an empty value OR rules without the label will match (standard Prometheus behavior).
+	// in: query
+	// required: false
+	RuleLabelMatchers []string `json:"rule_matcher"`
 }

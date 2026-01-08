@@ -12,6 +12,7 @@ describe('Rows to fields', () => {
         { name: 'Miiin', type: FieldType.number, values: [3, 100] },
         { name: 'max', type: FieldType.string, values: [15, 200] },
       ],
+      refId: 'A',
     });
 
     const result = rowsToFields(
@@ -57,6 +58,7 @@ describe('Rows to fields', () => {
           },
         ],
         "length": 1,
+        "refId": "rowsToFields-A",
       }
     `);
   });

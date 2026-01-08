@@ -406,6 +406,14 @@
             "name": "teamId",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetTeamRolesCommand"
+            }
           }
         ],
         "responses": {
@@ -718,7 +726,7 @@
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
         "tags": [
-          "ldap_debug",
+          "admin_ldap",
           "enterprise"
         ],
         "summary": "Returns the current state of the LDAP background sync integration.",
@@ -742,7 +750,8 @@
     "/admin/provisioning/access-control/reload": {
       "post": {
         "tags": [
-          "access_control_provisioning",
+          "admin_provisioning",
+          "access_control",
           "enterprise"
         ],
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
@@ -1257,7 +1266,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `licensing:update`.",
+        "description": "You need to have a permission with action `licensing:write`.",
         "tags": [
           "licensing",
           "enterprise"
@@ -1325,7 +1334,7 @@
     },
     "/licensing/token/renew": {
       "post": {
-        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:update`.",
+        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:write`.",
         "tags": [
           "licensing",
           "enterprise"
@@ -1697,6 +1706,39 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/dashboards/{uid}": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
+        "summary": "List reports by dashboard uid.",
+        "operationId": "getReportsByDashboardUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getReportsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -2221,8 +2263,7 @@
         "operationId": "getTeamGroupsApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -2266,8 +2307,7 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -2308,8 +2348,7 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "name": "teamId",
             "in": "path",
             "required": true
@@ -2330,6 +2369,69 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/teams/{teamId}/groups/search": {
+      "get": {
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ],
+        "summary": "Search for team groups with optional filtering and pagination.",
+        "operationId": "searchTeamGroups",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1000,
+            "description": "Number of items per page",
+            "name": "perpage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by exact name match",
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchTeamGroupsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -2374,27 +2476,6 @@
           "format": "int64"
         },
         "active_viewers": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "AddAPIKeyCommand": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
-        },
-        "secondsToLive": {
           "type": "integer",
           "format": "int64"
         }
@@ -2502,6 +2583,9 @@
     },
     "AddTeamMemberCommand": {
       "type": "object",
+      "required": [
+        "userId"
+      ],
       "properties": {
         "userId": {
           "type": "integer",
@@ -2722,6 +2806,7 @@
           "format": "int64"
         },
         "dashboardId": {
+          "description": "Deprecated: Use DashboardUID and OrgID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -2779,6 +2864,7 @@
       }
     },
     "AnnotationActions": {
+      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "canAdd": {
@@ -2801,6 +2887,9 @@
         "dashboardId": {
           "type": "integer",
           "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
         },
         "id": {
           "type": "integer",
@@ -2837,7 +2926,6 @@
     },
     "AnnotationPanelFilter": {
       "type": "object",
-      "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
       "properties": {
         "exclude": {
           "description": "Should the specified panels be included or excluded",
@@ -2848,12 +2936,13 @@
           "type": "array",
           "items": {
             "type": "integer",
-            "format": "int64"
+            "format": "uint8"
           }
         }
       }
     },
     "AnnotationPermission": {
+      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "dashboard": {
@@ -2871,7 +2960,7 @@
         "builtIn": {
           "description": "Set to 1 for the standard annotation query all dashboards have by default.",
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "datasource": {
           "$ref": "#/definitions/DataSourceRef"
@@ -2893,6 +2982,10 @@
         },
         "name": {
           "description": "Name of annotation.",
+          "type": "string"
+        },
+        "placement": {
+          "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
           "type": "string"
         },
         "target": {
@@ -2927,38 +3020,6 @@
         "type": {
           "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
           "type": "string"
-        }
-      }
-    },
-    "ApiKeyDTO": {
-      "type": "object",
-      "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
-        "expiration": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lastUsedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "name": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
         }
       }
     },
@@ -3207,6 +3268,24 @@
             "type": "string"
           }
         },
+        "InhibitAnyPolicy": {
+          "description": "InhibitAnyPolicy and InhibitAnyPolicyZero indicate the presence and value\nof the inhibitAnyPolicy extension.\n\nThe value of InhibitAnyPolicy indicates the number of additional\ncertificates in the path after this certificate that may use the\nanyPolicy policy OID to indicate a match with any other policy.\n\nWhen parsing a certificate, a positive non-zero InhibitAnyPolicy means\nthat the field was specified, -1 means it was unset, and\nInhibitAnyPolicyZero being true mean that the field was explicitly set to\nzero. The case of InhibitAnyPolicy==0 with InhibitAnyPolicyZero==false\nshould be treated equivalent to -1 (unset).",
+          "type": "integer",
+          "format": "int64"
+        },
+        "InhibitAnyPolicyZero": {
+          "description": "InhibitAnyPolicyZero indicates that InhibitAnyPolicy==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+          "type": "boolean"
+        },
+        "InhibitPolicyMapping": {
+          "description": "InhibitPolicyMapping and InhibitPolicyMappingZero indicate the presence\nand value of the inhibitPolicyMapping field of the policyConstraints\nextension.\n\nThe value of InhibitPolicyMapping indicates the number of additional\ncertificates in the path after this certificate that may use policy\nmapping.\n\nWhen parsing a certificate, a positive non-zero InhibitPolicyMapping\nmeans that the field was specified, -1 means it was unset, and\nInhibitPolicyMappingZero being true mean that the field was explicitly\nset to zero. The case of InhibitPolicyMapping==0 with\nInhibitPolicyMappingZero==false should be treated equivalent to -1\n(unset).",
+          "type": "integer",
+          "format": "int64"
+        },
+        "InhibitPolicyMappingZero": {
+          "description": "InhibitPolicyMappingZero indicates that InhibitPolicyMapping==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+          "type": "boolean"
+        },
         "IsCA": {
           "type": "boolean"
         },
@@ -3271,17 +3350,24 @@
           }
         },
         "Policies": {
-          "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
+          "description": "Policies contains all policy identifiers included in the certificate.\nSee CreateCertificate for context about how this field and the PolicyIdentifiers field\ninteract.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
           "type": "array",
           "items": {
             "type": "string"
           }
         },
         "PolicyIdentifiers": {
-          "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.",
+          "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.\nSee CreateCertificate for context about how this field and the Policies field\ninteract.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ObjectIdentifier"
+          }
+        },
+        "PolicyMappings": {
+          "description": "PolicyMappings contains a list of policy mappings included in the certificate.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PolicyMapping"
           }
         },
         "PublicKey": {},
@@ -3322,6 +3408,15 @@
             "type": "integer",
             "format": "uint8"
           }
+        },
+        "RequireExplicitPolicy": {
+          "description": "RequireExplicitPolicy and RequireExplicitPolicyZero indicate the presence\nand value of the requireExplicitPolicy field of the policyConstraints\nextension.\n\nThe value of RequireExplicitPolicy indicates the number of additional\ncertificates in the path after this certificate before an explicit policy\nis required for the rest of the path. When an explicit policy is required,\neach subsequent certificate in the path must contain a required policy OID,\nor a policy OID which has been declared as equivalent through the policy\nmapping extension.\n\nWhen parsing a certificate, a positive non-zero RequireExplicitPolicy\nmeans that the field was specified, -1 means it was unset, and\nRequireExplicitPolicyZero being true mean that the field was explicitly\nset to zero. The case of RequireExplicitPolicy==0 with\nRequireExplicitPolicyZero==false should be treated equivalent to -1\n(unset).",
+          "type": "integer",
+          "format": "int64"
+        },
+        "RequireExplicitPolicyZero": {
+          "description": "RequireExplicitPolicyZero indicates that RequireExplicitPolicy==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+          "type": "boolean"
         },
         "SerialNumber": {
           "type": "string"
@@ -3435,24 +3530,6 @@
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
       "format": "double"
-    },
-    "CookiePreferences": {
-      "type": "object",
-      "title": "CookiePreferences defines model for CookiePreferences.",
-      "properties": {
-        "analytics": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "functional": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "performance": {
-          "type": "object",
-          "additionalProperties": {}
-        }
-      }
     },
     "CookieType": {
       "type": "string"
@@ -3699,12 +3776,11 @@
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
-            1,
-            2
+            1
           ]
         },
         "model": {
@@ -3765,6 +3841,9 @@
         },
         "state": {
           "$ref": "#/definitions/State"
+        },
+        "subject": {
+          "type": "string"
         }
       }
     },
@@ -3869,6 +3948,30 @@
         }
       }
     },
+    "CreateSnapshotRequestDTO": {
+      "type": "object",
+      "properties": {
+        "resourceTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "ALERT_RULE_GROUP",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING",
+              "PLUGIN"
+            ]
+          }
+        }
+      }
+    },
     "CreateSnapshotResponseDTO": {
       "type": "object",
       "properties": {
@@ -3879,6 +3982,9 @@
     },
     "CreateTeamCommand": {
       "type": "object",
+      "required": [
+        "name"
+      ],
       "properties": {
         "email": {
           "type": "string"
@@ -4055,6 +4161,9 @@
         "annotationsPermissions": {
           "$ref": "#/definitions/AnnotationPermission"
         },
+        "apiVersion": {
+          "type": "string"
+        },
         "canAdmin": {
           "type": "boolean"
         },
@@ -4227,6 +4336,20 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "DashboardVersionResponseMeta": {
+      "type": "object",
+      "properties": {
+        "continueToken": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardVersionMeta"
+          }
         }
       }
     },
@@ -4745,6 +4868,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
+        },
         "orgId": {
           "type": "integer",
           "format": "int64"
@@ -4788,6 +4914,9 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
         },
         "parentUid": {
           "type": "string"
@@ -5039,6 +5168,9 @@
     "Hit": {
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
         "folderId": {
           "type": "integer",
           "format": "int64"
@@ -5061,6 +5193,10 @@
         },
         "isStarred": {
           "type": "boolean"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
         },
         "permanentlyDeleteDate": {
           "type": "string",
@@ -5355,6 +5491,7 @@
           "format": "int64"
         },
         "id": {
+          "description": "Deprecated: this field will be removed in the future",
           "type": "integer",
           "format": "int64"
         },
@@ -5460,7 +5597,6 @@
     },
     "LibraryElementDTOMetaUser": {
       "type": "object",
-      "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
       "properties": {
         "avatarUrl": {
           "type": "string"
@@ -5532,6 +5668,11 @@
           "$ref": "#/definitions/SupportedTransformationTypes"
         }
       }
+    },
+    "ManagerKind": {
+      "description": "It can be a user or a tool or a generic API client.\n+enum",
+      "type": "string",
+      "title": "ManagerKind is the type of manager, which is responsible for managing the resource."
     },
     "MassDeleteAnnotationsCmd": {
       "type": "object",
@@ -5627,6 +5768,8 @@
         "errorCode": {
           "type": "string",
           "enum": [
+            "ALERT_RULES_QUOTA_REACHED",
+            "ALERT_RULES_GROUP_QUOTA_REACHED",
             "DATASOURCE_NAME_CONFLICT",
             "DATASOURCE_INVALID_URL",
             "DATASOURCE_ALREADY_MANAGED",
@@ -5637,7 +5780,6 @@
             "RESOURCE_CONFLICT",
             "UNEXPECTED_STATUS_CODE",
             "INTERNAL_SERVICE_ERROR",
-            "ONLY_CORE_DATA_SOURCES",
             "GENERIC_ERROR"
           ]
         },
@@ -5671,10 +5813,12 @@
             "FOLDER",
             "LIBRARY_ELEMENT",
             "ALERT_RULE",
+            "ALERT_RULE_GROUP",
             "CONTACT_POINT",
             "NOTIFICATION_POLICY",
             "NOTIFICATION_TEMPLATE",
-            "MUTE_TIMING"
+            "MUTE_TIMING",
+            "PLUGIN"
           ]
         }
       }
@@ -5739,7 +5883,6 @@
     },
     "NavbarPreference": {
       "type": "object",
-      "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
         "bookmarkUrls": {
           "type": "array",
@@ -5759,7 +5902,7 @@
         },
         "key": {
           "type": "string",
-          "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a"
+          "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697"
         },
         "name": {
           "type": "string",
@@ -5868,6 +6011,9 @@
         "isExternallySynced": {
           "type": "boolean"
         },
+        "isProvisioned": {
+          "type": "boolean"
+        },
         "lastSeenAt": {
           "type": "string",
           "format": "date-time"
@@ -5943,12 +6089,11 @@
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
-            1,
-            2
+            1
           ]
         },
         "model": {
@@ -5996,6 +6141,9 @@
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
         },
+        "regionalFormat": {
+          "type": "string"
+        },
         "theme": {
           "type": "string",
           "enum": [
@@ -6026,8 +6174,8 @@
       }
     },
     "Permission": {
+      "description": "Permission is the model for access control permissions",
       "type": "object",
-      "title": "Permission is the model for access control permissions.",
       "properties": {
         "action": {
           "type": "string"
@@ -6172,6 +6320,20 @@
         "$ref": "#/definitions/Playlist"
       }
     },
+    "PolicyMapping": {
+      "type": "object",
+      "title": "PolicyMapping represents a policy mapping entry in the policyMappings extension.",
+      "properties": {
+        "IssuerDomainPolicy": {
+          "description": "IssuerDomainPolicy contains a policy OID the issuing certificate considers\nequivalent to SubjectDomainPolicy in the subject certificate.",
+          "type": "string"
+        },
+        "SubjectDomainPolicy": {
+          "description": "SubjectDomainPolicy contains a OID the issuing certificate considers\nequivalent to IssuerDomainPolicy in the subject certificate.",
+          "type": "string"
+        }
+      }
+    },
     "PostAnnotationsCmd": {
       "type": "object",
       "required": [
@@ -6227,12 +6389,43 @@
         }
       }
     },
-    "Preferences": {
-      "description": "Spec defines user, team or org Grafana preferences",
+    "PreferencesCookiePreferences": {
+      "description": "+k8s:openapi-gen=true",
+      "type": "object",
+      "properties": {
+        "analytics": {},
+        "functional": {},
+        "performance": {}
+      }
+    },
+    "PreferencesNavbarPreference": {
+      "description": "+k8s:openapi-gen=true",
+      "type": "object",
+      "properties": {
+        "bookmarkUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PreferencesQueryHistoryPreference": {
+      "description": "+k8s:openapi-gen=true",
+      "type": "object",
+      "properties": {
+        "homeTab": {
+          "description": "one of: '' | 'query' | 'starred';",
+          "type": "string"
+        }
+      }
+    },
+    "PreferencesSpec": {
+      "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
         "cookiePreferences": {
-          "$ref": "#/definitions/CookiePreferences"
+          "$ref": "#/definitions/PreferencesCookiePreferences"
         },
         "homeDashboardUID": {
           "description": "UID for the home dashboard",
@@ -6243,13 +6436,17 @@
           "type": "string"
         },
         "navbar": {
-          "$ref": "#/definitions/NavbarPreference"
+          "$ref": "#/definitions/PreferencesNavbarPreference"
         },
         "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
+          "$ref": "#/definitions/PreferencesQueryHistoryPreference"
+        },
+        "regionalFormat": {
+          "description": "Selected locale (beta)",
+          "type": "string"
         },
         "theme": {
-          "description": "Theme light, dark, empty is default",
+          "description": "light, dark, empty is default",
           "type": "string"
         },
         "timezone": {
@@ -6257,7 +6454,7 @@
           "type": "string"
         },
         "weekStart": {
-          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "description": "day of the week (sunday, monday, etc)",
           "type": "string"
         }
       }
@@ -6450,10 +6647,8 @@
     },
     "QueryHistoryPreference": {
       "type": "object",
-      "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
       "properties": {
         "homeTab": {
-          "description": "HomeTab one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -6709,6 +6904,9 @@
         "state": {
           "$ref": "#/definitions/State"
         },
+        "subject": {
+          "type": "string"
+        },
         "uid": {
           "type": "string"
         },
@@ -6878,6 +7076,57 @@
         }
       }
     },
+    "ResourceDependenciesResponseDTO": {
+      "type": "object",
+      "properties": {
+        "resourceDependencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResourceDependencyDTO"
+          }
+        }
+      }
+    },
+    "ResourceDependencyDTO": {
+      "type": "object",
+      "properties": {
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "ALERT_RULE_GROUP",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING",
+              "PLUGIN"
+            ]
+          }
+        },
+        "resourceType": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER",
+            "LIBRARY_ELEMENT",
+            "ALERT_RULE",
+            "ALERT_RULE_GROUP",
+            "CONTACT_POINT",
+            "NOTIFICATION_POLICY",
+            "NOTIFICATION_TEMPLATE",
+            "MUTE_TIMING",
+            "PLUGIN"
+          ]
+        }
+      }
+    },
     "Responses": {
       "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
       "type": "object",
@@ -6943,6 +7192,16 @@
     },
     "RoleDTO": {
       "type": "object",
+      "required": [
+        "version",
+        "uid",
+        "name",
+        "displayName",
+        "description",
+        "group",
+        "updated",
+        "created"
+      ],
       "properties": {
         "created": {
           "type": "string",
@@ -7191,6 +7450,29 @@
         }
       }
     },
+    "SearchTeamGroupsQueryResult": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "teamGroups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TeamGroupDTO"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "SearchTeamQueryResult": {
       "type": "object",
       "properties": {
@@ -7432,6 +7714,20 @@
         }
       }
     },
+    "SetTeamRolesCommand": {
+      "type": "object",
+      "properties": {
+        "includeHidden": {
+          "type": "boolean"
+        },
+        "roleUids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "SetUserRolesCommand": {
       "type": "object",
       "properties": {
@@ -7605,6 +7901,14 @@
     },
     "TeamDTO": {
       "type": "object",
+      "required": [
+        "id",
+        "uid",
+        "orgId",
+        "name",
+        "isProvisioned",
+        "memberCount"
+      ],
       "properties": {
         "accessControl": {
           "type": "object",
@@ -7618,9 +7922,16 @@
         "email": {
           "type": "string"
         },
+        "externalUID": {
+          "type": "string"
+        },
         "id": {
+          "description": "@deprecated Use UID instead",
           "type": "integer",
           "format": "int64"
+        },
+        "isProvisioned": {
+          "type": "boolean"
         },
         "memberCount": {
           "type": "integer",
@@ -7654,6 +7965,9 @@
         "teamId": {
           "type": "integer",
           "format": "int64"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -7731,9 +8045,15 @@
         "teamUID": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "userUID": {
+          "type": "string"
         }
       }
     },
@@ -8074,7 +8394,7 @@
       "type": "object",
       "properties": {
         "Object": {
-          "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
+          "description": "Object is a JSON compatible map with string, float, int, bool, []any,\nor map[string]any children.",
           "type": "object",
           "additionalProperties": {}
         }
@@ -8198,6 +8518,7 @@
           "type": "string"
         },
         "version": {
+          "description": "The previous version -- used for optimistic locking",
           "type": "integer",
           "format": "int64"
         },
@@ -8321,6 +8642,9 @@
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
         },
+        "regionalFormat": {
+          "type": "string"
+        },
         "theme": {
           "type": "string",
           "enum": [
@@ -8355,6 +8679,11 @@
     },
     "UpdateRoleCommand": {
       "type": "object",
+      "required": [
+        "displayName",
+        "description",
+        "group"
+      ],
       "properties": {
         "description": {
           "type": "string"
@@ -8413,14 +8742,10 @@
     "UpdateTeamCommand": {
       "type": "object",
       "properties": {
-        "Email": {
+        "email": {
           "type": "string"
         },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Name": {
+        "name": {
           "type": "string"
         }
       }
@@ -8544,6 +8869,9 @@
         "isGrafanaAdminExternallySynced": {
           "type": "boolean"
         },
+        "isProvisioned": {
+          "type": "boolean"
+        },
         "login": {
           "type": "string"
         },
@@ -8589,6 +8917,9 @@
           "type": "boolean"
         },
         "isDisabled": {
+          "type": "boolean"
+        },
+        "isProvisioned": {
           "type": "boolean"
         },
         "lastSeenAt": {
@@ -9151,10 +9482,7 @@
     "dashboardVersionsResponse": {
       "description": "",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/DashboardVersionMeta"
-        }
+        "$ref": "#/definitions/DashboardVersionResponseMeta"
       }
     },
     "deleteCorrelationResponse": {
@@ -9280,15 +9608,6 @@
       "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
-    "getAPIkeyResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/ApiKeyDTO"
-        }
       }
     },
     "getAccessControlStatusResponse": {
@@ -9554,7 +9873,7 @@
     "getPreferencesResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Preferences"
+        "$ref": "#/definitions/PreferencesSpec"
       }
     },
     "getPublicAnnotationsResponse": {
@@ -9808,6 +10127,10 @@
         "$ref": "#/definitions/publicError"
       }
     },
+    "interpolateDashboardResponse": {
+      "description": "",
+      "schema": {}
+    },
     "jwksResponse": {
       "description": "",
       "schema": {
@@ -9939,6 +10262,12 @@
       "description": "",
       "schema": {
         "type": "object"
+      }
+    },
+    "notAcceptableError": {
+      "description": "NotAcceptableError is returned when the server cannot produce a response matching the accepted formats.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
       }
     },
     "notFoundError": {
@@ -10078,6 +10407,12 @@
         "$ref": "#/definitions/ActiveUserStats"
       }
     },
+    "resourceDependenciesResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ResourceDependenciesResponseDTO"
+      }
+    },
     "resourcePermissionsDescription": {
       "description": "",
       "schema": {
@@ -10136,6 +10471,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/SearchResult"
+      }
+    },
+    "searchTeamGroupsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchTeamGroupsQueryResult"
       }
     },
     "searchTeamsResponse": {
@@ -10303,19 +10644,11 @@
     },
     {
       "description": "Permissions with `folderId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.",
-      "name": "folder_permissions"
+      "name": "permissions"
     },
     {
       "description": "The Admin HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission. (The default admin user is called admin and has permission to use this API.)",
       "name": "admin"
-    },
-    {
-      "description": "You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert. To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.\nThis topic is relevant for the legacy dashboard alerts only.\nYou can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).",
-      "name": "legacy_alerts"
-    },
-    {
-      "description": "The identifier (id) of a notification channel is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between multiple Grafana installs. It’s automatically generated if not provided when creating a notification channel. The uid allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple Grafana installations, refer to alert notification channel provisioning.\nThe uid can have a maximum length of 40 characters.",
-      "name": "legacy_alerts_notification_channels"
     },
     {
       "description": "Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.",
@@ -10342,10 +10675,6 @@
       "name": "teams"
     },
     {
-      "description": "This API can be used to enable, disable, list, add and remove permissions for a data source.\nPermissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.\nThis is only available in Grafana Enterprise\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
-      "name": "datasource_permissions"
-    },
-    {
       "description": "These are only available in Grafana Enterprise",
       "name": "enterprise"
     },
@@ -10360,22 +10689,6 @@
     {
       "description": "This API allows you to interact programmatically with the Reporting feature.\nReporting is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you have Fine-grained access Control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
       "name": "reports"
-    },
-    {
-      "description": "Grafana Alerting Alertmanager-compatible endpoints",
-      "name": "alertmanager"
-    },
-    {
-      "description": "Grafana Alerting endpoints for managing rules",
-      "name": "ruler"
-    },
-    {
-      "description": "Grafana Alerting testing endpoints",
-      "name": "testing"
-    },
-    {
-      "description": "Grafana Alerting Prometheus-compatible endpoints",
-      "name": "prometheus"
     },
     {
       "description": "If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.",

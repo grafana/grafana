@@ -12,7 +12,7 @@ import (
 	"crypto"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v4"
 )
 
 const (
@@ -30,7 +30,7 @@ type Service interface {
 
 type SigningKey struct {
 	KeyID      string                  `xorm:"key_id"`
-	PrivateKey []byte                  `xorm:"private_key"`
+	PrivateKey string                  `xorm:"private_key"`
 	AddedAt    time.Time               `xorm:"added_at"`
 	ExpiresAt  *time.Time              `xorm:"expires_at"`
 	Alg        jose.SignatureAlgorithm `xorm:"alg"`

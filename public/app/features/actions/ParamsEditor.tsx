@@ -2,11 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { contentTypeOptions, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-import { IconButton } from '@grafana/ui/src/components/IconButton/IconButton';
-import { Input } from '@grafana/ui/src/components/Input/Input';
-import { Stack } from '@grafana/ui/src/components/Layout/Stack/Stack';
-import { Select } from '@grafana/ui/src/components/Select/Select';
-import { useStyles2 } from '@grafana/ui/src/themes';
+import { t } from '@grafana/i18n';
+import { IconButton, Input, Stack, Select, useStyles2 } from '@grafana/ui';
 
 import { SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
@@ -82,17 +79,22 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
           value={paramName}
           onChange={changeParamName}
           suggestions={suggestions}
-          placeholder="Key"
+          placeholder={t('actions.params-editor.placeholder-key', 'Key')}
           style={{ width: 332 }}
         />
         <SuggestionsInput
           value={paramValue}
           onChange={changeParamValue}
           suggestions={suggestions}
-          placeholder="Value"
+          placeholder={t('actions.params-editor.placeholder-value', 'Value')}
           style={{ width: 332 }}
         />
-        <IconButton aria-label="add" name="plus-circle" onClick={() => addParam()} disabled={isAddParamsDisabled} />
+        <IconButton
+          aria-label={t('actions.params-editor.aria-label-add', 'Add')}
+          name="plus-circle"
+          onClick={() => addParam()}
+          disabled={isAddParamsDisabled}
+        />
       </Stack>
 
       <Stack direction="column">
@@ -100,7 +102,11 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
           <Stack key={entry[0]} direction="row">
             <Input disabled value={entry[0]} />
             <Input disabled value={entry[1]} />
-            <IconButton aria-label="delete" onClick={removeParam(entry[0])} name="trash-alt" />
+            <IconButton
+              aria-label={t('actions.params-editor.aria-label-delete', 'Delete')}
+              onClick={removeParam(entry[0])}
+              name="trash-alt"
+            />
           </Stack>
         ))}
       </Stack>

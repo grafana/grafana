@@ -371,7 +371,10 @@ func replaceInvalidRune(c rune) rune {
 	if c == ' ' {
 		return '.'
 	}
-	if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '-' || c == '_' || c == ':' || (c >= '0' && c <= '9')) {
+
+	isAlphanumeric := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+	isValidSpecialCharacter := c == '-' || c == '_' || c == ':'
+	if !isAlphanumeric && !isValidSpecialCharacter {
 		return '_'
 	}
 	return c

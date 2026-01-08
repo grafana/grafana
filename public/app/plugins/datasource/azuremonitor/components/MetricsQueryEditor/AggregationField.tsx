@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 
@@ -36,7 +37,7 @@ const AggregationField = ({
   const options = addValueToOptions(aggregationOptions, variableOptionGroup, query.azureMonitor?.aggregation);
 
   return (
-    <Field label="Aggregation">
+    <Field label={t('components.aggregation-field.label-aggregation', 'Aggregation')}>
       <Select
         inputId="azure-monitor-metrics-aggregation-field"
         value={query.azureMonitor?.aggregation || null}

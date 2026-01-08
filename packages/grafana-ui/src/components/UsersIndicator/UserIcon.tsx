@@ -2,15 +2,15 @@ import { css, cx } from '@emotion/css';
 import { useMemo, PropsWithChildren } from 'react';
 
 import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
-import { Tooltip } from '../Tooltip';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { UserView } from './types';
 
 export interface UserIconProps {
-  /** An object that contains the user's details and 'lastActiveAt' status */
+  /** An object that contains the user's details and an optional 'lastActiveAt' status */
   userView: UserView;
   /** A boolean value that determines whether the tooltip should be shown or not */
   showTooltip?: boolean;
@@ -51,6 +51,11 @@ const getUserInitials = (name?: string) => {
   return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase();
 };
 
+/**
+ * UserIcon renders a user icon and displays the user's name or initials along with the user's active status or last viewed date.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/iconography-usericon--docs
+ */
 export const UserIcon = ({
   userView,
   className,
@@ -59,7 +64,8 @@ export const UserIcon = ({
   showTooltip = true,
 }: PropsWithChildren<UserIconProps>) => {
   const { user, lastActiveAt } = userView;
-  const isActive = dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
+  const hasActive = lastActiveAt !== undefined && lastActiveAt !== null;
+  const isActive = hasActive && dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
   const theme = useTheme2();
   const styles = useMemo(() => getStyles(theme, isActive), [theme, isActive]);
   const content = (
@@ -67,7 +73,7 @@ export const UserIcon = ({
       type={'button'}
       onClick={onClick}
       className={cx(styles.container, onClick && styles.pointer, className)}
-      aria-label={`${user.name} icon`}
+      aria-label={t('grafana-ui.user-icon.label', '{{name}} icon', { name: user.name })}
     >
       {children ? (
         <div className={cx(styles.content, styles.textContent)}>{children}</div>
@@ -83,18 +89,20 @@ export const UserIcon = ({
     const tooltip = (
       <div className={styles.tooltipContainer}>
         <div className={styles.tooltipName}>{user.name}</div>
-        <div className={styles.tooltipDate}>
-          {isActive ? (
-            <div className={styles.dotContainer}>
-              <span>
-                <Trans i18nKey="grafana-ui.user-icon.active-text">Active last 15m</Trans>
-              </span>
-              <span className={styles.dot}></span>
-            </div>
-          ) : (
-            formatViewed(lastActiveAt)
-          )}
-        </div>
+        {hasActive && (
+          <div className={styles.tooltipDate}>
+            {isActive ? (
+              <div className={styles.dotContainer}>
+                <span>
+                  <Trans i18nKey="grafana-ui.user-icon.active-text">Active last 15m</Trans>
+                </span>
+                <span className={styles.dot}></span>
+              </div>
+            ) : (
+              formatViewed(lastActiveAt)
+            )}
+          </div>
+        )}
       </div>
     );
 

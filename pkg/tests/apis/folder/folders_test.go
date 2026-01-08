@@ -1,4 +1,4 @@
-package playlist
+package folder
 
 import (
 	"bytes"
@@ -6,30 +6,42 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"slices"
-
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	alerting "github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -37,27 +49,25 @@ func TestMain(m *testing.M) {
 }
 
 var gvr = schema.GroupVersionResource{
-	Group:    "folder.grafana.app",
-	Version:  "v0alpha1",
+	Group:    folders.GROUP,
+	Version:  folders.VERSION,
 	Resource: "folders",
 }
 
 func TestIntegrationFoldersApp(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
 	}
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-		},
-		// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-		// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-	})
 
 	t.Run("Check discovery client", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			EnableFeatureToggles: []string{},
+		})
 		disco := helper.NewDiscoveryClient()
-		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v0alpha1")
+		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1beta1")
 		require.NoError(t, err)
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
@@ -66,306 +76,248 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
-			"groupVersion": "folder.grafana.app/v0alpha1",
+			"groupVersion": "folder.grafana.app/v1beta1",
 			"resources": [
-			  {
-				"name": "folders",
-				"singularName": "folder",
-				"namespaced": true,
-				"kind": "Folder",
-				"verbs": [
-				  "create",
-				  "delete",
-				  "deletecollection",
-				  "get",
-				  "list",
-				  "patch",
-				  "update"
-				]
-			  },
-			  {
-				"name": "folders/access",
-				"singularName": "",
-				"namespaced": true,
-				"kind": "FolderAccessInfo",
-				"verbs": [
-				  "get"
-				]
-			  },
-			  {
-				"name": "folders/counts",
-				"singularName": "",
-				"namespaced": true,
-				"kind": "DescendantCounts",
-				"verbs": [
-				  "get"
-				]
-			  },
-			  {
-				"name": "folders/parents",
-				"singularName": "",
-				"namespaced": true,
-				"kind": "FolderInfoList",
-				"verbs": [
-				  "get"
-				]
-			  }
+				{
+					"name": "folders",
+					"singularName": "folder",
+					"namespaced": true,
+					"kind": "Folder",
+					"verbs": [
+						"create",
+						"delete",
+						"deletecollection",
+						"get",
+						"list",
+						"patch",
+						"update"
+					]
+				},
+				{
+					"name": "folders/access",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderAccessInfo",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/children",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderList",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/counts",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "DescendantCounts",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/parents",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderInfoList",
+					"verbs": [
+						"get"
+					]
+				}
 			]
-		  }`, string(v1Disco))
+		}`, string(v1Disco))
 	})
 
-	t.Run("with k8s api flag", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: true,
-			DisableAnonymous:  true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
+	// test on all dualwriter modes
+	for mode := 0; mode <= 4; mode++ {
+		modeDw := grafanarest.DualWriterMode(mode)
 
-	t.Run("with dual write (file, mode 0)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode0,
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v)", modeDw), func(t *testing.T) {
+			doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
 				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
+				EnableFeatureToggles: []string{},
+			}))
+		})
 
-	t.Run("with dual write (file, mode 1)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, create nested folders)", modeDw), func(t *testing.T) {
+			doNestedCreateTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
 				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
+			}))
+		})
 
-	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode0,
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, create existing folder)", modeDw), func(t *testing.T) {
+			doCreateDuplicateFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
 				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
+			}))
+		})
 
-	t.Run("with dual write (unified storage, mode 1)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
+		t.Run(fmt.Sprintf("when creating a folder, mode %v, it should trim leading and trailing spaces", modeDw), func(t *testing.T) {
+			doCreateEnsureTitleIsTrimmedTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
 				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
+			}))
+		})
 
-	t.Run("with dual write (unified-grpc, mode 0)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified-grpc",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode0,
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, create circular reference folder)", modeDw), func(t *testing.T) {
+			doCreateCircularReferenceFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
 				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
+			}))
+		})
+	}
+
+	// This is a general test for the unified storage list operation. We don't have a common test
+	// directory for now, so we (search and storage) keep it here as we own this part of the tests.
+	t.Run("make sure list works with continue tokens", func(t *testing.T) {
+		t.Skip("Skipping flaky test - list works with continue tokens")
+		modes := []grafanarest.DualWriterMode{
+			grafanarest.Mode1,
+			grafanarest.Mode2,
+			grafanarest.Mode3,
+			grafanarest.Mode4,
+			grafanarest.Mode5,
+		}
+		for _, mode := range modes {
+			t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
+				doListFoldersTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+					DisableDataMigrations: true,
+					AppModeProduction:     true,
+					DisableAnonymous:      true,
+					APIServerStorageType:  "unified",
+					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+						folders.RESOURCEGROUP: {
+							DualWriterMode: mode,
+						},
+					},
+					// We set it to 1 here, so we always get forced pagination based on the response size.
+					UnifiedStorageMaxPageSizeBytes: 1,
+				}), mode)
+			})
+		}
 	})
+}
 
-	t.Run("with dual write (unified-grpc, mode 1)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified-grpc",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
+// Validates that folder delete checks alert_rule stats and blocks deletion
+func TestIntegrationFolderDeletionBlockedByAlertRules(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	t.Run("with dual write (etcd, mode 0)", func(t *testing.T) {
-		// NOTE: running local etcd, that will be wiped clean!
-		t.Skip("local etcd testing")
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
 
+	t.Run("should be blocked by alert rules", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
-			APIServerStorageType: "etcd",
+			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode0,
-				},
+				folders.RESOURCEGROUP: {DualWriterMode: grafanarest.Mode5},
 			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
+			UnifiedStorageEnableSearch: true,
 		})
 
-		// Clear the collection before starting (etcd)
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
 			GVR:  gvr,
 		})
-		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+
+		// Create a folder via legacy API so it is visible everywhere.
+		folderUID := "alertrule-del-test"
+		legacyPayload := fmt.Sprintf(`{"title": "Folder With Alert Rule", "uid": "%s"}`, folderUID)
+		legacyCreate := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(legacyPayload),
+		}, &folder.Folder{})
+		require.NotNil(t, legacyCreate.Result)
+		require.Equal(t, folderUID, legacyCreate.Result.UID)
+
+		// Create one alert rule in that folder namespace via ruler API.
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		api := alerting.NewAlertingLegacyAPIClient(addr, "admin", "admin")
+
+		// simple always-true rule
+		forDuration := model.Duration(10 * time.Second)
+		rule := apimodels.PostableExtendedRuleNode{
+			ApiRuleNode: &apimodels.ApiRuleNode{For: &forDuration},
+			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+				Title:     "rule-in-folder",
+				Condition: "A",
+				Data: []apimodels.AlertQuery{
+					{
+						RefID:         "A",
+						DatasourceUID: expr.DatasourceUID,
+						RelativeTimeRange: apimodels.RelativeTimeRange{
+							From: apimodels.Duration(600 * time.Second),
+							To:   0,
+						},
+						Model: json.RawMessage(`{"type":"math","expression":"2 + 3 > 1"}`),
+					},
+				},
+			},
+		}
+		group := apimodels.PostableRuleGroupConfig{
+			Name:     "arulegroup",
+			Interval: model.Duration(10 * time.Second),
+			Rules:    []apimodels.PostableExtendedRuleNode{rule},
+		}
+		_ = api.PostRulesGroup(t, folderUID, &group, false)
+
+		// Attempt to delete the folder via K8s API. This should be blocked by alert rules.
+		err := client.Resource.Delete(context.Background(), folderUID, metav1.DeleteOptions{})
+		require.Error(t, err, "expected folder deletion to be blocked when alert rules exist")
+
+		// Delete the rule group from ruler.
+		status, body := api.DeleteRulesGroup(t, folderUID, group.Name, true)
+		require.Equalf(t, http.StatusAccepted, status, body)
+
+		// Now we should be able to delete the folder.
+		err = client.Resource.Delete(context.Background(), folderUID, metav1.DeleteOptions{})
 		require.NoError(t, err)
-
-		doFolderTests(t, helper)
-	})
-
-	t.Run("with dual write (etcd, mode 1)", func(t *testing.T) {
-		// NOTE: running local etcd, that will be wiped clean!
-		t.Skip("local etcd testing")
-
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "etcd",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		})
-
-		// Clear the collection before starting (etcd)
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
-			GVR:  gvr,
-		})
-		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
-		require.NoError(t, err)
-
-		doFolderTests(t, helper)
-	})
-
-	t.Run("with dual write (unified storage, mode 1, create nested folders)", func(t *testing.T) {
-		doNestedCreateTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-				featuremgmt.FlagNestedFolders,
-				featuremgmt.FlagKubernetesFolders,
-			},
-		}))
-	})
-
-	t.Run("with dual write (unified storage, mode 1, create existing folder)", func(t *testing.T) {
-		doCreateDuplicateFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-				featuremgmt.FlagNestedFolders,
-				featuremgmt.FlagKubernetesFolders,
-			},
-		}))
-	})
-
-	t.Run("when creating a folder it should trim leading and trailing spaces", func(t *testing.T) {
-		doCreateEnsureTitleIsTrimmedTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-				featuremgmt.FlagNestedFolders,
-				featuremgmt.FlagKubernetesFolders,
-			},
-		}))
-	})
-
-	t.Run("with dual write (unified storage, mode 1, create circular reference folder)", func(t *testing.T) {
-		doCreateCircularReferenceFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-				featuremgmt.FlagNestedFolders,
-				featuremgmt.FlagKubernetesFolders,
-			},
-		}))
 	})
 }
 
@@ -392,21 +344,26 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.NotNil(t, legacyCreate.Result)
 		uid := legacyCreate.Result.UID
 		require.NotEmpty(t, uid)
+		//nolint:staticcheck
+		id := legacyCreate.Result.ID
+		require.NotEmpty(t, id)
+		idStr := fmt.Sprintf("%d", id)
 
 		expectedResult := `{
-			"apiVersion": "folder.grafana.app/v0alpha1",
+			"apiVersion": "folder.grafana.app/v1beta1",
 			"kind": "Folder",
 			"metadata": {
 			  "creationTimestamp": "${creationTimestamp}",
+			  "labels": {"grafana.app/deprecatedInternalID":"` + idStr + `"},
 			  "name": "` + uid + `",
 			  "namespace": "default",
 			  "resourceVersion": "${resourceVersion}",
 			  "uid": "${uid}"
 			},
 			"spec": {
-			  "title": "Test"
-			}
-		  }`
+			  "title": "Test",
+			  "description": ""
+			}}`
 
 		// Get should return the same result
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
@@ -566,7 +523,7 @@ func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 	// creating a folder with a known parent should succeed
 	require.Equal(t, parentUID, childCreate.Result.ParentUID)
 	require.Equal(t, parentUID, parent.UID)
-	require.Equal(t, "Test\\/parent", parent.Title)
+	require.Equal(t, "Test/parent", parent.Title)
 	require.Equal(t, parentCreate.Result.URL, parent.URL)
 }
 
@@ -643,9 +600,70 @@ func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelpe
 	require.Equal(t, 400, create.Response.StatusCode)
 }
 
+func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.DualWriterMode) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	foldersCount := 3
+	for i := 0; i < foldersCount; i++ {
+		payload, err := json.Marshal(map[string]interface{}{
+			"title": fmt.Sprintf("Test-%d", i),
+			"uid":   fmt.Sprintf("uid-%d", i),
+		})
+		require.NoError(t, err)
+		parentCreate := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   payload,
+		}, &folder.Folder{})
+		require.NotNil(t, parentCreate.Result)
+		require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
+	}
+	fetchedFolders, fetchItemsPerCall := checkListRequest(t, 1, client)
+	require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
+	require.Equal(t, []int{1, 1, 1}, fetchItemsPerCall[:3])
+
+	// Now let's see if the iterator also works when we are limited by the page size, which should be set
+	// to 1 byte for this test. We only need to check that if we test unified storage as the primary storage,
+	// as legacy doesn't have such a page size limit.
+	if mode == grafanarest.Mode3 || mode == grafanarest.Mode4 || mode == grafanarest.Mode5 {
+		t.Run("check page size iterator", func(t *testing.T) {
+			fetchedFolders, fetchItemsPerCall := checkListRequest(t, 3, client)
+			require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
+			require.Equal(t, []int{1, 1, 1}, fetchItemsPerCall[:3])
+		})
+	}
+}
+
+func checkListRequest(t *testing.T, limit int64, client *apis.K8sResourceClient) ([]string, []int) {
+	fetchedFolders := make([]string, 0, 3)
+	fetchItemsPerCall := make([]int, 0, 3)
+	continueToken := ""
+	for {
+		res, err := client.Resource.List(context.Background(), metav1.ListOptions{
+			Limit:    limit,
+			Continue: continueToken,
+		})
+		require.NoError(t, err)
+		fetchItemsPerCall = append(fetchItemsPerCall, len(res.Items))
+		for _, item := range res.Items {
+			fetchedFolders = append(fetchedFolders, item.GetName())
+		}
+		continueToken = res.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+	return fetchedFolders, fetchItemsPerCall
+}
+
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
 	}
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
@@ -718,59 +736,85 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tcs {
-		t.Run(tc.description, func(t *testing.T) {
+	// test on all dualwriter modes
+	for mode := 0; mode <= 4; mode++ {
+		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folderv0alpha1.RESOURCEGROUP: {
-						DualWriterMode: grafanarest.Mode1,
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
 					},
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-					featuremgmt.FlagNestedFolders,
-					featuremgmt.FlagKubernetesFolders,
-				},
 			})
+			for i, tc := range tcs {
+				t.Run(fmt.Sprintf("[Mode: %v] "+tc.description, mode), func(t *testing.T) {
+					username := fmt.Sprintf("user-%d", i)
+					parentUID := fmt.Sprintf("parentuid-%d", i)
+					childUID := fmt.Sprintf("uid-%d", i)
 
-			user := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
+					// Update permissions to use unique parent UID
+					permissions := make([]resourcepermissions.SetResourcePermissionCommand, len(tc.permissions))
+					for j, perm := range tc.permissions {
+						permissions[j] = perm
+						if perm.ResourceID == "parentuid" {
+							permissions[j].ResourceID = parentUID
+						}
+					}
 
-			parentPayload := `{
+					user := helper.CreateUser(username, apis.Org1, org.RoleViewer, permissions)
+
+					// Get user ID for cleanup
+					userID, _ := user.Identity.GetInternalID()
+
+					// Register cleanup for this test case
+					t.Cleanup(helper.CleanupTestResources([]string{parentUID, childUID}, []int64{userID}))
+
+					parentPayload := fmt.Sprintf(`{
 				"title": "Test/parent",
-				"uid": "parentuid"
-				}`
-			parentCreate := apis.DoRequest(helper, apis.RequestParams{
-				User:   helper.Org1.Admin,
-				Method: http.MethodPost,
-				Path:   "/api/folders",
-				Body:   []byte(parentPayload),
-			}, &folder.Folder{})
-			require.NotNil(t, parentCreate.Result)
-			parentUID := parentCreate.Result.UID
-			require.NotEmpty(t, parentUID)
+				"uid": "%s"
+				}`, parentUID)
+					parentCreate := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: http.MethodPost,
+						Path:   "/api/folders",
+						Body:   []byte(parentPayload),
+					}, &folder.Folder{})
+					require.NotNil(t, parentCreate.Result)
+					createdParentUID := parentCreate.Result.UID
+					require.NotEmpty(t, createdParentUID)
 
-			resp := apis.DoRequest(helper, apis.RequestParams{
-				User:   user,
-				Method: http.MethodPost,
-				Path:   "/api/folders",
-				Body:   []byte(tc.input),
-			}, &dtos.Folder{})
-			require.Equal(t, tc.expectedCode, resp.Response.StatusCode)
+					// Update input to use unique UIDs
+					input := strings.ReplaceAll(tc.input, "parentuid", parentUID)
+					input = strings.ReplaceAll(input, `"uid": "uid"`, fmt.Sprintf(`"uid": "%s"`, childUID))
 
-			if tc.expectedCode == http.StatusOK {
-				require.Equal(t, "uid", resp.Result.UID)
-				require.Equal(t, "Folder", resp.Result.Title)
+					resp := apis.DoRequest(helper, apis.RequestParams{
+						User:   user,
+						Method: http.MethodPost,
+						Path:   "/api/folders",
+						Body:   []byte(input),
+					}, &dtos.Folder{})
+					require.Equal(t, tc.expectedCode, resp.Response.StatusCode)
+
+					if tc.expectedCode == http.StatusOK {
+						require.Equal(t, childUID, resp.Result.UID)
+						require.Equal(t, "Folder", resp.Result.Title)
+					}
+				})
 			}
 		})
 	}
 }
 
 func TestIntegrationFolderGetPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
 	}
 
 	type testCase struct {
@@ -798,10 +842,10 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			checkAccessControl: true,
 		},
 		{
-			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
+			description:          "get folder by UID should not return parent folders if nested folder are enabled and user does not have read access to parent folders",
 			expectedCode:         http.StatusOK,
-			expectedParentUIDs:   []string{api.REDACTED},
-			expectedParentTitles: []string{api.REDACTED},
+			expectedParentUIDs:   []string{},
+			expectedParentTitles: []string{},
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
 					Actions:           []string{dashboards.ActionFoldersRead},
@@ -820,112 +864,152 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tcs {
-		t.Run(tc.description, func(t *testing.T) {
+	// test on all dualwriter modes
+	for mode := 0; mode <= 4; mode++ {
+		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folderv0alpha1.RESOURCEGROUP: {
-						DualWriterMode: grafanarest.Mode1,
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
 					},
-				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-					featuremgmt.FlagNestedFolders,
-					featuremgmt.FlagKubernetesFolders,
 				},
 			})
 
-			// Create parent folder
-			parentPayload := `{
-				"title": "testparent",
-				"uid": "parentuid"
-				}`
-			parentCreate := apis.DoRequest(helper, apis.RequestParams{
-				User:   helper.Org1.Admin,
-				Method: http.MethodPost,
-				Path:   "/api/folders",
-				Body:   []byte(parentPayload),
-			}, &folder.Folder{})
-			require.NotNil(t, parentCreate.Result)
-			parentUID := parentCreate.Result.UID
-			require.NotEmpty(t, parentUID)
+			// Run all test cases within the same server instance
+			for i, tc := range tcs {
+				t.Run(tc.description, func(t *testing.T) {
+					// Use unique UIDs per test case to avoid conflicts
+					parentUID := fmt.Sprintf("parentuid-%d", i)
+					descUID := fmt.Sprintf("descuid-%d", i)
+					parentTitle := fmt.Sprintf("testparent-%d", i)
+					userLogin := fmt.Sprintf("user-%d", i)
+					acUserLogin := fmt.Sprintf("acuser-%d", i)
 
-			// Create descendant folder
-			payload := "{ \"uid\": \"descuid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
-			resp := apis.DoRequest(helper, apis.RequestParams{
-				User:   helper.Org1.Admin,
-				Method: http.MethodPost,
-				Path:   "/api/folders",
-				Body:   []byte(payload),
-			}, &dtos.Folder{})
-			require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+					// Create parent folder
+					parentPayload := fmt.Sprintf(`{
+					"title": "%s",
+					"uid": "%s"
+					}`, parentTitle, parentUID)
+					parentCreate := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: http.MethodPost,
+						Path:   "/api/folders",
+						Body:   []byte(parentPayload),
+					}, &folder.Folder{})
+					require.NotNil(t, parentCreate.Result)
+					require.Equal(t, parentUID, parentCreate.Result.UID)
 
-			user := helper.CreateUser("user", apis.Org1, org.RoleNone, tc.permissions)
+					// Create descendant folder
+					payload := fmt.Sprintf(`{ "uid": "%s", "title": "Folder-%d", "parentUid": "%s"}`, descUID, i, parentUID)
+					resp := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: http.MethodPost,
+						Path:   "/api/folders",
+						Body:   []byte(payload),
+					}, &dtos.Folder{})
+					require.Equal(t, http.StatusOK, resp.Response.StatusCode)
 
-			// Get with accesscontrol disabled
-			getResp := apis.DoRequest(helper, apis.RequestParams{
-				User:   user,
-				Method: http.MethodGet,
-				Path:   "/api/folders/descuid",
-			}, &dtos.Folder{})
-			require.Equal(t, tc.expectedCode, getResp.Response.StatusCode)
-			require.NotNil(t, getResp.Result)
+					// Update permissions to use unique descUID where needed
+					permissions := tc.permissions
+					for j := range permissions {
+						if permissions[j].ResourceID == "descuid" {
+							permissions[j].ResourceID = descUID
+						}
+					}
 
-			require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersRead])
-			require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersWrite])
+					user := helper.CreateUser(userLogin, apis.Org1, org.RoleNone, permissions)
 
-			parents := getResp.Result.Parents
-			require.Equal(t, len(tc.expectedParentUIDs), len(parents))
-			require.Equal(t, len(tc.expectedParentTitles), len(parents))
-			for i := 0; i < len(tc.expectedParentUIDs); i++ {
-				require.Equal(t, tc.expectedParentUIDs[i], parents[i].UID)
-				require.Equal(t, tc.expectedParentTitles[i], parents[i].Title)
-			}
+					// Get user ID for cleanup
+					userID, err := user.Identity.GetInternalID()
+					require.NoError(t, err)
 
-			// Get with accesscontrol enabled
-			if tc.checkAccessControl {
-				acPerms := []resourcepermissions.SetResourcePermissionCommand{
-					{
-						Actions:           []string{dashboards.ActionFoldersRead},
-						Resource:          "folders",
-						ResourceAttribute: "uid",
-						ResourceID:        "*",
-					},
-					{
-						Actions:           []string{dashboards.ActionFoldersWrite},
-						Resource:          "folders",
-						ResourceAttribute: "uid",
-						ResourceID:        "parentuid",
-					},
-				}
-				acUser := helper.CreateUser("acuser", apis.Org1, org.RoleNone, acPerms)
+					// Register cleanup to delete created resources
+					t.Cleanup(helper.CleanupTestResources([]string{descUID, parentUID}, []int64{userID}))
 
-				getWithAC := apis.DoRequest(helper, apis.RequestParams{
-					User:   acUser,
-					Method: http.MethodGet,
-					Path:   "/api/folders/descuid?accesscontrol=true",
-				}, &dtos.Folder{})
-				require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
-				require.NotNil(t, getWithAC.Result)
+					// Adjust expected UIDs and titles
+					expectedParentUIDs := tc.expectedParentUIDs
+					expectedParentTitles := tc.expectedParentTitles
+					if len(expectedParentUIDs) > 0 {
+						expectedParentUIDs = []string{parentUID}
+						expectedParentTitles = []string{parentTitle}
+					}
 
-				require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersRead])
-				require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersWrite])
+					// Get with accesscontrol disabled
+					getResp := apis.DoRequest(helper, apis.RequestParams{
+						User:   user,
+						Method: http.MethodGet,
+						Path:   "/api/folders/" + descUID,
+					}, &dtos.Folder{})
+					require.Equal(t, tc.expectedCode, getResp.Response.StatusCode)
+
+					if tc.expectedCode == http.StatusOK {
+						require.NotNil(t, getResp.Result)
+						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersRead])
+						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersWrite])
+
+						parents := getResp.Result.Parents
+						require.Equal(t, len(expectedParentUIDs), len(parents))
+						require.Equal(t, len(expectedParentTitles), len(parents))
+						for j := 0; j < len(expectedParentUIDs); j++ {
+							require.Equal(t, expectedParentUIDs[j], parents[j].UID)
+							require.Equal(t, expectedParentTitles[j], parents[j].Title)
+						}
+
+						// Get with accesscontrol enabled
+						if tc.checkAccessControl {
+							acPerms := []resourcepermissions.SetResourcePermissionCommand{
+								{
+									Actions:           []string{dashboards.ActionFoldersRead},
+									Resource:          "folders",
+									ResourceAttribute: "uid",
+									ResourceID:        "*",
+								},
+								{
+									Actions:           []string{dashboards.ActionFoldersWrite},
+									Resource:          "folders",
+									ResourceAttribute: "uid",
+									ResourceID:        parentUID,
+								},
+							}
+							acUser := helper.CreateUser(acUserLogin, apis.Org1, org.RoleNone, acPerms)
+
+							// Get user ID for cleanup
+							acUserID, err := acUser.Identity.GetInternalID()
+							require.NoError(t, err)
+							t.Cleanup(helper.CleanupTestResources([]string{}, []int64{acUserID}))
+
+							getWithAC := apis.DoRequest(helper, apis.RequestParams{
+								User:   acUser,
+								Method: http.MethodGet,
+								Path:   "/api/folders/" + descUID + "?accesscontrol=true",
+							}, &dtos.Folder{})
+							require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
+							require.NotNil(t, getWithAC.Result)
+
+							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersRead])
+							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersWrite])
+						}
+					}
+				})
 			}
 		})
 	}
 }
 
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
-func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
 	}
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
-	folderWithoutUID := "{ \"title\": \"Folder without UID\"}"
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
 	folderWithInvalidUid := "{ \"uid\": \"::::::::::::\", \"title\": \"Another folder\"}"
 	folderWithUIDTooLong := "{ \"uid\": \"asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm\", \"title\": \"Third folder\"}"
@@ -961,19 +1045,8 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:     "folder creation fails without permissions to create a folder",
 			input:           folderWithoutParentInput,
 			expectedCode:    http.StatusForbidden,
-			expectedMessage: dashboards.ErrFolderAccessDenied.Error(),
+			expectedMessage: fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", "folders:create"),
 			permissions:     []resourcepermissions.SetResourcePermissionCommand{},
-		},
-		{
-			// #TODO This test case doesn't set up the conditions it describes. We should have created a folder with the same UID before
-			// creating a second one and failing to do so successfully.
-			description:  "folder creation fails given folder service error %s",
-			input:        folderWithoutUID,
-			expectedCode: http.StatusConflict,
-			// expectedMessage:        dashboards.ErrFolderWithSameUIDExists.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderWithSameUIDExists,
-			createSecondRecord:     true,
-			permissions:            folderCreatePermission,
 		},
 		{
 			description:            "folder creation fails given folder service error %s",
@@ -1010,77 +1083,82 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tcs {
-		t.Run(testDescription(tc.description, tc.expectedFolderSvcError), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folderv0alpha1.RESOURCEGROUP: {
-						DualWriterMode: grafanarest.Mode1,
-					},
+	// test on all dualwriter modes
+	for mode := 0; mode <= 4; mode++ {
+		modeDw := grafanarest.DualWriterMode(mode)
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			DisableDataMigrations: true,
+			AppModeProduction:     true,
+			DisableAnonymous:      true,
+			APIServerStorageType:  "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folders.RESOURCEGROUP: {
+					DualWriterMode: modeDw,
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-					featuremgmt.FlagNestedFolders,
-					featuremgmt.FlagKubernetesFolders,
-				},
-			})
-
-			userTest := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
-
-			if tc.createSecondRecord {
-				client := helper.GetResourceClient(apis.ResourceClientArgs{
-					User: helper.Org1.Admin,
-					GVR:  gvr,
-				})
-				create2 := apis.DoRequest(helper, apis.RequestParams{
-					User:   client.Args.User,
-					Method: http.MethodPost,
-					Path:   "/api/folders",
-					Body:   []byte(tc.input),
-				}, &folder.Folder{})
-				require.NotEmpty(t, create2.Response)
-				require.Equal(t, http.StatusOK, create2.Response.StatusCode)
-			}
-
-			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
-			login := userTest.Identity.GetLogin()
-			baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password("user"), addr)
-
-			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(
-				"%s%s",
-				baseUrl,
-				"/api/folders",
-			), bytes.NewBuffer([]byte(tc.input)))
-			require.NoError(t, err)
-			req.Header.Set("Content-Type", "application/json")
-
-			resp, err := http.DefaultClient.Do(req)
-			require.NoError(t, err)
-			require.NotNil(t, resp)
-			require.Equal(t, tc.expectedCode, resp.StatusCode)
-
-			type folderWithMessage struct {
-				dtos.Folder
-				Message string `json:"message"`
-			}
-
-			folder := folderWithMessage{}
-			err = json.NewDecoder(resp.Body).Decode(&folder)
-			require.NoError(t, err)
-			require.NoError(t, resp.Body.Close())
-
-			if tc.expectedCode == http.StatusOK {
-				require.Equal(t, "uid", folder.UID)
-				require.Equal(t, "Folder", folder.Title)
-			}
-
-			if tc.expectedMessage != "" {
-				require.Equal(t, tc.expectedMessage, folder.Message)
-			}
+			},
 		})
+		for i, tc := range tcs {
+			t.Run(fmt.Sprintf("[Mode: %v] "+testDescription(tc.description, tc.expectedFolderSvcError), mode), func(t *testing.T) {
+				username := fmt.Sprintf("user-%d", i)
+				folderUID := fmt.Sprintf("uid-%d", i)
+
+				// Update input to use unique UIDs
+				input := strings.ReplaceAll(tc.input, `"uid": "uid"`, fmt.Sprintf(`"uid": "%s"`, folderUID))
+
+				userTest := helper.CreateUser(username, apis.Org1, org.RoleViewer, tc.permissions)
+
+				if tc.createSecondRecord {
+					client := helper.GetResourceClient(apis.ResourceClientArgs{
+						User: helper.Org1.Admin,
+						GVR:  gvr,
+					})
+					create2 := apis.DoRequest(helper, apis.RequestParams{
+						User:   client.Args.User,
+						Method: http.MethodPost,
+						Path:   "/api/folders",
+						Body:   []byte(input),
+					}, &folder.Folder{})
+					require.NotEmpty(t, create2.Response)
+					require.Equal(t, http.StatusOK, create2.Response.StatusCode)
+				}
+
+				addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
+				login := userTest.Identity.GetLogin()
+				baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password(username), addr)
+
+				req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(
+					"%s%s",
+					baseUrl,
+					"/api/folders",
+				), bytes.NewBuffer([]byte(input)))
+				require.NoError(t, err)
+				req.Header.Set("Content-Type", "application/json")
+
+				resp, err := http.DefaultClient.Do(req)
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+				type folderWithMessage struct {
+					dtos.Folder
+					Message string `json:"message"`
+				}
+
+				folder := folderWithMessage{}
+				err = json.NewDecoder(resp.Body).Decode(&folder)
+				require.NoError(t, err)
+				require.NoError(t, resp.Body.Close())
+
+				if tc.expectedCode == http.StatusOK {
+					require.Equal(t, folderUID, folder.UID)
+					require.Equal(t, "Folder", folder.Title)
+				}
+
+				if tc.expectedMessage != "" {
+					require.Equal(t, tc.expectedMessage, folder.Message)
+				}
+			})
+		}
 	}
 }
 
@@ -1093,9 +1171,11 @@ func testDescription(description string, expectedErr error) string {
 }
 
 // There are no counterpart of TestFoldersGetAPIEndpointK8S in pkg/api/folder_test.go
-func TestFoldersGetAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
+func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
 	}
 
 	type testCase struct {
@@ -1133,6 +1213,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 			expectedOutput: []dtos.FolderSearchHit{
 				{UID: "foo", Title: "Folder 1"},
 				{UID: "qux", Title: "Folder 3"},
+				{UID: folder.SharedWithMeFolder.UID, Title: folder.SharedWithMeFolder.Title},
 			},
 			permissions: folderReadAndCreatePermission,
 		},
@@ -1177,79 +1258,947 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 		},
 	}
 
-	// test on all dualwriter modes
-	for mode := 1; mode <= 4; mode++ {
-		for _, tc := range tcs {
-			t.Run(fmt.Sprintf("Mode: %d, %s", mode, tc.description), func(t *testing.T) {
-				modeDw := grafanarest.DualWriterMode(mode)
+	for mode := 0; mode <= 4; mode++ {
+		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
 
-				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-					AppModeProduction:    true,
-					DisableAnonymous:     true,
-					APIServerStorageType: "unified",
-					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-						folderv0alpha1.RESOURCEGROUP: {
-							DualWriterMode: modeDw,
-						},
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
 					},
-					EnableFeatureToggles: []string{
-						featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-						featuremgmt.FlagNestedFolders,
-						featuremgmt.FlagKubernetesFolders,
-					},
-				})
+				},
+				UnifiedStorageEnableSearch: true,
+			})
 
-				userTest := helper.CreateUser("user", apis.Org1, org.RoleNone, tc.permissions)
+			// Run all test cases within the same server instance
+			for i, tc := range tcs {
+				t.Run(tc.description, func(t *testing.T) {
+					// Use unique UIDs for folders to avoid conflicts between test cases
+					userTest := helper.CreateUser(fmt.Sprintf("user-%d", i), apis.Org1, org.RoleNone, tc.permissions)
 
-				for _, f := range tc.createFolders {
-					client := helper.GetResourceClient(apis.ResourceClientArgs{
-						User: userTest,
-						GVR:  gvr,
-					})
-					create2 := apis.DoRequest(helper, apis.RequestParams{
-						User:   client.Args.User,
-						Method: http.MethodPost,
-						Path:   "/api/folders",
-						Body:   []byte(f),
-					}, &folder.Folder{})
-					require.NotEmpty(t, create2.Response)
-					require.Equal(t, http.StatusOK, create2.Response.StatusCode)
-				}
+					// Create folders with unique UIDs per test case
+					for _, f := range tc.createFolders {
+						// Replace hardcoded UIDs with unique ones
+						uniqueFolder := f
+						uniqueFolder = strings.Replace(uniqueFolder, `"foo"`, fmt.Sprintf(`"foo-%d"`, i), 1)
+						uniqueFolder = strings.Replace(uniqueFolder, `"bar"`, fmt.Sprintf(`"bar-%d"`, i), 1)
+						uniqueFolder = strings.Replace(uniqueFolder, `"qux"`, fmt.Sprintf(`"qux-%d"`, i), 1)
+						uniqueFolder = strings.Replace(uniqueFolder, `"parentUid": "foo"`, fmt.Sprintf(`"parentUid": "foo-%d"`, i), 1)
 
-				addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
-				login := userTest.Identity.GetLogin()
-				baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password("user"), addr)
-
-				req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(
-					"%s%s",
-					baseUrl,
-					fmt.Sprintf("/api/folders%s", tc.params),
-				), nil)
-				require.NoError(t, err)
-				req.Header.Set("Content-Type", "application/json")
-				if tc.requestToAnotherOrg {
-					req.Header.Set("x-grafana-org-id", "2")
-				}
-
-				resp, err := http.DefaultClient.Do(req)
-				require.NoError(t, err)
-				require.NotNil(t, resp)
-				require.Equal(t, tc.expectedCode, resp.StatusCode)
-
-				if tc.expectedCode == http.StatusOK {
-					list := []dtos.FolderSearchHit{}
-					err = json.NewDecoder(resp.Body).Decode(&list)
-					require.NoError(t, err)
-					require.NoError(t, resp.Body.Close())
-
-					// ignore IDs
-					for i := 0; i < len(list); i++ {
-						list[i].ID = 0
+						client := helper.GetResourceClient(apis.ResourceClientArgs{
+							User: userTest,
+							GVR:  gvr,
+						})
+						create2 := apis.DoRequest(helper, apis.RequestParams{
+							User:   client.Args.User,
+							Method: http.MethodPost,
+							Path:   "/api/folders",
+							Body:   []byte(uniqueFolder),
+						}, &folder.Folder{})
+						require.NotEmpty(t, create2.Response)
+						require.Equal(t, http.StatusOK, create2.Response.StatusCode)
 					}
 
-					require.ElementsMatch(t, tc.expectedOutput, list)
-				}
-			})
-		}
+					addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
+					login := userTest.Identity.GetLogin()
+					baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password(fmt.Sprintf("user-%d", i)), addr)
+
+					// Adjust params with unique UIDs
+					params := tc.params
+					params = strings.ReplaceAll(params, "foo", fmt.Sprintf("foo-%d", i))
+
+					req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(
+						"%s%s",
+						baseUrl,
+						fmt.Sprintf("/api/folders%s", params),
+					), nil)
+					require.NoError(t, err)
+					req.Header.Set("Content-Type", "application/json")
+					if tc.requestToAnotherOrg {
+						req.Header.Set("x-grafana-org-id", "2")
+					}
+
+					resp, err := http.DefaultClient.Do(req)
+					require.NoError(t, err)
+					require.NotNil(t, resp)
+					require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+					if tc.expectedCode == http.StatusOK {
+						list := []dtos.FolderSearchHit{}
+						err = json.NewDecoder(resp.Body).Decode(&list)
+						require.NoError(t, err)
+						require.NoError(t, resp.Body.Close())
+
+						// Adjust expected output with unique UIDs
+						expectedOutput := make([]dtos.FolderSearchHit, len(tc.expectedOutput))
+						for j, output := range tc.expectedOutput {
+							expectedOutput[j] = output
+							expectedOutput[j].ID = 0 // ignore IDs
+							switch output.UID {
+							case "foo":
+								expectedOutput[j].UID = fmt.Sprintf("foo-%d", i)
+							case "bar":
+								expectedOutput[j].UID = fmt.Sprintf("bar-%d", i)
+								expectedOutput[j].ParentUID = fmt.Sprintf("foo-%d", i)
+							case "qux":
+								expectedOutput[j].UID = fmt.Sprintf("qux-%d", i)
+							}
+						}
+
+						// ignore IDs in actual list
+						for j := 0; j < len(list); j++ {
+							list[j].ID = 0
+						}
+
+						require.ElementsMatch(t, expectedOutput, list)
+					}
+				})
+			}
+		})
 	}
+}
+
+// Reproduces a bug where folder deletion does not check for attached library panels.
+func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	for mode := 0; mode <= 5; mode++ {
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete blocked by library elements)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesLibraryPanels,
+				},
+				UnifiedStorageEnableSearch: true,
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create a folder via legacy API (/api/folders) so it is visible to both paths
+			folderUID := fmt.Sprintf("libpanel-del-%d", mode)
+			legacyPayload := fmt.Sprintf(`{
+                "title": "Folder With Library Panel %d",
+                "uid": "%s"
+            }`, mode, folderUID)
+
+			legacyCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(legacyPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, legacyCreate.Result)
+			require.Equal(t, folderUID, legacyCreate.Result.UID)
+
+			// Create a library element inside the folder via /api to simulate an attached library panel
+			libElementPayload := fmt.Sprintf(`{
+                "kind": 1,
+                "name": "LP in %s",
+                "folderUid": "%s",
+                "model": {
+                    "type": "text",
+                    "title": "LP in %s"
+                }
+            }`, folderUID, folderUID, folderUID)
+
+			libCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/library-elements",
+				Body:   []byte(libElementPayload),
+			}, &struct{}{})
+			require.NotNil(t, libCreate.Response)
+			require.Equal(t, http.StatusOK, libCreate.Response.StatusCode)
+
+			// Attempt to delete the folder via K8s API. This should be blocked (ErrFolderNotEmpty)
+			err := client.Resource.Delete(context.Background(), folderUID, metav1.DeleteOptions{})
+			require.Error(t, err, "expected folder deletion to be blocked when library panels exist")
+
+			// Verify the folder still exists
+			_, getErr := client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+			require.NoError(t, getErr, "folder should still exist after failed deletion")
+		})
+	}
+}
+
+func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	// TODO: re-enable on mode 4 and 5 when we migrate /api to /apis for library connections, and begin to
+	// use search to return the connections, rather than the connections table.
+	for mode := 0; mode <= 3; mode++ {
+		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, delete parent blocked by library elements in child)", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesLibraryPanels,
+				},
+				UnifiedStorageEnableSearch: true,
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			parentUID := fmt.Sprintf("libpanel-parent-%d", mode)
+			parentPayload := fmt.Sprintf(`{
+				"title": "Parent Folder %d",
+				"uid": "%s"
+			}`, mode, parentUID)
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			require.Equal(t, parentUID, parentCreate.Result.UID)
+
+			childUID := fmt.Sprintf("libpanel-child-%d", mode)
+			childPayload := fmt.Sprintf(`{
+				"title": "Child Folder %d",
+				"uid": "%s",
+				"parentUid": "%s"
+			}`, mode, childUID, parentUID)
+			childCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(childPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, childCreate.Result)
+			require.Equal(t, childUID, childCreate.Result.UID)
+			require.Equal(t, parentUID, childCreate.Result.ParentUID)
+
+			libElementPayload := fmt.Sprintf(`{
+				"kind": 1,
+				"name": "LP in %s",
+				"folderUid": "%s",
+				"model": {
+					"type": "text",
+					"title": "LP in %s"
+				}
+			}`, childUID, childUID, childUID)
+
+			libCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/library-elements",
+				Body:   []byte(libElementPayload),
+			}, &struct{}{})
+			require.NotNil(t, libCreate.Response)
+			require.Equal(t, http.StatusOK, libCreate.Response.StatusCode)
+
+			// Attempt to delete the parent folder; should be blocked because child folder contains a library panel
+			err := client.Resource.Delete(context.Background(), parentUID, metav1.DeleteOptions{})
+			require.Error(t, err, "expected parent folder deletion to be blocked when child contains library panels")
+
+			// Verify both folders still exist
+			_, getParentErr := client.Resource.Get(context.Background(), parentUID, metav1.GetOptions{})
+			require.NoError(t, getParentErr, "parent folder should still exist after failed deletion")
+			_, getChildErr := client.Resource.Get(context.Background(), childUID, metav1.GetOptions{})
+			require.NoError(t, getChildErr, "child folder should still exist after failed deletion")
+		})
+	}
+}
+
+// Test folder deletion with connected (in-use) library panels - should be blocked
+func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	// TODO: re-enable on mode 4 and 5 when we migrate /api to /apis for library connections, and begin to
+	// use search to return the connections, rather than the connections table.
+	for mode := 0; mode <= 3; mode++ {
+		t.Run(fmt.Sprintf("mode %v - delete blocked by connected library panels in folder and subfolder", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: modeDw,
+					},
+				},
+				UnifiedStorageEnableSearch: true,
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create parent and child folders
+			uid := uuid.NewString()[:8]
+			parentUID := fmt.Sprintf("connected-parent-%d-%s", mode, uid)
+			childUID := fmt.Sprintf("connected-child-%d-%s", mode, uid)
+			createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %d-%s", mode, uid), "")
+			createTestFolder(t, helper, client, childUID, fmt.Sprintf("Child Folder %d-%s", mode, uid), parentUID)
+
+			// Create library panels in both folders
+			parentLibPanelName := fmt.Sprintf("Connected LP in parent %d-%s", mode, uid)
+			childLibPanelName := fmt.Sprintf("Connected LP in child %d-%s", mode, uid)
+			parentLibPanelUID := createTestLibraryPanel(t, helper, client, parentLibPanelName, parentUID)
+			childLibPanelUID := createTestLibraryPanel(t, helper, client, childLibPanelName, childUID)
+
+			// Create dashboards using library panels (makes them connected)
+			parentDashUID := createDashboardWithLibraryPanel(t, helper, client,
+				fmt.Sprintf("Dashboard with LP in parent %d-%s", mode, uid),
+				parentLibPanelUID, "Connected LP in parent", parentUID)
+			childDashUID := createDashboardWithLibraryPanel(t, helper, client,
+				fmt.Sprintf("Dashboard with LP in child %d-%s", mode, uid),
+				childLibPanelUID, "Connected LP in child", childUID)
+
+			// Attempt to delete the parent folder - should be blocked because library panels are connected
+			parentDelete := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodDelete,
+				Path:   "/api/folders/" + parentUID,
+			}, &folder.Folder{})
+			require.Equal(t, http.StatusForbidden, parentDelete.Response.StatusCode)
+
+			// Verify both folders still exist
+			_, getParentErr := client.Resource.Get(context.Background(), parentUID, metav1.GetOptions{})
+			require.NoError(t, getParentErr, "parent folder should still exist after failed deletion")
+			_, getChildErr := client.Resource.Get(context.Background(), childUID, metav1.GetOptions{})
+			require.NoError(t, getChildErr, "child folder should still exist after failed deletion")
+
+			// Verify library panels still exist
+			verifyLibraryPanelExists(t, helper, client, parentLibPanelUID)
+			verifyLibraryPanelExists(t, helper, client, childLibPanelUID)
+
+			// Verify dashboards still exist
+			verifyDashboardExists(t, helper, client, parentDashUID)
+			verifyDashboardExists(t, helper, client, childDashUID)
+		})
+	}
+}
+
+// Test folder deletion with dangling (unconnected) library panels - should succeed and clean up
+func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	for mode := 0; mode <= 5; mode++ {
+		t.Run(fmt.Sprintf("mode %v - delete succeeds and cleans up dangling library panels in folder and subfolder", grafanarest.DualWriterMode(mode)), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				UnifiedStorageEnableSearch: true,
+			})
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			// Create parent and child folders
+			uid := uuid.NewString()[:8]
+			parentUID := fmt.Sprintf("dangling-parent-%d-%s", mode, uid)
+			childUID := fmt.Sprintf("dangling-child-%d-%s", mode, uid)
+			createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %d-%s", mode, uid), "")
+			createTestFolder(t, helper, client, childUID, fmt.Sprintf("Child Folder %d-%s", mode, uid), parentUID)
+
+			// Create dangling library panels in both folders (not connected to any dashboard)
+			parentLibPanelUID := createTestLibraryPanel(t, helper, client,
+				fmt.Sprintf("Dangling LP in parent %d-%s", mode, uid), parentUID)
+			childLibPanelUID := createTestLibraryPanel(t, helper, client,
+				fmt.Sprintf("Dangling LP in child %d-%s", mode, uid), childUID)
+
+			// Verify library panels exist before deletion
+			verifyLibraryPanelExists(t, helper, client, parentLibPanelUID)
+			verifyLibraryPanelExists(t, helper, client, childLibPanelUID)
+
+			// Attempt to delete the parent folder - should be blocked because library panels are connected
+			parentDelete := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodDelete,
+				Path:   "/api/folders/" + parentUID,
+			}, &folder.Folder{})
+			require.Equal(t, http.StatusOK, parentDelete.Response.StatusCode, parentDelete.Body)
+			// Verify folders are deleted
+			_, getParentErr := client.Resource.Get(context.Background(), parentUID, metav1.GetOptions{})
+			require.Error(t, getParentErr, "parent folder should not exist after deletion")
+			_, getChildErr := client.Resource.Get(context.Background(), childUID, metav1.GetOptions{})
+			require.Error(t, getChildErr, "child folder should not exist after deletion")
+
+			// Verify dangling library panels were cleaned up
+			verifyLibraryPanelDeleted(t, helper, client, parentLibPanelUID, "dangling library panel in parent should be deleted")
+			verifyLibraryPanelDeleted(t, helper, client, childLibPanelUID, "dangling library panel in child should be deleted")
+		})
+	}
+}
+
+// Helper function to create a folder with specified UID and optional parent
+func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, uid, title, parentUID string) *folder.Folder {
+	t.Helper()
+
+	payload := fmt.Sprintf(`{
+		"title": "%s",
+		"uid": "%s"`, title, uid)
+
+	if parentUID != "" {
+		payload += fmt.Sprintf(`,
+		"parentUid": "%s"`, parentUID)
+	}
+
+	payload += "}"
+
+	folderCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(payload),
+	}, &folder.Folder{})
+
+	require.NotNil(t, folderCreate.Result)
+	require.Equal(t, uid, folderCreate.Result.UID)
+
+	return folderCreate.Result
+}
+
+// Helper function to create a library panel in a folder
+func createTestLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, name, folderUID string) string {
+	t.Helper()
+
+	libPanelPayload := fmt.Sprintf(`{
+		"kind": 1,
+		"name": "%s",
+		"folderUid": "%s",
+		"model": {
+			"type": "text",
+			"title": "%s"
+		}
+	}`, name, folderUID, name)
+
+	libCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/library-elements",
+		Body:   []byte(libPanelPayload),
+	}, &map[string]interface{}{})
+
+	require.NotNil(t, libCreate.Response)
+	require.Equal(t, http.StatusOK, libCreate.Response.StatusCode)
+
+	libPanelUID := (*libCreate.Result)["result"].(map[string]interface{})["uid"].(string)
+	require.NotEmpty(t, libPanelUID)
+
+	return libPanelUID
+}
+
+// Helper function to create a dashboard that uses a library panel
+func createDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, dashTitle, libPanelUID, libPanelName, folderUID string) string {
+	t.Helper()
+
+	dashPayload := fmt.Sprintf(`{
+		"dashboard": {
+			"title": "%s",
+			"panels": [{
+				"id": 1,
+				"libraryPanel": {
+					"uid": "%s",
+					"name": "%s"
+				}
+			}]
+		},
+		"folderUid": "%s",
+		"overwrite": false
+	}`, dashTitle, libPanelUID, libPanelName, folderUID)
+
+	dashCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/dashboards/db",
+		Body:   []byte(dashPayload),
+	}, &map[string]interface{}{})
+
+	require.NotNil(t, dashCreate.Response)
+	require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode)
+
+	// Extract dashboard UID from response
+	dashUID := (*dashCreate.Result)["uid"].(string)
+	require.NotEmpty(t, dashUID)
+
+	return dashUID
+}
+
+// Helper function to verify library panel exists
+func verifyLibraryPanelExists(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, libPanelUID string) {
+	t.Helper()
+
+	libGet := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf("/api/library-elements/%s", libPanelUID),
+	}, &map[string]interface{}{})
+
+	require.Equal(t, http.StatusOK, libGet.Response.StatusCode)
+}
+
+// Helper function to verify library panel does not exist
+func verifyLibraryPanelDeleted(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, libPanelUID, message string) {
+	t.Helper()
+
+	libGet := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf("/api/library-elements/%s", libPanelUID),
+	}, &map[string]interface{}{})
+
+	require.Equal(t, http.StatusNotFound, libGet.Response.StatusCode, message)
+}
+
+// Helper function to verify dashboard exists by UID
+func verifyDashboardExists(t *testing.T, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, dashUID string) {
+	t.Helper()
+
+	dashGet := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf("/api/dashboards/uid/%s", dashUID),
+	}, &map[string]interface{}{})
+
+	require.Equal(t, http.StatusOK, dashGet.Response.StatusCode, fmt.Sprintf("dashboard %s should still exist", dashUID))
+}
+
+// Test moving folders to root.
+func TestIntegrationMoveNestedFolderToRootK8S(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			folders.RESOURCEGROUP: {
+				DualWriterMode: grafanarest.Mode5,
+			},
+		},
+		UnifiedStorageEnableSearch: true,
+	})
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Create f1 under root
+	f1Payload := `{"title":"Folder 1","uid":"f1"}`
+	createF1 := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(f1Payload),
+	}, &dtos.Folder{})
+	require.NotNil(t, createF1.Result)
+	require.Equal(t, http.StatusOK, createF1.Response.StatusCode)
+	require.Equal(t, "f1", createF1.Result.UID)
+	require.Equal(t, "", createF1.Result.ParentUID)
+
+	// Create f2 under f1
+	f2Payload := `{"title":"Folder 2","uid":"f2","parentUid":"f1"}`
+	createF2 := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(f2Payload),
+	}, &dtos.Folder{})
+	require.NotNil(t, createF2.Result)
+	require.Equal(t, http.StatusOK, createF2.Response.StatusCode)
+	require.Equal(t, "f2", createF2.Result.UID)
+	require.Equal(t, "f1", createF2.Result.ParentUID)
+
+	// Move f2 to the root by having parentUid being empty in the request body
+	move := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders/f2/move",
+		Body:   []byte(`{"parentUid":""}`),
+	}, &dtos.Folder{})
+	require.NotNil(t, move.Result)
+	require.Equal(t, http.StatusOK, move.Response.StatusCode)
+	require.Equal(t, "f2", move.Result.UID)
+	require.Equal(t, "", move.Result.ParentUID)
+
+	// Fetch the folder to confirm it is now at root
+	get := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   "/api/folders/f2",
+	}, &dtos.Folder{})
+	require.NotNil(t, get.Result)
+	require.Equal(t, http.StatusOK, get.Response.StatusCode)
+	require.Equal(t, "f2", get.Result.UID)
+	require.Equal(t, "", get.Result.ParentUID)
+
+	// Check that we can get the same folder using metadata.name selector
+	results, err := client.Resource.List(context.Background(), metav1.ListOptions{
+		FieldSelector: "metadata.name=" + get.Result.UID,
+	})
+	require.NoError(t, err)
+	require.Len(t, results.Items, 1)
+	require.Equal(t, "f2", results.Items[0].GetName())
+}
+
+// Test deleting nested folders ensures postorder deletion
+func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	for mode := 0; mode <= 5; mode++ {
+		t.Run(fmt.Sprintf("Mode %d: Delete nested folder hierarchy in postorder", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+				},
+				UnifiedStorageEnableSearch: true,
+			})
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+			// Helper function to create a folder and return its UID and ParentUID
+			createFolder := func(title, uid, parentUid string) (string, string) {
+				payload := fmt.Sprintf(`{"title":"%s","uid":"%s"%s}`, title, uid, func() string {
+					if parentUid != "" {
+						return fmt.Sprintf(`,"parentUid":"%s"`, parentUid)
+					}
+					return ""
+				}())
+				create := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodPost,
+					Path:   "/api/folders",
+					Body:   []byte(payload),
+				}, &folder.Folder{})
+				require.NotNil(t, create.Result)
+				require.Equal(t, http.StatusOK, create.Response.StatusCode)
+				return create.Result.UID, create.Result.ParentUID
+			}
+
+			// Create a nested folder structure:
+			//       parent
+			//       /    \
+			//   child1  child2
+			//      |
+			//  grandchild
+
+			// Create parent folder
+			parentUID, _ := createFolder(fmt.Sprintf("Parent-%d", mode), fmt.Sprintf("parent-%d", mode), "")
+
+			// Create child1 folder
+			child1UID, child1ParentUID := createFolder(fmt.Sprintf("Child1-%d", mode), fmt.Sprintf("child1-%d", mode), parentUID)
+			require.Equal(t, parentUID, child1ParentUID)
+
+			// Create child2 folder
+			child2UID, child2ParentUID := createFolder(fmt.Sprintf("Child2-%d", mode), fmt.Sprintf("child2-%d", mode), parentUID)
+			require.Equal(t, parentUID, child2ParentUID)
+
+			// Create grandchild folder under child1
+			grandchildUID, grandchildParentUID := createFolder(fmt.Sprintf("Grandchild-%d", mode), fmt.Sprintf("grandchild-%d", mode), child1UID)
+			require.Equal(t, child1UID, grandchildParentUID)
+
+			// Verify the structure before deletion
+			verifyFolderExists := func(uid string, shouldExist bool) {
+				_, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+				if shouldExist {
+					require.NoError(t, err, "folder %s should exist", uid)
+				} else {
+					require.Error(t, err, "folder %s should not exist", uid)
+				}
+			}
+
+			// All folders should exist
+			verifyFolderExists(parentUID, true)
+			verifyFolderExists(child1UID, true)
+			verifyFolderExists(child2UID, true)
+			verifyFolderExists(grandchildUID, true)
+
+			// Delete the parent folder - this should trigger postorder deletion
+			parentDelete := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodDelete,
+				Path:   "/api/folders/" + parentUID,
+			}, &folder.Folder{})
+			require.NotNil(t, parentDelete.Result)
+			require.Equal(t, http.StatusOK, parentDelete.Response.StatusCode)
+
+			// All folders should now be deleted (postorder deletion: grandchild, child1, child2, parent)
+			verifyFolderExists(grandchildUID, false)
+			verifyFolderExists(child1UID, false)
+			verifyFolderExists(child2UID, false)
+			verifyFolderExists(parentUID, false)
+		})
+	}
+}
+
+func setupProvisioningDir(t *testing.T, opts *testinfra.GrafanaOpts) {
+	opts.Dir, opts.DirPath = testinfra.CreateGrafDir(t, *opts)
+
+	// Create provisioning directories
+	provDashboardsDir := fmt.Sprintf("%s/conf/provisioning/dashboards", opts.Dir)
+	provDashboardsCfg := fmt.Sprintf("%s/dev.yaml", provDashboardsDir)
+	blob := []byte(fmt.Sprintf(`
+apiVersion: 1
+
+providers:
+- name: 'provisioned dashboards'
+  type: file
+  orgId: 1
+  folder: 'GrafanaCloud'
+  options:
+   path: %s`, provDashboardsDir))
+	err := os.WriteFile(provDashboardsCfg, blob, 0o644)
+	require.NoError(t, err)
+	input, err := os.ReadFile(filepath.Join("testdata/dashboard.json"))
+	require.NoError(t, err)
+	provDashboardFile := filepath.Join(provDashboardsDir, "dashboard.json")
+	err = os.WriteFile(provDashboardFile, input, 0o644)
+	require.NoError(t, err)
+}
+
+// Test deleting folder with provisioned dashboard has proper handling with forceDeleteRules
+func TestIntegrationDeleteFolderWithProvisionedDashboards(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	for mode := 0; mode <= 5; mode++ {
+		t.Run(fmt.Sprintf("Mode %d: Delete provisioned folders and dashboards", mode), func(t *testing.T) {
+			modeDw := grafanarest.DualWriterMode(mode)
+			ops := testinfra.GrafanaOpts{
+				DisableDataMigrations: true,
+				DisableAnonymous:      true,
+				AppModeProduction:     true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folders.RESOURCEGROUP: {
+						DualWriterMode: modeDw,
+					},
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: modeDw,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+			}
+
+			setupProvisioningDir(t, &ops)
+			helper := apis.NewK8sTestHelper(t, ops)
+
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvr,
+			})
+
+			var folderUID string
+			var dashboardUID string
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				resp := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodGet,
+					Path:   fmt.Sprintf("/apis/dashboard.grafana.app/v0alpha1/namespaces/%s/search?query=dashboard&limit=50&type=dashboard", client.Args.Namespace),
+				}, &map[string]interface{}{})
+				var list v0alpha1.SearchResults
+				require.NotNil(t, resp.Response)
+				assert.Equal(t, http.StatusOK, resp.Response.StatusCode)
+				assert.NoError(t, json.Unmarshal(resp.Body, &list))
+				assert.Equal(collect, list.TotalHits, int64(1), "Dashboard should be ready")
+				for _, d := range list.Hits {
+					folderUID = d.Folder
+					dashboardUID = d.Name
+				}
+			}, 10*time.Second, 25*time.Millisecond)
+
+			_, err := client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+			require.NoError(t, err, "folder %s should exist", folderUID)
+			// Verify dashboards exist
+			verifyDashboardExists := func(shouldExist bool) {
+				getDash := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodGet,
+					Path:   fmt.Sprintf("/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/%s", dashboardUID),
+				}, &map[string]interface{}{})
+				if shouldExist {
+					require.Equal(t, http.StatusOK, getDash.Response.StatusCode, "dashboard %s should exist", dashboardUID)
+				} else {
+					require.Equal(t, http.StatusNotFound, getDash.Response.StatusCode, "dashboard %s should not exist", dashboardUID)
+				}
+			}
+
+			verifyDashboardExists(true)
+
+			t.Run("Deletion should fail when forceDeleteRules=false with provisioned dashboards", func(t *testing.T) {
+				// Attempt to delete the parent folder without forceDeleteRules
+				parentDeleteNoForce := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodDelete,
+					Path:   fmt.Sprintf("/api/folders/%s?forceDeleteRules=false", folderUID),
+				}, &folder.Folder{})
+
+				// Should fail because provisioned dashboards cannot be deleted without forceDeleteRules
+				require.Equal(t, http.StatusBadRequest, parentDeleteNoForce.Response.StatusCode, "deletion should fail without forceDeleteRules")
+				require.Contains(t, string(parentDeleteNoForce.Body), dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason, "error message should indicate provisioned dashboards cannot be deleted")
+				// Verify folders still exist
+				_, err := client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+				require.NoError(t, err, "parent folder %d should still exist", folderUID)
+				// Verify dashboard still exist
+				verifyDashboardExists(true)
+			})
+
+			t.Run("Deletion should succeed when forceDeleteRules=true and delete provisioned dashboards", func(t *testing.T) {
+				_, err = client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+				require.NoError(t, err, "parent folder %d should still exist", folderUID)
+				// Delete the parent folder with forceDeleteRules=true
+				parentDelete := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodDelete,
+					Path:   fmt.Sprintf("/api/folders/%s?forceDeleteRules=true", folderUID),
+				}, &folder.Folder{})
+
+				require.Equal(t, http.StatusOK, parentDelete.Response.StatusCode, "deletion should succeed with forceDeleteRules")
+
+				// Verify folders was deleted
+				_, err := client.Resource.Get(context.Background(), folderUID, metav1.GetOptions{})
+				require.Error(t, err, "parent folder %s should not exist", folderUID)
+				// Verify provisioned dashboard is deleted
+				verifyDashboardExists(false)
+			})
+		})
+	}
+}
+
+// Test that folders created during provisioning using the dual writer have the
+// appropriate labels and annotations in unified storage.
+func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	mode3 := grafanarest.DualWriterMode(3)
+	ops := testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			folders.RESOURCEGROUP: {
+				DualWriterMode: mode3,
+			},
+			"dashboards.dashboard.grafana.app": {
+				DualWriterMode: mode3,
+			},
+		},
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagUnifiedStorageSearch,
+		},
+	}
+
+	setupProvisioningDir(t, &ops)
+	helper := apis.NewK8sTestHelper(t, ops)
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	var folderList folders.FolderList
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		resp := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodGet,
+			Path:   fmt.Sprintf("/apis/folder.grafana.app/v1beta1/namespaces/%s/folders", client.Args.Namespace),
+		}, &map[string]interface{}{})
+		require.NotNil(t, resp.Response)
+		require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+		require.NoError(t, json.Unmarshal(resp.Body, &folderList))
+	}, 10*time.Second, 25*time.Millisecond)
+
+	require.Len(t, folderList.Items, 1)
+
+	accessor, err := utils.MetaAccessor(&folderList.Items[0])
+	require.NoError(t, err)
+
+	expectedLabels := map[string]string{"grafana.app/deprecatedInternalID": "1"}
+	expectedAnnotations := map[string]string{
+		"grafana.app/createdBy": "access-policy:service",
+		"grafana.app/managedBy": "classic-file-provisioning",
+		"grafana.app/managerId": "provisioned dashboards",
+	}
+
+	require.Equal(t, expectedLabels, accessor.GetLabels())
+	require.Equal(t, expectedAnnotations, accessor.GetAnnotations())
 }

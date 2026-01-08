@@ -56,7 +56,9 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 
         // Add a row for each series
         const res = reduceSeriesToRows(data, matcher, options.reducers, options.labelsToFields);
-        return res ? [res] : [];
+        return res
+          ? [{ ...res, refId: `${DataTransformerID.reduce}-${data.map((frame) => frame.refId).join('-')}` }]
+          : [];
       })
     ),
 };
@@ -228,10 +230,11 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
           const value = results[reducer];
           const copy = {
             ...field,
+            labels: { ...field.labels },
             type: getFieldType(reducer, field),
             values: [value],
+            state: undefined,
           };
-          copy.state = undefined;
           if (reducers.length > 1) {
             if (!copy.labels) {
               copy.labels = {};

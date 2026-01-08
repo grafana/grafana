@@ -2,6 +2,7 @@ package connectors
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -86,7 +87,12 @@ const testGHUserTeamsJSON = `[
   }
 ]`
 
-const testGHUserJSON = `{
+var (
+	testGHUserJSON           = fmt.Sprintf(testGHUserJSONTemplate, "octocat@github.com")
+	testGHUserEmptyEmailJSON = fmt.Sprintf(testGHUserJSONTemplate, "")
+)
+
+const testGHUserJSONTemplate = `{
   "login": "octocat",
   "id": 1,
   "node_id": "MDQ6VXNlcjE=",
@@ -109,7 +115,7 @@ const testGHUserJSON = `{
   "company": "GitHub",
   "blog": "https://github.com/blog",
   "location": "San Francisco",
-  "email": "octocat@github.com",
+  "email": "%s",
   "hireable": false,
   "bio": "There once was...",
   "twitter_username": "monatheoctocat",
@@ -132,6 +138,16 @@ const testGHUserJSON = `{
     "collaborators": 0
   }
 }`
+
+const testGHUserEmailJSON = `[{
+	"email": "octocat@github.com",
+	"primary": true,
+	"verified": true
+}]`
+
+const testGHOrgsJSON = `[{
+	"login": "github"
+}]`
 
 func TestSocialGitHub_UserInfo(t *testing.T) {
 	var boolPointer *bool
@@ -310,19 +326,44 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userTeamsRawJSON:    testGHUserTeamsJSON,
 			wantErr:             true,
 		},
+		{
+			name:             "should fetch email and allowed orgs",
+			userRawJSON:      testGHUserEmptyEmailJSON,
+			userTeamsRawJSON: testGHUserTeamsJSON,
+			oAuthExtraInfo: map[string]string{
+				"allowed_organizations": "github",
+			},
+			want: &social.BasicUserInfo{
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				writer.WriteHeader(http.StatusOK)
+				reqURL := request.URL.String()
+
 				// return JSON if matches user endpoint
-				if strings.HasSuffix(request.URL.String(), "/user") {
+				if strings.HasSuffix(reqURL, "/user") {
 					writer.Header().Set("Content-Type", "application/json")
 					_, err := writer.Write([]byte(tt.userRawJSON))
 					require.NoError(t, err)
-				} else if strings.HasSuffix(request.URL.String(), "/user/teams?per_page=100") {
+				} else if strings.HasSuffix(reqURL, "/user/teams?per_page=100") {
 					writer.Header().Set("Content-Type", "application/json")
 					_, err := writer.Write([]byte(tt.userTeamsRawJSON))
+					require.NoError(t, err)
+				} else if strings.HasSuffix(reqURL, "/emails") { // only called if email is empty
+					writer.Header().Set("Content-Type", "application/json")
+					_, err := writer.Write([]byte(testGHUserEmailJSON))
+					require.NoError(t, err)
+				} else if strings.HasSuffix(reqURL, "/orgs?per_page=100") {
+					writer.Header().Set("Content-Type", "application/json")
+					_, err := writer.Write([]byte(testGHOrgsJSON))
 					require.NoError(t, err)
 				} else {
 					writer.WriteHeader(http.StatusNotFound)
@@ -349,7 +390,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				}, cfg,
 				ProvideOrgRoleMapper(cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures())
 
 			token := &oauth2.Token{
@@ -430,7 +471,7 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.teamIds, s.teamIds)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
@@ -454,6 +495,7 @@ func TestSocialGitHub_Validate(t *testing.T) {
 					"auth_url":                   "",
 					"token_url":                  "",
 					"api_url":                    "",
+					"login_prompt":               "select_account",
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
@@ -553,11 +595,22 @@ func TestSocialGitHub_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if login prompt is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"login_prompt":               "invalid",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -593,6 +646,7 @@ func TestSocialGitHub_Reload(t *testing.T) {
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
 					"auth_url":      "some-new-url",
+					"login_prompt":  "login",
 				},
 			},
 			expectError: false,
@@ -600,6 +654,7 @@ func TestSocialGitHub_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
+				LoginPrompt:  "login",
 			},
 			expectedConfig: &oauth2.Config{
 				ClientID:     "new-client-id",
@@ -638,7 +693,7 @@ func TestSocialGitHub_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -697,7 +752,7 @@ func TestGitHub_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

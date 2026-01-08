@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -15,12 +16,18 @@ import {
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
+import { PanelDataPane } from './PanelDataPane';
+import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
+import { scrollToQueryRow } from './utils';
+
+const SET_TIMEOUT = 750;
 
 interface PanelDataTransformationsTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -34,7 +41,7 @@ export class PanelDataTransformationsTab
   tabId = TabId.Transformations;
 
   getTabLabel() {
-    return 'Transformations';
+    return t('dashboard-scene.panel-data-transformations-tab.tab-label', 'Transformations');
   }
 
   public renderTab(props: PanelDataTabHeaderProps) {
@@ -65,14 +72,59 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const transformations: DataTransformerConfig[] = transformsWrongType as unknown as DataTransformerConfig[];
+
+  // Type guard to ensure transformations are DataTransformerConfig[]
+  const transformations = useMemo<DataTransformerConfig[]>(() => {
+    return Array.isArray(transformsWrongType)
+      ? transformsWrongType.filter(
+          (t): t is DataTransformerConfig =>
+            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
+        )
+      : [];
+  }, [transformsWrongType]);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
+
+  const onGoToQueries = useCallback(() => {
+    const parent = model.parent;
+    if (!(parent instanceof PanelDataPane)) {
+      return;
+    }
+
+    const queriesTab = parent.state.tabs.find((tab) => tab.tabId === TabId.Queries);
+    if (!(queriesTab instanceof PanelDataQueriesTab)) {
+      return;
+    }
+
+    // Always create a new SQL expression (it will be added to the end of the queries array)
+    queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
+
+    // Navigate to the Queries tab
+    parent.onChangeTab(queriesTab);
+
+    // Scroll to the newly created SQL query after tab renders
+    setTimeout(() => {
+      const queries = queriesTab.getQueries();
+      // The newly added query is the last one in the array
+      if (queries.length > 0) {
+        const newQuery = queries[queries.length - 1];
+        if (newQuery?.refId) {
+          scrollToQueryRow(newQuery.refId);
+        }
+      }
+    }, SET_TIMEOUT);
+  }, [model]);
+
+  const onAddTransformation = useCallback(
+    (transformationId: string) => {
+      model.onChangeTransformations([...transformations, { id: transformationId, options: {} }]);
+    },
+    [model, transformations]
+  );
 
   if (!data || !sourceData.data) {
     return;
@@ -90,13 +142,18 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
       }}
       isOpen={drawerOpen}
       series={data.series}
-    ></TransformationsDrawer>
+    />
   );
 
   if (transformations.length < 1) {
     return (
       <>
-        <EmptyTransformationsMessage onShowPicker={openDrawer}></EmptyTransformationsMessage>
+        <EmptyTransformationsMessage
+          onShowPicker={openDrawer}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          data={sourceData.data.series}
+        />
         {transformationsDrawer}
       </>
     );
@@ -112,7 +169,9 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           onClick={openDrawer}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          Add another transformation
+          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
+            Add another transformation
+          </Trans>
         </Button>
         <Button
           data-testid={selectors.components.Transforms.removeAllTransformationsButton}
@@ -121,14 +180,22 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           variant="secondary"
           onClick={() => setConfirmModalOpen(true)}
         >
-          Delete all transformations
+          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
+            Delete all transformations
+          </Trans>
         </Button>
       </ButtonGroup>
       <ConfirmModal
         isOpen={confirmModalOpen}
-        title="Delete all transformations?"
-        body="By deleting all transformations, you will go back to the main selection screen."
-        confirmText="Delete all"
+        title={t(
+          'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
+          'Delete all transformations?'
+        )}
+        body={t(
+          'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
+          'By deleting all transformations, you will go back to the main selection screen.'
+        )}
+        confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
         onConfirm={() => {
           model.onChangeTransformations([]);
           setConfirmModalOpen(false);

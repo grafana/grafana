@@ -27,8 +27,8 @@ func NewService(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*cor
 	return s, nil
 }
 
-func (s *coreService) start(_ context.Context) error {
-	serv, err := Initialize(s.cfg, s.opts, s.apiOpts)
+func (s *coreService) start(ctx context.Context) error {
+	serv, err := Initialize(ctx, s.cfg, s.opts, s.apiOpts)
 	if err != nil {
 		return err
 	}

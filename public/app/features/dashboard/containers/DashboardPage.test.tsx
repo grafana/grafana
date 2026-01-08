@@ -1,6 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
-import { Component } from 'react';
 import { useEffectOnce } from 'react-use';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { render } from 'test/test-utils';
@@ -11,10 +10,10 @@ import { config, setDataSourceSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
@@ -34,11 +33,9 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 });
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => {
-  class GeneralSettings extends Component<{}, {}> {
-    render() {
-      return <>general settings</>;
-    }
-  }
+  const GeneralSettings = () => {
+    return <>general settings</>;
+  };
 
   return { GeneralSettings };
 });
@@ -49,14 +46,11 @@ jest.mock('app/features/query/components/QueryGroup', () => {
   };
 });
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/app_events', () => ({
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };
     },
-  },
-  contextSrv: {
-    user: { orgId: 1 },
   },
 }));
 
@@ -91,7 +85,7 @@ const mockCleanUpDashboardAndVariables = jest.fn();
 function setup(propOverrides?: Partial<Props>) {
   config.bootData.navTree = [
     { text: 'Dashboards', id: 'dashboards/browse' },
-    { text: 'Home', id: HOME_NAV_ID },
+    { text: 'Home', id: HOME_NAV_ID, url: '/' },
     {
       text: 'Help',
       id: 'help',
@@ -107,9 +101,9 @@ function setup(propOverrides?: Partial<Props>) {
       'dashboards/browse': {
         text: 'Dashboards',
         id: 'dashboards/browse',
-        parentItem: { text: 'Home', id: HOME_NAV_ID },
+        parentItem: { text: 'Home', id: HOME_NAV_ID, url: '/' },
       },
-      [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
+      [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID, url: '/' },
     },
     initPhase: DashboardInitPhase.NotStarted,
     initError: null,
@@ -204,6 +198,7 @@ describe('DashboardPage', () => {
   describe('When going into view mode', () => {
     beforeEach(() => {
       setDataSourceSrv({
+        registerRuntimeDataSource: jest.fn(),
         get: jest.fn().mockResolvedValue({ getRef: jest.fn(), query: jest.fn().mockResolvedValue([]) }),
         getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
         getList: jest.fn(),

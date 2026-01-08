@@ -1,5 +1,5 @@
-import { cloneDeep, merge, isEqual } from 'lodash';
-import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
+import { cloneDeep, isEqual } from 'lodash';
+import { forkJoin, Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
@@ -31,7 +31,7 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
@@ -53,6 +53,7 @@ export interface QueryRunnerOptions<
   panelName?: string;
   panelPluginId?: string;
   dashboardUID?: string;
+  dashboardTitle?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -236,11 +237,24 @@ export class PanelQueryRunner {
     let seriesStream = transformDataFrame(seriesTransformations, data.series, ctx);
     let annotationsStream = transformDataFrame(annotationsTransformations, data.annotations ?? [], ctx);
 
-    return merge(seriesStream, annotationsStream).pipe(
-      map((frames) => {
-        let isAnnotations = frames.some((f) => f.meta?.dataTopic === DataTopic.Annotations);
-        let transformed = isAnnotations ? { annotations: frames } : { series: frames };
-        return { ...data, ...transformed };
+    let series: DataFrame[] = [];
+    let annotations: DataFrame[] = [];
+
+    return forkJoin([seriesStream, annotationsStream]).pipe(
+      map((results) => {
+        // this strategy allows transformations to take in series frames and produce anno frames
+        // we look at each transformation's result and put it in the correct place
+        results.forEach((frames) => {
+          for (const frame of frames) {
+            if (frame.meta?.dataTopic === DataTopic.Annotations) {
+              annotations.push(frame);
+            } else {
+              series.push(frame);
+            }
+          }
+        });
+
+        return { ...data, series, annotations };
       }),
       catchError((err) => {
         console.warn('Error running transformation:', err);
@@ -262,6 +276,7 @@ export class PanelQueryRunner {
       panelName,
       panelPluginId,
       dashboardUID,
+      dashboardTitle,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -288,6 +303,7 @@ export class PanelQueryRunner {
       panelName,
       panelPluginId,
       dashboardUID,
+      dashboardTitle,
       range: timeRange,
       timeInfo,
       interval: '',

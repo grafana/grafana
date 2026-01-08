@@ -2,21 +2,23 @@ package migrator
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
-	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/util/sqlite"
+
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -66,12 +68,16 @@ func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 
 // NewScopedMigrator should only be used for the transition to a new storage engine
 func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Migrator {
+	return newMigrator(engine, cfg, scope, NewDialect(engine.DriverName()))
+}
+
+func newMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string, dialect Dialect) *Migrator {
 	mg := &Migrator{
 		Cfg:          cfg,
 		DBEngine:     engine,
 		migrations:   make([]Migration, 0),
 		migrationIds: make(map[string]struct{}),
-		Dialect:      NewDialect(engine.DriverName()),
+		Dialect:      dialect,
 		metrics: migratorMetrics{
 			migCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 				Namespace: "grafana_database",
@@ -161,16 +167,7 @@ func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
 func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	logMap := make(map[string]MigrationLog)
 	logItems := make([]MigrationLog, 0)
-
-	exists, err := mg.DBEngine.IsTableExist(mg.tableName)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to check table existence", err)
-	}
-	if !exists {
-		return logMap, nil
-	}
-
-	if err = mg.DBEngine.Table(mg.tableName).Find(&logItems); err != nil {
+	if err := mg.DBEngine.Table(mg.tableName).Find(&logItems); err != nil {
 		return nil, err
 	}
 
@@ -246,9 +243,29 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 
 	logger.Info("Starting DB migrations")
 
-	_, err = mg.GetMigrationLog()
+	migrationLogExists, err := mg.DBEngine.IsTableExist(mg.tableName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to check table existence: %w", err)
+	}
+
+	if !migrationLogExists {
+		// Check if dialect can initialize database from a snapshot.
+		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName, logger)
+		if err != nil {
+			return fmt.Errorf("failed to create database from snapshot: %w", err)
+		}
+
+		migrationLogExists, err = mg.DBEngine.IsTableExist(mg.tableName)
+		if err != nil {
+			return fmt.Errorf("failed to check table existence after applying snapshot: %w", err)
+		}
+	}
+
+	if migrationLogExists {
+		_, err = mg.GetMigrationLog()
+		if err != nil {
+			return err
+		}
 	}
 
 	successLabel := prometheus.Labels{"success": "true"}
@@ -313,7 +330,7 @@ func (mg *Migrator) doMigration(ctx context.Context, m Migration) error {
 		err := mg.exec(ctx, m, sess)
 		// if we get an sqlite busy/locked error, sleep 100ms and try again
 		cnt := 0
-		for cnt < 3 && (errors.Is(err, sqlite3.ErrLocked) || errors.Is(err, sqlite3.ErrBusy)) {
+		for cnt < 3 && sqlite.IsBusyOrLocked(err) {
 			cnt++
 			logger.Debug("Database locked, sleeping then retrying", "error", err, "sql", sql)
 			span.AddEvent("Database locked, sleeping then retrying",
@@ -380,8 +397,12 @@ func (mg *Migrator) exec(ctx context.Context, m Migration, sess *xorm.Session) e
 		err = codeMigration.Exec(sess, mg)
 	} else {
 		sql := m.SQL(mg.Dialect)
-		logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
-		_, err = sess.Exec(sql)
+		if strings.TrimSpace(sql) == "" {
+			logger.Debug("Skipping empty sql migration", "id", m.Id())
+		} else {
+			logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+			_, err = sess.Exec(sql)
+		}
 	}
 
 	if err != nil {

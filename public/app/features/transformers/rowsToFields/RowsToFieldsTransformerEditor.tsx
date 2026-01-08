@@ -2,8 +2,10 @@ import { PluginState, TransformerRegistryItem, TransformerUIProps, TransformerCa
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
+import darkImage from '../images/dark/rowsToFields.svg';
+import lightImage from '../images/light/rowsToFields.svg';
 
-import { rowsToFieldsTransformer, RowToFieldsTransformOptions } from './rowsToFields';
+import { getRowsToFieldsTransformer, RowToFieldsTransformOptions } from './rowsToFields';
 
 export interface Props extends TransformerUIProps<RowToFieldsTransformOptions> {}
 
@@ -24,13 +26,18 @@ export function RowsToFieldsTransformerEditor({ input, options, onChange }: Prop
   );
 }
 
-export const rowsToFieldsTransformRegistryItem: TransformerRegistryItem<RowToFieldsTransformOptions> = {
-  id: rowsToFieldsTransformer.id,
-  editor: RowsToFieldsTransformerEditor,
-  transformation: rowsToFieldsTransformer,
-  name: rowsToFieldsTransformer.name,
-  description: rowsToFieldsTransformer.description,
-  state: PluginState.beta,
-  categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(rowsToFieldsTransformer.id).helperDocs,
+export const getRowsToFieldsTransformRegistryItem: () => TransformerRegistryItem<RowToFieldsTransformOptions> = () => {
+  const rowsToFieldsTransformer = getRowsToFieldsTransformer();
+  return {
+    id: rowsToFieldsTransformer.id,
+    editor: RowsToFieldsTransformerEditor,
+    transformation: rowsToFieldsTransformer,
+    name: rowsToFieldsTransformer.name,
+    description: rowsToFieldsTransformer.description,
+    state: PluginState.beta,
+    categories: new Set([TransformerCategory.Reformat]),
+    help: getTransformationContent(rowsToFieldsTransformer.id).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  };
 };

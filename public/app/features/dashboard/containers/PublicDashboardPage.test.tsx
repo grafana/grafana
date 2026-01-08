@@ -5,11 +5,11 @@ import { useEffectOnce } from 'react-use';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Dashboard, DashboardCursorSync, FieldConfigSource, Panel, ThresholdsMode } from '@grafana/schema/src';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import * as appTypes from 'app/types';
-import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
+import { StoreState } from 'app/types/store';
 
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
@@ -45,12 +45,12 @@ jest.mock('app/features/dashboard/state/initDashboard', () => ({
   initDashboard: jest.fn(),
 }));
 
-jest.mock('app/types', () => ({
-  ...jest.requireActual('app/types'),
+jest.mock('app/types/store', () => ({
+  ...jest.requireActual('app/types/store'),
   useDispatch: () => jest.fn(),
 }));
 
-const setup = (propOverrides?: Partial<Props>, initialState?: Partial<appTypes.StoreState>) => {
+const setup = (propOverrides?: Partial<Props>, initialState?: Partial<StoreState>) => {
   const store = configureStore(initialState);
   const props: Props = {
     ...getRouteComponentProps({
@@ -202,6 +202,7 @@ describe('PublicDashboardPage', () => {
           repeatDirection: 'h',
           transformations: [],
           transparent: false,
+          description: 'hello',
         },
       ];
 
@@ -245,7 +246,7 @@ describe('PublicDashboardPage', () => {
           ...dashboardBase,
           getModel: () =>
             getTestDashboard({
-              timepicker: { hidden: false, refresh_intervals: [], time_options: [] },
+              timepicker: { hidden: false, refresh_intervals: [] },
             }),
         },
       });
@@ -260,7 +261,29 @@ describe('PublicDashboardPage', () => {
       setup(undefined, {
         dashboard: {
           ...dashboardBase,
-          getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false, dashboardNotFound: false }),
+          initError: {
+            message: 'Failed to fetch dashboard',
+            error: {
+              status: 403,
+              statusText: 'Forbidden',
+              data: {
+                statusCode: 403,
+                messageId: 'publicdashboards.notEnabled',
+                message: 'Dashboard paused',
+              },
+              config: {
+                method: 'GET',
+                url: 'api/public/dashboards/4615c835a4e441f09c94fb1b073e6d2e',
+                retry: 0,
+                headers: {
+                  'X-Grafana-Org-Id': 1,
+                  'X-Grafana-Device-Id': 'da48fad0e58ba327fd7d1e6bd17e9c63',
+                },
+                hideFromInspector: true,
+              },
+            },
+          },
+          getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false }),
         },
       });
 
@@ -277,7 +300,28 @@ describe('PublicDashboardPage', () => {
       setup(undefined, {
         dashboard: {
           ...dashboardBase,
-          getModel: () => getTestDashboard(undefined, { dashboardNotFound: true }),
+          initError: {
+            message: 'Failed to fetch dashboard',
+            error: {
+              status: 404,
+              statusText: 'Not Found',
+              data: {
+                statusCode: 404,
+                messageId: 'publicdashboards.notFound',
+                message: 'Dashboard not found',
+              },
+              config: {
+                method: 'GET',
+                url: 'api/public/dashboards/ce159fe139fc4d238a7d9c3ae33fb82b',
+                retry: 0,
+                hideFromInspector: true,
+                headers: {
+                  'X-Grafana-Device-Id': 'da48fad0e58ba327fd7d1e6bd17e9c63',
+                },
+              },
+            },
+          },
+          getModel: () => getTestDashboard(undefined, {}),
         },
       });
 

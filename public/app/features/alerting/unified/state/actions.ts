@@ -1,27 +1,14 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService } from '@grafana/runtime';
-import { logMeasurement } from '@grafana/runtime/src/utils/logging';
-import {
-  AlertManagerCortexConfig,
-  AlertmanagerGroup,
-  Matcher,
-  Receiver,
-  TestReceiversAlert,
-} from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO, ThunkResult } from 'app/types';
+import { locationService, logMeasurement } from '@grafana/runtime';
+import { AlertManagerCortexConfig, AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { ThunkResult } from 'app/types/store';
 import { RuleIdentifier, RuleNamespace, StateHistoryItem } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { backendSrv } from '../../../../core/services/backend_srv';
 import { withPromRulesMetadataLogging, withRulerRulesMetadataLogging } from '../Analytics';
-import {
-  deleteAlertManagerConfig,
-  fetchAlertGroups,
-  testReceivers,
-  updateAlertManagerConfig,
-} from '../api/alertmanager';
+import { deleteAlertManagerConfig, fetchAlertGroups, updateAlertManagerConfig } from '../api/alertmanager';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
@@ -183,7 +170,7 @@ export function fetchAllPromRulesAction(
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(
   'unifiedalerting/fetchGrafanaAnnotations',
-  (alertId: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(alertId))
+  (ruleUID: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(ruleUID))
 );
 
 interface UpdateAlertManagerConfigActionOptions {
@@ -241,19 +228,6 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
     )
 );
 
-export const fetchFolderAction = createAsyncThunk(
-  'unifiedalerting/fetchFolder',
-  (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid, { withAccessControl: true }))
-);
-
-export const fetchFolderIfNotFetchedAction = (uid: string): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    if (!getState().unifiedAlerting.folders[uid]?.dispatched) {
-      dispatch(fetchFolderAction(uid));
-    }
-  };
-};
-
 export const fetchAlertGroupsAction = createAsyncThunk(
   'unifiedalerting/fetchAlertGroups',
   (alertManagerSourceName: string): Promise<AlertmanagerGroup[]> => {
@@ -276,22 +250,6 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
         successMessage: 'Alertmanager configuration reset.',
       }
     );
-  }
-);
-
-interface TestReceiversOptions {
-  alertManagerSourceName: string;
-  receivers: Receiver[];
-  alert?: TestReceiversAlert;
-}
-
-export const testReceiversAction = createAsyncThunk(
-  'unifiedalerting/testReceivers',
-  ({ alertManagerSourceName, receivers, alert }: TestReceiversOptions): Promise<void> => {
-    return withAppEvents(withSerializedError(testReceivers(alertManagerSourceName, receivers, alert)), {
-      errorMessage: 'Failed to send test alert.',
-      successMessage: 'Test alert sent.',
-    });
   }
 );
 

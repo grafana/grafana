@@ -30,7 +30,7 @@ type CallbackHandler func(c *contextmodel.ReqContext) response.Response
 func (s *QueryHistoryService) permissionsMiddleware(handler CallbackHandler, errorMessage string) CallbackHandler {
 	return func(c *contextmodel.ReqContext) response.Response {
 		hasAccess := ac.HasAccess(s.accessControl, c)
-		if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit && !hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		if c.GetOrgRole() == org.RoleViewer && !hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
 			return response.Error(http.StatusUnauthorized, errorMessage, nil)
 		}
 		return handler(c)
@@ -192,7 +192,6 @@ func (s *QueryHistoryService) unstarHandler(c *contextmodel.ReqContext) response
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
 	}
-
 	query, err := s.UnstarQueryInQueryHistory(c.Req.Context(), c.SignedInUser, queryUID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar query in query history", err)

@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func Test_ReadPluginJSON(t *testing.T) {
@@ -56,6 +57,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Extensions: Extensions{
 					AddedLinks:        []AddedLink{},
 					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -63,8 +65,8 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Dependencies: Dependencies{
 					GrafanaVersion: "3.x.x",
 					Plugins: []Dependency{
-						{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-						{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+						{Type: "datasource", ID: "graphite", Name: "Graphite"},
+						{Type: "panel", ID: "graph", Name: "Graph"},
 					},
 					Extensions: ExtensionsDependencies{
 						ExposedComponents: []string{},
@@ -72,10 +74,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				},
 
 				Includes: []*Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: ActionAppAccess},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: ActionAppAccess},
-					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: ActionAppAccess},
-					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: identity.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: identity.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Panel", Type: "panel", Role: identity.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Datasource", Type: "datasource", Role: identity.RoleViewer, Action: ActionAppAccess},
 				},
 				Backend: false,
 			},
@@ -108,8 +110,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Name: "Pie Chart (old)",
 
 				Extensions: Extensions{
-					AddedLinks:        []AddedLink{},
-					AddedComponents:   []AddedComponent{},
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -123,7 +127,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				},
 
 				Includes: []*Includes{
-					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: org.RoleViewer},
+					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: identity.RoleViewer},
 				},
 			},
 		},
@@ -143,8 +147,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Type:     TypeDataSource,
 
 				Extensions: Extensions{
-					AddedLinks:        []AddedLink{},
-					AddedComponents:   []AddedComponent{},
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -188,6 +194,9 @@ func Test_ReadPluginJSON(t *testing.T) {
 								"id": "myorg-extensions-app/component-1/v1"
 							}
 						],
+						"addedFunctions": [
+              {"targets": ["foo/bar"], "title":"some hook"}
+            ],
 						"extensionPoints": [
 							{
 								"title": "Extension point 1",
@@ -209,6 +218,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 						{Title: "Added link 1", Description: "Added link 1 description", Targets: []string{"grafana/dashboard/panel/menu"}},
 					},
 					AddedComponents: []AddedComponent{
+
 						{Title: "Added component 1", Description: "Added component 1 description", Targets: []string{"grafana/user/profile/tab"}},
 					},
 					ExposedComponents: []ExposedComponent{
@@ -216,6 +226,9 @@ func Test_ReadPluginJSON(t *testing.T) {
 					},
 					ExtensionPoints: []ExtensionPoint{
 						{Id: "myorg-extensions-app/extensions-point-1/v1", Title: "Extension point 1", Description: "Extension points 1 description"},
+					},
+					AddedFunctions: []AddedFunction{
+						{Targets: []string{"foo/bar"}, Title: "some hook"},
 					},
 				},
 
@@ -271,6 +284,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 					AddedComponents: []AddedComponent{
 						{Title: "Added component 1", Description: "Added component 1 description", Targets: []string{"grafana/user/profile/tab"}},
 					},
+					AddedFunctions:    []AddedFunction{},
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -301,8 +315,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Type: TypeApp,
 
 				Extensions: Extensions{
-					AddedLinks:        []AddedLink{},
-					AddedComponents:   []AddedComponent{},
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -332,8 +348,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Type: TypeApp,
 
 				Extensions: Extensions{
-					AddedLinks:        []AddedLink{},
-					AddedComponents:   []AddedComponent{},
+					AddedLinks:      []AddedLink{},
+					AddedComponents: []AddedComponent{},
+					AddedFunctions:  []AddedFunction{},
+
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -371,6 +389,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Extensions: Extensions{
 					AddedLinks:        []AddedLink{},
 					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
 					ExposedComponents: []ExposedComponent{},
 					ExtensionPoints:   []ExtensionPoint{},
 				},
@@ -381,6 +400,108 @@ func Test_ReadPluginJSON(t *testing.T) {
 					Plugins:           []Dependency{},
 					Extensions: ExtensionsDependencies{
 						ExposedComponents: []string{"myorg-extensions-app/component-1/v1"},
+					},
+				},
+			},
+		},
+		{
+			name: "can read languages in a datasource plugin",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-languages-datasource",
+					"name": "Languages Datasource",
+					"type": "datasource",
+					"languages": ["en-US", "pt-BR"]
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:        "myorg-languages-datasource",
+				Name:      "Languages Datasource",
+				Type:      TypeDataSource,
+				Languages: []string{"en-US", "pt-BR"},
+
+				Extensions: Extensions{
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "can read languages in a panel plugin",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-languages-panel",
+					"name": "Languages Panel",
+					"type": "panel",
+					"languages": ["en-US", "pt-BR"]
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:        "myorg-languages-panel",
+				Name:      "Languages Panel",
+				Type:      TypePanel,
+				Languages: []string{"en-US", "pt-BR"},
+
+				Extensions: Extensions{
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+			},
+		},
+		{
+			name: "can read languages in an app plugin",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "myorg-languages-app",
+					"name": "Languages App",
+					"type": "app",
+					"languages": ["en-US", "pt-BR"]
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:        "myorg-languages-app",
+				Name:      "Languages App",
+				Type:      TypeApp,
+				Languages: []string{"en-US", "pt-BR"},
+
+				Extensions: Extensions{
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
+					AddedFunctions:    []AddedFunction{},
+					ExposedComponents: []ExposedComponent{},
+					ExtensionPoints:   []ExtensionPoint{},
+				},
+
+				Dependencies: Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []Dependency{},
+					Extensions: ExtensionsDependencies{
+						ExposedComponents: []string{},
 					},
 				},
 			},

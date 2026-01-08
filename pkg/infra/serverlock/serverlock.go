@@ -307,7 +307,10 @@ func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string)
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.releaseLock")
 	defer span.End()
 
-	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+	// ensure clean up happens even if the context is cancelled
+	dbCtx := context.WithoutCancel(ctx)
+
+	err := sl.SQLStore.WithDbSession(dbCtx, func(dbSession *db.Session) error {
 		sql := `DELETE FROM server_lock WHERE operation_uid=? `
 
 		res, err := dbSession.Exec(sql, actionName)
@@ -316,11 +319,11 @@ func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string)
 		}
 		affected, err := res.RowsAffected()
 		if err != nil {
-			sl.log.FromContext(ctx).Debug("Error getting rows affected", "actionName", actionName, "error", err)
+			sl.log.FromContext(dbCtx).Debug("Error getting rows affected", "actionName", actionName, "error", err)
 		}
 
 		if affected != 1 {
-			sl.log.FromContext(ctx).Debug("Error releasing lock", "actionName", actionName, "rowsAffected", affected)
+			sl.log.FromContext(dbCtx).Debug("Error releasing lock", "actionName", actionName, "rowsAffected", affected)
 		}
 		return nil
 	})

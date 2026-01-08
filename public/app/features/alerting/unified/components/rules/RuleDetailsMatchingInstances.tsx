@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { countBy, sum } from 'lodash';
-import { useMemo, useState } from 'react';
 import * as React from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
 import {
@@ -18,7 +19,7 @@ import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
-import { isAlertingRule } from '../../utils/rules';
+import { prometheusRuleType } from '../../utils/rules';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { getComponentsFromStats } from './RuleStats';
@@ -39,18 +40,44 @@ interface ShowMoreInstancesProps {
   stats: ShowMoreStats;
   onClick?: React.ComponentProps<typeof LinkButton>['onClick'];
   href?: React.ComponentProps<typeof LinkButton>['href'];
+  enableFiltering?: boolean;
+  alertState?: InstanceStateFilter;
 }
 
-function ShowMoreInstances({ stats, onClick, href }: ShowMoreInstancesProps) {
+function ShowMoreInstances({ stats, onClick, href, enableFiltering, alertState }: ShowMoreInstancesProps) {
   const styles = useStyles2(getStyles);
+  const { visibleItemsCount, totalItemsCount } = stats;
 
   return (
     <div className={styles.footerRow}>
       <div>
-        Showing {stats.visibleItemsCount} out of {stats.totalItemsCount} instances
+        {enableFiltering && alertState ? (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.showing-count-with-state"
+            values={{ visibleItemsCount, alertState, totalItemsCount }}
+          >
+            Showing {{ visibleItemsCount }} {{ alertState }} out of {{ totalItemsCount }} instances
+          </Trans>
+        ) : (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.showing-count"
+            values={{ visibleItemsCount, totalItemsCount }}
+          >
+            Showing {{ visibleItemsCount }} out of {{ totalItemsCount }} instances
+          </Trans>
+        )}
       </div>
       <LinkButton size="sm" variant="secondary" data-testid="show-all" onClick={onClick} href={href}>
-        Show all {stats.totalItemsCount} alert instances
+        {enableFiltering ? (
+          <Trans i18nKey="alerting.rule-details-matching-instances.button-show-all">Show all</Trans>
+        ) : (
+          <Trans
+            i18nKey="alerting.rule-details-matching-instances.button-show-all-instances"
+            values={{ totalItemsCount }}
+          >
+            Show all {{ totalItemsCount }} alert instances
+          </Trans>
+        )}
       </LinkButton>
     </div>
   );
@@ -73,13 +100,13 @@ export function RuleDetailsMatchingInstances(props: Props) {
 
   const alerts = useMemo(
     (): Alert[] =>
-      isAlertingRule(promRule) && promRule.alerts?.length
+      prometheusRuleType.alertingRule(promRule) && promRule.alerts?.length
         ? filterAlerts(queryString, alertState, sortAlerts(SortOrder.Importance, promRule.alerts))
         : [],
     [promRule, alertState, queryString]
   );
 
-  if (!isAlertingRule(promRule)) {
+  if (!prometheusRuleType.alertingRule(promRule)) {
     return null;
   }
 
@@ -93,6 +120,7 @@ export function RuleDetailsMatchingInstances(props: Props) {
     instanceTotals.alerting,
     instanceTotals.inactive,
     instanceTotals.pending,
+    instanceTotals.recovering,
     instanceTotals.nodata,
   ]);
   const hiddenInstancesCount = totalInstancesCount - visibleInstances.length;
@@ -104,7 +132,11 @@ export function RuleDetailsMatchingInstances(props: Props) {
 
   // createViewLink returns a link containing the app subpath prefix hence cannot be used
   // in locationService.push as it will result in a double prefix
-  const ruleViewPageLink = createViewLink(namespace.rulesSource, props.rule, location.pathname + location.search);
+  const ruleViewPageLink = createViewLink(
+    namespace.rulesSource,
+    props.rule,
+    window.location.pathname + window.location.search
+  );
   const statsComponents = getComponentsFromStats(instanceTotals);
 
   const resetFilter = () => setAlertState(undefined);
@@ -114,6 +146,8 @@ export function RuleDetailsMatchingInstances(props: Props) {
       stats={stats}
       onClick={enableFiltering ? resetFilter : undefined}
       href={!enableFiltering ? ruleViewPageLink : undefined}
+      enableFiltering={enableFiltering}
+      alertState={alertState}
     />
   ) : undefined;
 

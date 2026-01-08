@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
@@ -15,12 +16,62 @@ var (
 	regexpOperatorPattern           = regexp.MustCompile(`^\/.*\/$`)
 	regexpMeasurementPattern        = regexp.MustCompile(`^\/.*\/$`)
 	regexMatcherWithStartEndPattern = regexp.MustCompile(`^/\^(.*)\$/$`)
+	regexpRawQueryWhere             = regexp.MustCompile(`(?i)WHERE`)
 )
+
+func (query *Query) getRawQueryWithAdhocFilters() string {
+	if len(query.AdhocFilters) == 0 {
+		return query.RawQuery
+	}
+
+	// If there's no where to be found (get it?), just append.
+	whereIndexes := regexpRawQueryWhere.FindAllStringIndex(query.RawQuery, -1)
+	if len(whereIndexes) == 0 {
+		query.RawQuery += " WHERE "
+		query.RawQuery += strings.Join(query.renderAdhocFilters(), " ")
+		return query.RawQuery
+	}
+
+	// Walk through raw query and determine if the 'WHERE' strings
+	// we found above are quoted or not. We'll insert adhoc filters
+	// after the first unquoted 'WHERE' string we find. Influxql supports
+	// subqueries, so valid queries can have multiple where clauses,
+	// but this code does not attempt to support that.
+	byteIndex := 0
+	insideQuotes := false
+	var previousRuneValue rune
+	whereIndex, whereIndexes := whereIndexes[0], whereIndexes[1:]
+	for _, runeValue := range query.RawQuery {
+		if previousRuneValue != '\\' && (runeValue == '"' || runeValue == '\'') {
+			insideQuotes = !insideQuotes
+		}
+		previousRuneValue = runeValue
+
+		if byteIndex == whereIndex[0] {
+			if !insideQuotes {
+				alteredQuery := query.RawQuery[:whereIndex[1]]
+				alteredQuery += " "
+				alteredQuery += strings.Join(query.renderAdhocFilters(), " ")
+				alteredQuery += " AND"
+				alteredQuery += query.RawQuery[whereIndex[1]:]
+				return alteredQuery
+			}
+			if len(whereIndexes) == 0 {
+				query.RawQuery += " WHERE "
+				query.RawQuery += strings.Join(query.renderAdhocFilters(), " ")
+				return query.RawQuery
+			}
+			whereIndex, whereIndexes = whereIndexes[0], whereIndexes[1:]
+		}
+		byteIndex += utf8.RuneLen(runeValue)
+	}
+	return query.RawQuery
+}
 
 func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error) {
 	var res string
 	if query.UseRawQuery && query.RawQuery != "" {
-		res = query.RawQuery
+		res = query.getRawQueryWithAdhocFilters()
 	} else {
 		res = query.renderSelectors(queryContext)
 		res += query.renderMeasurement()
@@ -44,9 +95,13 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 	return res, nil
 }
 
-func (query *Query) renderTags() []string {
-	res := make([]string, 0, len(query.Tags))
-	for i, tag := range query.Tags {
+func (query *Query) renderAdhocFilters() []string {
+	return renderTags(query.AdhocFilters)
+}
+
+func renderTags(tags []*Tag) []string {
+	res := make([]string, 0, len(tags))
+	for i, tag := range tags {
 		str := ""
 
 		if i > 0 {
@@ -131,8 +186,11 @@ func (query *Query) renderTags() []string {
 
 		res = append(res, fmt.Sprintf(`%s%s %s %s`, str, escapedKey, tag.Operator, textValue))
 	}
-
 	return res
+}
+
+func (query *Query) renderTags() []string {
+	return renderTags(query.Tags)
 }
 
 func (query *Query) renderTimeFilter(queryContext *backend.QueryDataRequest) string {

@@ -1,4 +1,5 @@
-import { Button } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Button, EmptyState, Stack } from '@grafana/ui';
 
 import { DataSourceRights } from '../types';
 
@@ -7,28 +8,38 @@ import { DataSourceReadOnlyMessage } from './DataSourceReadOnlyMessage';
 export type Props = {
   dataSourceRights: DataSourceRights;
   onDelete: () => void;
+  notFound: boolean;
 };
 
-export function DataSourceLoadError({ dataSourceRights, onDelete }: Props) {
+export function DataSourceLoadError({ dataSourceRights, onDelete, notFound }: Props) {
   const { readOnly, hasDeleteRights } = dataSourceRights;
   const canDelete = !readOnly && hasDeleteRights;
-  const navigateBack = () => history.back();
+  const navigateBack = () => window.history.back();
 
   return (
     <>
       {readOnly && <DataSourceReadOnlyMessage />}
+      <Stack direction="column">
+        <Stack direction="column" alignItems="center">
+          {notFound && (
+            <EmptyState
+              variant="not-found"
+              message={t('datasources.data-source-load-error.not-found', 'Data source not found')}
+            />
+          )}
+        </Stack>
+        <Stack direction="row" gap={2}>
+          {canDelete && (
+            <Button type="submit" variant="destructive" onClick={onDelete}>
+              <Trans i18nKey="datasources.data-source-load-error.delete">Delete</Trans>
+            </Button>
+          )}
 
-      <div className="gf-form-button-row">
-        {canDelete && (
-          <Button type="submit" variant="destructive" onClick={onDelete}>
-            Delete
+          <Button variant="secondary" fill="outline" type="button" onClick={navigateBack}>
+            <Trans i18nKey="datasources.data-source-load-error.back">Back</Trans>
           </Button>
-        )}
-
-        <Button variant="secondary" fill="outline" type="button" onClick={navigateBack}>
-          Back
-        </Button>
-      </div>
+        </Stack>
+      </Stack>
     </>
   );
 }

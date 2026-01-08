@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -16,7 +15,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -34,14 +32,13 @@ type SyncerConfig struct {
 	RequestInfo *request.RequestInfo
 
 	Mode              DualWriterMode
-	LegacyStorage     LegacyStorage
+	LegacyStorage     Storage
 	Storage           Storage
 	ServerLockService ServerLockService
+	SkipDataSync      bool
 
 	DataSyncerInterval     time.Duration
 	DataSyncerRecordsLimit int
-
-	Reg prometheus.Registerer
 }
 
 func (s *SyncerConfig) Validate() error {
@@ -69,15 +66,12 @@ func (s *SyncerConfig) Validate() error {
 	if s.DataSyncerRecordsLimit == 0 {
 		s.DataSyncerRecordsLimit = 1000
 	}
-	if s.Reg == nil {
-		s.Reg = prometheus.DefaultRegisterer
-	}
 	return nil
 }
 
 // StartPeriodicDataSyncer starts a background job that will execute the DataSyncer, syncing the data
 // from the hosted grafana backend into the unified storage backend. This is run in the grafana instance.
-func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
+func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig, metrics *DualWriterMetrics) error {
 	if err := cfg.Validate(); err != nil {
 		return fmt.Errorf("invalid syncer config: %w", err)
 	}
@@ -95,14 +89,14 @@ func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
 		time.Sleep(time.Second * time.Duration(jitterSeconds))
 
 		// run it immediately
-		syncOK, err := runDataSyncer(ctx, cfg)
+		syncOK, err := runDataSyncer(ctx, cfg, metrics)
 		log.Info("data syncer finished", "syncOK", syncOK, "error", err)
 
 		ticker := time.NewTicker(cfg.DataSyncerInterval)
 		for {
 			select {
 			case <-ticker.C:
-				syncOK, err = runDataSyncer(ctx, cfg)
+				syncOK, err = runDataSyncer(ctx, cfg, metrics)
 				log.Info("data syncer finished", "syncOK", syncOK, ", error", err)
 			case <-ctx.Done():
 				return
@@ -114,7 +108,7 @@ func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
 
 // runDataSyncer will ensure that data between legacy storage and unified storage are in sync.
 // The sync implementation depends on the DualWriter mode
-func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
+func runDataSyncer(ctx context.Context, cfg *SyncerConfig, metrics *DualWriterMetrics) (bool, error) {
 	if err := cfg.Validate(); err != nil {
 		return false, fmt.Errorf("invalid syncer config: %w", err)
 	}
@@ -126,19 +120,17 @@ func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
 	// implementation depends on the current DualWriter mode
 	switch cfg.Mode {
 	case Mode1, Mode2:
-		return legacyToUnifiedStorageDataSyncer(ctx, cfg)
+		return legacyToUnifiedStorageDataSyncer(ctx, cfg, metrics)
 	default:
 		klog.Info("data syncer not implemented for mode:", cfg.Mode)
 		return false, nil
 	}
 }
 
-func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
+func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig, metrics *DualWriterMetrics) (bool, error) {
 	if err := cfg.Validate(); err != nil {
 		return false, fmt.Errorf("invalid syncer config: %w", err)
 	}
-	metrics := &dualWriterMetrics{}
-	metrics.init(cfg.Reg)
 
 	log := klog.NewKlogr().WithName("legacyToUnifiedStorageDataSyncer").WithValues("mode", cfg.Mode, "resource", cfg.Kind)
 
@@ -159,11 +151,8 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 		log.Info("starting legacyToUnifiedStorageDataSyncer")
 		startSync := time.Now()
 
-		// Add a claim to the context to allow the background job to use the underlying access_token permissions.
-		orgId := int64(1)
-
 		ctx = klog.NewContext(ctx, log)
-		ctx = identity.WithRequester(ctx, getSyncRequester(orgId))
+		ctx, _ = identity.WithServiceIdentity(ctx, 0)
 		ctx = request.WithNamespace(ctx, cfg.RequestInfo.Namespace)
 		ctx = request.WithRequestInfo(ctx, cfg.RequestInfo)
 
@@ -183,7 +172,9 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 
 		log.Info("got items from unified storage", "items", len(storageList))
 
-		legacyList, err := getList(ctx, cfg.LegacyStorage, &metainternalversion.ListOptions{})
+		legacyList, err := getList(ctx, cfg.LegacyStorage, &metainternalversion.ListOptions{
+			Limit: int64(cfg.DataSyncerRecordsLimit),
+		})
 		if err != nil {
 			log.Error(err, "unable to extract list from legacy storage")
 			return
@@ -298,28 +289,40 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 	return everythingSynced, err
 }
 
-func getSyncRequester(orgId int64) *identity.StaticRequester {
-	return &identity.StaticRequester{
-		Type:           claims.TypeServiceAccount, // system:apiserver
-		UserID:         1,
-		OrgID:          orgId,
-		Name:           "admin",
-		Login:          "admin",
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true,
-		Permissions: map[int64]map[string][]string{
-			orgId: {
-				"*": {"*"}, // all resources, all scopes
-			},
-		},
-	}
-}
-
 func getList(ctx context.Context, obj rest.Lister, listOptions *metainternalversion.ListOptions) ([]runtime.Object, error) {
-	ll, err := obj.List(ctx, listOptions)
-	if err != nil {
-		return nil, err
+	var allItems []runtime.Object
+
+	for {
+		if int64(len(allItems)) >= listOptions.Limit {
+			return nil, fmt.Errorf("list has more than %d records. Aborting sync", listOptions.Limit)
+		}
+
+		ll, err := obj.List(ctx, listOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		items, err := meta.ExtractList(ll)
+		if err != nil {
+			return nil, err
+		}
+
+		allItems = append(allItems, items...)
+
+		// Get continue token from the list metadata.
+		listMeta, err := meta.ListAccessor(ll)
+		if err != nil {
+			return nil, err
+		}
+
+		// If no continue token, we're done paginating.
+		if listMeta.GetContinue() == "" {
+			break
+		}
+
+		// Set continue token for next page.
+		listOptions.Continue = listMeta.GetContinue()
 	}
 
-	return meta.ExtractList(ll)
+	return allItems, nil
 }

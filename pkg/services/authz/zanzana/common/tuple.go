@@ -2,11 +2,14 @@ package common
 
 import (
 	"fmt"
+	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -26,6 +29,18 @@ const (
 )
 
 const (
+	TypeFolderPrefix       string = TypeFolder + ":"
+	TypeResourcePrefix     string = TypeResource + ":"
+	TypeGroupResoucePrefix string = TypeGroupResouce + ":"
+	TypeTeamPrefix         string = TypeTeam + ":"
+)
+
+const (
+	KindDashboards string = dashboardV1.DASHBOARD_RESOURCE
+	KindFolders    string = folderV1.RESOURCE
+)
+
+const (
 	RelationTeamMember string = "member"
 	RelationTeamAdmin  string = "admin"
 	RelationParent     string = "parent"
@@ -40,14 +55,26 @@ const (
 	RelationCreate string = "create"
 	RelationDelete string = "delete"
 
-	RelationFolderResourceSetView  string = "resource_" + RelationSetView
-	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
-	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
+	RelationGetPermissions string = "get_permissions"
+	RelationSetPermissions string = "set_permissions"
 
-	RelationFolderResourceGet    string = "resource_" + RelationGet
-	RelationFolderResourceUpdate string = "resource_" + RelationUpdate
-	RelationFolderResourceCreate string = "resource_" + RelationCreate
-	RelationFolderResourceDelete string = "resource_" + RelationDelete
+	RelationCanGet            string = "can_get"
+	RelationCanCreate         string = "can_create"
+	RelationCanUpdate         string = "can_update"
+	RelationCanDelete         string = "can_delete"
+	RelationCanGetPermissions string = "can_get_permissions"
+	RelationCanSetPermissions string = "can_set_permissions"
+
+	RelationSubresourceSetView  string = "resource_" + RelationSetView
+	RelationSubresourceSetEdit  string = "resource_" + RelationSetEdit
+	RelationSubresourceSetAdmin string = "resource_" + RelationSetAdmin
+
+	RelationSubresourceGet            string = "resource_" + RelationGet
+	RelationSubresourceUpdate         string = "resource_" + RelationUpdate
+	RelationSubresourceCreate         string = "resource_" + RelationCreate
+	RelationSubresourceDelete         string = "resource_" + RelationDelete
+	RelationSubresourceGetPermissions string = "resource_" + RelationGetPermissions
+	RelationSubresourceSetPermissions string = "resource_" + RelationSetPermissions
 )
 
 // RelationsGroupResource are relations that can be added on type "group_resource".
@@ -56,6 +83,8 @@ var RelationsGroupResource = []string{
 	RelationUpdate,
 	RelationCreate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 }
 
 // RelationsResource are relations that can be added on type "resource".
@@ -63,35 +92,81 @@ var RelationsResource = []string{
 	RelationGet,
 	RelationUpdate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 }
 
-// RelationsFolderResource are relations that can be added on type "folder" for child resources.
-var RelationsFolderResource = []string{
-	RelationFolderResourceGet,
-	RelationFolderResourceUpdate,
-	RelationFolderResourceCreate,
-	RelationFolderResourceDelete,
+// RelationsSubresource are relations that can be added on typed resources for subresources.
+var RelationsSubresource = []string{
+	RelationSubresourceGet,
+	RelationSubresourceUpdate,
+	RelationSubresourceCreate,
+	RelationSubresourceDelete,
+	RelationSubresourceGetPermissions,
+	RelationSubresourceSetPermissions,
 }
 
-// RelationsFolder are relations that can be added on type "folder".
-var RelationsFolder = append(
-	RelationsFolderResource,
+// RelationsTyped are relations that can be added to typed resources (folders, teams, users, etc).
+var RelationsTyped = append(
+	RelationsSubresource,
 	RelationGet,
 	RelationUpdate,
 	RelationCreate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 )
+
+// VerbMapping is mapping a k8s verb to a zanzana relation.
+var VerbMapping = map[string]string{
+	utils.VerbGet:              RelationGet,
+	utils.VerbList:             RelationGet,
+	utils.VerbWatch:            RelationGet,
+	utils.VerbCreate:           RelationCreate,
+	utils.VerbUpdate:           RelationUpdate,
+	utils.VerbPatch:            RelationUpdate,
+	utils.VerbDelete:           RelationDelete,
+	utils.VerbDeleteCollection: RelationDelete,
+	utils.VerbGetPermissions:   RelationGetPermissions,
+	utils.VerbSetPermissions:   RelationSetPermissions,
+}
+
+// RelationToVerbMapping is mapping a zanzana relation to k8s verb.
+var RelationToVerbMapping = map[string]string{
+	RelationGet:            utils.VerbGet,
+	RelationCreate:         utils.VerbCreate,
+	RelationUpdate:         utils.VerbUpdate,
+	RelationDelete:         utils.VerbDelete,
+	RelationGetPermissions: utils.VerbGetPermissions,
+	RelationSetPermissions: utils.VerbSetPermissions,
+}
+
+// FolderPermissionRelation returns the optimized folder relation for permission management.
+func FolderPermissionRelation(relation string) string {
+	switch relation {
+	case RelationGet:
+		return RelationCanGet
+	case RelationCreate:
+		return RelationCanCreate
+	case RelationUpdate:
+		return RelationCanUpdate
+	case RelationDelete:
+		return RelationCanDelete
+	case RelationGetPermissions:
+		return RelationCanGetPermissions
+	case RelationSetPermissions:
+		return RelationCanSetPermissions
+	default:
+		return relation
+	}
+}
 
 func IsGroupResourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsGroupResource)
 }
 
-func IsFolderResourceRelation(relation string) bool {
-	return isValidRelation(relation, RelationsFolderResource)
-}
-
-func IsResourceRelation(relation string) bool {
-	return isValidRelation(relation, RelationsResource)
+func IsSubresourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsSubresource)
 }
 
 func isValidRelation(relation string, valid []string) bool {
@@ -103,62 +178,154 @@ func isValidRelation(relation string, valid []string) bool {
 	return false
 }
 
-func FolderResourceRelation(relation string) string {
-	return fmt.Sprintf("%s_%s", TypeResource, relation)
+func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {
+	return strings.HasPrefix(t.Object, TypeFolder) && strings.HasPrefix(t.Relation, "resource_")
+}
+
+func SubresourceRelation(relation string) string {
+	return TypeResource + "_" + relation
 }
 
 func NewTypedIdent(typ string, name string) string {
-	return fmt.Sprintf("%s:%s", typ, name)
+	return typ + ":" + name
 }
 
-func NewResourceIdent(group, resource, name string) string {
-	return fmt.Sprintf("%s:%s/%s", TypeResource, FormatGroupResource(group, resource), name)
+func NewResourceIdent(group, resource, subresource, name string) string {
+	return TypeResourcePrefix + FormatGroupResource(group, resource, subresource) + "/" + name
 }
 
 func NewFolderIdent(name string) string {
-	return fmt.Sprintf("%s:%s", TypeFolder, name)
+	return TypeFolderPrefix + name
 }
 
-func NewGroupResourceIdent(group, resource string) string {
-	return fmt.Sprintf("%s:%s", TypeGroupResouce, FormatGroupResource(group, resource))
+func NewGroupResourceIdent(group, resource, subresource string) string {
+	return TypeGroupResoucePrefix + FormatGroupResource(group, resource, subresource)
 }
 
-func FormatGroupResource(group, resource string) string {
-	return fmt.Sprintf("%s/%s", group, resource)
+func FormatGroupResource(group, resource, subresource string) string {
+	b := strings.Builder{}
+	b.WriteString(group)
+	b.WriteRune('/')
+	b.WriteString(resource)
+
+	if subresource != "" {
+		b.WriteRune('/')
+		b.WriteString(subresource)
+	}
+
+	return b.String()
 }
 
-func NewResourceTuple(subject, relation, group, resource, name string) *openfgav1.TupleKey {
+// NewTupleEntry constructs new openfga entry type:name[#relation].
+// Relation allows to specify group of users (subjects) related to type:name
+// (for example, team:devs#member refers to users which are members of team devs)
+func NewTupleEntry(objectType, name, relation string) string {
+	obj := fmt.Sprintf("%s:%s", objectType, name)
+	if relation != "" {
+		obj = fmt.Sprintf("%s#%s", obj, relation)
+	}
+	return obj
+}
+
+func NewObjectEntry(objectType, group, resource, subresource, name string) string {
+	if objectType == TypeFolder {
+		return TypeFolder + ":" + name
+	}
+
+	obj := fmt.Sprintf("%s:%s/%s", objectType, group, resource)
+	if subresource != "" {
+		obj = fmt.Sprintf("%s/%s", obj, subresource)
+	}
+	if name != "" {
+		obj = fmt.Sprintf("%s/%s", obj, name)
+	}
+	return obj
+}
+
+func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
+	if name == "*" {
+		if m.group != "" && m.resource != "" {
+			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource), true
+		}
+		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
+	}
+
+	if translation.typ == TypeResource {
+		return NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name), true
+	}
+
+	if translation.typ == TypeFolder {
+		if m.group != "" && m.resource != "" {
+			return NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name), true
+		}
+
+		return NewFolderTuple(subject, m.relation, name), true
+	}
+
+	return NewTypedTuple(translation.typ, subject, m.relation, name), true
+}
+
+func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
+	va := a.Condition.Context.Fields["subresources"]
+	vb := b.Condition.Context.Fields["subresources"]
+	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
+}
+
+func NewResourceTuple(subject, relation, group, resource, subresource, name string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
 		Relation: relation,
-		Object:   NewResourceIdent(group, resource, name),
+		Object:   NewResourceIdent(group, resource, subresource, name),
 		Condition: &openfgav1.RelationshipCondition{
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"group_resource": structpb.NewStringValue(FormatGroupResource(group, resource)),
+					"group_resource": structpb.NewStringValue(FormatGroupResource(group, resource, subresource)),
 				},
 			},
 		},
 	}
 }
 
-func isFolderResourceRelationSet(relation string) bool {
-	return relation == RelationFolderResourceSetView ||
-		relation == RelationFolderResourceSetEdit ||
-		relation == RelationFolderResourceSetAdmin
+func isSubresourceRelationSet(relation string) bool {
+	return relation == RelationSubresourceSetView ||
+		relation == RelationSubresourceSetEdit ||
+		relation == RelationSubresourceSetAdmin
 }
 
-func NewFolderResourceTuple(subject, relation, group, resource, folder string) *openfgav1.TupleKey {
-	relation = FolderResourceRelation(relation)
+func NewFolderParentTuple(folder, parent string) *openfgav1.TupleKey {
+	return &openfgav1.TupleKey{
+		Object:   NewFolderIdent(folder),
+		Relation: RelationParent,
+		User:     NewFolderIdent(parent),
+	}
+}
+
+func NewFolderTuple(subject, relation, name string) *openfgav1.TupleKey {
+	return NewTypedTuple(TypeFolder, subject, relation, name)
+}
+
+func NewFolderResourceTuple(subject, relation, group, resource, subresource, folder string) *openfgav1.TupleKey {
+	relation = SubresourceRelation(relation)
 	var condition *openfgav1.RelationshipCondition
-	if !isFolderResourceRelationSet(relation) {
+	if !isSubresourceRelationSet(relation) {
 		condition = &openfgav1.RelationshipCondition{
-			Name: "folder_group_filter",
+			Name: "subresource_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"group_resources": structpb.NewListValue(&structpb.ListValue{
-						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource))},
+					"subresources": structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource, subresource))},
 					}),
 				},
 			},
@@ -173,24 +340,36 @@ func NewFolderResourceTuple(subject, relation, group, resource, folder string) *
 	}
 }
 
-func NewGroupResourceTuple(subject, relation, group, resource string) *openfgav1.TupleKey {
+func NewTypedResourceTuple(subject, relation, typ, group, resource, subresource, name string) *openfgav1.TupleKey {
+	relation = SubresourceRelation(relation)
+	var condition *openfgav1.RelationshipCondition
+	if !isSubresourceRelationSet(relation) {
+		condition = &openfgav1.RelationshipCondition{
+			Name: "subresource_filter",
+			Context: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"subresources": structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource, subresource))},
+					}),
+				},
+			},
+		}
+	}
+
+	return &openfgav1.TupleKey{
+		User:      subject,
+		Relation:  relation,
+		Object:    NewTypedIdent(typ, name),
+		Condition: condition,
+	}
+}
+
+func NewGroupResourceTuple(subject, relation, group, resource, subresource string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
 		Relation: relation,
-		Object:   NewGroupResourceIdent(group, resource),
+		Object:   NewGroupResourceIdent(group, resource, subresource),
 	}
-}
-
-func NewFolderParentTuple(folder, parent string) *openfgav1.TupleKey {
-	return &openfgav1.TupleKey{
-		Object:   NewFolderIdent(folder),
-		Relation: "parent",
-		User:     NewFolderIdent(parent),
-	}
-}
-
-func NewFolderTuple(subject, relation, name string) *openfgav1.TupleKey {
-	return NewTypedTuple(TypeFolder, subject, relation, name)
 }
 
 func NewTypedTuple(typ, subject, relation, name string) *openfgav1.TupleKey {
@@ -198,6 +377,14 @@ func NewTypedTuple(typ, subject, relation, name string) *openfgav1.TupleKey {
 		User:     subject,
 		Relation: relation,
 		Object:   NewTypedIdent(typ, name),
+	}
+}
+
+func NewTuple(subject, relation, object string) *openfgav1.TupleKey {
+	return &openfgav1.TupleKey{
+		User:     subject,
+		Relation: relation,
+		Object:   object,
 	}
 }
 
@@ -259,6 +446,14 @@ func ToOpenFGATupleKey(t *authzextv1.TupleKey) *openfgav1.TupleKey {
 	return tupleKey
 }
 
+func ToOpenFGATupleKeys(tuples []*authzextv1.TupleKey) []*openfgav1.TupleKey {
+	result := make([]*openfgav1.TupleKey, 0, len(tuples))
+	for _, t := range tuples {
+		result = append(result, ToOpenFGATupleKey(t))
+	}
+	return result
+}
+
 func ToOpenFGATupleKeyWithoutCondition(t *authzextv1.TupleKeyWithoutCondition) *openfgav1.TupleKeyWithoutCondition {
 	return &openfgav1.TupleKeyWithoutCondition{
 		User:     t.GetUser(),
@@ -282,6 +477,14 @@ func ToOpenFGATuples(tuples []*authzextv1.Tuple) []*openfgav1.Tuple {
 	return result
 }
 
+func ToOpenFGADeleteTupleKey(tuples *openfgav1.TupleKey) *openfgav1.TupleKeyWithoutCondition {
+	return &openfgav1.TupleKeyWithoutCondition{
+		User:     tuples.GetUser(),
+		Relation: tuples.GetRelation(),
+		Object:   tuples.GetObject(),
+	}
+}
+
 func AddRenderContext(req *openfgav1.CheckRequest) {
 	if req.ContextualTuples == nil {
 		req.ContextualTuples = &openfgav1.ContextualTupleKeys{}
@@ -294,16 +497,27 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 		User:     req.TupleKey.User,
 		Relation: RelationSetView,
 		Object: NewGroupResourceIdent(
-			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
-			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+			dashboardV1.DashboardResourceInfo.GroupResource().Group,
+			dashboardV1.DashboardResourceInfo.GroupResource().Resource,
+			"",
 		),
 	})
 }
 
-func NewResourceContext(group, resource string) *structpb.Struct {
-	return &structpb.Struct{
-		Fields: map[string]*structpb.Value{
-			"requested_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
-		},
+func SplitTupleObject(object string) (string, string, string) {
+	var objectType, name, relation string
+	parts := strings.Split(object, ":")
+	if len(parts) < 2 {
+		return "", "", ""
 	}
+
+	objectType = parts[0]
+	nameRel := parts[1]
+	parts = strings.Split(nameRel, "#")
+	if len(parts) > 1 {
+		relation = parts[1]
+	}
+	name = parts[0]
+
+	return objectType, name, relation
 }

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSX } from 'react';
 import { selectOptionInTest, getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { DataSourceVariableEditorUnConnected as DataSourceVariableEditor } from './DataSourceVariableEditor';
@@ -29,7 +30,7 @@ describe('DataSourceVariableEditor', () => {
     render(<DataSourceVariableEditor {...props} />);
 
     const selectContainer = getSelectParent(screen.getByLabelText('Type'));
-    expect(selectContainer).toHaveTextContent('Prometheus');
+    expect(selectContainer).toHaveTextContent('Choose');
   });
 
   it('calls the handler when the data source is changed', async () => {

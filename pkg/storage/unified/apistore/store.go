@@ -6,16 +6,19 @@
 package apistore
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"reflect"
 	"strconv"
 	"time"
 
-	"golang.org/x/exp/rand"
+	"github.com/bwmarrin/snowflake"
+	"go.opentelemetry.io/otel"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,14 +29,17 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/bwmarrin/snowflake"
-
+	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/concurrency"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const (
@@ -42,14 +48,33 @@ const (
 	LargeObjectSupportDisabled = false
 )
 
-var _ storage.Interface = (*Storage)(nil)
+var (
+	_      storage.Interface = (*Storage)(nil)
+	tracer                   = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/apistore")
+)
+
+type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 
 // Optional settings that apply to a single resource
 type StorageOptions struct {
+	// ????: should we constrain this to only dashboards for now?
+	// Not yet clear if this is a good general solution, or just a stop-gap
 	LargeObjectSupport LargeObjectSupport
-	InternalConversion func([]byte, runtime.Object) (runtime.Object, error)
 
+	// Allow writing objects with metadata.annotations[grafana.app/folder]
+	EnableFolderSupport bool
+
+	// Some resources should not allow the absolute maximum (254 characters)
+	MaximumNameLength int
+
+	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
+
+	// Process inline secure values
+	SecureValues secrets.InlineSecureValueSupport
+
+	// Temporary fix to support adding default permissions AfterCreate
+	Permissions DefaultPermissionSetter
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -63,9 +88,10 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store     resource.ResourceClient
-	getKey    func(string) (*resource.ResourceKey, error)
-	snowflake *snowflake.Node // used to enforce internal ids
+	store          resource.ResourceClient
+	getKey         func(string) (*resourcepb.ResourceKey, error)
+	snowflake      *snowflake.Node    // used to enforce internal ids
+	configProvider RestConfigProvider // used for provisioning
 
 	versioner storage.Versioner
 
@@ -79,29 +105,35 @@ var ErrFileNotExists = fmt.Errorf("file doesn't exist")
 // ErrNamespaceNotExists means the directory for the namespace doesn't actually exist.
 var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
+type RestConfigProvider interface {
+	GetRestConfig(context.Context) (*clientrest.Config, error)
+}
+
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
 	store resource.ResourceClient,
 	keyFunc func(obj runtime.Object) (string, error),
-	keyParser func(key string) (*resource.ResourceKey, error),
+	keyParser func(key string) (*resourcepb.ResourceKey, error),
 	newFunc func() runtime.Object,
 	newListFunc func() runtime.Object,
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
+	configProvider RestConfigProvider,
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
-		store:        store,
-		gr:           config.GroupResource,
-		codec:        config.Codec,
-		keyFunc:      keyFunc,
-		newFunc:      newFunc,
-		newListFunc:  newListFunc,
-		getAttrsFunc: getAttrsFunc,
-		trigger:      trigger,
-		indexers:     indexers,
+		store:          store,
+		gr:             config.GroupResource,
+		codec:          config.Codec,
+		keyFunc:        keyFunc,
+		newFunc:        newFunc,
+		newListFunc:    newListFunc,
+		getAttrsFunc:   getAttrsFunc,
+		trigger:        trigger,
+		indexers:       indexers,
+		configProvider: configProvider,
 
 		getKey: keyParser,
 
@@ -111,7 +143,7 @@ func NewStorage(
 	}
 
 	if opts.RequireDeprecatedInternalID {
-		node, err := snowflake.NewNode(rand.Int63n(1024))
+		node, err := snowflake.NewNode(rand.Int64N(1024))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -120,7 +152,7 @@ func NewStorage(
 
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests
 	if s.getKey == nil {
-		s.getKey = func(key string) (*resource.ResourceKey, error) {
+		s.getKey = func(key string) (*resourcepb.ResourceKey, error) {
 			k, err := grafanaregistry.ParseKey(key)
 			if err != nil {
 				return nil, err
@@ -131,7 +163,7 @@ func NewStorage(
 			if k.Resource == "" {
 				return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
 			}
-			return &resource.ResourceKey{
+			return &resourcepb.ResourceKey{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,
@@ -143,14 +175,39 @@ func NewStorage(
 	return s, func() {}, nil
 }
 
+// CompactRevision implements storage.Interface.
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/interfaces.go#L278
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L204
+func (s *Storage) CompactRevision() int64 {
+	return 0
+}
+
+// SetKeysFunc allows to override the function used to get keys from storage.
+// This allows to replace default function that fetches keys from storage with one using cache.
+// https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/interfaces.go#L273
+func (s *Storage) SetKeysFunc(storage.KeysFunc) {
+	// noop
+}
+
+// Stats implements storage.Interface.
+func (s *Storage) Stats(ctx context.Context) (storage.Stats, error) {
+	return storage.Stats{}, nil
+}
+
+// GetCurrentResourceVersion implements storage.Interface.
+// See: https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L686
+func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
+	// Although not totally accurate, this is sufficient
+	return uint64(time.Now().UnixMicro()), nil
+}
+
 func (s *Storage) Versioner() storage.Versioner {
 	return s.versioner
 }
 
-func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Object, error) {
-	if s.opts.InternalConversion != nil {
-		return s.opts.InternalConversion(data, obj)
-	}
+func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
+	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
+	defer span.End()
 	obj, _, err := s.codec.Decode(data, nil, obj)
 	return obj, err
 }
@@ -159,28 +216,38 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	var err error
-	req := &resource.CreateRequest{}
-	req.Value, err = s.prepareObjectForStorage(ctx, obj)
+	ctx, span := tracer.Start(ctx, "apistore.Storage.Create")
+	defer span.End()
+	v, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
+	}
+	req := &resourcepb.CreateRequest{
+		Value: v.raw.Bytes(),
 	}
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
 	}
-	rsp, err := s.store.Create(ctx, req)
+
+	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
 	if err != nil {
 		return err
 	}
+
+	rsp, err := s.store.Create(ctx, req)
+	if err != nil {
+		return v.finish(ctx, resource.GetError(resource.AsErrorResult(err)), s.opts.SecureValues)
+	}
 	if rsp.Error != nil {
+		err = resource.GetError(rsp.Error)
 		if rsp.Error.Code == http.StatusConflict {
-			return storage.NewKeyExistsError(key, 0)
+			err = storage.NewKeyExistsError(key, 0)
 		}
-		return resource.GetError(rsp.Error)
+		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
-	if err := copyModifiedObjectToDestination(obj, out); err != nil {
+	if _, err := s.convertToObject(ctx, req.Value, out); err != nil {
 		return err
 	}
 
@@ -193,13 +260,13 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	// set a timer to delete the file after ttl seconds
 	if ttl > 0 {
 		time.AfterFunc(time.Second*time.Duration(ttl), func() {
-			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj); err != nil {
+			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj, storage.DeleteOptions{}); err != nil {
 				panic(err)
 			}
 		})
 	}
 
-	return nil
+	return v.finish(ctx, nil, s.opts.SecureValues)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -214,7 +281,15 @@ func (s *Storage) Delete(
 	preconditions *storage.Preconditions,
 	validateDeletion storage.ValidateObjectFunc,
 	_ runtime.Object,
+	opts storage.DeleteOptions,
 ) error {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.Delete")
+	defer span.End()
+	info, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return errors.New("missing auth info")
+	}
+
 	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 		return err
 	}
@@ -223,18 +298,11 @@ func (s *Storage) Delete(
 	if err != nil {
 		return err
 	}
-	cmd := &resource.DeleteRequest{Key: k}
+	cmd := &resourcepb.DeleteRequest{Key: k}
 
 	if preconditions != nil {
 		if err := preconditions.Check(key, out); err != nil {
 			return err
-		}
-
-		if preconditions.ResourceVersion != nil {
-			cmd.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
-			if err != nil {
-				return err
-			}
 		}
 		if preconditions.UID != nil {
 			cmd.Uid = string(*preconditions.UID)
@@ -246,13 +314,31 @@ func (s *Storage) Delete(
 			return err
 		}
 	}
+
+	meta, err := utils.MetaAccessor(out)
+	if err != nil {
+		return fmt.Errorf("unable to read object %w", err)
+	}
+	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
+		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
+	}
+
+	cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
+	if err != nil {
+		return resource.GetError(resource.AsErrorResult(err))
+	}
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		return resource.GetError(rsp.Error)
 	}
+
+	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+		logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
+	}
+
 	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
 		return err
 	}
@@ -261,6 +347,8 @@ func (s *Storage) Delete(
 
 // This version is not yet passing the watch tests
 func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.Watch")
+	defer span.End()
 	k, err := s.getKey(key)
 	if err != nil {
 		return watch.NewEmptyWatch(), nil
@@ -271,7 +359,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		return watch.NewEmptyWatch(), nil
 	}
 
-	cmd := &resource.WatchRequest{
+	cmd := &resourcepb.WatchRequest{
 		Since:               req.ResourceVersion,
 		Options:             req.Options,
 		SendInitialEvents:   false,
@@ -288,7 +376,8 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
-		return nil, err
+
+		return nil, resource.GetError(resource.AsErrorResult(err))
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
@@ -303,8 +392,10 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.Get")
+	defer span.End()
 	var err error
-	req := &resource.ReadRequest{}
+	req := &resourcepb.ReadRequest{}
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		if opts.IgnoreNotFound {
@@ -322,7 +413,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 
 	rsp, err := s.store.Read(ctx, req)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		if rsp.Error.Code == http.StatusNotFound {
@@ -334,7 +425,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return resource.GetError(rsp.Error)
 	}
 
-	_, err = s.convertToObject(rsp.Value, objPtr)
+	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
 	if err != nil {
 		return err
 	}
@@ -348,6 +439,8 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.GetList")
+	defer span.End()
 	k, err := s.getKey(key)
 	if err != nil {
 		return err
@@ -360,7 +453,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
-		return err
+		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
 		return resource.GetError(rsp.Error)
@@ -380,35 +473,36 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	if v.IsNil() {
-		v.Set(reflect.MakeSlice(v.Type(), 0, 0))
+		v.Set(reflect.MakeSlice(v.Type(), 0, len(rsp.Items)))
 	}
 
-	for _, item := range rsp.Items {
-		obj, err := s.convertToObject(item.Value, s.newFunc())
+	// Pre-allocate results slice to preserve order and avoid race conditions.
+	// Each goroutine writes to its own index, no mutex needed.
+	type resultSlot struct {
+		obj          runtime.Object
+		shouldAppend bool
+	}
+	results := make([]resultSlot, len(rsp.Items))
+
+	// Concurrently process items as some may be large and take a while to process.
+	err = concurrency.ForEachJob(ctx, len(rsp.Items), 10, func(ctx context.Context, idx int) error {
+		item := rsp.Items[idx]
+		obj, shouldAppend, err := s.processItem(ctx, item, opts, predicate)
 		if err != nil {
 			return err
 		}
-		if err := s.versioner.UpdateObject(obj, uint64(item.ResourceVersion)); err != nil {
-			return err
+		if shouldAppend {
+			results[idx] = resultSlot{obj: obj, shouldAppend: true}
 		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 
-		if opts.ResourceVersionMatch == metaV1.ResourceVersionMatchExact {
-			currentVersion, err := s.versioner.ObjectResourceVersion(obj)
-			if err != nil {
-				return err
-			}
-			expectedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
-			if err != nil {
-				return err
-			}
-			if currentVersion != expectedRV {
-				continue
-			}
-		}
-
-		ok, err := predicate.Matches(obj)
-		if err == nil && ok {
-			v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
+	for _, r := range results {
+		if r.shouldAppend {
+			v.Set(reflect.Append(v, reflect.ValueOf(r.obj).Elem()))
 		}
 	}
 
@@ -420,6 +514,45 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 	return nil
+}
+
+// processItem converts a raw item from the response, updates its version,
+// checks resource version matching, and applies predicates.
+// Returns the processed object, whether it should be appended to results, and any error.
+func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrapper, opts storage.ListOptions, predicate storage.SelectionPredicate) (runtime.Object, bool, error) {
+	_, span := tracer.Start(ctx, "apistore.Storage.processItem")
+	defer span.End()
+
+	obj, err := s.convertToObject(ctx, item.Value, s.newFunc())
+	if err != nil {
+		return nil, false, err
+	}
+	if err := s.versioner.UpdateObject(obj, uint64(item.ResourceVersion)); err != nil {
+		return nil, false, err
+	}
+
+	// Skip items that don't match the exact resource version if specified
+	if opts.ResourceVersionMatch == metaV1.ResourceVersionMatchExact {
+		currentVersion, err := s.versioner.ObjectResourceVersion(obj)
+		if err != nil {
+			return nil, false, err
+		}
+		expectedRV, err := s.versioner.ParseResourceVersion(opts.ResourceVersion)
+		if err != nil {
+			return nil, false, err
+		}
+		if currentVersion != expectedRV {
+			return nil, false, nil
+		}
+	}
+
+	// Apply predicate filtering
+	ok, err := predicate.Matches(obj)
+	if err != nil || !ok {
+		return nil, false, nil
+	}
+
+	return obj, true, nil
 }
 
 // GuaranteedUpdate keeps calling 'tryUpdate()' to update key 'key' (of type 'destination')
@@ -445,18 +578,32 @@ func (s *Storage) GuaranteedUpdate(
 	tryUpdate storage.UpdateFunc,
 	cachedExistingObject runtime.Object,
 ) error {
+	ctx, span := tracer.Start(ctx, "apistore.Storage.GuaranteedUpdate")
+	defer span.End()
 	var (
-		res         storage.ResponseMeta
-		updatedObj  runtime.Object
-		existingObj runtime.Object
-		created     bool
-		err         error
+		res           storage.ResponseMeta
+		updatedObj    runtime.Object
+		existingObj   runtime.Object
+		existingBytes []byte
+		err           error
 	)
-	req := &resource.UpdateRequest{}
+	req := &resourcepb.UpdateRequest{}
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
 	}
+	// NOTE: by default, the RV will **not** be set in the preconditions (it is removed here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L187)
+	// instead, the RV check is done with the object from the request itself.
+	//
+	// the object from the request is retrieved in the tryUpdate function (we use the generic k8s store one). this function calls the UpdateObject function here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L653
+	// and that will run a series of transformations: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/rest/update.go#L219
+	//
+	// the specific transformations it runs depends on what type of update it is.
+	// for patch, the transformers are set here and use the patchBytes from the request: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/patch.go#L697
+	// for put, it uses the object from the request here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/endpoints/handlers/update.go#L163
+	//
+	// after those transformations, the RV will then be on the object so that the RV check can properly be done here: https://github.com/kubernetes/kubernetes/blob/v1.34.1/staging/src/k8s.io/apiserver/pkg/registry/generic/registry/store.go#L662
+	// it will be compared to the current object that we pass in below from storage.
 	if preconditions != nil && preconditions.ResourceVersion != nil {
 		req.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
 		if err != nil {
@@ -466,129 +613,114 @@ func (s *Storage) GuaranteedUpdate(
 
 	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
 		// Read the latest value
-		rsp, err := s.store.Read(ctx, &resource.ReadRequest{Key: req.Key})
+		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
 		if err != nil {
-			return err
+			return resource.GetError(resource.AsErrorResult(err))
 		}
 
-		if rsp.Error != nil {
-			if rsp.Error.Code == http.StatusNotFound {
+		if readResponse.Error != nil {
+			if readResponse.Error.Code == http.StatusNotFound {
 				if !ignoreNotFound {
 					return apierrors.NewNotFound(s.gr, req.Key.Name)
 				}
 			} else {
-				return resource.GetError(rsp.Error)
+				return resource.GetError(readResponse.Error)
 			}
 		}
 
-		created = true
-		existingObj = s.newFunc()
-		if len(rsp.Value) > 0 {
-			created = false
-			_, err = s.convertToObject(rsp.Value, existingObj)
+		// Upsert?  (create because it does not already exist)
+		if len(readResponse.Value) == 0 {
+			if !ignoreNotFound {
+				return apierrors.NewNotFound(s.gr, req.Key.Name)
+			}
+
+			updatedObj, _, err = tryUpdate(s.newFunc(), res)
 			if err != nil {
-				return err
-			}
-
-			mmm, err := utils.MetaAccessor(existingObj)
-			if err != nil {
-				return err
-			}
-			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
-			res.ResourceVersion = uint64(rsp.ResourceVersion)
-
-			if rest.IsDualWriteUpdate(ctx) {
-				// Ignore the RV when updating legacy values
-				mmm.SetResourceVersion("")
-			} else {
-				if err := preconditions.Check(key, existingObj); err != nil {
-					if attempt >= MaxUpdateAttempts {
-						return fmt.Errorf("precondition failed: %w", err)
-					}
-					continue
-				}
-			}
-
-			// restore the full original object before tryUpdate
-			if s.opts.LargeObjectSupport != nil && mmm.GetBlob() != nil {
-				err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, mmm)
-				if err != nil {
+				if attempt >= MaxUpdateAttempts {
 					return err
 				}
+				continue
 			}
-		} else if !ignoreNotFound {
-			return apierrors.NewNotFound(s.gr, req.Key.Name)
+			return s.Create(ctx, key, updatedObj, destination, 0)
 		}
 
-		updatedObj, _, err = tryUpdate(existingObj.DeepCopyObject(), res)
+		existingBytes = readResponse.Value
+		existingObj, err = s.convertToObject(ctx, readResponse.Value, s.newFunc())
+		if err != nil {
+			return err
+		}
+
+		existing, err := utils.MetaAccessor(existingObj)
+		if err != nil {
+			return err
+		}
+		existing.SetResourceVersionInt64(readResponse.ResourceVersion)
+		res.ResourceVersion = uint64(readResponse.ResourceVersion)
+
+		if err := preconditions.Check(key, existingObj); err != nil {
+			if attempt >= MaxUpdateAttempts {
+				return fmt.Errorf("precondition failed: %w", err)
+			}
+			continue
+		}
+
+		// restore the full original object before tryUpdate
+		if s.opts.LargeObjectSupport != nil && existing.GetBlob() != nil {
+			err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, existing)
+			if err != nil {
+				return err
+			}
+		}
+
+		updatedObj, _, err = tryUpdate(existingObj, res)
 		if err != nil {
 			if attempt >= MaxUpdateAttempts {
 				return err
 			}
 			continue
 		}
-		break
-	}
 
-	unchanged, err := isUnchanged(s.codec, existingObj, updatedObj)
-	if err != nil {
-		return err
-	}
+		v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
+		if err != nil {
+			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
+		}
 
-	if unchanged {
-		if err := copyModifiedObjectToDestination(updatedObj, destination); err != nil {
+		// Only update (for real) if the bytes have changed
+		var rv uint64
+		req.Value = v.raw.Bytes()
+		if !bytes.Equal(req.Value, existingBytes) {
+			req.ResourceVersion = readResponse.ResourceVersion
+			updateResponse, err := s.store.Update(ctx, req)
+			if err != nil {
+				err = resource.GetError(resource.AsErrorResult(err))
+			} else if updateResponse.Error != nil {
+				if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+					continue // try the read again
+				}
+				err = resource.GetError(updateResponse.Error)
+			}
+
+			// Cleanup secure values
+			if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+				return err
+			}
+
+			rv = uint64(updateResponse.ResourceVersion)
+		}
+
+		if _, err := s.convertToObject(ctx, req.Value, destination); err != nil {
 			return err
+		}
+
+		if rv > 0 {
+			if err := s.versioner.UpdateObject(destination, rv); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
 
-	rv := int64(0)
-	if created {
-		value, err := s.prepareObjectForStorage(ctx, updatedObj)
-		if err != nil {
-			return err
-		}
-		rsp2, err := s.store.Create(ctx, &resource.CreateRequest{
-			Key:   req.Key,
-			Value: value,
-		})
-		if err != nil {
-			return err
-		}
-		if rsp2.Error != nil {
-			return resource.GetError(rsp2.Error)
-		}
-		rv = rsp2.ResourceVersion
-	} else {
-		req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
-		if err != nil {
-			return err
-		}
-		rsp2, err := s.store.Update(ctx, req)
-		if err != nil {
-			return err
-		}
-		if rsp2.Error != nil {
-			return resource.GetError(rsp2.Error)
-		}
-		rv = rsp2.ResourceVersion
-	}
-
-	if err := s.versioner.UpdateObject(updatedObj, uint64(rv)); err != nil {
-		return err
-	}
-
-	if err := copyModifiedObjectToDestination(updatedObj, destination); err != nil {
-		return err
-	}
-
 	return nil
-}
-
-// Count returns number of different entries under the key (generally being path prefix).
-// TODO: Implement count.
-func (s *Storage) Count(key string) (int64, error) {
-	return 0, nil
 }
 
 // RequestWatchProgress requests the a watch stream progress status be sent in the
@@ -630,18 +762,5 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	if minimumRV > actualRevision {
 		return storage.NewTooLargeResourceVersionError(minimumRV, actualRevision, 0)
 	}
-	return nil
-}
-
-func copyModifiedObjectToDestination(updatedObj runtime.Object, destination runtime.Object) error {
-	u, err := conversion.EnforcePtr(updatedObj)
-	if err != nil {
-		return fmt.Errorf("unable to enforce updated object pointer: %w", err)
-	}
-	d, err := conversion.EnforcePtr(destination)
-	if err != nil {
-		return fmt.Errorf("unable to enforce destination pointer: %w", err)
-	}
-	d.Set(u)
 	return nil
 }

@@ -6,12 +6,21 @@ package server
 
 import (
 	"github.com/google/wire"
-	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
+	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
+	secretService "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,6 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
+	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
+	builder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
@@ -38,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -50,6 +62,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
+)
+
+var provisioningExtras = wire.NewSet(
+	extras.ProvideProvisioningOSSRepositoryExtras,
+)
+
+var configProviderExtras = wire.NewSet(
+	configprovider.ProvideService,
 )
 
 var wireExtsBasicSet = wire.NewSet(
@@ -69,9 +95,12 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(pluginaccesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	validations.ProvideValidator,
-	wire.Bind(new(validations.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
+	wire.Bind(new(validations.DataSourceRequestValidator), new(*validations.OSSDataSourceRequestValidator)),
+	validations.ProvideURLValidator,
+	wire.Bind(new(validations.DataSourceRequestURLValidator), new(*validations.OSSDataSourceRequestURLValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
+	legacysql.NewDatabaseProvider,
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
 	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
 	migrations.ProvideOSSMigrations,
@@ -86,6 +115,9 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
+	secretkeeper.ProvideService,
+	wire.Bind(new(contracts.KeeperService), new(*secretkeeper.OSSKeeperService)),
+	secretService.ProvideConsolidationService,
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
 	guardian.ProvideGuardian,
@@ -107,9 +139,22 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
-	search2.ProvideDashboardStats,
-	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
+	builders.ProvideDashboardStats,
+	wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)),
 	search2.ProvideDocumentBuilders,
+	sandbox.ProvideService,
+	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
+	wire.Struct(new(unified.Options), "*"),
+	unified.ProvideUnifiedStorageClient,
+	sql.ProvideStorageBackend,
+	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
+	aggregatorrunner.ProvideNoopAggregatorConfigurator,
+	apisregistry.WireSetExts,
+	gsmKMSProviders.ProvideOSSKMSProviders,
+	secret.ProvideSecureValueClient,
+	provisioningExtras,
+	configProviderExtras,
+	advisor.ProvideAppInstaller,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -139,12 +184,23 @@ var wireExtsBaseCLISet = wire.NewSet(
 	hooks.ProvideService,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
+	configProviderExtras,
 )
 
 // wireModuleServerSet is a wire set for the ModuleServer.
 var wireExtsModuleServerSet = wire.NewSet(
 	NewModule,
 	wireExtsBaseCLISet,
+	// Tracing
+	tracing.ProvideTracingConfig,
+	tracing.ProvideService,
+	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
+	// Unified storage
+	resource.ProvideStorageMetrics,
+	resource.ProvideIndexMetrics,
+	// Overriden by enterprise
+	ProvideNoopModuleRegisterer,
+	sql.ProvideStorageBackend,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

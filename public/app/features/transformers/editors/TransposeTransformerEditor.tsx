@@ -4,17 +4,34 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  SpecialValue,
+  SelectableValue,
 } from '@grafana/data';
-import { TransposeTransformerOptions } from '@grafana/data/src/transformations/transformers/transpose';
-import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { TransposeTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
+import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
+import darkImage from '../images/dark/transpose.svg';
+import lightImage from '../images/light/transpose.svg';
+import { getEmptyOptions } from '../utils';
+
+export const TransposeTransformerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
+  const onSelectEmptyValue = (value?: SelectableValue<SpecialValue>) => {
+    onChange({
+      ...options,
+      emptyValue: value?.value,
+    });
+  };
+
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={'First field name'} labelWidth={24}>
+        <InlineField
+          label={t('transformers.transpose-transfomer-editor.label-first-field-name', 'First field name')}
+          labelWidth={24}
+        >
           <Input
-            placeholder="Field"
+            placeholder={t('transformers.transpose-transfomer-editor.placeholder-field', 'Field')}
             value={options.firstFieldName}
             onChange={(e) => onChange({ ...options, firstFieldName: e.currentTarget.value })}
             width={25}
@@ -22,24 +39,43 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Remaining fields name'} tooltip={'Name for value fields'} labelWidth={24}>
+        <InlineField
+          label={t('transformers.transpose-transfomer-editor.label-remaining-fields-name', 'Remaining fields name')}
+          tooltip={t('transformers.transpose-transfomer-editor.tooltip-name-for-value-fields', 'Name for value fields')}
+          labelWidth={24}
+        >
           <Input
-            placeholder="Value"
+            placeholder={t('transformers.transpose-transfomer-editor.placeholder-value', 'Value')}
             value={options.restFieldsName}
             onChange={(e) => onChange({ ...options, restFieldsName: e.currentTarget.value })}
             width={25}
           />
         </InlineField>
       </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label={t('transformers.grouping-to-matrix-transformer-editor.label-empty-value', 'Empty value')}>
+          <Select options={getEmptyOptions()} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
+        </InlineField>
+      </InlineFieldRow>
     </>
   );
 };
 
-export const transposeTransformerRegistryItem: TransformerRegistryItem<TransposeTransformerOptions> = {
+export const getTransposeTransformerRegistryItem: () => TransformerRegistryItem<TransposeTransformerOptions> = () => ({
   id: DataTransformerID.transpose,
-  editor: TransposeTransfomerEditor,
+  editor: TransposeTransformerEditor,
   transformation: standardTransformers.transposeTransformer,
-  name: standardTransformers.transposeTransformer.name,
-  description: standardTransformers.transposeTransformer.description,
+  name: t('transformers.transpose-transformer-editor.name.transpose', 'Transpose'),
+  description: t(
+    'transformers.transpose-transformer-editor.description.transpose-data-frame',
+    'Transpose the data frame.'
+  ),
   categories: new Set([TransformerCategory.Reformat]),
-};
+  tags: new Set([
+    t('transformers.transpose-transformer-editor.tags.pivot', 'Pivot'),
+    t('transformers.transpose-transformer-editor.tags.translate', 'Translate'),
+    t('transformers.transpose-transformer-editor.tags.transform', 'Transform'),
+  ]),
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

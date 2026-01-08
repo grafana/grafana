@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { ReactElement, useState } from 'react';
+import { ReactElement, useState, type JSX } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';
 
@@ -38,7 +39,7 @@ const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecond
         title={libraryPanel.name}
         description={libraryPanel.description}
         plugin={panelPlugin}
-        onClick={() => onClick?.(libraryPanel)}
+        onSelect={() => onClick?.(libraryPanel)}
         onDelete={showSecondaryActions ? () => setShowDeletionModal(true) : undefined}
       >
         <FolderLink libraryPanel={libraryPanel} />
@@ -85,7 +86,9 @@ function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
     return (
       <span className={styles.metaContainer}>
         <Icon name={'folder'} size="sm" />
-        <span>Dashboards</span>
+        <span>
+          <Trans i18nKey="library-panels.folder-link.dashboards">Dashboards</Trans>
+        </span>
       </span>
     );
   }

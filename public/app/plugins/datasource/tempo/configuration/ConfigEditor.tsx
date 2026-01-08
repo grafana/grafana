@@ -2,6 +2,13 @@ import { css } from '@emotion/css';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
 import {
+  NodeGraphSection,
+  SpanBarSection,
+  TraceToLogsSection,
+  TraceToMetricsSection,
+  TraceToProfilesSection,
+} from '@grafana/o11y-ds-frontend';
+import {
   AdvancedHttpSettings,
   Auth,
   ConfigSection,
@@ -10,20 +17,15 @@ import {
   ConnectionSettings,
   convertLegacyAuthProps,
   DataSourceDescription,
-} from '@grafana/experimental';
-import {
-  NodeGraphSection,
-  SpanBarSection,
-  TraceToLogsSection,
-  TraceToMetricsSection,
-  TraceToProfilesSection,
-} from '@grafana/o11y-ds-frontend';
+} from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
 
 import { QuerySettings } from './QuerySettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { StreamingSection } from './StreamingSection';
+import { TagLimitSection } from './TagLimitSettings';
+import { TagsTimeRangeSettings } from './TagsTimeRangeSettings';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
 export type ConfigEditorProps = DataSourcePluginOptionsEditorProps;
@@ -117,6 +119,20 @@ const ConfigEditor = ({ options, onOptionsChange }: ConfigEditorProps) => {
             <QuerySettings options={options} onOptionsChange={onOptionsChange} />
           </ConfigSubSection>
 
+          <ConfigSubSection
+            title="Tags time range"
+            description={
+              <ConfigDescriptionLink
+                description="Modify how tags and tag values queries are run."
+                suffix="tempo/configure-tempo-data-source/#tags-time-range"
+                feature="the tags time range"
+              />
+            }
+          >
+            <TagsTimeRangeSettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
+
+          <TagLimitSection options={options} onOptionsChange={onOptionsChange} />
           <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>
       </ConfigSection>

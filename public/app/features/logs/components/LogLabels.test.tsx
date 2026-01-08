@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { LogLabels, LogLabelsList } from './LogLabels';
+import { getNormalizedFieldName } from './panel/processing';
 
 describe('<LogLabels />', () => {
   it('renders notice when no labels are found', () => {
@@ -35,6 +36,60 @@ describe('<LogLabels />', () => {
     await userEvent.hover(screen.getByText('foo=bar'));
     expect(screen.getAllByText('foo=bar')).toHaveLength(1);
   });
+  describe('displayMax', () => {
+    it('renders up to displayMax labels', () => {
+      render(<LogLabels labels={{ foo: 'bar', baz: '42' }} displayMax={1} />);
+      expect(screen.getByText('foo=bar')).toBeInTheDocument();
+      expect(screen.getByLabelText('Expand labels')).toBeInTheDocument();
+      expect(screen.queryByText('baz=42')).not.toBeInTheDocument();
+    });
+
+    it('allows to render all labels', async () => {
+      const onDisplayMaxToggle = jest.fn();
+      const { rerender } = render(
+        <LogLabels labels={{ foo: 'bar', baz: '42' }} displayMax={1} onDisplayMaxToggle={onDisplayMaxToggle} />
+      );
+
+      await userEvent.click(screen.getByLabelText('Expand labels'));
+      expect(onDisplayMaxToggle).toHaveBeenCalledTimes(1);
+      expect(onDisplayMaxToggle).toHaveBeenCalledWith(true);
+
+      rerender(<LogLabels labels={{ foo: 'bar', baz: '42' }} displayMax={1} onDisplayMaxToggle={onDisplayMaxToggle} />);
+
+      expect(screen.getByText('foo=bar')).toBeInTheDocument();
+      expect(screen.getByText('baz=42')).toBeInTheDocument();
+      expect(screen.getByLabelText('Collapse labels')).toBeInTheDocument();
+    });
+
+    it('allows to collapse labels', async () => {
+      const onDisplayMaxToggle = jest.fn();
+      const { rerender } = render(
+        <LogLabels
+          labels={{ foo: 'bar', baz: '42' }}
+          displayMax={1}
+          displayAll
+          onDisplayMaxToggle={onDisplayMaxToggle}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText('Collapse labels'));
+      expect(onDisplayMaxToggle).toHaveBeenCalledTimes(1);
+      expect(onDisplayMaxToggle).toHaveBeenCalledWith(false);
+
+      rerender(
+        <LogLabels
+          labels={{ foo: 'bar', baz: '42' }}
+          displayMax={1}
+          displayAll
+          onDisplayMaxToggle={onDisplayMaxToggle}
+        />
+      );
+
+      expect(screen.getByText('foo=bar')).toBeInTheDocument();
+      expect(screen.getByLabelText('Expand labels')).toBeInTheDocument();
+      expect(screen.queryByText('baz=42')).not.toBeInTheDocument();
+    });
+  });
 });
 
 describe('<LogLabelsList />', () => {
@@ -42,6 +97,6 @@ describe('<LogLabelsList />', () => {
     render(<LogLabelsList labels={['bar', '42', LOG_LINE_BODY_FIELD_NAME]} />);
     expect(screen.queryByText('bar')).toBeInTheDocument();
     expect(screen.queryByText('42')).toBeInTheDocument();
-    expect(screen.queryByText('log line')).toBeInTheDocument();
+    expect(screen.queryByText(getNormalizedFieldName(LOG_LINE_BODY_FIELD_NAME))).toBeInTheDocument();
   });
 });

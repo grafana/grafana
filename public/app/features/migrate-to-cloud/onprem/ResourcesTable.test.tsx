@@ -19,7 +19,14 @@ setBackendSrv(backendSrv);
 function render(props: Partial<ResourcesTableProps>) {
   rtlRender(
     <TestProvider>
-      <ResourcesTable onChangePage={() => {}} numberOfPages={10} page={0} resources={props.resources || []} />
+      <ResourcesTable
+        onChangeSort={() => {}}
+        onChangePage={() => {}}
+        numberOfPages={10}
+        page={0}
+        resources={props.resources || []}
+        localPlugins={[]}
+      />
     </TestProvider>
   );
 }

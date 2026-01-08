@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -37,6 +36,11 @@ var (
 		"Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
 		errutil.WithPublic(`Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
 	)
+
+	ErrReceiverOrigin = errutil.BadRequest("alerting.notifications.receivers.originInvalid").MustTemplate(
+		"Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+	)
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -51,6 +55,7 @@ type ReceiverService struct {
 	provenanceValidator    validation.ProvenanceStatusTransitionValidator
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
+	includeImported        bool
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -74,6 +79,9 @@ type receiverAccessControlService interface {
 	AuthorizeCreate(context.Context, identity.Requester) error
 	AuthorizeUpdate(context.Context, identity.Requester, *models.Receiver) error
 	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
+
+	HasUpdateProtected(context.Context, identity.Requester, *models.Receiver) (bool, error)
+	AuthorizeUpdateProtected(context.Context, identity.Requester, *models.Receiver) error
 
 	Access(ctx context.Context, user identity.Requester, receivers ...*models.Receiver) (map[string]models.ReceiverPermissionSet, error)
 }
@@ -104,6 +112,7 @@ func NewReceiverService(
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
 	tracer tracing.Tracer,
+	includeStaged bool,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -116,7 +125,12 @@ func NewReceiverService(
 		provenanceValidator:    validation.ValidateProvenanceRelaxed,
 		resourcePermissions:    resourcePermissions,
 		tracer:                 tracer,
+		includeImported:        includeStaged,
 	}
+}
+
+func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
+	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
 }
 
 // GetReceiver returns a receiver by name.
@@ -133,23 +147,28 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return nil, err
 	}
-	postable, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name))
+
+	prov, err := rs.loadProvenances(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
+	}
+
+	rcv, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name), prov)
+	if err != nil {
+		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
+			imported := rs.getImportedReceivers(ctx, span, []string{legacy_storage.NameToUid(q.Name)}, revision)
+			if len(imported) > 0 {
+				rcv = imported[0]
+			}
+		}
+		if rcv == nil {
+			return nil, err
+		}
 	}
 
 	span.AddEvent("Loaded receiver", trace.WithAttributes(
 		attribute.String("concurrency_token", revision.ConcurrencyToken),
 	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	rcv, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
-	if err != nil {
-		return nil, err
-	}
 
 	auth := rs.authz.AuthorizeReadDecrypted
 	if !q.Decrypt {
@@ -195,20 +214,25 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if err != nil {
 		return nil, err
 	}
-	postables := revision.GetReceivers(uids)
 
-	span.AddEvent("Loaded receivers", trace.WithAttributes(
-		attribute.String("concurrency_token", revision.ConcurrencyToken),
-		attribute.Int("count", len(postables)),
-	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+	prov, err := rs.loadProvenances(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
 	}
-	receivers, err := PostableApiReceiversToReceivers(postables, storedProvenances)
+
+	receivers, err := revision.GetReceivers(uids, prov)
 	if err != nil {
 		return nil, err
+	}
+
+	span.AddEvent("Loaded receivers", trace.WithAttributes(
+		attribute.String("concurrency_token", revision.ConcurrencyToken),
+		attribute.Int("count", len(receivers)),
+	))
+
+	if rs.includeImported {
+		imported := rs.getImportedReceivers(ctx, span, uids, revision)
+		receivers = append(receivers, imported...)
 	}
 
 	filterFn := rs.authz.FilterReadDecrypted
@@ -241,77 +265,9 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	return limitOffset(filtered, q.Offset, q.Limit), nil
 }
 
-// ListReceivers returns a list of receivers a user has access to.
-// Receivers can be filtered by name.
-// This offers an looser permissions compared to GetReceivers. When a user doesn't have read access it will check for list access instead of returning an empty list.
-// If the users has list access, all receiver settings will be removed from the response. This option is for backwards compatibility with the v1/receivers endpoint
-// and should be removed when FGAC is fully implemented.
-func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListReceiversQuery, user identity.Requester) ([]*models.Receiver, error) { // TODO: Remove this method with FGAC.
-	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.list", trace.WithAttributes(
-		attribute.Int64("query_org_id", q.OrgID),
-		attribute.StringSlice("query_names", q.Names),
-		attribute.Int("query_limit", q.Limit),
-		attribute.Int("query_offset", q.Offset),
-	))
-	defer span.End()
-
-	listAccess, err := rs.authz.HasList(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-
-	uids := make([]string, 0, len(q.Names))
-	for _, name := range q.Names {
-		uids = append(uids, legacy_storage.NameToUid(name))
-	}
-
-	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
-	if err != nil {
-		return nil, err
-	}
-	postables := revision.GetReceivers(uids)
-
-	span.AddEvent("Loaded receivers", trace.WithAttributes(
-		attribute.String("concurrency_token", revision.ConcurrencyToken),
-		attribute.Int("count", len(postables)),
-	))
-
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-	receivers, err := PostableApiReceiversToReceivers(postables, storedProvenances)
-	if err != nil {
-		return nil, err
-	}
-
-	if !listAccess {
-		var err error
-		receivers, err = rs.authz.FilterRead(ctx, user, receivers...)
-		if err != nil {
-			return nil, err
-		}
-
-		span.AddEvent("Applied access control filter", trace.WithAttributes(
-			attribute.Int("count", len(receivers)),
-		))
-	}
-
-	// Remove settings.
-	for _, r := range receivers {
-		for _, integration := range r.Integrations {
-			integration.Settings = nil
-			integration.SecureSettings = nil
-			integration.DisableResolveMessage = false
-		}
-	}
-
-	return limitOffset(receivers, q.Offset, q.Limit), nil
-}
-
 // DeleteReceiver deletes a receiver by uid.
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
-func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance definitions.Provenance, version string, orgID int64, user identity.Requester) error {
+func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance models.Provenance, version string, orgID int64, user identity.Requester) error {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.delete", trace.WithAttributes(
 		attribute.String("receiver_uid", uid),
 		attribute.String("receiver_version", version),
@@ -325,21 +281,25 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	if err != nil {
 		return err
 	}
-	postable, err := revision.GetReceiver(uid)
+
+	prov, err := rs.loadProvenances(ctx, orgID)
 	if err != nil {
-		if errors.Is(err, legacy_storage.ErrReceiverNotFound) {
-			return nil
-		}
 		return err
 	}
 
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+	existing, err := revision.GetReceiver(uid, prov)
 	if err != nil {
-		return err
-	}
-	existing, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
-	if err != nil {
-		return err
+		if !errors.Is(err, legacy_storage.ErrReceiverNotFound) {
+			return err
+		}
+		if rs.includeImported {
+			// try to get the imported receiver and return a specific error if it exists
+			result := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
+			if len(result) > 0 {
+				return makeErrReceiverOrigin(result[0], "delete")
+			}
+		}
+		return nil
 	}
 
 	logger := rs.log.FromContext(ctx).New("receiver", existing.Name, "uid", uid, "version", version, "integrations", existing.GetIntegrationTypes())
@@ -355,7 +315,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
-	if err := rs.provenanceValidator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
+	if err := rs.provenanceValidator(existing.Provenance, callerProvenance); err != nil {
 		return err
 	}
 
@@ -400,7 +360,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if err := rs.authz.AuthorizeCreate(ctx, user); err != nil {
 		return nil, err
 	}
-
+	if r.Origin != models.ResourceOriginGrafana {
+		return nil, makeErrReceiverOrigin(r, "create")
+	}
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -422,7 +384,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	// Generate UID from name.
 	createdReceiver.UID = legacy_storage.NameToUid(createdReceiver.Name)
 
-	created, err := revision.CreateReceiver(&createdReceiver)
+	result, err = revision.CreateReceiver(&createdReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -439,10 +401,6 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err = PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
-	if err != nil {
-		return nil, err
-	}
 	span.AddEvent("Created a new receiver", trace.WithAttributes(
 		attribute.String("uid", result.UID),
 		attribute.String("version", result.Version),
@@ -459,6 +417,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		attribute.StringSlice("integrations", r.GetIntegrationTypes()),
 	))
 	defer span.End()
+	// check origin of the provided receiver
+	if r.Origin != models.ResourceOriginGrafana {
+		return nil, makeErrReceiverOrigin(r, "update")
+	}
 
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
@@ -471,16 +433,28 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	postable, err := revision.GetReceiver(r.GetUID())
+
+	prov, err := rs.loadProvenances(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
+	existing, err := revision.GetReceiver(r.GetUID(), prov)
 	if err != nil {
+		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
+			// try to get the imported receiver and return a specific error if it exists
+			result := rs.getImportedReceivers(ctx, span, []string{r.GetUID()}, revision)
+			if len(result) > 0 {
+				return nil, makeErrReceiverOrigin(result[0], "update")
+			}
+		}
 		return nil, err
 	}
-	existing, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+
+	// We re-encrypt the existing receiver to ensure any unencrypted secure fields that are correctly encrypted, note this should NOT re-encrypt secure fields that are already encrypted.
+	// This is rare, but can happen if a receiver is created with unencrypted secure fields and then the secure option is added later.
+	// Preferably, this would be handled by receiver config versions and migrations but for now this is a good safety net.
+	err = existing.Encrypt(rs.encryptor(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -503,6 +477,18 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
+	// if user does not have permissions to update protected, check the diff and return error if there is a change in protected fields
+	canUpdateProtected, _ := rs.authz.HasUpdateProtected(ctx, user, r)
+	if !canUpdateProtected {
+		diff := models.HasReceiversDifferentProtectedFields(existing, r)
+		if len(diff) > 0 {
+			err = rs.authz.AuthorizeUpdateProtected(ctx, user, r)
+			if err != nil {
+				return nil, makeProtectedFieldsAuthzError(err, diff)
+			}
+		}
+	}
+
 	// We need to perform two important steps to process settings on an updated integration:
 	// 1. Encrypt new or updated secret fields as they will arrive in plain text.
 	// 2. For updates, callers do not re-send unchanged secure settings and instead mark them in SecureFields. We need
@@ -520,7 +506,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
-	updated, err := revision.UpdateReceiver(&updatedReceiver)
+	result, err := revision.UpdateReceiver(&updatedReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -528,7 +514,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// If the name of the receiver changed, we must update references to it in both routes and notification settings.
 		if existing.Name != r.Name {
-			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, existing.Name, r.Name, r.Provenance)
+			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision, existing.Name, r.Name, r.Provenance)
 			if err != nil {
 				return err
 			}
@@ -559,10 +545,6 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err := PostableApiReceiverToReceiver(updated, updatedReceiver.Provenance)
-	if err != nil {
-		return nil, err
-	}
 	logger.Info("Updated receiver", "new_version", result.Version)
 	return result, nil
 }
@@ -578,7 +560,21 @@ func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name st
 
 // AccessControlMetadata returns access control metadata for the given Receivers.
 func (rs *ReceiverService) AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*models.Receiver) (map[string]models.ReceiverPermissionSet, error) {
-	return rs.authz.Access(ctx, user, receivers...)
+	permissions, err := rs.authz.Access(ctx, user, receivers...)
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range receivers {
+		if m.Origin == models.ResourceOriginGrafana {
+			continue
+		}
+		perms := permissions[m.GetUID()]
+		perms.Set(models.ReceiverPermissionAdmin, false)
+		perms.Set(models.ReceiverPermissionWrite, false)
+		perms.Set(models.ReceiverPermissionDelete, false)
+		permissions[m.GetUID()] = perms
+	}
+	return permissions, nil
 }
 
 // InUseMetadata returns metadata for the given Receivers about their usage in routes and rules.
@@ -587,31 +583,65 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 	if err != nil {
 		return nil, err
 	}
-	receiverUses := revision.ReceiverUseByName()
 
-	q := models.ListNotificationSettingsQuery{OrgID: orgID}
-	if len(receivers) == 1 {
-		q.ReceiverName = receivers[0].Name
-	}
-	keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, q)
-	if err != nil {
-		return nil, err
+	var hasGrafanaOrigin, hasImportedOrigin bool
+	for i := range receivers {
+		switch receivers[i].Origin {
+		case models.ResourceOriginGrafana:
+			hasGrafanaOrigin = true
+		case models.ResourceOriginImported:
+			hasImportedOrigin = true
+		}
+		if hasGrafanaOrigin && hasImportedOrigin {
+			break
+		}
 	}
 
-	byReceiver := map[string][]models.AlertRuleKey{}
-	for key, settings := range keys {
-		for _, s := range settings {
-			if s.Receiver != "" {
-				byReceiver[s.Receiver] = append(byReceiver[s.Receiver], key)
+	var receiverUsesInRoutes map[string]int
+	var importedUsesInRoutes map[string]int
+	receiverUsesInRules := map[string][]models.AlertRuleKey{}
+	if hasGrafanaOrigin {
+		receiverUsesInRoutes = revision.ReceiverUseByName()
+		q := models.ListNotificationSettingsQuery{OrgID: orgID}
+		if len(receivers) == 1 {
+			q.ReceiverName = receivers[0].Name
+		}
+		keys, err := rs.ruleNotificationsStore.ListNotificationSettings(ctx, q)
+		if err != nil {
+			return nil, err
+		}
+
+		for key, settings := range keys {
+			for _, s := range settings {
+				if s.Receiver != "" {
+					receiverUsesInRules[s.Receiver] = append(receiverUsesInRules[s.Receiver], key)
+				}
 			}
+		}
+	}
+	if hasImportedOrigin {
+		s, err := revision.Imported()
+		if err == nil {
+			importedUsesInRoutes = s.ReceiverUseByName()
+		} else {
+			rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Skipping", "err", err)
 		}
 	}
 
 	results := make(map[string]models.ReceiverMetadata, len(receivers))
 	for _, rcv := range receivers {
+		if rcv.Origin == models.ResourceOriginImported {
+			results[rcv.GetUID()] = models.ReceiverMetadata{
+				InUseByRoutes: importedUsesInRoutes[rcv.Name],
+				InUseByRules:  nil,
+				CanUse:        false,
+			}
+			continue
+		}
 		results[rcv.GetUID()] = models.ReceiverMetadata{
-			InUseByRoutes: receiverUses[rcv.Name],
-			InUseByRules:  byReceiver[rcv.Name],
+			InUseByRoutes: receiverUsesInRoutes[rcv.Name],
+			InUseByRules:  receiverUsesInRules[rcv.Name],
+			CanUse:        rcv.Origin == models.ResourceOriginGrafana, // Only receivers from the Grafana configuration can be used.
 		}
 	}
 
@@ -635,8 +665,7 @@ func removedIntegrations(old, new *models.Receiver) []*models.Integration {
 func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int64, receiver *models.Receiver) error {
 	// Add provenance for all integrations in the receiver.
 	for _, integration := range receiver.Integrations {
-		target := definitions.EmbeddedContactPoint{UID: integration.UID}
-		if err := rs.provisioningStore.SetProvenance(ctx, &target, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
+		if err := rs.provisioningStore.SetProvenance(ctx, integration, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
 			return err
 		}
 	}
@@ -646,8 +675,7 @@ func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int6
 func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, integrations []*models.Integration) error {
 	// Delete provenance for all integrations.
 	for _, integration := range integrations {
-		target := definitions.EmbeddedContactPoint{UID: integration.UID}
-		if err := rs.provisioningStore.DeleteProvenance(ctx, &target, orgID); err != nil {
+		if err := rs.provisioningStore.DeleteProvenance(ctx, integration, orgID); err != nil {
 			return err
 		}
 	}
@@ -760,7 +788,11 @@ func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []mode
 	})
 }
 
-func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, receiverProvenance models.Provenance) error {
+func makeErrReceiverOrigin(r *models.Receiver, action string) error {
+	return ErrReceiverOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": r.Name}})
+}
+
+func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.rename-dependent-resources", trace.WithAttributes(
 		attribute.String("oldName", oldName),
 		attribute.String("newName", newName),
@@ -770,10 +802,10 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 
 	validate := validation.ValidateProvenanceOfDependentResources(receiverProvenance)
 	// if there are no references to the old time interval, exit
-	updatedRoutes := legacy_storage.RenameReceiverInRoute(oldName, newName, route)
+	updatedRoutes := revision.RenameReceiverInRoutes(oldName, newName)
 	canUpdate := true
 	if updatedRoutes > 0 {
-		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, route, orgID)
+		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, revision.Config.AlertmanagerConfig.Route, orgID)
 		if err != nil {
 			return err
 		}
@@ -796,4 +828,24 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
 	}
 	return nil
+}
+
+func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.Span, uids []string, revision *legacy_storage.ConfigRevision) []*models.Receiver {
+	var result []*models.Receiver
+	imported, err := revision.Imported()
+	if err == nil {
+		result, err = imported.GetReceivers(uids)
+	}
+	if err != nil {
+		rs.log.FromContext(ctx).Warn("Unable to include imported receivers. Skipping", "err", err)
+		span.RecordError(err, trace.WithAttributes(
+			attribute.String("concurrency_token", revision.ConcurrencyToken),
+		))
+	} else if len(result) > 0 { // if the list is empty, then we do not have any imported configuration
+		span.AddEvent("Loaded importedReceivers receivers", trace.WithAttributes(
+			attribute.String("concurrency_token", revision.ConcurrencyToken),
+			attribute.Int("count", len(result)),
+		))
+	}
+	return result
 }

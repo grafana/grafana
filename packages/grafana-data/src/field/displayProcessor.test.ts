@@ -423,6 +423,11 @@ describe('Format value', () => {
       const processor = getDisplayProcessorFromConfig({ decimals: 5 }, FieldType.number);
       expect(processor(35, 2).text).toEqual('35.00000');
     });
+
+    it('does not attempt to coerce non-numeric strings back to numbers', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'dthms' }, FieldType.number);
+      expect(processor(35, 2).text).toEqual('00:00:35'); // we're checking that this isn't NaN.
+    });
   });
 });
 

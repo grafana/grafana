@@ -5,7 +5,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
@@ -22,8 +22,14 @@ export interface Props {
   labelId?: string;
   headerDataTestId?: string;
   contentDataTestId?: string;
+  unmountContentWhenClosed?: boolean;
 }
 
+/**
+ * A simple container for enabling collapsing/expanding of content.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-collapsablesection--docs
+ */
 export const CollapsableSection = ({
   label,
   isOpen,
@@ -35,9 +41,13 @@ export const CollapsableSection = ({
   loading = false,
   headerDataTestId,
   contentDataTestId,
+  unmountContentWhenClosed = true,
 }: Props) => {
-  const [open, toggleOpen] = useState<boolean>(isOpen);
+  const [internalOpenState, toggleInternalOpenState] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
+
+  const isControlled = isOpen !== undefined && onToggle !== undefined;
+  const isSectionOpen = isControlled ? isOpen : internalOpenState;
 
   const onClick = (e: React.MouseEvent) => {
     if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
@@ -47,12 +57,27 @@ export const CollapsableSection = ({
     e.preventDefault();
     e.stopPropagation();
 
-    onToggle?.(!open);
-    toggleOpen(!open);
+    onToggle?.(!isOpen);
+
+    if (!isControlled) {
+      toggleInternalOpenState(!internalOpenState);
+    }
   };
   const { current: id } = useRef(uniqueId());
 
   const buttonLabelId = labelId ?? `collapse-label-${id}`;
+
+  const content = (
+    <div
+      id={`collapse-content-${id}`}
+      className={cx(styles.content, contentClassName, {
+        [styles.contentHidden]: !unmountContentWhenClosed && !isSectionOpen,
+      })}
+      data-testid={contentDataTestId}
+    >
+      {children}
+    </div>
+  );
 
   return (
     <>
@@ -65,29 +90,21 @@ export const CollapsableSection = ({
           id={`collapse-button-${id}`}
           className={styles.button}
           onClick={onClick}
-          aria-expanded={open && !loading}
+          aria-expanded={isSectionOpen && !loading}
           aria-controls={`collapse-content-${id}`}
           aria-labelledby={buttonLabelId}
         >
           {loading ? (
             <Spinner className={styles.spinner} />
           ) : (
-            <Icon name={open ? 'angle-up' : 'angle-down'} className={styles.icon} />
+            <Icon name={isSectionOpen ? 'angle-down' : 'angle-right'} className={styles.icon} />
           )}
         </button>
         <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
           {label}
         </div>
       </div>
-      {open && (
-        <div
-          id={`collapse-content-${id}`}
-          className={cx(styles.content, contentClassName)}
-          data-testid={contentDataTestId}
-        >
-          {children}
-        </div>
-      )}
+      {unmountContentWhenClosed ? isSectionOpen && content : content}
     </>
   );
 };
@@ -95,21 +112,24 @@ export const CollapsableSection = ({
 const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
+    alignItems: 'center',
     cursor: 'pointer',
     boxSizing: 'border-box',
-    flexDirection: 'row-reverse',
     position: 'relative',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     fontSize: theme.typography.size.lg,
     padding: `${theme.spacing(0.5)} 0`,
     '&:focus-within': getFocusStyles(theme),
   }),
   button: css({
     all: 'unset',
+    marginRight: theme.spacing(1),
     '&:focus-visible': {
       outline: 'none',
       outlineOffset: 'unset',
-      transition: 'none',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'none',
+      },
       boxShadow: 'none',
     },
   }),
@@ -119,6 +139,9 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   content: css({
     padding: `${theme.spacing(2)} 0`,
   }),
+  contentHidden: css({
+    display: 'none',
+  }),
   spinner: css({
     display: 'flex',
     alignItems: 'center',
@@ -126,5 +149,8 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   }),
   label: css({
     display: 'flex',
+    flex: '1 1 auto',
+    fontWeight: theme.typography.fontWeightMedium,
+    color: theme.colors.text.maxContrast,
   }),
 });

@@ -5,7 +5,7 @@ import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineLabel } from '../Forms/InlineLabel';
 
 import { SegmentSelect } from './SegmentSelect';
@@ -20,6 +20,9 @@ export interface SegmentSyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDi
   inputMinWidth?: number;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-segment--docs
+ */
 export function Segment<T>({
   options,
   value,

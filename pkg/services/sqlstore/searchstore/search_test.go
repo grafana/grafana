@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -31,7 +32,9 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestBuilder_EqualResults_Basic(t *testing.T) {
+func TestIntegrationBuilder_EqualResults_Basic(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -68,13 +71,16 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 		{
 			ID:    dashIds[0],
 			Title: "A",
+			OrgID: 1,
 			Slug:  "a",
 			Term:  "templated",
 		},
 	}, res)
 }
 
-func TestBuilder_Pagination(t *testing.T) {
+func TestIntegrationBuilder_Pagination(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -121,7 +127,9 @@ func TestBuilder_Pagination(t *testing.T) {
 	assert.Equal(t, "P", resPg2[0].Title, "page 2 should start with the 16th dashboard")
 }
 
-func TestBuilder_RBAC(t *testing.T) {
+func TestIntegrationBuilder_RBAC(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testsCases := []struct {
 		desc            string
 		userPermissions []accesscontrol.Permission
@@ -133,6 +141,47 @@ func TestBuilder_RBAC(t *testing.T) {
 			desc:     "no user permissions",
 			features: featuremgmt.WithFeatures(),
 			expectedParams: []any{
+				int64(1),
+			},
+		},
+		{
+			desc: "user with write permission",
+			userPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
+			},
+			level:    dashboardaccess.PERMISSION_EDIT,
+			features: featuremgmt.WithFeatures(),
+			expectedParams: []any{
+				int64(1),
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:write",
+				"folders:edit",
+				"folders:admin",
+				int64(1),
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:create",
+				"folders:edit",
+				"folders:admin",
+				int64(1),
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:write",
+				"dashboards:edit",
+				"dashboards:admin",
 				int64(1),
 			},
 		},
@@ -152,6 +201,20 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:read",
+				"folders:view",
+				"folders:edit",
+				"folders:admin",
+				int64(1),
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"folders:read",
+				"folders:view",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				int64(1),
@@ -160,89 +223,18 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:read",
+				"dashboards:view",
+				"dashboards:edit",
+				"dashboards:admin",
 				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"folders:read",
 			},
 		},
 		{
-			desc: "user with write permission",
+			desc: "user with edit permission remove subquery",
 			userPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
 			},
 			level:    dashboardaccess.PERMISSION_EDIT,
-			features: featuremgmt.WithFeatures(),
-			expectedParams: []any{
-				int64(1),
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"dashboards:write",
-				int64(1),
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"dashboards:write",
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"dashboards:create",
-			},
-		},
-		{
-			desc: "user with view permission with nesting",
-			userPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
-			},
-			level:    dashboardaccess.PERMISSION_VIEW,
-			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-			expectedParams: []any{
-				int64(1),
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"dashboards:read",
-				int64(1),
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"folders:read",
-				int64(1),
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"dashboards:read",
-				int64(1),
-			},
-		},
-		{
-			desc: "user with view permission with remove subquery",
-			userPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
-			},
-			level:    dashboardaccess.PERMISSION_VIEW,
 			features: featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 			expectedParams: []any{
 				int64(1),
@@ -252,39 +244,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				"Viewer",
 				int64(1),
 				0,
-				"dashboards:read",
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"dashboards:read",
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
-				"folders:read",
-			},
-		},
-		{
-			desc: "user with edit permission with nesting and remove subquery",
-			userPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
-			},
-			level:    dashboardaccess.PERMISSION_EDIT,
-			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-			expectedParams: []any{
-				int64(1),
-				int64(1),
-				int64(1),
-				0,
-				"Viewer",
-				int64(1),
-				0,
 				"dashboards:write",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				int64(1),
@@ -293,6 +255,8 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:create",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				int64(1),
@@ -301,6 +265,8 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:write",
+				"dashboards:edit",
+				"dashboards:admin",
 			},
 		},
 	}
@@ -333,6 +299,7 @@ func TestBuilder_RBAC(t *testing.T) {
 						"",
 						tc.features,
 						recursiveQueriesAreSupported,
+						store.GetDialect(),
 					),
 				},
 				Dialect:  store.GetDialect(),

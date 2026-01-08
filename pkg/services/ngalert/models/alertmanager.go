@@ -9,7 +9,7 @@ type AlertConfiguration struct {
 	AlertmanagerConfiguration string
 	ConfigurationHash         string
 	ConfigurationVersion      string
-	CreatedAt                 int64 `xorm:"created"`
+	CreatedAt                 int64 `xorm:"created_at"`
 	Default                   bool
 	OrgID                     int64 `xorm:"org_id"`
 }

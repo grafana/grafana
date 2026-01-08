@@ -3,19 +3,20 @@
 // Provenance-includes-license: Apache-2.0
 // Provenance-includes-copyright: The Kubernetes Authors.
 
-package apistore
+package apistore_test
 
 import (
 	"context"
-	"os"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/api/apitesting"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,13 +29,17 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type StorageType string
@@ -98,24 +103,20 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		Resource: "pods",
 	}
 
-	bucket := memblob.OpenBucket(nil)
-	if true {
-		tmp, err := os.MkdirTemp("", "xxx-*")
-		require.NoError(t, err)
-
-		bucket, err = fileblob.OpenBucket(tmp, &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		require.NoError(t, err)
-	}
 	ctx := storagetesting.NewContext()
 
 	var server resource.ResourceServer
 	switch setupOpts.storageType {
 	case StorageTypeFile:
-		backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
-			Bucket: bucket,
+		// Create in-memory BadgerDB for testing
+		db, err := badger.Open(badger.DefaultOptions("").
+			WithInMemory(true).
+			WithLogger(nil))
+		require.NoError(t, err)
+
+		kv := resource.NewBadgerKV(db)
+		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+			KvStore: kv,
 		})
 		require.NoError(t, err)
 
@@ -125,12 +126,10 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 
 		// Issue a health check to ensure the server is initialized
-		_, err = server.IsHealthy(ctx, &resource.HealthCheckRequest{})
+		_, err = server.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 		require.NoError(t, err)
 	case StorageTypeUnified:
-		if testing.Short() {
-			t.Skip("skipping integration test")
-		}
+		testutil.SkipIntegrationTestInShortMode(t)
 		dbstore := infraDB.InitTestDB(t)
 		cfg := setting.NewCfg()
 
@@ -160,7 +159,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	client := resource.NewLocalResourceClient(server)
 
 	config := storagebackend.NewDefaultConfig(setupOpts.prefix, setupOpts.codec)
-	store, destroyFunc, err := NewStorage(
+	store, destroyFunc, err := apistore.NewStorage(
 		config.ForResource(setupOpts.groupResource),
 		client,
 		func(obj runtime.Object) (string, error) {
@@ -175,8 +174,8 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		setupOpts.newListFunc,
 		storage.DefaultNamespaceScopedAttr,
 		make(map[string]storage.IndexerFunc, 0),
-		nil,
-		StorageOptions{},
+		nil, nil,
+		apistore.StorageOptions{},
 	)
 	if err != nil {
 		return nil, nil, nil, err
@@ -184,7 +183,9 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	return ctx, store, destroyFunc, nil
 }
 
-func TestWatch(t *testing.T) {
+func TestIntegrationWatch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
 			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
@@ -370,4 +371,42 @@ func newPod() runtime.Object {
 
 func newPodList() runtime.Object {
 	return &example.PodList{}
+}
+
+func testKeyParser(val string) (*resourcepb.ResourceKey, error) {
+	k, err := grafanaregistry.ParseKey(val)
+	if err != nil {
+		if strings.HasPrefix(val, "pods/") {
+			parts := strings.Split(val, "/")
+			if len(parts) == 2 {
+				err = nil
+				k = &grafanaregistry.Key{
+					Resource: parts[0], // pods
+					Name:     parts[1],
+				}
+			} else if len(parts) == 3 {
+				err = nil
+				k = &grafanaregistry.Key{
+					Resource:  parts[0], // pods
+					Namespace: parts[1],
+					Name:      parts[2],
+				}
+			}
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	if k.Group == "" {
+		k.Group = "example.apiserver.k8s.io"
+	}
+	if k.Resource == "" {
+		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
+	}
+	return &resourcepb.ResourceKey{
+		Namespace: k.Namespace,
+		Group:     k.Group,
+		Resource:  k.Resource,
+		Name:      k.Name,
+	}, err
 }

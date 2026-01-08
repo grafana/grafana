@@ -4,13 +4,14 @@ import { lastValueFrom } from 'rxjs';
 import {
   AnnotationEventMappings,
   AnnotationQuery,
-  DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   LoadingState,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { DataQuery } from '@grafana/schema';
 import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -19,7 +20,9 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { executeAnnotationQuery } from '../executeAnnotationQuery';
 import { shouldUseLegacyRunner, shouldUseMappingUI, standardAnnotationSupport } from '../standardAnnotationSupport';
 import { AnnotationQueryResponse } from '../types';
+import { updateAnnotationFromSavedQuery } from '../utils/savedQueryUtils';
 
+import { AnnotationQueryEditorActionsWrapper } from './AnnotationQueryEditorActionsWrapper';
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
 export interface Props {
@@ -32,6 +35,7 @@ export interface Props {
 interface State {
   running?: boolean;
   response?: AnnotationQueryResponse;
+  skipNextVerification?: boolean;
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
@@ -47,16 +51,31 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     }
   }
 
+  /**
+   * verifyDataSource() prepares the annotation and provides immediate query feedback:
+   * 1. Applies datasource-specific preparation (e.g., Prometheus moves expr to target field)
+   * 2. Updates annotation if preparation made changes
+   * 3. Runs query to show immediate results in the UI
+   */
   verifyDataSource() {
     const { datasource, annotation } = this.props;
 
-    // Handle any migration issues
+    // Skip verification if we just did a saved query replacement to avoid double preparation
+    if (this.state.skipNextVerification) {
+      this.setState({ skipNextVerification: false });
+      this.onRunQuery();
+      return;
+    }
+
+    // Always run prepareAnnotation to ensure proper query structure
+    // This is essential for datasources like Prometheus that need to format queries correctly
     const processor = {
       ...standardAnnotationSupport,
       ...datasource.annotations,
     };
 
     const fixed = processor.prepareAnnotation!(annotation);
+    // if datasource prepared annotation returns a different annotation(e.g., prometheus before had expr in the root level now it's saved in 'target'), update the annotation with that one
     if (fixed !== annotation) {
       this.props.onChange(fixed);
     } else {
@@ -99,9 +118,27 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   };
 
   onQueryChange = (target: DataQuery) => {
+    // if dealing with v2 dashboards
+    if (this.props.annotation.query && this.props.annotation.query.spec) {
+      target = {
+        ...this.props.annotation.query.spec,
+        ...target,
+      };
+    }
+    //target property is what ds query editor are using, but for v2 we also need to keep query in sync
     this.props.onChange({
       ...this.props.annotation,
+      // the query editor uses target, but the annotation in v2 uses query
+      // therefore we need to keep the target and query in sync
       target,
+      ...(this.props.annotation.query && {
+        query: {
+          kind: this.props.annotation.query.kind,
+          spec: { ...target },
+        },
+      }),
+      // Keep legacyOptions from the original annotation if they exist
+      ...(this.props.annotation.legacyOptions ? { legacyOptions: this.props.annotation.legacyOptions } : {}),
     });
   };
 
@@ -147,13 +184,21 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     }
 
     if (!events?.length) {
-      return <p>No events found</p>;
+      return (
+        <p>
+          <Trans i18nKey="annotations.standard-annotation-query-editor.no-events-found">No events found</Trans>
+        </p>
+      );
     }
 
     const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
+    const numEvents = events.length;
+    const numFields = frame?.fields.length;
     return (
       <p>
-        {events.length} events (from {frame?.fields.length} fields)
+        <Trans i18nKey="annotations.standard-annotation-query-editor.events-found">
+          {{ numEvents }} events (from {{ numFields }} fields)
+        </Trans>
       </p>
     );
   }
@@ -178,7 +223,9 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
               size="xs"
               onClick={this.onRunQuery}
             >
-              Test annotation query
+              <Trans i18nKey="annotations.standard-annotation-query-editor.test-annotation-query">
+                Test annotation query
+              </Trans>
             </Button>
           )}
         </div>
@@ -186,7 +233,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         <Alert
           data-testid={selectors.components.Annotations.editor.resultContainer}
           severity={this.getStatusSeverity(response)}
-          title="Query result"
+          title={t('annotations.standard-annotation-query-editor.title-query-result', 'Query result')}
         >
           {this.renderStatusText(response, running)}
         </Alert>
@@ -195,7 +242,27 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   onAnnotationChange = (annotation: AnnotationQuery) => {
-    this.props.onChange(annotation);
+    // Also preserve any legacyOptions field that might exist when migrating from V2 to V1
+    this.props.onChange({
+      ...annotation,
+      // Keep legacyOptions from the original annotation if they exist
+      ...(this.props.annotation.legacyOptions ? { legacyOptions: this.props.annotation.legacyOptions } : {}),
+    });
+  };
+
+  onQueryReplace = async (replacedQuery: DataQuery) => {
+    const { annotation, onChange } = this.props;
+
+    try {
+      // Use new async updateAnnotationFromSavedQuery that returns properly prepared annotation
+      const preparedAnnotation = await updateAnnotationFromSavedQuery(annotation, replacedQuery);
+      // Set flag to skip next verification since updateAnnotationFromSavedQuery already prepared the annotation
+      this.setState({ skipNextVerification: true });
+      onChange(preparedAnnotation);
+    } catch (error) {
+      console.error('Failed to replace annotation query:', error);
+      // On error, reset the replacing state but don't change the annotation
+    }
   };
 
   render() {
@@ -205,28 +272,58 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     // Find the annotation runner
     let QueryEditor = datasource.annotations?.QueryEditor || datasource.components?.QueryEditor;
     if (!QueryEditor) {
-      return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
+      return (
+        <div>
+          <Trans i18nKey="annotations.standard-annotation-query-editor.no-query-editor">
+            Annotations are not supported. This datasource needs to export a QueryEditor
+          </Trans>
+        </div>
+      );
     }
 
-    const query = {
+    // For v2 dashboards, target is not available, only query
+    let target = annotation.target;
+
+    // For v2 dashboards, use query.spec
+    if (annotation.query && annotation.query.spec) {
+      target = {
+        ...annotation.query.spec,
+      };
+    }
+
+    let query = {
       ...datasource.annotations?.getDefaultQuery?.(),
-      ...(annotation.target ?? { refId: 'Anno' }),
+      ...(target ?? { refId: 'Anno' }),
     };
+
+    // Create annotation object that respects annotations API
+    let editorAnnotation = annotation;
+
+    // For v2 dashboards: propagate legacyOptions to root level for datasource compatibility
+    if (annotation.query && annotation.legacyOptions) {
+      editorAnnotation = { ...annotation.legacyOptions, ...annotation };
+    }
 
     return (
       <>
         <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>
-          <QueryEditor
-            key={datasource?.name}
-            query={query}
-            datasource={datasource}
-            onChange={this.onQueryChange}
-            onRunQuery={this.onRunQuery}
-            data={response?.panelData}
-            range={getTimeSrv().timeRange()}
+          <AnnotationQueryEditorActionsWrapper
             annotation={annotation}
-            onAnnotationChange={this.onAnnotationChange}
-          />
+            datasource={datasource}
+            onQueryReplace={this.onQueryReplace}
+          >
+            <QueryEditor
+              key={datasource?.name}
+              query={query}
+              datasource={datasource}
+              onChange={this.onQueryChange}
+              onRunQuery={this.onRunQuery}
+              data={response?.panelData}
+              range={getTimeSrv().timeRange()}
+              annotation={editorAnnotation}
+              onAnnotationChange={this.onAnnotationChange}
+            />
+          </AnnotationQueryEditorActionsWrapper>
         </DataSourcePluginContextProvider>
         {shouldUseMappingUI(datasource) && (
           <>

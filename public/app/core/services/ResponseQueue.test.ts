@@ -4,8 +4,8 @@ import { first } from 'rxjs/operators';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { FetchQueue, FetchQueueUpdate } from './FetchQueue';
-import { subscribeTester } from './FetchQueue.test';
 import { ResponseQueue } from './ResponseQueue';
+import { subscribeTester } from './mocks/subscribeTester';
 
 const getTestContext = () => {
   const id = 'id';

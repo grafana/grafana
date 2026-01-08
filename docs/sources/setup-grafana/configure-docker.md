@@ -18,6 +18,11 @@ title: Configure a Grafana Docker image
 weight: 1800
 ---
 
+{{< admonition type="caution" >}}
+Starting with Grafana release `12.4.0`, the `grafana/grafana-oss` Docker Hub repository will no longer be updated.
+Instead, we encourage you to use the `grafana/grafana` Docker Hub repository. These two repositories have the same Grafana OSS docker images.
+{{< /admonition >}}
+
 # Configure a Grafana Docker image
 
 This topic explains how to run Grafana on Docker in complex environments that require you to:
@@ -27,7 +32,7 @@ This topic explains how to run Grafana on Docker in complex environments that re
 - Define secrets on the Cloud
 - Configure plugins
 
-> **Note:** The examples in this topic use the Grafana Enterprise Docker image. You can use the Grafana Open Source edition by changing the Docker image to `grafana/grafana-oss`.
+> **Note:** The examples in this topic use the Grafana Enterprise Docker image. You can use the Grafana Open Source edition by changing the Docker image to `grafana/grafana`.
 
 ## Supported Docker image variants
 
@@ -35,7 +40,7 @@ You can install and run Grafana using the following official Docker images.
 
 - **Grafana Enterprise**: `grafana/grafana-enterprise`
 
-- **Grafana Open Source**: `grafana/grafana-oss`
+- **Grafana Open Source**: `grafana/grafana`
 
 Each edition is available in two variants: Alpine and Ubuntu.
 
@@ -52,11 +57,11 @@ The Ubuntu-based Grafana Enterprise and OSS images are built using the [Ubuntu](
 
 - **Grafana Enterprise**: `grafana/grafana-enterprise:<version>-ubuntu`
 
-- **Grafana Open Source**: `grafana/grafana-oss:<version>-ubuntu`
+- **Grafana Open Source**: `grafana/grafana:<version>-ubuntu`
 
 ## Run a specific version of Grafana
 
-You can also run a specific version of Grafana or a beta version based on the main branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
+You can also run a specific version of Grafana or a beta version based on the main branch of the [`grafana/grafana` GitHub repository](https://github.com/grafana/grafana).
 
 > **Note:** If you use a Linux operating system such as Debian or Ubuntu and encounter permission errors when running Docker commands, you might need to prefix the command with `sudo` or add your user to the `docker` group. The official Docker documentation provides instructions on how to [run Docker without a non-root user](https://docs.docker.com/engine/install/linux-postinstall/).
 
@@ -74,19 +79,21 @@ The following command runs the Grafana Enterprise container and specifies versio
 docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:9.4.7
 ```
 
+For recent releases of Grafana, there are also `minor` version tags in the `grafana/grafana` and `grafana/grafana-enterprise` docker repositories. For example, if you want to always have the latest `12.1` version, you can use `grafana/grafana-enterprise:12.1` or `grafana/grafana-enterprise:12.1-ubuntu`.
+
 ## Run the Grafana main branch
 
-After every successful build of the main branch, two tags, `grafana/grafana-oss:main` and `grafana/grafana-oss:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-oss-dev:<version><build ID>-pre` and `grafana/grafana-oss-dev:<version><build ID>-pre-ubuntu`, where `version` is the next version of Grafana and `build ID `is the ID of the corresponding CI build. These tags provide access to the most recent Grafana main builds. For more information, refer to [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags).
+After every successful build of the main branch, two tags, `grafana/grafana:main` and `grafana/grafana:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-dev:<version>` and `grafana/grafana-dev:<version>-ubuntu`, where `version` is a prerelease version of Grafana. For example, if `1234` is the GitHub Run ID of the build, `12.2.0-1234`. These tags provide access to the most recent Grafana main builds. For more information, refer to [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags).
 
-To ensure stability and consistency, we strongly recommend using the `grafana/grafana-oss-dev:<version><build ID>-pre` tag when running the Grafana main branch in a production environment. This tag ensures that you are using a specific version of Grafana instead of the most recent commit, which could potentially introduce bugs or issues. It also avoids polluting the tag namespace for the main Grafana images with thousands of pre-release tags.
+To ensure stability and consistency, we strongly recommend using the `grafana/grafana-dev:<version>` tag when running the Grafana main branch in a production environment. This tag ensures that you are using a specific version of Grafana instead of the most recent commit, which could potentially introduce bugs or issues. It also avoids polluting the tag namespace for the main Grafana images with thousands of pre-release tags.
 
-For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.com/r/grafana/grafana-oss/tags/) and [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags/).
+For a list of available tags, refer to [`grafana/grafana`](https://hub.docker.com/r/grafana/grafana/tags/) and [`grafana/grafana-dev`](https://hub.docker.com/r/grafana/grafana-dev/tags/).
 
 ## Default paths
 
-Grafana comes with default configuration parameters that remain the same among versions regardless of the operating system or the environment (for example, virtual machine, Docker, Kubernetes, etc.). You can refer to the [Configure Grafana]({{< relref "./configure-grafana" >}}) documentation to view all the default configuration settings.
+Grafana comes with default configuration parameters that remain the same among versions regardless of the operating system or the environment (for example, virtual machine, Docker, Kubernetes, etc.). You can refer to the [Configure Grafana](../configure-grafana/) documentation to view all the default configuration settings.
 
-The following configurations are set by default when you start the Grafana Docker container. When running in Docker you cannot change the configurations by editing the `conf/grafana.ini` file. Instead, you can modify the configuration using [environment variables]({{< relref "./configure-grafana#override-configuration-with-environment-variables" >}}).
+The following configurations are set by default when you start the Grafana Docker container. When running in Docker you cannot change the configurations by editing the `conf/grafana.ini` file. Instead, you can modify the configuration using [environment variables](../configure-grafana/#override-configuration-with-environment-variables).
 
 | Setting               | Default value             |
 | --------------------- | ------------------------- |
@@ -99,7 +106,7 @@ The following configurations are set by default when you start the Grafana Docke
 
 ## Install plugins in the Docker container
 
-You can install publicly available plugins and plugins that are private or used internally in an organization. For plugin installation instructions, refer to [Install plugins in the Docker container]({{< relref "./installation/docker#install-plugins-in-the-docker-container" >}}).
+You can install publicly available plugins and plugins that are private or used internally in an organization. For plugin installation instructions, refer to [Install plugins in the Docker container](../installation/docker/#install-plugins-in-the-docker-container).
 
 ### Install plugins from other sources
 
@@ -209,7 +216,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 ## Logging
 
-By default, Docker container logs are directed to `STDOUT`, a common practice in the Docker community. You can change this by setting a different [log mode]({{< relref "./configure-grafana#mode" >}}) such as `console`, `file`, or `syslog`. You can use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
+By default, Docker container logs are directed to `STDOUT`, a common practice in the Docker community. You can change this by setting a different [log mode](../configure-grafana/#mode) such as `console`, `file`, or `syslog`. You can use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
 
 Example:
 
@@ -235,7 +242,7 @@ The following example demonstrates how to set the admin password:
 
 ### Configure Docker secrets credentials for AWS CloudWatch
 
-Grafana ships with built-in support for the [Amazon CloudWatch datasource]({{< relref "../datasources/aws-cloudwatch" >}}). To configure the data source, you must provide information such as the AWS ID-Key, secret access key, region, and so on. You can use Docker secrets as a way to provide this information.
+Grafana ships with built-in support for the [Amazon CloudWatch datasource](../../datasources/aws-cloudwatch/). To configure the data source, you must provide information such as the AWS ID-Key, secret access key, region, and so on. You can use Docker secrets as a way to provide this information.
 
 Example:
 
@@ -309,7 +316,7 @@ The following list includes the supported environment variables:
 
 By default, the Grafana log level is set to `INFO`, but you can increase the log level to `DEBUG` mode when you want to reproduce a problem.
 
-For more information about logging, refer to [logs]({{< relref "./configure-grafana#log" >}}).
+For more information about logging, refer to [logs](../configure-grafana/#log).
 
 ### Increase log level using the Docker run (CLI) command
 

@@ -1,16 +1,19 @@
 import memoizeOne from 'memoize-one';
 
 import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { getDashboardUrl } from 'app/features/dashboard-scene/utils/urlBuilders';
+import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dispatch } from 'app/store/store';
 
+import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
+import { extractErrorMessage } from '../../api/utils';
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
-import { t } from '../internationalization';
 
 import { copyStringToClipboard } from './explore';
 
@@ -18,30 +21,89 @@ function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
 }
 
+export function buildShortUrl(k8sShortUrl: ShortURL) {
+  const key = k8sShortUrl.metadata.name;
+  const orgId = k8sShortUrl.metadata.namespace;
+  const hostUrl = buildHostUrl();
+  return `${hostUrl}/goto/${key}?orgId=${orgId}`;
+}
+
 function getRelativeURLPath(url: string) {
   let path = url.replace(buildHostUrl(), '');
   return path.startsWith('/') ? path.substring(1, path.length) : path;
 }
 
-export const createShortLink = memoizeOne(async function (path: string) {
+const createShortLinkLegacy = async (path: string): Promise<string> => {
+  const shortLink = await getBackendSrv().post(`/api/short-urls`, {
+    path: getRelativeURLPath(path),
+  });
+  return shortLink.url;
+};
+
+// Memoized API call, to not re-execute the same request multiple times
+// this function creates a shortURL using the legacy or the new k8s api depending on the feature toggle
+export const createShortLink = memoizeOne(async (path: string): Promise<string> => {
   try {
-    const shortLink = await getBackendSrv().post(`/api/short-urls`, {
-      path: getRelativeURLPath(path),
-    });
-    return shortLink.url;
+    if (config.featureToggles.useKubernetesShortURLsAPI) {
+      // Use RTK API - it handles caching/failures/retries automatically
+      const result = await dispatch(
+        shortURLAPIv1beta1.endpoints.createShortUrl.initiate({
+          shortUrl: {
+            apiVersion: 'shorturl.grafana.app/v1beta1',
+            kind: 'ShortURL',
+            metadata: {},
+            spec: {
+              path: getRelativeURLPath(path),
+            },
+          },
+        })
+      );
+
+      if ('data' in result && result.data) {
+        return buildShortUrl(result.data);
+      }
+
+      if ('error' in result) {
+        const errorMessage = extractErrorMessage(result.error);
+        throw new Error(errorMessage || 'Failed to create short URL');
+      }
+
+      throw new Error('Failed to create short URL');
+    } else {
+      return await createShortLinkLegacy(path);
+    }
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    throw err; // Re-throw so callers know it failed
   }
 });
 
+/**
+ * Creates a ClipboardItem for the shortened link. This is used due to clipboard issues in Safari after making async calls.
+ * See https://github.com/grafana/grafana/issues/106889
+ * @param path - The long path to share.
+ * @returns A ClipboardItem for the shortened link.
+ */
+const createShortLinkClipboardItem = (path: string) => {
+  return new ClipboardItem({
+    'text/plain': createShortLink(path),
+  });
+};
+
 export const createAndCopyShortLink = async (path: string) => {
-  const shortLink = await createShortLink(path);
-  if (shortLink) {
-    copyStringToClipboard(shortLink);
-    dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
-  } else {
-    dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+  try {
+    if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
+      await navigator.clipboard.write([createShortLinkClipboardItem(path)]);
+      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
+    } else {
+      const shortLink = await createShortLink(path);
+      copyStringToClipboard(shortLink);
+      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
+    }
+  } catch (error) {
+    // createShortLink already handles error notifications, just log
+    console.error('Error in createAndCopyShortLink:', error);
   }
 };
 
@@ -70,7 +132,7 @@ export const createDashboardShareUrl = (dashboard: DashboardScene, opts: ShareLi
     slug: dashboard.state.meta.slug,
     currentQueryParams: location.search,
     updateQuery: urlParamsUpdate,
-    absolute: true,
+    absolute: !opts.useShortUrl,
   });
 };
 
@@ -82,7 +144,7 @@ export const getShareUrlParams = (
   const urlParamsUpdate: UrlQueryMap = {};
 
   if (panel) {
-    urlParamsUpdate.viewPanel = panel.state.key;
+    urlParamsUpdate.viewPanel = panel.getPathId();
   }
 
   if (opts.useAbsoluteTimeRange) {
@@ -108,14 +170,6 @@ function getPreviousLog(row: LogRowModel, allLogs: LogRowModel[]): LogRowModel |
 }
 
 export function getLogsPermalinkRange(row: LogRowModel, rows: LogRowModel[], absoluteRange: AbsoluteTimeRange) {
-  const range = {
-    from: new Date(absoluteRange.from).toISOString(),
-    to: new Date(absoluteRange.to).toISOString(),
-  };
-  if (!config.featureToggles.logsInfiniteScrolling) {
-    return range;
-  }
-
   // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
   // Look for the previous sibling log, and use its timestamp
   const allLogs = rows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);

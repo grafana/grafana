@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
-
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 )
 
 type LibraryConnectionKind int
@@ -26,7 +24,7 @@ type LibraryElement struct {
 	Kind        int64
 	Type        string
 	Description string
-	Model       json.RawMessage
+	Model       json.RawMessage `xorm:"TEXT"` // Column is defined as TEXT in `library_element`.
 	Version     int64
 
 	Created time.Time
@@ -99,8 +97,8 @@ type LibraryElementDTOMeta struct {
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
-	CreatedBy librarypanel.LibraryElementDTOMetaUser `json:"createdBy"`
-	UpdatedBy librarypanel.LibraryElementDTOMetaUser `json:"updatedBy"`
+	CreatedBy LibraryElementDTOMetaUser `json:"createdBy"`
+	UpdatedBy LibraryElementDTOMetaUser `json:"updatedBy"`
 }
 
 // libraryElementConnection is the model for library element connections.
@@ -126,15 +124,22 @@ type LibraryElementConnectionWithMeta struct {
 	CreatedByEmail string
 }
 
+type LibraryElementDTOMetaUser struct {
+	Id        int64  `json:"id"`
+	Name      string `json:"name"`
+	AvatarUrl string `json:"avatarUrl"`
+}
+
 // LibraryElementConnectionDTO is the frontend DTO for element connections.
 type LibraryElementConnectionDTO struct {
-	ID            int64                                  `json:"id"`
-	Kind          int64                                  `json:"kind"`
-	ElementID     int64                                  `json:"elementId"`
-	ConnectionID  int64                                  `json:"connectionId"`
-	ConnectionUID string                                 `json:"connectionUid"`
-	Created       time.Time                              `json:"created"`
-	CreatedBy     librarypanel.LibraryElementDTOMetaUser `json:"createdBy"`
+	// Deprecated: this field will be removed in the future
+	ID            int64                     `json:"id"`
+	Kind          int64                     `json:"kind"`
+	ElementID     int64                     `json:"elementId"`
+	ConnectionID  int64                     `json:"connectionId"`
+	ConnectionUID string                    `json:"connectionUid"`
+	Created       time.Time                 `json:"created"`
+	CreatedBy     LibraryElementDTOMetaUser `json:"createdBy"`
 }
 
 var (
@@ -156,6 +161,8 @@ var (
 	ErrLibraryElementInvalidUID = errors.New("uid contains illegal characters")
 	// errLibraryElementUIDTooLong is an error for when the uid of a library element is invalid
 	ErrLibraryElementUIDTooLong = errors.New("uid too long, max 40 characters")
+	// ErrLibraryElementProvisionedFolder indicates that a library element cannot be created on a provisioned folder.
+	ErrLibraryElementProvisionedFolder = errors.New("resource type not supported in repository-managed folders")
 )
 
 // Commands
@@ -177,8 +184,7 @@ type CreateLibraryElementCommand struct {
 	// Kind of element to create, Use 1 for library panels or 2 for c.
 	// Description:
 	// * 1 - library panels
-	// * 2 - library variables
-	// Enum: 1,2
+	// Enum: 1
 	Kind int64 `json:"kind" binding:"Required"`
 	// required: false
 	UID string `json:"uid"`
@@ -199,8 +205,7 @@ type PatchLibraryElementCommand struct {
 	// Kind of element to create, Use 1 for library panels or 2 for c.
 	// Description:
 	// * 1 - library panels
-	// * 2 - library variables
-	// Enum: 1,2
+	// Enum: 1
 	Kind int64 `json:"kind" binding:"Required"`
 	// Version of the library element you are updating.
 	Version int64 `json:"version" binding:"Required"`
@@ -214,6 +219,7 @@ type GetLibraryElementCommand struct {
 	// Deprecated: use FolderUID instead
 	FolderID int64
 	UID      string
+	Name     string
 }
 
 // SearchLibraryElementsQuery is the query used for searching for Elements
@@ -262,8 +268,7 @@ type LibraryElementKind int
 const (
 	// PanelElement is used for library elements that are of the Panel kind
 	PanelElement LibraryElementKind = iota + 1
-	// VariableElement is used for library elements that are of the Variable kind
-	VariableElement
 )
 
+const LibraryElementTableName = "library_element"
 const LibraryElementConnectionTableName = "library_element_connection"

@@ -15,6 +15,13 @@
     "logos": {
       "small": "img/icn-annolist-panel.svg",
       "large": "img/icn-annolist-panel.svg"
-    }
+    },
+    "links": [
+      { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
+      {
+        "name": "Documentation",
+        "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/annotations/"
+      }
+    ]
   }
 }

@@ -3,13 +3,11 @@
 package apistore
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"time"
 
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
+	badger "github.com/dgraph-io/badger/v4"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -19,6 +17,7 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
 
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -27,72 +26,102 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
 
 type RESTOptionsGetter struct {
-	client   resource.ResourceClient
-	original storagebackend.Config
+	client         resource.ResourceClient
+	secrets        secret.InlineSecureValueSupport
+	original       storagebackend.Config
+	configProvider RestConfigProvider
 
 	// Each group+resource may need custom options
 	options map[string]StorageOptions
 }
 
-func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(
+	client resource.ResourceClient,
+	secrets secret.InlineSecureValueSupport,
+	original storagebackend.Config,
+	configProvider RestConfigProvider,
+) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		client:   client,
-		original: original,
-		options:  make(map[string]StorageOptions),
+		client:         client,
+		secrets:        secrets,
+		original:       original,
+		options:        make(map[string]StorageOptions),
+		configProvider: configProvider,
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
-	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
-		Bucket: memblob.OpenBucket(&memblob.Options{}),
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, secrets secret.InlineSecureValueSupport) (*RESTOptionsGetter, error) {
+	// Create BadgerDB with in-memory mode
+	db, err := badger.Open(badger.DefaultOptions("").
+		WithInMemory(true).
+		WithMemTableSize(256 << 10).  // 256KB memtable size
+		WithValueThreshold(16 << 10). // 16KB threshold for storing values in LSM vs value log
+		WithNumMemtables(2).          // Keep only 2 memtables in memory
+		WithLogger(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	kv := resource.NewBadgerKV(db)
+	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+		KvStore:                      kv,
+		WithExperimentalClusterScope: true,
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
+		secrets,
 		originalStorageConfig,
+		nil,
 	), nil
 }
 
 // Optionally, this constructor allows specifying directories
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
-func NewRESTOptionsGetterForFile(path string,
+func NewRESTOptionsGetterForFileXX(path string,
 	originalStorageConfig storagebackend.Config,
 	features map[string]any) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
 
-	bucket, err := fileblob.OpenBucket(filepath.Join(path, "resource"), &fileblob.Options{
-		CreateDir: true,
-		Metadata:  fileblob.MetadataDontWrite, // skip
+	db, err := badger.Open(badger.DefaultOptions(filepath.Join(path, "badger")).
+		WithLogger(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	kv := resource.NewBadgerKV(db)
+	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+		KvStore: kv,
 	})
 	if err != nil {
 		return nil, err
 	}
-	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
-		Bucket: bucket,
-	})
-	if err != nil {
-		return nil, err
-	}
+
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
+		nil, // secrets
 		originalStorageConfig,
+		nil,
 	), nil
 }
 
@@ -133,15 +162,17 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
+			opts := r.options[resource.String()]
+			opts.SecureValues = r.secrets
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
-				trigger, indexers, r.options[resource.String()])
+				trigger, indexers, r.configProvider, opts)
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
 		// k8s expects forward slashes here, we'll convert them to os path separators in the storage
 		ResourcePrefix:            "/group/" + resource.Group + "/resource/" + resource.Resource,
 		CountMetricPollPeriod:     1 * time.Second,
-		StorageObjectCountTracker: storageConfig.Config.StorageObjectCountTracker,
+		StorageObjectCountTracker: storageConfig.StorageObjectCountTracker,
 	}
 
 	return ret, nil

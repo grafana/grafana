@@ -5,7 +5,7 @@ import { PluginType, escapeStringForRegex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
+import { getCatalogPluginMock, getPluginsStateMock } from '../mocks/mockHelpers';
 import { fetchRemotePlugins } from '../state/actions';
 import { CatalogPlugin, ReducerState, RequestStatus } from '../types';
 
@@ -15,7 +15,6 @@ jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
   const mockedRuntime = { ...original };
 
-  mockedRuntime.config.bootData.user.isGrafanaAdmin = true;
   mockedRuntime.config.buildInfo.version = 'v8.1.0';
 
   return mockedRuntime;

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { JSX } from 'react';
 import {
   ActionMeta as SelectActionMeta,
   CommonProps as ReactSelectCommonProps,
@@ -116,6 +117,8 @@ export interface SelectCommonProps<T> {
   loadingMessage?: string;
   /** Disables wrapping of multi value values when closed */
   noMultiValueWrap?: boolean;
+  /** Use a custom ref because generic component as output of React.forwardRef is not directly possible */
+  selectRef?: React.Ref<HTMLElement>;
 }
 
 export interface SelectAsyncProps<T> {
@@ -188,9 +191,10 @@ export type ReactSelectProps<Option, IsMulti extends boolean, Group extends Grou
   Option,
   IsMulti,
   Group
->['selectProps'] & {
-  invalid: boolean;
-};
+>['selectProps'] &
+  SelectCommonProps<Option> & {
+    autoWidth: boolean;
+  };
 
 // Use this type when implementing custom components for react select.
 // See SelectContainerProps in SelectContainer.tsx

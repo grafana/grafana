@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+var _ Dialect = MySQL
+var _ Dialect = SQLite
+var _ Dialect = PostgreSQL
+
 func TestSelectForOption_Valid(t *testing.T) {
 	t.Parallel()
 
@@ -133,52 +137,12 @@ func TestStandardIdent_Ident(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
-		gotOutput, gotErr := standardIdent{}.Ident(tc.input)
+		gotOutput, gotErr := standardIdent(tc.input)
 		if !errors.Is(gotErr, tc.err) {
 			t.Fatalf("unexpected error %v in test case %d", gotErr, i)
 		}
 		if gotOutput != tc.output {
 			t.Fatalf("unexpected error %v in test case %d", gotErr, i)
 		}
-	}
-}
-
-func TestArgPlaceholderFunc(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		input           int
-		valuePositional string
-	}{
-		{
-			input:           1,
-			valuePositional: "$1",
-		},
-		{
-			input:           16,
-			valuePositional: "$16",
-		},
-	}
-
-	for i, tc := range testCases {
-		got := argFmtSQL92(tc.input)
-		if got != "?" {
-			t.Fatalf("[argFmtSQL92] unexpected value %q in test case %d", got, i)
-		}
-
-		got = argFmtPositional(tc.input)
-		if got != tc.valuePositional {
-			t.Fatalf("[argFmtPositional] unexpected value %q in test case %d", got, i)
-		}
-	}
-}
-
-func TestName_Name(t *testing.T) {
-	t.Parallel()
-
-	const v = "some dialect name"
-	n := name(v)
-	if n.DialectName() != v {
-		t.Fatalf("unexpected dialect name %q", n.DialectName())
 	}
 }

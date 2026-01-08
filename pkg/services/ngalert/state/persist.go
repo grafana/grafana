@@ -2,27 +2,42 @@ package state
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
+type AlertInstancesProvider interface {
+	GetAlertInstances() []models.AlertInstance
+}
+
 // InstanceStore represents the ability to fetch and write alert instances.
 type InstanceStore interface {
 	InstanceReader
+	InstanceWriter
+}
 
+// InstanceReader provides methods to fetch alert instances.
+type InstanceReader interface {
+	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
+}
+
+// InstanceWriter provides methods to write alert instances.
+type InstanceWriter interface {
 	SaveAlertInstance(ctx context.Context, instance models.AlertInstance) error
 	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
 	// SaveAlertInstancesForRule overwrites the state for the given rule.
 	SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error
-	FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error
+	// FullSync performs a full synchronization of alert instances.
+	// If jitterFunc is provided, applies jitter delays between batches to distribute database load.
+	// If jitterFunc is nil, executes batches without delays.
+	FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error
 }
 
-// InstanceReader provides methods to fetch alert instances.
-type InstanceReader interface {
+type OrgReader interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
-	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
 }
 
 // RuleReader represents the ability to fetch alert rules.

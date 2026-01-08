@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/events"
@@ -24,6 +25,7 @@ import (
 // Store is the interface for the datasource Service's storage.
 type Store interface {
 	GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+	GetDataSourceInNamespace(context.Context, string, string, string) (*datasources.DataSource, error)
 	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
 	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
@@ -61,23 +63,64 @@ func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDat
 }
 
 func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
-	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) {
+	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) { // nolint:staticcheck
 		return nil, datasources.ErrDataSourceIdentifierNotSet
 	}
 
 	if len(query.UID) > 0 {
 		if err := util.ValidateUID(query.UID); err != nil {
-			logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, "read", fmt.Errorf("invalid UID"))
+			logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, "read", fmt.Errorf("invalid UID")) // nolint:staticcheck
 		}
 	}
 
-	datasource := &datasources.DataSource{Name: query.Name, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
+	datasource := &datasources.DataSource{
+		OrgID: query.OrgID,
+		UID:   query.UID,
+		Name:  query.Name, // nolint:staticcheck
+		ID:    query.ID,   // nolint:staticcheck
+	}
 	has, err := sess.Get(datasource)
 
 	if err != nil {
-		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID)
+		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
 		return nil, err
 	} else if !has {
+		ss.logger.Debug("Data source not found", "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
+		return nil, datasources.ErrDataSourceNotFound
+	}
+
+	return datasource, nil
+}
+
+func (ss *SqlStore) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+	var (
+		dataSource *datasources.DataSource
+		err        error
+	)
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return dataSource, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		dataSource, err = ss.getDataSourceInGroup(ctx, ns.OrgID, name, group, sess)
+		return err
+	})
+}
+
+func (ss *SqlStore) getDataSourceInGroup(_ context.Context, orgID int64, name, group string, sess *db.Session) (*datasources.DataSource, error) {
+	datasource := &datasources.DataSource{
+		OrgID: orgID,
+		Type:  group,
+		UID:   name,
+	}
+	has, err := sess.Get(datasource)
+
+	if err != nil {
+		ss.logger.Error("Failed getting data source", "err", err, "name", name, "orgId", orgID, "group", group)
+		return nil, err
+	} else if !has {
+		ss.logger.Debug("Data source not found", "name", name, "orgId", orgID, "group", group)
 		return nil, datasources.ErrDataSourceNotFound
 	}
 
@@ -138,7 +181,7 @@ func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*d
 
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Where(prunableQuery, ss.db.GetDialect().BooleanStr(true)).Asc("id").Find(&dataSources)
+		return sess.Where(prunableQuery, ss.db.GetDialect().BooleanValue(true)).Asc("id").Find(&dataSources)
 	})
 }
 
@@ -252,9 +295,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			cmd.UID = uid
 		} else if err := util.ValidateUID(cmd.UID); err != nil {
 			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "create", err)
-			if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagFailWrongDSUID) {
-				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
-			}
+			return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 		}
 
 		ds = &datasources.DataSource{
@@ -296,14 +337,6 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 				return err
 			}
 		}
-
-		sess.PublishAfterCommit(&events.DataSourceCreated{
-			Timestamp: time.Now(),
-			Name:      cmd.Name,
-			ID:        ds.ID,
-			UID:       cmd.UID,
-			OrgID:     cmd.OrgID,
-		})
 		return nil
 	})
 }
@@ -326,12 +359,14 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			cmd.JsonData = simplejson.New()
 		}
 
-		if cmd.UID != "" {
+		if cmd.ID == 0 || cmd.OrgID == 0 {
+			return datasources.ErrDataSourceIdentifierNotSet
+		}
+
+		if len(cmd.UID) > 0 {
 			if err := util.ValidateUID(cmd.UID); err != nil {
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
-				if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagFailWrongDSUID) {
-					return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
-				}
+				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 			}
 		}
 

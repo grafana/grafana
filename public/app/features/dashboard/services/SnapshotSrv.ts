@@ -1,8 +1,10 @@
 import { lastValueFrom, map } from 'rxjs';
 
 import { config, getBackendSrv, FetchResponse } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { DashboardDTO, SnapshotSpec } from 'app/types/dashboard';
+
+import { getAPINamespace } from '../../../api/utils';
 
 // Used in the snapshot list
 export interface Snapshot {
@@ -47,9 +49,13 @@ const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   getSharingOptions: () => getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options'),
   deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
   getSnapshot: async (key: string) => {
-    const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
-    dto.meta.canShare = false;
-    return dto;
+    try {
+      const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
+      dto.meta.canShare = false;
+      return dto;
+    } catch (e) {
+      throw e;
+    }
   },
 };
 
@@ -62,6 +68,7 @@ interface K8sMetadata {
 
 interface K8sSnapshotInfo {
   title: string;
+  external: boolean;
   externalUrl?: string;
   expires?: number;
 }
@@ -77,17 +84,17 @@ interface DashboardSnapshotList {
 
 interface K8sDashboardSnapshot {
   apiVersion: string;
-  kind: 'DashboardSnapshot';
+  kind: 'Snapshot';
   metadata: K8sMetadata;
-  dashboard: DashboardDataDTO;
+  spec: SnapshotSpec;
 }
 
 class K8sAPI implements DashboardSnapshotSrv {
-  readonly apiVersion = 'dashboardsnapshot.grafana.app/v0alpha1';
+  readonly apiVersion = 'dashboard.grafana.app/v0alpha1';
   readonly url: string;
 
   constructor() {
-    this.url = `/apis/${this.apiVersion}/namespaces/${config.namespace}/dashboardsnapshots`;
+    this.url = `/apis/${this.apiVersion}/namespaces/${getAPINamespace()}/snapshots`;
   }
 
   async create(cmd: SnapshotCreateCommand) {
@@ -100,7 +107,7 @@ class K8sAPI implements DashboardSnapshotSrv {
       return {
         key: r.metadata.name,
         name: r.spec.title,
-        external: r.spec.externalUrl != null,
+        external: r.spec.external,
         externalUrl: r.spec.externalUrl,
       };
     });
@@ -111,10 +118,7 @@ class K8sAPI implements DashboardSnapshotSrv {
   }
 
   async getSharingOptions() {
-    // TODO? should this be in a config service, or in the same service?
-    // we have http://localhost:3000/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/default/options
-    // BUT that has an unclear user mapping story still, so lets stick with the existing shared-options endpoint
-    return getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options');
+    return getBackendSrv().get<SnapshotSharingOptions>(this.url + '/settings');
   }
 
   async getSnapshot(uid: string): Promise<DashboardDTO> {
@@ -127,14 +131,14 @@ class K8sAPI implements DashboardSnapshotSrv {
     return lastValueFrom(
       getBackendSrv()
         .fetch<K8sDashboardSnapshot>({
-          url: this.url + '/' + uid + '/body',
+          url: this.url + '/' + uid,
           method: 'GET',
           headers: headers,
         })
         .pipe(
           map((response: FetchResponse<K8sDashboardSnapshot>) => {
             return {
-              dashboard: response.data.dashboard,
+              dashboard: response.data.spec.dashboard,
               meta: {
                 isSnapshot: true,
                 canSave: false,

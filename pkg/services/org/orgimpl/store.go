@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -54,6 +55,7 @@ type sqlStore struct {
 	//TODO: moved to service
 	log     log.Logger
 	deletes []string
+	cfg     *setting.Cfg
 }
 
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
@@ -96,11 +98,6 @@ func (ss *sqlStore) Insert(ctx context.Context, orga *org.Org) (int64, error) {
 				return err
 			}
 		}
-		sess.PublishAfterCommit(&events.OrgCreated{
-			Timestamp: orga.Created,
-			Id:        orga.ID,
-			Name:      orga.Name,
-		})
 		return nil
 	})
 	if err != nil {
@@ -156,12 +153,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *org.UpdateOrgCommand) error
 			return org.ErrOrgNotFound.Errorf("failed to update organization with ID: %d", cmd.OrgId)
 		}
 
-		sess.PublishAfterCommit(&events.OrgUpdated{
-			Timestamp: orga.Updated,
-			Id:        orga.ID,
-			Name:      orga.Name,
-		})
-
 		return nil
 	})
 }
@@ -200,12 +191,6 @@ func (ss *sqlStore) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddress
 			return err
 		}
 
-		sess.PublishAfterCommit(&events.OrgUpdated{
-			Timestamp: org.Updated,
-			Id:        org.ID,
-			Name:      org.Name,
-		})
-
 		return nil
 	})
 }
@@ -220,9 +205,10 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 		}
 
 		deletes := []string{
-			"DELETE FROM star WHERE EXISTS (SELECT 1 FROM dashboard WHERE org_id = ? AND star.dashboard_uid = dashboard.uid)",
-			"DELETE FROM dashboard_tag WHERE EXISTS (SELECT 1 FROM dashboard WHERE org_id = ? AND dashboard_tag.dashboard_id = dashboard.id)",
-			"DELETE FROM dashboard WHERE org_id = ?",
+			"DELETE FROM star WHERE org_id = ?",
+			"DELETE FROM playlist_item WHERE playlist_id IN (SELECT id FROM playlist WHERE org_id = ?)",
+			"DELETE FROM playlist WHERE org_id = ?",
+			"DELETE FROM dashboard_tag WHERE org_id = ?",
 			"DELETE FROM api_key WHERE org_id = ?",
 			"DELETE FROM data_source WHERE org_id = ?",
 			"DELETE FROM org_user WHERE org_id = ?",
@@ -343,12 +329,6 @@ func (ss *sqlStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgComm
 		}
 
 		_, err := sess.Insert(&user)
-
-		sess.PublishAfterCommit(&events.OrgCreated{
-			Timestamp: orga.Created,
-			Id:        orga.ID,
-			Name:      orga.Name,
-		})
 
 		return err
 	}); err != nil {
@@ -568,7 +548,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 		}
 
 		whereConditions = append(whereConditions, "u.is_service_account = ?")
-		whereParams = append(whereParams, ss.dialect.BooleanStr(false))
+		whereParams = append(whereParams, ss.dialect.BooleanValue(false))
 
 		if query.User == nil {
 			ss.log.Warn("Query user not set for filtering.")
@@ -583,10 +563,20 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			whereParams = append(whereParams, acFilter.Args...)
 		}
 
+		if query.ExcludeHiddenUsers {
+			cond, params := buildHiddenUsersFilter(query.User, ss.cfg.HiddenUsers)
+			if cond != "" {
+				whereConditions = append(whereConditions, cond)
+				whereParams = append(whereParams, params...)
+			}
+		}
+
 		if query.Query != "" {
-			queryWithWildcards := "%" + query.Query + "%"
-			whereConditions = append(whereConditions, "(email "+ss.dialect.LikeStr()+" ? OR name "+ss.dialect.LikeStr()+" ? OR login "+ss.dialect.LikeStr()+" ?)")
-			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+			sql1, param1 := ss.dialect.LikeOperator("email", true, query.Query, true)
+			sql2, param2 := ss.dialect.LikeOperator("name", true, query.Query, true)
+			sql3, param3 := ss.dialect.LikeOperator("login", true, query.Query, true)
+			whereConditions = append(whereConditions, fmt.Sprintf("(%s OR %s OR %s)", sql1, sql2, sql3))
+			whereParams = append(whereParams, param1, param2, param3)
 		}
 
 		if len(whereConditions) > 0 {
@@ -610,6 +600,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			"u.created",
 			"u.updated",
 			"u.is_disabled",
+			"u.is_provisioned",
 		)
 
 		if len(query.SortOpts) > 0 {
@@ -682,6 +673,15 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 			return user.ErrUserNotFound
 		}
 
+		// check if user belongs to org
+		var orgUser org.OrgUser
+		if exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgID, cmd.UserID).Get(&orgUser); err != nil {
+			return err
+		} else if !exists {
+			ss.log.Debug("User not in org, nothing to do", "user_id", cmd.UserID, "org_id", cmd.OrgID)
+			return nil
+		}
+
 		deletes := []string{
 			"DELETE FROM org_user WHERE org_id=? and user_id=?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and user_id = ?",
@@ -728,7 +728,7 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 					return err
 				}
 			}
-		} else if cmd.ShouldDeleteOrphanedUser {
+		} else if cmd.ShouldDeleteOrphanedUser && !usr.IsAdmin {
 			// no other orgs, delete the full user
 			if err := ss.deleteUserInTransaction(sess, &user.DeleteUserCommand{UserID: usr.ID}); err != nil {
 				return err
@@ -835,4 +835,24 @@ func removeUserOrg(sess *db.Session, userID int64) error {
 // RegisterDelete registers a delete query to be executed when an org is deleted, used to delete enterprise data.
 func (ss *sqlStore) RegisterDelete(query string) {
 	ss.deletes = append(ss.deletes, query)
+}
+
+func buildHiddenUsersFilter(requester identity.Requester, hiddenUsersMap map[string]struct{}) (string, []any) {
+	if requester != nil && requester.GetIsGrafanaAdmin() {
+		return "", nil
+	}
+
+	hiddenUsers := make([]any, 0)
+	for user := range hiddenUsersMap {
+		if requester != nil && user == requester.GetLogin() {
+			continue
+		}
+		hiddenUsers = append(hiddenUsers, user)
+	}
+
+	if len(hiddenUsers) > 0 {
+		return "u.login NOT IN (?" + strings.Repeat(",?", len(hiddenUsers)-1) + ")", hiddenUsers
+	}
+
+	return "", nil
 }

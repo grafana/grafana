@@ -42,7 +42,8 @@ func TestIdentityQueries(t *testing.T) {
 	}
 
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
-		RootDir: "testdata",
+		RootDir:        "testdata",
+		SQLTemplatesFS: sqlTemplatesFS,
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			sqlUserIdentifiers: {
 				{
@@ -103,6 +104,16 @@ func TestIdentityQueries(t *testing.T) {
 						OrgID:  1,
 						Action: "folders:read",
 						Role:   "Viewer",
+					}),
+				},
+				{
+					Name: "With_action_sets",
+					Data: getPermissions(&PermissionsQuery{
+						UserID:     1,
+						OrgID:      1,
+						Action:     "folders:create",
+						ActionSets: []string{"folders:edit", "folders:admin"},
+						Role:       "Viewer",
 					}),
 				},
 			},

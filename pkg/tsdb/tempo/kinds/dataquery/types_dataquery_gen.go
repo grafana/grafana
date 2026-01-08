@@ -7,161 +7,195 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package dataquery
 
-// Defines values for SearchStreamingState.
-const (
-	SearchStreamingStateDone      SearchStreamingState = "done"
-	SearchStreamingStateError     SearchStreamingState = "error"
-	SearchStreamingStatePending   SearchStreamingState = "pending"
-	SearchStreamingStateStreaming SearchStreamingState = "streaming"
+import (
+	json "encoding/json"
+	errors "errors"
 )
 
-// Defines values for SearchTableType.
-const (
-	SearchTableTypeRaw    SearchTableType = "raw"
-	SearchTableTypeSpans  SearchTableType = "spans"
-	SearchTableTypeTraces SearchTableType = "traces"
-)
-
-// Defines values for TempoQueryType.
-const (
-	TempoQueryTypeClear         TempoQueryType = "clear"
-	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
-	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
-	TempoQueryTypeTraceId       TempoQueryType = "traceId"
-	TempoQueryTypeTraceql       TempoQueryType = "traceql"
-	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
-	TempoQueryTypeUpload        TempoQueryType = "upload"
-)
-
-// Defines values for TraceqlSearchScope.
-const (
-	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
-	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
-	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
-	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
-	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
-	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
-	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
-)
-
-// These are the common properties available to all queries in all datasources.
-// Specific implementations will *extend* this interface, adding the required
-// properties for the given context.
-type DataQuery struct {
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
-
-	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
-	Hide *bool `json:"hide,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
+type TempoQuery struct {
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
-}
-
-// The state of the TraceQL streaming search query
-type SearchStreamingState string
-
-// The type of the table that is used to display the search results
-type SearchTableType string
-
-// TempoDataQuery defines model for TempoDataQuery.
-type TempoDataQuery = map[string]any
-
-// TempoQuery defines model for TempoQuery.
-type TempoQuery struct {
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool `json:"hide,omitempty"`
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+	// TraceQL query or trace ID
+	Query *string `json:"query,omitempty"`
+	// @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
+	Search *string `json:"search,omitempty"`
+	// @deprecated Query traces by service name
+	ServiceName *string `json:"serviceName,omitempty"`
+	// @deprecated Query traces by span name
+	SpanName *string `json:"spanName,omitempty"`
+	// @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
+	MinDuration *string `json:"minDuration,omitempty"`
+	// @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
+	MaxDuration *string `json:"maxDuration,omitempty"`
+	// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}. Providing multiple values will produce union of results for each filter, using PromQL OR operator internally.
+	ServiceMapQuery *StringOrArrayOfString `json:"serviceMapQuery,omitempty"`
+	// Use service.namespace in addition to service.name to uniquely identify a service.
+	ServiceMapIncludeNamespace *bool `json:"serviceMapIncludeNamespace,omitempty"`
+	// Whether to use native histograms for service map queries
+	ServiceMapUseNativeHistograms *bool `json:"serviceMapUseNativeHistograms,omitempty"`
+	// Defines the maximum number of traces that are returned from Tempo
+	Limit *int64 `json:"limit,omitempty"`
+	// Defines the maximum number of spans per spanset that are returned from Tempo
+	Spss    *int64          `json:"spss,omitempty"`
+	Filters []TraceqlFilter `json:"filters"`
+	// deprecated Filters that are used to query the metrics summary
+	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
+	// The type of the table that is used to display the search results
+	TableType *SearchTableType `json:"tableType,omitempty"`
+	// For metric queries, the step size to use
+	Step *string `json:"step,omitempty"`
+	// For metric queries, how many exemplars to request, 0 means no exemplars
+	Exemplars *int64 `json:"exemplars,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any            `json:"datasource,omitempty"`
-	Filters    []TraceqlFilter `json:"filters,omitempty"`
-
-	// Filters that are used to query the metrics summary
-	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
-
-	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
-	Hide *bool `json:"hide,omitempty"`
-
-	// Defines the maximum number of traces that are returned from Tempo
-	Limit *int64 `json:"limit,omitempty"`
-
-	// @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
-	MaxDuration *string `json:"maxDuration,omitempty"`
-
-	// @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
-	MinDuration *string `json:"minDuration,omitempty"`
-
-	// TraceQL query or trace ID
-	Query *string `json:"query,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId *string `json:"refId,omitempty"`
-
-	// @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
-	Search *string `json:"search,omitempty"`
-
-	// Use service.namespace in addition to service.name to uniquely identify a service.
-	ServiceMapIncludeNamespace *bool `json:"serviceMapIncludeNamespace,omitempty"`
-
-	// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}. Providing multiple values will produce union of results for each filter, using PromQL OR operator internally.
-	ServiceMapQuery *any `json:"serviceMapQuery,omitempty"`
-
-	// @deprecated Query traces by service name
-	ServiceName *string `json:"serviceName,omitempty"`
-
-	// @deprecated Query traces by span name
-	SpanName *string `json:"spanName,omitempty"`
-
-	// Defines the maximum number of spans per spanset that are returned from Tempo
-	Spss *int64 `json:"spss,omitempty"`
-
-	// For metric queries, the step size to use
-	Step *string `json:"step,omitempty"`
-
-	// The type of the table that is used to display the search results
-	TableType *SearchTableType `json:"tableType,omitempty"`
+	Datasource any `json:"datasource,omitempty"`
+	// For metric queries, whether to run instant or range queries
+	MetricsQueryType *MetricsQueryType `json:"metricsQueryType,omitempty"`
 }
 
-// TempoQueryType defines model for TempoQueryType.
-type TempoQueryType string
+// NewTempoQuery creates a new TempoQuery object.
+func NewTempoQuery() *TempoQuery {
+	return &TempoQuery{
+		Filters: []TraceqlFilter{},
+	}
+}
 
-// TraceqlFilter defines model for TraceqlFilter.
 type TraceqlFilter struct {
 	// Uniquely identify the filter, will not be used in the query generation
 	Id string `json:"id"`
-
-	// The operator that connects the tag to the value, for example: =, >, !=, =~
-	Operator *string `json:"operator,omitempty"`
-
-	// Scope static fields are pre-set in the UI, dynamic fields are added by the user
-	Scope *TraceqlSearchScope `json:"scope,omitempty"`
-
 	// The tag for the search filter, for example: .http.status_code, .service.name, status
 	Tag *string `json:"tag,omitempty"`
-
+	// The operator that connects the tag to the value, for example: =, >, !=, =~
+	Operator *string `json:"operator,omitempty"`
 	// The value for the search filter
-	Value *any `json:"value,omitempty"`
-
+	Value *StringOrArrayOfString `json:"value,omitempty"`
 	// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
 	ValueType *string `json:"valueType,omitempty"`
+	// The scope of the filter, can either be unscoped/all scopes, resource or span
+	Scope *TraceqlSearchScope `json:"scope,omitempty"`
+	// Whether the value is a custom value typed by the user
+	IsCustomValue *bool `json:"isCustomValue,omitempty"`
 }
 
-// TraceqlSearchScope static fields are pre-set in the UI, dynamic fields are added by the user
+// NewTraceqlFilter creates a new TraceqlFilter object.
+func NewTraceqlFilter() *TraceqlFilter {
+	return &TraceqlFilter{}
+}
+
+// static fields are pre-set in the UI, dynamic fields are added by the user
 type TraceqlSearchScope string
+
+const (
+	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
+	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
+	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
+	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
+	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
+	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
+	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
+)
+
+// The type of the table that is used to display the search results
+type SearchTableType string
+
+const (
+	SearchTableTypeTraces SearchTableType = "traces"
+	SearchTableTypeSpans  SearchTableType = "spans"
+	SearchTableTypeRaw    SearchTableType = "raw"
+)
+
+type MetricsQueryType string
+
+const (
+	MetricsQueryTypeRange   MetricsQueryType = "range"
+	MetricsQueryTypeInstant MetricsQueryType = "instant"
+)
+
+type TempoQueryType string
+
+const (
+	TempoQueryTypeTraceql       TempoQueryType = "traceql"
+	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
+	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
+	TempoQueryTypeUpload        TempoQueryType = "upload"
+	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
+	TempoQueryTypeTraceId       TempoQueryType = "traceId"
+	TempoQueryTypeClear         TempoQueryType = "clear"
+)
+
+// The state of the TraceQL streaming search query
+type SearchStreamingState string
+
+const (
+	SearchStreamingStatePending   SearchStreamingState = "pending"
+	SearchStreamingStateStreaming SearchStreamingState = "streaming"
+	SearchStreamingStateDone      SearchStreamingState = "done"
+	SearchStreamingStateError     SearchStreamingState = "error"
+)
+
+type StringOrArrayOfString struct {
+	String        *string  `json:"String,omitempty"`
+	ArrayOfString []string `json:"ArrayOfString,omitempty"`
+}
+
+// NewStringOrArrayOfString creates a new StringOrArrayOfString object.
+func NewStringOrArrayOfString() *StringOrArrayOfString {
+	return &StringOrArrayOfString{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrArrayOfString` as JSON.
+func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.ArrayOfString != nil {
+		return json.Marshal(resource.ArrayOfString)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.
+func (resource *StringOrArrayOfString) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// ArrayOfString
+	var ArrayOfString []string
+	if err := json.Unmarshal(raw, &ArrayOfString); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfString = nil
+	} else {
+		resource.ArrayOfString = ArrayOfString
+		return nil
+	}
+
+	return errors.Join(errList...)
+}

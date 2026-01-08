@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.5.0-pre";
+export const pluginVersion = "%VERSION%";
 
 export enum QueryEditorMode {
   Builder = 'builder',
@@ -50,6 +50,14 @@ export interface LokiDataQuery extends common.DataQuery {
    * Used to override the name of the series.
    */
   legendFormat?: string;
+  /**
+   * The full query plan for split/shard queries. Encoded and sent to Loki via `X-Loki-Query-Limits-Context` header. Requires "lokiQueryLimitsContext" feature flag
+   */
+  limitsContext?: {
+    expr: string;
+    from: number;
+    to: number;
+  };
   /**
    * Used to limit the number of log rows returned.
    */

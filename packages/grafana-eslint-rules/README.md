@@ -18,6 +18,8 @@ Check if border-radius theme tokens are used.
 
 To improve the consistency across Grafana we encourage devs to use tokens instead of custom values. In this case, we want the `borderRadius` to use the appropriate token such as `theme.shape.radius.default`, `theme.shape.radius.pill` or `theme.shape.radius.circle`.
 
+Instead of using `0` to remove a previously set border-radius, use `unset`.
+
 ### `no-unreduced-motion`
 
 Avoid direct use of `animation*` or `transition*` properties.
@@ -112,59 +114,70 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!
 
-### `no-untranslated-strings`
+### `consistent-story-titles`
 
-Check if strings are marked for translation.
+Enforce consistent Storybook titles in `.story.tsx` files.
 
-```tsx
-// Bad ❌
-<InlineToast placement="top" referenceElement={buttonRef.current}>
-  Copied
-</InlineToast>
+Storybook titles should not contain more than one `/` for sections (resulting in maximum 2 parts), unless one of the sections is 'Deprecated'. This helps maintain a clean and organized Storybook structure.
 
-// Good ✅
-<InlineToast placement="top" referenceElement={buttonRef.current}>
-  <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
-</InlineToast>
-
-```
-
-#### Passing variables to translations
+#### Examples
 
 ```tsx
 // Bad ❌
-const SearchTitle = ({ term }) => <div>Results for {term}</div>;
+export default { title: 'Components/Forms/Button' };
 
 // Good ✅
-const SearchTitle = ({ term }) => <Trans i18nKey="search-page.results-title">Results for {{ term }}</Trans>;
+export default { title: 'Components/Button' };
 
-// Good ✅ (if you need to interpolate variables inside nested components)
-const SearchTerm = ({ term }) => <Text color="success">{term}</Text>;
-const SearchTitle = ({ term }) => (
-  <Trans i18nKey="search-page.results-title">
-    Results for <SearchTerm term={term} />
-  </Trans>
-);
+// Good ✅ - Deprecated allows any number of sections
+export default { title: 'Components/Deprecated/Forms/Button/Extra' };
 
-// Good ✅ (if you need to interpolate variables and additional translated strings inside nested components)
-const SearchTitle = ({ term }) => (
-  <Trans i18nKey="search-page.results-title" values={{ myVariable: term }}>
-    Results for <Text color="success">{'{{ myVariable }}'} and this translated text is also in green</Text>
-  </Trans>
-);
+// Good ✅ - Variable assignment pattern
+const storyConfig = { title: 'Components/Button' };
+export default storyConfig;
+
+// Bad ❌ - Variable assignment with too many sections
+const storyConfig = { title: 'Components/Forms/Button' };
+export default storyConfig;
 ```
 
-#### How to translate props or attributes
+### `no-plugin-external-import-paths`
 
-Right now, we only check if a string is wrapped up by the `Trans` tag. We currently do not apply this rule to props, attributes or similar, but we also ask for them to be translated with the `t()` function.
+Prevent plugins from importing anything outside their own directory.
+
+This rule enforces strict plugin isolation by preventing plugins from importing anything that reaches outside their own plugin directory. This helps maintain clean plugin boundaries and prevents tight coupling between plugins and other parts of the codebase.
+
+The rule automatically detects the current plugin directory from the file path and blocks any relative imports that would reach outside that directory.
+
+The rule is applied to specific plugins by configuring the `files` pattern in the ESLint configuration, similar to `grafana/decoupled-plugins-overrides`.
+
+#### Examples
 
 ```tsx
-// Bad ❌
-<input type="value" placeholder={'Username'} />;
+// Bad ❌ - Importing from sibling plugin
+import { getDataLinks } from '../status-history/utils';
+import { isTooltipScrollable } from '../timeseries/utils';
 
-// Good ✅
-const placeholder = t('form.username-placeholder', 'Username');
-return <input type="value" placeholder={placeholder} />;
+// Bad ❌ - Importing from Grafana core
+import { something } from '../../../features/dashboard/state';
+
+// Bad ❌ - Importing from outside plugin directory
+import { other } from '../some-other-folder/utils';
+
+// Good ✅ - Importing from same plugin
+import { someUtil } from './utils';
+import { Component } from './Component';
+import { helper } from './subfolder/helper';
+
+// Good ✅ - Importing from external packages
+import React from 'react';
+import { Button } from '@grafana/ui';
 ```
 
-Check more info about how translations work in Grafana in [Internationalization.md](https://github.com/grafana/grafana/blob/main/contribute/internationalization.md)
+#### Error Message
+
+When a violation is detected, the rule reports:
+
+```
+Import '../status-history/utils' reaches outside the 'histogram' plugin directory. Plugins should only import from external dependencies or relative paths within their own directory.
+```

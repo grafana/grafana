@@ -2,18 +2,23 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { getBackendSrv } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { Dashboard } from '@grafana/schema';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { t, Trans } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 import { dispatch } from 'app/store/store';
 
+import { Spec as DashboardV2Spec } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
+import {
+  transformSceneToSaveModelSchemaV2,
+  trimDashboardForSnapshot as trimDashboardForSnapshotV2,
+} from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { SceneShareTabState, ShareView } from './types';
@@ -53,6 +58,12 @@ export interface ShareSnapshotTabState extends SceneShareTabState {
   snapshotName: string;
   selectedExpireOption: SelectableValue<number>;
   snapshotSharingOptions?: SnapshotSharingOptions;
+}
+
+// this is a hacky way to pass the uid with the dashboard to the backend so the dashboard can be found
+// and snapshot can be created
+interface DashboardV2SpecWithUid extends DashboardV2Spec {
+  uid?: string;
 }
 
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> implements ShareView {
@@ -102,7 +113,26 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
   private prepareSnapshot() {
     const timeRange = sceneGraph.getTimeRange(this);
     const { dashboardRef, panelRef } = this.state;
-    const saveModel = transformSceneToSaveModel(dashboardRef.resolve(), true);
+
+    let saveModel: Dashboard | DashboardV2SpecWithUid;
+
+    const apiVersion = dashboardRef.resolve().serializer.apiVersion;
+
+    const isV2Dashboard =
+      apiVersion === 'dashboard.grafana.app/v2beta1' || apiVersion === 'dashboard.grafana.app/v2alpha1';
+
+    if (isV2Dashboard) {
+      saveModel = transformSceneToSaveModelSchemaV2(dashboardRef.resolve(), true);
+      saveModel.uid = dashboardRef.resolve().serializer.getK8SMetadata()?.name;
+      return trimDashboardForSnapshotV2(
+        this.state.snapshotName.trim() || '',
+        timeRange.state.value,
+        saveModel,
+        panelRef?.resolve()
+      );
+    }
+
+    saveModel = transformSceneToSaveModel(dashboardRef.resolve(), true);
 
     return trimDashboardForSnapshot(
       this.state.snapshotName.trim() || '',
@@ -149,8 +179,8 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
     }
   };
 
-  public onSnapshotDelete = async (url: string) => {
-    const response = await getBackendSrv().get(url);
+  public onSnapshotDelete = async (key: string) => {
+    const response = await getDashboardSnapshotSrv().deleteSnapshot(key);
     dispatch(
       notifyApp(createSuccessNotification(t('snapshot.share.success-delete', 'Your snapshot has been deleted')))
     );
@@ -165,8 +195,8 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
     return model.onSnapshotCreate(external);
   });
 
-  const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (url: string) => {
-    return await getBackendSrv().get(url);
+  const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (key: string) => {
+    return await getDashboardSnapshotSrv().deleteSnapshot(key);
   });
 
   // If snapshot has been deleted - show message and allow to close modal
@@ -275,7 +305,7 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
               size="md"
               variant="destructive"
               onClick={() => {
-                deleteSnapshot(snapshotResult.value!.deleteUrl);
+                deleteSnapshot(snapshotResult.value!.key);
               }}
             >
               <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot.</Trans>

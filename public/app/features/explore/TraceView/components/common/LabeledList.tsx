@@ -16,8 +16,8 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, IconName } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 
@@ -28,6 +28,7 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
       listStyle: 'none',
       margin: 0,
       padding: 0,
+      fontSize: theme.typography.size.sm,
       ...(divider
         ? {
             marginRight: '-8px',
@@ -45,16 +46,32 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
             borderRight: `1px solid ${autoColor(theme, '#ddd')}`,
             padding: '0 8px',
           }
-        : {}),
+        : { padding: '0 4px' }),
     }),
     LabeledListLabel: css({
       label: 'LabeledListLabel',
-      color: theme.isLight ? '#999' : '#666',
+      color: theme.colors.text.secondary,
       marginRight: '0.25rem',
     }),
     LabeledListValue: css({
       label: 'LabeledListValue',
       marginRight: divider ? undefined : '0.55rem',
+      wordWrap: 'break-word',
+      wordBreak: 'break-all',
+    }),
+    LabeledListIcon: css({
+      label: 'LabeledListIcon',
+      marginRight: '0.25rem',
+      marginTop: '-0.1rem',
+    }),
+    LabeledListServiceLine: css({
+      label: 'LabeledListServiceLine',
+      display: 'inline-block',
+      width: '1rem',
+      height: '0.35rem',
+      marginRight: '0.5rem',
+      verticalAlign: 'middle',
+      borderRadius: theme.shape.radius.default,
     }),
   };
 };
@@ -62,18 +79,24 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
 type LabeledListProps = {
   className?: string;
   divider?: boolean;
-  items: Array<{ key: string; label: React.ReactNode; value: React.ReactNode }>;
+  items: Array<{ key: string; label: React.ReactNode; value: React.ReactNode; icon?: IconName }>;
+  color?: string;
 };
 
 export default function LabeledList(props: LabeledListProps) {
-  const { className, divider = false, items } = props;
+  const { className, divider = false, items, color } = props;
   const styles = useStyles2(getStyles(divider));
 
   return (
     <ul className={cx(styles.LabeledList, className)}>
-      {items.map(({ key, label, value }) => {
+      {items.map(({ key, label, value, icon }) => {
         return (
+          // If label is service, create small line on left with color
           <li className={styles.LabeledListItem} key={`${key}`}>
+            {label === 'Service:' && (
+              <div className={styles.LabeledListServiceLine} style={{ backgroundColor: color }} />
+            )}
+            {icon && <Icon name={icon} className={styles.LabeledListIcon} size="sm" />}
             <span className={styles.LabeledListLabel}>{label}</span>
             <strong className={styles.LabeledListValue}>{value}</strong>
           </li>

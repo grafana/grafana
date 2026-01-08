@@ -13,6 +13,7 @@ const validateMock = jest.fn();
 describe('DerivedField', () => {
   beforeEach(() => {
     setDataSourceSrv({
+      registerRuntimeDataSource: jest.fn(),
       get: jest.fn(),
       reload: jest.fn(),
       getInstanceSettings: jest.fn(),

@@ -1,4 +1,5 @@
 import { DataLinkBuiltInVars } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -125,7 +126,7 @@ const validVariableNames: Record<string, RegExp[]> = {
 };
 
 export const getPropsWithVariable = (variableId: string, parent: { key: string; value: any }, result: any) => {
-  const stringValues = Object.keys(parent.value).reduce<Record<string, any>>((all, key) => {
+  const stringValues = Object.keys(parent.value).reduce<Record<string, string>>((all, key) => {
     const value = parent.value[key];
     if (!value || typeof value !== 'string') {
       return all;
@@ -151,7 +152,7 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     return all;
   }, {});
 
-  const objectValues = Object.keys(parent.value).reduce<Record<string, any>>((all, key) => {
+  const objectValues = Object.keys(parent.value).reduce<Record<string, object>>((all, key) => {
     const value = parent.value[key];
     if (value && typeof value === 'object' && Object.keys(value).length) {
       let id = value.title || value.name || value.id || key;
@@ -332,7 +333,9 @@ export const transformUsagesToNetwork = (usages: VariableUsageTree[]): UsagesToN
     const { variable, tree } = usage;
     const result: UsagesToNetwork = {
       variable,
-      nodes: [{ id: 'dashboard', label: 'dashboard' }],
+      nodes: [
+        { id: 'dashboard', label: t('variables.transform-usages-to-network.result.label.dashboard', 'dashboard') },
+      ],
       edges: [],
       showGraph: false,
     };

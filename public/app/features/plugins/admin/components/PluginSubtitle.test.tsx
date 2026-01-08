@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { PluginSignatureStatus } from '@grafana/data';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import * as runtime from '../state/hooks';
 import { CatalogPlugin } from '../types';
@@ -62,16 +62,10 @@ describe('PluginSubtitle', () => {
     expect(screen.getByText('Test description')).toBeInTheDocument();
   });
 
-  it('renders links', () => {
-    render(<PluginSubtitle plugin={basePlugin} />);
-    expect(screen.getByText('Website')).toHaveAttribute('href', 'http://test.com');
-  });
-
   it('shows error alert when installation error exists', () => {
-    jest.spyOn(runtime, 'useInstallStatus').mockReturnValueOnce({
-      error: { message: 'Install failed', error: 'Details' },
-      isInstalling: false,
-    });
+    jest
+      .spyOn(runtime, 'useInstallStatus')
+      .mockReturnValueOnce({ error: { message: 'Install failed', error: 'Details' }, isInstalling: false });
     render(<PluginSubtitle plugin={basePlugin} />);
     expect(screen.getByText('Install failed')).toBeInTheDocument();
   });

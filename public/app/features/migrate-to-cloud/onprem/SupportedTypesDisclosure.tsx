@@ -1,14 +1,18 @@
+import { Trans } from '@grafana/i18n';
 import { Text, TextLink } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 export function SupportedTypesDisclosure() {
   return (
     <Text color="secondary" textAlignment="center">
       <Trans i18nKey="migrate-to-cloud.support-types-disclosure.text">
-        Dashboards, Folders, and built-in core data sources are migrated to your Grafana Cloud stack.{' '}
-        <TextLink external href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide">
-          Learn about migrating other settings.
-        </TextLink>
+        Resources are copied to your Grafana Cloud stack.{' '}
+        <TextLink
+          external
+          href="https://grafana.com/docs/grafana-cloud/security-and-account-management/migration-guide/"
+        >
+          Learn more
+        </TextLink>{' '}
+        about the full set of supported resources and migrating other settings.
       </Trans>
     </Text>
   );

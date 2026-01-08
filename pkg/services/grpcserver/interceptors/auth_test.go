@@ -102,8 +102,8 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 		}, nil)
 		permissions := []accesscontrol.Permission{
 			{
-				Action: accesscontrol.ActionAPIKeyRead,
-				Scope:  accesscontrol.ScopeAPIKeysAll,
+				Action: accesscontrol.ActionUsersWrite,
+				Scope:  accesscontrol.ScopeUsersAll,
 			},
 		}
 		ac := accesscontrolmock.New().WithPermissions(permissions)
@@ -114,7 +114,7 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 		require.NoError(t, err)
 		signedInUser := grpccontext.FromContext(ctx).SignedInUser
 		require.Equal(t, serviceAccountId, signedInUser.UserID)
-		require.Equal(t, []string{accesscontrol.ScopeAPIKeysAll}, signedInUser.Permissions[1][accesscontrol.ActionAPIKeyRead])
+		require.Equal(t, []string{accesscontrol.ScopeUsersAll}, signedInUser.Permissions[1][accesscontrol.ActionUsersWrite])
 	})
 }
 

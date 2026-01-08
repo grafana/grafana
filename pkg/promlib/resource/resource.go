@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	"github.com/prometheus/prometheus/promql/parser"
 
 	"github.com/grafana/grafana/pkg/promlib/client"
@@ -83,15 +84,6 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 	return callResponse, err
 }
 
-func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
-	newReq := &backend.CallResourceRequest{
-		PluginContext: req.PluginContext,
-		Path:          "/api/v1/status/buildinfo",
-	}
-
-	return r.Execute(ctx, newReq)
-}
-
 func getSelectors(expr string) ([]string, error) {
 	parsed, err := parser.ParseExpr(expr)
 	if err != nil {
@@ -125,8 +117,8 @@ type SuggestionRequest struct {
 
 	Queries []string `json:"queries"`
 
-	Scopes       []models.ScopeFilter `json:"scopes"`
-	AdhocFilters []models.ScopeFilter `json:"adhocFilters"`
+	Scopes       []scope.ScopeFilter `json:"scopes"`
+	AdhocFilters []scope.ScopeFilter `json:"adhocFilters"`
 
 	// Start and End are proxied directly to the prometheus endpoint (which is rfc3339 | unix_timestamp)
 	Start string `json:"start"`
@@ -182,8 +174,8 @@ func (r *Resource) GetSuggestions(ctx context.Context, req *backend.CallResource
 		values.Add("match[]", vs.String())
 	}
 
-	// if no timeserie name is provided, but scopes are, the scope is still rendered and passed as match param.
-	if len(selectorList) == 0 && len(sugReq.Scopes) > 0 {
+	// if no timeserie name is provided, but scopes or adhoc filters are, the scope is still rendered and passed as match param.
+	if len(selectorList) == 0 && len(matchers) > 0 {
 		vs := parser.VectorSelector{LabelMatchers: matchers}
 		values.Add("match[]", vs.String())
 	}

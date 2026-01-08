@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { configureStore } from 'app/store/configureStore';
-import { Invitee, OrgUser } from 'app/types';
+import { Invitee, OrgUser } from 'app/types/user';
 
 import { Props, UsersListPageUnconnected } from './UsersListPage';
 import { pageChanged, sortChanged } from './state/reducers';
@@ -12,7 +12,7 @@ jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
 }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     user: { orgId: 1 },
     hasPermission: () => false,

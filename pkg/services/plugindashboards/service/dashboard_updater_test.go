@@ -23,7 +23,7 @@ func TestDashboardUpdater(t *testing.T) {
 	t.Run("updateAppDashboards", func(t *testing.T) {
 		scenario(t, "Without any stored plugin settings shouldn't delete/import any dashboards",
 			scenarioInput{}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.Len(t, ctx.pluginSettingsService.getPluginSettingsArgs, 1)
 				require.Equal(t, int64(0), ctx.pluginSettingsService.getPluginSettingsArgs[0])
@@ -46,7 +46,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
@@ -68,7 +68,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
@@ -100,7 +100,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
@@ -135,7 +135,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
@@ -183,7 +183,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Len(t, ctx.dashboardService.deleteDashboardArgs, 1)

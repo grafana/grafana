@@ -29,7 +29,7 @@ export type TraceProcess = {
 };
 
 export type TraceSpanReference = {
-  refType: 'CHILD_OF' | 'FOLLOWS_FROM';
+  refType: 'CHILD_OF' | 'FOLLOWS_FROM' | 'EXTERNAL';
   // eslint-disable-next-line no-use-before-define
   span?: TraceSpan | null | undefined;
   spanID: string;
@@ -99,4 +99,13 @@ export type CriticalPathSection = {
   spanId: string;
   section_start: number;
   section_end: number;
+};
+
+// Type for the plugin link context that includes trace data and datasource information
+export type TraceViewPluginExtensionContext = Trace & {
+  datasource: {
+    name: string;
+    uid: string;
+    type: string;
+  };
 };

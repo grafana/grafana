@@ -6,19 +6,21 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestCreateLibraryElement(t *testing.T) {
-	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
+func TestIntegration_CreateLibraryElement(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	scenarioWithPanel(t, "When an admin tries to create a library panel with the same name, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
 			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
-			require.Equal(t, 400, resp.Status())
+			require.Equal(t, 200, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists, it should succeed",
@@ -43,17 +45,17 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: model.LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           "ScenarioFolder",
+						FolderName:          sc.folder.Title,
+						FolderUID:           sc.folder.UID,
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             sc.initialResult.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
@@ -94,17 +96,17 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: model.LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           "ScenarioFolder",
+						FolderName:          sc.folder.Title,
+						FolderUID:           sc.folder.UID,
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
@@ -173,17 +175,17 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: model.LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           "ScenarioFolder",
+						FolderName:          sc.folder.Title,
+						FolderUID:           sc.folder.UID,
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",

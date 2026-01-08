@@ -6,16 +6,17 @@ import {
   TextDimensionConfig,
   ColorDimensionConfig,
   ScalarDimensionConfig,
+  DirectionDimensionConfig,
+  ConnectionDirection,
 } from '@grafana/schema';
-import {
-  getColorDimension,
-  getScaledDimension,
-  getTextDimension,
-  getResourceDimension,
-  DimensionSupplier,
-} from 'app/features/dimensions';
 
+import { getColorDimension } from './color';
+import { getDirectionDimension } from './direction';
+import { getResourceDimension } from './resource';
 import { getScalarDimension } from './scalar';
+import { getScaledDimension } from './scale';
+import { getTextDimension } from './text';
+import { DimensionSupplier } from './types';
 
 export function getColorDimensionFromData(
   data: PanelData | undefined,
@@ -30,6 +31,21 @@ export function getColorDimensionFromData(
     }
   }
   return getColorDimension(undefined, cfg, config.theme2);
+}
+
+export function getDirectionDimensionFromData(
+  data: PanelData | undefined,
+  cfg: DirectionDimensionConfig
+): DimensionSupplier<ConnectionDirection> {
+  if (data?.series && cfg.field) {
+    for (const frame of data.series) {
+      const d = getDirectionDimension(frame, cfg);
+      if (!d.isAssumed || data.series.length === 1) {
+        return d;
+      }
+    }
+  }
+  return getDirectionDimension(undefined, cfg);
 }
 
 export function getScaleDimensionFromData(

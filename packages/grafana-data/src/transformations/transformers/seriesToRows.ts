@@ -37,7 +37,10 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
 
         const timeFieldByIndex: Record<number, number> = {};
         const targetFields = new Set<string>();
-        const dataFrame = new MutableDataFrame();
+        const dataFrame = new MutableDataFrame({
+          refId: `${DataTransformerID.seriesToRows}-${data.map((frame) => frame.refId).join('-')}`,
+          fields: [],
+        });
         const metricField: Field = {
           name: TIME_SERIES_METRIC_FIELD_NAME,
           values: [],

@@ -1,0 +1,34 @@
+{
+  "title": "Dashboard with minimal graph panel settings",
+  "tags": [],
+  "timezone": "browser",
+  "editable": true,
+  "panels": [
+    {
+      "id": 4,
+      "type": "graph",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
+          "editorMode": "builder",
+          "expr": "{\"a.utf8.metric 🤘\", job=\"prometheus-utf8\"}",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 12,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+    }
+}

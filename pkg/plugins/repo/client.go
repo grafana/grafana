@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -24,16 +25,18 @@ type Client struct {
 	httpClientNoTimeout http.Client
 	retryCount          int
 	grafanaComAPIToken  string
+	grafanaComAPIURL    string
 
 	log log.PrettyLogger
 }
 
-func NewClient(skipTLSVerify bool, grafanaComAPIToken string, logger log.PrettyLogger) *Client {
+func NewClient(skipTLSVerify bool, grafanaComAPIToken, grafanaComAPIURL string, logger log.PrettyLogger) *Client {
 	return &Client{
 		httpClient:          MakeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: MakeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
 		grafanaComAPIToken:  grafanaComAPIToken,
+		grafanaComAPIURL:    grafanaComAPIURL,
 	}
 }
 
@@ -97,7 +100,7 @@ func (c *Client) SendReq(ctx context.Context, url *url.URL, compatOpts CompatOpt
 	return io.ReadAll(bodyReader)
 }
 
-func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
+func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, expectedChecksum string, compatOpts CompatOpts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -133,7 +136,7 @@ func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, 
 				if err != nil {
 					return
 				}
-				err = c.downloadFile(ctx, tmpFile, pluginURL, checksum, compatOpts)
+				err = c.downloadFile(ctx, tmpFile, pluginURL, expectedChecksum, compatOpts)
 			} else {
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -166,7 +169,7 @@ func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, 
 		if c.retryCount < 3 {
 			c.retryCount++
 			c.log.Debug("Failed downloading. Will retry.")
-			err = c.downloadFile(ctx, tmpFile, pluginURL, checksum, compatOpts)
+			err = c.downloadFile(ctx, tmpFile, pluginURL, expectedChecksum, compatOpts)
 		}
 		return err
 	}
@@ -184,8 +187,9 @@ func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, 
 	if err = w.Flush(); err != nil {
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
 	}
-	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
-		return ErrChecksumMismatch(pluginURL)
+	computedChecksum := fmt.Sprintf("%x", h.Sum(nil))
+	if len(expectedChecksum) > 0 && expectedChecksum != computedChecksum {
+		return ErrChecksumMismatch(pluginURL, expectedChecksum, computedChecksum)
 	}
 
 	c.retryCount = 0
@@ -233,7 +237,7 @@ func (c *Client) createReq(ctx context.Context, url *url.URL, compatOpts CompatO
 		req.Header.Set("grafana-origin", orig.(string))
 	}
 
-	if c.grafanaComAPIToken != "" {
+	if strings.HasPrefix(url.String(), c.grafanaComAPIURL) && c.grafanaComAPIToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.grafanaComAPIToken)
 	}
 

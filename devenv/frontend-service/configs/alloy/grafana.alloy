@@ -1,0 +1,11 @@
+//
+// Metrics
+prometheus.scrape "grafana_dev" {
+	targets = [
+		{__scheme__ = "http", __address__ = "grafana-api:3000", job = "grafana_dev", service_name = "grafana-api"},
+		{__scheme__ = "http", __address__ = "frontend-service:3000", job = "grafana_dev", service_name = "frontend-service"},
+	]
+	scrape_interval  = "15s"
+	forward_to       = [prometheus.relabel.publish_metrics.receiver]
+	scrape_protocols = ["PrometheusProto", "OpenMetricsText1.0.0", "OpenMetricsText0.0.1", "PrometheusText0.0.4"]
+}

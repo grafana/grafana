@@ -1,12 +1,21 @@
 import { useEffect, useMemo } from 'react';
 
 import { PluginError, PluginType } from '@grafana/data';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
-import { sortPlugins, Sorters, isPluginUpdateable } from '../helpers';
-import { CatalogPlugin } from '../types';
+import { sortPlugins, Sorters, isPluginUpdatable } from '../helpers';
+import { CatalogPlugin, PluginStatus } from '../types';
 
-import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall } from './actions';
+import {
+  fetchAll,
+  fetchDetails,
+  fetchRemotePlugins,
+  install,
+  uninstall,
+  fetchAllLocal,
+  unsetInstall,
+  fetchPluginInsights,
+} from './actions';
 import {
   selectPlugins,
   selectById,
@@ -37,17 +46,22 @@ export const useGetAll = (filters: PluginFilters, sortBy: Sorters = Sorters.name
 export const useGetUpdatable = () => {
   const { isLoading } = useFetchStatus();
   const { plugins: installed } = useGetAll({ isInstalled: true });
-  const updatablePlugins = installed.filter(isPluginUpdateable);
+  const updatablePlugins = installed.filter(isPluginUpdatable);
   return {
     isLoading,
     updatablePlugins,
   };
 };
 
-export const useGetSingle = (id: string): CatalogPlugin | undefined => {
+export const useGetSingle = (id: string, version?: string): CatalogPlugin | undefined => {
   useFetchAll();
   useFetchDetails(id);
 
+  return useSelector((state) => selectById(state, id));
+};
+
+export const useGetPluginInsights = (id: string, version: string | undefined): CatalogPlugin | undefined => {
+  useFetchPluginInsights(id, version);
   return useSelector((state) => selectById(state, id));
 };
 
@@ -64,7 +78,7 @@ export const useGetErrors = (filterByPluginType?: PluginType): PluginError[] => 
 
 export const useInstall = () => {
   const dispatch = useDispatch();
-  return (id: string, version?: string, isUpdating?: boolean) => dispatch(install({ id, version, isUpdating }));
+  return (id: string, version?: string, installType?: PluginStatus) => dispatch(install({ id, version, installType }));
 };
 
 export const useUnsetInstall = () => {
@@ -151,6 +165,17 @@ export const useFetchDetails = (id: string) => {
   useEffect(() => {
     shouldFetch && dispatch(fetchDetails(id));
   }, [plugin]); // eslint-disable-line
+};
+
+export const useFetchPluginInsights = (id: string, version: string | undefined) => {
+  const dispatch = useDispatch();
+  const plugin = useSelector((state) => selectById(state, id));
+  const isNotFetching = !useSelector(selectIsRequestPending(fetchPluginInsights.typePrefix));
+  const shouldFetch = isNotFetching && plugin && !plugin.insights && version;
+
+  useEffect(() => {
+    shouldFetch && dispatch(fetchPluginInsights({ id, version }));
+  }, [plugin, version]); // eslint-disable-line
 };
 
 export const useFetchDetailsLazy = () => {

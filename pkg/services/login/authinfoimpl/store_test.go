@@ -14,6 +14,7 @@ import (
 	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -21,9 +22,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAuthInfoStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	sql := db.InitTestDB(t)
 	store := ProvideStore(sql, secretstest.NewFakeSecretsService())
@@ -46,11 +45,14 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 			UserId:     2,
 		}))
 
-		labels, err := store.GetUserLabels(ctx, login.GetUserLabelsQuery{UserIDs: []int64{1, 2}})
+		labels, err := store.GetUsersRecentlyUsedLabel(ctx, login.GetUserLabelsQuery{UserIDs: []int64{1, 2}})
 		require.NoError(t, err)
 		require.Len(t, labels, 2)
 
-		require.Equal(t, login.AzureADAuthModule, labels[1])
+		// There is no guarantee that user with user_id=1 gets "oauth_azuread" or "ldap".
+		// Both are valid results for the query (basically SELECT * FROM `user_auth` WHERE `user_id` IN (1,2) ORDER BY created),
+		// Some databases may randomize its output, so test cannot rely on the ordering (other than "Created" column, which is equal here).
+		require.True(t, labels[1] == login.AzureADAuthModule || labels[1] == login.LDAPAuthModule)
 		require.Equal(t, login.GoogleAuthModule, labels[2])
 	})
 

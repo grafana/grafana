@@ -12,9 +12,9 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { StoreState } from 'app/types/store';
 
 import { getState } from '../../store/store';
-import { StoreState } from '../../types';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
 
 import { variableAdapters } from './adapters';
@@ -279,12 +279,9 @@ export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariabl
   return { type: variable.type, id: variable.id, rootStateKey: variable.rootStateKey };
 };
 
-export function toVariablePayload<T extends any = undefined>(
-  identifier: VariableIdentifier,
-  data?: T
-): VariablePayload<T>;
-export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
-export function toVariablePayload<T extends any = undefined>(
+export function toVariablePayload<T = undefined>(identifier: VariableIdentifier, data?: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(
   obj: VariableIdentifier | VariableModel,
   data?: T
 ): VariablePayload<T> {

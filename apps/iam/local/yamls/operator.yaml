@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: operator
+  namespace: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: operator-config
+  namespace: default
+data:
+  operator.ini: |
+    app_mode = development
+    target = operator
+    ensure_default_org_and_user = false
+    skip_migrations = true
+
+
+    [grpc_client_authentication]
+    token_exchange_url = http://host.docker.internal:8080/v1/sign-access-token
+    token_namespace = *
+
+    [operator]
+    folder_app_url = https://host.docker.internal:6446
+    max_concurrent_workers = 20
+    tls_ca_file =
+    tls_insecure = true
+    zanzana_url = zanzana.default.svc.cluster.local:50051
+
+    [tracing.opentelemetry]
+    custom_attributes = namespace:grafana-iam
+    sampler_param = 1
+    sampler_type = remote
+    sampling_server_url = http://jaeger-agent.jaeger.svc.cluster.local.:5778/sampling
+
+    [tracing.opentelemetry.otlp]
+    address = jaeger-agent.jaeger.svc.cluster.local.:4317
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iam-folder-reconciler
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: iam-folder-reconciler
+  template:
+    metadata:
+      labels:
+        name: iam-folder-reconciler
+    spec:
+      containers:
+        - command:
+            - grafana
+            - server
+            - target
+            - --config=/etc/grafana-config/operator.ini
+            - --homepath=/usr/share/grafana
+          env:
+            - name: KUBE_FEATURE_WatchListClient
+              value: "true"
+            - name: GF_DEFAULT_TARGET
+              value: operator
+            - name: GF_OPERATOR_NAME
+              value: iam-folder-reconciler
+            - name: GF_DIAGNOSTICS_PROFILING_ENABLED
+              value: "true"
+            - name: GF_DIAGNOSTICS_PROFILING_ADDR
+              value: "0.0.0.0"
+            - name: GF_DIAGNOSTICS_PROFILING_PORT
+              value: "6060"
+            - name: GF_GRPC_CLIENT_AUTHENTICATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: iam-operator-secrets
+                  key: grpc_auth_token
+          image: iam-folder-reconciler
+          imagePullPolicy: IfNotPresent
+          name: iam-folder-reconciler
+          volumeMounts:
+            - name: operator-config
+              mountPath: /etc/grafana-config
+      serviceAccount: operator
+      volumes:
+        - configMap:
+            name: operator-config
+          name: operator-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iam-folder-reconciler
+  namespace: default
+  labels:
+    name: iam-folder-reconciler
+spec:
+  ports:
+    - name: iam-folder-reconciler-http-metrics
+      port: 8080
+      targetPort: 8080
+    - name: iam-folder-reconciler-pprof
+      port: 6060
+      targetPort: 6060
+  selector:
+    name: iam-folder-reconciler
+---

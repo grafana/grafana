@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
 
@@ -10,7 +11,10 @@ import { OptionPaneRenderProps } from './types';
 export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
   const { panel, onPanelConfigChange, dashboard } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
-    title: 'Library panel options',
+    title: t(
+      'dashboard.get-library-panel-options-category.descriptor.title.library-panel-options',
+      'Library panel options'
+    ),
     id: 'Library panel options',
     isOpenDefault: true,
   });
@@ -19,13 +23,14 @@ export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): Op
     descriptor
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: 'Name',
+          title: t('dashboard.get-library-panel-options-category.title.name', 'Name'),
+          id: 'library-panel-name',
           value: panel.libraryPanel.name,
           popularRank: 1,
-          render: function renderName() {
+          render: function renderName(descriptor) {
             return (
               <Input
-                id="LibraryPanelFrameName"
+                id={descriptor.props.id}
                 defaultValue={panel.libraryPanel.name}
                 onBlur={(e) =>
                   onPanelConfigChange('libraryPanel', { ...panel.libraryPanel, name: e.currentTarget.value })
@@ -37,7 +42,8 @@ export function getLibraryPanelOptionsCategory(props: OptionPaneRenderProps): Op
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: 'Information',
+          title: t('dashboard.get-library-panel-options-category.title.information', 'Information'),
+          id: 'library-panel-information',
           render: function renderLibraryPanelInformation() {
             return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
           },

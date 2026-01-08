@@ -3,16 +3,11 @@ import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
-import {
-  mapNumbertoTimeInSlider,
-  mapQueriesToHeadings,
-  SortOrder,
-  RichHistorySearchFilters,
-  RichHistorySettings,
-} from 'app/core/utils/richHistory';
+import { mapNumbertoTimeInSlider, mapQueriesToHeadings } from 'app/core/utils/richHistory';
+import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';

@@ -1,0 +1,4 @@
+{
+  "labels": "**/resources/**/labels*",
+  "values": "**/resources/**/values*"
+}

@@ -13,43 +13,70 @@ import {
   GroupByVariable,
   AdHocFiltersVariable,
   SceneDataTransformer,
+  SceneGridItem,
+  SwitchVariable,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
   ConstantVariableKind,
   CustomVariableKind,
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   DatasourceVariableKind,
+  defaultDataQueryKind,
+  GridLayoutItemSpec,
+  GridLayoutSpec,
   GroupByVariableKind,
   IntervalVariableKind,
   QueryVariableKind,
+  SwitchVariableKind,
   TextVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
+import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { DashboardLayoutManager } from '../scene/types';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
-import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import {
+  getLibraryPanelElement,
+  getPanelElement,
+  transformSaveModelSchemaV2ToScene,
+} from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
-const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
   metadata: {
     name: 'dashboard-uid',
     namespace: 'default',
     labels: {},
-    resourceVersion: '',
-    creationTimestamp: '',
+    generation: 123,
+    resourceVersion: '123',
+    creationTimestamp: 'creationTs',
+    annotations: {
+      'grafana.app/createdBy': 'user:createBy',
+      'grafana.app/folder': 'folder-uid',
+      'grafana.app/updatedBy': 'user:updatedBy',
+      'grafana.app/updatedTimestamp': 'updatedTs',
+    },
   },
   spec: handyTestingSchema,
-  access: {},
+  access: {
+    url: '/d/abc',
+    slug: 'what-a-dashboard',
+  },
   apiVersion: 'v2',
 };
 
@@ -79,7 +106,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(scene.state.description).toEqual(dash.description);
     expect(scene.state.editable).toEqual(dash.editable);
     expect(scene.state.preload).toEqual(false);
-    expect(scene.state.version).toEqual(dash.schemaVersion);
+    expect(scene.state.version).toEqual(123);
     expect(scene.state.tags).toEqual(dash.tags);
 
     const liveNow = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
@@ -109,10 +136,12 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(dashboardControls).toBeDefined();
     expect(dashboardControls.state.refreshPicker.state.intervals).toEqual(time.autoRefreshIntervals);
     expect(dashboardControls.state.hideTimeControls).toBe(time.hideTimepicker);
+    expect(dashboardControls.state.timePicker.state.quickRanges).toEqual(dash.timeSettings.quickRanges);
 
     // Variables
     const variables = scene.state?.$variables;
     expect(variables?.state.variables).toHaveLength(dash.variables.length);
+
     validateVariable({
       sceneVariable: variables?.state.variables[0],
       variableKind: dash.variables[0] as QueryVariableKind,
@@ -177,6 +206,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       sceneVariableClass: AdHocFiltersVariable,
       index: 7,
     });
+    validateVariable({
+      sceneVariable: variables?.state.variables[8],
+      variableKind: dash.variables[8] as SwitchVariableKind,
+      scene: scene,
+      dashSpec: dash,
+      sceneVariableClass: SwitchVariable,
+      index: 8,
+    });
 
     // Annotations
     expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
@@ -201,44 +238,57 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(dash.annotations[3].spec.enable);
     expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(dash.annotations[3].spec.hide);
 
-    // To be implemented
-    // expect(timePicker.state.ranges).toEqual(dash.timeSettings.quickRanges);
-
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels).toHaveLength(1);
-    const vizPanel = vizPanels[0];
-    validateVizPanel(vizPanel, dash);
+    expect(vizPanels).toHaveLength(2);
 
     // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
-    expect(layout.state.grid.state.children.length).toBe(1);
-    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${dash.elements['panel-1'].spec.id}`);
-    const gridLayoutItemSpec = dash.layout.spec.items[0].spec;
+
+    // Panel
+    const panel = getPanelElement(dash, 'panel-1')!;
+    expect(layout.state.grid.state.children.length).toBe(2);
+    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${panel.spec.id}`);
+    const gridLayoutItemSpec = (dash.layout.spec as GridLayoutSpec).items[0].spec as GridLayoutItemSpec;
     expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
+    const vizPanel = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    validateVizPanel(vizPanel, dash);
+
+    // Library Panel
+    const libraryPanel = getLibraryPanelElement(dash, 'panel-2')!;
+    expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.id}`);
+    const libraryGridLayoutItemSpec = (dash.layout.spec as GridLayoutSpec).items[1].spec as GridLayoutItemSpec;
+    expect(layout.state.grid.state.children[1].state.width).toBe(libraryGridLayoutItemSpec.width);
+    expect(layout.state.grid.state.children[1].state.height).toBe(libraryGridLayoutItemSpec.height);
+    expect(layout.state.grid.state.children[1].state.x).toBe(libraryGridLayoutItemSpec.x);
+    expect(layout.state.grid.state.children[1].state.y).toBe(libraryGridLayoutItemSpec.y);
+    const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'panel-2')!;
+    validateVizPanel(vizLibraryPanel, dash);
 
     // Transformations
-    expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      dash.elements['panel-1'].spec.data.spec.transformations[0].spec
+    const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
+      getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0].spec
     );
   });
 
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
-        datasource: {
-          type: 'graphite',
-          uid: 'datasource1',
-        },
         hidden: false,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'graphite',
+          datasource: {
+            name: 'datasource1',
+          },
           spec: {
             expr: 'test-query',
           },
@@ -249,60 +299,572 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(1);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 
-  it('should set panel ds as undefined if it is not mixed DS', () => {
+  it('should set ds if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'datasource1',
+          },
+          spec: {
+            expr: 'test-query',
+          },
+        },
+      },
+    });
+
+    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+    const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
+    expect(vizPanels.length).toBe(2);
+    expect(getQueryRunnerFor(vizPanels[0])?.state.queries[0].datasource).toEqual({
+      type: 'prometheus',
+      uid: 'datasource1',
+    });
+  });
+
+  it('should set panel ds as mixed if no panels have ds defined', () => {
+    const dashboard = cloneDeep(defaultDashboard);
+
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'abc123',
+          },
+          spec: {
+            expr: 'test-query',
+          },
+        },
+      },
+    });
+
+    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+    const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
+    expect(vizPanels.length).toBe(2);
+    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
+    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+  });
+
+  describe('adhoc variables', () => {
+    it('should convert empty defaultKeys array to undefined', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.defaultKeys = [];
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+
+      expect(adhocVariable.state.defaultKeys).toBeUndefined();
+    });
+
+    it('should preserve non-empty defaultKeys array', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      expect(adhocVar.spec.defaultKeys.length).toBeGreaterThan(0);
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+
+      expect(adhocVariable.state.defaultKeys).toEqual(adhocVar.spec.defaultKeys);
+    });
+  });
+
+  describe('When creating a snapshot dashboard scene', () => {
+    it('should initialize a dashboard scene with SnapshotVariables', () => {
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      // check variables were converted to snapshot variables
+      expect(scene.state.$variables?.state.variables).toHaveLength(9);
+      expect(scene.state.$variables?.getByName('customVar')).toBeInstanceOf(SnapshotVariable);
+      expect(scene.state.$variables?.getByName('adhocVar')).toBeInstanceOf(AdHocFiltersVariable);
+      expect(scene.state.$variables?.getByName('intervalVar')).toBeInstanceOf(SnapshotVariable);
+      // custom snapshot
+      const customSnapshot = scene.state.$variables?.getByName('customVar') as SnapshotVariable;
+      expect(customSnapshot.state.value).toBe('option1');
+      expect(customSnapshot.state.text).toBe('option1');
+      expect(customSnapshot.state.isReadOnly).toBe(true);
+      // adhoc snapshot
+      const adhocSnapshot = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      const adhocVariable = snapshot.spec.variables[7] as AdhocVariableKind;
+      expect(adhocSnapshot.state.filters).toEqual(adhocVariable.spec.filters);
+      expect(adhocSnapshot.state.readOnly).toBe(true);
+      // interval snapshot
+      const intervalSnapshot = scene.state.$variables?.getByName('intervalVar') as SnapshotVariable;
+      expect(intervalSnapshot.state.value).toBe('1m');
+      expect(intervalSnapshot.state.text).toBe('1m');
+      expect(intervalSnapshot.state.isReadOnly).toBe(true);
+    });
+
+    it('should convert empty defaultKeys array to undefined for adhoc variables', () => {
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = cloneDeep({
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      });
+
+      const adhocVar = snapshot.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.defaultKeys = [];
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+
+      expect(adhocVariable.state.defaultKeys).toBeUndefined();
+    });
+  });
+
+  describe('meta', () => {
+    describe('initializes meta based on k8s resource', () => {
+      it('handles undefined access values', () => {
+        const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+        // when access metadata undefined
+        expect(scene.state.meta.canShare).toBe(true);
+        expect(scene.state.meta.canSave).toBe(true);
+        expect(scene.state.meta.canStar).toBe(true);
+        expect(scene.state.meta.canEdit).toBe(true);
+        expect(scene.state.meta.canDelete).toBe(true);
+        expect(scene.state.meta.canAdmin).toBe(true);
+        expect(scene.state.meta.annotationsPermissions).toBe(undefined);
+
+        expect(scene.state.meta.url).toBe('/d/abc');
+        expect(scene.state.meta.slug).toBe('what-a-dashboard');
+        expect(scene.state.meta.created).toBe('creationTs');
+        expect(scene.state.meta.createdBy).toBe('user:createBy');
+        expect(scene.state.meta.updated).toBe('updatedTs');
+        expect(scene.state.meta.updatedBy).toBe('user:updatedBy');
+        expect(scene.state.meta.folderUid).toBe('folder-uid');
+        expect(scene.state.meta.version).toBe(123);
+      });
+
+      it('handles access metadata values', () => {
+        const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+          ...defaultDashboard,
+          access: {
+            canSave: false,
+            canEdit: false,
+            canDelete: false,
+            canShare: false,
+            canStar: false,
+            canAdmin: false,
+            annotationsPermissions: {
+              dashboard: {
+                canAdd: false,
+                canEdit: false,
+                canDelete: false,
+              },
+              organization: {
+                canAdd: false,
+                canEdit: false,
+                canDelete: false,
+              },
+            },
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        expect(scene.state.meta.canShare).toBe(false);
+        expect(scene.state.meta.canSave).toBe(false);
+        expect(scene.state.meta.canStar).toBe(false);
+        expect(scene.state.meta.canEdit).toBe(false);
+        expect(scene.state.meta.canDelete).toBe(false);
+        expect(scene.state.meta.canAdmin).toBe(false);
+        expect(scene.state.meta.annotationsPermissions).toEqual(dashboard.access.annotationsPermissions);
+        expect(scene.state.meta.version).toBe(123);
+      });
+    });
+
+    describe('Editable false dashboard', () => {
+      let dashboard: DashboardWithAccessInfo<DashboardV2Spec>;
+
+      beforeEach(() => {
+        dashboard = {
+          ...cloneDeep(defaultDashboard),
+          spec: {
+            ...defaultDashboard.spec,
+            editable: false,
+          },
+        };
+      });
+      it('Should set meta canEdit and canSave to false', () => {
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        expect(scene.state.meta.canMakeEditable).toBe(true);
+
+        expect(scene.state.meta.canSave).toBe(false);
+        expect(scene.state.meta.canEdit).toBe(false);
+        expect(scene.state.meta.canDelete).toBe(false);
+      });
+
+      describe('when does not have save permissions', () => {
+        it('Should set meta correct meta', () => {
+          dashboard.access.canSave = false;
+          const scene = transformSaveModelSchemaV2ToScene(dashboard);
+          expect(scene.state.meta.canMakeEditable).toBe(false);
+
+          expect(scene.state.meta.canSave).toBe(false);
+          expect(scene.state.meta.canEdit).toBe(false);
+          expect(scene.state.meta.canDelete).toBe(false);
+        });
+      });
+    });
+
+    describe('Editable true dashboard', () => {
+      let dashboard: DashboardWithAccessInfo<DashboardV2Spec>;
+
+      beforeEach(() => {
+        dashboard = {
+          ...cloneDeep(defaultDashboard),
+          spec: {
+            ...defaultDashboard.spec,
+            editable: true,
+          },
+        };
+      });
+      it('Should set meta canEdit and canSave to false', () => {
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        expect(scene.state.meta.canMakeEditable).toBe(false);
+
+        expect(scene.state.meta.canSave).toBe(true);
+        expect(scene.state.meta.canEdit).toBe(true);
+        expect(scene.state.meta.canDelete).toBe(true);
+      });
+    });
+    describe('dynamic dashboard layouts', () => {
+      it('should build a dashboard scene with a auto grid layout', () => {
+        const dashboard = cloneDeep(defaultDashboard);
+        dashboard.spec.layout = {
+          kind: 'AutoGridLayout',
+          spec: {
+            maxColumnCount: 4,
+            columnWidthMode: 'custom',
+            columnWidth: 100,
+            rowHeightMode: 'standard',
+            items: [
+              {
+                kind: 'AutoGridLayoutItem',
+                spec: {
+                  element: {
+                    kind: 'ElementReference',
+                    name: 'panel-1',
+                  },
+                },
+              },
+            ],
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const layoutManager = scene.state.body as AutoGridLayoutManager;
+        expect(layoutManager.descriptor.id).toBe('AutoGridLayout');
+        expect(layoutManager.state.maxColumnCount).toBe(4);
+        expect(layoutManager.state.columnWidth).toBe(100);
+        expect(layoutManager.state.rowHeight).toBe('standard');
+        expect(layoutManager.state.layout.state.children.length).toBe(1);
+        const gridItem = layoutManager.state.layout.state.children[0] as AutoGridItem;
+        expect(gridItem.state.body.state.key).toBe('panel-1');
+      });
+
+      it('should build a dashboard scene with a tabs layout', () => {
+        const dashboard = cloneDeep(defaultDashboard);
+        dashboard.spec.layout = {
+          kind: 'TabsLayout',
+          spec: {
+            tabs: [
+              {
+                kind: 'TabsLayoutTab',
+                spec: {
+                  title: 'tab1',
+                  layout: {
+                    kind: 'AutoGridLayout',
+                    spec: {
+                      maxColumnCount: 4,
+                      columnWidthMode: 'standard',
+                      rowHeightMode: 'standard',
+                      items: [
+                        {
+                          kind: 'AutoGridLayoutItem',
+                          spec: {
+                            element: {
+                              kind: 'ElementReference',
+                              name: 'panel-1',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const layoutManager = scene.state.body as TabsLayoutManager;
+        expect(layoutManager.descriptor.id).toBe('TabsLayout');
+        expect(layoutManager.state.tabs.length).toBe(1);
+        expect(layoutManager.state.tabs[0].state.title).toBe('tab1');
+        const gridLayoutManager = layoutManager.state.tabs[0].state.layout as AutoGridLayoutManager;
+        expect(gridLayoutManager.state.maxColumnCount).toBe(4);
+        expect(gridLayoutManager.state.columnWidth).toBe('standard');
+        expect(gridLayoutManager.state.rowHeight).toBe('standard');
+        expect(gridLayoutManager.state.layout.state.children.length).toBe(1);
+        const gridItem = gridLayoutManager.state.layout.state.children[0] as AutoGridItem;
+        expect(gridItem.state.body.state.key).toBe('panel-1');
+      });
+
+      it('should build a dashboard scene with rows layout', () => {
+        const dashboard = cloneDeep(defaultDashboard);
+        dashboard.spec.layout = {
+          kind: 'RowsLayout',
+          spec: {
+            rows: [
+              {
+                kind: 'RowsLayoutRow',
+                spec: {
+                  title: 'row1',
+                  collapse: false,
+                  layout: {
+                    kind: 'AutoGridLayout',
+                    spec: {
+                      maxColumnCount: 4,
+                      columnWidthMode: 'standard',
+                      rowHeightMode: 'standard',
+                      items: [
+                        {
+                          kind: 'AutoGridLayoutItem',
+                          spec: {
+                            element: {
+                              kind: 'ElementReference',
+                              name: 'panel-1',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              {
+                kind: 'RowsLayoutRow',
+                spec: {
+                  title: 'row2',
+                  collapse: true,
+                  layout: {
+                    kind: 'GridLayout',
+                    spec: {
+                      items: [
+                        {
+                          kind: 'GridLayoutItem',
+                          spec: {
+                            y: 0,
+                            x: 0,
+                            height: 10,
+                            width: 10,
+                            element: {
+                              kind: 'ElementReference',
+                              name: 'panel-2',
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const layoutManager = scene.state.body as RowsLayoutManager;
+        expect(layoutManager.descriptor.id).toBe('RowsLayout');
+        expect(layoutManager.state.rows.length).toBe(2);
+        const row1Manager = layoutManager.state.rows[0].state.layout as AutoGridLayoutManager;
+        expect(row1Manager.descriptor.id).toBe('AutoGridLayout');
+        expect(row1Manager.state.maxColumnCount).toBe(4);
+        expect(row1Manager.state.columnWidth).toBe('standard');
+        expect(row1Manager.state.rowHeight).toBe('standard');
+        const row1GridItem = row1Manager.state.layout.state.children[0] as AutoGridItem;
+        expect(row1GridItem.state.body.state.key).toBe('panel-1');
+
+        const row2Manager = layoutManager.state.rows[1].state.layout as DefaultGridLayoutManager;
+        expect(row2Manager.descriptor.id).toBe('GridLayout');
+        const row2GridItem = row2Manager.state.grid.state.children[0] as SceneGridItem;
+        expect(row2GridItem.state.body!.state.key).toBe('panel-2');
+      });
+    });
+  });
+
+  describe('annotations', () => {
+    it('should transform annotation with legacyOptions field', () => {
+      // Create a dashboard with an annotation that has options
+      const dashboardWithAnnotationOptions: DashboardWithAccessInfo<DashboardV2Spec> = {
+        kind: 'DashboardWithAccessInfo',
+        apiVersion: 'v2beta1',
+        metadata: {
+          name: 'test-dashboard',
+          namespace: 'default',
+          creationTimestamp: new Date().toISOString(),
+          labels: {},
+          annotations: {},
+          generation: 1,
+          resourceVersion: '1',
+        },
+        spec: {
+          title: 'Dashboard with annotation options',
+          editable: true,
+          preload: false,
+          liveNow: false,
+          cursorSync: 'Off',
+          links: [],
+          tags: [],
+          timeSettings: {
+            from: 'now-6h',
+            to: 'now',
+            timezone: 'browser',
+            hideTimepicker: false,
+            autoRefresh: '5s',
+            autoRefreshIntervals: ['5s', '10s', '30s'],
+            fiscalYearStartMonth: 0,
+            weekStart: 'monday',
+          },
+          variables: [],
+          elements: {},
+          layout: {
+            kind: 'GridLayout',
+            spec: { items: [] },
+          },
+          annotations: [
+            {
+              kind: 'AnnotationQuery',
+              spec: {
+                name: 'Annotation with legacy options',
+                builtIn: false,
+                enable: true,
+                hide: false,
+                iconColor: 'purple',
+                legacyOptions: {
+                  expr: 'rate(http_requests_total[5m])',
+                  queryType: 'range',
+                  legendFormat: '{{method}} {{endpoint}}',
+                  useValueAsTime: true,
+                  step: '1m',
+                },
+                query: {
+                  kind: 'DataQuery',
+                  version: defaultDataQueryKind().version,
+                  group: 'prometheus',
+                  datasource: {
+                    name: 'abc123',
+                  },
+                  spec: {},
+                },
+              },
+            },
+          ],
+        },
+        access: {
+          canSave: true,
+          canEdit: true,
+          canDelete: true,
+          canAdmin: true,
+          canStar: true,
+          canShare: true,
+          annotationsPermissions: {
+            dashboard: {
+              canAdd: true,
+              canEdit: true,
+              canDelete: true,
+            },
+            organization: {
+              canAdd: true,
+              canEdit: true,
+              canDelete: true,
+            },
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboardWithAnnotationOptions);
+
+      // Get the annotation layers
+      const dataLayerSet = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayerSet).toBeDefined();
+      expect(dataLayerSet.state.annotationLayers.length).toBe(2);
+      const defaultAnnotationLayer = dataLayerSet.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
+
+      // Verify that the default annotation layer has been correctly initialized
+      expect(defaultAnnotationLayer.state.query).toEqual({
         datasource: {
+          uid: '-- Grafana --',
+          type: 'grafana',
+        },
+        builtIn: 1,
+        enable: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotations & Alerts',
+        hide: true,
+        type: 'dashboard',
+      });
+
+      const annotationLayer = dataLayerSet.state.annotationLayers[1] as DashboardAnnotationsDataLayer;
+
+      // Verify that the legacyOptions have been merged into the query object
+      expect(annotationLayer.state.query).toMatchObject({
+        datasource: {
+          uid: 'abc123',
           type: 'prometheus',
-          uid: 'datasource1',
         },
-        hidden: false,
-        query: {
-          kind: 'prometheus',
-          spec: {
-            expr: 'test-query',
-          },
-        },
-      },
+        name: 'Annotation with legacy options',
+        enable: true,
+        hide: false,
+        iconColor: 'purple',
+        expr: 'rate(http_requests_total[5m])',
+        queryType: 'range',
+        legendFormat: '{{method}} {{endpoint}}',
+        useValueAsTime: true,
+        step: '1m',
+      });
     });
-
-    const scene = transformSaveModelSchemaV2ToScene(dashboard);
-
-    const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(1);
-    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
-  });
-
-  it('should set panel ds as mixed if one ds is undefined', () => {
-    const dashboard = cloneDeep(defaultDashboard);
-
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
-      kind: 'PanelQuery',
-      spec: {
-        refId: 'A',
-        hidden: false,
-        query: {
-          kind: 'prometheus',
-          spec: {
-            expr: 'test-query',
-          },
-        },
-      },
-    });
-
-    const scene = transformSaveModelSchemaV2ToScene(dashboard);
-
-    const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(1);
-    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
-    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 });

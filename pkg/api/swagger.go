@@ -22,7 +22,7 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 
 	// The swagger based api navigator
 	r.Get("/swagger", func(c *contextmodel.ReqContext) {
-		ctx := c.Context.Req.Context()
+		ctx := c.Req.Context()
 		assets, err := webassets.GetWebAssets(ctx, hs.Cfg, hs.License)
 		if err != nil {
 			errhttp.Write(ctx, err, c.Resp)
@@ -30,10 +30,8 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 		}
 
 		data := map[string]any{
-			"Nonce":          c.RequestNonce,
-			"Assets":         assets,
-			"FavIcon":        "public/img/fav32.png",
-			"AppleTouchIcon": "public/img/apple-touch-icon.png",
+			"Nonce":  c.RequestNonce,
+			"Assets": assets,
 		}
 		if hs.Cfg.CSPEnabled {
 			data["CSPEnabled"] = true

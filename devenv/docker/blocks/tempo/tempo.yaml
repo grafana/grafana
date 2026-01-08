@@ -6,15 +6,23 @@ distributor:
     jaeger:                            # the receives all come from the OpenTelemetry collector.  more configuration information can
       protocols:                       # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
         thrift_http:                   #
-        grpc:                          # for a production deployment you should only enable the receivers you need!
+          endpoint: "tempo:14268"      # for a production deployment you should only enable the receivers you need!
+        grpc:
+          endpoint: "tempo:14250"
         thrift_binary:
+          endpoint: "tempo:6832"
         thrift_compact:
+          endpoint: "tempo:6831"
     zipkin:
+      endpoint: "tempo:9411"
     otlp:
       protocols:
-        http:
         grpc:
+          endpoint: "tempo:4317"
+        http:
+          endpoint: "tempo:4318"
     opencensus:
+      endpoint: "tempo:55678"
 
 compactor:
   compaction:
@@ -52,6 +60,7 @@ storage:
 overrides:
   defaults:
     metrics_generator:
+      generate_native_histograms: both # 'classic' or 'native' or 'both'
       processors: [local-blocks, service-graphs, span-metrics]
 
 stream_over_http_enabled: true

@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { MouseEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Alert, Button, CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 export interface Props {
   title: string;

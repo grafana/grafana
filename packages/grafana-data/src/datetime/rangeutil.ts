@@ -1,9 +1,10 @@
-import { each } from 'lodash';
+import { formatDateRange, t } from '@grafana/i18n';
 
 import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
+import { getFeatureToggle } from '../utils/featureToggles';
 
 import * as dateMath from './datemath';
-import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimezone } from './formatter';
 import { isDateTime, DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
@@ -17,82 +18,353 @@ const spans: { [key: string]: { display: string; section?: number } } = {
   y: { display: 'year' },
 };
 
-const rangeOptions: TimeOption[] = [
-  { from: 'now/d', to: 'now/d', display: 'Today' },
-  { from: 'now/d', to: 'now', display: 'Today so far' },
-  { from: 'now/w', to: 'now/w', display: 'This week' },
-  { from: 'now/w', to: 'now', display: 'This week so far' },
-  { from: 'now/M', to: 'now/M', display: 'This month' },
-  { from: 'now/M', to: 'now', display: 'This month so far' },
-  { from: 'now/y', to: 'now/y', display: 'This year' },
-  { from: 'now/y', to: 'now', display: 'This year so far' },
+const getLastNMinutesDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNMinutes', 'Last {{count}} minutes', {
+    count,
+    defaultValue_one: 'Last {{count}} minute',
+  });
+};
 
-  { from: 'now-1d/d', to: 'now-1d/d', display: 'Yesterday' },
+const getLastNHoursDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNHours', 'Last {{count}} hours', {
+    count,
+    defaultValue_one: 'Last {{count}} hour',
+  });
+};
+
+const getLastNDaysDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNDays', 'Last {{count}} days', {
+    count,
+    defaultValue_one: 'Last {{count}} day',
+  });
+};
+
+const getLastNMonthsDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNMonths', 'Last {{count}} months', {
+    count,
+    defaultValue_one: 'Last {{count}} month',
+  });
+};
+
+const getLastNYearsDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.lastNYears', 'Last {{count}} years', {
+    count,
+    defaultValue_one: 'Last {{count}} year',
+  });
+};
+
+const getNextNMinutesDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNMinutes', 'Next {{count}} minutes', {
+    count,
+    defaultValue_one: 'Next {{count}} minute',
+  });
+};
+
+const getNextNHoursDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNHours', 'Next {{count}} hours', {
+    count,
+    defaultValue_one: 'Next {{count}} hour',
+  });
+};
+
+const getNextNDaysDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNDays', 'Next {{count}} days', {
+    count,
+    defaultValue_one: 'Next {{count}} day',
+  });
+};
+
+const getNextNMonthsDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNMonths', 'Next {{count}} months', {
+    count,
+    defaultValue_one: 'Next {{count}} month',
+  });
+};
+
+const getNextNYearsDisplay = (count: number) => {
+  return t('grafana-data.datetime.rangeutils.nextNYears', 'Next {{count}} years', {
+    count,
+    defaultValue_one: 'Next {{count}} year',
+  });
+};
+
+const getBaseRangeOptions: () => TimeOption[] = () => [
+  { from: 'now/d', to: 'now/d', display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.today', 'Today') },
+  {
+    from: 'now/d',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.todaySoFar', 'Today so far'),
+  },
+  {
+    from: 'now/w',
+    to: 'now/w',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisWeek', 'This week'),
+  },
+  {
+    from: 'now/w',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisWeekSoFar', 'This week so far'),
+  },
+  {
+    from: 'now/M',
+    to: 'now/M',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisMonth', 'This month'),
+  },
+  {
+    from: 'now/M',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisMonthSoFar', 'This month so far'),
+  },
+  {
+    from: 'now/y',
+    to: 'now/y',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisYear', 'This year'),
+  },
+  {
+    from: 'now/y',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisYearSoFar', 'This year so far'),
+  },
+
+  {
+    from: 'now-1d/d',
+    to: 'now-1d/d',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.yesterday', 'Yesterday'),
+  },
   {
     from: 'now-2d/d',
     to: 'now-2d/d',
-    display: 'Day before yesterday',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.dayBeforeYesterday', 'Day before yesterday'),
   },
   {
     from: 'now-7d/d',
     to: 'now-7d/d',
-    display: 'This day last week',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisDayLastWeek', 'This day last week'),
   },
-  { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week' },
-  { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month' },
-  { from: 'now-1Q/fQ', to: 'now-1Q/fQ', display: 'Previous fiscal quarter' },
-  { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year' },
-  { from: 'now-1y/fy', to: 'now-1y/fy', display: 'Previous fiscal year' },
+  {
+    from: 'now-1w/w',
+    to: 'now-1w/w',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousWeek', 'Previous week'),
+  },
+  {
+    from: 'now-1M/M',
+    to: 'now-1M/M',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousMonth', 'Previous month'),
+  },
+  {
+    from: 'now-1Q/fQ',
+    to: 'now-1Q/fQ',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousFiscalQuarter', 'Previous fiscal quarter'),
+  },
+  {
+    from: 'now-1y/y',
+    to: 'now-1y/y',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousYear', 'Previous year'),
+  },
+  {
+    from: 'now-1y/fy',
+    to: 'now-1y/fy',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.previousFiscalYear', 'Previous fiscal year'),
+  },
 
-  { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
-  { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
-  { from: 'now-30m', to: 'now', display: 'Last 30 minutes' },
-  { from: 'now-1h', to: 'now', display: 'Last 1 hour' },
-  { from: 'now-3h', to: 'now', display: 'Last 3 hours' },
-  { from: 'now-6h', to: 'now', display: 'Last 6 hours' },
-  { from: 'now-12h', to: 'now', display: 'Last 12 hours' },
-  { from: 'now-24h', to: 'now', display: 'Last 24 hours' },
-  { from: 'now-2d', to: 'now', display: 'Last 2 days' },
-  { from: 'now-7d', to: 'now', display: 'Last 7 days' },
-  { from: 'now-30d', to: 'now', display: 'Last 30 days' },
-  { from: 'now-90d', to: 'now', display: 'Last 90 days' },
-  { from: 'now-6M', to: 'now', display: 'Last 6 months' },
-  { from: 'now-1y', to: 'now', display: 'Last 1 year' },
-  { from: 'now-2y', to: 'now', display: 'Last 2 years' },
-  { from: 'now-5y', to: 'now', display: 'Last 5 years' },
-  { from: 'now/fQ', to: 'now', display: 'This fiscal quarter so far' },
-  { from: 'now/fQ', to: 'now/fQ', display: 'This fiscal quarter' },
-  { from: 'now/fy', to: 'now', display: 'This fiscal year so far' },
-  { from: 'now/fy', to: 'now/fy', display: 'This fiscal year' },
+  {
+    from: 'now-5m',
+    to: 'now',
+    display: getLastNMinutesDisplay(5),
+  },
+  {
+    from: 'now-15m',
+    to: 'now',
+    display: getLastNMinutesDisplay(15),
+  },
+  {
+    from: 'now-30m',
+    to: 'now',
+    display: getLastNMinutesDisplay(30),
+  },
+  {
+    from: 'now-1h',
+    to: 'now',
+    display: getLastNHoursDisplay(1),
+  },
+  {
+    from: 'now-3h',
+    to: 'now',
+    display: getLastNHoursDisplay(3),
+  },
+  {
+    from: 'now-6h',
+    to: 'now',
+    display: getLastNHoursDisplay(6),
+  },
+  {
+    from: 'now-12h',
+    to: 'now',
+    display: getLastNHoursDisplay(12),
+  },
+  {
+    from: 'now-24h',
+    to: 'now',
+    display: getLastNHoursDisplay(24),
+  },
+  {
+    from: 'now-2d',
+    to: 'now',
+    display: getLastNDaysDisplay(2),
+  },
+  {
+    from: 'now-7d',
+    to: 'now',
+    display: getLastNDaysDisplay(7),
+  },
+  {
+    from: 'now-30d',
+    to: 'now',
+    display: getLastNDaysDisplay(30),
+  },
+  {
+    from: 'now-90d',
+    to: 'now',
+    display: getLastNDaysDisplay(90),
+  },
+  {
+    from: 'now-6M',
+    to: 'now',
+    display: getLastNMonthsDisplay(6),
+  },
+  {
+    from: 'now-1y',
+    to: 'now',
+    display: getLastNYearsDisplay(1),
+  },
+  {
+    from: 'now-2y',
+    to: 'now',
+    display: getLastNYearsDisplay(2),
+  },
+  {
+    from: 'now-5y',
+    to: 'now',
+    display: getLastNYearsDisplay(5),
+  },
+  {
+    from: 'now/fQ',
+    to: 'now',
+    display: t(
+      'grafana-data.datetime.rangeutils.getBaseRangeOptions.thisFiscalQuarterSoFar',
+      'This fiscal quarter so far'
+    ),
+  },
+  {
+    from: 'now/fQ',
+    to: 'now/fQ',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisFiscalQuarter', 'This fiscal quarter'),
+  },
+  {
+    from: 'now/fy',
+    to: 'now',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisFiscalYearSoFar', 'This fiscal year so far'),
+  },
+  {
+    from: 'now/fy',
+    to: 'now/fy',
+    display: t('grafana-data.datetime.rangeutils.getBaseRangeOptions.thisFiscalYear', 'This fiscal year'),
+  },
 ];
 
-const hiddenRangeOptions: TimeOption[] = [
-  { from: 'now', to: 'now+1m', display: 'Next minute' },
-  { from: 'now', to: 'now+5m', display: 'Next 5 minutes' },
-  { from: 'now', to: 'now+15m', display: 'Next 15 minutes' },
-  { from: 'now', to: 'now+30m', display: 'Next 30 minutes' },
-  { from: 'now', to: 'now+1h', display: 'Next hour' },
-  { from: 'now', to: 'now+3h', display: 'Next 3 hours' },
-  { from: 'now', to: 'now+6h', display: 'Next 6 hours' },
-  { from: 'now', to: 'now+12h', display: 'Next 12 hours' },
-  { from: 'now', to: 'now+24h', display: 'Next 24 hours' },
-  { from: 'now', to: 'now+2d', display: 'Next 2 days' },
-  { from: 'now', to: 'now+7d', display: 'Next 7 days' },
-  { from: 'now', to: 'now+30d', display: 'Next 30 days' },
-  { from: 'now', to: 'now+90d', display: 'Next 90 days' },
-  { from: 'now', to: 'now+6M', display: 'Next 6 months' },
-  { from: 'now', to: 'now+1y', display: 'Next year' },
-  { from: 'now', to: 'now+2y', display: 'Next 2 years' },
-  { from: 'now', to: 'now+5y', display: 'Next 5 years' },
+const getHiddenRangeOptions: () => TimeOption[] = () => [
+  {
+    from: 'now',
+    to: 'now+1m',
+    display: getNextNMinutesDisplay(1),
+  },
+  {
+    from: 'now',
+    to: 'now+5m',
+    display: getNextNMinutesDisplay(5),
+  },
+  {
+    from: 'now',
+    to: 'now+15m',
+    display: getNextNMinutesDisplay(15),
+  },
+  {
+    from: 'now',
+    to: 'now+30m',
+    display: getNextNMinutesDisplay(30),
+  },
+  {
+    from: 'now',
+    to: 'now+1h',
+    display: getNextNHoursDisplay(1),
+  },
+  {
+    from: 'now',
+    to: 'now+3h',
+    display: getNextNHoursDisplay(3),
+  },
+  {
+    from: 'now',
+    to: 'now+6h',
+    display: getNextNHoursDisplay(6),
+  },
+  {
+    from: 'now',
+    to: 'now+12h',
+    display: getNextNHoursDisplay(12),
+  },
+  {
+    from: 'now',
+    to: 'now+24h',
+    display: getNextNHoursDisplay(24),
+  },
+  {
+    from: 'now',
+    to: 'now+2d',
+    display: getNextNDaysDisplay(2),
+  },
+  {
+    from: 'now',
+    to: 'now+7d',
+    display: getNextNDaysDisplay(7),
+  },
+  {
+    from: 'now',
+    to: 'now+30d',
+    display: getNextNDaysDisplay(30),
+  },
+  {
+    from: 'now',
+    to: 'now+90d',
+    display: getNextNDaysDisplay(90),
+  },
+  {
+    from: 'now',
+    to: 'now+6M',
+    display: getNextNMonthsDisplay(6),
+  },
+  {
+    from: 'now',
+    to: 'now+1y',
+    display: getNextNYearsDisplay(1),
+  },
+  {
+    from: 'now',
+    to: 'now+2y',
+    display: getNextNYearsDisplay(2),
+  },
+  {
+    from: 'now',
+    to: 'now+5y',
+    display: getNextNYearsDisplay(5),
+  },
 ];
 
-const rangeIndex: Record<string, TimeOption> = {};
-each(rangeOptions, (frame) => {
-  rangeIndex[frame.from + ' to ' + frame.to] = frame;
-});
-each(hiddenRangeOptions, (frame) => {
-  rangeIndex[frame.from + ' to ' + frame.to] = frame;
-});
+const getStandardRangeOptions = () => [...getBaseRangeOptions(), ...getHiddenRangeOptions()];
+
+function findRangeInOptions(range: RawTimeRange, options: TimeOption[]) {
+  return options.find((option) => option.from === range.from && option.to === range.to);
+}
 
 // handles expressions like
 // 5m
@@ -106,7 +378,7 @@ export function describeTextRange(expr: string): TimeOption {
     expr = (isLast ? 'now-' : 'now') + expr;
   }
 
-  let opt = rangeIndex[expr + ' to now'];
+  let opt = findRangeInOptions({ from: expr, to: 'now' }, getStandardRangeOptions());
   if (opt) {
     return opt;
   }
@@ -138,20 +410,29 @@ export function describeTextRange(expr: string): TimeOption {
   return opt;
 }
 
+// TODO: Should we keep these format presets somewhere common?
+const rangeFormatShort: Intl.DateTimeFormatOptions = {
+  dateStyle: 'short',
+  timeStyle: 'short',
+};
+
+const rangeFormatFull: Intl.DateTimeFormatOptions = {
+  dateStyle: 'short',
+  timeStyle: 'medium',
+};
+
 /**
  * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
  *
- * @example
- * ```
- * // Prints "2":
- * console.log(add(1,1));
- * ```
  * @category TimeUtils
  * @param range - a time range (usually specified by the TimePicker)
+ * @param timeZone - optional time zone.
+ * @param quickRanges - optional dashboard's custom quick ranges to pick range names from.
  * @alpha
  */
-export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone): string {
-  const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
+export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]): string {
+  const rangeOptions = quickRanges ? quickRanges.concat(getStandardRangeOptions()) : getStandardRangeOptions();
+  const option = findRangeInOptions(range, rangeOptions);
 
   if (option) {
     return option.display;
@@ -160,9 +441,25 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone): str
   const options = { timeZone };
 
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
+    const fromDate = range.from.toDate();
+    const toDate = range.to.toDate();
+
+    if (!getFeatureToggle('localeFormatPreference')) {
+      return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
+    }
+
+    const hasSeconds = fromDate.getSeconds() !== 0 || toDate.getSeconds() !== 0;
+    const intlFormat = hasSeconds ? rangeFormatFull : rangeFormatShort;
+    const intlFormatOptions = {
+      ...intlFormat,
+      timeZone: timeZone ? toIANATimezone(timeZone) : undefined,
+    };
+
+    return formatDateRange(fromDate, toDate, intlFormatOptions);
   }
 
+  // TODO: We could update these to all use Intl APIs.
+  // Could we use formatRangeToParts and replace the 'other side' with the ago formatting?
   if (isDateTime(range.from)) {
     const parsed = dateMath.parse(range.to, true, 'utc');
     return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
@@ -299,7 +596,7 @@ export function calculateInterval(range: TimeRange, resolution: number, lowLimit
   };
 }
 
-const interval_regex = /(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
+const interval_regex = /^(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
 // histogram & trends
 const intervals_in_seconds: Record<string, number> = {
   y: 31536000,
@@ -479,5 +776,16 @@ export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: D
     from,
     to,
     raw: { from, to },
+  };
+}
+
+/**
+ * @internal
+ * Returns a RawTimeRange that has been converted so that from and to are strings
+ */
+export function formatRawTimeRange(range: RawTimeRange): RawTimeRange {
+  return {
+    from: isDateTime(range.from) ? range.from.toISOString() : range.from,
+    to: isDateTime(range.to) ? range.to.toISOString() : range.to,
   };
 }

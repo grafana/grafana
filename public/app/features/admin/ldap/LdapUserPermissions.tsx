@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import * as React from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { Column, Icon, InteractiveTable } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { LdapPermissions } from 'app/types';
+import { LdapPermissions } from 'app/types/ldap';
 
 interface Props {
   permissions: LdapPermissions;

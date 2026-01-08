@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
+import { EditorField } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
+import { ValueTypes } from '../dataquery.gen';
 import { getAggregationOptionsByMetric } from '../functions';
-import { ValueTypes } from '../types/query';
 import { MetricDescriptor } from '../types/types';
 
 export interface Props {

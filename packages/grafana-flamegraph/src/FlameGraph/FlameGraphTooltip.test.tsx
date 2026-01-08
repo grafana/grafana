@@ -111,6 +111,20 @@ describe('FlameGraphTooltip', () => {
   });
 });
 
+function setupDiffData2() {
+  const flameGraphData = createDataFrame({
+    fields: [
+      { name: 'level', values: [0, 1] },
+      { name: 'value', values: [101, 101] },
+      { name: 'valueRight', values: [100, 100] },
+      { name: 'self', values: [100, 100] },
+      { name: 'selfRight', values: [1, 1] },
+      { name: 'label', values: ['total', 'func1'] },
+    ],
+  });
+  return new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+}
+
 describe('getDiffTooltipData', () => {
   it('works with diff data', () => {
     const tooltipData = getDiffTooltipData(
@@ -139,6 +153,36 @@ describe('getDiffTooltipData', () => {
         baseline: '50',
         comparison: '40',
         diff: '-10',
+      },
+    ]);
+  });
+  it('works with diff data and short values', () => {
+    const tooltipData = getDiffTooltipData(
+      setupDiffData2(),
+      { start: 0, itemIndexes: [1], value: 101, valueRight: 100, children: [], level: 0 },
+      200
+    );
+    expect(tooltipData).toEqual([
+      {
+        rowId: '1',
+        label: '% of total',
+        baseline: '1%',
+        comparison: '100%',
+        diff: '9.90 K%',
+      },
+      {
+        rowId: '2',
+        label: 'Value',
+        baseline: '1',
+        comparison: '100',
+        diff: '99',
+      },
+      {
+        rowId: '3',
+        label: 'Samples',
+        baseline: '1',
+        comparison: '100',
+        diff: '99',
       },
     ]);
   });

@@ -1,8 +1,9 @@
 import { toLonLat } from 'ol/proj';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useId } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { Options, MapViewConfig, GeomapInstanceState } from '../types';
@@ -62,11 +63,14 @@ export const MapViewEditor = ({
     [value, onChange]
   );
 
+  const viewInputId = useId();
+  const zoomInputId = useId();
+
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="View" labelWidth={labelWidth} grow={true}>
-          <Select options={views.options} value={views.current} onChange={onSelectView} />
+        <InlineField label={t('geomap.map-view-editor.label-view', 'View')} labelWidth={labelWidth} grow={true}>
+          <Select inputId={viewInputId} options={views.options} value={views.current} onChange={onSelectView} />
         </InlineField>
       </InlineFieldRow>
       {value.id === MapCenterID.Coordinates && (
@@ -77,8 +81,17 @@ export const MapViewEditor = ({
       )}
 
       <InlineFieldRow>
-        <InlineField label={value?.id === MapCenterID.Fit ? 'Max Zoom' : 'Zoom'} labelWidth={labelWidth} grow={true}>
+        <InlineField
+          label={
+            value?.id === MapCenterID.Fit
+              ? t('geomap.map-view-editor.label-max-zoom', 'Max Zoom')
+              : t('geomap.map-view-editor.label-zoom', 'Zoom')
+          }
+          labelWidth={labelWidth}
+          grow={true}
+        >
           <NumberInput
+            id={zoomInputId}
             value={value?.zoom ?? 1}
             min={1}
             max={18}
@@ -90,11 +103,13 @@ export const MapViewEditor = ({
         </InlineField>
       </InlineFieldRow>
 
-      <VerticalGroup>
+      <Stack direction="column">
         <Button variant="secondary" size="sm" fullWidth onClick={onSetCurrentView}>
-          <span>Use current map settings</span>
+          <span>
+            <Trans i18nKey="geomap.map-view-editor.use-current-map-settings">Use current map settings</Trans>
+          </span>
         </Button>
-      </VerticalGroup>
+      </Stack>
     </>
   );
 };

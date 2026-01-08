@@ -15,6 +15,8 @@ import {
   DataQueryRequest,
   getTimeZone,
   PluginMetaInfo,
+  DataLink,
+  NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -39,24 +41,16 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
-  getEscapedSpanNames,
+  getEscapedRegexValues,
+  getEscapedValues,
+  makeHistogramLink,
+  makePromServiceMapRequest,
 } from './datasource';
 import mockJson from './test/mockJsonResponse.json';
 import mockServiceGraph from './test/mockServiceGraph.json';
-import { createMetadataRequest, createTempoDatasource } from './test/mocks';
+import { createTempoDatasource } from './test/mocks';
 import { initTemplateSrv } from './test/test_utils';
 import { TempoJsonData, TempoQuery } from './types';
-
-let mockObservable: () => Observable<unknown>;
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    getBackendSrv: () => ({
-      fetch: mockObservable,
-      _request: mockObservable,
-    }),
-  };
-});
 
 describe('Tempo data source', () => {
   // Mock the console error so that running the test suite doesnt throw the error
@@ -66,8 +60,6 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
-    config.featureToggles.traceQLStreaming = true;
-    jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
     const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;
@@ -170,16 +162,6 @@ describe('Tempo data source', () => {
             valueType: 'string',
           },
         ],
-        groupBy: [
-          {
-            id: 'groupBy1',
-            tag: '$interpolationVar',
-          },
-          {
-            id: 'groupBy2',
-            tag: '$interpolationVar',
-          },
-        ],
       };
     }
     let templateSrv: TemplateSrv;
@@ -212,8 +194,6 @@ describe('Tempo data source', () => {
       expect(queries[0].filters[0].value).toBe(textWithPipe);
       expect(queries[0].filters[1].value).toBe(text);
       expect(queries[0].filters[1].tag).toBe(text);
-      expect(queries[0].groupBy?.[0].tag).toBe(text);
-      expect(queries[0].groupBy?.[1].tag).toBe(text);
     });
 
     it('when applying template variables', async () => {
@@ -226,8 +206,6 @@ describe('Tempo data source', () => {
       expect(resp.filters[0].value).toBe(textWithPipe);
       expect(resp.filters[1].value).toBe(scopedText);
       expect(resp.filters[1].tag).toBe(scopedText);
-      expect(resp.groupBy?.[0].tag).toBe(scopedText);
-      expect(resp.groupBy?.[1].tag).toBe(scopedText);
     });
 
     it('when serviceMapQuery is an array', async () => {
@@ -316,7 +294,7 @@ describe('Tempo data source', () => {
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);
-    expect(field.values[0]).toBe('60ba2abb44f13eae');
+    expect(field.values[0]).toBe('000000000000000060ba2abb44f13eae');
     expect(field.values.length).toBe(6);
   });
 
@@ -350,38 +328,12 @@ describe('Tempo data source', () => {
     expect(edgesFrame.meta?.preferredVisualisationType).toBe('nodeGraph');
   });
 
-  it('should format metrics summary query correctly', () => {
-    const ds = new TempoDatasource(defaultSettings, {} as TemplateSrv);
-    const queryGroupBy = [
-      { id: '1', scope: TraceqlSearchScope.Unscoped, tag: 'component' },
-      { id: '2', scope: TraceqlSearchScope.Span, tag: 'name' },
-      { id: '3', scope: TraceqlSearchScope.Resource, tag: 'service.name' },
-      { id: '4', scope: TraceqlSearchScope.Intrinsic, tag: 'kind' },
-    ];
-    const groupBy = ds.formatGroupBy(queryGroupBy);
-    expect(groupBy).toEqual('.component, span.name, resource.service.name, kind');
-  });
-
-  describe('test the testDatasource function', () => {
-    it('should return a success msg if response.ok is true', async () => {
-      mockObservable = () => of({ ok: true });
-      const handleStreamingQuery = jest
-        .spyOn(TempoDatasource.prototype, 'handleStreamingQuery')
-        .mockImplementation(() => of({ data: [] }));
-
-      const ds = new TempoDatasource(defaultSettings);
-      const response = await ds.testDatasource();
-      expect(response.status).toBe('success');
-      expect(handleStreamingQuery).toHaveBeenCalled();
-    });
-  });
-
   describe('test the metadataRequest function', () => {
-    it('should return the last value from the observed stream', async () => {
-      mockObservable = () => of('321', '123', '456');
+    it('should return the data from getResource', async () => {
       const ds = new TempoDatasource(defaultSettings);
-      const response = await ds.metadataRequest('/api/search/tags');
-      expect(response).toBe('456');
+      jest.spyOn(ds, 'getResource').mockResolvedValue({ data: 'test-data' });
+      const response = await ds.metadataRequest('api/v2/search/tags');
+      expect(response).toBe('test-data');
     });
   });
 
@@ -544,6 +496,32 @@ describe('Tempo service graph view', () => {
     expect(response.data[1].fields[0]?.config?.links?.length).toBeGreaterThan(0);
     expect(response.data[1].fields[0]?.config?.links).toEqual(serviceGraphLinks);
 
+    const viewServicesLink = response.data[1].fields[0]?.config?.links.find(
+      (link: DataLink) => link.title === 'View traces'
+    );
+    expect(viewServicesLink).toBeDefined();
+    expect(viewServicesLink.internal.query({ replaceVariables: replaceVariablesInstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceqlSearch',
+      filters: [
+        {
+          id: 'service-name',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.name',
+          value: 'my-service',
+          valueType: 'string',
+        },
+      ],
+    });
+    expect(viewServicesLink.internal.query({ replaceVariables: replaceVariablesUninstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceql',
+      filters: [],
+      query:
+        '{span.db.name="my-service" || span.db.system="my-service" || span.peer.service="my-service" || span.messaging.system="my-service" || span.net.peer.name="my-service"}',
+    });
+
     expect(response.data[2].name).toBe('Edges');
     expect(response.data[2].fields[0].values.length).toBe(2);
   });
@@ -584,13 +562,25 @@ describe('Tempo service graph view', () => {
       'sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum{ foo="bar" }[$__range]))'
     );
     expect(nthQuery(0).targets[1].expr).toBe(
-      'sum by (client, server) (rate(traces_service_graph_request_total{ foo="bar" }[$__range]))'
+      'group by (client, connection_type, server) (traces_service_graph_request_server_seconds_sum{ foo="bar" })'
     );
     expect(nthQuery(0).targets[2].expr).toBe(
-      'sum by (client, server) (rate(traces_service_graph_request_failed_total{ foo="bar" }[$__range]))'
+      'sum by (client, server) (rate(traces_service_graph_request_total{ foo="bar" }[$__range]))'
     );
     expect(nthQuery(0).targets[3].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_total{ foo="bar" })'
+    );
+    expect(nthQuery(0).targets[4].expr).toBe(
+      'sum by (client, server) (rate(traces_service_graph_request_failed_total{ foo="bar" }[$__range]))'
+    );
+    expect(nthQuery(0).targets[5].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_failed_total{ foo="bar" })'
+    );
+    expect(nthQuery(0).targets[6].expr).toBe(
       'sum by (client, server) (rate(traces_service_graph_request_server_seconds_bucket{ foo="bar" }[$__range]))'
+    );
+    expect(nthQuery(0).targets[7].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_server_seconds_bucket{ foo="bar" })'
     );
   });
 
@@ -632,13 +622,25 @@ describe('Tempo service graph view', () => {
       'sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_server_seconds_sum{baz="bad"}[$__range]))'
     );
     expect(nthQuery(0).targets[1].expr).toBe(
-      'sum by (client, server) (rate(traces_service_graph_request_total{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_total{baz="bad"}[$__range]))'
+      'group by (client, connection_type, server) (traces_service_graph_request_server_seconds_sum{ foo="bar" }) OR group by (client, connection_type, server) (traces_service_graph_request_server_seconds_sum{baz="bad"})'
     );
     expect(nthQuery(0).targets[2].expr).toBe(
-      'sum by (client, server) (rate(traces_service_graph_request_failed_total{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_failed_total{baz="bad"}[$__range]))'
+      'sum by (client, server) (rate(traces_service_graph_request_total{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_total{baz="bad"}[$__range]))'
     );
     expect(nthQuery(0).targets[3].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_total{ foo="bar" }) OR group by (client, connection_type, server) (traces_service_graph_request_total{baz="bad"})'
+    );
+    expect(nthQuery(0).targets[4].expr).toBe(
+      'sum by (client, server) (rate(traces_service_graph_request_failed_total{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_failed_total{baz="bad"}[$__range]))'
+    );
+    expect(nthQuery(0).targets[5].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_failed_total{ foo="bar" }) OR group by (client, connection_type, server) (traces_service_graph_request_failed_total{baz="bad"})'
+    );
+    expect(nthQuery(0).targets[6].expr).toBe(
       'sum by (client, server) (rate(traces_service_graph_request_server_seconds_bucket{ foo="bar" }[$__range])) OR sum by (client, server) (rate(traces_service_graph_request_server_seconds_bucket{baz="bad"}[$__range]))'
+    );
+    expect(nthQuery(0).targets[7].expr).toBe(
+      'group by (client, connection_type, server) (traces_service_graph_request_server_seconds_bucket{ foo="bar" }) OR group by (client, connection_type, server) (traces_service_graph_request_server_seconds_bucket{baz="bad"})'
     );
   });
 
@@ -723,6 +725,20 @@ describe('Tempo service graph view', () => {
     expect(builtQuery).toBe(
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="${app}",service="$app"}[$__range])) by (span_name))'
     );
+
+    targets = {
+      targets: [
+        { queryType: 'serviceMap', serviceMapQuery: '{client="app",client_deployment_environment="production"}' },
+      ],
+    } as DataQueryRequest<TempoQuery>;
+    builtQuery = buildExpr(
+      { expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)', params: [], topk: 5 },
+      '',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",deployment_environment="production"}[$__range])) by (span_name))'
+    );
   });
 
   it('should build link expr correctly', () => {
@@ -737,12 +753,25 @@ describe('Tempo service graph view', () => {
       'server.cluster.local:9090^/sample.test(.*)?',
       'test\\path',
     ];
-    let escaped = getEscapedSpanNames(spanNames);
+    let escaped = getEscapedRegexValues(getEscapedValues(spanNames));
     expect(escaped).toEqual([
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
       'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
-      'test\\\\\\\\path',
+      'test\\\\path',
+    ]);
+  });
+
+  it('should escape span with multi line content correctly', () => {
+    const spanContent = [
+      `
+      SELECT * from "my_table"
+      WHERE "data_enabled" = 1
+      ORDER BY "name" ASC`,
+    ];
+    let escaped = getEscapedRegexValues(getEscapedValues(spanContent));
+    expect(escaped).toEqual([
+      '\\n      SELECT \\\\* from \\"my_table\\"\\n      WHERE \\"data_enabled\\" = 1\\n      ORDER BY \\"name\\" ASC',
     ]);
   });
 
@@ -773,7 +802,7 @@ describe('Tempo service graph view', () => {
         },
         {
           url: '',
-          title: 'Request histogram',
+          title: 'Request classic histogram',
           internal: {
             query: {
               expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))',
@@ -803,27 +832,33 @@ describe('Tempo service graph view', () => {
           url: '',
           title: 'View traces',
           internal: {
-            query: {
-              refId: 'A',
-              queryType: 'traceqlSearch',
-              filters: [
-                {
-                  id: 'service-name',
-                  operator: '=',
-                  scope: 'resource',
-                  tag: 'service.name',
-                  value: '${__data.fields.target}',
-                  valueType: 'string',
-                },
-              ],
-            },
-            datasourceUid: 'EbPO1fYnz',
             datasourceName: '',
+            datasourceUid: 'EbPO1fYnz',
+            query: expect.any(Function),
           },
         },
       ],
     };
     expect(fieldConfig).toStrictEqual(resultObj);
+
+    const viewServicesLink: DataLink | undefined = fieldConfig.links.find(
+      (link: DataLink) => link.title === 'View traces'
+    );
+    expect(viewServicesLink).toBeDefined();
+    expect(viewServicesLink!.internal!.query({ replaceVariables: replaceVariablesInstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceqlSearch',
+      filters: [
+        {
+          id: 'service-name',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.name',
+          value: 'my-target-service',
+          valueType: 'string',
+        },
+      ],
+    });
   });
 
   it('should get field config correctly when namespaces are present', () => {
@@ -864,7 +899,7 @@ describe('Tempo service graph view', () => {
         },
         {
           url: '',
-          title: 'Request histogram',
+          title: 'Request classic histogram',
           internal: {
             query: {
               expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.sourceName}",client_service_namespace="${__data.fields.sourceNamespace}",server="${__data.fields.targetName}",server_service_namespace="${__data.fields.targetNamespace}"}[$__rate_interval])) by (le, client, server, server_service_namespace, client_service_namespace))',
@@ -894,35 +929,41 @@ describe('Tempo service graph view', () => {
           url: '',
           title: 'View traces',
           internal: {
-            query: {
-              queryType: 'traceqlSearch',
-              refId: 'A',
-              filters: [
-                {
-                  id: 'service-namespace',
-                  operator: '=',
-                  scope: 'resource',
-                  tag: 'service.namespace',
-                  value: '${__data.fields.targetNamespace}',
-                  valueType: 'string',
-                },
-                {
-                  id: 'service-name',
-                  operator: '=',
-                  scope: 'resource',
-                  tag: 'service.name',
-                  value: '${__data.fields.targetName}',
-                  valueType: 'string',
-                },
-              ],
-            },
-            datasourceUid: 'EbPO1fYnz',
             datasourceName: '',
+            datasourceUid: 'EbPO1fYnz',
+            query: expect.any(Function),
           },
         },
       ],
     };
     expect(fieldConfig).toStrictEqual(resultObj);
+
+    const viewServicesLink: DataLink | undefined = fieldConfig.links.find(
+      (link: DataLink) => link.title === 'View traces'
+    );
+    expect(viewServicesLink).toBeDefined();
+    expect(viewServicesLink!.internal!.query({ replaceVariables: replaceVariablesInstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceqlSearch',
+      filters: [
+        {
+          id: 'service-namespace',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.namespace',
+          value: 'my-target-namespace-service',
+          valueType: 'string',
+        },
+        {
+          id: 'service-name',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.name',
+          value: 'my-target-name-service',
+          valueType: 'string',
+        },
+      ],
+    });
   });
 
   it('should get rate aligned values correctly', () => {
@@ -1052,13 +1093,9 @@ describe('label names - v2 tags', () => {
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
-      createMetadataRequest({
-        data: {
-          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
-        },
-      })
-    );
+    // Mock the language provider to return v2 tags
+    datasource.languageProvider.tagsV2 = [{ name: 'span', tags: ['label1', 'label2'] }];
+    jest.spyOn(datasource.languageProvider, 'start').mockResolvedValue([]);
   });
 
   it('get label names', async () => {
@@ -1069,55 +1106,18 @@ describe('label names - v2 tags', () => {
   });
 });
 
-describe('label names - v1 tags', () => {
-  let datasource: TempoDatasource;
-
-  beforeEach(() => {
-    datasource = createTempoDatasource();
-    jest
-      .spyOn(datasource, 'metadataRequest')
-      .mockImplementationOnce(() => {
-        throw Error;
-      })
-      .mockImplementation(
-        createMetadataRequest({
-          data: {
-            tagNames: ['label1', 'label2'],
-          },
-        })
-      );
-  });
-
-  it('get label names', async () => {
-    // label_names()
-    const response = await datasource.executeVariableQuery({ refId: 'test', type: TempoVariableQueryType.LabelNames });
-    expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }, { text: 'status.code' }]);
-  });
-});
-
 describe('label values', () => {
   let datasource: TempoDatasource;
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
-      createMetadataRequest({
-        data: {
-          tagValues: [
-            {
-              type: 'value1',
-              value: 'value1',
-              label: 'value1',
-            },
-            {
-              type: 'value2',
-              value: 'value2',
-              label: 'value2',
-            },
-          ],
-        },
-      })
-    );
+    // Mock the language provider to return v2 tags that includes the "label" tag
+    datasource.languageProvider.tagsV2 = [{ name: 'span', tags: ['label'] }];
+    jest.spyOn(datasource.languageProvider, 'start').mockResolvedValue([]);
+    jest.spyOn(datasource.languageProvider, 'getOptionsV2').mockResolvedValue([
+      { type: 'string', value: 'value1', label: 'value1' },
+      { type: 'string', value: 'value2', label: 'value2' },
+    ]);
   });
 
   it('get label values for given label', async () => {
@@ -1128,10 +1128,7 @@ describe('label values', () => {
       label: 'label',
     });
 
-    expect(response).toEqual([
-      { text: { type: 'value1', value: 'value1', label: 'value1' } },
-      { text: { type: 'value2', value: 'value2', label: 'value2' } },
-    ]);
+    expect(response).toEqual([{ text: 'value1' }, { text: 'value2' }]);
   });
 
   it('do not raise error when label is not set', async () => {
@@ -1151,29 +1148,27 @@ describe('should provide functionality for ad-hoc filters', () => {
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
-      createMetadataRequest({
-        data: {
-          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
-          tagValues: [
-            {
-              type: 'value1',
-              value: 'value1',
-              label: 'value1',
-            },
-            {
-              type: 'value2',
-              value: 'value2',
-              label: 'value2',
-            },
-          ],
-        },
-      })
-    );
+    // Mock the language provider to return v2 tags
+    datasource.languageProvider.tagsV2 = [{ name: 'span', tags: ['label1', 'label2'] }];
+    jest.spyOn(datasource.languageProvider, 'fetchTags').mockResolvedValue();
+    jest.spyOn(datasource.languageProvider, 'getOptionsV2').mockResolvedValue([
+      { type: 'string', value: 'value1', label: 'value1' },
+      { type: 'string', value: 'value2', label: 'value2' },
+    ]);
   });
 
   it('for getTagKeys', async () => {
-    const response = await datasource.getTagKeys();
+    const response = await datasource.getTagKeys({
+      filters: [],
+      timeRange: {
+        from: dateTime('2021-04-20T15:55:00Z'),
+        to: dateTime('2021-04-20T15:55:00Z'),
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      },
+    });
     expect(response).toEqual([{ text: 'span.label1' }, { text: 'span.label2' }]);
   });
 
@@ -1193,6 +1188,80 @@ describe('should provide functionality for ad-hoc filters', () => {
     };
     const response = await datasource.getTagValues(options);
     expect(response).toEqual([{ text: 'value1' }, { text: 'value2' }]);
+  });
+});
+
+describe('histogram type functionality', () => {
+  it('should create correct histogram links for classic histogram type', () => {
+    const datasourceUid = 'prom';
+    const source = 'client="${__data.fields.source}",';
+    const target = 'server="${__data.fields.target}"';
+    const serverSumBy = 'server';
+
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, false);
+    expect(links).toHaveLength(1);
+    expect(links[0].title).toBe('Request classic histogram');
+    expect(links[0].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+  });
+
+  it('should create correct histogram links for native histogram type', () => {
+    const datasourceUid = 'prom';
+    const source = 'client="${__data.fields.source}",';
+    const target = 'server="${__data.fields.target}"';
+    const serverSumBy = 'server';
+
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, true);
+    expect(links).toHaveLength(1);
+    expect(links[0].title).toBe('Request native histogram');
+    expect(links[0].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+  });
+
+  it('should include histogram type in field config', () => {
+    const datasourceUid = 'prom';
+    const tempoDatasourceUid = 'tempo';
+    const targetField = '__data.fields.target';
+    const tempoField = '__data.fields.target';
+    const sourceField = '__data.fields.source';
+
+    const fieldConfig = getFieldConfig(
+      datasourceUid,
+      tempoDatasourceUid,
+      targetField,
+      tempoField,
+      sourceField,
+      undefined,
+      true
+    );
+    const histogramLink = fieldConfig.links.find((link) => link.title === 'Request native histogram');
+    expect(histogramLink).toBeDefined();
+    expect(histogramLink?.internal?.query).toBeDefined();
+    if (histogramLink?.internal?.query && 'expr' in histogramLink.internal.query) {
+      expect(histogramLink.internal.query.expr).toBe(
+        'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+      );
+    }
+  });
+
+  it('should handle histogram type in service map query', () => {
+    const request = makePromServiceMapRequest(
+      {
+        targets: [{ serviceMapQuery: '{service="test"}' }],
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest<TempoQuery>,
+      true
+    );
+
+    const bucketMetric = request.targets.find((t: PromQuery) => t.expr.includes('_bucket'));
+    expect(bucketMetric).toBeUndefined();
+
+    const nativeMetric = request.targets.find((t: PromQuery) =>
+      t.expr.includes('traces_service_graph_request_server_seconds')
+    );
+    expect(nativeMetric).toBeDefined();
   });
 });
 
@@ -1405,7 +1474,7 @@ const serviceGraphLinks = [
   },
   {
     url: '',
-    title: 'Request histogram',
+    title: 'Request classic histogram',
     internal: {
       query: {
         expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__rate_interval])) by (le, client, server))',
@@ -1435,25 +1504,33 @@ const serviceGraphLinks = [
     url: '',
     title: 'View traces',
     internal: {
-      query: {
-        refId: 'A',
-        queryType: 'traceqlSearch',
-        filters: [
-          {
-            id: 'service-name',
-            operator: '=',
-            scope: 'resource',
-            tag: 'service.name',
-            value: '${__data.fields.id}',
-            valueType: 'string',
-          },
-        ],
-      } as TempoQuery,
+      query: expect.any(Function),
       datasourceUid: 'gdev-tempo',
       datasourceName: 'Tempo',
     },
   },
 ];
+
+const replaceVariablesInstrumented = (variable: string): string => {
+  const variables: Record<string, string> = {
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.target}}`]: 'my-target-service',
+    [`\${__data.fields.targetName}`]: 'my-target-name-service',
+    [`\${__data.fields.targetNamespace}`]: 'my-target-namespace-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'true',
+  };
+  return variables[variable];
+};
+
+const replaceVariablesUninstrumented = (variable: string): string => {
+  const variables: Record<string, string> = {
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'false',
+  };
+  return variables[variable];
+};
 
 interface PromQuery extends DataQuery {
   expr: string;

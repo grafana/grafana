@@ -1,7 +1,8 @@
 import { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
-import { Box, Spinner, Stack } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Box, Spinner, Stack } from '@grafana/ui';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
@@ -16,6 +17,7 @@ interface SaveDashboardDiffProps {
   hasFolderChanges?: boolean;
   oldFolder?: string;
   newFolder?: string;
+  hasMigratedToV2?: boolean;
 }
 
 export const SaveDashboardDiff = ({
@@ -25,6 +27,7 @@ export const SaveDashboardDiff = ({
   hasFolderChanges,
   oldFolder,
   newFolder,
+  hasMigratedToV2,
 }: SaveDashboardDiffProps) => {
   const loader = useAsync(async () => {
     const oldJSON = JSON.stringify(oldValue ?? {}, null, 2);
@@ -61,6 +64,17 @@ export const SaveDashboardDiff = ({
 
   return (
     <Stack direction="column" gap={1}>
+      {hasMigratedToV2 && (
+        <Box paddingTop={1}>
+          <Alert
+            title={t(
+              'dashboard.save-dashboard-diff.title-because-dashboard-migrated-grafana-format',
+              'The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format'
+            )}
+            severity="info"
+          />
+        </Box>
+      )}
       {hasFolderChanges && (
         <DiffGroup
           diffs={[
@@ -74,21 +88,27 @@ export const SaveDashboardDiff = ({
             },
           ]}
           key={'folder'}
-          title={'folder'}
+          title={t('dashboard.save-dashboard-diff.title-folder', 'folder')}
         />
       )}
       {(!value || !oldValue) && <Spinner />}
       {value && value.count >= 1 ? (
         <>
-          {value && value.schemaChange && value.schemaChange}
+          {!hasMigratedToV2 && value && value.schemaChange && value.schemaChange}
           {value && value.showDiffs && value.diffs}
           <Box paddingTop={1}>
-            <h4>Full JSON diff</h4>
+            <h4>
+              <Trans i18nKey="dashboard.save-dashboard-diff.full-json-diff">Full JSON diff</Trans>
+            </h4>
             {value.jsonView}
           </Box>
         </>
       ) : (
-        <Box paddingTop={1}>No changes in the dashboard JSON</Box>
+        <Box paddingTop={1}>
+          <Trans i18nKey="dashboard.save-dashboard-diff.no-changes-in-the-dashboard-json">
+            No changes in the dashboard JSON
+          </Trans>
+        </Box>
       )}
     </Stack>
   );

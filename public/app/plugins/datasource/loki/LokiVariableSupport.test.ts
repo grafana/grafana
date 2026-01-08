@@ -3,9 +3,9 @@ import { firstValueFrom } from 'rxjs';
 import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
-import { createLokiDatasource } from './__mocks__/datasource';
-import { createMetadataRequest } from './__mocks__/metadataRequest';
 import { LokiDatasource } from './datasource';
+import { createLokiDatasource } from './mocks/datasource';
+import { createMetadataRequest } from './mocks/metadataRequest';
 import { LokiVariableQueryType } from './types';
 
 describe('LokiVariableSupport', () => {

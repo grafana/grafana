@@ -81,6 +81,7 @@ func (proxy *PluginProxy) HandleRequest() {
 			hasSlash := strings.HasSuffix(proxy.proxyPath, "/")
 			proxy.proxyPath = path
 
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if hasSlash && !strings.HasSuffix(path, "/") && proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagPluginProxyPreserveTrailingSlash) {
 				proxy.proxyPath += "/"
 			}
@@ -119,8 +120,8 @@ func (proxy *PluginProxy) HandleRequest() {
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
 	span.SetAttributes(
-		attribute.String("user", proxy.ctx.SignedInUser.Login),
-		attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID),
+		attribute.String("user", proxy.ctx.Login),
+		attribute.Int64("org_id", proxy.ctx.OrgID),
 	)
 
 	proxy.tracer.Inject(ctx, proxy.ctx.Req.Header, span)
@@ -129,8 +130,7 @@ func (proxy *PluginProxy) HandleRequest() {
 }
 
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
-	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
-	if useRBAC {
+	if route.ReqAction != "" {
 		routeEval := pluginac.GetPluginRouteEvaluator(proxy.ps.PluginID, route.ReqAction)
 		hasAccess := ac.HasAccess(proxy.accessControl, proxy.ctx)(routeEval)
 		if !hasAccess {

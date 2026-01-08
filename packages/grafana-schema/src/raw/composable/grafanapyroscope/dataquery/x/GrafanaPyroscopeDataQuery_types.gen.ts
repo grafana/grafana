@@ -18,9 +18,17 @@ export const defaultPyroscopeQueryType: PyroscopeQueryType = 'both';
 
 export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
   /**
+   * If set to true, the response will contain annotations
+   */
+  annotations?: boolean;
+  /**
    * Allows to group the results.
    */
   groupBy: Array<string>;
+  /**
+   * If set to true, exemplars will be requested
+   */
+  includeExemplars: boolean;
   /**
    * Specifies the query label selectors.
    */
@@ -45,6 +53,7 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
 
 export const defaultGrafanaPyroscopeDataQuery: Partial<GrafanaPyroscopeDataQuery> = {
   groupBy: [],
+  includeExemplars: false,
   labelSelector: '{}',
   spanSelector: [],
 };

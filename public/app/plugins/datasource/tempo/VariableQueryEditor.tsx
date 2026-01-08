@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { DataQuery, SelectableValue } from '@grafana/data';
+import { DataQuery, SelectableValue, TimeRange } from '@grafana/data';
 import { InlineField, InlineFieldRow, InputActionMeta, Select } from '@grafana/ui';
 
-import { maxOptions } from './SearchTraceQLEditor/SearchField';
 import { TempoDatasource } from './datasource';
+import { OPTIONS_LIMIT } from './language_provider';
 
 export enum TempoVariableQueryType {
   LabelNames,
@@ -28,25 +28,34 @@ export type TempoVariableQueryEditorProps = {
   onChange: (value: TempoVariableQuery) => void;
   query: TempoVariableQuery;
   datasource: TempoDatasource;
+  range?: TimeRange;
 };
 
-export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoVariableQueryEditorProps) => {
+export const TempoVariableQueryEditor = ({ onChange, query, datasource, range }: TempoVariableQueryEditorProps) => {
   const [label, setLabel] = useState(query.label || '');
   const [type, setType] = useState<number | undefined>(query.type);
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
   const [labelQuery, setLabelQuery] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (type === TempoVariableQueryType.LabelValues) {
-      datasource.labelNamesQuery().then((labelNames: Array<{ text: string }>) => {
-        setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
-      });
+      setIsLoading(true);
+      datasource
+        .labelNamesQuery(range)
+        .then((labelNames: Array<{ text: string }>) => {
+          setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
+          setIsLoading(false);
+        })
+        .catch(() => {
+          setIsLoading(false);
+        });
     }
-  }, [datasource, query, type]);
+  }, [datasource, query, type, range]);
 
   const options = useMemo(() => {
     if (labelQuery.length === 0) {
-      return labelOptions.slice(0, maxOptions);
+      return labelOptions.slice(0, OPTIONS_LIMIT);
     }
 
     const queryLowerCase = labelQuery.toLowerCase();
@@ -57,7 +66,7 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
         }
         return false;
       })
-      .slice(0, maxOptions);
+      .slice(0, OPTIONS_LIMIT);
   }, [labelQuery, labelOptions]);
 
   const onQueryTypeChange = (newType: SelectableValue<TempoVariableQueryType>) => {
@@ -122,6 +131,7 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
               width={32}
               allowCustomValue
               virtualized
+              isLoading={isLoading}
             />
           </InlineField>
         </InlineFieldRow>

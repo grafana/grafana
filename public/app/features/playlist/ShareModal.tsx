@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { buildBaseUrl } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { PlaylistMode } from './types';

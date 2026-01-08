@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
 
@@ -14,6 +15,7 @@ interface Props {
 
 export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
   const network = useMemo(() => usages.find((n) => n.variable.id === id), [usages, id]);
+
   if (usages.length === 0 || isAdhoc || !network) {
     return null;
   }
@@ -26,7 +28,14 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
   });
 
   return (
-    <NetworkGraphModal show={false} title={`Showing usages for: $${id}`} nodes={nodes} edges={network.edges}>
+    <NetworkGraphModal
+      show={false}
+      title={t('variabels.variable-usages-button.usage-title', 'Showing usages for: {{variableId}}', {
+        variableId: `$${id}`,
+      })}
+      nodes={nodes}
+      edges={network.edges}
+    >
       {({ showModal }) => {
         return (
           <IconButton
@@ -35,7 +44,7 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
               showModal();
             }}
             name="code-branch"
-            tooltip="Show usages"
+            tooltip={t('variables.variable-usages-button.tooltip-show-usages', 'Show usages')}
           />
         );
       }}

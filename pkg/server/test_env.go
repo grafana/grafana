@@ -1,6 +1,10 @@
 package server
 
 import (
+	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -15,6 +19,10 @@ import (
 )
 
 func ProvideTestEnv(
+	testingT interface {
+		mock.TestingT
+		Cleanup(func())
+	},
 	server *Server,
 	db db.DB,
 	cfg *setting.Cfg,
@@ -26,8 +34,11 @@ func ProvideTestEnv(
 	featureMgmt featuremgmt.FeatureToggles,
 	resourceClient resource.ResourceClient,
 	idService auth.IDService,
+	githubFactory *github.Factory,
+	decryptService decrypt.DecryptService,
 ) (*TestEnv, error) {
 	return &TestEnv{
+		TestingT:            testingT,
 		Server:              server,
 		SQLStore:            db,
 		Cfg:                 cfg,
@@ -39,10 +50,16 @@ func ProvideTestEnv(
 		FeatureToggles:      featureMgmt,
 		ResourceClient:      resourceClient,
 		IDService:           idService,
+		GitHubFactory:       githubFactory,
+		DecryptService:      decryptService,
 	}, nil
 }
 
 type TestEnv struct {
+	TestingT interface {
+		mock.TestingT
+		Cleanup(func())
+	}
 	Server              *Server
 	SQLStore            db.DB
 	Cfg                 *setting.Cfg
@@ -55,4 +72,6 @@ type TestEnv struct {
 	FeatureToggles      featuremgmt.FeatureToggles
 	ResourceClient      resource.ResourceClient
 	IDService           auth.IDService
+	GitHubFactory       *github.Factory
+	DecryptService      decrypt.DecryptService
 }

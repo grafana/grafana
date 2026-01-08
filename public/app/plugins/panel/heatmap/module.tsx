@@ -1,4 +1,12 @@
-import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameType,
+  FieldConfigProperty,
+  FieldType,
+  identityOverrideProcessor,
+  PanelPlugin,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   AxisPlacement,
@@ -8,27 +16,41 @@ import {
   HeatmapCellLayout,
 } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
-import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
+import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapPanel } from './HeatmapPanel';
+import { YBucketScaleEditor } from './YBucketScaleEditor';
 import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { colorSchemes, quantizeScheme } from './palettes';
-import { HeatmapSuggestionsSupplier } from './suggestions';
+import { heatmapSuggestionsSupplier } from './suggestions';
 import { Options, defaultOptions, HeatmapColorMode, HeatmapColorScale } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig({
-    disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
+    disableStandardOptions: Object.values(FieldConfigProperty).filter(
+      (v) => v !== FieldConfigProperty.Links && v !== FieldConfigProperty.Unit
+    ),
+    standardOptions: {
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
+      [FieldConfigProperty.Unit]: {
+        hideFromDefaults: true,
+      },
+    },
     useCustomConfig: (builder) => {
+      const category = [t('heatmap.category-heatmap', 'Heatmap')];
       builder.addCustomEditor<void, ScaleDistributionConfig>({
         id: 'scaleDistribution',
         path: 'scaleDistribution',
-        name: 'Y axis scale',
-        category: ['Heatmap'],
+        name: t('heatmap.name-y-axis-scale', 'Y axis scale'),
+        category,
         editor: ScaleDistributionEditor,
         override: ScaleDistributionEditor,
         defaultValue: { type: ScaleDistribution.Linear },
@@ -45,6 +67,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     const opts = context.options ?? defaultOptions;
 
     let isOrdinalY = false;
+    const isHeatmapCells = context.data.some((frame) => frame.meta?.type === DataFrameType.HeatmapCells);
 
     if (context.data.length > 0) {
       try {
@@ -61,17 +84,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       } catch {}
     }
 
-    let category = ['Heatmap'];
+    let category = [t('heatmap.category-heatmap', 'Heatmap')];
 
     builder.addRadio({
       path: 'calculate',
-      name: 'Calculate from data',
+      name: t('heatmap.name-calculate-from-data', 'Calculate from data'),
       defaultValue: defaultOptions.calculate,
       category,
       settings: {
         options: [
-          { label: 'Yes', value: true },
-          { label: 'No', value: false },
+          { label: t('heatmap.calculate-from-data-options.label-yes', 'Yes'), value: true },
+          { label: t('heatmap.calculate-from-data-options.label-no', 'No'), value: false },
         ],
       },
     });
@@ -80,26 +103,37 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
     }
 
-    category = ['Y Axis'];
+    if (!opts.calculate && !isHeatmapCells && config.featureToggles.heatmapRowsAxisOptions) {
+      builder.addCustomEditor({
+        id: 'rowsFrame-yBucketScale',
+        path: 'rowsFrame.yBucketScale',
+        name: t('heatmap.name-y-bucket-scale', 'Y bucket scale'),
+        category,
+        editor: YBucketScaleEditor,
+        defaultValue: undefined,
+      });
+    }
+
+    category = [t('heatmap.category-y-axis', 'Y Axis')];
 
     builder
       .addRadio({
         path: 'yAxis.axisPlacement',
-        name: 'Placement',
+        name: t('heatmap.name-placement', 'Placement'),
         defaultValue: defaultOptions.yAxis.axisPlacement ?? AxisPlacement.Left,
         category,
         settings: {
           options: [
-            { label: 'Left', value: AxisPlacement.Left },
-            { label: 'Right', value: AxisPlacement.Right },
-            { label: 'Hidden', value: AxisPlacement.Hidden },
+            { label: t('heatmap.placement-options.label-left', 'Left'), value: AxisPlacement.Left },
+            { label: t('heatmap.placement-options.label-right', 'Right'), value: AxisPlacement.Right },
+            { label: t('heatmap.placement-options.label-hidden', 'Hidden'), value: AxisPlacement.Hidden },
           ],
         },
       })
       .addUnitPicker({
         category,
         path: 'yAxis.unit',
-        name: 'Unit',
+        name: t('heatmap.name-unit', 'Unit'),
         defaultValue: undefined,
         settings: {
           isClearable: true,
@@ -108,9 +142,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       .addNumberInput({
         category,
         path: 'yAxis.decimals',
-        name: 'Decimals',
+        name: t('heatmap.name-decimals', 'Decimals'),
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('heatmap.placeholder-decimals', 'Auto'),
         },
       });
 
@@ -119,17 +153,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       builder
         .addNumberInput({
           path: 'yAxis.min',
-          name: 'Min value',
+          name: t('heatmap.name-min-value', 'Min value'),
           settings: {
-            placeholder: 'Auto',
+            placeholder: t('heatmap.placeholder-min-value', 'Auto'),
           },
           category,
         })
         .addTextInput({
           path: 'yAxis.max',
-          name: 'Max value',
+          name: t('heatmap.name-max-value', 'Max value'),
           settings: {
-            placeholder: 'Auto',
+            placeholder: t('heatmap.placeholder-max-value', 'Auto'),
           },
           category,
         });
@@ -138,65 +172,67 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     builder
       .addNumberInput({
         path: 'yAxis.axisWidth',
-        name: 'Axis width',
+        name: t('heatmap.name-axis-width', 'Axis width'),
         defaultValue: defaultOptions.yAxis.axisWidth,
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('heatmap.placeholder-axis-width', 'Auto'),
           min: 5, // smaller should just be hidden
         },
         category,
       })
       .addTextInput({
         path: 'yAxis.axisLabel',
-        name: 'Axis label',
+        name: t('heatmap.name-axis-label', 'Axis label'),
         defaultValue: defaultOptions.yAxis.axisLabel,
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('heatmap.placeholder-axis-label', 'Auto'),
         },
         category,
       });
 
-    if (!opts.calculate) {
+    // Hide tick alignment for explicit scales - bucket boundaries are fixed by numeric labels
+    const hasExplicitScale = context.options?.rowsFrame?.yBucketScale !== undefined;
+    if (!opts.calculate && !hasExplicitScale) {
       builder.addRadio({
         path: 'rowsFrame.layout',
-        name: 'Tick alignment',
+        name: t('heatmap.name-tick-alignment', 'Tick alignment'),
         defaultValue: defaultOptions.rowsFrame?.layout ?? HeatmapCellLayout.auto,
         category,
         settings: {
           options: [
-            { label: 'Auto', value: HeatmapCellLayout.auto },
-            { label: 'Top (LE)', value: HeatmapCellLayout.le },
-            { label: 'Middle', value: HeatmapCellLayout.unknown },
-            { label: 'Bottom (GE)', value: HeatmapCellLayout.ge },
+            { label: t('heatmap.tick-alignment-options.label-auto', 'Auto'), value: HeatmapCellLayout.auto },
+            { label: t('heatmap.tick-alignment-options.label-top', 'Top (LE)'), value: HeatmapCellLayout.le },
+            { label: t('heatmap.tick-alignment-options.label-middle', 'Middle'), value: HeatmapCellLayout.unknown },
+            { label: t('heatmap.tick-alignment-options.label-bottom', 'Bottom (GE)'), value: HeatmapCellLayout.ge },
           ],
         },
       });
     }
     builder.addBooleanSwitch({
       path: 'yAxis.reverse',
-      name: 'Reverse',
+      name: t('heatmap.name-reverse', 'Reverse'),
       defaultValue: defaultOptions.yAxis.reverse === true,
       category,
     });
 
-    category = ['Colors'];
+    category = [t('heatmap.category-colors', 'Colors')];
 
     builder.addRadio({
       path: `color.mode`,
-      name: 'Mode',
+      name: t('heatmap.name-mode', 'Mode'),
       defaultValue: defaultOptions.color.mode,
       category,
       settings: {
         options: [
-          { label: 'Scheme', value: HeatmapColorMode.Scheme },
-          { label: 'Opacity', value: HeatmapColorMode.Opacity },
+          { label: t('heatmap.mode-options.label-scheme', 'Scheme'), value: HeatmapColorMode.Scheme },
+          { label: t('heatmap.mode-options.label-opacity', 'Opacity'), value: HeatmapColorMode.Opacity },
         ],
       },
     });
 
     builder.addColorPicker({
       path: `color.fill`,
-      name: 'Color',
+      name: t('heatmap.name-color', 'Color'),
       defaultValue: defaultOptions.color.fill,
       category,
       showIf: (opts) => opts.color.mode === HeatmapColorMode.Opacity,
@@ -204,13 +240,13 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
 
     builder.addRadio({
       path: `color.scale`,
-      name: 'Scale',
+      name: t('heatmap.name-scale', 'Scale'),
       defaultValue: defaultOptions.color.scale,
       category,
       settings: {
         options: [
-          { label: 'Exponential', value: HeatmapColorScale.Exponential },
-          { label: 'Linear', value: HeatmapColorScale.Linear },
+          { label: t('heatmap.scale-options.label-exponential', 'Exponential'), value: HeatmapColorScale.Exponential },
+          { label: t('heatmap.scale-options.label-linear', 'Linear'), value: HeatmapColorScale.Linear },
         ],
       },
       showIf: (opts) => opts.color.mode === HeatmapColorMode.Opacity,
@@ -218,7 +254,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
 
     builder.addSliderInput({
       path: 'color.exponent',
-      name: 'Exponent',
+      name: t('heatmap.name-exponent', 'Exponent'),
       defaultValue: defaultOptions.color.exponent,
       category,
       settings: {
@@ -232,7 +268,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
 
     builder.addSelect({
       path: `color.scheme`,
-      name: 'Scheme',
+      name: t('heatmap.name-scheme', 'Scheme'),
       description: '',
       defaultValue: defaultOptions.color.scheme,
       category,
@@ -249,7 +285,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     builder
       .addSliderInput({
         path: 'color.steps',
-        name: 'Steps',
+        name: t('heatmap.name-steps', 'Steps'),
         defaultValue: defaultOptions.color.steps,
         category,
         settings: {
@@ -260,7 +296,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       })
       .addBooleanSwitch({
         path: 'color.reverse',
-        name: 'Reverse',
+        name: t('heatmap.name-reverse', 'Reverse'),
         defaultValue: defaultOptions.color.reverse,
         category,
       })
@@ -282,32 +318,32 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     builder
       .addNumberInput({
         path: 'color.min',
-        name: 'Start color scale from value',
+        name: t('heatmap.name-start-color-from-value', 'Start color scale from value'),
         defaultValue: defaultOptions.color.min,
         settings: {
-          placeholder: 'Auto (min)',
+          placeholder: t('heatmap.placeholder-start-color-from-value', 'Auto (min)'),
         },
         category,
       })
       .addNumberInput({
         path: 'color.max',
-        name: 'End color scale at value',
+        name: t('heatmap.name-end-color-at-value', 'End color scale at value'),
         defaultValue: defaultOptions.color.max,
         settings: {
-          placeholder: 'Auto (max)',
+          placeholder: t('heatmap.placeholder-end-color-at-value', 'Auto (max)'),
         },
         category,
       });
 
-    category = ['Cell display'];
+    category = [t('heatmap.category-cell-display', 'Cell display')];
 
     if (!opts.calculate) {
       builder.addTextInput({
         path: 'rowsFrame.value',
-        name: 'Value name',
+        name: t('heatmap.name-value-name', 'Value name'),
         defaultValue: defaultOptions.rowsFrame?.value,
         settings: {
-          placeholder: 'Value',
+          placeholder: t('heatmap.placeholder-value-name', 'Value'),
         },
         category,
       });
@@ -317,7 +353,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       .addUnitPicker({
         category,
         path: 'cellValues.unit',
-        name: 'Unit',
+        name: t('heatmap.name-unit', 'Unit'),
         defaultValue: undefined,
         settings: {
           isClearable: true,
@@ -326,9 +362,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       .addNumberInput({
         category,
         path: 'cellValues.decimals',
-        name: 'Decimals',
+        name: t('heatmap.name-decimals', 'Decimals'),
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('heatmap.placeholder-decimals', 'Auto'),
         },
       });
 
@@ -347,7 +383,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       //   },
       // })
       .addSliderInput({
-        name: 'Cell gap',
+        name: t('heatmap.name-cell-gap', 'Cell gap'),
         path: 'cellGap',
         defaultValue: defaultOptions.cellGap,
         category,
@@ -358,19 +394,19 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       })
       .addNumberInput({
         path: 'filterValues.le',
-        name: 'Hide cells with values <=',
+        name: t('heatmap.name-hide-cells-lt', 'Hide cells with values <='),
         defaultValue: defaultOptions.filterValues?.le,
         settings: {
-          placeholder: 'None',
+          placeholder: t('heatmap.placeholder-hide-cells-lt', 'None'),
         },
         category,
       })
       .addNumberInput({
         path: 'filterValues.ge',
-        name: 'Hide cells with values >=',
+        name: t('heatmap.name-hide-cells-gt', 'Hide cells with values >='),
         defaultValue: defaultOptions.filterValues?.ge,
         settings: {
-          placeholder: 'None',
+          placeholder: t('heatmap.placeholder-hide-cells-gt', 'None'),
         },
         category,
       });
@@ -385,25 +421,25 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     //   },
     // })
 
-    category = ['Tooltip'];
+    category = [t('heatmap.category-tooltip', 'Tooltip')];
 
     builder.addRadio({
       path: 'tooltip.mode',
-      name: 'Tooltip mode',
+      name: t('heatmap.name-tooltip-mode', 'Tooltip mode'),
       category,
       defaultValue: TooltipDisplayMode.Single,
       settings: {
         options: [
-          { value: TooltipDisplayMode.Single, label: 'Single' },
-          { value: TooltipDisplayMode.Multi, label: 'All' },
-          { value: TooltipDisplayMode.None, label: 'Hidden' },
+          { value: TooltipDisplayMode.Single, label: t('heatmap.tooltip-mode-options.label-single', 'Single') },
+          { value: TooltipDisplayMode.Multi, label: t('heatmap.tooltip-mode-options.label-all', 'All') },
+          { value: TooltipDisplayMode.None, label: t('heatmap.tooltip-mode-options.label-hidden', 'Hidden') },
         ],
       },
     });
 
     builder.addBooleanSwitch({
       path: 'tooltip.yHistogram',
-      name: 'Show histogram (Y axis)',
+      name: t('heatmap.name-show-histogram', 'Show histogram (Y axis)'),
       defaultValue: defaultOptions.tooltip.yHistogram,
       category,
       showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single,
@@ -411,7 +447,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
 
     builder.addBooleanSwitch({
       path: 'tooltip.showColorScale',
-      name: 'Show color scale',
+      name: t('heatmap.name-show-color-scale', 'Show color scale'),
       defaultValue: defaultOptions.tooltip.showColorScale,
       category,
       showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single,
@@ -419,7 +455,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
 
     builder.addNumberInput({
       path: 'tooltip.maxWidth',
-      name: 'Max width',
+      name: t('heatmap.name-max-width', 'Max width'),
       category,
       settings: {
         integer: true,
@@ -429,30 +465,34 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
 
     builder.addNumberInput({
       path: 'tooltip.maxHeight',
-      name: 'Max height',
+      name: t('heatmap.name-max-height', 'Max height'),
       category,
       defaultValue: undefined,
       settings: {
         integer: true,
       },
-      showIf: (options) => options.tooltip?.mode === TooltipDisplayMode.Multi,
+      showIf: (options: Options, data: DataFrame[] | undefined, annotations: DataFrame[] | undefined) =>
+        options.tooltip?.mode === TooltipDisplayMode.Multi ||
+        annotations?.some((df) => df.meta?.custom?.resultType === 'exemplar'),
     });
 
-    category = ['Legend'];
+    category = [t('heatmap.category-legend', 'Legend')];
     builder.addBooleanSwitch({
       path: 'legend.show',
-      name: 'Show legend',
+      name: t('heatmap.name-show-legend', 'Show legend'),
       defaultValue: defaultOptions.legend.show,
       category,
     });
 
-    category = ['Exemplars'];
+    category = [t('heatmap.category-exemplars', 'Exemplars')];
     builder.addColorPicker({
       path: 'exemplars.color',
-      name: 'Color',
+      name: t('heatmap.name-color', 'Color'),
       defaultValue: defaultOptions.exemplars.color,
       category,
+      showIf: (options: Options, data: DataFrame[] | undefined, annotations: DataFrame[] | undefined) =>
+        annotations?.some((df) => df.meta?.custom?.resultType === 'exemplar'),
     });
   })
-  .setSuggestionsSupplier(new HeatmapSuggestionsSupplier())
+  .setSuggestionsSupplier(heatmapSuggestionsSupplier)
   .setDataSupport({ annotations: true });

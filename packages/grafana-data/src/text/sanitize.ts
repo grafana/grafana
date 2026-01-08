@@ -13,11 +13,17 @@ XSSWL.iframe = ['src', 'width', 'height'];
 
 const sanitizeTextPanelWhitelist = new xss.FilterXSS({
   // Add sandbox attribute to iframe tags if an attribute is allowed.
-  onTagAttr: function (tag, name, value, isWhiteAttr) {
+  onTagAttr(tag, name, value, isWhiteAttr) {
     if (tag === 'iframe') {
       return isWhiteAttr
         ? ` ${name}="${xss.escapeAttrValue(sanitizeUrl(value))}" sandbox credentialless referrerpolicy=no-referrer`
         : '';
+    }
+    return;
+  },
+  onTag(tag, html, options) {
+    if (html === '<input disabled="" type="checkbox">' || html === '<input checked="" disabled="" type="checkbox">') {
+      return html;
     }
     return;
   },
@@ -50,13 +56,22 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
  */
 export function sanitize(unsanitizedString: string): string {
   try {
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+
     return DOMPurify.sanitize(unsanitizedString, {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['form', 'input'],
+      ADD_ATTR: ['target'],
     });
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return escapeHtml(unsanitizedString);
+  } finally {
+    DOMPurify.removeHook('afterSanitizeAttributes');
   }
 }
 
@@ -112,6 +127,52 @@ export function escapeHtml(str: string): string {
     .replace(/>/g, '&gt;')
     .replace(/'/g, '&#39;')
     .replace(/"/g, '&quot;');
+}
+
+export class PathValidationError extends Error {
+  constructor(message = 'Invalid request path') {
+    super(message);
+    this.name = 'PathValidationError';
+    // Maintains proper stack trace for where error was thrown (only available on V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PathValidationError);
+    }
+  }
+}
+
+/**
+ * Validates a path or URL, protecting against path traversal attacks.
+ * Returns the original input if safe, or throw an error
+ */
+export function validatePath<OriginalPath extends string>(path: OriginalPath): OriginalPath {
+  try {
+    let decoded: string = path;
+    while (true) {
+      const nextDecode = decodeURIComponent(decoded);
+      if (nextDecode === decoded) {
+        break; // String is fully decoded.
+      }
+      decoded = nextDecode;
+    }
+
+    // Validate the entire decoded string for traversal attempts
+    // This prevents attacks that use query separators to hide traversal payloads
+    if (/\.\.|\/\\|[\t\n\r]/.test(decoded)) {
+      throw new PathValidationError();
+    }
+
+    // Return the original path (not the decoded version) to preserve the full URL
+    return path;
+  } catch (err) {
+    // Rethrow the original PathValidationError to preserve the stack trace
+    if (err instanceof PathValidationError) {
+      throw err;
+    }
+
+    // A decoding error can happen with malformed URIs (e.g., % not followed by hex).
+    // These are suspicious, so we treat them as traversal attempts.
+    throw new PathValidationError('Error validating request path');
+  }
 }
 
 export const textUtil = {

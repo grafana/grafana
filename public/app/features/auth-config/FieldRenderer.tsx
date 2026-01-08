@@ -2,14 +2,18 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { UseFormReturn, Controller } from 'react-hook-form';
 
+import { SelectableValue } from '@grafana/data';
 import { Checkbox, Field, Input, SecretInput, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import { fieldMap } from './fields';
 import { SSOProviderDTO, SSOSettingsField } from './types';
-import { isSelectableValue } from './utils/guards';
+import { isSelectableValueArray } from './utils/guards';
 
 interface FieldRendererProps
-  extends Pick<UseFormReturn<SSOProviderDTO>, 'register' | 'control' | 'watch' | 'setValue' | 'unregister'> {
+  extends Pick<
+    UseFormReturn<SSOProviderDTO>,
+    'register' | 'control' | 'watch' | 'setValue' | 'getValues' | 'unregister'
+  > {
   field: SSOSettingsField;
   errors: UseFormReturn['formState']['errors'];
   secretConfigured: boolean;
@@ -22,6 +26,7 @@ export const FieldRenderer = ({
   errors,
   watch,
   setValue,
+  getValues,
   control,
   unregister,
   secretConfigured,
@@ -30,17 +35,47 @@ export const FieldRenderer = ({
   const [isSecretConfigured, setIsSecretConfigured] = useState(secretConfigured);
   const isDependantField = typeof field !== 'string';
   const name = isDependantField ? field.name : field;
-  const parentValue = isDependantField ? watch(field.dependsOn) : null;
+  const parentValue = isDependantField && field.dependsOn ? watch(field.dependsOn) : null;
   const fieldData = fieldMap(provider)[name];
   const theme = useTheme2();
+
+  // Handle disabledWhen configuration
+  const disabledWhen = isDependantField ? field.disabledWhen : undefined;
+  const disabledWhenValue = disabledWhen ? watch(disabledWhen.field) : undefined;
+  const isDisabled = disabledWhen ? disabledWhenValue === disabledWhen.is : false;
+
   // Unregister a field that depends on a toggle to clear its data
   useEffect(() => {
-    if (isDependantField) {
+    if (isDependantField && field.dependsOn) {
       if (!parentValue) {
         unregister(name);
       }
     }
-  }, [unregister, name, parentValue, isDependantField]);
+  }, [unregister, name, parentValue, isDependantField, field]);
+
+  const isNotEmptySelectableValueArray = (
+    current: string | boolean | Record<string, string> | Array<SelectableValue<string>> | undefined
+  ): current is Array<SelectableValue<string>> => {
+    return Array.isArray(current) && current.length > 0 && 'value' in current[0];
+  };
+
+  useEffect(() => {
+    if (fieldData.defaultValue) {
+      const current = getValues(name);
+      const obj = fieldData.options?.find(
+        (option) => option.value === (isNotEmptySelectableValueArray(current) ? current[0].value : undefined)
+      );
+      setValue(name, obj?.value || fieldData.defaultValue.value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Set the value when the field is disabled
+  useEffect(() => {
+    if (isDisabled && disabledWhen?.disabledValue) {
+      setValue(name, disabledWhen.disabledValue.value);
+    }
+  }, [isDisabled, disabledWhen?.disabledValue, name, setValue]);
 
   if (!field) {
     console.log('missing field:', name);
@@ -52,12 +87,12 @@ export const FieldRenderer = ({
   }
 
   // Dependant field means the field depends on another field's value and shouldn't be rendered if the parent field is false
-  if (isDependantField) {
-    const parentValue = watch(field.dependsOn);
+  if (isDependantField && field.dependsOn) {
     if (!parentValue) {
       return null;
     }
   }
+
   const fieldProps = {
     label: fieldData.label,
     required: !!fieldData.validation?.required,
@@ -101,7 +136,7 @@ export const FieldRenderer = ({
       const watchOptions = watch(name);
       let options = fieldData.options;
       if (!fieldData.options?.length) {
-        options = isSelectableValue(watchOptions) ? watchOptions : [];
+        options = isSelectableValueArray(watchOptions) ? watchOptions : [];
       }
       return (
         <Field key={name} {...fieldProps} htmlFor={name}>
@@ -109,10 +144,10 @@ export const FieldRenderer = ({
             rules={fieldData.validation}
             name={name}
             control={control}
-            render={({ field: { ref, onChange, ...fieldProps }, fieldState: { invalid } }) => {
+            render={({ field: { ref, onChange, ...controllerFieldProps }, fieldState: { invalid } }) => {
               return (
                 <Select
-                  {...fieldProps}
+                  {...controllerFieldProps}
                   placeholder={fieldData.placeholder}
                   isMulti={fieldData.multi}
                   invalid={invalid}
@@ -121,6 +156,7 @@ export const FieldRenderer = ({
                   allowCustomValue={!!fieldData.allowCustomValue}
                   defaultValue={fieldData.defaultValue}
                   onChange={onChange}
+                  disabled={isDisabled}
                   onCreateOption={(v) => {
                     const customValue = { value: v, label: v };
                     onChange([...(options || []), customValue]);

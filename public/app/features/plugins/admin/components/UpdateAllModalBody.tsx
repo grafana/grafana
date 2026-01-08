@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Checkbox, EmptyState, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { CatalogPlugin } from '../types';
 
@@ -87,7 +87,9 @@ const StatusIcon = ({
   if (errorMap && errorMap.has(id)) {
     return (
       <Tooltip
-        content={`${t('plugins.catalog.update-all.error', 'Error updating plugin:')} ${errorMap.get(id)?.message}`}
+        content={t('plugins.catalog.update-all.error', 'Error updating plugin: {{errorMessage}}', {
+          errorMessage: errorMap.get(id)?.message,
+        })}
       >
         <Icon className={styles.errorIcon} size="xl" name="exclamation-triangle" />
       </Tooltip>
@@ -194,7 +196,7 @@ export const UpdateModalBody = ({
               {`${errorMap.size} ${t('plugins.catalog.update-all.error-status-text', 'failed - see error messages')}`}
             </div>
           )}
-          {config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall && (
+          {config.pluginAdminExternalManageEnabled && (
             <footer className={styles.footer}>
               <Trans i18nKey="plugins.catalog.update-all.cloud-update-message">
                 * It may take a few minutes for the plugins to be available for usage.

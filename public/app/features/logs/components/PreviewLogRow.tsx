@@ -10,7 +10,7 @@ export const PreviewLogRow = ({ row, showDuplicates, showLabels, showTime, displ
       <td></td>
       {showTime && <td>{row.timeEpochMs}</td>}
       {showLabels && row.uniqueLabels && <td></td>}
-      {displayedFields ? (
+      {displayedFields && displayedFields.length > 0 ? (
         <LogRowMessageDisplayedFields
           {...rest}
           row={row}
@@ -21,9 +21,9 @@ export const PreviewLogRow = ({ row, showDuplicates, showLabels, showTime, displ
           preview
         />
       ) : (
-        <td>{row.entry}</td>
+        <td className={rest.styles.logsRowMessage}>{row.entry}</td>
       )}
-      <td></td>
+      <td className={`log-row-menu-cell ${rest.styles.logRowMenuCell}`}></td>
     </tr>
   );
 };

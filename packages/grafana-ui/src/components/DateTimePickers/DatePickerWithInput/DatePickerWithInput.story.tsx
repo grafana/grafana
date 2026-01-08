@@ -13,7 +13,7 @@ const minimumDate = new Date();
 minimumDate.setMonth(minimumDate.getMonth() - 1);
 
 const meta: Meta<typeof DatePickerWithInput> = {
-  title: 'Pickers and Editors/TimePickers/DatePickerWithInput',
+  title: 'Date time pickers/DatePickerWithInput',
   component: DatePickerWithInput,
   parameters: {
     docs: {

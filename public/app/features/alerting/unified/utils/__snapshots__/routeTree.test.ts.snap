@@ -8,6 +8,7 @@ exports[`addRouteToReferenceRoute should be able to add above 1`] = `
       "id": "route-2",
     },
     {
+      "active_time_intervals": undefined,
       "continue": undefined,
       "group_by": undefined,
       "group_interval": undefined,
@@ -39,6 +40,7 @@ exports[`addRouteToReferenceRoute should be able to add as child 1`] = `
       "id": "route-3",
       "routes": [
         {
+          "active_time_intervals": undefined,
           "continue": undefined,
           "group_by": undefined,
           "group_interval": undefined,
@@ -69,6 +71,7 @@ exports[`addRouteToReferenceRoute should be able to add below 1`] = `
       "id": "route-3",
     },
     {
+      "active_time_intervals": undefined,
       "continue": undefined,
       "group_by": undefined,
       "group_interval": undefined,

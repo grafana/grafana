@@ -26,13 +26,13 @@ import { dataFrameFromJSON } from './DataFrameJSON';
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
     // TODO: should be Column but type does not exists there so not sure whats up here.
-    const { text, type, ...disp } = c as any;
+    const { text, type, ...disp } = c as Column & { type?: FieldType };
     const values: unknown[] = [];
     return {
-      name: text?.length ? text : c, // rename 'text' to the 'name' field
-      config: (disp || {}) as FieldConfig,
+      name: text ?? c, // rename 'text' to the 'name' field
+      config: disp || {},
       values,
-      type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
+      type: type && Object.values(FieldType).includes(type) ? type : FieldType.other,
     };
   });
 
@@ -400,8 +400,9 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
       if (config) {
         // keep unit etc
         const { ...column } = config;
-        (column as Column).text = name;
-        return column as Column;
+        const result = column as Column;
+        result.text = name;
+        return result;
       }
       return { text: name };
     }),
@@ -429,18 +430,20 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
 
   return {
     ...data,
-    fields: data.fields.map((f) => {
-      const newF = {
-        ...f,
-        values: f.values.map((v, i) => f.values[index[i]]),
+    fields: data.fields.map((field) => {
+      const newValues = Array.from({ length: field.values.length }, (_, i) => field.values[index[i]]);
+
+      const newField = {
+        ...field,
+        values: newValues,
       };
 
       // only add .nanos if it exists
-      const { nanos } = f;
+      const { nanos } = field;
       if (nanos !== undefined) {
-        newF.nanos = nanos.map((n, i) => nanos[index[i]]);
+        newField.nanos = Array.from({ length: nanos.length }, (_, i) => nanos[index[i]]);
       }
-      return newF;
+      return newField;
     }),
   };
 }

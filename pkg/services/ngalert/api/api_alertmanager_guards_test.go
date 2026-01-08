@@ -693,6 +693,7 @@ func TestCheckMuteTimes(t *testing.T) {
 }
 
 func gettableMuteIntervals(t *testing.T, muteTimeIntervals []amConfig.MuteTimeInterval, provenances map[string]definitions.Provenance) definitions.GettableUserConfig {
+	t.Helper()
 	return definitions.GettableUserConfig{
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
 			MuteTimeProvenances: provenances,

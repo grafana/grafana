@@ -9,9 +9,11 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     menu: css({
       label: 'grafana-select-menu',
       background: theme.components.dropdown.background,
+      borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       position: 'relative',
       minWidth: '100%',
+      overflow: 'hidden',
       zIndex: 1,
     }),
     option: css({
@@ -25,6 +27,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       cursor: 'pointer',
       borderLeft: '2px solid transparent',
+      borderRadius: theme.shape.radius.default,
 
       '&:hover': {
         background: theme.colors.action.hover,
@@ -124,7 +127,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       alignItems: 'center',
       lineHeight: 1,
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
       margin: theme.spacing(0.25, 1, 0.25, 0),
       padding: theme.spacing(0.25, 0, 0.25, 1),
       color: theme.colors.text.primary,

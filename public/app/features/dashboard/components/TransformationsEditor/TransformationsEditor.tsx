@@ -5,6 +5,7 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   DataFrame,
+  DataQueryRequest,
   DataTransformerConfig,
   PanelData,
   SelectableValue,
@@ -12,6 +13,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -23,14 +25,12 @@ import {
   ButtonGroup,
   ScrollContainer,
 } from '@grafana/ui';
-import config from 'app/core/config';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
 import { PanelModel } from '../../state/PanelModel';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';
-import { TransformationPicker } from './TransformationPicker';
 import { TransformationPickerNg } from './TransformationPickerNg';
 import { TransformationsEditorTransformation } from './types';
 
@@ -43,6 +43,7 @@ export type viewAllType = 'viewAll';
 export type FilterCategory = TransformerCategory | viewAllType;
 
 export interface TransformationData {
+  request?: DataQueryRequest;
   series: DataFrame[];
   annotations?: DataFrame[];
 }
@@ -138,21 +139,19 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   }
 
   componentDidUpdate(prevProps: Readonly<TransformationsEditorProps>, prevState: Readonly<State>): void {
-    if (config.featureToggles.transformationsRedesign) {
-      const prevHasTransforms = prevState.transformations.length > 0;
-      const prevShowPicker = !prevHasTransforms || prevState.showPicker;
+    const prevHasTransforms = prevState.transformations.length > 0;
+    const prevShowPicker = !prevHasTransforms || prevState.showPicker;
 
-      const currentHasTransforms = this.state.transformations.length > 0;
-      const currentShowPicker = !currentHasTransforms || this.state.showPicker;
+    const currentHasTransforms = this.state.transformations.length > 0;
+    const currentShowPicker = !currentHasTransforms || this.state.showPicker;
 
-      if (prevShowPicker !== currentShowPicker) {
-        // kindOfZero will be a random number between 0 and 0.5. It will be rounded to 0 by the scrollable component.
-        // We cannot always use 0 as it will not trigger a rerender of the scrollable component consistently
-        // due to React changes detection algo.
-        const kindOfZero = Math.random() / 2;
+    if (prevShowPicker !== currentShowPicker) {
+      // kindOfZero will be a random number between 0 and 0.5. It will be rounded to 0 by the scrollable component.
+      // We cannot always use 0 as it will not trigger a rerender of the scrollable component consistently
+      // due to React changes detection algo.
+      const kindOfZero = Math.random() / 2;
 
-        this.setState({ scrollTop: currentShowPicker ? kindOfZero : Number.MAX_SAFE_INTEGER });
-      }
+      this.setState({ scrollTop: currentShowPicker ? kindOfZero : Number.MAX_SAFE_INTEGER });
     }
 
     if (prevState.scrollTop !== this.state.scrollTop) {
@@ -180,10 +179,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   onTransformationAdd = (selectable: SelectableValue<string>) => {
-    let eventName = 'panel_editor_tabs_transformations_management';
-    if (config.featureToggles.transformationsRedesign) {
-      eventName = 'transformations_redesign_' + eventName;
-    }
+    const eventName = 'transformations_redesign_panel_editor_tabs_transformations_management';
 
     reportInteraction(eventName, {
       action: 'add',
@@ -208,10 +204,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   onTransformationChange = (idx: number, dataConfig: DataTransformerConfig) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
-    let eventName = 'panel_editor_tabs_transformations_management';
-    if (config.featureToggles.transformationsRedesign) {
-      eventName = 'transformations_redesign_' + eventName;
-    }
+    const eventName = 'transformations_redesign_panel_editor_tabs_transformations_management';
 
     reportInteraction(eventName, {
       action: 'change',
@@ -224,10 +217,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   onTransformationRemove = (idx: number) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
-    let eventName = 'panel_editor_tabs_transformations_management';
-    if (config.featureToggles.transformationsRedesign) {
-      eventName = 'transformations_redesign_' + eventName;
-    }
+    const eventName = 'transformations_redesign_panel_editor_tabs_transformations_management';
 
     reportInteraction(eventName, {
       action: 'remove',
@@ -266,7 +256,8 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         onShowPicker={() => {
           this.setState({ showPicker: true });
         }}
-      ></EmptyTransformationsMessage>
+        data={this.state.data.series}
+      />
     );
   };
 
@@ -295,20 +286,11 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderTransformsPicker() {
-    let { showPicker } = this.state;
-    const { transformations, search } = this.state;
-    const { transformationsRedesign } = config.featureToggles;
+    const { showPicker, transformations, search } = this.state;
     const noTransforms = !transformations?.length;
     const hasTransforms = transformations.length > 0;
     let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
-
-    // In the case we're not on the transformation
-    // redesign and there are no transformations
-    // then we show the picker in that case
-    if (!transformationsRedesign && noTransforms) {
-      showPicker = true;
-    }
 
     if (this.state.selectedFilter !== VIEW_ALL_VALUE) {
       xforms = xforms.filter(
@@ -334,7 +316,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             onClick={() => {
               this.setState({ search: '' });
             }}
-            tooltip="Clear search"
+            tooltip={t('dashboard.un-themed-transformations-editor.tooltip-clear-search', 'Clear search')}
           />
         </>
       );
@@ -349,74 +331,58 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           onClick={() => {
             this.setState({ showPicker: false });
           }}
-          tooltip="Close picker"
+          tooltip={t('dashboard.un-themed-transformations-editor.tooltip-close-picker', 'Close picker')}
         />
       );
     }
 
-    // If we're in the transformation redesign
-    // we have the add transformation add the
-    // delete all control
-    let picker = null;
-    let deleteAll = null;
-    if (transformationsRedesign) {
-      picker = (
-        <TransformationPickerNg
-          noTransforms={noTransforms}
-          search={search}
-          suffix={suffix}
-          xforms={xforms}
-          onClose={() => this.setState({ showPicker: false })}
-          onSelectedFilterChange={(filter) => this.setState({ selectedFilter: filter })}
-          onShowIllustrationsChange={(showIllustrations) => this.setState({ showIllustrations })}
-          onSearchChange={this.onSearchChange}
-          onSearchKeyDown={this.onSearchKeyDown}
-          onTransformationAdd={this.onTransformationAdd}
-          data={this.state.data.series}
-          selectedFilter={this.state.selectedFilter}
-          showIllustrations={this.state.showIllustrations}
-        />
-      );
+    const picker = (
+      <TransformationPickerNg
+        noTransforms={noTransforms}
+        search={search}
+        suffix={suffix}
+        xforms={xforms}
+        onClose={() => this.setState({ showPicker: false })}
+        onSelectedFilterChange={(filter) => this.setState({ selectedFilter: filter })}
+        onShowIllustrationsChange={(showIllustrations) => this.setState({ showIllustrations })}
+        onSearchChange={this.onSearchChange}
+        onSearchKeyDown={this.onSearchKeyDown}
+        onTransformationAdd={this.onTransformationAdd}
+        data={this.state.data.series}
+        selectedFilter={this.state.selectedFilter}
+        showIllustrations={this.state.showIllustrations}
+      />
+    );
 
-      deleteAll = (
-        <>
-          <Button
-            icon="times"
-            variant="secondary"
-            onClick={() => this.setState({ showRemoveAllModal: true })}
-            style={{ marginLeft: this.props.theme.spacing.md }}
-          >
+    const deleteAll = (
+      <>
+        <Button
+          icon="times"
+          variant="secondary"
+          onClick={() => this.setState({ showRemoveAllModal: true })}
+          style={{ marginLeft: this.props.theme.spacing.md }}
+        >
+          <Trans i18nKey="dashboard.un-themed-transformations-editor.delete-all-transformations">
             Delete all transformations
-          </Button>
-          <ConfirmModal
-            isOpen={Boolean(this.state.showRemoveAllModal)}
-            title="Delete all transformations?"
-            body="By deleting all transformations, you will go back to the main selection screen."
-            confirmText="Delete all"
-            onConfirm={() => this.onTransformationRemoveAll()}
-            onDismiss={() => this.setState({ showRemoveAllModal: false })}
-          />
-        </>
-      );
-    }
-    // Otherwise we use the old picker
-    else {
-      picker = (
-        <TransformationPicker
-          noTransforms={noTransforms}
-          search={search}
-          suffix={suffix}
-          xforms={xforms}
-          onSearchChange={this.onSearchChange}
-          onSearchKeyDown={this.onSearchKeyDown}
-          onTransformationAdd={this.onTransformationAdd}
+          </Trans>
+        </Button>
+        <ConfirmModal
+          isOpen={Boolean(this.state.showRemoveAllModal)}
+          title={t(
+            'dashboard.un-themed-transformations-editor.title-delete-all-transformations',
+            'Delete all transformations?'
+          )}
+          body={t(
+            'dashboard.un-theme-transformations-editor.body-delete-all-transformations',
+            'By deleting all transformations, you will go back to the main selection screen.'
+          )}
+          confirmText={t('dashboard.un-themed-transformations-editor.confirmText-delete-all', 'Delete all')}
+          onConfirm={() => this.onTransformationRemoveAll()}
+          onDismiss={() => this.setState({ showRemoveAllModal: false })}
         />
-      );
-    }
+      </>
+    );
 
-    // Compose actions, if we're in the
-    // redesign a "Delete All Transformations"
-    // button (with confirm modal) is added
     const actions = (
       <ButtonGroup>
         <Button
@@ -427,7 +393,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           }}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          Add another transformation
+          <Trans i18nKey="dashboard.un-themed-transformations-editor.actions.add-another-transformation">
+            Add another transformation
+          </Trans>
         </Button>
         {deleteAll}
       </ButtonGroup>
@@ -436,14 +404,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     return (
       <>
         {showPicker && picker}
-        {
-          // If the transformation redesign is enabled
-          // and there are transforms then show actions
-          (transformationsRedesign && hasTransforms && actions) ||
-            // If it's not enabled only show actions when there are
-            // transformations and the (old) picker isn't being shown
-            (!transformationsRedesign && !showPicker && hasTransforms && actions)
-        }
+        {hasTransforms && actions}
       </>
     );
   }
@@ -468,7 +429,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       <ScrollContainer ref={this.ref} minHeight="100%">
         <Container padding="lg">
           <div data-testid={selectors.components.TransformTab.content}>
-            {!hasTransforms && config.featureToggles.transformationsRedesign && this.renderEmptyMessage()}
+            {!hasTransforms && this.renderEmptyMessage()}
             {hasTransforms && this.renderTransformationEditors()}
             {this.renderTransformsPicker()}
           </div>

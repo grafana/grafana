@@ -250,7 +250,7 @@ func NewNoData() NoData {
 	return NoData{data.NewFrame("no data")}
 }
 
-// TableData is an untyped no data response.
+// TableData is a single table data frame with no labels on any fields.
 type TableData struct{ Frame *data.Frame }
 
 // Type returns the Value type and allows it to fulfill the Value interface.

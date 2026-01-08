@@ -20,8 +20,10 @@ import (
 	"github.com/go-kit/log/level"
 	"github.com/go-stack/stack"
 	"github.com/mattn/go-isatty"
+	sloggokit "github.com/tjhop/slog-gokit"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/infra/log/text"
 	"github.com/grafana/grafana/pkg/util"
@@ -52,6 +54,8 @@ func init() {
 	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
+	// Use default Info level during package initialization before config is loaded
+	initAppSDKLogger(logger, slog.LevelInfo)
 
 	RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
 		pFromCtx := ctx.Value(logParamsContextKey{})
@@ -77,7 +81,7 @@ func newManager(logger gokitlog.Logger) *logManager {
 	}
 }
 
-func (lm *logManager) initialize(loggers []logWithFilters) {
+func (lm *logManager) initialize(loggers []logWithFilters, levelStr string) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
@@ -86,7 +90,7 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 		defaultLoggers[index] = level.NewFilter(logger.val, logger.maxLevel)
 	}
 
-	lm.ConcreteLogger.Swap(&compositeLogger{loggers: defaultLoggers})
+	lm.Swap(&compositeLogger{loggers: defaultLoggers})
 	lm.logFilters = loggers
 
 	loggersByName := []string{}
@@ -109,6 +113,8 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 
 		lm.loggersByName[name].Swap(&compositeLogger{loggers: ctxLoggers})
 	}
+
+	initAppSDKLogger(lm.ConcreteLogger, stringToSlogLevel(levelStr))
 }
 
 func (lm *logManager) New(ctx ...any) *ConcreteLogger {
@@ -509,7 +515,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		configLoggers = append(configLoggers, handler)
 	}
 	if len(configLoggers) > 0 {
-		root.initialize(configLoggers)
+		root.initialize(configLoggers, defaultLevelName)
 	}
 
 	return nil
@@ -544,4 +550,24 @@ func SetupConsoleLogger(level string) error {
 	}
 
 	return nil
+}
+
+// stringToSlogLevel converts a log level string to slog.Level
+func stringToSlogLevel(levelStr string) slog.Level {
+	switch strings.ToLower(levelStr) {
+	case "trace", "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error", "critical":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
+}
+
+func initAppSDKLogger(gkl gokitlog.Logger, level slog.Level) {
+	logging.DefaultLogger = logging.NewSLogLogger(sloggokit.NewGoKitHandler(gkl, level))
 }

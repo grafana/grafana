@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Row } from 'react-table';
 
-import { Field, FieldType, MutableDataFrame, SelectableValue } from '@grafana/data';
+import { Field, FieldConfigSource, FieldType, MutableDataFrame, SelectableValue } from '@grafana/data';
 
 import {
   calculateUniqueFieldValues,
@@ -548,7 +548,7 @@ describe('Table utils', () => {
     // FLAKY TEST - https://drone.grafana.net/grafana/grafana/201232/1/5
     it.skip('should guess the longest field correctly if there are few records', () => {
       const data = getWrappableData(10);
-      const config = {
+      const config: FieldConfigSource = {
         defaults: {
           custom: {
             cellOptions: {
@@ -556,6 +556,7 @@ describe('Table utils', () => {
             },
           },
         },
+        overrides: [],
       };
 
       const longestField = guessLongestField(config, data);
@@ -564,7 +565,7 @@ describe('Table utils', () => {
 
     it('should guess the longest field correctly if there are many records', () => {
       const data = getWrappableData(1000);
-      const config = {
+      const config: FieldConfigSource = {
         defaults: {
           custom: {
             cellOptions: {
@@ -572,6 +573,7 @@ describe('Table utils', () => {
             },
           },
         },
+        overrides: [],
       };
 
       const longestField = guessLongestField(config, data);
@@ -580,7 +582,7 @@ describe('Table utils', () => {
 
     it('should return undefined if there is no data', () => {
       const data = getData();
-      const config = {
+      const config: FieldConfigSource = {
         defaults: {
           custom: {
             cellOptions: {
@@ -588,10 +590,30 @@ describe('Table utils', () => {
             },
           },
         },
+        overrides: [],
       };
 
       const longestField = guessLongestField(config, data);
       expect(longestField).toBe(undefined);
+    });
+
+    it('should not throw an error if first entry in input data is missing a given field', () => {
+      const data = getWrappableData(10);
+      const config: FieldConfigSource = {
+        defaults: {
+          custom: {
+            cellOptions: {
+              wrapText: true,
+            },
+          },
+        },
+        overrides: [],
+      };
+
+      data.fields[1].values[0] = undefined; // Simulate missing value in the first row
+
+      const longestField = guessLongestField(config, data);
+      expect(longestField?.name).toBe('Lorem 10');
     });
   });
 });

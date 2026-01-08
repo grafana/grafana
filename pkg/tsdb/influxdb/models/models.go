@@ -10,6 +10,7 @@ type Query struct {
 	Measurement  string
 	Policy       string
 	Tags         []*Tag
+	AdhocFilters []*Tag
 	GroupBy      []*QueryPart
 	Selects      []*Select
 	RawQuery     string

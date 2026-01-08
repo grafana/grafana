@@ -1,6 +1,6 @@
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Stack, Text } from '@grafana/ui';
-import { Props as AlertProps } from '@grafana/ui/src/components/Alert/Alert';
+import { AlertProps } from '@grafana/ui/internal';
 
 interface AlertWithTraceIDProps extends AlertProps {
   error?: unknown;
@@ -17,7 +17,7 @@ export function AlertWithTraceID(props: AlertWithTraceIDProps) {
 
         {traceID && (
           /* Deliberately don't want to translate 'Trace ID' */
-          /* eslint-disable-next-line @grafana/no-untranslated-strings */
+          /* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */
           <Text element="p" color="secondary" variant="bodySmall">
             Trace ID: {traceID}
           </Text>

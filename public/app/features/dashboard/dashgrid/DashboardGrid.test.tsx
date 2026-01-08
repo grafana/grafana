@@ -4,10 +4,10 @@ import { render } from 'test/test-utils';
 
 import { TextBoxVariableModel } from '@grafana/data';
 import { Dashboard } from '@grafana/schema';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { GetVariables } from 'app/features/variables/state/selectors';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';

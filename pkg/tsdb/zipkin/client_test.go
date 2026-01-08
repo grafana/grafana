@@ -2,11 +2,14 @@ package zipkin
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/openzipkin/zipkin-go/model"
 	"github.com/stretchr/testify/assert"
@@ -17,29 +20,37 @@ func TestZipkinClient_Services(t *testing.T) {
 		name           string
 		mockResponse   string
 		mockStatusCode int
+		mockStatus     string
 		expectedResult []string
 		expectError    bool
+		expectedError  error
 	}{
 		{
 			name:           "Successful response",
 			mockResponse:   `["service1", "service2"]`,
 			mockStatusCode: http.StatusOK,
+			mockStatus:     "OK",
 			expectedResult: []string{"service1", "service2"},
 			expectError:    false,
+			expectedError:  nil,
 		},
 		{
 			name:           "Non-200 response",
 			mockResponse:   "",
 			mockStatusCode: http.StatusInternalServerError,
+			mockStatus:     "Internal Server Error",
 			expectedResult: []string{},
 			expectError:    true,
+			expectedError:  backend.DownstreamError(fmt.Errorf("request failed: Internal Server Error")),
 		},
 		{
 			name:           "Invalid JSON response",
 			mockResponse:   `{invalid json`,
 			mockStatusCode: http.StatusOK,
+			mockStatus:     "OK",
 			expectedResult: []string{},
 			expectError:    true,
+			expectedError:  errors.New("invalid character 'i' looking for beginning of value"),
 		},
 	}
 

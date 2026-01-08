@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
+
+var domainRegexp = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,6}$`)
 
 func AllowAssignGrafanaAdminValidator(info *social.OAuthInfo, oldInfo *social.OAuthInfo, requester identity.Requester) ssosettings.ValidateFunc[social.OAuthInfo] {
 	return func(info *social.OAuthInfo, requester identity.Requester) error {
@@ -48,6 +51,15 @@ func SkipOrgRoleSyncAllowAssignGrafanaAdminValidator(info *social.OAuthInfo, req
 	return nil
 }
 
+func LoginPromptValidator(info *social.OAuthInfo, requester identity.Requester) error {
+	prompt := info.LoginPrompt
+
+	if prompt != "" && prompt != "login" && prompt != "consent" && prompt != "select_account" {
+		return ssosettings.ErrInvalidOAuthConfig("Invalid value for login_prompt. Valid values are: login, consent, select_account.")
+	}
+	return nil
+}
+
 func RequiredValidator(value string, name string) ssosettings.ValidateFunc[social.OAuthInfo] {
 	return func(info *social.OAuthInfo, requester identity.Requester) error {
 		if value == "" {
@@ -61,6 +73,18 @@ func UrlValidator(value string, name string) ssosettings.ValidateFunc[social.OAu
 	return func(info *social.OAuthInfo, requester identity.Requester) error {
 		if !isValidUrl(value) {
 			return ssosettings.ErrInvalidOAuthConfig(fmt.Sprintf("%s is an invalid URL.", name))
+		}
+		return nil
+	}
+}
+
+func DomainValidator(value string, name string) ssosettings.ValidateFunc[social.OAuthInfo] {
+	return func(info *social.OAuthInfo, requester identity.Requester) error {
+		if value == "" {
+			return nil
+		}
+		if !domainRegexp.MatchString(value) {
+			return ssosettings.ErrInvalidOAuthConfig(fmt.Sprintf("%s contains an invalid domain.", name))
 		}
 		return nil
 	}

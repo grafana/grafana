@@ -3,10 +3,11 @@ import { byTestId, byText } from 'testing-library-selector';
 
 import { PromOptions } from '@grafana/prometheus';
 import { setPluginLinksHook } from '@grafana/runtime';
+import config from 'app/core/config';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';
@@ -27,6 +28,9 @@ import { Annotation } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./api/ruler');
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
 
 const prometheusModuleSettings = { alerting: true, module: 'core:plugin/prometheus' };
@@ -116,9 +120,6 @@ const promResponse: PromRulesResponse = {
         interval: 20,
       },
     ],
-    totals: {
-      alerting: 2,
-    },
   },
 };
 const rulerResponse = {
@@ -212,6 +213,7 @@ describe('PanelAlertTabContent', () => {
 
     mockAlertRuleApi(server).prometheusRuleNamespaces(GRAFANA_RULES_SOURCE_NAME, promResponse);
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, rulerResponse);
+    config.unifiedAlertingEnabled = true;
   });
 
   it('Will take into account panel maxDataPoints', async () => {
@@ -329,6 +331,7 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
+    config.unifiedAlertingEnabled = true;
     renderAlertTabContent(dashboard, panel);
 
     const rows = await ui.row.findAll();

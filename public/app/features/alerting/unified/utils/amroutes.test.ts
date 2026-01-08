@@ -1,11 +1,14 @@
-import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
+import { uniqueId } from 'lodash';
+
+import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';
 
 import { amRouteToFormAmRoute, emptyRoute, formAmRouteToAmRoute } from './amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 
-const emptyAmRoute: Route = {
+const emptyAmRoute: RouteWithID = {
+  id: uniqueId(),
   receiver: '',
   group_by: [],
   continue: false,
@@ -20,8 +23,8 @@ const emptyAmRoute: Route = {
   mute_time_intervals: [],
 };
 
-const buildAmRoute = (override: Partial<Route> = {}): Route => {
-  return { ...emptyAmRoute, ...override };
+const buildAmRouteWithID = (override: Partial<RouteWithID> = {}): RouteWithID => {
+  return { ...emptyAmRoute, ...override, id: uniqueId() };
 };
 
 const buildFormAmRoute = (override: Partial<FormAmRoute> = {}): FormAmRoute => {
@@ -138,7 +141,7 @@ describe('amRouteToFormAmRoute', () => {
   describe('when called with empty group_by array', () => {
     it('should set overrideGrouping true and groupBy empty', () => {
       // Arrange
-      const amRoute = buildAmRoute({ group_by: [] });
+      const amRoute = buildAmRouteWithID({ group_by: [] });
 
       // Act
       const formRoute = amRouteToFormAmRoute(amRoute);
@@ -156,7 +159,7 @@ describe('amRouteToFormAmRoute', () => {
       ${undefined}
     `("when group_by is '$group_by', should set overrideGrouping false", ({ group_by }) => {
       // Arrange
-      const amRoute = buildAmRoute({ group_by: group_by });
+      const amRoute = buildAmRouteWithID({ group_by: group_by });
 
       // Act
       const formRoute = amRouteToFormAmRoute(amRoute);
@@ -170,7 +173,7 @@ describe('amRouteToFormAmRoute', () => {
   describe('when called with non-empty group_by', () => {
     it('Should set overrideGrouping true and groupBy', () => {
       // Arrange
-      const amRoute = buildAmRoute({ group_by: ['SHOULD BE SET'] });
+      const amRoute = buildAmRouteWithID({ group_by: ['SHOULD BE SET'] });
 
       // Act
       const formRoute = amRouteToFormAmRoute(amRoute);
@@ -183,7 +186,7 @@ describe('amRouteToFormAmRoute', () => {
 
   it('should unquote and unescape matchers values', () => {
     // Arrange
-    const amRoute = buildAmRoute({
+    const amRoute = buildAmRouteWithID({
       matchers: ['foo=bar', 'foo="bar"', 'foo="bar"baz"', 'foo="bar\\\\baz"', 'foo="\\\\bar\\\\baz"\\\\"'],
     });
 
@@ -202,7 +205,7 @@ describe('amRouteToFormAmRoute', () => {
 
   it('should unquote and unescape matcher names', () => {
     // Arrange
-    const amRoute = buildAmRoute({
+    const amRoute = buildAmRouteWithID({
       matchers: ['"foo"=bar', '"foo with spaces"=bar', '"foo\\\\slash"=bar', '"foo"quote"=bar', '"fo\\\\o"="ba\\\\r"'],
     });
 

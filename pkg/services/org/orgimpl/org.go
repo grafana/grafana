@@ -27,6 +27,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (org
 			db:      db,
 			dialect: db.GetDialect(),
 			log:     log,
+			cfg:     cfg,
 		},
 		cfg: cfg,
 		log: log,
@@ -136,11 +137,6 @@ func (s *Service) CreateWithMember(ctx context.Context, cmd *org.CreateOrgComman
 // TODO: refactor service to call store CRUD method
 func (s *Service) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCommand) error {
 	return s.store.UpdateAddress(ctx, cmd)
-}
-
-// TODO: refactor service to call store CRUD method
-func (s *Service) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
-	return s.store.Delete(ctx, cmd)
 }
 
 func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error) {

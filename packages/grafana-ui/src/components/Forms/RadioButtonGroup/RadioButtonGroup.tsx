@@ -4,11 +4,10 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
 
-import { RadioButtonSize, RadioButton } from './RadioButton';
-
+import { RadioButtonSize, RadioButton, RADIO_GROUP_PADDING } from './RadioButton';
 export interface RadioButtonGroupProps<T> {
   value?: T;
   id?: string;
@@ -25,6 +24,11 @@ export interface RadioButtonGroupProps<T> {
   invalid?: boolean;
 }
 
+/**
+ * RadioButtonGroup is used to select a single value from multiple mutually exclusive options.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-radiobuttongroup--docs
+ */
 export function RadioButtonGroup<T>({
   options,
   value,
@@ -119,13 +123,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'nowrap',
       border: `1px solid ${theme.components.input.borderColor}`,
       borderRadius: theme.shape.radius.default,
-      padding: '2px',
+      padding: RADIO_GROUP_PADDING,
       '&:hover': {
         borderColor: theme.components.input.borderHover,
       },
     }),
     fullWidth: css({
       display: 'flex',
+      flexGrow: 1,
     }),
     icon: css({
       marginRight: '6px',

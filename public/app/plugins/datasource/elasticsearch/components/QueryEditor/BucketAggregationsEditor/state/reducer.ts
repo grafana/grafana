@@ -1,11 +1,12 @@
 import { Action } from '@reduxjs/toolkit';
 
+import { BucketAggregation, ElasticsearchDataQuery, Terms } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+
 import { defaultBucketAgg } from '../../../../queryDef';
-import { ElasticsearchQuery, Terms, BucketAggregation } from '../../../../types';
 import { removeEmpty } from '../../../../utils';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
-import { initQuery } from '../../state';
+import { changeEditorTypeAndResetQuery, initQuery } from '../../state';
 import { bucketAggregationConfig } from '../utils';
 
 import {
@@ -18,7 +19,7 @@ import {
 
 export const createReducer =
   (defaultTimeField: string) =>
-  (state: ElasticsearchQuery['bucketAggs'], action: Action): ElasticsearchQuery['bucketAggs'] => {
+  (state: ElasticsearchDataQuery['bucketAggs'], action: Action): ElasticsearchDataQuery['bucketAggs'] => {
     if (addBucketAggregation.match(action)) {
       const newAgg: Terms = {
         id: action.payload,
@@ -84,6 +85,11 @@ export const createReducer =
         return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
       }
       return state;
+    }
+
+    if (changeEditorTypeAndResetQuery.match(action)) {
+      // Returns the default bucket agg. We will always want to set the default when switching types
+      return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
     }
 
     if (changeBucketAggregationSetting.match(action)) {

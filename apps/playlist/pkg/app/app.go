@@ -3,18 +3,17 @@ package app
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/rest"
-	"k8s.io/klog/v2"
-
-	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
-
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
 )
 
 type PlaylistConfig struct {
@@ -51,8 +50,10 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "playlist",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
-			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
+			InformerOptions: operator.InformerOptions{
+				ErrorHandler: func(ctx context.Context, err error) {
+					klog.ErrorS(err, "Informer processing error")
+				},
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{

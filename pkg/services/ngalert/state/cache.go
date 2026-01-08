@@ -25,12 +25,64 @@ type ruleStates struct {
 type cache struct {
 	states    map[int64]map[string]*ruleStates // orgID > alertRuleUID > stateID > state
 	mtxStates sync.RWMutex
+	metrics   alertMetrics
+}
+
+type alertMetrics struct {
+	lastUpdate  time.Time
+	mtx         sync.RWMutex
+	stateCounts map[eval.State]float64
 }
 
 func newCache() *cache {
 	return &cache{
 		states: make(map[int64]map[string]*ruleStates),
 	}
+}
+
+func (c *cache) calcMetrics(states map[eval.State]struct{}) map[eval.State]float64 {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	counts := make(map[eval.State]float64, len(states))
+	for state := range states {
+		counts[state] = 0
+	}
+	for _, orgMap := range c.states {
+		for _, rule := range orgMap {
+			for _, st := range rule.states {
+				for state := range states {
+					if st.State == state {
+						counts[state] += 1
+					}
+				}
+			}
+		}
+	}
+	return counts
+}
+
+func (c *cache) updateMetrics() {
+	c.metrics.mtx.Lock()
+	defer c.metrics.mtx.Unlock()
+	if time.Since(c.metrics.lastUpdate) < time.Second {
+		return // avoid updating too frequently
+	}
+	newMetrics := c.calcMetrics(map[eval.State]struct{}{
+		eval.Normal:     {},
+		eval.Alerting:   {},
+		eval.Pending:    {},
+		eval.Error:      {},
+		eval.NoData:     {},
+		eval.Recovering: {},
+	})
+	c.metrics.lastUpdate = time.Now()
+	c.metrics.stateCounts = newMetrics
+}
+
+func (c *cache) countAlertsBy(state eval.State) float64 {
+	c.metrics.mtx.RLock()
+	defer c.metrics.mtx.RUnlock()
+	return c.metrics.stateCounts[state]
 }
 
 // RegisterMetrics registers a set of Gauges in the form of collectors for the alerts in the cache.
@@ -43,6 +95,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 			Help:        "How many alerts by state are in the scheduler.",
 			ConstLabels: prometheus.Labels{"state": strings.ToLower(state.String())},
 		}, func() float64 {
+			c.updateMetrics()
 			return c.countAlertsBy(state)
 		})
 	}
@@ -52,23 +105,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 	r.MustRegister(newAlertCountByState(eval.Pending))
 	r.MustRegister(newAlertCountByState(eval.Error))
 	r.MustRegister(newAlertCountByState(eval.NoData))
-}
-
-func (c *cache) countAlertsBy(state eval.State) float64 {
-	c.mtxStates.RLock()
-	defer c.mtxStates.RUnlock()
-	var count float64
-	for _, orgMap := range c.states {
-		for _, rule := range orgMap {
-			for _, st := range rule.states {
-				if st.State == state {
-					count++
-				}
-			}
-		}
-	}
-
-	return count
+	r.MustRegister(newAlertCountByState(eval.Recovering))
 }
 
 func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
@@ -108,9 +145,25 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
 	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
 
-	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels))
+	// If the result contains an error, we want to add the ref_id and datasource_uid labels
+	// to the new state if the alert rule should be in the ErrorErrState.
+	var errorLabels data.Labels
+	if result.State == eval.Error && alertRule.ExecErrState == ngModels.ErrorErrState {
+		refID, datasourceUID := datasourceErrorInfo(result.Error, alertRule)
+		if refID != "" || datasourceUID != "" {
+			errorLabels = data.Labels{
+				"ref_id":         refID,
+				"datasource_uid": datasourceUID,
+			}
+		}
+	}
+
+	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels)+len(errorLabels))
 	dupes := make(data.Labels)
 	for key, val := range extraLabels {
+		lbs[key] = val
+	}
+	for key, val := range errorLabels {
 		lbs[key] = val
 	}
 	for key, val := range labels {
@@ -143,81 +196,6 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	return lbs, annotations
 }
 
-func (c *cache) create(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
-	lbs, annotations := expandAnnotationsAndLabels(ctx, log, alertRule, result, extraLabels, externalURL)
-
-	cacheID := lbs.Fingerprint()
-	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
-	// expected value for a Normal state during state transition.
-	newState := State{
-		OrgID:                alertRule.OrgID,
-		AlertRuleUID:         alertRule.UID,
-		CacheID:              cacheID,
-		State:                eval.Normal,
-		StateReason:          "",
-		ResultFingerprint:    result.Instance.Fingerprint(), // remember original result fingerprint
-		LatestResult:         nil,
-		Error:                nil,
-		Image:                nil,
-		Annotations:          annotations,
-		Labels:               lbs,
-		Values:               nil,
-		StartsAt:             result.EvaluatedAt,
-		EndsAt:               result.EvaluatedAt,
-		ResolvedAt:           nil,
-		LastSentAt:           nil,
-		LastEvaluationString: "",
-		LastEvaluationTime:   result.EvaluatedAt,
-		EvaluationDuration:   result.EvaluationDuration,
-	}
-
-	existingState := c.get(alertRule.OrgID, alertRule.UID, cacheID)
-	if existingState == nil {
-		return &newState
-	}
-	// if there is existing state, copy over the current values that may be needed to determine the final state.
-	// TODO remove some unnecessary assignments below because they are overridden in setNextState
-	newState.State = existingState.State
-	newState.StateReason = existingState.StateReason
-	newState.Image = existingState.Image
-	newState.LatestResult = existingState.LatestResult
-	newState.Error = existingState.Error
-	newState.Values = existingState.Values
-	newState.LastEvaluationString = existingState.LastEvaluationString
-	newState.StartsAt = existingState.StartsAt
-	newState.EndsAt = existingState.EndsAt
-	newState.ResolvedAt = existingState.ResolvedAt
-	newState.LastSentAt = existingState.LastSentAt
-	// Annotations can change over time, however we also want to maintain
-	// certain annotations across evaluations
-	for key := range ngModels.InternalAnnotationNameSet { // Changing in
-		value, ok := existingState.Annotations[key]
-		if !ok {
-			continue
-		}
-		// If the annotation is not present then it should be copied from
-		// the current state to the new state
-		if _, ok = newState.Annotations[key]; !ok {
-			newState.Annotations[key] = value
-		}
-	}
-
-	// if the current state is "data source error" then it may have additional labels that may not exist in the new state.
-	// See https://github.com/grafana/grafana/blob/c7fdf8ce706c2c9d438f5e6eabd6e580bac4946b/pkg/services/ngalert/state/state.go#L161-L163
-	// copy known labels over to the new instance, it can help reduce flapping
-	// TODO fix this?
-	if existingState.State == eval.Error && result.State == eval.Error {
-		setIfExist := func(lbl string) {
-			if v, ok := existingState.Labels[lbl]; ok {
-				newState.Labels[lbl] = v
-			}
-		}
-		setIfExist("datasource_uid")
-		setIfExist("ref_id")
-	}
-	return &newState
-}
-
 // expand returns the expanded templates of all annotations or labels for the template data.
 // If a template cannot be expanded due to an error in the template the original template is
 // maintained and an error is added to the multierror. All errors in the multierror are
@@ -241,25 +219,23 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 	return expanded, errs
 }
 
-func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
-	deleted := make([]*State, 0)
+func (rs *ruleStates) deleteStates(predicate func(s *State) bool) {
 	for id, state := range rs.states {
 		if predicate(state) {
 			delete(rs.states, id)
-			deleted = append(deleted, state)
 		}
 	}
-	return deleted
 }
 
-func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) []*State {
+// deleteRuleStates iterates over all states for the given rule and deletes those where predicate returns true.
+// The predicate function is called once for each state and should return true if the state should be deleted.
+func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
 	if ok {
-		return ruleStates.deleteStates(predicate)
+		ruleStates.deleteStates(predicate)
 	}
-	return nil
 }
 
 func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
@@ -297,22 +273,19 @@ func (c *cache) get(orgID int64, alertRuleUID string, stateId data.Fingerprint) 
 	return nil
 }
 
-func (c *cache) getAll(orgID int64, skipNormalState bool) []*State {
+func (c *cache) getAll(orgID int64) []*State {
 	var states []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
 		for _, v2 := range v1.states {
-			if skipNormalState && IsNormalStateWithNoReason(v2) {
-				continue
-			}
 			states = append(states, v2)
 		}
 	}
 	return states
 }
 
-func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string, skipNormalState bool) []*State {
+func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	orgRules, ok := c.states[orgID]
@@ -325,9 +298,6 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string, skipNormal
 	}
 	result := make([]*State, 0, len(rs.states))
 	for _, state := range rs.states {
-		if skipNormalState && IsNormalStateWithNoReason(state) {
-			continue
-		}
 		result = append(result, state)
 	}
 	return result
@@ -357,16 +327,13 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 }
 
 // GetAlertInstances returns the whole content of the cache as a slice of AlertInstance.
-func (c *cache) GetAlertInstances(skipNormalState bool) []ngModels.AlertInstance {
+func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 	var states []ngModels.AlertInstance
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, orgStates := range c.states {
 		for _, v1 := range orgStates {
 			for _, v2 := range v1.states {
-				if skipNormalState && IsNormalStateWithNoReason(v2) {
-					continue
-				}
 				key, err := v2.GetAlertInstanceKey()
 				if err != nil {
 					continue
@@ -374,11 +341,13 @@ func (c *cache) GetAlertInstances(skipNormalState bool) []ngModels.AlertInstance
 				states = append(states, ngModels.AlertInstance{
 					AlertInstanceKey:  key,
 					Labels:            ngModels.InstanceLabels(v2.Labels),
+					Annotations:       v2.Annotations,
 					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
 					CurrentReason:     v2.StateReason,
 					LastEvalTime:      v2.LastEvaluationTime,
 					CurrentStateSince: v2.StartsAt,
 					CurrentStateEnd:   v2.EndsAt,
+					FiredAt:           v2.FiredAt,
 					ResolvedAt:        v2.ResolvedAt,
 					LastSentAt:        v2.LastSentAt,
 					ResultFingerprint: v2.ResultFingerprint.String(),

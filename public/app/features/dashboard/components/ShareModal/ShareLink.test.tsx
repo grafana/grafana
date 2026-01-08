@@ -7,6 +7,7 @@ import { setEchoSrv, setTemplateSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
+import { contextSrv } from '../../../../core/services/context_srv';
 import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
@@ -32,9 +33,10 @@ function mockLocationHref(href: string) {
     search = href.substring(searchPos);
   }
 
+  const win: typeof globalThis = window;
   //@ts-ignore
-  delete window.location;
-  window.location = {
+  delete win.location;
+  win.location = {
     ...location,
     href,
     origin: new URL(href).origin,
@@ -78,7 +80,7 @@ describe('ShareModal', () => {
     });
     mockLocationHref('http://server/#!/test');
     config.rendererAvailable = true;
-    config.bootData.user.orgId = 1;
+    contextSrv.user.orgId = 1;
     props = {
       panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
       dashboard: createDashboardModelFixture({
@@ -104,7 +106,7 @@ describe('ShareModal', () => {
       render(<ShareLink {...props} />);
 
       const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
-      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&scale=1&tz=UTC';
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&hideLogo=true&width=1000&height=500&scale=1&tz=UTC';
       expect(
         await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
       ).toHaveAttribute('href', base + params);
@@ -115,7 +117,7 @@ describe('ShareModal', () => {
       render(<ShareLink {...props} />);
 
       const base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
-      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&scale=1&tz=UTC';
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&hideLogo=true&width=1000&height=500&scale=1&tz=UTC';
       expect(
         await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
       ).toHaveAttribute('href', base + params);
@@ -152,7 +154,7 @@ describe('ShareModal', () => {
         await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
       ).toHaveAttribute(
         'href',
-        base + path + '?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&scale=1&tz=UTC'
+        base + path + '?from=1000&to=2000&orgId=1&panelId=1&hideLogo=true&width=1000&height=500&scale=1&tz=UTC'
       );
     });
 
@@ -170,7 +172,7 @@ describe('ShareModal', () => {
       render(<ShareLink {...props} />);
 
       const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
-      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&scale=1&tz=UTC';
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&hideLogo=true&width=1000&height=500&scale=1&tz=UTC';
       expect(
         await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
       ).toHaveAttribute('href', base + params);
@@ -185,7 +187,7 @@ describe('when appUrl is set in the grafana config', () => {
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
     config.rendererAvailable = true;
-    config.bootData.user.orgId = 1;
+    contextSrv.user.orgId = 1;
   });
 
   afterAll(() => {
@@ -211,7 +213,7 @@ describe('when appUrl is set in the grafana config', () => {
       await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
     ).toHaveAttribute(
       'href',
-      `http://dashboards.grafana.com/render/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}&width=1000&height=500&scale=1&tz=UTC`
+      `http://dashboards.grafana.com/render/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}&hideLogo=true&width=1000&height=500&scale=1&tz=UTC`
     );
   });
 });

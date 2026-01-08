@@ -1,6 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/types.ts
-import { VisualQueryBinary } from './shared/LokiAndPromQueryModellerBase';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
+import {
+  QueryBuilderLabelFilter,
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  VisualQueryBinary,
+} from './shared/types';
 
 /**
  * Visual query model
@@ -10,11 +14,24 @@ export interface PromVisualQuery {
   labels: QueryBuilderLabelFilter[];
   operations: QueryBuilderOperation[];
   binaryQueries?: PromVisualQueryBinary[];
-  // metrics explorer additional settings
-  useBackend?: boolean;
-  disableTextWrap?: boolean;
-  includeNullMetadata?: boolean;
-  fullMetaSearch?: boolean;
+}
+
+export interface PromQueryModellerInterface {
+  renderLabels(labels: QueryBuilderLabelFilter[]): string;
+
+  renderQuery(query: PromVisualQuery, nested?: boolean): string;
+
+  hasBinaryOp(query: PromVisualQuery): boolean;
+
+  getQueryPatterns(): PromQueryPattern[];
+
+  getOperationsForCategory(category: string): QueryBuilderOperationDef[];
+
+  getOperationDef(id: string): QueryBuilderOperationDef | undefined;
+
+  getAlternativeOperations(key: string): QueryBuilderOperationDef[];
+
+  getCategories(): string[];
 }
 
 export type PromVisualQueryBinary = VisualQueryBinary<PromVisualQuery>;
@@ -59,6 +76,7 @@ export enum PromOperationId {
   Deg = 'deg',
   Delta = 'delta',
   Deriv = 'deriv',
+  DoubleExponentialSmoothing = 'double_exponential_smoothing',
   DropCommonLabels = 'drop_common_labels',
   Exp = 'exp',
   Floor = 'floor',
@@ -70,15 +88,20 @@ export enum PromOperationId {
   HistogramFraction = 'histogram_fraction',
   HistogramStddev = 'histogram_stddev',
   HistogramStdvar = 'histogram_stdvar',
+  // Renamed as DoubleExponentialSmoothing with Prometheus v3.x
+  // https://github.com/prometheus/prometheus/pull/14930
   HoltWinters = 'holt_winters',
   Hour = 'hour',
   Idelta = 'idelta',
   Increase = 'increase',
+  Info = 'info',
   Irate = 'irate',
   LabelJoin = 'label_join',
   LabelReplace = 'label_replace',
   Last = 'last',
   LastOverTime = 'last_over_time',
+  LimitK = 'limitk',
+  LimitRatio = 'limit_ratio',
   Ln = 'ln',
   Log10 = 'log10',
   Log2 = 'log2',
@@ -107,6 +130,7 @@ export enum PromOperationId {
   Sqrt = 'sqrt',
   Stddev = 'stddev',
   StddevOverTime = 'stddev_over_time',
+  Stdvar = 'stdvar',
   Sum = 'sum',
   SumOverTime = 'sum_over_time',
   Tan = 'tan',

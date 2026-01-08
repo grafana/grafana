@@ -3,119 +3,14 @@ name: Crowdin Download Action
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 0 * * *"
 
 jobs:
   download-sources-from-crowdin:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write # needed to commit changes into the PR
-      pull-requests: write # needed to update PR description, labels, etc
-
-    steps:
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
-
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          token: ${{ steps.generate_token.outputs.token }}
-
-      - name: Download sources
-        id: crowdin-download
-        uses: crowdin/github-action@v2
-        with:
-          upload_sources: false
-          upload_translations: false
-          download_sources: false
-          download_translations: true
-          export_only_approved: true
-          localization_branch_name: i18n_crowdin_translations
-          create_pull_request: true
-          pull_request_title: 'I18n: Download translations from Crowdin'
-          pull_request_body:  |
-            :robot: Automatic download of translations from Crowdin.
-
-            Steps for merging:
-              1. A quick sanity check of the changes and approve. Things to look out for:
-                - No changes in the English file. The source of truth is in the main branch, NOT in Crowdin.
-                - Translations maybe be removed if the English phrase was removed, but there should not be many of these
-                - Anything else that looks 'funky'. Ask if you're not sure.
-              2. Approve & (Auto-)merge. :tada:
-
-            If there's a conflict, close the pull request and **delete the branch**. A GH action will recreate the pull request.
-            Remember, the longer this pull request is open, the more likely it is that it'll get conflicts.
-          pull_request_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'
-          pull_request_reviewers: 'grafana-frontend-platform'
-          pull_request_base_branch_name: 'main'
-          base_url: 'https://grafana.api.crowdin.com'
-          config: 'crowdin.yml'
-          source: 'public/locales/en-US/grafana.json'
-          translation: 'public/locales/%locale%/%original_file_name%'
-          # Magic details of the github-actions bot user, to pass CLA checks
-          github_user_name: "github-actions[bot]"
-          github_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-
-      - name: Get pull request ID
-        if: steps.crowdin-download.outputs.pull_request_url
-        shell: bash
-        # Crowdin action returns us the URL of the pull request, but we need an ID for the GraphQL API
-        # that looks like 'PR_kwDOAOaWjc5mP_GU'
-        run: |
-          pr_id=$(gh pr view ${{ steps.crowdin-download.outputs.pull_request_url }} --json id -q .id)
-          echo "PULL_REQUEST_ID=$pr_id" >> "$GITHUB_ENV"
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
-      - name: Get project board ID
-        uses: octokit/graphql-action@v2.x
-        id: get-project-id
-        if: steps.crowdin-download.outputs.pull_request_url
-        with:
-          # Frontend Platform project - https://github.com/orgs/grafana/projects/78
-          org: grafana
-          project_number: 78
-          query: |
-            query getProjectId($org: String!, $project_number: Int!){
-              organization(login: $org) {
-                projectV2(number: $project_number) {
-                  title
-                  id
-                }
-              }
-            }
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
-      - name: Add to project board
-        uses: octokit/graphql-action@v2.x
-        if: steps.crowdin-download.outputs.pull_request_url
-        with:
-          projectid: ${{ fromJson(steps.get-project-id.outputs.data).organization.projectV2.id }}
-          prid: ${{ env.PULL_REQUEST_ID }}
-          query: |
-            mutation addPullRequestToProject($projectid: ID!, $prid: ID!){
-              addProjectV2ItemById(input: {projectId: $projectid, contentId: $prid}) {
-                item {
-                  id
-                }
-              }
-            }
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
-      - name: Run auto-milestone
-        uses: grafana/grafana-github-actions-go/auto-milestone@main
-        if: steps.crowdin-download.outputs.pull_request_url
-        with:
-          pr: ${{ steps.crowdin-download.outputs.pull_request_number }}
-          token: ${{ steps.generate_token.outputs.token }}
+    if: github.repository == 'grafana/grafana'
+    uses: grafana/grafana-github-actions/.github/workflows/crowdin-download.yml@main
+    with:
+      crowdin_project_id: 5
+      pr_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'
+      github_board_id: 78 # Frontend Platform project
+      en_paths: public/locales/en-US/grafana.json, public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json, public/app/plugins/datasource/mssql/locales/en-US/mssql.json, packages/grafana-prometheus/src/locales/en-US/grafana-prometheus.json, packages/grafana-sql/src/locales/en-US/grafana-sql.json

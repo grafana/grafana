@@ -12,22 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import { RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
-import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
+import { SpanBarOptions } from '../settings/SpanBarSettings';
+import TNil from '../types/TNil';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { TraceSpan, Trace, TraceLink, TraceSpanReference } from '../types/trace';
+import { SpanLinkFunc } from '../types/links';
+import { TraceSpan, Trace, TraceSpanReference, CriticalPathSection } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 
 import ListView from './ListView';
@@ -78,7 +81,6 @@ type TVirtualizedTraceViewOwnProps = {
   trace: Trace;
   traceToProfilesOptions?: TraceToProfilesOptions;
   spanBarOptions: SpanBarOptions | undefined;
-  linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   childrenToggle: (spanID: string) => void;
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailLogsToggle: (spanID: string) => void;
@@ -99,16 +101,18 @@ type TVirtualizedTraceViewOwnProps = {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
-  showCriticalPathSpansOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   datasourceType: string;
+  datasourceUid: string;
   headerHeight: number;
   criticalPath: CriticalPathSection[];
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   redrawListView: {};
   setRedrawListView: (redraw: {}) => void;
+  timeRange: TimeRange;
+  app: CoreApp;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
@@ -129,18 +133,15 @@ function generateRowStates(
   detailStates: Map<string, DetailState | TNil>,
   findMatchesIDs: Set<string> | TNil,
   showSpanFilterMatchesOnly: boolean,
-  showCriticalPathSpansOnly: boolean,
   criticalPath: CriticalPathSection[]
 ): RowState[] {
   if (!spans) {
     return [];
   }
+  // Apply filtering when matchesOnly is enabled
+  // Critical path filtering is now integrated into findMatchesIDs
   if (showSpanFilterMatchesOnly && findMatchesIDs) {
     spans = spans.filter((span) => findMatchesIDs.has(span.spanID));
-  }
-
-  if (showCriticalPathSpansOnly && criticalPath) {
-    spans = spans.filter((span) => criticalPath.find((section) => section.spanId === span.spanID));
   }
 
   let collapseDepth = null;
@@ -192,7 +193,6 @@ function generateRowStatesFromTrace(
   detailStates: Map<string, DetailState | TNil>,
   findMatchesIDs: Set<string> | TNil,
   showSpanFilterMatchesOnly: boolean,
-  showCriticalPathSpansOnly: boolean,
   criticalPath: CriticalPathSection[]
 ): RowState[] {
   return trace
@@ -202,7 +202,6 @@ function generateRowStatesFromTrace(
         detailStates,
         findMatchesIDs,
         showSpanFilterMatchesOnly,
-        showCriticalPathSpansOnly,
         criticalPath
       )
     : [];
@@ -264,22 +263,14 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   getRowStates(): RowState[] {
-    const {
-      childrenHiddenIDs,
-      detailStates,
-      trace,
-      findMatchesIDs,
-      showSpanFilterMatchesOnly,
-      showCriticalPathSpansOnly,
-      criticalPath,
-    } = this.props;
+    const { childrenHiddenIDs, detailStates, trace, findMatchesIDs, showSpanFilterMatchesOnly, criticalPath } =
+      this.props;
     return memoizedGenerateRowStates(
       trace,
       childrenHiddenIDs,
       detailStates,
       findMatchesIDs,
       showSpanFilterMatchesOnly,
-      showCriticalPathSpansOnly,
       criticalPath
     );
   }
@@ -548,15 +539,17 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
-      linksGetter,
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
       theme,
       datasourceType,
+      datasourceUid,
       traceFlameGraphs,
       setTraceFlameGraphs,
       setRedrawListView,
+      timeRange,
+      app,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -566,13 +559,12 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const styles = getStyles();
 
     return (
-      <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
+      <div className={cx(styles.row, 'span-detail-row')} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
         <SpanDetailRow
           color={color}
           columnDivision={spanNameColumnWidth}
           onDetailToggled={detailToggle}
           detailState={detailState}
-          linksGetter={linksGetter}
           logItemToggle={detailLogItemToggle}
           logsToggle={detailLogsToggle}
           processToggle={detailProcessToggle}
@@ -594,10 +586,13 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           focusedSpanId={focusedSpanId}
           createFocusSpanLink={createFocusSpanLink}
           datasourceType={datasourceType}
+          datasourceUid={datasourceUid}
           visibleSpanIds={visibleSpanIds}
           traceFlameGraphs={traceFlameGraphs}
           setTraceFlameGraphs={setTraceFlameGraphs}
           setRedrawListView={setRedrawListView}
+          timeRange={timeRange}
+          app={app}
         />
       </div>
     );
@@ -649,7 +644,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           <ToolbarButton
             className={styles.scrollToTopButton}
             onClick={this.scrollToTop}
-            title="Scroll to top"
+            tooltip={t('explore.unthemed-virtualized-trace-view.title-scroll-to-top', 'Scroll to top')}
             icon="arrow-up"
           ></ToolbarButton>
         )}

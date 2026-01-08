@@ -1,18 +1,16 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Provider } from 'react-redux';
-import { Props } from 'react-virtualized-auto-sizer';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { render, screen } from 'test/test-utils';
+import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { AccessControlAction } from 'app/types/accessControl';
+import { CombinedRuleGroup, CombinedRuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 
 import * as analytics from '../../Analytics';
+import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { useHasRuler } from '../../hooks/useHasRuler';
-import { mockExportApi, mockFolderApi, setupMswServer } from '../../mockApi';
-import { grantUserPermissions, mockCombinedRule, mockDataSource, mockFolder, mockGrafanaRulerRule } from '../../mocks';
+import { mockFolderApi, setupMswServer } from '../../mockApi';
+import { grantUserPermissions, mockCombinedRule, mockFolder, mockGrafanaRulerRule } from '../../mocks';
+import { mimirDataSource } from '../../mocks/server/configure';
 
 import { RulesGroup } from './RulesGroup';
 
@@ -20,28 +18,14 @@ jest.mock('../../hooks/useHasRuler');
 
 jest.spyOn(analytics, 'logInfo');
 
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: Props) =>
-    children({
-      height: 600,
-      scaledHeight: 600,
-      scaledWidth: 1,
-      width: 1,
-    });
-});
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value }: { value: string }) => <textarea data-testid="code-editor" value={value} readOnly />,
-}));
-
 const mocks = {
   useHasRuler: jest.mocked(useHasRuler),
 };
 
-function mockUseHasRuler(hasRuler: boolean, rulerRulesLoaded: boolean) {
+function mockUseHasRuler(hasRuler: boolean, rulerConfig: RulerDataSourceConfig) {
   mocks.useHasRuler.mockReturnValue({
     hasRuler,
-    rulerRulesLoaded,
+    rulerConfig,
   });
 }
 
@@ -52,21 +36,8 @@ beforeEach(() => {
 });
 
 const ui = {
-  editGroupButton: byTestId('edit-group'),
-  deleteGroupButton: byTestId('delete-group'),
-  exportGroupButton: byRole('button', { name: 'Export rule group' }),
-  confirmDeleteModal: {
-    header: byText('Delete group'),
-    confirmButton: byText('Delete'),
-  },
-  export: {
-    dialog: byRole('dialog', { name: /Drawer title Export .* rules/ }),
-    jsonTab: byRole('tab', { name: /JSON/ }),
-    yamlTab: byRole('tab', { name: /YAML/ }),
-    editor: byTestId('code-editor'),
-    copyCodeButton: byRole('button', { name: 'Copy code' }),
-    downloadButton: byRole('button', { name: 'Download' }),
-  },
+  detailsButton: byRole('link', { name: 'rule group details' }),
+  editGroupButton: byRole('link', { name: 'edit rule group' }),
 };
 
 const server = setupMswServer();
@@ -76,14 +47,10 @@ afterEach(() => {
 });
 
 describe('Rules group tests', () => {
-  const store = configureStore();
-
   function renderRulesGroup(namespace: CombinedRuleNamespace, group: CombinedRuleGroup) {
-    return render(
-      <Provider store={store}>
-        <RulesGroup group={group} namespace={namespace} expandAll={false} viewMode={'grouped'} />
-      </Provider>
-    );
+    return render(<RulesGroup group={group} namespace={namespace} expandAll={false} viewMode={'grouped'} />, {
+      historyOptions: { initialEntries: ['/alerting/list'] },
+    });
   }
 
   describe('Grafana rules', () => {
@@ -105,52 +72,61 @@ describe('Rules group tests', () => {
       groups: [group],
     };
 
-    it('Should hide delete and edit group buttons', async () => {
+    beforeEach(() => {
+      mockUseHasRuler(true, GRAFANA_RULER_CONFIG);
+    });
+
+    it('Should hide edit group button when no folder save permissions', async () => {
       // Act
-      mockUseHasRuler(true, true);
       mockFolderApi(server).folder('cpu-usage', mockFolder({ uid: 'cpu-usage', canSave: false }));
       renderRulesGroup(namespace, group);
       expect(await screen.findByTestId('rule-group')).toBeInTheDocument();
 
       // Assert
-      expect(ui.deleteGroupButton.query()).not.toBeInTheDocument();
+      expect(ui.detailsButton.query()).toBeInTheDocument();
       expect(ui.editGroupButton.query()).not.toBeInTheDocument();
     });
 
-    it('Should allow exporting rules group', async () => {
+    it('Should render view and edit buttons when folder has save permissions and user can edit rules', async () => {
       // Arrange
-      mockUseHasRuler(true, true);
-      mockFolderApi(server).folder('cpu-usage', mockFolder({ uid: 'cpu-usage' }));
-      mockExportApi(server).exportRulesGroup('cpu-usage', 'TestGroup', {
-        yaml: 'Yaml Export Content',
-        json: 'Json Export Content',
-      });
-
-      const user = userEvent.setup();
+      mockFolderApi(server).folder('cpu-usage', mockFolder({ uid: 'cpu-usage', canSave: true }));
 
       // Act
       renderRulesGroup(namespace, group);
-      await user.click(await ui.exportGroupButton.find());
+      expect(await screen.findByTestId('rule-group')).toBeInTheDocument();
 
       // Assert
-      const drawer = await ui.export.dialog.find();
+      const detailsLink = await ui.detailsButton.find();
+      const editLink = await ui.editGroupButton.find();
 
-      expect(ui.export.yamlTab.get(drawer)).toHaveAttribute('aria-selected', 'true');
-      await waitFor(() => {
-        expect(ui.export.editor.get(drawer)).toHaveTextContent('Yaml Export Content');
-      });
+      expect(detailsLink).toHaveAttribute(
+        'href',
+        '/alerting/grafana/namespaces/cpu-usage/groups/TestGroup/view?returnTo=%2Falerting%2Flist'
+      );
+      expect(editLink).toHaveAttribute(
+        'href',
+        '/alerting/grafana/namespaces/cpu-usage/groups/TestGroup/edit?returnTo=%2Falerting%2Flist'
+      );
+    });
 
-      await user.click(ui.export.jsonTab.get(drawer));
-      await waitFor(() => {
-        expect(ui.export.editor.get(drawer)).toHaveTextContent('Json Export Content');
-      });
+    it('Should only render view button when folder has save permissions and user cannot edit rules', async () => {
+      // Arrange
+      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+      mockFolderApi(server).folder('cpu-usage', mockFolder({ uid: 'cpu-usage', canSave: true }));
 
-      expect(ui.export.copyCodeButton.get(drawer)).toBeInTheDocument();
-      expect(ui.export.downloadButton.get(drawer)).toBeInTheDocument();
+      // Act
+      renderRulesGroup(namespace, group);
+      expect(await screen.findByTestId('rule-group')).toBeInTheDocument();
+
+      // Assert
+      expect(ui.detailsButton.query()).toBeInTheDocument();
+      expect(ui.editGroupButton.query()).not.toBeInTheDocument();
     });
   });
 
   describe('Cloud rules', () => {
+    const { dataSource, rulerConfig } = mimirDataSource();
+
     beforeEach(() => {
       contextSrv.isEditor = true;
     });
@@ -163,79 +139,42 @@ describe('Rules group tests', () => {
 
     const namespace: CombinedRuleNamespace = {
       name: 'TestNamespace',
-      rulesSource: mockDataSource(),
+      rulesSource: dataSource,
       groups: [group],
     };
 
-    it('When ruler enabled should display delete and edit group buttons', () => {
+    it('When ruler enabled should display details and edit group buttons', async () => {
       // Arrange
-      mockUseHasRuler(true, true);
+      mockUseHasRuler(true, rulerConfig);
 
       // Act
       renderRulesGroup(namespace, group);
+      const detailsLink = await ui.detailsButton.find();
+      const editLink = await ui.editGroupButton.find();
 
       // Assert
       expect(mocks.useHasRuler).toHaveBeenCalled();
-      expect(ui.deleteGroupButton.get()).toBeInTheDocument();
-      expect(ui.editGroupButton.get()).toBeInTheDocument();
+      expect(detailsLink).toHaveAttribute(
+        'href',
+        '/alerting/mimir/namespaces/TestNamespace/groups/TestGroup/view?returnTo=%2Falerting%2Flist'
+      );
+      expect(editLink).toHaveAttribute(
+        'href',
+        '/alerting/mimir/namespaces/TestNamespace/groups/TestGroup/edit?returnTo=%2Falerting%2Flist'
+      );
     });
 
-    it('When ruler disabled should hide delete and edit group buttons', () => {
+    it('When ruler disabled should hide edit group button', () => {
       // Arrange
-      mockUseHasRuler(false, false);
+      mockUseHasRuler(false, rulerConfig);
 
       // Act
       renderRulesGroup(namespace, group);
 
       // Assert
       expect(mocks.useHasRuler).toHaveBeenCalled();
-      expect(ui.deleteGroupButton.query()).not.toBeInTheDocument();
+      expect(ui.detailsButton.query()).toBeInTheDocument();
       expect(ui.editGroupButton.query()).not.toBeInTheDocument();
-    });
-
-    it('Delete button click should display confirmation modal', async () => {
-      // Arrange
-      mockUseHasRuler(true, true);
-
-      // Act
-      renderRulesGroup(namespace, group);
-      await userEvent.click(ui.deleteGroupButton.get());
-
-      // Assert
-      expect(ui.confirmDeleteModal.header.get()).toBeInTheDocument();
-      expect(ui.confirmDeleteModal.confirmButton.get()).toBeInTheDocument();
-    });
-  });
-
-  describe('Analytics', () => {
-    beforeEach(() => {
-      contextSrv.isEditor = true;
-    });
-
-    const group: CombinedRuleGroup = {
-      name: 'TestGroup',
-      rules: [mockCombinedRule()],
-      totals: {},
-    };
-
-    const namespace: CombinedRuleNamespace = {
-      name: 'TestNamespace',
-      rulesSource: mockDataSource(),
-      groups: [group],
-    };
-
-    it('Should log info when closing the edit group rule modal without saving', async () => {
-      mockUseHasRuler(true, true);
-      renderRulesGroup(namespace, group);
-
-      await userEvent.click(ui.editGroupButton.get());
-
-      expect(screen.getByText('Cancel')).toBeInTheDocument();
-
-      await userEvent.click(screen.getByText('Cancel'));
-
-      expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
-      expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.leavingRuleGroupEdit);
     });
   });
 });

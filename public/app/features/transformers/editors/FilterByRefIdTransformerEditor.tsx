@@ -1,150 +1,49 @@
-import { PureComponent } from 'react';
-
 import {
   DataTransformerID,
-  KeyValue,
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  FrameMatcherID,
 } from '@grafana/data';
-import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByRefId';
-import { HorizontalGroup, FilterPill, FieldValidationMessage, InlineField } from '@grafana/ui';
+import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
+import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/filterByRefId.svg';
+import lightImage from '../images/light/filterByRefId.svg';
 
-interface FilterByRefIdTransformerEditorProps extends TransformerUIProps<FilterFramesByRefIdTransformerOptions> {}
+export const FilterByRefIdTransformerEditor = (props: TransformerUIProps<FilterFramesByRefIdTransformerOptions>) => {
+  return (
+    <FrameMultiSelectionEditor
+      value={{
+        id: FrameMatcherID.byRefId,
+        options: props.options.include || '',
+      }}
+      onChange={(value) => {
+        props.onChange({
+          ...props.options,
+          include: value?.options || '',
+        });
+      }}
+      context={{ data: props.input }}
+    />
+  );
+};
 
-interface FilterByRefIdTransformerEditorState {
-  include: string;
-  options: RefIdInfo[];
-  selected: string[];
-}
-
-interface RefIdInfo {
-  refId: string;
-  count: number;
-}
-export class FilterByRefIdTransformerEditor extends PureComponent<
-  FilterByRefIdTransformerEditorProps,
-  FilterByRefIdTransformerEditorState
-> {
-  constructor(props: FilterByRefIdTransformerEditorProps) {
-    super(props);
-    this.state = {
-      include: props.options.include || '',
-      options: [],
-      selected: [],
-    };
-  }
-
-  componentDidMount() {
-    this.initOptions();
-  }
-
-  componentDidUpdate(oldProps: FilterByRefIdTransformerEditorProps) {
-    if (this.props.input !== oldProps.input) {
-      this.initOptions();
-    }
-  }
-
-  private initOptions() {
-    const { input, options } = this.props;
-    const configuredOptions = options.include ? options.include.split('|') : [];
-
-    const allNames: RefIdInfo[] = [];
-    const byName: KeyValue<RefIdInfo> = {};
-    for (const frame of input) {
-      if (frame.refId) {
-        let v = byName[frame.refId];
-        if (!v) {
-          v = byName[frame.refId] = {
-            refId: frame.refId,
-            count: 0,
-          };
-          allNames.push(v);
-        }
-        v.count++;
-      }
-    }
-
-    if (configuredOptions.length) {
-      const options: RefIdInfo[] = [];
-      const selected: RefIdInfo[] = [];
-      for (const v of allNames) {
-        if (configuredOptions.includes(v.refId)) {
-          selected.push(v);
-        }
-        options.push(v);
-      }
-
-      this.setState({
-        options,
-        selected: selected.map((s) => s.refId),
-      });
-    } else {
-      this.setState({ options: allNames, selected: [] });
-    }
-  }
-
-  onFieldToggle = (fieldName: string) => {
-    const { selected } = this.state;
-    if (selected.indexOf(fieldName) > -1) {
-      this.onChange(selected.filter((s) => s !== fieldName));
-    } else {
-      this.onChange([...selected, fieldName]);
-    }
-  };
-
-  onChange = (selected: string[]) => {
-    this.setState({ selected });
-    this.props.onChange({
-      ...this.props.options,
-      include: selected.join('|'),
-    });
-  };
-
-  render() {
-    const { options, selected } = this.state;
-    const { input } = this.props;
-    return (
-      <>
-        {input.length <= 1 && (
-          <div>
-            <FieldValidationMessage>Filter data by query expects multiple queries in the input.</FieldValidationMessage>
-          </div>
-        )}
-        <InlineField label="Series refId" labelWidth={16} shrink>
-          <HorizontalGroup spacing="xs" align="flex-start" wrap>
-            {options.map((o, i) => {
-              const label = `${o.refId}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
-              const isSelected = selected.indexOf(o.refId) > -1;
-              return (
-                <FilterPill
-                  key={`${o.refId}/${i}`}
-                  onClick={() => {
-                    this.onFieldToggle(o.refId);
-                  }}
-                  label={label}
-                  selected={isSelected}
-                />
-              );
-            })}
-          </HorizontalGroup>
-        </InlineField>
-      </>
-    );
-  }
-}
-
-export const filterFramesByRefIdTransformRegistryItem: TransformerRegistryItem<FilterFramesByRefIdTransformerOptions> =
-  {
+export const getFilterFramesByRefIdTransformRegistryItem: () => TransformerRegistryItem<FilterFramesByRefIdTransformerOptions> =
+  () => ({
     id: DataTransformerID.filterByRefId,
     editor: FilterByRefIdTransformerEditor,
     transformation: standardTransformers.filterFramesByRefIdTransformer,
-    name: standardTransformers.filterFramesByRefIdTransformer.name,
-    description:
-      'Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel.',
+    name: t('transformers.filter-by-ref-id-transformer-editor.name.filter-data-by-query', 'Filter data by query'),
+    description: t(
+      'transformers.filter-by-ref-id-transformer-editor.description.filter-data-by-query-useful-sharing-results',
+      'Remove rows from the data based on origin query'
+    ),
     categories: new Set([TransformerCategory.Filter]),
     help: getTransformationContent(DataTransformerID.filterByRefId).helperDocs,
-  };
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

@@ -1,15 +1,12 @@
+import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
-import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button } from '@grafana/ui';
+import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { LINK_ICON_MAP, NEW_LINK } from './utils';
-
-const linkTypeOptions = [
-  { value: 'dashboards', label: 'Dashboards' },
-  { value: 'link', label: 'Link' },
-];
 
 const linkIconOptions = Object.keys(LINK_ICON_MAP).map((key) => ({ label: key, value: key }));
 
@@ -20,6 +17,14 @@ interface DashboardLinkFormProps {
 }
 
 export function DashboardLinkForm({ link, onUpdate, onGoBack }: DashboardLinkFormProps) {
+  const styles = useStyles2(getStyles);
+  const linkTypeOptions = [
+    {
+      value: 'dashboards',
+      label: t('dashboard-scene.dashboard-link-form.link-type-options.label.dashboards', 'Dashboards'),
+    },
+    { value: 'link', label: t('dashboard-scene.dashboard-link-form.link-type-options.label.link', 'Link') },
+  ];
   const onTagsChange = (tags: string[]) => {
     onUpdate({ ...link, tags: tags });
   };
@@ -50,60 +55,138 @@ export function DashboardLinkForm({ link, onUpdate, onGoBack }: DashboardLinkFor
     });
   };
 
+  const onPlacementChange = (ev: React.FocusEvent<HTMLInputElement>) => {
+    const isChecked = ev.currentTarget.checked;
+    onUpdate({
+      ...link,
+      placement: isChecked ? 'inControlsMenu' : undefined,
+    });
+  };
+
   const isNew = link.title === NEW_LINK.title;
 
   return (
     <div style={{ maxWidth: '600px' }}>
-      <Field label="Title">
-        <Input name="title" id="title" value={link.title} onChange={onChange} autoFocus={isNew} />
-      </Field>
-      <Field label="Type">
-        <Select inputId="link-type-input" value={link.type} options={linkTypeOptions} onChange={onTypeChange} />
-      </Field>
-      {link.type === 'dashboards' && (
-        <>
-          <Field label="With tags">
+      <Stack direction="column" gap={2}>
+        {/* Title */}
+        <Field noMargin label={t('dashboard-scene.dashboard-link-form.label-title', 'Title')}>
+          <Input name="title" id="title" value={link.title} onChange={onChange} autoFocus={isNew} />
+        </Field>
+
+        {/* Type */}
+        <Field noMargin label={t('dashboard-scene.dashboard-link-form.label-type', 'Type')}>
+          <Select inputId="link-type-input" value={link.type} options={linkTypeOptions} onChange={onTypeChange} />
+        </Field>
+
+        {/* Tags */}
+        {link.type === 'dashboards' && (
+          <Field noMargin label={t('dashboard-scene.dashboard-link-form.label-with-tags', 'With tags')}>
             <TagsInput tags={link.tags} onChange={onTagsChange} />
           </Field>
-        </>
-      )}
-      {link.type === 'link' && (
-        <>
-          <Field label="URL">
-            <Input name="url" value={link.url} onChange={onChange} />
-          </Field>
-          <Field label="Tooltip">
-            <Input name="tooltip" value={link.tooltip} onChange={onChange} placeholder="Open dashboard" />
-          </Field>
-          <Field label="Icon">
-            <Select value={link.icon} options={linkIconOptions} onChange={onIconChange} />
-          </Field>
-        </>
-      )}
-      <CollapsableSection label="Options" isOpen={true}>
-        {link.type === 'dashboards' && (
-          <Field>
-            <Checkbox label="Show as dropdown" name="asDropdown" value={link.asDropdown} onChange={onChange} />
-          </Field>
         )}
-        <Field>
-          <Checkbox label="Include current time range" name="keepTime" value={link.keepTime} onChange={onChange} />
-        </Field>
-        <Field>
-          <Checkbox
-            label="Include current template variable values"
-            name="includeVars"
-            value={link.includeVars}
-            onChange={onChange}
-          />
-        </Field>
-        <Field>
-          <Checkbox label="Open link in new tab" name="targetBlank" value={link.targetBlank} onChange={onChange} />
-        </Field>
-      </CollapsableSection>
-      <Button variant="secondary" onClick={onGoBack}>
-        Back to list
-      </Button>
+
+        {link.type === 'link' && (
+          <Stack direction="column" gap={2}>
+            {/* URL */}
+            <Field noMargin label={t('dashboard-scene.dashboard-link-form.label-url', 'URL')}>
+              <Input name="url" value={link.url} onChange={onChange} />
+            </Field>
+
+            {/* Tooltip */}
+            <Field noMargin label={t('dashboard-scene.dashboard-link-form.label-tooltip', 'Tooltip')}>
+              <Input
+                name="tooltip"
+                value={link.tooltip}
+                onChange={onChange}
+                placeholder={t('dashboard-scene.dashboard-link-form.placeholder-open-dashboard', 'Open dashboard')}
+              />
+            </Field>
+
+            {/* Icon */}
+            <Field noMargin label={t('dashboard-scene.dashboard-link-form.label-icon', 'Icon')}>
+              <Select value={link.icon} options={linkIconOptions} onChange={onIconChange} />
+            </Field>
+          </Stack>
+        )}
+
+        <CollapsableSection
+          label={t('dashboard-scene.dashboard-link-form.label-options', 'Options')}
+          isOpen={true}
+          contentClassName={styles.collapsableSection}
+        >
+          <Stack direction="column" gap={2}>
+            {/* Show as dropdown */}
+            {link.type === 'dashboards' && (
+              <Field noMargin>
+                <Checkbox
+                  label={t('dashboard-scene.dashboard-link-form.label-show-as-dropdown', 'Show as dropdown')}
+                  name="asDropdown"
+                  value={link.asDropdown}
+                  onChange={onChange}
+                />
+              </Field>
+            )}
+
+            {/* Include time range */}
+            <Field noMargin>
+              <Checkbox
+                label={t(
+                  'dashboard-scene.dashboard-link-form.label-include-current-time-range',
+                  'Include current time range'
+                )}
+                name="keepTime"
+                value={link.keepTime}
+                onChange={onChange}
+              />
+            </Field>
+
+            {/* Include variables */}
+            <Field noMargin>
+              <Checkbox
+                label={t(
+                  'dashboard-scene.dashboard-link-form.label-include-current-template-variable-values',
+                  'Include current template variable values'
+                )}
+                name="includeVars"
+                value={link.includeVars}
+                onChange={onChange}
+              />
+            </Field>
+
+            {/* Open in new tab */}
+            <Field noMargin>
+              <Checkbox
+                label={t('dashboard-scene.dashboard-link-form.label-open-link-in-new-tab', 'Open link in new tab')}
+                name="targetBlank"
+                value={link.targetBlank}
+                onChange={onChange}
+              />
+            </Field>
+
+            {/* Show in controls */}
+            <Field noMargin>
+              <Checkbox
+                label={t('dashboard-scene.dashboard-link-form.label-show-in-controls-menu', 'Show in controls menu')}
+                name="placement"
+                value={link.placement === 'inControlsMenu'}
+                onChange={onPlacementChange}
+              />
+            </Field>
+          </Stack>
+        </CollapsableSection>
+
+        <div>
+          <Button variant="secondary" onClick={onGoBack}>
+            <Trans i18nKey="dashboard-scene.dashboard-link-form.back-to-list">Back to list</Trans>
+          </Button>
+        </div>
+      </Stack>
     </div>
   );
 }
+
+const getStyles = () => ({
+  collapsableSection: css({
+    padding: 0,
+  }),
+});

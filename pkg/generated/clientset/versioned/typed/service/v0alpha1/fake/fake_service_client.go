@@ -15,7 +15,7 @@ type FakeServiceV0alpha1 struct {
 }
 
 func (c *FakeServiceV0alpha1) ExternalNames(namespace string) v0alpha1.ExternalNameInterface {
-	return &FakeExternalNames{c, namespace}
+	return newFakeExternalNames(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

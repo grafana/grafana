@@ -4,22 +4,37 @@ import { useRef, useCallback } from 'react';
 
 import { createDataFrame, createTheme } from '@grafana/data';
 
+import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
-import FlameGraphContainer from './FlameGraphContainer';
+import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: false,
+    openAssistant: undefined,
+  }),
+  createAssistantContextItem: jest.fn(),
+  OpenAssistantButton: () => <div>OpenAssistantButton</div>,
+}));
+
 jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
   useMeasure: () => {
-    const ref = useRef();
+    const ref = useRef(null);
     return [ref, { width: 1600 }];
   },
 }));
 
 describe('FlameGraphContainer', () => {
   // Needed for AutoSizer to work in test
-  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { value: 500 });
-  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { value: 500 });
-  Object.defineProperty(HTMLElement.prototype, 'clientWidth', { value: 500 });
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: jest.fn(() => ({
+      width: 500,
+      height: 500,
+      left: 0,
+    })),
+  });
 
   const FlameGraphContainerWithProps = () => {
     const flameGraphData = createDataFrame(data);
@@ -40,15 +55,15 @@ describe('FlameGraphContainer', () => {
   it('should update search when row selected in top table', async () => {
     render(<FlameGraphContainerWithProps />);
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
-    expect(screen.getByDisplayValue('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
     // Unclick the selection so that we can click something else and continue test checks
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
 
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[1]);
-    expect(screen.getByDisplayValue('total')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('^total$')).toBeInTheDocument();
     // after it is highlighted it will be the only (first) item in the table so [1] -> [0]
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
-    expect(screen.queryByDisplayValue('total')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('^total$')).not.toBeInTheDocument();
   });
 
   it('should render options', async () => {
@@ -98,21 +113,117 @@ describe('FlameGraphContainer', () => {
     render(<FlameGraphContainerWithProps />);
 
     // Checking for presence of this function before filter
-    const matchingText = 'net/http.HandlerFunc.ServeHTTP';
+    const matchingText1 = 'net/http.HandlerFunc.ServeHTTP';
+    const matchingText2 = 'runtime.gcBgMarkWorker';
     const nonMatchingText = 'runtime.systemstack';
 
-    expect(screen.queryAllByText(matchingText).length).toBe(1);
+    expect(screen.queryAllByText(matchingText1).length).toBe(1);
+    expect(screen.queryAllByText(matchingText2).length).toBe(1);
     expect(screen.queryAllByText(nonMatchingText).length).toBe(1);
 
     // Apply the filter
-    const searchInput = await screen.getByPlaceholderText('Search...');
-    await userEvent.type(searchInput, 'Handler serve');
+    const searchInput = screen.getByPlaceholderText('Search...');
+    await userEvent.type(searchInput, 'Handler serve,gcBgMarkWorker');
 
     // We have to wait for filter to take effect
     await waitFor(() => {
       expect(screen.queryAllByText(nonMatchingText).length).toBe(0);
     });
     // Check we didn't lose the one that should match
-    expect(screen.queryAllByText(matchingText).length).toBe(1);
+    expect(screen.queryAllByText(matchingText1).length).toBe(1);
+    expect(screen.queryAllByText(matchingText2).length).toBe(1);
+  });
+});
+
+describe('labelSearch', () => {
+  let container: FlameGraphDataContainer;
+
+  beforeEach(() => {
+    const df = createDataFrame(data);
+    df.meta = {
+      custom: {
+        ProfileTypeID: 'cpu:foo:bar',
+      },
+    };
+
+    container = new FlameGraphDataContainer(df, { collapsing: false });
+  });
+
+  describe('fuzzy', () => {
+    it('single term', () => {
+      const search = 'test pkg';
+      let found = labelSearch(search, container);
+      expect(found.size).toBe(45);
+    });
+
+    it('multiple terms', () => {
+      const search = 'test pkg,compress';
+      let found = labelSearch(search, container);
+      expect(found.size).toBe(107);
+    });
+
+    it('falls back to fuzzy with malformed regex', () => {
+      const search = 'deduplicatingSlice[.';
+      let found = labelSearch(search, container);
+      expect(found.size).toBe(1);
+    });
+
+    it('no results', () => {
+      const search = 'term_not_found';
+      let found = labelSearch(search, container);
+      expect(found.size).toBe(0);
+    });
+  });
+
+  describe('regex', () => {
+    it('single pattern', () => {
+      const term = '\\d$';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(61);
+    });
+
+    it('multiple patterns', () => {
+      const term = '\\d$,^go';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(62);
+    });
+
+    it('no results', () => {
+      const term = 'pattern_not_found';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(0);
+    });
+  });
+
+  describe('fuzzy and regex', () => {
+    it('regex found, fuzzy found', () => {
+      const term = '\\d$,test pkg';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(98);
+    });
+
+    it('regex not found, fuzzy found', () => {
+      const term = 'not_found_suffix$,test pkg';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(45);
+    });
+
+    it('regex found, fuzzy not found', () => {
+      const term = '\\d$,not_found_fuzzy';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(61);
+    });
+
+    it('regex not found, fuzzy not found', () => {
+      const term = 'not_found_suffix$,not_found_fuzzy';
+      let found = labelSearch(term, container);
+      expect(found.size).toBe(0);
+    });
+
+    it('does not match empty terms', () => {
+      const search = ',,,,,';
+      let found = labelSearch(search, container);
+      expect(found.size).toBe(0);
+    });
   });
 });

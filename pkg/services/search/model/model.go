@@ -65,6 +65,7 @@ const (
 type Hit struct {
 	ID                    int64      `json:"id"`
 	UID                   string     `json:"uid"`
+	OrgID                 int64      `json:"orgId"`
 	Title                 string     `json:"title"`
 	URI                   string     `json:"uri"`
 	URL                   string     `json:"url"`
@@ -72,6 +73,7 @@ type Hit struct {
 	Type                  HitType    `json:"type"`
 	Tags                  []string   `json:"tags"`
 	IsStarred             bool       `json:"isStarred"`
+	Description           string     `json:"description,omitempty"`
 	FolderID              int64      `json:"folderId,omitempty"` // Deprecated: use FolderUID instead
 	FolderUID             string     `json:"folderUid,omitempty"`
 	FolderTitle           string     `json:"folderTitle,omitempty"`

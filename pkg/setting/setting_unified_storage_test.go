@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,24 +14,56 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 		assert.NoError(t, err)
 
-		s, err := cfg.Raw.NewSection("unified_storage.playlists.playlist.grafana.app")
-		assert.NoError(t, err)
+		setSectionKey := func(sectionName, key, value string) {
+			section := cfg.Raw.Section(sectionName) // Gets existing or creates new
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
 
-		_, err = s.NewKey("dualWriterMode", "2")
-		assert.NoError(t, err)
+		setMigratedResourceKey := func(key, value string) {
+			for migratedResource := range MigratedUnifiedResources {
+				setSectionKey("unified_storage."+migratedResource, key, value)
+			}
+		}
 
-		_, err = s.NewKey("dualWriterPeriodicDataSyncJobEnabled", "true")
-		assert.NoError(t, err)
+		validateMigratedResources := func(optIn bool) {
+			for migratedResource, enabled := range MigratedUnifiedResources {
+				resourceCfg, exists := cfg.UnifiedStorage[migratedResource]
 
-		_, err = s.NewKey("dataSyncerRecordsLimit", "1001")
-		assert.NoError(t, err)
+				isEnabled := enabled
+				if optIn {
+					isEnabled = true
+				}
 
-		_, err = s.NewKey("dataSyncerInterval", "10m")
-		assert.NoError(t, err)
+				if !isEnabled {
+					if exists {
+						assert.Equal(t, rest.DualWriterMode(1), resourceCfg.DualWriterMode, migratedResource)
+					}
+					continue
+				}
+				assert.Equal(t, exists, true, migratedResource)
+
+				assert.Equal(t, UnifiedStorageConfig{
+					DualWriterMode:                      5,
+					DualWriterMigrationDataSyncDisabled: true,
+					EnableMigration:                     isEnabled,
+				}, resourceCfg, migratedResource)
+			}
+		}
+
+		setMigratedResourceKey("dualWriterMode", "1") // migrated resources enabled by default will change to 5 in setUnifiedStorageConfig
+
+		setSectionKey("unified_storage.resource.not_migrated.grafana.app", "dualWriterMode", "2")
+		setSectionKey("unified_storage.resource.not_migrated.grafana.app", "dualWriterPeriodicDataSyncJobEnabled", "true")
+		setSectionKey("unified_storage.resource.not_migrated.grafana.app", "dataSyncerRecordsLimit", "1001")
+		setSectionKey("unified_storage.resource.not_migrated.grafana.app", "dataSyncerInterval", "10m")
+
+		// Add unified_storage section for index settings
+		setSectionKey("unified_storage", "index_min_count", "5")
 
 		cfg.setUnifiedStorageConfig()
 
-		value, exists := cfg.UnifiedStorage["playlists.playlist.grafana.app"]
+		value, exists := cfg.UnifiedStorage["resource.not_migrated.grafana.app"]
 
 		assert.Equal(t, exists, true)
 		assert.Equal(t, value, UnifiedStorageConfig{
@@ -39,5 +72,28 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			DataSyncerRecordsLimit:               1001,
 			DataSyncerInterval:                   time.Minute * 10,
 		})
+
+		validateMigratedResources(false)
+
+		setMigratedResourceKey("enableMigration", "true") // will be changed to 5 in setUnifiedStorageConfig
+
+		cfg.setUnifiedStorageConfig()
+
+		validateMigratedResources(true)
+
+		// Test that index settings are correctly parsed
+		assert.Equal(t, 5, cfg.IndexMinCount)
+	})
+
+	t.Run("read unified_storage configs with defaults", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		// Don't add any custom index settings, test defaults
+		cfg.setUnifiedStorageConfig()
+
+		// Test that default index settings are applied
+		assert.Equal(t, 1, cfg.IndexMinCount)
 	})
 }

@@ -21,7 +21,7 @@ var (
 )
 
 type ruleFactory interface {
-	new(context.Context, *models.AlertRule) Rule
+	new(context.Context, ruleWithFolder) Rule
 }
 
 type ruleRegistry struct {
@@ -35,14 +35,14 @@ func newRuleRegistry() ruleRegistry {
 
 // getOrCreate gets a rule routine from registry for the provided rule. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine and a flag that indicates whether it is a new struct or not.
-func (r *ruleRegistry) getOrCreate(context context.Context, item *models.AlertRule, factory ruleFactory) (Rule, bool) {
+func (r *ruleRegistry) getOrCreate(context context.Context, rf ruleWithFolder, factory ruleFactory) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	key := item.GetKey()
+	key := rf.rule.GetKey()
 	rule, ok := r.rules[key]
 	if !ok {
-		rule = factory.new(context, item)
+		rule = factory.new(context, rf)
 		r.rules[key] = rule
 	}
 	return rule, !ok
@@ -87,15 +87,11 @@ func (r *ruleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
-type RuleVersionAndPauseStatus struct {
-	Fingerprint fingerprint
-	IsPaused    bool
-}
-
 type Evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
 	folderTitle string
+	afterEval   func()
 }
 
 func (e *Evaluation) Fingerprint() fingerprint {
@@ -105,13 +101,13 @@ func (e *Evaluation) Fingerprint() fingerprint {
 type alertRulesRegistry struct {
 	rules        map[models.AlertRuleKey]*models.AlertRule
 	folderTitles map[models.FolderKey]string
-	mu           sync.Mutex
+	mu           sync.RWMutex
 }
 
 // all returns all rules in the registry.
 func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[models.FolderKey]string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	result := make([]*models.AlertRule, 0, len(r.rules))
 	for _, rule := range r.rules {
 		result = append(result, rule)
@@ -120,8 +116,8 @@ func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[models.FolderKey]st
 }
 
 func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return r.rules[k]
 }
 
@@ -161,12 +157,14 @@ func (r *alertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool
 }
 
 func (r *alertRulesRegistry) isEmpty() bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return len(r.rules) == 0
 }
 
 func (r *alertRulesRegistry) needsUpdate(keys []models.AlertRuleKeyWithVersion) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	if len(r.rules) != len(keys) {
 		return true
 	}
@@ -308,14 +306,12 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	}
 
 	for _, setting := range rule.NotificationSettings {
-		binary.LittleEndian.PutUint64(tmp, uint64(setting.Fingerprint()))
+		binary.LittleEndian.PutUint64(tmp, uint64(setting.Fingerprint(nil)))
 		writeBytes(tmp)
 	}
 
 	// fields that do not affect the state.
 	// TODO consider removing fields below from the fingerprint
-	writeInt(rule.ID)
-	writeInt(rule.OrgID)
 	writeInt(int64(rule.For))
 	if rule.DashboardUID != nil {
 		writeString(*rule.DashboardUID)
@@ -324,7 +320,6 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 		writeInt(*rule.PanelID)
 	}
 	writeString(rule.RuleGroup)
-	writeInt(int64(rule.RuleGroupIndex))
 	writeString(string(rule.NoDataState))
 	writeString(string(rule.ExecErrState))
 	if rule.Record != nil {

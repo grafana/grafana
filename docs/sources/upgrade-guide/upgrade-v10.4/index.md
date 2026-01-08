@@ -32,6 +32,6 @@ You can disable this behavior using the feature flag `alertingUpgradeDryrunOnSta
 alertingUpgradeDryrunOnStart=false
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 We strongly encourage you to review the [upgrade guide](https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts/) and perform the necessary upgrade steps prior to v11.
-{{% /admonition %}}
+{{< /admonition >}}

@@ -33,6 +33,7 @@ import {
 
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
+import { UserStorage } from './userStorage';
 
 /**
  * @internal
@@ -85,6 +86,8 @@ enum PluginRequestHeaders {
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
   SkipQueryCache = 'X-Cache-Skip', // used by datasources to skip the query cache
+  DashboardTitle = 'X-Dashboard-Title', // used by datasources to identify the dashboard title
+  PanelTitle = 'X-Panel-Title', // used by datasources to identify the panel title
 }
 
 /**
@@ -120,8 +123,11 @@ class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
+  userStorage: UserStorage;
+
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     super(instanceSettings);
+    this.userStorage = new UserStorage(instanceSettings.type);
   }
 
   /**
@@ -174,6 +180,7 @@ class DataSourceWithBackend<
       if (datasource.uid?.length) {
         dsUIDs.add(datasource.uid);
       }
+
       return {
         ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
         datasource,
@@ -195,13 +202,6 @@ class DataSourceWithBackend<
       to: range?.to.valueOf().toString(),
     };
 
-    if (config.featureToggles.queryOverLive) {
-      return getGrafanaLiveSrv().getQueryData({
-        request,
-        body,
-      });
-    }
-
     const headers: Record<string, string> = request.headers ?? {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
@@ -210,14 +210,7 @@ class DataSourceWithBackend<
 
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
-      if (!(config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs)) {
-        console.warn('feature toggle queryServiceFromUI also requires the queryService to be running');
-      } else {
-        if (!hasExpr && dsUIDs.size === 1) {
-          // TODO? can we talk directly to the apiserver?
-        }
-        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=' + this.type`;
-      }
+      url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
     }
 
     if (hasExpr) {
@@ -232,8 +225,14 @@ class DataSourceWithBackend<
 
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
+      if (request.dashboardTitle) {
+        headers[PluginRequestHeaders.DashboardTitle] = request.dashboardTitle;
+      }
       if (request.panelId) {
         headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+      }
+      if (request.panelName) {
+        headers[PluginRequestHeaders.PanelTitle] = request.panelName;
       }
     }
     if (request.panelPluginId) {

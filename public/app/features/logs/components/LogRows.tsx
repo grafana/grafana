@@ -5,20 +5,20 @@ import {
   TimeZone,
   LogsDedupStrategy,
   LogRowModel,
-  Field,
-  LinkModel,
   LogsSortOrder,
   CoreApp,
   DataFrame,
   LogRowContextOptions,
+  TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { PopoverContent, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
-import { sortLogRows, targetIsElement } from '../utils';
+import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled, sortLogRows, targetIsElement } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
@@ -43,7 +43,7 @@ export interface Props {
   showContextToggle?: (row: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: GetFieldLinksFn;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
@@ -60,8 +60,8 @@ export interface Props {
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  pinnedRowId?: string;
   pinnedLogs?: string[];
+  timeRange: TimeRange;
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
    * Any overflowing content will be clipped at the table boundary.
@@ -75,7 +75,7 @@ export interface Props {
   renderPreview?: boolean;
 }
 
-type PopoverStateType = {
+export type PopoverStateType = {
   selection: string;
   selectedRow: LogRowModel | null;
   popoverMenuCoordinates: { x: number; y: number };
@@ -112,6 +112,7 @@ export const LogRows = memo(
       selectedRow: null,
       popoverMenuCoordinates: { x: 0, y: 0 },
     });
+    const [showDisablePopoverOptions, setShowDisablePopoverOptions] = useState(false);
     const logRowsRef = useRef<HTMLDivElement>(null);
     const theme = useTheme2();
     const styles = getLogRowStyles(theme);
@@ -121,7 +122,6 @@ export const LogRows = memo(
       [dedupedRows]
     );
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    // Staged rendering
     const orderedRows = useMemo(
       () => (logsSortOrder ? sortLogRows(dedupedRows, logsSortOrder) : dedupedRows),
       [dedupedRows, logsSortOrder]
@@ -130,7 +130,6 @@ export const LogRows = memo(
     const getRows = useMemo(() => () => orderedRows, [orderedRows]);
     const handleDeselectionRef = useRef<((e: Event) => void) | null>(null);
     const keyMaker = new UniqueKeyMaker();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
 
     useEffect(() => {
       return () => {
@@ -169,7 +168,7 @@ export const LogRows = memo(
     );
 
     const popoverMenuSupported = useCallback(() => {
-      if (!config.featureToggles.logRowsPopoverMenu) {
+      if (isPopoverMenuDisabled()) {
         return false;
       }
       return Boolean(onClickFilterOutString || onClickFilterString);
@@ -209,6 +208,9 @@ export const LogRows = memo(
         if (!selection) {
           return false;
         }
+        if (e.altKey) {
+          enablePopoverMenu();
+        }
         if (popoverMenuSupported() === false) {
           // This signals onRowClick inside LogRow to skip the event because the user is selecting text
           return selection ? true : false;
@@ -236,6 +238,19 @@ export const LogRows = memo(
       [handleDeselection, popoverMenuSupported]
     );
 
+    const onDisablePopoverMenu = useCallback(() => {
+      setShowDisablePopoverOptions(true);
+    }, []);
+
+    const onDisableCancel = useCallback(() => {
+      setShowDisablePopoverOptions(false);
+    }, []);
+
+    const onDisableConfirm = useCallback(() => {
+      disablePopoverMenu();
+      setShowDisablePopoverOptions(false);
+    }, []);
+
     return (
       <div className={styles.logRows} ref={logRowsRef}>
         {popoverState.selection && popoverState.selectedRow && (
@@ -246,6 +261,29 @@ export const LogRows = memo(
             {...popoverState.popoverMenuCoordinates}
             onClickFilterString={onClickFilterString}
             onClickFilterOutString={onClickFilterOutString}
+            onDisable={onDisablePopoverMenu}
+          />
+        )}
+        {showDisablePopoverOptions && (
+          <ConfirmModal
+            isOpen
+            title={t('logs.log-rows.disable-popover.title', 'Disable menu')}
+            body={
+              <>
+                <Trans i18nKey="logs.log-rows.disable-popover.message">
+                  You are about to disable the logs filter menu. To re-enable it, select text in a log line while
+                  holding the alt key.
+                </Trans>
+                <div className={styles.shortcut}>
+                  <Icon name="keyboard" />
+                  <Trans i18nKey="logs.log-rows.disable-popover-message.shortcut">alt+select to enable again</Trans>
+                </div>
+              </>
+            }
+            confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
+            icon="exclamation-triangle"
+            onConfirm={onDisableConfirm}
+            onDismiss={onDisableCancel}
           />
         )}
         <table className={cx(styles.logsRowsTable, props.overflowingContent ? '' : styles.logsRowsTableContain)}>
@@ -266,7 +304,7 @@ export const LogRows = memo(
                   onPinLine={props.onPinLine}
                   onUnpinLine={props.onUnpinLine}
                   pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
-                  pinned={props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
+                  pinned={pinnedLogs?.some((logId) => logId === row.rowId || logId === row.uid)}
                   isFilterLabelActive={props.isFilterLabelActive}
                   handleTextSelection={handleSelection}
                   enableLogDetails={enableLogDetails}
@@ -291,3 +329,4 @@ export const LogRows = memo(
     );
   }
 );
+LogRows.displayName = 'LogRows';

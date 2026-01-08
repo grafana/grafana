@@ -5,14 +5,15 @@ import userEvent from '@testing-library/user-event';
 import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import { getMockTimeRange } from '../../test/mocks/datasource';
 import { PromOptions } from '../../types';
-import { promQueryModeller } from '../PromQueryModeller';
 import { addOperationInQueryBuilder } from '../testUtils';
 import { PromVisualQuery } from '../types';
 
 import { OperationList } from './OperationList';
+import { promQueryModeller } from './modeller_instance';
 
 const defaultQuery: PromVisualQuery = {
   metric: 'random_metric',
@@ -38,7 +39,7 @@ describe('OperationList', () => {
 
   it('removes an operation', async () => {
     const { onChange } = setup();
-    const removeOperationButtons = screen.getAllByTitle('Remove operation');
+    const removeOperationButtons = screen.getAllByLabelText('Remove operation');
     expect(removeOperationButtons).toHaveLength(2);
     await userEvent.click(removeOperationButtons[1]);
     expect(onChange).toHaveBeenCalledWith({
@@ -64,7 +65,7 @@ describe('OperationList', () => {
 });
 
 function setup(query: PromVisualQuery = defaultQuery) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
   const props = {
     datasource: new PrometheusDatasource(
       {
@@ -78,6 +79,7 @@ function setup(query: PromVisualQuery = defaultQuery) {
     onRunQuery: () => {},
     onChange: jest.fn(),
     queryModeller: promQueryModeller,
+    timeRange: getMockTimeRange(),
   };
 
   render(<OperationList {...props} query={query} />);

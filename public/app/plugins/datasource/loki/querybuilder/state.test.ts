@@ -1,4 +1,4 @@
-import { QueryEditorMode } from '@grafana/experimental';
+import { QueryEditorMode } from '@grafana/plugin-ui';
 
 import { changeEditorMode, getQueryWithDefaults } from './state';
 

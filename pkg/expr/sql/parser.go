@@ -1,89 +1,78 @@
 package sql
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/jeremywohl/flatten"
+	"github.com/dolthub/vitess/go/vt/sqlparser"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-const (
-	TABLE_NAME    = "table_name"
-	ERROR         = ".error"
-	ERROR_MESSAGE = ".error_message"
-)
-
-var logger = log.New("sql_expr")
-
-// TablesList returns a list of tables for the sql statement
-func TablesList(rawSQL string) ([]string, error) {
-	db := NewInMemoryDB()
-	rawSQL = strings.Replace(rawSQL, "'", "''", -1)
-	cmd := fmt.Sprintf("SELECT json_serialize_sql('%s')", rawSQL)
-	ret, err := db.RunCommands([]string{cmd})
+// TablesList returns a list of tables for the sql statement excluding
+// CTEs and the 'dual' table. The list is sorted alphabetically.
+func TablesList(ctx context.Context, rawSQL string) ([]string, error) {
+	logger := backend.NewLoggerWith("logger", "expr.sql").FromContext(ctx)
+	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
-		logger.Error("error serializing sql", "error", err.Error(), "sql", rawSQL, "cmd", cmd)
-		return nil, fmt.Errorf("error serializing sql: %s", err.Error())
+		logger.Error("error parsing sql", "error", err.Error(), "sql", rawSQL)
+		return nil, fmt.Errorf("error parsing sql: %s", err.Error())
 	}
 
-	ast := []map[string]any{}
-	err = json.Unmarshal([]byte(ret), &ast)
-	if err != nil {
-		logger.Error("error converting json sql to ast", "error", err.Error(), "ret", ret)
-		return nil, fmt.Errorf("error converting json to ast: %s", err.Error())
-	}
+	tables := make(map[string]struct{})
+	cteNames := make(map[string]struct{})
 
-	return tablesFromAST(ast)
-}
+	walkSubtree := func(node sqlparser.SQLNode) error {
+		err = sqlparser.Walk(func(node sqlparser.SQLNode) (kontinue bool, err error) {
+			switch v := node.(type) {
+			case *sqlparser.CommonTableExpr:
+				// Track CTE name from the As field
+				cteName := v.As.String()
+				if cteName != "" {
+					cteNames[strings.ToLower(cteName)] = struct{}{}
+				}
 
-// tablesFromAST returns a list of tables from the ast
-func tablesFromAST(ast []map[string]any) ([]string, error) {
-	flat, err := flatten.Flatten(ast[0], "", flatten.DotStyle)
-	if err != nil {
-		logger.Error("error flattening ast", "error", err.Error(), "ast", ast)
-		return nil, fmt.Errorf("error flattening ast: %s", err.Error())
-	}
-
-	tables := []string{}
-	for k, v := range flat {
-		if strings.HasSuffix(k, ERROR) {
-			v, ok := v.(bool)
-			if ok && v {
-				logger.Error("error in sql", "error", k)
-				return nil, astError(k, flat)
+			case *sqlparser.AliasedTableExpr:
+				if tableName, ok := v.Expr.(sqlparser.TableName); ok {
+					tables[tableName.Name.String()] = struct{}{}
+				}
+			case *sqlparser.TableName:
+				tables[v.Name.String()] = struct{}{}
 			}
+			return true, nil
+		}, node)
+
+		if err != nil {
+			logger.Error("error walking sql", "error", err, "node", node)
+			return fmt.Errorf("failed to parse SQL expression: %w", err)
 		}
-		if strings.Contains(k, TABLE_NAME) {
-			table, ok := v.(string)
-			if ok && !existsInList(table, tables) {
-				tables = append(tables, v.(string))
-			}
-		}
+		return nil
 	}
-	sort.Strings(tables)
+
+	if err := walkSubtree(stmt); err != nil {
+		return nil, err
+	}
+
+	result := make([]string, 0, len(tables))
+	for table := range tables {
+		// Remove 'dual' table if it exists
+		// This is a special table in MySQL that always returns a single row with a single column
+		// See: https://dev.mysql.com/doc/refman/5.7/en/select.html#:~:text=You%20are%20permitted%20to%20specify%20DUAL%20as%20a%20dummy%20table%20name%20in%20situations%20where%20no%20tables%20are%20referenced
+		if table == "dual" {
+			continue
+		}
+
+		// Skip CTEs
+		if _, ok := cteNames[strings.ToLower(table)]; ok {
+			continue
+		}
+		result = append(result, table)
+	}
+
+	sort.Strings(result)
 
 	logger.Debug("tables found in sql", "tables", tables)
 
-	return tables, nil
-}
-
-func astError(k string, flat map[string]any) error {
-	key := strings.Replace(k, ERROR, "", 1)
-	message, ok := flat[key+ERROR_MESSAGE]
-	if !ok {
-		message = "unknown error in sql"
-	}
-	return fmt.Errorf("error in sql: %s", message)
-}
-
-func existsInList(table string, list []string) bool {
-	for _, t := range list {
-		if t == table {
-			return true
-		}
-	}
-	return false
+	return result, nil
 }

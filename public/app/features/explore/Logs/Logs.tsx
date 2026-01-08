@@ -16,15 +16,11 @@ import {
   RawTimeRange,
   DataQueryResponse,
   LogRowContextOptions,
-  LinkModel,
   EventBus,
   ExplorePanelsState,
-  Field,
   TimeRange,
   LogsDedupStrategy,
   LogsSortOrder,
-  LogLevel,
-  DataTopic,
   CoreApp,
   LogsDedupDescription,
   rangeUtil,
@@ -33,9 +29,12 @@ import {
   DataHoverEvent,
   serializeStateToUrlParam,
   urlUtil,
+  LogLevel,
+  shallowCompare,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataTopic } from '@grafana/schema';
 import {
   Button,
   InlineField,
@@ -48,21 +47,25 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
-import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
+import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
-import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
-import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
+import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
+import { LogList, LogListOptions } from 'app/features/logs/components/panel/LogList';
+import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
+import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
+import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
+import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { getState } from 'app/store/store';
-import { ExploreItemState, useDispatch } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
+import { useDispatch } from 'app/types/store';
 
 import {
-  contentOutlineTrackLevelFilter,
   contentOutlineTrackPinAdded,
   contentOutlineTrackPinClicked,
   contentOutlineTrackPinLimitReached,
@@ -72,13 +75,15 @@ import {
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
+import { changeQueries, runQueries } from '../state/query';
 
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { canKeepDisplayedFields, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { getExploreBaseUrl } from './utils/url';
 
 interface Props extends Themeable2 {
   width: number;
@@ -107,19 +112,16 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
-  getRowContext?: (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions) => Promise<any>;
+  getRowContext?: (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions) => Promise<DataQueryResponse>;
   getRowContextQuery?: (
     row: LogRowModel,
     options?: LogRowContextOptions,
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
-  getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
-  addResultsToCache: () => void;
-  clearCache: () => void;
+  getFieldLinks: GetFieldLinksFn;
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
-  scrollElement?: HTMLDivElement;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
@@ -179,8 +181,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     getFieldLinks,
     theme,
     logsQueries,
-    clearCache,
-    addResultsToCache,
     exploreId,
     getRowContext,
     getLogRowContextUi,
@@ -189,7 +189,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     panelState,
     eventBus,
     onPinLineCallback,
-    scrollElement,
   } = props;
   const [showLabels, setShowLabels] = useState<boolean>(store.getBool(SETTINGS_KEYS.showLabels, false));
   const [showTime, setShowTime] = useState<boolean>(store.getBool(SETTINGS_KEYS.showTime, true));
@@ -198,17 +197,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)
   );
   const [dedupStrategy, setDedupStrategy] = useState<LogsDedupStrategy>(LogsDedupStrategy.none);
-  const [hiddenLogLevels, setHiddenLogLevels] = useState<LogLevel[]>([]);
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
-    store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending
+    panelState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
-  const [displayedFields, setDisplayedFields] = useState<string[]>([]);
-  const [forceEscape, setForceEscape] = useState<boolean>(false);
+  const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
+  const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
-  const [visualisationType, setVisualisationType] = useState<LogsVisualisationType | undefined>(
+  const [visualisationType, setVisualisationType] = useState<LogsVisualisationType>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -216,15 +214,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const previousLoading = usePrevious(loading);
 
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
-  const { register, unregister, outlineItems, updateItem, unregisterAllChildren } = useContentOutlineContext() ?? {};
+  const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
   const flipOrderTimer = useRef<number | undefined>(undefined);
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
-  const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
+  const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
-  const prevLogsQueries = usePrevious(logsQueries);
+  const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
 
   const tableHeight = getLogsTableHeight();
-  const styles = getStyles(theme, wrapLogMessage, tableHeight);
+  const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
+  const styles = getStyles(theme, setWrapperLineWrapStyles, tableHeight);
   const hasData = logRows && logRows.length > 0;
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
@@ -242,63 +241,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
     return logsParent?.children?.filter((child) => child.title === PINNED_LOGS_TITLE).length ?? 0;
   }, [outlineItems]);
-
-  const registerLogLevelsWithContentOutline = useCallback(() => {
-    const levelsArr = Object.keys(LogLevelColor);
-    const logVolumeDataFrames = new Set(logsVolumeData?.data);
-    // TODO remove this once filtering multiple log volumes is supported
-    const logVolData = logsVolumeData?.data.filter(
-      (frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations
-    );
-    const grouped = groupBy(logVolData, 'meta.custom.datasourceName');
-    const numberOfLogVolumes = Object.keys(grouped).length;
-
-    // clean up all current log levels
-    if (unregisterAllChildren) {
-      unregisterAllChildren((items) => {
-        const logsParent = items?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
-        return logsParent?.id;
-      }, 'filter');
-    }
-
-    // check if we have dataFrames that return the same level
-    const logLevelsArray: Array<{ levelStr: string; logLevel: LogLevel }> = [];
-    logVolumeDataFrames.forEach((dataFrame) => {
-      const { level } = getLogLevelInfo(dataFrame);
-      logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level) });
-    });
-
-    const sortedLLArray = logLevelsArray.sort(
-      (a: { levelStr: string; logLevel: LogLevel }, b: { levelStr: string; logLevel: LogLevel }) => {
-        return levelsArr.indexOf(a.logLevel.toString()) > levelsArr.indexOf(b.logLevel.toString()) ? 1 : -1;
-      }
-    );
-
-    const logLevels = new Set(sortedLLArray);
-
-    if (logLevels.size > 1 && logsVolumeEnabled && numberOfLogVolumes === 1) {
-      logLevels.forEach((level) => {
-        const allLevelsSelected = hiddenLogLevels.length === 0;
-        const currentLevelSelected = !hiddenLogLevels.find((hiddenLevel) => hiddenLevel === level.levelStr);
-        if (register) {
-          register({
-            title: level.levelStr,
-            icon: 'gf-logs',
-            panelId: PINNED_LOGS_PANELID,
-            level: 'child',
-            type: 'filter',
-            highlight: currentLevelSelected && !allLevelsSelected,
-            onClick: (e: React.MouseEvent) => {
-              toggleLegendRef.current?.(level.levelStr, mapMouseEventToMode(e));
-              contentOutlineTrackLevelFilter(level);
-            },
-            ref: null,
-            color: LogLevelColor[level.logLevel],
-          });
-        }
-      });
-    }
-  }, [logsVolumeData?.data, unregisterAllChildren, logsVolumeEnabled, hiddenLogLevels, register, toggleLegendRef]);
 
   useEffect(() => {
     if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
@@ -329,25 +271,23 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [dispatch, exploreId, loading, panelState, previousLoading]);
 
   useEffect(() => {
+    // Initialize URL sort order
+    if (!panelState?.logs?.sortOrder) {
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState,
+          sortOrder: logsSortOrder,
+        })
+      );
+    }
+  }, [dispatch, exploreId, logsSortOrder, panelState]);
+
+  useEffect(() => {
     const visualisationType = panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
     setVisualisationType(visualisationType);
 
     store.set(visualisationTypeKey, visualisationType);
   }, [panelState?.logs?.visualisationType]);
-
-  useEffect(() => {
-    let displayedFields: string[] = [];
-    if (Array.isArray(panelState?.logs?.displayedFields)) {
-      displayedFields = panelState?.logs?.displayedFields;
-    } else if (panelState?.logs?.displayedFields && typeof panelState?.logs?.displayedFields === 'object') {
-      displayedFields = Object.values(panelState?.logs?.displayedFields);
-    }
-    setDisplayedFields(displayedFields);
-  }, [panelState?.logs?.displayedFields]);
-
-  useEffect(() => {
-    registerLogLevelsWithContentOutline();
-  }, [logsVolumeData?.data, hiddenLogLevels, registerLogLevelsWithContentOutline]);
 
   useUnmount(() => {
     if (flipOrderTimer) {
@@ -360,23 +300,19 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   useUnmount(() => {
     // If we're unmounting logs (e.g. switching to another datasource), we need to remove the logs specific panel state, otherwise it will persist in the explore url
-    if (
-      panelState?.logs?.columns ||
-      panelState?.logs?.refId ||
-      panelState?.logs?.labelFieldName ||
-      panelState?.logs?.displayedFields
-    ) {
-      dispatch(
-        changePanelState(exploreId, 'logs', {
-          ...panelState?.logs,
-          columns: undefined,
-          visualisationType: visualisationType,
-          labelFieldName: undefined,
-          refId: undefined,
-          displayedFields: undefined,
-        })
-      );
-    }
+    dispatch(
+      changePanelState(exploreId, 'logs', {
+        ...panelState?.logs,
+        columns: undefined,
+        visualisationType: visualisationType,
+        labelFieldName: undefined,
+        refId: undefined,
+        displayedFields: undefined,
+        sortOrder: undefined,
+        tableSortBy: undefined,
+        tableSortDir: undefined,
+      })
+    );
   });
 
   const updatePanelState = useCallback(
@@ -391,6 +327,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
             displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
+            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
+            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
           })
         );
       }
@@ -401,23 +339,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       panelState?.logs?.columns,
       panelState?.logs?.displayedFields,
       panelState?.logs?.refId,
+      panelState?.logs?.tableSortBy,
+      panelState?.logs?.tableSortDir,
       visualisationType,
     ]
   );
 
   useEffect(() => {
-    if (!prevLogsQueries) {
-      // Initial load, ignore
-      return;
-    }
-    if (!canKeepDisplayedFields(logsQueries, prevLogsQueries)) {
-      setDisplayedFields([]);
+    if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
       updatePanelState({
         ...panelState?.logs,
-        displayedFields: [],
+        displayedFields,
       });
     }
-  }, [logsQueries, panelState?.logs, prevLogsQueries, updatePanelState]);
+  }, [displayedFields, panelState?.logs, updatePanelState]);
 
   // actions
   const onLogRowHover = useCallback(
@@ -437,45 +372,68 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [props.eventBus]
   );
 
-  const scrollIntoView = useCallback(
-    (element: HTMLElement) => {
-      if (config.featureToggles.logsInfiniteScrolling) {
-        if (logsContainerRef.current) {
-          topLogsRef.current?.scrollIntoView();
-          logsContainerRef.current.scroll({
-            behavior: 'smooth',
-            top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-          });
-        }
+  const scrollIntoView = useCallback((element: HTMLElement) => {
+    if (logsContainerRef.current) {
+      topLogsRef.current?.scrollIntoView?.();
+      logsContainerRef.current.scroll({
+        behavior: 'smooth',
+        top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+      });
+    }
 
+    return;
+  }, []);
+
+  const sortOrderChanged = useCallback(
+    (newSortOrder: LogsSortOrder) => {
+      if (!logsQueries) {
         return;
       }
+      let hasLokiQueries = false;
+      const newQueries = logsQueries.map((query) => {
+        if (query.datasource?.type !== 'loki' || !isLokiQuery(query)) {
+          return query;
+        }
+        if (query.direction === LokiQueryDirection.Scan) {
+          // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
+          return query;
+        }
+        hasLokiQueries = true;
+        const newDirection =
+          newSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
+        if (newDirection !== query.direction) {
+          query.direction = newDirection;
+        }
+        return query;
+      });
 
-      if (scrollElement) {
-        scrollElement.scroll({
-          behavior: 'smooth',
-          top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-        });
+      if (hasLokiQueries) {
+        dispatch(changeQueries({ exploreId, queries: newQueries }));
+        dispatch(runQueries({ exploreId }));
       }
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState?.logs,
+          sortOrder: newSortOrder,
+        })
+      );
     },
-    [scrollElement]
+    [dispatch, exploreId, logsQueries, panelState?.logs]
   );
 
-  const onChangeLogsSortOrder = () => {
-    setIsFlipping(true);
-    // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
-    flipOrderTimer.current = window.setTimeout(() => {
-      const newSortOrder =
-        logsSortOrder === LogsSortOrder.Descending ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
-      store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
-      setLogsSortOrder(newSortOrder);
-    }, 0);
-    cancelFlippingTimer.current = window.setTimeout(() => setIsFlipping(false), 1000);
-  };
-
-  const onEscapeNewlines = useCallback(() => {
-    setForceEscape(!forceEscape);
-  }, [forceEscape]);
+  const onChangeLogsSortOrder = useCallback(
+    (newSortOrder: LogsSortOrder) => {
+      setIsFlipping(true);
+      // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
+      flipOrderTimer.current = window.setTimeout(() => {
+        store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
+        sortOrderChanged(newSortOrder);
+        setLogsSortOrder(newSortOrder);
+      }, 0);
+      cancelFlippingTimer.current = window.setTimeout(() => setIsFlipping(false), 1000);
+    },
+    [sortOrderChanged]
+  );
 
   const onChangeVisualisation = useCallback(
     (visualisation: LogsVisualisationType) => {
@@ -546,11 +504,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
   }, []);
 
-  const onToggleLogLevel = useCallback((hiddenRawLevels: string[]) => {
-    const hiddenLogLevels = hiddenRawLevels.map((level) => getLogLevelFromKey(level));
-    setHiddenLogLevels(hiddenLogLevels);
-  }, []);
-
   const onToggleLogsVolumeCollapse = useCallback(
     (collapsed: boolean) => {
       props.onSetLogsVolumeEnabled(!collapsed);
@@ -593,13 +546,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       if (index === -1) {
         const updatedDisplayedFields = displayedFields.concat(key);
         setDisplayedFields(updatedDisplayedFields);
-        updatePanelState({
-          ...panelState?.logs,
-          displayedFields: updatedDisplayedFields,
-        });
       }
     },
-    [displayedFields, panelState?.logs, updatePanelState]
+    [displayedFields]
   );
 
   const hideField = useCallback(
@@ -608,32 +557,26 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       if (index > -1) {
         const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
         setDisplayedFields(updatedDisplayedFields);
-        updatePanelState({
-          ...panelState?.logs,
-          displayedFields: updatedDisplayedFields,
-        });
       }
     },
-    [displayedFields, panelState?.logs, updatePanelState]
+    [displayedFields]
   );
 
-  const clearDetectedFields = useCallback(() => {
-    updatePanelState({
-      ...panelState?.logs,
-      displayedFields: [],
-    });
+  const clearDisplayedFields = useCallback(() => {
     setDisplayedFields([]);
-  }, [panelState?.logs, updatePanelState]);
+  }, []);
 
   const onCloseCallbackRef = useRef<() => void>(() => {});
 
   let onCloseContext = useCallback(() => {
     setContextOpen(false);
     setContextRow(undefined);
-    reportInteraction('grafana_explore_logs_log_context_closed', {
-      datasourceType: contextRow?.datasourceType,
-      logRowUid: contextRow?.uid,
-    });
+    if (!config.featureToggles.newLogContext) {
+      reportInteraction('grafana_explore_logs_log_context_closed', {
+        datasourceType: contextRow?.datasourceType,
+        logRowUid: contextRow?.uid,
+      });
+    }
     onCloseCallbackRef?.current();
   }, [contextRow?.datasourceType, contextRow?.uid, onCloseCallbackRef]);
 
@@ -641,10 +584,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
     setContextOpen(true);
     setContextRow(row);
-    reportInteraction('grafana_explore_logs_log_context_opened', {
-      datasourceType: row.datasourceType,
-      logRowUid: row.uid,
-    });
+    if (!config.featureToggles.newLogContext) {
+      reportInteraction('grafana_explore_logs_log_context_opened', {
+        datasourceType: row.datasourceType,
+        logRowUid: row.uid,
+      });
+    }
     onCloseCallbackRef.current = onClose;
   }, []);
 
@@ -662,13 +607,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
       urlState.panelsState = {
         ...panelState,
-        logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
+        logs: {
+          id: row.uid,
+          visualisationType: visualisationType ?? getDefaultVisualisationType(),
+          displayedFields,
+          sortOrder: logsSortOrder,
+        },
       };
       urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
 
       // append changed urlState to baseUrl
       const serializedState = serializeStateToUrlParam(urlState);
-      const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
+      const baseUrl = getExploreBaseUrl();
       const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
       await createAndCopyShortLink(url);
 
@@ -678,20 +628,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         logRowLevel: row.logLevel,
       });
     },
-    [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]
+    [absoluteRange, displayedFields, exploreId, logRows, logsSortOrder, panelState, visualisationType]
   );
 
   const scrollToTopLogs = useCallback(() => {
-    if (config.featureToggles.logsInfiniteScrolling) {
-      if (logsContainerRef.current) {
-        logsContainerRef.current.scroll({
-          behavior: 'auto',
-          top: 0,
-        });
-      }
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scroll({
+        behavior: 'auto',
+        top: 0,
+      });
     }
     topLogsRef.current?.scrollIntoView();
-  }, [logsContainerRef, topLogsRef]);
+  }, []);
 
   const onPinToContentOutlineClick = useCallback(
     (row: LogRowModel, allowUnPin = true) => {
@@ -739,21 +687,86 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]
   );
 
-  const hasUnescapedContent = useMemo(() => checkUnescapedContent(logRows), [logRows]);
-  const filteredLogs = useMemo(() => filterRows(logRows, hiddenLogLevels), [hiddenLogLevels, logRows]);
-  const { dedupedRows, dedupCount } = useMemo(
-    () => dedupRows(filteredLogs, dedupStrategy),
-    [dedupStrategy, filteredLogs]
-  );
-  const navigationRange = useMemo(() => createNavigationRange(logRows), [logRows]);
+  const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);
   const infiniteScrollAvailable = useMemo(
     () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
     [logsQueries]
   );
 
+  const visibilityChangedRef = useRef(true);
+  const onLogOptionsChange = useCallback(
+    (option: LogListOptions, value: string | string[] | boolean) => {
+      if (option === 'sortOrder' && isLogsSortOrder(value)) {
+        sortOrderChanged(value);
+      } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
+        setDedupStrategy(value);
+      } else if (option === 'filterLevels' && Array.isArray(value) && logsVolumeEnabled) {
+        const logVolData =
+          logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations) ?? [];
+        const grouped = groupBy(logVolData, 'meta.custom.datasourceName');
+        const numberOfLogVolumes = Object.keys(grouped).length;
+
+        // Not supported
+        if (numberOfLogVolumes > 1) {
+          return;
+        }
+
+        const logsVolumeLevels = [
+          ...new Set(
+            logVolData.map((dataFrame) => {
+              const { level } = getLogLevelInfo(dataFrame, logVolData);
+              return getLogLevelFromKey(level);
+            })
+          ),
+        ];
+
+        setFilterLevels((currentFilterLevels: LogLevel[] | undefined) => {
+          const newLevels = value.map((level) => getLogLevelFromKey(level));
+          const newLogsVolumeLevels = newLevels.filter((level) => logsVolumeLevels.includes(level));
+          const prevLogsVolumeLevels = currentFilterLevels?.filter((level) => logsVolumeLevels.includes(level)) ?? [];
+
+          if (!newLogsVolumeLevels.length) {
+            toggleLegendRef.current?.(undefined, SeriesVisibilityChangeMode.ToggleSelection);
+            return undefined;
+          }
+
+          const addedLevels = newLogsVolumeLevels.filter((newLevel) => !prevLogsVolumeLevels.includes(newLevel));
+          const removedLevels = prevLogsVolumeLevels.filter((prevLevel) => !newLogsVolumeLevels.includes(prevLevel));
+
+          addedLevels.forEach((level) => {
+            visibilityChangedRef.current = true;
+            toggleLegendRef.current?.(
+              level,
+              !prevLogsVolumeLevels.length
+                ? SeriesVisibilityChangeMode.ToggleSelection
+                : SeriesVisibilityChangeMode.AppendToSelection
+            );
+          });
+          removedLevels.forEach((level) => {
+            visibilityChangedRef.current = true;
+            toggleLegendRef.current?.(level, SeriesVisibilityChangeMode.AppendToSelection);
+          });
+
+          return newLevels;
+        });
+      } else if (option === 'defaultDisplayedFields' && Array.isArray(value)) {
+        setDefaultDisplayedFields(value);
+      }
+    },
+    [logsVolumeData?.data, logsVolumeEnabled, sortOrderChanged]
+  );
+
+  const onDisplayedSeriesChanged = useCallback((levels: string[]) => {
+    if (visibilityChangedRef.current) {
+      visibilityChangedRef.current = false;
+      return;
+    }
+    setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
+  }, []);
+
   return (
     <>
-      {getRowContext && contextRow && (
+      {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && getRowContext && contextRow && (
         <LogRowContextModal
           open={contextOpen}
           row={contextRow}
@@ -765,39 +778,58 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           timeZone={timeZone}
         />
       )}
-      <PanelChrome
-        title="Logs volume"
-        collapsible
-        collapsed={!logsVolumeEnabled}
-        onToggleCollapse={onToggleLogsVolumeCollapse}
-      >
-        {logsVolumeEnabled && (
-          <LogsVolumePanelList
-            toggleLegendRef={toggleLegendRef}
-            absoluteRange={absoluteRange}
-            width={width}
-            logsVolumeData={logsVolumeData}
-            onUpdateTimeRange={onChangeTime}
-            timeZone={timeZone}
-            splitOpen={splitOpen}
-            onLoadLogsVolume={loadLogsVolumeData}
-            onHiddenSeriesChanged={onToggleLogLevel}
-            eventBus={logsVolumeEventBus}
-            onClose={() => onToggleLogsVolumeCollapse(true)}
-          />
-        )}
-      </PanelChrome>
+      {config.featureToggles.newLogsPanel && config.featureToggles.newLogContext && getRowContext && contextRow && (
+        <LogLineContext
+          open={contextOpen}
+          log={contextRow}
+          onClose={onCloseContext}
+          getRowContext={(row, options) => getRowContext(row, contextRow, options)}
+          getRowContextQuery={getRowContextQuery}
+          getLogRowContextUi={getLogRowContextUi}
+          logOptionsStorageKey={SETTING_KEY_ROOT}
+          timeZone={timeZone}
+          displayedFields={displayedFields}
+          onClickShowField={showField}
+          onClickHideField={hideField}
+        />
+      )}
+      <div className={styles.logsVolumePanel}>
+        <PanelChrome
+          title={t('explore.unthemed-logs.title-logs-volume', 'Logs volume')}
+          collapsible
+          loadingState={logsVolumeData?.state}
+          collapsed={!logsVolumeEnabled}
+          onToggleCollapse={onToggleLogsVolumeCollapse}
+        >
+          {logsVolumeEnabled && (
+            <LogsVolumePanelList
+              toggleLegendRef={toggleLegendRef}
+              absoluteRange={absoluteRange}
+              width={width}
+              logsVolumeData={logsVolumeData}
+              onUpdateTimeRange={onChangeTime}
+              timeZone={timeZone}
+              splitOpen={splitOpen}
+              onLoadLogsVolume={loadLogsVolumeData}
+              onDisplayedSeriesChanged={onDisplayedSeriesChanged}
+              eventBus={logsVolumeEventBus}
+              onClose={() => onToggleLogsVolumeCollapse(true)}
+              logs={logRows}
+            />
+          )}
+        </PanelChrome>
+      </div>
       <PanelChrome
         titleItems={[
           config.featureToggles.logsExploreTableVisualisation ? (
             visualisationType === 'logs' ? null : (
-              <PanelChrome.TitleItem title="Feedback" key="A">
+              <PanelChrome.TitleItem title={t('explore.unthemed-logs.title-feedback', 'Feedback')} key="A">
                 <LogsFeedback feedbackUrl="https://forms.gle/5YyKdRQJ5hzq4c289" />
               </PanelChrome.TitleItem>
             )
           ) : null,
         ]}
-        title={'Logs'}
+        title={t('explore.unthemed-logs.title-logs', 'Logs')}
         actions={
           <>
             {config.featureToggles.logsExploreTableVisualisation && (
@@ -806,14 +838,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   className={styles.visualisationTypeRadio}
                   options={[
                     {
-                      label: 'Logs',
+                      label: t('explore.unthemed-logs.label.logs', 'Logs'),
                       value: 'logs',
-                      description: 'Show results in logs visualisation',
+                      description: t(
+                        'explore.unthemed-logs.description.show-results-in-logs-visualisation',
+                        'Show results in logs visualisation'
+                      ),
                     },
                     {
-                      label: 'Table',
+                      label: t('explore.unthemed-logs.label.table', 'Table'),
                       value: 'table',
-                      description: 'Show results in table visualisation',
+                      description: t(
+                        'explore.unthemed-logs.description.show-results-in-table-visualisation',
+                        'Show results in table visualisation'
+                      ),
                     },
                   ]}
                   size="sm"
@@ -827,102 +865,129 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         loadingState={loading ? LoadingState.Loading : LoadingState.Done}
       >
         <div className={styles.stickyNavigation}>
-          {visualisationType !== 'table' && (
-            <div className={styles.logOptions}>
-              <InlineFieldRow>
-                <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
-                  <InlineSwitch
-                    value={showTime}
-                    onChange={onChangeShowTime}
-                    className={styles.horizontalInlineSwitch}
+          {visualisationType !== 'table' &&
+            !config.featureToggles.newLogsPanel &&
+            !config.featureToggles.logsPanelControls && (
+              <div className={styles.logOptions}>
+                <InlineFieldRow>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-time', 'Time')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`show-time_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
-                  <InlineSwitch
-                    value={showLabels}
-                    onChange={onChangeLabels}
-                    className={styles.horizontalInlineSwitch}
+                  >
+                    <InlineSwitch
+                      value={showTime}
+                      onChange={onChangeShowTime}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`show-time_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-unique-labels', 'Unique labels')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`unique-labels_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
-                  <InlineSwitch
-                    value={wrapLogMessage}
-                    onChange={onChangeWrapLogMessage}
-                    className={styles.horizontalInlineSwitch}
+                  >
+                    <InlineSwitch
+                      value={showLabels}
+                      onChange={onChangeLabels}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`unique-labels_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-wrap-lines', 'Wrap lines')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`wrap-lines_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
-                  <InlineSwitch
-                    value={prettifyLogMessage}
-                    onChange={onChangePrettifyLogMessage}
-                    className={styles.horizontalInlineSwitch}
+                  >
+                    <InlineSwitch
+                      value={wrapLogMessage}
+                      onChange={onChangeWrapLogMessage}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`wrap-lines_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-prettify-json', 'Prettify JSON')}
+                    className={styles.horizontalInlineLabel}
                     transparent
-                    id={`prettify_${exploreId}`}
-                  />
-                </InlineField>
-                <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
-                  <RadioButtonGroup
-                    options={DEDUP_OPTIONS.map((dedupType) => ({
-                      label: capitalize(dedupType),
-                      value: dedupType,
-                      description: LogsDedupDescription[dedupType],
-                    }))}
-                    value={dedupStrategy}
-                    onChange={onChangeDedup}
-                    className={styles.radioButtons}
-                  />
-                </InlineField>
-              </InlineFieldRow>
+                  >
+                    <InlineSwitch
+                      value={prettifyLogMessage}
+                      onChange={onChangePrettifyLogMessage}
+                      className={styles.horizontalInlineSwitch}
+                      transparent
+                      id={`prettify_${exploreId}`}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-deduplication', 'Deduplication')}
+                    className={styles.horizontalInlineLabel}
+                    transparent
+                  >
+                    <RadioButtonGroup
+                      options={DEDUP_OPTIONS.map((dedupType) => ({
+                        label: capitalize(dedupType),
+                        value: dedupType,
+                        description: LogsDedupDescription[dedupType],
+                      }))}
+                      value={dedupStrategy}
+                      onChange={onChangeDedup}
+                      className={styles.radioButtons}
+                    />
+                  </InlineField>
+                </InlineFieldRow>
 
-              <div>
-                <InlineField
-                  label="Display results"
-                  className={styles.horizontalInlineLabel}
-                  transparent
-                  disabled={isFlipping || loading}
-                >
-                  <RadioButtonGroup
-                    options={[
-                      {
-                        label: 'Newest first',
-                        value: LogsSortOrder.Descending,
-                        description: 'Show results newest to oldest',
-                      },
-                      {
-                        label: 'Oldest first',
-                        value: LogsSortOrder.Ascending,
-                        description: 'Show results oldest to newest',
-                      },
-                    ]}
-                    value={logsSortOrder}
-                    onChange={onChangeLogsSortOrder}
-                    className={styles.radioButtons}
-                  />
-                </InlineField>
+                <div>
+                  <InlineField
+                    label={t('explore.unthemed-logs.label-display-results', 'Display results')}
+                    className={styles.horizontalInlineLabel}
+                    transparent
+                    disabled={isFlipping || loading}
+                  >
+                    <RadioButtonGroup
+                      options={[
+                        {
+                          label: t('explore.unthemed-logs.label.newest-first', 'Newest first'),
+                          value: LogsSortOrder.Descending,
+                          description: t(
+                            'explore.unthemed-logs.description.show-results-newest-to-oldest',
+                            'Show results newest to oldest'
+                          ),
+                        },
+                        {
+                          label: t('explore.unthemed-logs.label.oldest-first', 'Oldest first'),
+                          value: LogsSortOrder.Ascending,
+                          description: t(
+                            'explore.unthemed-logs.description.show-results-oldest-to-newest',
+                            'Show results oldest to newest'
+                          ),
+                        },
+                      ]}
+                      value={logsSortOrder}
+                      onChange={onChangeLogsSortOrder}
+                      className={styles.radioButtons}
+                    />
+                  </InlineField>
+                </div>
               </div>
-            </div>
-          )}
+            )}
           <div ref={topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
             meta={logsMeta || []}
             dedupStrategy={dedupStrategy}
             dedupCount={dedupCount}
-            hasUnescapedContent={hasUnescapedContent}
-            forceEscape={forceEscape}
             displayedFields={displayedFields}
-            onEscapeNewlines={onEscapeNewlines}
-            clearDetectedFields={clearDetectedFields}
+            clearDisplayedFields={clearDisplayedFields}
+            defaultDisplayedFields={defaultDisplayedFields}
+            visualisationType={visualisationType}
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {visualisationType === 'table' && hasData && (
+          {!config.featureToggles.logsPanelControls && visualisationType === 'table' && hasData && (
             <div className={styles.logRows} data-testid="logRowsTable">
               {/* Width should be full width minus logs navigation and padding */}
               <LogsTableWrap
@@ -935,101 +1000,195 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 panelState={panelState?.logs}
-                theme={theme}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
+                displayedFields={displayedFields}
+                exploreId={props.exploreId}
+                absoluteRange={props.absoluteRange}
+                logRows={props.logRows}
               />
             </div>
           )}
-          {visualisationType === 'logs' && (
-            <div
-              className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
-              data-testid="logRows"
-              ref={logsContainerRef}
-            >
-              {hasData && (
-                <InfiniteScroll
+          {(!config.featureToggles.newLogsPanel || visualisationType === 'table') &&
+            config.featureToggles.logsPanelControls &&
+            hasData && (
+              <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
+                <ControlledLogRows
+                  ref={logsContainerRef}
+                  logsTableFrames={props.logsFrames}
+                  width={width}
+                  updatePanelState={updatePanelState}
+                  panelState={panelState?.logs}
+                  datasourceType={props.datasourceType}
+                  splitOpen={splitOpen}
+                  visualisationType={visualisationType}
                   loading={loading}
                   loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
                   range={props.range}
+                  pinnedLogs={pinnedLogs}
+                  logRows={logRows}
+                  deduplicatedRows={dedupedRows}
+                  dedupStrategy={dedupStrategy}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  showContextToggle={showContextToggle}
+                  getRowContextQuery={getRowContextQuery}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  enableLogDetails={true}
+                  wrapLogMessage={wrapLogMessage}
+                  prettifyLogMessage={prettifyLogMessage}
                   timeZone={timeZone}
-                  rows={logRows}
-                  scrollElement={logsContainerRef.current}
-                  sortOrder={logsSortOrder}
+                  getFieldLinks={getFieldLinks}
+                  logsSortOrder={logsSortOrder}
+                  displayedFields={displayedFields}
+                  onClickShowField={showField}
+                  onClickHideField={hideField}
                   app={CoreApp.Explore}
-                >
-                  <LogRows
-                    pinnedLogs={pinnedLogs}
-                    logRows={logRows}
-                    deduplicatedRows={dedupedRows}
-                    dedupStrategy={dedupStrategy}
-                    onClickFilterLabel={onClickFilterLabel}
-                    onClickFilterOutLabel={onClickFilterOutLabel}
-                    showContextToggle={showContextToggle}
-                    getRowContextQuery={getRowContextQuery}
-                    showLabels={showLabels}
-                    showTime={showTime}
-                    enableLogDetails={true}
-                    forceEscape={forceEscape}
-                    wrapLogMessage={wrapLogMessage}
-                    prettifyLogMessage={prettifyLogMessage}
+                  onLogRowHover={onLogRowHover}
+                  onOpenContext={onOpenContext}
+                  onPermalinkClick={onPermalinkClick}
+                  permalinkedRowId={panelState?.logs?.id}
+                  isFilterLabelActive={props.isFilterLabelActive}
+                  onClickFilterString={props.onClickFilterString}
+                  onClickFilterOutString={props.onClickFilterOutString}
+                  onUnpinLine={onPinToContentOutlineClick}
+                  onPinLine={onPinToContentOutlineClick}
+                  pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                  logsMeta={logsMeta}
+                  logOptionsStorageKey={SETTING_KEY_ROOT}
+                  onLogOptionsChange={onLogOptionsChange}
+                  filterLevels={filterLevels}
+                  timeRange={props.range}
+                  exploreId={props.exploreId}
+                  absoluteRange={props.absoluteRange}
+                />
+              </div>
+            )}
+          {!config.featureToggles.logsPanelControls &&
+            !config.featureToggles.newLogsPanel &&
+            visualisationType === 'logs' &&
+            hasData && (
+              <>
+                <div className={styles.scrollableLogRows} data-testid="logRows" ref={logsContainerRef}>
+                  <InfiniteScroll
+                    loading={loading}
+                    loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
+                    range={props.range}
                     timeZone={timeZone}
-                    getFieldLinks={getFieldLinks}
-                    logsSortOrder={logsSortOrder}
-                    displayedFields={displayedFields}
-                    onClickShowField={showField}
-                    onClickHideField={hideField}
-                    app={CoreApp.Explore}
-                    onLogRowHover={onLogRowHover}
-                    onOpenContext={onOpenContext}
-                    onPermalinkClick={onPermalinkClick}
-                    permalinkedRowId={panelState?.logs?.id}
-                    scrollIntoView={scrollIntoView}
-                    isFilterLabelActive={props.isFilterLabelActive}
+                    rows={logRows}
                     scrollElement={logsContainerRef.current}
-                    onClickFilterString={props.onClickFilterString}
-                    onClickFilterOutString={props.onClickFilterOutString}
-                    onUnpinLine={onPinToContentOutlineClick}
-                    onPinLine={onPinToContentOutlineClick}
-                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                    renderPreview
-                  />
-                </InfiniteScroll>
+                    sortOrder={logsSortOrder}
+                    app={CoreApp.Explore}
+                  >
+                    <LogRows
+                      pinnedLogs={pinnedLogs}
+                      logRows={logRows}
+                      deduplicatedRows={dedupedRows}
+                      dedupStrategy={dedupStrategy}
+                      onClickFilterLabel={onClickFilterLabel}
+                      onClickFilterOutLabel={onClickFilterOutLabel}
+                      showContextToggle={showContextToggle}
+                      getRowContextQuery={getRowContextQuery}
+                      showLabels={showLabels}
+                      showTime={showTime}
+                      enableLogDetails={true}
+                      wrapLogMessage={wrapLogMessage}
+                      prettifyLogMessage={prettifyLogMessage}
+                      timeZone={timeZone}
+                      getFieldLinks={getFieldLinks}
+                      logsSortOrder={logsSortOrder}
+                      displayedFields={displayedFields}
+                      onClickShowField={showField}
+                      onClickHideField={hideField}
+                      app={CoreApp.Explore}
+                      onLogRowHover={onLogRowHover}
+                      onOpenContext={onOpenContext}
+                      onPermalinkClick={onPermalinkClick}
+                      permalinkedRowId={panelState?.logs?.id}
+                      scrollIntoView={scrollIntoView}
+                      isFilterLabelActive={props.isFilterLabelActive}
+                      scrollElement={logsContainerRef.current}
+                      onClickFilterString={props.onClickFilterString}
+                      onClickFilterOutString={props.onClickFilterOutString}
+                      onUnpinLine={onPinToContentOutlineClick}
+                      onPinLine={onPinToContentOutlineClick}
+                      pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                      renderPreview
+                      timeRange={props.range}
+                    />
+                  </InfiniteScroll>
+                </div>
+                <LogsNavigation logsSortOrder={logsSortOrder} scrollToTopLogs={scrollToTopLogs} />
+              </>
+            )}
+          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && (
+            <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
+              {logsContainerRef.current && hasData && (
+                <LogList
+                  app={CoreApp.Explore}
+                  containerElement={logsContainerRef.current}
+                  enableLogDetails={true}
+                  dataFrames={props.logsFrames ?? []}
+                  dedupStrategy={dedupStrategy}
+                  displayedFields={displayedFields}
+                  filterLevels={filterLevels}
+                  getFieldLinks={getFieldLinks}
+                  getRowContextQuery={getRowContextQuery}
+                  isLabelFilterActive={props.isFilterLabelActive}
+                  loading={loading}
+                  loadMore={loadMoreLogs}
+                  logOptionsStorageKey={SETTING_KEY_ROOT}
+                  logs={dedupedRows}
+                  logsMeta={logsMeta}
+                  logSupportsContext={showContextToggle}
+                  onClickShowField={showField}
+                  onClickHideField={hideField}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  onClickFilterString={props.onClickFilterString}
+                  onClickFilterOutString={props.onClickFilterOutString}
+                  onLogOptionsChange={onLogOptionsChange}
+                  onLogLineHover={onLogRowHover}
+                  onOpenContext={onOpenContext}
+                  onPermalinkClick={onPermalinkClick}
+                  onPinLine={onPinToContentOutlineClick}
+                  onUnpinLine={onPinToContentOutlineClick}
+                  permalinkedLogId={panelState?.logs?.id}
+                  pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                  pinnedLogs={pinnedLogs}
+                  setDisplayedFields={setDisplayedFields}
+                  showControls
+                  showFieldSelector
+                  showTime={showTime}
+                  sortOrder={logsSortOrder}
+                  timeRange={props.range}
+                  timeZone={timeZone}
+                  wrapLogMessage={wrapLogMessage}
+                />
               )}
             </div>
           )}
           {!loading && !hasData && !scanning && (
-            <div className={styles.logRows}>
+            <div className={styles.noDataWrapper}>
               <div className={styles.noData}>
                 <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
-                <Button size="sm" variant="secondary" onClick={onClickScan}>
+                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
                   <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
                 </Button>
               </div>
             </div>
           )}
           {scanning && (
-            <div className={styles.logRows}>
+            <div className={styles.noDataWrapper}>
               <div className={styles.noData}>
                 <span>{scanText}</span>
-                <Button size="sm" variant="secondary" onClick={onClickStopScan}>
+                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickStopScan}>
                   <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
                 </Button>
               </div>
             </div>
           )}
-          <LogsNavigation
-            logsSortOrder={logsSortOrder}
-            visibleRange={navigationRange ?? absoluteRange}
-            absoluteRange={absoluteRange}
-            timeZone={timeZone}
-            onChangeTime={onChangeTime}
-            loading={loading}
-            queries={logsQueries ?? []}
-            scrollToTopLogs={scrollToTopLogs}
-            addResultsToCache={addResultsToCache}
-            clearCache={clearCache}
-          />
         </div>
       </PanelChrome>
     </>
@@ -1040,10 +1199,17 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
+    noDataWrapper: css({
+      display: 'flex',
+      justifyContent: 'center',
+      width: '100%',
+      paddingBottom: theme.spacing(2),
+    }),
     noData: css({
-      '& > *': {
-        marginLeft: '0.5em',
-      },
+      display: 'inline-block',
+    }),
+    scanButton: css({
+      marginLeft: theme.spacing(1),
     }),
     logOptions: css({
       display: 'flex',
@@ -1082,52 +1248,40 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     scrollableLogRows: css({
       overflowY: 'scroll',
       width: '100%',
-      maxHeight: '75vh',
+      maxHeight: '80vh',
     }),
     logRows: css({
       overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,
       overflowY: 'visible',
       width: '100%',
     }),
+    controlledLogRowsWrapper: css({
+      width: '100%',
+      maxHeight: '80vh',
+    }),
+    logRowsWrapper: css({
+      width: '100%',
+    }),
     visualisationType: css({
       display: 'flex',
       flex: '1',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end',
     }),
     visualisationTypeRadio: css({
       margin: `0 0 0 ${theme.spacing(1)}`,
     }),
     stickyNavigation: css({
       overflow: 'visible',
-      ...(config.featureToggles.logsInfiniteScrolling && { marginBottom: '0px' }),
+      marginBottom: '0px',
+    }),
+    logsVolumePanel: css({
+      marginBottom: theme.spacing(1.5),
     }),
   };
-};
-
-const checkUnescapedContent = (logRows: LogRowModel[]) => {
-  return logRows.some((r) => r.hasUnescapedContent);
 };
 
 const dedupRows = (logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
   const dedupedRows = dedupLogRows(logRows, dedupStrategy);
   const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
   return { dedupedRows, dedupCount };
-};
-
-const filterRows = (logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
-  return filterLogLevels(logRows, new Set(hiddenLogLevels));
-};
-
-const createNavigationRange = (logRows: LogRowModel[]): { from: number; to: number } | undefined => {
-  if (!logRows || logRows.length === 0) {
-    return undefined;
-  }
-  const firstTimeStamp = logRows[0].timeEpochMs;
-  const lastTimeStamp = logRows[logRows.length - 1].timeEpochMs;
-
-  if (lastTimeStamp < firstTimeStamp) {
-    return { from: lastTimeStamp, to: firstTimeStamp };
-  }
-
-  return { from: firstTimeStamp, to: lastTimeStamp };
 };

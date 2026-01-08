@@ -217,7 +217,7 @@
       }
     }
   ],
-  "schemaVersion": 33,
+  "schemaVersion": 32,
   "tags": [],
   "templating": {
     "list": []

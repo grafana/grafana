@@ -17,7 +17,7 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
 **Prerequisites:**
 
 - A Google Cloud account with permission to list and create KMS keys and service accounts to access those keys
-- Access to the Grafana [configuration]({{< relref "../../../configure-grafana#configuration-file-location" >}}) file
+- Access to the Grafana [configuration](../../../configure-grafana/#configuration-file-location) file
 
 1. [Create a key ring](https://cloud.google.com/kms/docs/creating-keys#kms-create-key-ring-console) in Google Cloud KMS.
 
@@ -33,7 +33,6 @@ You can use an encryption key from Google Cloud Key Management Service to encryp
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.azurekv.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
    <br><br>b. Fill in the section with the following values:
    <br>
-
    - `key_id`: encryption key ID, refer to [Getting the ID for a Key](https://cloud.google.com/kms/docs/getting-resource-ids#getting_the_id_for_a_key_and_version).
    - `credentials_file`: full path to service account key JSON file on your computer.
 

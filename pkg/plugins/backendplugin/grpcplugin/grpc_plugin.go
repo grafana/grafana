@@ -7,9 +7,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/hashicorp/go-plugin"
-	trace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -48,7 +47,7 @@ func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.
 		descriptor: descriptor,
 		logger:     logger,
 		clientFactory: func() *plugin.Client {
-			return plugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, env(), descriptor.skipHostEnvVars, logger, tracer, descriptor.versionedPlugins))
+			return plugin.NewClient(newClientConfig(descriptor, env(), logger, tracer))
 		},
 		state: pluginStateNotStarted,
 	}
@@ -88,14 +87,6 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	if p.pluginClient == nil {
 		p.state = pluginStateStartFail
 		return errors.New("no compatible plugin implementation found")
-	}
-
-	elevated, err := process.IsRunningWithElevatedPrivileges()
-	if err != nil {
-		p.logger.Debug("Error checking plugin process execution privilege", "error", err)
-	}
-	if elevated {
-		p.logger.Warn("Plugin process is running with elevated privileges. This is not recommended")
 	}
 
 	p.state = pluginStateStartSuccess

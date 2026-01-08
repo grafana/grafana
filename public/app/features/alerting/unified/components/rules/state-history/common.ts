@@ -1,5 +1,6 @@
 import { isEqual, uniqBy } from 'lodash';
 
+import { DataFrameJSON } from '@grafana/data';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
 export interface Line {
@@ -9,6 +10,7 @@ export interface Line {
   labels?: Record<string, string>;
   fingerprint?: string;
   ruleUID?: string;
+  error?: string;
 }
 
 export interface LogRecord {
@@ -38,4 +40,38 @@ export function extractCommonLabels(labels: Label[][]): Label[] {
   );
 
   return commonLabels;
+}
+
+export function historyDataFrameToLogRecords(stateHistory?: DataFrameJSON): LogRecord[] {
+  if (!stateHistory?.data || !stateHistory.data.values || !Array.isArray(stateHistory.data.values)) {
+    return [];
+  }
+
+  const [tsValues, lines] = stateHistory.data.values;
+
+  if (!Array.isArray(tsValues) || !Array.isArray(lines) || tsValues.length !== lines.length) {
+    return [];
+  }
+
+  const timestamps = isNumbers(tsValues) ? tsValues : [];
+
+  // merge timestamp with "line"
+  const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+    const line = lines[index];
+    if (!isLine(line)) {
+      return acc;
+    }
+    acc.push({ timestamp, line });
+    return acc;
+  }, []);
+
+  return logRecords;
+}
+
+export function isNumbers(value: unknown[]): value is number[] {
+  return value.every((v) => typeof v === 'number');
+}
+
+export function isLine(value: unknown): value is Line {
+  return typeof value === 'object' && value !== null && 'current' in value && 'previous' in value;
 }

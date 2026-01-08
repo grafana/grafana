@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { AppNotification, timeoutMap } from 'app/types';
+import { AppNotification, timeoutMap } from 'app/types/appNotifications';
 
 interface Props {
   appNotification: AppNotification;

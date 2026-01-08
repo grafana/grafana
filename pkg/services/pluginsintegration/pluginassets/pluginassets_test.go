@@ -2,6 +2,7 @@ package pluginassets
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -11,11 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService_Calculate(t *testing.T) {
@@ -29,7 +30,7 @@ func TestService_Calculate(t *testing.T) {
 
 	tcs := []struct {
 		name           string
-		pluginSettings setting.PluginSettings
+		pluginSettings config.PluginSettings
 		plugin         pluginstore.Plugin
 		expected       plugins.LoadingStrategy
 	}{
@@ -57,7 +58,7 @@ func TestService_Calculate(t *testing.T) {
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				CreatePluginVersionCfgKey: futureVersion,
 			}),
-			plugin:   newPlugin(pluginID, withAngular(false)),
+			plugin:   newPlugin(pluginID, withAngular(false), withFS(plugins.NewFakeFS())),
 			expected: plugins.LoadingStrategyScript,
 		},
 		{
@@ -65,24 +66,21 @@ func TestService_Calculate(t *testing.T) {
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				// NOTE: cdn key is not set
 			}),
-			plugin:   newPlugin(pluginID, withAngular(false)),
+			plugin:   newPlugin(pluginID, withAngular(false), withFS(plugins.NewFakeFS())),
 			expected: plugins.LoadingStrategyScript,
 		},
 		{
-			name: "Expected LoadingStrategyScript when create-plugin version is not compatible, plugin is not angular, is not configured as CDN enabled and does not have the CDN class",
+			name: "Expected LoadingStrategyScript when create-plugin version is not compatible, plugin is not angular, is not configured as CDN enabled and does not have a CDN fs",
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				CreatePluginVersionCfgKey: incompatVersion,
 				// NOTE: cdn key is not set
 			}),
-			plugin: newPlugin(pluginID, withAngular(false), func(p pluginstore.Plugin) pluginstore.Plugin {
-				p.Class = plugins.ClassExternal
-				return p
-			}),
+			plugin:   newPlugin(pluginID, withAngular(false), withClass(plugins.ClassExternal), withFS(plugins.NewFakeFS())),
 			expected: plugins.LoadingStrategyScript,
 		},
 		{
 			name: "Expected LoadingStrategyFetch when parent create-plugin version is not set, is configured as CDN enabled and plugin is not angular",
-			pluginSettings: setting.PluginSettings{
+			pluginSettings: config.PluginSettings{
 				"parent-datasource": {
 					"cdn": "true",
 				},
@@ -95,7 +93,7 @@ func TestService_Calculate(t *testing.T) {
 		},
 		{
 			name: "Expected LoadingStrategyFetch when parent create-plugin version is not set, is configured as CDN enabled and plugin is angular",
-			pluginSettings: setting.PluginSettings{
+			pluginSettings: config.PluginSettings{
 				"parent-datasource": {
 					"cdn": "true",
 				},
@@ -108,23 +106,20 @@ func TestService_Calculate(t *testing.T) {
 		},
 		{
 			name:           "Expected LoadingStrategyFetch when parent create-plugin version is not set, is not configured as CDN enabled and plugin is angular",
-			pluginSettings: setting.PluginSettings{},
-			plugin: newPlugin(pluginID, withAngular(true), func(p pluginstore.Plugin) pluginstore.Plugin {
+			pluginSettings: config.PluginSettings{},
+			plugin: newPlugin(pluginID, withAngular(true), withFS(plugins.NewFakeFS()), func(p pluginstore.Plugin) pluginstore.Plugin {
 				p.Parent = &pluginstore.ParentPlugin{ID: "parent-datasource"}
 				return p
 			}),
 			expected: plugins.LoadingStrategyFetch,
 		},
 		{
-			name: "Expected LoadingStrategyFetch when create-plugin version is not compatible, plugin is not angular, is configured as CDN enabled and does not have the CDN class",
+			name: "Expected LoadingStrategyFetch when create-plugin version is not compatible, plugin is not angular, and plugin is configured as CDN enabled",
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				"cdn":                     "true",
 				CreatePluginVersionCfgKey: incompatVersion,
 			}),
-			plugin: newPlugin(pluginID, withAngular(false), func(p pluginstore.Plugin) pluginstore.Plugin {
-				p.Class = plugins.ClassExternal
-				return p
-			}),
+			plugin:   newPlugin(pluginID, withAngular(false), withClass(plugins.ClassExternal)),
 			expected: plugins.LoadingStrategyFetch,
 		},
 		{
@@ -132,7 +127,7 @@ func TestService_Calculate(t *testing.T) {
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				CreatePluginVersionCfgKey: incompatVersion,
 			}),
-			plugin:   newPlugin(pluginID, withAngular(true)),
+			plugin:   newPlugin(pluginID, withAngular(true), withFS(plugins.NewFakeFS())),
 			expected: plugins.LoadingStrategyFetch,
 		},
 		{
@@ -145,22 +140,25 @@ func TestService_Calculate(t *testing.T) {
 			expected: plugins.LoadingStrategyFetch,
 		},
 		{
-			name: "Expected LoadingStrategyFetch when create-plugin version is not compatible, plugin is not angular and has the CDN class",
+			name: "Expected LoadingStrategyFetch when create-plugin version is not compatible, plugin is not angular and has a CDN fs",
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				CreatePluginVersionCfgKey: incompatVersion,
 			}),
-			plugin: newPlugin(pluginID, withAngular(false), func(p pluginstore.Plugin) pluginstore.Plugin {
-				p.Class = plugins.ClassCDN
-				return p
-			}),
+			plugin: newPlugin(pluginID, withAngular(false), withFS(
+				&pluginfakes.FakePluginFS{
+					TypeFunc: func() plugins.FSType {
+						return plugins.FSTypeCDN
+					},
+				},
+			)),
 			expected: plugins.LoadingStrategyFetch,
 		},
 		{
-			name: "Expected LoadingStrategyScript when plugin setting create-plugin version is badly formatted, plugin is not configured as CDN enabled and does not have the CDN class",
+			name: "Expected LoadingStrategyScript when plugin setting create-plugin version is badly formatted, plugin is not configured as CDN enabled and does not have a CDN fs",
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				CreatePluginVersionCfgKey: "invalidSemver",
 			}),
-			plugin:   newPlugin(pluginID, withAngular(false)),
+			plugin:   newPlugin(pluginID, withAngular(false), withFS(plugins.NewFakeFS())),
 			expected: plugins.LoadingStrategyScript,
 		},
 	}
@@ -187,10 +185,16 @@ func TestService_ModuleHash(t *testing.T) {
 		parentPluginID = "grafana-test-app"
 	)
 	for _, tc := range []struct {
-		name          string
-		features      *config.Features
-		store         []pluginstore.Plugin
-		plugin        pluginstore.Plugin
+		name     string
+		features *config.Features
+		store    []pluginstore.Plugin
+
+		// Can be used to configure plugin's fs
+		// fs cdn type = loaded from CDN with no files on disk
+		// fs local type = files on disk but served from CDN only if cdn=true
+		plugin pluginstore.Plugin
+
+		// When true, set cdn=true in config
 		cdn           bool
 		expModuleHash string
 	}{
@@ -202,18 +206,28 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: "",
 		},
 		{
-			name: "feature flag on with cdn on should return module hash",
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+				withClass(plugins.ClassExternal),
 			),
 			cdn:           true,
 			features:      &config.Features{SriChecksEnabled: true},
 			expModuleHash: newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"),
 		},
 		{
-			name: "feature flag on with cdn off should return module hash",
+			plugin: newPlugin(
+				pluginID,
+				withSignatureStatus(plugins.SignatureStatusValid),
+				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+				withClass(plugins.ClassExternal),
+			),
+			cdn:           true,
+			features:      &config.Features{SriChecksEnabled: true},
+			expModuleHash: newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"),
+		},
+		{
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -221,10 +235,9 @@ func TestService_ModuleHash(t *testing.T) {
 			),
 			cdn:           false,
 			features:      &config.Features{SriChecksEnabled: true},
-			expModuleHash: newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"),
+			expModuleHash: "",
 		},
 		{
-			name: "feature flag off with cdn on should not return module hash",
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -235,7 +248,6 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: "",
 		},
 		{
-			name: "feature flag off with cdn off should not return module hash",
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -262,7 +274,7 @@ func TestService_ModuleHash(t *testing.T) {
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested", "datasource"))),
 				withParent(parentPluginID),
 			),
-			cdn:           false,
+			cdn:           true,
 			features:      &config.Features{SriChecksEnabled: true},
 			expModuleHash: newSRIHash(t, "04d70db091d96c4775fb32ba5a8f84cc22893eb43afdb649726661d4425c6711"),
 		},
@@ -283,7 +295,7 @@ func TestService_ModuleHash(t *testing.T) {
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested", "panels", "one"))),
 				withParent(parentPluginID),
 			),
-			cdn:           false,
+			cdn:           true,
 			features:      &config.Features{SriChecksEnabled: true},
 			expModuleHash: newSRIHash(t, "cbd1ac2284645a0e1e9a8722a729f5bcdd2b831222728709c6360beecdd6143f"),
 		},
@@ -311,7 +323,7 @@ func TestService_ModuleHash(t *testing.T) {
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-deeply-nested", "datasource", "panels", "one"))),
 				withParent("parent-datasource"),
 			),
-			cdn:           false,
+			cdn:           true,
 			features:      &config.Features{SriChecksEnabled: true},
 			expModuleHash: newSRIHash(t, "cbd1ac2284645a0e1e9a8722a729f5bcdd2b831222728709c6360beecdd6143f"),
 		},
@@ -351,12 +363,30 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: "",
 		},
 	} {
+		if tc.name == "" {
+			var expS string
+			if tc.expModuleHash == "" {
+				expS = "should not return module hash"
+			} else {
+				expS = "should return module hash"
+			}
+			tc.name = fmt.Sprintf("feature=%v, cdn_config=%v, class=%v %s", tc.features.SriChecksEnabled, tc.cdn, tc.plugin.Class, expS)
+		}
+
 		t.Run(tc.name, func(t *testing.T) {
-			var pluginSettings setting.PluginSettings
+			var pluginSettings config.PluginSettings
 			if tc.cdn {
-				pluginSettings = newPluginSettings(pluginID, map[string]string{
-					"cdn": "true",
-				})
+				pluginSettings = config.PluginSettings{
+					pluginID: {
+						"cdn": "true",
+					},
+					parentPluginID: map[string]string{
+						"cdn": "true",
+					},
+					"grand-parent-app": map[string]string{
+						"cdn": "true",
+					},
+				}
 			}
 			features := tc.features
 			if features == nil {
@@ -381,7 +411,7 @@ func TestService_ModuleHash(t *testing.T) {
 
 func TestService_ModuleHash_Cache(t *testing.T) {
 	pCfg := &config.PluginManagementCfg{
-		PluginSettings: setting.PluginSettings{},
+		PluginSettings: config.PluginSettings{},
 		Features:       config.Features{SriChecksEnabled: true},
 	}
 	svc := ProvideService(
@@ -414,6 +444,23 @@ func TestService_ModuleHash_Cache(t *testing.T) {
 			withSignatureStatus(plugins.SignatureStatusValid),
 			withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
 		)
+
+		pCfg = &config.PluginManagementCfg{
+			PluginsCDNURLTemplate: "https://cdn.grafana.com",
+			PluginSettings: config.PluginSettings{
+				pluginID: {
+					"cdn": "true",
+				},
+			},
+			Features: config.Features{SriChecksEnabled: true},
+		}
+		svc = ProvideService(
+			pCfg,
+			pluginscdn.ProvideService(pCfg),
+			signature.ProvideService(pCfg, statickey.New()),
+			pluginstore.NewFakePluginStore(),
+		)
+
 		k := svc.moduleHashCacheKey(pV1)
 
 		_, ok := svc.moduleHashCache.Load(k)
@@ -522,14 +569,21 @@ func withParent(parentID string) func(p pluginstore.Plugin) pluginstore.Plugin {
 	}
 }
 
-func newCfg(ps setting.PluginSettings) *config.PluginManagementCfg {
+func withClass(class plugins.Class) func(p pluginstore.Plugin) pluginstore.Plugin {
+	return func(p pluginstore.Plugin) pluginstore.Plugin {
+		p.Class = class
+		return p
+	}
+}
+
+func newCfg(ps config.PluginSettings) *config.PluginManagementCfg {
 	return &config.PluginManagementCfg{
 		PluginSettings: ps,
 	}
 }
 
-func newPluginSettings(pluginID string, kv map[string]string) setting.PluginSettings {
-	return setting.PluginSettings{
+func newPluginSettings(pluginID string, kv map[string]string) config.PluginSettings {
+	return config.PluginSettings{
 		pluginID: kv,
 	}
 }

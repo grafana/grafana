@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // ProvidePluginManagementConfig returns a new config.PluginManagementCfg.
@@ -29,15 +28,13 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		allowedUnsigned,
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		config.Features{
-			ExternalCorePluginsEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins),
-			SkipHostEnvVarsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
-			SriChecksEnabled:           features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
+			SriChecksEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
+			TempoAlertingEnabled: features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
 		},
-		cfg.AngularSupportEnabled,
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
-		cfg.HideAngularDeprecation,
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComSSOAPIToken,
 	), nil
@@ -51,7 +48,7 @@ type PluginInstanceCfg struct {
 
 	Tracing config.Tracing
 
-	PluginSettings setting.PluginSettings
+	PluginSettings config.PluginSettings
 
 	AWSAllowedAuthProviders   []string
 	AWSAssumeRoleEnabled      bool
@@ -130,8 +127,8 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 	}, nil
 }
 
-func extractPluginSettings(settingProvider setting.Provider) setting.PluginSettings {
-	ps := setting.PluginSettings{}
+func extractPluginSettings(settingProvider setting.Provider) config.PluginSettings {
+	ps := config.PluginSettings{}
 	for sectionName, sectionCopy := range settingProvider.Current() {
 		if !strings.HasPrefix(sectionName, "plugin.") {
 			continue

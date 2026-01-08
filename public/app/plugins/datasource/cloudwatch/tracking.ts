@@ -1,16 +1,19 @@
 import { DashboardLoadedEvent } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
-import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
-import { migrateMetricQuery } from './migrations/metricQueryMigrations';
-import pluginJson from './plugin.json';
 import {
   CloudWatchLogsQuery,
+  CloudWatchLogsAnomaliesQuery,
   CloudWatchMetricsQuery,
-  CloudWatchQuery,
-  MetricEditorMode,
+  LogsMode,
+  LogsQueryLanguage,
   MetricQueryType,
-} from './types';
+  MetricEditorMode,
+} from './dataquery.gen';
+import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery, isLogsAnomaliesQuery } from './guards';
+import { migrateMetricQuery } from './migrations/metricQueryMigrations';
+import pluginJson from './plugin.json';
+import { CloudWatchQuery } from './types';
 import { filterMetricsQuery } from './utils/utils';
 
 type CloudWatchOnDashboardLoadedTrackingEvent = {
@@ -20,6 +23,18 @@ type CloudWatchOnDashboardLoadedTrackingEvent = {
 
   /* The number of CloudWatch logs queries present in the dashboard*/
   logs_queries_count: number;
+
+  /* The number of Logs queries that use Logs Insights query language */
+  logs_cwli_queries_count: number;
+
+  /* The number of Logs queries that use SQL language */
+  logs_sql_queries_count: number;
+
+  /* The number of Logs queries that use PPL language */
+  logs_ppl_queries_count: number;
+
+  /* The number of log anomalies queries */
+  log_anomalies_queries_count: number;
 
   /* The number of CloudWatch metrics queries present in the dashboard*/
   metrics_queries_count: number;
@@ -67,7 +82,8 @@ export const onDashboardLoadedHandler = ({
       return;
     }
 
-    let logsQueries: CloudWatchLogsQuery[] = [];
+    let logsInsightsQueries: CloudWatchLogsQuery[] = [];
+    let logAnomaliesQueries: CloudWatchLogsAnomaliesQuery[] = [];
     let metricsQueries: CloudWatchMetricsQuery[] = [];
 
     for (const query of cloudWatchQueries) {
@@ -75,8 +91,12 @@ export const onDashboardLoadedHandler = ({
         continue;
       }
 
-      if (isCloudWatchLogsQuery(query)) {
-        query.logGroupNames?.length && logsQueries.push(query);
+      const isLogsInsightsQuery =
+        isCloudWatchLogsQuery(query) && (!query.logsMode || query.logsMode === LogsMode.Insights);
+      if (isLogsInsightsQuery) {
+        (query.logGroupNames?.length || query.logGroups?.length) && logsInsightsQueries.push(query);
+      } else if (isLogsAnomaliesQuery(query)) {
+        logAnomaliesQueries.push(query);
       } else if (isCloudWatchMetricsQuery(query)) {
         const migratedQuery = migrateMetricQuery(query);
         filterMetricsQuery(migratedQuery) && metricsQueries.push(query);
@@ -87,7 +107,13 @@ export const onDashboardLoadedHandler = ({
       grafana_version: grafanaVersion,
       dashboard_id: dashboardId,
       org_id: orgId,
-      logs_queries_count: logsQueries?.length,
+      logs_queries_count: logsInsightsQueries?.length + logAnomaliesQueries.length,
+      logs_cwli_queries_count: logsInsightsQueries?.filter(
+        (q) => !q.queryLanguage || q.queryLanguage === LogsQueryLanguage.CWLI
+      ).length,
+      logs_sql_queries_count: logsInsightsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.SQL).length,
+      logs_ppl_queries_count: logsInsightsQueries?.filter((q) => q.queryLanguage === LogsQueryLanguage.PPL).length,
+      log_anomalies_queries_count: logAnomaliesQueries.length,
       metrics_queries_count: metricsQueries?.length,
       metrics_search_count: 0,
       metrics_search_builder_count: 0,
@@ -122,6 +148,16 @@ export const onDashboardLoadedHandler = ({
   } catch (error) {
     console.error('error in cloudwatch tracking handler', error);
   }
+};
+
+type SampleQueryTrackingEvent = {
+  queryLanguage: LogsQueryLanguage;
+  queryCategory: string;
+};
+
+export const trackSampleQuerySelection = (props: SampleQueryTrackingEvent) => {
+  const { queryLanguage, queryCategory } = props;
+  reportInteraction('cloudwatch-logs-cheat-sheet-query-clicked', { queryLanguage, queryCategory });
 };
 
 const isMetricSearchBuilder = (q: CloudWatchMetricsQuery) =>

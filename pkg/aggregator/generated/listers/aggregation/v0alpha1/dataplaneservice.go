@@ -5,10 +5,10 @@
 package v0alpha1
 
 import (
-	v0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/listers"
-	"k8s.io/client-go/tools/cache"
+	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // DataPlaneServiceLister helps list DataPlaneServices.
@@ -16,19 +16,19 @@ import (
 type DataPlaneServiceLister interface {
 	// List lists all DataPlaneServices in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v0alpha1.DataPlaneService, err error)
+	List(selector labels.Selector) (ret []*aggregationv0alpha1.DataPlaneService, err error)
 	// Get retrieves the DataPlaneService from the index for a given name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v0alpha1.DataPlaneService, error)
+	Get(name string) (*aggregationv0alpha1.DataPlaneService, error)
 	DataPlaneServiceListerExpansion
 }
 
 // dataPlaneServiceLister implements the DataPlaneServiceLister interface.
 type dataPlaneServiceLister struct {
-	listers.ResourceIndexer[*v0alpha1.DataPlaneService]
+	listers.ResourceIndexer[*aggregationv0alpha1.DataPlaneService]
 }
 
 // NewDataPlaneServiceLister returns a new DataPlaneServiceLister.
 func NewDataPlaneServiceLister(indexer cache.Indexer) DataPlaneServiceLister {
-	return &dataPlaneServiceLister{listers.New[*v0alpha1.DataPlaneService](indexer, v0alpha1.Resource("dataplaneservice"))}
+	return &dataPlaneServiceLister{listers.New[*aggregationv0alpha1.DataPlaneService](indexer, aggregationv0alpha1.Resource("dataplaneservice"))}
 }

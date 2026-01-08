@@ -9,25 +9,30 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, folderStore folder.Store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, userService user.Service) *LibraryElementService {
 	l := &LibraryElementService{
-		Cfg:           cfg,
-		SQLStore:      sqlStore,
-		RouteRegister: routeRegister,
-		folderService: folderService,
-		log:           log.New("library-elements"),
-		features:      features,
-		AccessControl: ac,
+		Cfg:               cfg,
+		SQLStore:          sqlStore,
+		RouteRegister:     routeRegister,
+		folderService:     folderService,
+		dashboardsService: dashboardsService,
+		log:               log.New("library-elements"),
+		features:          features,
+		AccessControl:     ac,
+		k8sHandler:        newLibraryElementsK8sHandler(cfg, clientConfigProvider, folderService, userService, dashboardsService),
 	}
 
 	l.registerAPIEndpoints()
-	ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, folderStore))
+	ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, l.folderService))
 
 	return l
 }
@@ -35,6 +40,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 // Service is a service for operating on library elements.
 type Service interface {
 	CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error)
+	PatchLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error)
+	DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error)
 	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
 	GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error)
 	ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error
@@ -45,21 +52,18 @@ type Service interface {
 
 // LibraryElementService is the service for the Library Element feature.
 type LibraryElementService struct {
-	Cfg           *setting.Cfg
-	SQLStore      db.DB
-	RouteRegister routing.RouteRegister
-	folderService folder.Service
-	log           log.Logger
-	features      featuremgmt.FeatureToggles
-	AccessControl accesscontrol.AccessControl
+	Cfg               *setting.Cfg
+	SQLStore          db.DB
+	RouteRegister     routing.RouteRegister
+	folderService     folder.Service
+	dashboardsService dashboards.DashboardService
+	log               log.Logger
+	features          featuremgmt.FeatureToggles
+	AccessControl     accesscontrol.AccessControl
+	k8sHandler        *libraryElementsK8sHandler
 }
 
 var _ Service = (*LibraryElementService)(nil)
-
-// CreateElement creates a Library Element.
-func (l *LibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
-	return l.createLibraryElement(c, signedInUser, cmd)
-}
 
 // GetElement gets an element from a UID.
 func (l *LibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {

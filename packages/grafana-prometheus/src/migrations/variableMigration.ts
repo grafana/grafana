@@ -1,11 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/migrations/variableMigration.ts
-import { promQueryModeller } from '../querybuilder/PromQueryModeller';
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
+import { promQueryModeller } from '../querybuilder/shared/modeller_instance';
 import { PromVariableQuery, PromVariableQueryType as QueryType } from '../types';
 
 export const PrometheusLabelNamesRegex = /^label_names\(\)\s*$/;
-// Note that this regex is different from the one in metric_find_query.ts because this is used pre-interpolation
-export const PrometheusLabelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_$][a-zA-Z0-9_]*)\)\s*$/;
+export const PrometheusLabelValuesRegex = /^label_values\((?:(.+),\s*)?(.+)\)\s*$/;
 export const PrometheusMetricNamesRegex = /^metrics\((.+)\)\s*$/;
 export const PrometheusQueryResultRegex = /^query_result\((.+)\)\s*$/;
 export const PrometheusLabelNamesRegexWithMatch = /^label_names\((.+)\)\s*$/;
@@ -97,7 +96,7 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
   return queryBase;
 }
 
-// migrate it back to a string with the correct varialbes in place
+// migrate it back to a string with the correct variables in place
 export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVariableQuery): string {
   switch (QueryVariable.qryType) {
     case QueryType.LabelNames:
@@ -108,7 +107,7 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
     case QueryType.LabelValues:
       if (QueryVariable.metric || (QueryVariable.labelFilters && QueryVariable.labelFilters.length !== 0)) {
         const visualQueryQuery = {
-          metric: QueryVariable.metric,
+          metric: QueryVariable.metric ?? '',
           labels: QueryVariable.labelFilters ?? [],
           operations: [],
         };

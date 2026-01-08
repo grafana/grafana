@@ -2,104 +2,196 @@ import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useStyles2 } from '../../themes';
-import { Checkbox } from '../Forms/Checkbox';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
-import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
-import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString } from './Combobox';
-import { OptionListItem } from './OptionListItem';
+import { ComboboxBaseProps, AutoSizeConditionals } from './Combobox';
+import { ComboboxList } from './ComboboxList';
+import { SuffixIcon } from './SuffixIcon';
 import { ValuePill } from './ValuePill';
+import { itemToString } from './filter';
 import { getComboboxStyles } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
+import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
-import { useMeasureMulti } from './useMeasureMulti';
+import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
+import { useMultiInputAutoSize } from './useMultiInputAutoSize';
+import { useOptions } from './useOptions';
 
-interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
+interface MultiComboboxBaseProps<T extends string | number>
+  extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange' | 'isClearable'> {
   value?: T[] | Array<ComboboxOption<T>>;
-  onChange: (items?: T[]) => void;
+  onChange: (option: Array<ComboboxOption<T>>) => void;
+  isClearable?: boolean;
+  enableAllOption?: boolean;
+  portalContainer?: HTMLElement;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
+/**
+ * The behavior of the MultiCombobox is similar to that of the Combobox, but it allows you to select multiple options. For all non-multi behaviors, see the Combobox documentation.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-multicombobox--docs
+ */
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options, placeholder, onChange, value, width } = props;
-  const isAsync = typeof options === 'function';
+  const {
+    placeholder,
+    onChange,
+    value,
+    width,
+    enableAllOption,
+    invalid,
+    disabled,
+    minWidth,
+    maxWidth,
+    isClearable,
+    createCustomValue = false,
+    'aria-labelledby': ariaLabelledBy,
+    'data-testid': dataTestId,
+    portalContainer,
+    prefixIcon,
+    id,
+  } = props;
+
+  const styles = useStyles2(getComboboxStyles);
+  const [inputValue, setInputValue] = useState('');
+
+  const allOptionItem = useMemo(() => {
+    return {
+      label:
+        inputValue === ''
+          ? t('multicombobox.all.title', 'All')
+          : t('multicombobox.all.title-filtered', 'All (filtered)'),
+      // Type casting needed to make this work when T is a number
+      value: ALL_OPTION_VALUE,
+    } as ComboboxOption<T>;
+  }, [inputValue]);
+
+  // Handle async options and the 'All' option
+  const {
+    options: baseOptions,
+    updateOptions,
+    asyncLoading,
+    asyncError,
+  } = useOptions(props.options, createCustomValue);
+  const options = useMemo(() => {
+    // Only add the 'All' option if there's more than 1 option
+    const addAllOption = enableAllOption && baseOptions.length > 1;
+    return addAllOption ? [allOptionItem, ...baseOptions] : baseOptions;
+  }, [baseOptions, enableAllOption, allOptionItem]);
+  const loading = props.loading || asyncLoading;
 
   const selectedItems = useMemo(() => {
-    if (!value || isAsync) {
-      //TODO handle async
+    if (!value) {
       return [];
     }
 
-    return getSelectedItemsFromValue<T>(value, options);
-  }, [value, options, isAsync]);
+    return getSelectedItemsFromValue<T>(value, typeof props.options !== 'function' ? props.options : baseOptions);
+  }, [value, props.options, baseOptions]);
 
-  const styles = useStyles2(getComboboxStyles);
-
-  const [items, _baseSetItems] = useState(isAsync ? [] : options);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
-
-  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen);
-
-  const { measureRef, suffixMeasureRef, shownItems } = useMeasureMulti(selectedItems, width);
+  const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
+    selectedItems,
+    width,
+    disabled
+  );
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
     [selectedItems]
   );
 
-  const [inputValue, setInputValue] = useState('');
+  const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem, reset } =
+    useMultipleSelection({
+      selectedItems, // initially selected items,
+      onStateChange: ({ type, selectedItems: newSelectedItems }) => {
+        switch (type) {
+          case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:
+          case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownDelete:
+          case useMultipleSelection.stateChangeTypes.DropdownKeyDownBackspace:
+          case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
+          case useMultipleSelection.stateChangeTypes.FunctionAddSelectedItem:
+          case useMultipleSelection.stateChangeTypes.FunctionSetSelectedItems:
+          case useMultipleSelection.stateChangeTypes.FunctionReset:
+            // Unclear why newSelectedItems would be undefined, but this seems logical
+            onChange(newSelectedItems ?? []);
+            break;
 
-  const { getSelectedItemProps, getDropdownProps, removeSelectedItem } = useMultipleSelection({
-    selectedItems, //initally selected items,
-    onStateChange: ({ type, selectedItems: newSelectedItems }) => {
-      switch (type) {
-        case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:
-        case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownDelete:
-        case useMultipleSelection.stateChangeTypes.DropdownKeyDownBackspace:
-        case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
-          if (newSelectedItems) {
-            onChange(getComboboxOptionsValues(newSelectedItems));
-          }
-          break;
+          default:
+            break;
+        }
+      },
+      stateReducer: (_state, actionAndChanges) => {
+        const { changes } = actionAndChanges;
+        return {
+          ...changes,
 
-        default:
-          break;
-      }
-    },
-  });
+          /**
+           * TODO: Fix Hack!
+           * This prevents the menu from closing when the user unselects an item in the dropdown at the expense
+           * of breaking keyboard navigation.
+           *
+           * Downshift isn't really designed to keep selected items in the dropdown menu, so when you unselect an item
+           * in a multiselect, the stateReducer tries to move focus onto another item which causes the menu to be closed.
+           * This only seems to happen when you deselect the last item in the selectedItems list.
+           *
+           * Check out:
+           *  - FunctionRemoveSelectedItem in the useMultipleSelection reducer https://github.com/downshift-js/downshift/blob/master/src/hooks/useMultipleSelection/reducer.js#L75
+           *  - The activeIndex useEffect in useMultipleSelection https://github.com/downshift-js/downshift/blob/master/src/hooks/useMultipleSelection/index.js#L68-L72
+           *
+           * Forcing the activeIndex to -999 both prevents the useEffect that changes the focus from triggering (value never changes)
+           * and prevents the if statement in useMultipleSelection from focusing anything.
+           */
+          activeIndex: -999,
+        };
+      },
+    });
 
-  const {
-    //getToggleButtonProps,
-    //getLabelProps,
-    getMenuProps,
-    getInputProps,
-    highlightedIndex,
-    getItemProps,
-  } = useCombobox({
-    isOpen,
-    items,
+  const { isOpen, highlightedIndex, getMenuProps, getInputProps, getItemProps } = useCombobox({
+    items: options,
     itemToString,
+    inputId: id,
     inputValue,
     selectedItem: null,
     stateReducer: (state, actionAndChanges) => {
-      const { changes, type } = actionAndChanges;
+      const { type } = actionAndChanges;
+      let { changes } = actionAndChanges;
+      const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
+
+      // Reset the input value when the menu is opened. If the menu is opened due to an input change
+      // then make sure we keep that.
+      // This will trigger onInputValueChange to load async options
+      if (menuBeingOpened && changes.inputValue === state.inputValue) {
+        changes = {
+          ...changes,
+          inputValue: '',
+        };
+      }
+
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
           return {
             ...changes,
             isOpen: true,
-            defaultHighlightedIndex: 0,
+            highlightedIndex: state.highlightedIndex,
           };
+        case useCombobox.stateChangeTypes.InputBlur:
+          setInputValue('');
         default:
           return changes;
+      }
+    },
+
+    onIsOpenChange: ({ isOpen, inputValue }) => {
+      if (isOpen && inputValue === '') {
+        updateOptions(inputValue);
       }
     },
 
@@ -107,20 +199,48 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
-          if (newSelectedItem) {
-            if (!isOptionSelected(newSelectedItem)) {
-              onChange(getComboboxOptionsValues([...selectedItems, newSelectedItem]));
-              break;
-            }
-            removeSelectedItem(newSelectedItem); // onChange is handled by multiselect here
+          // Don't allow selection of info options
+          if (newSelectedItem?.infoOption) {
+            break;
           }
-          break;
-        case useCombobox.stateChangeTypes.InputBlur:
-          setIsOpen(false);
-          setInputValue('');
+
+          // Handle All functionality
+          if (newSelectedItem?.value === ALL_OPTION_VALUE) {
+            // TODO: fix bug where if the search filtered items list is the
+            // same length, but different, than the selected items (ask tobias)
+            const isAllFilteredSelected = selectedItems.length === options.length - 1;
+
+            // if every option is already selected, clear the selection.
+            // otherwise, select all the options (excluding the first ALL_OPTION and info options)
+            const realOptions = options.slice(1).filter((option) => !option.infoOption);
+            let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
+
+            if (!isAllFilteredSelected && inputValue !== '') {
+              newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
+            }
+
+            if (isAllFilteredSelected && inputValue !== '') {
+              // Deselect all currently filtered items
+              const filteredSet = new Set(realOptions.map((item) => item.value));
+              newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
+            }
+            setSelectedItems(newSelectedItems);
+          } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
+            // Find the actual selected item object that matches the clicked item by value
+            // This is necessary because the clicked item (from async options) may be a different
+            // object reference than the selected item, and useMultipleSelection uses object equality
+            const itemToRemove = selectedItems.find((item) => item.value === newSelectedItem.value);
+            if (itemToRemove) {
+              removeSelectedItem(itemToRemove);
+            }
+          } else if (newSelectedItem) {
+            addSelectedItem(newSelectedItem);
+          }
           break;
         case useCombobox.stateChangeTypes.InputChange:
           setInputValue(newInputValue ?? '');
+          updateOptions(newInputValue ?? '');
+
           break;
         default:
           break;
@@ -128,19 +248,36 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
   });
 
-  const visibleItems = isOpen ? selectedItems : selectedItems.slice(0, shownItems);
+  const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(options, isOpen);
+  const multiStyles = useStyles2(
+    getMultiComboboxStyles,
+    isOpen,
+    invalid,
+    disabled,
+    width,
+    minWidth,
+    maxWidth,
+    isClearable
+  );
 
+  // Selected items that show up in the input field
+  const visibleItems = isOpen ? selectedItems.slice(0, MAX_SHOWN_ITEMS) : selectedItems.slice(0, shownItems);
+
+  const { inputRef, inputWidth } = useMultiInputAutoSize(inputValue);
   return (
-    <div ref={containerRef}>
-      <div
-        style={{ width: width === 'auto' ? undefined : width }}
-        className={multiStyles.wrapper}
-        ref={measureRef}
-        onClick={() => selectedItems.length > 0 && setIsOpen(!isOpen)}
-      >
+    <div className={multiStyles.container} ref={containerRef}>
+      <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
+        {prefixIcon && (
+          <Box marginLeft={0.5}>
+            <Text color="secondary">
+              <Icon name={prefixIcon} />
+            </Text>
+          </Box>
+        )}
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
             <ValuePill
+              disabled={disabled}
               onRemove={() => {
                 removeSelectedItem(item);
               }}
@@ -150,15 +287,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               {itemToString(item)}
             </ValuePill>
           ))}
-          {selectedItems.length > shownItems && !isOpen && (
-            <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={suffixMeasureRef}>
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+          {selectedItems.length > visibleItems.length && (
+            <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={counterMeasureRef}>
               <Text>...</Text>
               <Tooltip
                 interactive
                 content={
                   <>
-                    {selectedItems.slice(shownItems).map((item) => (
+                    {selectedItems.slice(visibleItems.length).map((item) => (
                       <div key={item.value}>{itemToString(item)}</div>
                     ))}
                   </>
@@ -169,47 +305,65 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             </Box>
           )}
           <input
-            className={cx(multiStyles.input, {
-              [multiStyles.inputClosed]: !isOpen && selectedItems.length > 0,
-            })}
-            {...getInputProps(
-              getDropdownProps({
+            className={multiStyles.input}
+            {...getInputProps({
+              ...getDropdownProps({
+                disabled,
                 preventKeyAction: isOpen,
-                placeholder: selectedItems.length > 0 ? undefined : placeholder,
-                onFocus: () => setIsOpen(true),
-              })
-            )}
+                placeholder: visibleItems.length === 0 ? placeholder : '',
+                ref: inputRef,
+                style: { width: inputWidth },
+              }),
+              'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+              'data-testid': dataTestId,
+            })}
           />
+
+          <div className={multiStyles.suffix} ref={suffixMeasureRef}>
+            {isClearable && selectedItems.length > 0 && (
+              <Icon
+                name="times"
+                className={styles.clear}
+                title={t('multicombobox.clear.title', 'Clear all')}
+                tabIndex={0}
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  reset();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    reset();
+                  }
+                }}
+              />
+            )}
+            <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+          </div>
         </span>
       </div>
-      <Portal>
+      <Portal root={portalContainer}>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
-          style={{ ...floatStyles }}
+          style={{
+            ...floatStyles,
+            width: floatStyles.width + 24, // account for checkbox
+            pointerEvents: 'auto', // Override container's pointer-events: none
+          }}
           {...getMenuProps({ ref: floatingRef })}
         >
           {isOpen && (
-            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
-              <ul>
-                {items.map((item, index) => {
-                  const itemProps = getItemProps({ item, index });
-                  const isSelected = isOptionSelected(item);
-                  const id = 'multicombobox-option-' + item.value.toString();
-                  return (
-                    <li
-                      key={item.value}
-                      {...itemProps}
-                      style={highlightedIndex === index ? { backgroundColor: 'blue' } : {}}
-                    >
-                      {' '}
-                      {/* Add styling with virtualization */}
-                      <Checkbox key={id} value={isSelected} aria-labelledby={id} />
-                      <OptionListItem option={item} id={id} />
-                    </li>
-                  );
-                })}
-              </ul>
-            </ScrollContainer>
+            <ComboboxList
+              loading={loading}
+              options={options}
+              highlightedIndex={highlightedIndex}
+              selectedItems={selectedItems}
+              scrollRef={scrollRef}
+              getItemProps={getItemProps}
+              enableAllOption={enableAllOption}
+              isMultiSelect={true}
+              error={asyncError}
+            />
           )}
         </div>
       </Portal>
@@ -221,39 +375,33 @@ function getSelectedItemsFromValue<T extends string | number>(
   value: T[] | Array<ComboboxOption<T>>,
   options: Array<ComboboxOption<T>>
 ) {
-  if (!isComboboxOptions(value)) {
-    const resultingItems: Array<ComboboxOption<T> | undefined> = [];
+  if (isComboboxOptions(value)) {
+    return value;
+  }
+  const valueMap = new Map(value.map((val, index) => [val, index]));
+  const resultingItems: Array<ComboboxOption<T>> = [];
 
-    for (const item of options) {
-      for (const [index, val] of value.entries()) {
-        if (val === item.value) {
-          resultingItems[index] = item;
-        }
-      }
-      if (resultingItems.length === value.length && !resultingItems.includes(undefined)) {
-        // We found all items for the values
-        break;
-      }
+  for (const option of options) {
+    const index = valueMap.get(option.value);
+    if (index !== undefined) {
+      resultingItems[index] = option;
+      valueMap.delete(option.value);
     }
-
-    // Handle values that are not in options
-    for (const [index, val] of value.entries()) {
-      if (resultingItems[index] === undefined) {
-        resultingItems[index] = { value: val };
-      }
+    if (valueMap.size === 0) {
+      // We found all values
+      break;
     }
-    return resultingItems.filter((item) => item !== undefined); // TODO: Not actually needed, but TS complains
   }
 
-  return value;
+  // Handle items that are not in options
+  for (const [val, index] of valueMap) {
+    resultingItems[index] = { value: val };
+  }
+  return resultingItems;
 }
 
 function isComboboxOptions<T extends string | number>(
   value: T[] | Array<ComboboxOption<T>>
 ): value is Array<ComboboxOption<T>> {
   return typeof value[0] === 'object';
-}
-
-function getComboboxOptionsValues<T extends string | number>(optionArray: Array<ComboboxOption<T>>) {
-  return optionArray.map((option) => option.value);
 }

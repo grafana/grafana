@@ -1,0 +1,125 @@
+{
+  "title": "V17 MinSpan to MaxPerRow Migration Test Dashboard",
+  "schemaVersion": 16,
+  "panels": [
+    {
+      "id": 1,
+      "type": "graph",
+      "title": "Panel with minSpan 8",
+      "minSpan": 8,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": 2,
+      "type": "singlestat",
+      "title": "Panel with minSpan 4",
+      "minSpan": 4,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      }
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Panel with minSpan 2",
+      "minSpan": 2,
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      }
+    },
+    {
+      "id": 4,
+      "type": "graph",
+      "title": "Panel with minSpan 12",
+      "minSpan": 12,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "id": 5,
+      "type": "gauge",
+      "title": "Panel with minSpan 24",
+      "minSpan": 24,
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Panel with minSpan 1",
+      "minSpan": 1,
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 6,
+        "y": 8
+      }
+    },
+    {
+      "id": 7,
+      "type": "graph",
+      "title": "Panel without minSpan",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 12,
+        "y": 8
+      }
+    },
+    {
+      "id": 8,
+      "type": "text",
+      "title": "Panel with invalid minSpan",
+      "minSpan": "invalid",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      }
+    },
+    {
+      "id": 9,
+      "type": "graph",
+      "title": "Panel with zero minSpan",
+      "minSpan": 0,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 22
+      }
+    },
+    {
+      "id": 10,
+      "type": "graph",
+      "title": "Panel with negative minSpan",
+      "minSpan": -5,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 22
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { OptionProps } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { TagBadge } from './TagBadge';
@@ -16,7 +17,11 @@ export const TagOption = ({ data, className, label, isFocused, innerProps }: Opt
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(styles.option, isFocused && styles.optionFocused)} aria-label="Tag option" {...innerProps}>
+    <div
+      className={cx(styles.option, isFocused && styles.optionFocused)}
+      aria-label={t('tag-filter.tag-option-label', 'Tag option')}
+      {...innerProps}
+    >
       <div className={cx(styles.optionInner, className)}>
         {typeof label === 'string' ? <TagBadge label={label} removeIcon={false} count={data.count ?? 0} /> : label}
       </div>
@@ -27,16 +32,17 @@ export const TagOption = ({ data, className, label, isFocused, innerProps }: Opt
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     option: css({
-      padding: theme.spacing(1),
+      padding: theme.spacing(0.5),
       whiteSpace: 'nowrap',
       cursor: 'pointer',
       borderLeft: '2px solid transparent',
+      borderRadius: theme.shape.radius.default,
       '&:hover': {
-        background: theme.colors.background.secondary,
+        background: theme.colors.action.hover,
       },
     }),
     optionFocused: css({
-      background: theme.colors.background.secondary,
+      background: theme.colors.action.focus,
       borderStyle: 'solid',
       borderTop: 0,
       borderRight: 0,

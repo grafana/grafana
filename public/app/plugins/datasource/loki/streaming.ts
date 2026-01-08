@@ -25,7 +25,7 @@ export async function getLiveStreamKey(query: LokiQuery): Promise<string> {
   const msgUint8 = new TextEncoder().encode(str); // encode as (utf-8) Uint8Array
   const hashBuffer = await crypto.subtle.digest('SHA-1', msgUint8); // hash the message
   const hashArray = Array.from(new Uint8Array(hashBuffer.slice(0, 8))); // first 8 bytes
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `${query.datasource?.uid}/${hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')}/${config.bootData.user.orgId}`;
 }
 
 // This will get both v1 and v2 result formats

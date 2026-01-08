@@ -2,11 +2,11 @@
 import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 // Types
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 // Components, enums
 import { useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
@@ -89,7 +89,7 @@ export function RichHistoryContainer(props: Props) {
     }
   }, [tracked, selectedTab]);
 
-  if (!richHistorySettings || !selectedTab) {
+  if (!richHistorySettings) {
     return (
       <span>
         <Trans i18nKey="explore.rich-history-container.loading">Loading...</Trans>

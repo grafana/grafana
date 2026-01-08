@@ -44,6 +44,7 @@ jest.mock('@grafana/runtime', () => ({
     featureToggles: {
       newDashboardWithFiltersAndGroupBy: false,
     },
+    apps: {},
     bootData: {
       ...jest.requireActual('@grafana/runtime').config.bootData,
       user: {

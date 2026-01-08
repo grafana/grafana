@@ -18,9 +18,6 @@ import {
   ElasticsearchDataQuery,
 } from './dataquery.gen';
 
-export * from './dataquery.gen';
-export type { ElasticsearchDataQuery as ElasticsearchQuery } from './dataquery.gen';
-
 // We want to extend the settings of the Logs query with additional properties that
 // are not part of the schema. This is a workaround, because exporting LogsSettings
 // from dataquery.gen.ts and extending that produces error in SettingKeyOf.
@@ -66,9 +63,11 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   index?: string;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
+  defaultQueryMode?: QueryType;
 }
 
 export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document';
+export type EditorType = 'code' | 'builder';
 
 interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;
@@ -138,7 +137,7 @@ export interface ElasticsearchAnnotationQuery {
   index?: string;
 }
 
-export type RangeMap = Record<string, { from: number; to: number; format: string }>;
+export type RangeMap = Record<string, { gte: number; lte: number; format: string }>;
 
 export type ElasticsearchResponse = ElasticsearchResponseWithHits | ElasticsearchResponseWithAggregations;
 

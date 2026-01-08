@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "De bouwmodus geeft geen wijzigingen weer die in de code zijn aangebracht. De querybouwer geeft de laatste wijzigingen weer die je in de bouwmodus hebt aangebracht.",
+        "cancel": "Annuleren",
+        "clipboard": "Wil je je code naar het klembord kopiëren?",
+        "copy-code-and-switch": "Code kopiëren en schakelen",
+        "discard-code-and-switch": "Code verwijderen en schakelen",
+        "warning": "Waarschuwing"
+      },
+      "connection-limits": {
+        "auto-max-idle": "Automatisch maximaal inactief",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
+        "content-max-lifetime": "De maximale hoeveelheid tijd in seconden dat een verbinding opnieuw kan worden gebruikt. Indien ingesteld op 0, worden verbindingen voor altijd hergebruikt.",
+        "content-max-open": "",
+        "max-idle": "Max. inactief",
+        "max-lifetime": "Max. levensduur",
+        "max-open": "Max. open",
+        "title-connection-limits": "Verbindingslimieten"
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": "Gegevenssetkiezer"
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "Fout"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": "Macro's"
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "Groeperen op",
+          "title-remove-group-by-column": "Groep verwijderen per kolom"
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "Sorteren op",
+        "label-limit": "Limiet",
+        "label-offset": "Offset",
+        "label-order-by": "Sorteren op"
+      },
+      "preview": {
+        "label-element": {
+          "preview": "Voorbeeld",
+          "tooltip-copy-to-clipboard": "Kopiëren naar klembord"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "",
+        "editor-modes": {
+          "label-builder": "Bouwer",
+          "label-code": "Code"
+        },
+        "label-dataset": "Gegevensreeks",
+        "label-filter": "Filter",
+        "label-format": "Formaat",
+        "label-group": "Groep",
+        "label-order": "Orde",
+        "label-preview": "Voorbeeld",
+        "label-table": "Tabel",
+        "placeholder-select-format": "Selecteer het formaat",
+        "run-query": "Query uitvoeren"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "Druk op CTRL/CMD+Return om de query uit te voeren",
+        "tooltip-collapse": "Editor samenvouwen",
+        "tooltip-expand": "Editor uitvouwen",
+        "tooltip-format-query": "Query-formaat"
+      },
+      "query-validator": {
+        "query-will-process": "",
+        "validating-query": "Query valideren..."
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": "Bewerken in uitgevouwen code-editor"
+        },
+        "title-query-num": "Query {{queryNum}}"
+      },
+      "select-column": {
+        "label-column": "Kolom"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "Parameter {{index}} voor kolom {{columnIndex}}",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": "Parameter verwijderen"
+          }
+        },
+        "title-add-parameter": "Parameter toevoegen"
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "Aggregaties",
+              "macros": "Macro's"
+            }
+          }
+        },
+        "label": {
+          "time": "tijd",
+          "value": "waarde"
+        },
+        "label-alias": "Alias",
+        "label-data-operations": "Gegevensbewerkingen",
+        "title-add-column": "Kolom toevoegen",
+        "title-remove-column": "Kolom verwijderen"
+      },
+      "settings": {
+        "aria-label-conjunction": "Conjunctie",
+        "aria-label-field": "Veld",
+        "aria-label-operator": "Operator",
+        "title-button-filter": "{{ buttonLabel }}-filter"
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "Editor word geladen"
+      },
+      "table-selector": {
+        "aria-label-table-selector": "Tabelkiezer",
+        "placeholder-loading": "Tabellen laden",
+        "placeholder-select-table": "Tabel selecteren"
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "Geef hier het clientcertificaat op om te verifiëren met een TLS/SSL-clientcertificaat.",
+        "content-tlsssl-client-key": "Geef hier de sleutel op om te verifiëren met een TLS/SSL-clientcertificaat.",
+        "content-tlsssl-root-certificate": "Als de geselecteerde TLS/SSL-modus een serverrootcertificaat vereist, geef dit dan hier op",
+        "tlsssl-client-certificate": "TLS/SSL-gebruikerscertificaat",
+        "tlsssl-client-key": "TLS/SSL-clientsleutel",
+        "tlsssl-root-certificate": "TLS/SSL-rootcertificaat"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "Filteren op kolomwaarde",
+        "label-group-by-column": "Groeperen op kolom"
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": "Macro's waardekiezer"
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": "Geselecteerde kolommen"
+      }
+    }
+  }
+}

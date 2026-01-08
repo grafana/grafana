@@ -1,0 +1,96 @@
+package v1beta1
+
+import (
+	_ "embed"
+	json "encoding/json"
+	fmt "fmt"
+	"strings"
+	"sync"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/errors"
+
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/cuevalidator"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+)
+
+func ValidateDashboardSpec(obj *Dashboard, forceValidation bool) (field.ErrorList, field.ErrorList) {
+	var schemaVersionError field.ErrorList
+	schemaVersion := schemaversion.GetSchemaVersion(obj.Spec.Object)
+	if schemaVersion != schemaversion.LATEST_VERSION {
+		schemaVersionError = field.ErrorList{field.Invalid(field.NewPath("spec", "schemaVersion"), field.OmitValueType{}, fmt.Sprintf("Schema version %d is not supported - please upgrade to %d", schemaVersion, schemaversion.LATEST_VERSION))}
+		if !forceValidation {
+			return nil, schemaVersionError
+		}
+	}
+
+	data, err := json.Marshal(obj.Spec.Object)
+	if err != nil {
+		return field.ErrorList{
+			field.Invalid(field.NewPath("spec"), field.OmitValueType{}, err.Error()),
+		}, schemaVersionError
+	}
+
+	if err := getValidator().Validate(data); err != nil {
+		errs := field.ErrorList{}
+
+		for _, e := range errors.Errors(err) {
+			if
+			// We don't want to return confusing "empty disjunction" errors,
+			// because the users don't necessarily understand what to do with them.
+			// For empty disjunctions, CUE will also return more specific errors,
+			// so we can safely ignore the generic ones.
+			strings.Contains(e.Error(), "disjunction") ||
+				// We don't want to return errors about unknown fields either.
+				strings.Contains(e.Error(), "field not allowed") {
+				continue
+			}
+
+			// We want to manually format the error message,
+			// because e.Error() contains the full CUE path.
+			format, args := e.Msg()
+
+			errs = append(errs, field.Invalid(
+				field.NewPath(formatErrorPath(e.Path())),
+				field.OmitValueType{},
+				fmt.Sprintf(format, args...),
+			))
+		}
+
+		return errs, schemaVersionError
+	}
+
+	return nil, schemaVersionError
+}
+
+func formatErrorPath(path []string) string {
+	if len(path) <= 4 {
+		return strings.Join(path, ".")
+	}
+	// omitting the "lineage.schemas[0].schema.spec" prefix here.
+	return strings.Join(path[4:], ".")
+}
+
+var (
+	validator     *cuevalidator.Validator
+	getSchemaOnce sync.Once
+)
+
+//go:embed dashboard_kind.cue
+var schemaSource string
+
+func getValidator() *cuevalidator.Validator {
+	getSchemaOnce.Do(func() {
+		// The validator uses periodic context recreation to prevent memory leaks.
+		// The context is reused for up to 100 validations, then recreated to allow
+		// garbage collection of cached values while maintaining good performance.
+		validator = cuevalidator.NewValidatorFromSource(
+			schemaSource,
+			cue.ParsePath("lineage.schemas[0].schema.spec"),
+		)
+	})
+
+	return validator
+}

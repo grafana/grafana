@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -76,9 +75,7 @@ func New(cfg *setting.Cfg,
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
 		}
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			actionSetService.StoreActionSet(GetActionSetName(options.Resource, permission), actions)
-		}
+		actionSetService.StoreActionSet(GetActionSetName(options.Resource, permission), actions)
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
@@ -107,7 +104,7 @@ func New(cfg *setting.Cfg,
 		actionSetSvc: actionSetService,
 	}
 
-	s.api = newApi(cfg, ac, router, s)
+	s.api = newApi(cfg, ac, router, s, features, s.options.RestConfigProvider)
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err
@@ -151,13 +148,11 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 	}
 
 	actions := s.actions
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		for _, action := range s.actions {
-			actionSets := s.actionSetSvc.ResolveAction(action)
-			for _, actionSet := range actionSets {
-				if !slices.Contains(actions, actionSet) {
-					actions = append(actions, actionSet)
-				}
+	for _, action := range s.actions {
+		actionSets := s.actionSetSvc.ResolveAction(action)
+		for _, actionSet := range actionSets {
+			if !slices.Contains(actions, actionSet) {
+				actions = append(actions, actionSet)
 			}
 		}
 	}
@@ -176,33 +171,31 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 		return nil, err
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		for i := range resourcePermissions {
-			actions := resourcePermissions[i].Actions
-			var expandedActions []string
-			for _, action := range actions {
-				if isFolderOrDashboardAction(action) {
-					actionSetActions := s.actionSetSvc.ResolveActionSet(action)
-					if len(actionSetActions) > 0 {
-						// Add all actions for folder
-						if s.options.Resource == dashboards.ScopeFoldersRoot {
-							expandedActions = append(expandedActions, actionSetActions...)
-							continue
-						}
-						// This check is needed for resolving inherited permissions - we don't want to include
-						// actions that are not related to dashboards when expanding dashboard action sets
-						for _, actionSetAction := range actionSetActions {
-							if slices.Contains(s.actions, actionSetAction) {
-								expandedActions = append(expandedActions, actionSetAction)
-							}
-						}
+	for i := range resourcePermissions {
+		actions := resourcePermissions[i].Actions
+		var expandedActions []string
+		for _, action := range actions {
+			if isFolderOrDashboardAction(action) {
+				actionSetActions := s.actionSetSvc.ResolveActionSet(action)
+				if len(actionSetActions) > 0 {
+					// Add all actions for folder
+					if s.options.Resource == dashboards.ScopeFoldersRoot {
+						expandedActions = append(expandedActions, actionSetActions...)
 						continue
 					}
+					// This check is needed for resolving inherited permissions - we don't want to include
+					// actions that are not related to dashboards when expanding dashboard action sets
+					for _, actionSetAction := range actionSetActions {
+						if slices.Contains(s.actions, actionSetAction) {
+							expandedActions = append(expandedActions, actionSetAction)
+						}
+					}
+					continue
 				}
-				expandedActions = append(expandedActions, action)
 			}
-			resourcePermissions[i].Actions = expandedActions
+			expandedActions = append(expandedActions, action)
 		}
+		resourcePermissions[i].Actions = expandedActions
 	}
 
 	return resourcePermissions, nil
@@ -361,9 +354,23 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		return []string{}, nil
 	}
 
+	var actions []string
+
+	// Write action sets for folders and dashboards
+	if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == dashboards.ScopeDashboardsRoot {
+		actions = append(actions, GetActionSetName(s.options.Resource, permission))
+
+		// If we only want to store action sets, return now
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabledGlobally(featuremgmt.FlagOnlyStoreActionSets) {
+			return actions, nil
+		}
+	}
+
 	for k, v := range s.options.PermissionsToActions {
 		if permission == k {
-			return v, nil
+			actions = append(actions, v...)
+			return actions, nil
 		}
 	}
 	return nil, ErrInvalidPermission.Build(ErrInvalidPermissionData(permission))
@@ -495,15 +502,13 @@ type ActionSetStore interface {
 }
 
 type ActionSetSvc struct {
-	features featuremgmt.FeatureToggles
-	store    ActionSetStore
+	store ActionSetStore
 }
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
-func NewActionSetService(features featuremgmt.FeatureToggles) ActionSetService {
+func NewActionSetService() ActionSetService {
 	return &ActionSetSvc{
-		features: features,
-		store:    NewInMemoryActionSetStore(features),
+		store: NewInMemoryActionSetStore(),
 	}
 }
 
@@ -580,12 +585,9 @@ func (a *ActionSetSvc) ExpandActionSetsWithFilter(permissions []accesscontrol.Pe
 // RegisterActionSets allow the caller to expand the existing action sets with additional permissions
 // This is intended to be used by plugins, and currently supports extending folder and dashboard action sets
 func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, registrations []plugins.ActionSet) error {
-	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.RegisterActionSets")
+	_, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.RegisterActionSets")
 	defer span.End()
 
-	if !a.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) || !a.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
-		return nil
-	}
 	for _, reg := range registrations {
 		if err := pluginutils.ValidatePluginActionSet(pluginID, reg); err != nil {
 			return err

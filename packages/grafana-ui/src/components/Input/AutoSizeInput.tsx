@@ -20,6 +20,11 @@ export interface Props extends InputProps {
   defaultValue?: string | number | readonly string[];
 }
 
+/**
+ * You can use it or regular text input. When used, AutoSizeInput resizes itself to the current content. For an array of data or tree-structured data, consider using `Combobox` or `Cascader` respectively.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-autosizeinput--docs
+ */
 export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const {
     defaultValue = '',
@@ -50,6 +55,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
   return (
     <AutoSizeInputContext.Provider value={true}>
       <Input
+        data-testid="autosize-input" // consumer should override default testid
         {...restProps}
         placeholder={placeholder}
         ref={ref}
@@ -76,7 +82,6 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
             onCommitChange(event);
           }
         }}
-        data-testid="autosize-input"
       />
     </AutoSizeInputContext.Provider>
   );

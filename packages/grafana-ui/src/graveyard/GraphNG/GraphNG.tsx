@@ -19,13 +19,13 @@ import {
 import { VizLegendOptions } from '@grafana/schema';
 
 import { PanelContext, PanelContextRoot } from '../../components/PanelChrome/PanelContext';
-import { VizLayout } from '../../components/VizLayout/VizLayout';
+import { VizLayout, VizLayoutLegendProps } from '../../components/VizLayout/VizLayout';
 import { UPlotChart } from '../../components/uPlot/Plot';
 import { AxisProps } from '../../components/uPlot/config/UPlotAxisBuilder';
 import { Renderers, UPlotConfigBuilder } from '../../components/uPlot/config/UPlotConfigBuilder';
 import { ScaleProps } from '../../components/uPlot/config/UPlotScaleBuilder';
 import { findMidPointYPosition, pluginLog } from '../../components/uPlot/utils';
-import { Themeable2 } from '../../types';
+import { Themeable2 } from '../../types/theme';
 
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
@@ -54,7 +54,7 @@ export interface GraphNGProps extends Themeable2 {
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
-  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement<VizLayoutLegendProps> | null;
 
   /**
    * needed for propsToDiff to re-init the plot & config

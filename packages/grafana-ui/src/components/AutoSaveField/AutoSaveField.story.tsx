@@ -1,10 +1,10 @@
 import { StoryFn, Meta } from '@storybook/react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
+import { Combobox } from '../Combobox/Combobox';
 import { Checkbox } from '../Forms/Checkbox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Input } from '../Input/Input';
-import { Select } from '../Select/Select';
 import { Switch } from '../Switch/Switch';
 import { TextArea } from '../TextArea/TextArea';
 
@@ -12,7 +12,7 @@ import { AutoSaveField } from './AutoSaveField';
 import mdx from './AutoSaveField.mdx';
 
 const meta: Meta = {
-  title: 'Forms/AutoSaveField',
+  title: 'Inputs/AutoSaveField',
   component: AutoSaveField,
   parameters: {
     docs: {
@@ -74,10 +74,12 @@ const themeOptions = [
 
 export const Basic: StoryFn = (args) => {
   const [inputValue, setInputValue] = useState('');
+  const id = useId();
   return (
     <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} {...args}>
       {(onChange) => (
         <Input
+          id={id}
           value={inputValue}
           onChange={(e) => {
             const value = e.currentTarget.value;
@@ -97,17 +99,25 @@ Basic.args = {
 };
 
 export const AllComponents: StoryFn = (args) => {
-  const [selected, setSelected] = useState('');
-  const [checkBoxTest, setCheckBoxTest] = useState(false);
-  const [textAreaValue, setTextAreaValue] = useState('');
   const [inputTextValue, setInputTextValue] = useState('');
-  const [switchTest, setSwitchTest] = useState(false);
+  const [comoboboxValue, setComboboxValue] = useState('');
+  const [radioButtonValue, setRadioButtonValue] = useState('');
+  const [checkBoxValue, setCheckBoxValue] = useState(false);
+  const [textAreaValue, setTextAreaValue] = useState('');
+  const [switchValue, setSwitchValue] = useState(false);
+  const textId = useId();
+  const comboboxId = useId();
+  const radioButtonId = useId();
+  const checkBoxId = useId();
+  const textAreaId = useId();
+  const switchId = useId();
 
   return (
     <div>
       <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Text as a child" {...args}>
         {(onChange) => (
           <Input
+            id={textId}
             value={inputTextValue}
             onChange={(e) => {
               const value = e.currentTarget.value;
@@ -117,13 +127,15 @@ export const AllComponents: StoryFn = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Select as child" {...args}>
+      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Combobox as child" {...args}>
         {(onChange) => (
-          <Select
+          <Combobox
+            id={comboboxId}
             options={themeOptions}
-            value={args.weekPickerValue}
+            value={comoboboxValue}
             onChange={(v) => {
               onChange(v.value);
+              setComboboxValue(v.value);
             }}
           />
         )}
@@ -135,10 +147,11 @@ export const AllComponents: StoryFn = (args) => {
       >
         {(onChange) => (
           <RadioButtonGroup
+            id={radioButtonId}
             options={themeOptions}
-            value={selected}
+            value={radioButtonValue}
             onChange={(themeOption) => {
-              setSelected(themeOption);
+              setRadioButtonValue(themeOption);
               onChange(themeOption);
             }}
           />
@@ -151,14 +164,15 @@ export const AllComponents: StoryFn = (args) => {
       >
         {(onChange) => (
           <Checkbox
+            id={checkBoxId}
             label="Checkbox test"
             description="This is a checkbox input"
             name="checkbox-test"
-            value={checkBoxTest}
+            value={checkBoxValue}
             onChange={(e) => {
               const value = e.currentTarget.checked;
               onChange(value);
-              setCheckBoxTest(value);
+              setCheckBoxValue(value);
             }}
           />
         )}
@@ -170,6 +184,7 @@ export const AllComponents: StoryFn = (args) => {
       >
         {(onChange) => (
           <TextArea
+            id={textAreaId}
             value={textAreaValue}
             onChange={(e) => {
               const value = e.currentTarget.value;
@@ -186,12 +201,13 @@ export const AllComponents: StoryFn = (args) => {
       >
         {(onChange) => (
           <Switch
+            id={switchId}
             label="Switch test"
             name="switch-test"
-            value={switchTest}
+            value={switchValue}
             onChange={(e) => {
               onChange(e.currentTarget.checked);
-              setSwitchTest(e.currentTarget.checked);
+              setSwitchValue(e.currentTarget.checked);
             }}
           />
         )}

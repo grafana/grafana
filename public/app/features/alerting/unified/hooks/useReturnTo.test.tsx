@@ -5,9 +5,10 @@ import { useReturnTo } from './useReturnTo';
 
 describe('useReturnTo', () => {
   beforeAll(() => {
+    const win: typeof globalThis = window;
     // @ts-expect-error
-    delete window.location;
-    window.location = { origin: 'https://play.grafana.net' } as Location;
+    delete win.location;
+    win.location = { origin: 'https://play.grafana.net' } as Location;
   });
 
   it('should return the fallback value when `returnTo` is not present in the query string', () => {

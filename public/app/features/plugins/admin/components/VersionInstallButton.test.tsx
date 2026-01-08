@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 
 import { config } from '@grafana/runtime';
@@ -15,6 +16,7 @@ describe('VersionInstallButton', () => {
       ...originalConfig.featureToggles,
     };
     config.pluginCatalogPreinstalledPlugins = originalConfig.pluginCatalogPreinstalledPlugins;
+    config.pluginCatalogPreinstalledAutoUpdate = originalConfig.pluginCatalogPreinstalledAutoUpdate;
   });
   it('should show install when no version is installed', () => {
     const version: Version = {
@@ -120,7 +122,7 @@ describe('VersionInstallButton', () => {
       grafanaDependency: null,
     };
     const installedVersion = '1.0.0';
-    config.featureToggles.preinstallAutoUpdate = true;
+    config.pluginCatalogPreinstalledAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '1.0.0' }];
     renderWithStore(
       <VersionInstallButton
@@ -142,7 +144,7 @@ describe('VersionInstallButton', () => {
       grafanaDependency: null,
     };
     const installedVersion = '1.0.1';
-    config.featureToggles.preinstallAutoUpdate = true;
+    config.pluginCatalogPreinstalledAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '1.0.1' }];
     renderWithStore(
       <VersionInstallButton
@@ -164,7 +166,7 @@ describe('VersionInstallButton', () => {
       grafanaDependency: null,
     };
     const installedVersion = '1.0.1';
-    config.featureToggles.preinstallAutoUpdate = true;
+    config.pluginCatalogPreinstalledAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '' }];
     renderWithStore(
       <VersionInstallButton
@@ -176,6 +178,46 @@ describe('VersionInstallButton', () => {
       />
     );
     expect(screen.getByText('Downgrade')).not.toBeVisible();
+  });
+
+  it('should show the installation button if invalid semver version is provided', () => {
+    const version: Version = {
+      version: '1.0.a',
+      createdAt: '',
+      isCompatible: false,
+      grafanaDependency: null,
+    };
+    const installedVersion = '1.0.1';
+    renderWithStore(
+      <VersionInstallButton
+        installedVersion={installedVersion}
+        pluginId={'test'}
+        version={version}
+        disabled={false}
+        onConfirmInstallation={() => {}}
+      />
+    );
+    expect(screen.getByText('Install')).toBeInTheDocument();
+  });
+
+  it('should show the installation button if invalid semver installed version is provided', () => {
+    const version: Version = {
+      version: '1.0.0',
+      createdAt: '',
+      isCompatible: false,
+      grafanaDependency: null,
+    };
+    const installedVersion = '1.0.a';
+    renderWithStore(
+      <VersionInstallButton
+        installedVersion={installedVersion}
+        pluginId={'test'}
+        version={version}
+        disabled={false}
+        onConfirmInstallation={() => {}}
+      />
+    );
+    expect(screen.getByText('Install')).toBeInTheDocument();
   });
 });
 

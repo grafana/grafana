@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeIntervalsApi';
 import { mergeTimeIntervals } from 'app/features/alerting/unified/components/mute-timings/util';
@@ -8,15 +9,15 @@ import {
   IoK8SApimachineryPkgApisMetaV1ObjectMeta,
 } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 import {
-  getK8sNamespace,
   isK8sEntityProvisioned,
   shouldUseK8sApi,
+  stringifyFieldSelector,
 } from 'app/features/alerting/unified/utils/k8s/utils';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
+import { getAPINamespace } from '../../../../../api/utils';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
@@ -25,7 +26,7 @@ import {
   updateMuteTimingAction,
 } from '../../reducers/alertmanager/muteTimings';
 
-const { useLazyGetAlertmanagerConfigurationQuery, useGetMuteTimingListQuery } = alertmanagerApi;
+const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 const {
   useLazyListNamespacedTimeIntervalQuery,
   useCreateNamespacedTimeIntervalMutation,
@@ -114,7 +115,7 @@ export const useMuteTimings = ({ alertmanager, skip }: BaseAlertmanagerArgs & Sk
       return;
     }
     if (useK8sApi) {
-      const namespace = getK8sNamespace();
+      const namespace = getAPINamespace();
       getGrafanaTimeIntervals({ namespace });
     } else {
       getAlertmanagerTimeIntervals(alertmanager);
@@ -140,7 +141,7 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const [updateConfiguration] = useProduceNewAlertmanagerConfiguration();
 
   const addToK8sAPI = useAsync(({ interval }: CreateUpdateMuteTimingArgs) => {
-    const namespace = getK8sNamespace();
+    const namespace = getAPINamespace();
 
     return createGrafanaTimeInterval({
       namespace,
@@ -202,8 +203,11 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
 
   useEffect(() => {
     if (useK8sApi) {
-      const namespace = getK8sNamespace();
-      getGrafanaTimeInterval({ namespace, fieldSelector: `spec.name=${nameToFind}` }, true);
+      const namespace = getAPINamespace();
+      getGrafanaTimeInterval(
+        { namespace, fieldSelector: stringifyFieldSelector([['metadata.name', base64UrlEncode(nameToFind)]]) },
+        true
+      );
     } else {
       getAlertmanagerTimeInterval(alertmanager, true);
     }
@@ -228,7 +232,7 @@ export const useUpdateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
 
   const updateToK8sAPI = useAsync(
     async ({ interval, originalName }: CreateUpdateMuteTimingArgs & { originalName: string }) => {
-      const namespace = getK8sNamespace();
+      const namespace = getAPINamespace();
 
       return replaceGrafanaTimeInterval({
         name: originalName,
@@ -267,7 +271,7 @@ export const useDeleteMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   });
 
   const deleteFromK8sAPI = useAsync(async ({ name }: DeleteMuteTimingArgs) => {
-    const namespace = getK8sNamespace();
+    const namespace = getAPINamespace();
     await deleteGrafanaTimeInterval({
       name,
       namespace,
@@ -301,22 +305,4 @@ export const useValidateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) =>
         return duplicatedInterval ? `Mute timing already exists with name "${value}"` : undefined;
       });
   };
-};
-
-/**
- * @deprecated This will be deprecated by the K8S API.
- * Once that is enabled by default, this method should be removed and `useMuteTimings` should always be used instead
- */
-export const useSelectableMuteTimings = ({ alertmanager, skip }: BaseAlertmanagerArgs & Skippable) => {
-  const useK8sApi = shouldUseK8sApi(alertmanager);
-  const useDeprecatedEndpoint = alertmanager === GRAFANA_RULES_SOURCE_NAME && !useK8sApi;
-
-  /** Fetch from the (to be deprecated) specific endpoint for time-intervals */
-  const deprecatedMuteTimingsResponse = useGetMuteTimingListQuery(undefined, {
-    skip: skip || !useDeprecatedEndpoint,
-  });
-
-  const fetchMuteTimings = useMuteTimings({ alertmanager, skip: skip || useDeprecatedEndpoint });
-
-  return useDeprecatedEndpoint ? deprecatedMuteTimingsResponse : fetchMuteTimings;
 };

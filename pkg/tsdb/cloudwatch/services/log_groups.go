@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -16,13 +16,13 @@ type LogGroupsService struct {
 	isCrossAccountEnabled bool
 }
 
-func NewLogGroupsService(logsClient models.CloudWatchLogsAPIProvider, isCrossAccountEnabled bool) models.LogGroupsProvider {
+var NewLogGroupsService = func(logsClient models.CloudWatchLogsAPIProvider, isCrossAccountEnabled bool) models.LogGroupsProvider {
 	return &LogGroupsService{logGroupsAPI: logsClient, isCrossAccountEnabled: isCrossAccountEnabled}
 }
 
-func (s *LogGroupsService) GetLogGroupsWithContext(ctx context.Context, req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
+func (s *LogGroupsService) GetLogGroups(ctx context.Context, req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
 	input := &cloudwatchlogs.DescribeLogGroupsInput{
-		Limit:              aws.Int64(req.Limit),
+		Limit:              aws.Int32(req.Limit),
 		LogGroupNamePrefix: req.LogGroupNamePrefix,
 	}
 
@@ -33,13 +33,13 @@ func (s *LogGroupsService) GetLogGroupsWithContext(ctx context.Context, req reso
 		}
 		if !req.IsTargetingAllAccounts() {
 			// TODO: accept more than one account id in search
-			input.AccountIdentifiers = []*string{req.AccountId}
+			input.AccountIdentifiers = []string{*req.AccountId}
 		}
 	}
 	result := []resources.ResourceResponse[resources.LogGroup]{}
 
 	for {
-		response, err := s.logGroupsAPI.DescribeLogGroupsWithContext(ctx, input)
+		response, err := s.logGroupsAPI.DescribeLogGroups(ctx, input)
 		if err != nil || response == nil {
 			return nil, err
 		}
@@ -63,7 +63,7 @@ func (s *LogGroupsService) GetLogGroupsWithContext(ctx context.Context, req reso
 	return result, nil
 }
 
-func (s *LogGroupsService) GetLogGroupFieldsWithContext(ctx context.Context, request resources.LogGroupFieldsRequest, option ...request.Option) ([]resources.ResourceResponse[resources.LogGroupField], error) {
+func (s *LogGroupsService) GetLogGroupFields(ctx context.Context, request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error) {
 	input := &cloudwatchlogs.GetLogGroupFieldsInput{
 		LogGroupName: aws.String(request.LogGroupName),
 	}
@@ -73,7 +73,7 @@ func (s *LogGroupsService) GetLogGroupFieldsWithContext(ctx context.Context, req
 	// 	input.LogGroupName = nil
 	// }
 
-	getLogGroupFieldsOutput, err := s.logGroupsAPI.GetLogGroupFieldsWithContext(ctx, input)
+	getLogGroupFieldsOutput, err := s.logGroupsAPI.GetLogGroupFields(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (s *LogGroupsService) GetLogGroupFieldsWithContext(ctx context.Context, req
 		result = append(result, resources.ResourceResponse[resources.LogGroupField]{
 			Value: resources.LogGroupField{
 				Name:    *logGroupField.Name,
-				Percent: *logGroupField.Percent,
+				Percent: int64(logGroupField.Percent),
 			},
 		})
 	}

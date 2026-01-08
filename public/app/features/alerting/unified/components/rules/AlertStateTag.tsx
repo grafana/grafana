@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
 import { AlertState } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Tooltip } from '@grafana/ui';
 import { GrafanaAlertState, GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -16,9 +17,15 @@ interface Props {
 export const AlertStateTag = memo(({ state, isPaused = false, size = 'md', muted = false }: Props) => {
   if (isPaused) {
     return (
-      <Tooltip content={'Alert evaluation is currently paused'} placement="top">
+      <Tooltip
+        content={t(
+          'alerting.alert-state-tag.content-alert-evaluation-is-currently-paused',
+          'Alert evaluation is currently paused'
+        )}
+        placement="top"
+      >
         <StateTag state="warning" size={size} muted={muted}>
-          <Icon name="pause" size="xs" /> Paused
+          <Icon name="pause" size="xs" /> <Trans i18nKey="alerting.alert-state-tag.paused">Paused</Trans>
         </StateTag>
       </Tooltip>
     );

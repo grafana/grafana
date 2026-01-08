@@ -1,9 +1,9 @@
 import { of } from 'rxjs';
 
-import { CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
-import { dateTime } from '@grafana/data/src/datetime/moment_wrapper';
+import { dateTime, CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
 
+import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../dataquery.gen';
 import {
   namespaceVariable,
   metricVariable,
@@ -12,11 +12,10 @@ import {
   dimensionVariable,
   periodIntervalVariable,
   accountIdVariable,
-} from '../__mocks__/CloudWatchDataSource';
-import { initialVariableModelState } from '../__mocks__/CloudWatchVariables';
-import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
-import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
-import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../types';
+} from '../mocks/CloudWatchDataSource';
+import { initialVariableModelState } from '../mocks/CloudWatchVariables';
+import { setupMockedMetricsQueryRunner } from '../mocks/MetricsQueryRunner';
+import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../mocks/queries';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -253,6 +252,36 @@ describe('CloudWatchMetricsQueryRunner', () => {
 
         await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
           expect(queryMock.mock.calls[0][0].targets[0].period).toEqual('600');
+        });
+      });
+
+      it('should append -metrics to the request id', async () => {
+        const queries: CloudWatchMetricsQuery[] = [
+          {
+            id: '',
+            metricQueryType: MetricQueryType.Search,
+            metricEditorMode: MetricEditorMode.Builder,
+            queryMode: 'Metrics',
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'AWS/EC2',
+            metricName: 'CPUUtilization',
+            dimensions: {
+              InstanceId: 'i-12345678',
+            },
+            statistic: 'Average',
+            period: '[[period]]',
+          },
+        ];
+
+        const { runner, queryMock, request } = setupMockedMetricsQueryRunner({
+          // DataSourceWithBackend runs toDataQueryResponse({response from CW backend})
+          response: toDataQueryResponse(resultsFromBEQuery),
+          variables: [periodIntervalVariable],
+        });
+
+        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
+          expect(queryMock.mock.calls[0][0].requestId).toEqual('mockId-metrics');
         });
       });
 

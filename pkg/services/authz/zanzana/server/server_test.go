@@ -5,15 +5,23 @@ import (
 	"testing"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+
+	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -24,75 +32,208 @@ const (
 
 	folderGroup    = "folder.grafana.app"
 	folderResource = "folders"
+
+	teamGroup    = "iam.grafana.app"
+	teamResource = "teams"
+
+	userGroup    = "iam.grafana.app"
+	userResource = "users"
+
+	serviceAccountGroup    = "iam.grafana.app"
+	serviceAccountResource = "serviceaccounts"
+
+	statusSubresource = "status"
 )
+
+func setup(t *testing.T, srv *Server) *Server {
+	// seed tuples
+	tuples := []*openfgav1.TupleKey{
+		common.NewResourceTuple("user:1", common.RelationGet, dashboardGroup, dashboardResource, "", "1"),
+		common.NewResourceTuple("user:1", common.RelationUpdate, dashboardGroup, dashboardResource, "", "1"),
+		common.NewGroupResourceTuple("user:2", common.RelationGet, dashboardGroup, dashboardResource, ""),
+		common.NewGroupResourceTuple("user:2", common.RelationUpdate, dashboardGroup, dashboardResource, ""),
+		common.NewResourceTuple("user:3", common.RelationSetView, dashboardGroup, dashboardResource, "", "1"),
+		common.NewFolderResourceTuple("user:4", common.RelationGet, dashboardGroup, dashboardResource, "", "1"),
+		common.NewFolderResourceTuple("user:4", common.RelationGet, dashboardGroup, dashboardResource, "", "3"),
+		common.NewFolderResourceTuple("user:5", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "1"),
+		common.NewFolderTuple("user:6", common.RelationGet, "1"),
+		common.NewGroupResourceTuple("user:7", common.RelationGet, folderGroup, folderResource, ""),
+		// folder-4 -> folder-5 -> folder-6
+		common.NewFolderParentTuple("5", "4"),
+		common.NewFolderParentTuple("6", "5"),
+		common.NewFolderResourceTuple("user:8", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "5"),
+		common.NewFolderResourceTuple("user:9", common.RelationCreate, dashboardGroup, dashboardResource, "", "5"),
+		common.NewResourceTuple("user:10", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource, "10"),
+		common.NewResourceTuple("user:10", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource, "11"),
+		common.NewGroupResourceTuple("user:11", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource),
+		common.NewFolderResourceTuple("user:12", common.RelationGet, dashboardGroup, dashboardResource, statusSubresource, "5"),
+		common.NewFolderResourceTuple("user:13", common.RelationGet, folderGroup, folderResource, statusSubresource, "5"),
+		common.NewTypedResourceTuple("user:14", common.RelationGet, common.TypeTeam, teamGroup, teamResource, statusSubresource, "1"),
+		common.NewTypedResourceTuple("user:15", common.RelationGet, common.TypeUser, userGroup, userResource, statusSubresource, "1"),
+		common.NewTypedResourceTuple("user:16", common.RelationGet, common.TypeServiceAccount, serviceAccountGroup, serviceAccountResource, statusSubresource, "1"),
+		common.NewFolderTuple("user:17", common.RelationSetView, "4"),
+		common.NewFolderTuple("user:18", common.RelationCreate, "general"),
+		common.NewFolderResourceTuple("user:18", common.RelationCreate, dashboardGroup, dashboardResource, "", "general"),
+	}
+
+	return setupOpenFGADatabase(t, srv, tuples)
+}
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
 func TestIntegrationServer(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	testDB, cfg := db.InitTestDBWithCfg(t)
+	// Create a test-specific config to avoid migration conflicts
+	cfg := setting.NewCfg()
+
+	// Use a test-specific database to avoid migration conflicts
+	testStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+
 	// Hack to skip these tests on mysql 5.7
-	if testDB.GetDialect().DriverName() == migrator.MySQL {
-		if supported, err := testDB.RecursiveQueriesAreSupported(); !supported || err != nil {
+	if testStore.GetDialect().DriverName() == migrator.MySQL {
+		if supported, err := testStore.RecursiveQueriesAreSupported(); !supported || err != nil {
 			t.Skip("skipping integration test")
 		}
 	}
 
-	srv := setup(t, testDB, cfg)
+	srv := setupOpenFGAServer(t, testStore, cfg)
 	t.Run("test check", func(t *testing.T) {
+		setup(t, srv)
 		testCheck(t, srv)
 	})
 
 	t.Run("test list", func(t *testing.T) {
+		setup(t, srv)
 		testList(t, srv)
 	})
 
+	t.Run("test list streaming", func(t *testing.T) {
+		setup(t, srv)
+		srv.cfg.UseStreamedListObjects = true
+		testList(t, srv)
+		srv.cfg.UseStreamedListObjects = false
+	})
+
 	t.Run("test batch check", func(t *testing.T) {
+		setup(t, srv)
 		testBatchCheck(t, srv)
+	})
+
+	t.Run("test mutate", func(t *testing.T) {
+		testMutate(t, srv)
+	})
+
+	t.Run("test mutate folders", func(t *testing.T) {
+		testMutateFolders(t, srv)
+	})
+
+	t.Run("test mutate resource permissions", func(t *testing.T) {
+		testMutateResourcePermissions(t, srv)
+	})
+
+	t.Run("test mutate org roles", func(t *testing.T) {
+		testMutateOrgRoles(t, srv)
+	})
+
+	t.Run("test query folders", func(t *testing.T) {
+		testQueryFolders(t, srv)
+	})
+
+	t.Run("test mutate role bindings", func(t *testing.T) {
+		testMutateRoleBindings(t, srv)
+	})
+
+	t.Run("test mutate team bindings", func(t *testing.T) {
+		testMutateTeamBindings(t, srv)
+	})
+
+	t.Run("test mutate roles", func(t *testing.T) {
+		testMutateRoles(t, srv)
 	})
 }
 
-func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
+func setupOpenFGAServer(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	t.Helper()
+
 	store, err := store.NewEmbeddedStore(cfg, testDB, log.NewNopLogger())
 	require.NoError(t, err)
-	openfga, err := NewOpenFGA(&cfg.Zanzana, store, log.NewNopLogger())
+	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
 	require.NoError(t, err)
 
-	srv, err := NewAuthz(cfg, openfga)
+	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(t, err)
+
+	return srv
+}
+
+func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKey) *Server {
+	t.Helper()
 
 	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
 	require.NoError(t, err)
 
+	// Clean up any existing store
+	_, err = srv.openfga.DeleteStore(context.Background(), &openfgav1.DeleteStoreRequest{
+		StoreId: storeInf.ID,
+	})
+	require.NoError(t, err)
+
 	// seed tuples
-	_, err = openfga.Write(context.Background(), &openfgav1.WriteRequest{
+	writes := &openfgav1.WriteRequestWrites{
+		TupleKeys:   tuples,
+		OnDuplicate: "ignore",
+	}
+
+	// First, try to delete any existing tuples to avoid conflicts
+	deletes := make([]*openfgav1.TupleKeyWithoutCondition, 0, len(writes.TupleKeys))
+	for _, tupleKey := range writes.TupleKeys {
+		deletes = append(deletes, &openfgav1.TupleKeyWithoutCondition{
+			User:     tupleKey.User,
+			Relation: tupleKey.Relation,
+			Object:   tupleKey.Object,
+		})
+	}
+
+	// Try to delete existing tuples (ignore errors if they don't exist)
+	_, err = srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
 		StoreId:              storeInf.ID,
 		AuthorizationModelId: storeInf.ModelID,
-		Writes: &openfgav1.WriteRequestWrites{
-			TupleKeys: []*openfgav1.TupleKey{
-				common.NewResourceTuple("user:1", common.RelationGet, dashboardGroup, dashboardResource, "1"),
-				common.NewResourceTuple("user:1", common.RelationUpdate, dashboardGroup, dashboardResource, "1"),
-				common.NewGroupResourceTuple("user:2", common.RelationGet, dashboardGroup, dashboardResource),
-				common.NewGroupResourceTuple("user:2", common.RelationUpdate, dashboardGroup, dashboardResource),
-				common.NewResourceTuple("user:3", common.RelationSetView, dashboardGroup, dashboardResource, "1"),
-				common.NewFolderResourceTuple("user:4", common.RelationGet, dashboardGroup, dashboardResource, "1"),
-				common.NewFolderResourceTuple("user:4", common.RelationGet, dashboardGroup, dashboardResource, "3"),
-				common.NewFolderResourceTuple("user:5", common.RelationSetEdit, dashboardGroup, dashboardResource, "1"),
-				common.NewFolderTuple("user:6", common.RelationGet, "1"),
-				common.NewGroupResourceTuple("user:7", common.RelationGet, folderGroup, folderResource),
-				common.NewFolderParentTuple("5", "4"),
-				common.NewFolderParentTuple("6", "5"),
-				common.NewFolderResourceTuple("user:8", common.RelationSetEdit, dashboardGroup, dashboardResource, "5"),
-				common.NewFolderResourceTuple("user:9", "create", dashboardGroup, dashboardResource, "5"),
-			},
+		Deletes: &openfgav1.WriteRequestDeletes{
+			TupleKeys: deletes,
+			OnMissing: "ignore",
 		},
 	})
 	require.NoError(t, err)
+
+	// Now write the new tuples
+	_, err = srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
+		StoreId:              storeInf.ID,
+		AuthorizationModelId: storeInf.ModelID,
+		Writes:               writes,
+	})
+	require.NoError(t, err)
 	return srv
+}
+
+func newContextWithNamespace() context.Context {
+	return newContextWithNamespaceAndPermissions()
+}
+
+func newContextWithNamespaceAndPermissions(perms ...string) context.Context {
+	ctx := context.Background()
+	ctx = claims.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+		Rest: authnlib.AccessTokenClaims{
+			Namespace:            "*",
+			Permissions:          perms,
+			DelegatedPermissions: perms,
+		},
+	}))
+	return ctx
+}
+
+func newContextWithZanzanaUpdatePermission() context.Context {
+	return newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUpdate)
 }

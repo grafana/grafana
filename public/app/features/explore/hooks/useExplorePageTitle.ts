@@ -4,7 +4,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { ExploreQueryParams } from 'app/types';
+import { ExploreQueryParams } from 'app/types/explore';
 
 import { isFulfilled, hasKey } from './utils';
 

@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 
 import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../constants';
+import { AlignmentTypes, SLOQuery } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
 import { selectors } from '../e2e/selectors';
 import { alignmentPeriodLabel } from '../functions';
-import { AlignmentTypes, SLOQuery } from '../types/query';
 import { CustomMetaData } from '../types/types';
 
 import { AliasBy } from './AliasBy';

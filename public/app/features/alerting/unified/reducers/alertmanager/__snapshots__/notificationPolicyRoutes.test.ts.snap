@@ -1,0 +1,184 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`routes Should add a new route with receiver E as a child of default route 1`] = `
+{
+  "alertmanager_config": {
+    "mute_time_intervals": [],
+    "route": {
+      "group_by": [
+        "grafana_folder",
+      ],
+      "group_interval": "1m",
+      "group_wait": "10s",
+      "object_matchers": [],
+      "receiver": "ROOT",
+      "routes": [
+        {
+          "object_matchers": [
+            [
+              "team",
+              "=",
+              "operations",
+            ],
+          ],
+          "receiver": "A",
+          "routes": [
+            {
+              "object_matchers": [
+                [
+                  "region",
+                  "=",
+                  "europe",
+                ],
+              ],
+              "receiver": "B1",
+              "routes": [],
+            },
+            {
+              "object_matchers": [
+                [
+                  "region",
+                  "=",
+                  "nasa",
+                ],
+              ],
+              "receiver": "B2",
+              "routes": [],
+            },
+          ],
+        },
+        {
+          "object_matchers": [
+            [
+              "foo",
+              "=",
+              "bar",
+            ],
+          ],
+          "receiver": "C",
+          "routes": [],
+        },
+        {
+          "active_time_intervals": undefined,
+          "continue": undefined,
+          "group_by": undefined,
+          "group_interval": undefined,
+          "group_wait": undefined,
+          "match": undefined,
+          "match_re": undefined,
+          "matchers": undefined,
+          "mute_time_intervals": undefined,
+          "object_matchers": undefined,
+          "receiver": "E",
+          "repeat_interval": undefined,
+          "routes": undefined,
+        },
+      ],
+    },
+    "time_intervals": [],
+  },
+  "template_files": {},
+}
+`;
+
+exports[`routes Should delete route 1`] = `
+{
+  "alertmanager_config": {
+    "mute_time_intervals": [],
+    "route": {
+      "group_by": [
+        "grafana_folder",
+      ],
+      "group_interval": "1m",
+      "group_wait": "10s",
+      "object_matchers": [],
+      "receiver": "ROOT",
+      "routes": [
+        {
+          "object_matchers": [
+            [
+              "foo",
+              "=",
+              "bar",
+            ],
+          ],
+          "receiver": "C",
+          "routes": [],
+        },
+      ],
+    },
+    "time_intervals": [],
+  },
+  "template_files": {},
+}
+`;
+
+exports[`routes Should update an existing route A with receiver B 1`] = `
+{
+  "alertmanager_config": {
+    "mute_time_intervals": [],
+    "route": {
+      "group_by": [
+        "grafana_folder",
+      ],
+      "group_interval": "1m",
+      "group_wait": "10s",
+      "object_matchers": [],
+      "receiver": "ROOT",
+      "routes": [
+        {
+          "active_time_intervals": undefined,
+          "continue": undefined,
+          "group_by": undefined,
+          "group_interval": undefined,
+          "group_wait": undefined,
+          "match": undefined,
+          "match_re": undefined,
+          "matchers": undefined,
+          "mute_time_intervals": undefined,
+          "object_matchers": undefined,
+          "receiver": "B",
+          "repeat_interval": undefined,
+          "routes": [
+            {
+              "object_matchers": [
+                [
+                  "region",
+                  "=",
+                  "europe",
+                ],
+              ],
+              "receiver": "B1",
+              "routes": [],
+            },
+            {
+              "object_matchers": [
+                [
+                  "region",
+                  "=",
+                  "nasa",
+                ],
+              ],
+              "receiver": "B2",
+              "routes": [],
+            },
+          ],
+        },
+        {
+          "object_matchers": [
+            [
+              "foo",
+              "=",
+              "bar",
+            ],
+          ],
+          "receiver": "C",
+          "routes": [],
+        },
+      ],
+    },
+    "time_intervals": [],
+  },
+  "template_files": {},
+}
+`;

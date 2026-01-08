@@ -2,52 +2,10 @@ package accesscontrol
 
 import (
 	"context"
-	// #nosec G505 Used only for shortening the uid, not for security purposes.
-	"crypto/sha1"
-	"encoding/hex"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
-)
-
-const (
-	ScopeReceiversRoot = "receivers"
-)
-
-var (
-	ScopeReceiversProvider = ReceiverScopeProvider{ac.NewScopeProvider(ScopeReceiversRoot)}
-	ScopeReceiversAll      = ScopeReceiversProvider.GetResourceAllScope()
-)
-
-type ReceiverScopeProvider struct {
-	ac.ScopeProvider
-}
-
-func (p ReceiverScopeProvider) GetResourceScopeUID(uid string) string {
-	return ScopeReceiversProvider.ScopeProvider.GetResourceScopeUID(p.GetResourceIDFromUID(uid))
-}
-
-// GetResourceIDFromUID converts a receiver uid to a resource id. This is necessary as resource ids are limited to 40 characters.
-// If the uid is already less than or equal to 40 characters, it is returned as is.
-func (p ReceiverScopeProvider) GetResourceIDFromUID(uid string) string {
-	if len(uid) <= util.MaxUIDLength {
-		return uid
-	}
-	// #nosec G505 Used only for shortening the uid, not for security purposes.
-	h := sha1.New()
-	h.Write([]byte(uid))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-// ReceiverPermission is a type for representing a receiver permission.
-type ReceiverPermission string
-
-const (
-	ReceiverPermissionView  ReceiverPermission = "View"
-	ReceiverPermissionEdit  ReceiverPermission = "Edit"
-	ReceiverPermissionAdmin ReceiverPermission = "Admin"
 )
 
 var (
@@ -65,19 +23,19 @@ var (
 	// Asserts read-only access to all redacted receivers.
 	readRedactedAllReceiversEval = ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
-		ac.EvalPermission(ac.ActionAlertingReceiversRead, ScopeReceiversAll),
+		ac.EvalPermission(ac.ActionAlertingReceiversRead, models.ScopeReceiversAll),
 		readDecryptedAllReceiversEval,
 	)
 	// Asserts read-only access to all decrypted receivers.
 	readDecryptedAllReceiversEval = ac.EvalAny(
-		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets, ScopeReceiversAll),
+		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets, models.ScopeReceiversAll),
 	)
 
 	// Asserts read-only access to a specific redacted receiver.
 	readRedactedReceiverEval = func(uid string) ac.Evaluator {
 		return ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversRead, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+			ac.EvalPermission(ac.ActionAlertingReceiversRead, models.ScopeReceiversProvider.GetResourceScopeUID(uid)),
 			readDecryptedReceiverEval(uid),
 		)
 	}
@@ -85,7 +43,7 @@ var (
 	// Asserts read-only access to a specific decrypted receiver.
 	readDecryptedReceiverEval = func(uid string) ac.Evaluator {
 		return ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets, models.ScopeReceiversProvider.GetResourceScopeUID(uid)),
 		)
 	}
 
@@ -126,16 +84,36 @@ var (
 	// Asserts update access to all receivers.
 	updateAllReceiversEval = ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-		ac.EvalPermission(ac.ActionAlertingReceiversUpdate, ScopeReceiversAll),
+		ac.EvalPermission(ac.ActionAlertingReceiversUpdate, models.ScopeReceiversAll),
 	)
 
 	// Asserts update access to a specific receiver.
 	updateReceiverEval = func(uid string) ac.Evaluator {
 		return ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-			ac.EvalPermission(ac.ActionAlertingReceiversUpdate, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+			ac.EvalPermission(ac.ActionAlertingReceiversUpdate, models.ScopeReceiversProvider.GetResourceScopeUID(uid)),
 		)
 	}
+
+	// Asserts pre-conditions for access to modify protected fields of receivers. If this evaluates to false, the user cannot modify protected fields of any receivers.
+	updateReceiversProtectedPreConditionsEval = ac.EvalAll(
+		updateReceiversPreConditionsEval,
+		ac.EvalPermission(ac.ActionAlertingReceiversUpdateProtected), // Action for receivers. UID scope.
+	)
+
+	// Asserts access to modify protected fields of a specific receiver.
+	updateReceiverProtectedEval = func(uid string) ac.Evaluator {
+		return ac.EvalAll(
+			updateReceiverEval(uid),
+			ac.EvalPermission(ac.ActionAlertingReceiversUpdateProtected, models.ScopeReceiversProvider.GetResourceScopeUID(uid)),
+		)
+	}
+
+	// Asserts access to modify protected fields of all receivers.
+	updateAllReceiverProtectedEval = ac.EvalAll(
+		updateAllReceiversEval,
+		ac.EvalPermission(ac.ActionAlertingReceiversUpdateProtected, models.ScopeReceiversAll),
+	)
 
 	// Delete
 
@@ -148,14 +126,14 @@ var (
 	// Asserts delete access to all receivers.
 	deleteAllReceiversEval = ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-		ac.EvalPermission(ac.ActionAlertingReceiversDelete, ScopeReceiversAll),
+		ac.EvalPermission(ac.ActionAlertingReceiversDelete, models.ScopeReceiversAll),
 	)
 
 	// Asserts delete access to a specific receiver.
 	deleteReceiverEval = func(uid string) ac.Evaluator {
 		return ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-			ac.EvalPermission(ac.ActionAlertingReceiversDelete, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+			ac.EvalPermission(ac.ActionAlertingReceiversDelete, models.ScopeReceiversProvider.GetResourceScopeUID(uid)),
 		)
 	}
 
@@ -169,26 +147,27 @@ var (
 
 	// Asserts resource permissions access to all receivers.
 	permissionsAllReceiversEval = ac.EvalAll(
-		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead, ScopeReceiversAll),
-		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite, ScopeReceiversAll),
+		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead, models.ScopeReceiversAll),
+		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite, models.ScopeReceiversAll),
 	)
 
 	// Asserts resource permissions access to a specific receiver.
 	permissionsReceiverEval = func(uid string) ac.Evaluator {
 		return ac.EvalAll(
-			ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead, ScopeReceiversProvider.GetResourceScopeUID(uid)),
-			ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite, ScopeReceiversProvider.GetResourceScopeUID(uid)),
+			ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead, models.ScopeReceiversProvider.GetResourceScopeUID(uid)),
+			ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite, models.ScopeReceiversProvider.GetResourceScopeUID(uid)),
 		)
 	}
 )
 
 type ReceiverAccess[T models.Identified] struct {
-	read          actionAccess[T]
-	readDecrypted actionAccess[T]
-	create        actionAccess[T]
-	update        actionAccess[T]
-	delete        actionAccess[T]
-	permissions   actionAccess[T]
+	read            actionAccess[T]
+	readDecrypted   actionAccess[T]
+	create          actionAccess[T]
+	update          actionAccess[T]
+	updateProtected actionAccess[T]
+	delete          actionAccess[T]
+	permissions     actionAccess[T]
 }
 
 // NewReceiverAccess creates a new ReceiverAccess service. If includeProvisioningActions is true, the service will include
@@ -242,6 +221,18 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 				return updateReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: updateAllReceiversEval,
+		},
+		updateProtected: actionAccess[T]{
+			genericService: genericService{
+				ac: a,
+			},
+			resource:      "receiver",
+			action:        "update protected fields of", // this produces message "user is not authorized to update protected fields of X receiver"
+			authorizeSome: updateReceiversProtectedPreConditionsEval,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return updateReceiverProtectedEval(receiver.GetUID())
+			},
+			authorizeAll: updateAllReceiverProtectedEval,
 		},
 		delete: actionAccess[T]{
 			genericService: genericService{
@@ -353,6 +344,14 @@ func (s ReceiverAccess[T]) AuthorizeUpdate(ctx context.Context, user identity.Re
 	return s.update.Authorize(ctx, user, receiver)
 }
 
+func (s ReceiverAccess[T]) HasUpdateProtected(ctx context.Context, user identity.Requester, receiver T) (bool, error) {
+	return s.updateProtected.Has(ctx, user, receiver)
+}
+
+func (s ReceiverAccess[T]) AuthorizeUpdateProtected(ctx context.Context, user identity.Requester, receiver T) error {
+	return s.updateProtected.Authorize(ctx, user, receiver)
+}
+
 // Global
 
 // AuthorizeCreate checks if user has access to create receivers. Returns an error if user does not have access.
@@ -422,6 +421,12 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 		basePerms.Set(models.ReceiverPermissionDelete, true) // Has access to all receivers.
 	}
 
+	if err := s.updateProtected.AuthorizePreConditions(ctx, user); err != nil {
+		basePerms.Set(models.ReceiverPermissionModifyProtected, false)
+	} else if err := s.updateProtected.AuthorizeAll(ctx, user); err == nil {
+		basePerms.Set(models.ReceiverPermissionModifyProtected, true)
+	}
+
 	if basePerms.AllSet() {
 		// Shortcut for the case when all permissions are known based on preconditions.
 		result := make(map[string]models.ReceiverPermissionSet, len(receivers))
@@ -452,6 +457,11 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 		if _, ok := permSet.Has(models.ReceiverPermissionDelete); !ok {
 			err := s.delete.authorize(ctx, user, rcv)
 			permSet.Set(models.ReceiverPermissionDelete, err == nil)
+		}
+
+		if _, ok := permSet.Has(models.ReceiverPermissionModifyProtected); !ok {
+			err := s.updateProtected.authorize(ctx, user, rcv)
+			permSet.Set(models.ReceiverPermissionModifyProtected, err == nil)
 		}
 
 		result[rcv.GetUID()] = permSet

@@ -3,14 +3,19 @@ package sql
 import (
 	"testing"
 	"text/template"
+	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
 func TestUnifiedStorageQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
-		RootDir: "testdata",
+		RootDir:        "testdata",
+		SQLTemplatesFS: sqlTemplatesFS,
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			sqlResourceDelete: {
 				{
@@ -18,12 +23,27 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlResourceRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						WriteEvent: resource.WriteEvent{
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Namespace: "nn",
 								Group:     "gg",
 								Resource:  "rr",
 								Name:      "name",
 							},
+						},
+					},
+				},
+				{
+					Name: "with rv",
+					Data: &sqlResourceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						WriteEvent: resource.WriteEvent{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "nn",
+								Group:     "gg",
+								Resource:  "rr",
+								Name:      "name",
+							},
+							PreviousRV: 1234,
 						},
 					},
 				},
@@ -34,13 +54,13 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlResourceRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						WriteEvent: resource.WriteEvent{
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Namespace: "nn",
 								Group:     "gg",
 								Resource:  "rr",
 								Name:      "name",
 							},
-							Type:       resource.WatchEvent_ADDED,
+							Type:       resourcepb.WatchEvent_ADDED,
 							PreviousRV: 123,
 						},
 						Folder: "fldr",
@@ -53,12 +73,13 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlResourceRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						WriteEvent: resource.WriteEvent{
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Namespace: "nn",
 								Group:     "gg",
 								Resource:  "rr",
 								Name:      "name",
 							},
+							PreviousRV: 1759304090100678,
 						},
 						Folder: "fldr",
 					},
@@ -69,8 +90,8 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "without_resource_version",
 					Data: &sqlResourceReadRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Request: &resource.ReadRequest{
-							Key: &resource.ResourceKey{
+						Request: &resourcepb.ReadRequest{
+							Key: &resourcepb.ResourceKey{
 								Namespace: "nn",
 								Group:     "gg",
 								Resource:  "rr",
@@ -87,10 +108,10 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "filter_on_namespace",
 					Data: &sqlResourceListRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Request: &resource.ListRequest{
+						Request: &resourcepb.ListRequest{
 							Limit: 10,
-							Options: &resource.ListOptions{
-								Key: &resource.ResourceKey{
+							Options: &resourcepb.ListOptions{
+								Key: &resourcepb.ResourceKey{
 									Namespace: "ns",
 								},
 							},
@@ -106,13 +127,26 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Request: &historyListRequest{
 							Limit: 10,
-							Options: &resource.ListOptions{
-								Key: &resource.ResourceKey{
+							Options: &resourcepb.ListOptions{
+								Key: &resourcepb.ResourceKey{
 									Namespace: "ns",
 								},
 							},
 						},
-						Response: new(resource.ResourceWrapper),
+						Response: new(resourcepb.ResourceWrapper),
+					},
+				},
+			},
+			sqlResourceHistoryListModifiedSince: {
+				{
+					Name: "single path",
+					Data: &sqlResourceListModifiedSinceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "group",
+						Resource:    "res",
+						SinceRv:     10000,
+						LatestRv:    20000,
 					},
 				},
 			},
@@ -129,11 +163,15 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceUpdateRV: {
+			rvmanager.SqlResourceUpdateRV: {
 				{
 					Name: "single path",
-					Data: &sqlResourceUpdateRVRequest{
+					Data: &rvmanager.SqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
+						},
 					},
 				},
 			},
@@ -141,11 +179,11 @@ func TestUnifiedStorageQueries(t *testing.T) {
 			sqlResourceHistoryRead: {
 				{
 					Name: "single path",
-					Data: &sqlResourceReadRequest{
+					Data: &sqlResourceHistoryReadRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Request: &resource.ReadRequest{
+						Request: &historyReadRequest{
 							ResourceVersion: 123,
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Namespace: "ns",
 								Group:     "gp",
 								Resource:  "rs",
@@ -157,31 +195,49 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceHistoryUpdateRV: {
+			sqlResourceHistoryReadLatestRV: {
 				{
 					Name: "single path",
-					Data: &sqlResourceUpdateRVRequest{
+					Data: &sqlResourceHistoryReadLatestRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
+					},
+				},
+				{
+					Name: "with WatchEvent_DELETED",
+					Data: &sqlResourceHistoryReadLatestRVRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Request: &historyReadLatestRVRequest{
+							Key: &resourcepb.ResourceKey{
+								Namespace: "ns",
+								Group:     "gp",
+								Resource:  "rs",
+								Name:      "nm",
+							},
+							EventType: resourcepb.WatchEvent_DELETED,
+						},
+						Response: new(resourceHistoryReadLatestRVResponse),
 					},
 				},
 			},
 
-			sqlResoureceHistoryUpdateUid: {
+			rvmanager.SqlResourceHistoryUpdateRV: {
 				{
-					Name: "modify uids in history",
-					Data: &sqlResourceHistoryUpdateRequest{
+					Name: "single path",
+					Data: &rvmanager.SqlResourceUpdateRVRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						WriteEvent: resource.WriteEvent{
-							Key: &resource.ResourceKey{
-								Namespace: "nn",
-								Group:     "gg",
-								Resource:  "rr",
-								Name:      "name",
-							},
-							PreviousRV: 1234,
+						GUIDToRV: map[string]int64{
+							"guid1": 123,
+							"guid2": 456,
 						},
-						OldUID: "old-uid",
-						NewUID: "new-uid",
 					},
 				},
 			},
@@ -191,8 +247,9 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Name: "insert into resource_history",
 					Data: &sqlResourceRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Generation:  789,
 						WriteEvent: resource.WriteEvent{
-							Key: &resource.ResourceKey{
+							Key: &resourcepb.ResourceKey{
 								Namespace: "nn",
 								Group:     "gg",
 								Resource:  "rr",
@@ -205,23 +262,96 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceVersionGet: {
+			sqlResourceHistoryGet: {
+				{
+					Name: "read object history",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+							Name:      "name",
+						},
+					},
+				},
+			},
+
+			sqlResourceTrash: {
+				{
+					Name: "read trash",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash: true,
+					},
+				},
+				{
+					Name: "read trash second page",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash:   true,
+						StartRV: 123456,
+					},
+				},
+			},
+
+			sqlResourceHistoryPrune: {
+				{
+					Name: "max-versions",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "default",
+							Group:     "provisioning.grafana.app",
+							Resource:  "repositories",
+							Name:      "repo-xyz",
+						},
+						HistoryLimit: 10,
+					},
+				},
+				{
+					Name: "collapse-generations",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "default",
+							Group:     "provisioning.grafana.app",
+							Resource:  "repositories",
+							Name:      "repo-xyz",
+						},
+						PartitionByGeneration: true,
+						HistoryLimit:          1,
+					},
+				},
+			},
+
+			rvmanager.SqlResourceVersionGet: {
 				{
 					Name: "single path",
-					Data: &sqlResourceVersionGetRequest{
+					Data: &rvmanager.SqlResourceVersionGetRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Resource:    "resource",
 						Group:       "group",
-						Response:    new(resourceVersionResponse),
+						Response:    new(rvmanager.ResourceVersionResponse),
 						ReadOnly:    false,
 					},
 				},
 			},
 
-			sqlResourceVersionUpdate: {
+			rvmanager.SqlResourceVersionUpdate: {
 				{
 					Name: "increment resource version",
-					Data: &sqlResourceVersionUpsertRequest{
+					Data: &rvmanager.SqlResourceVersionUpsertRequest{
 						SQLTemplate:     mocks.NewTestingSQLTemplate(),
 						Resource:        "resource",
 						Group:           "group",
@@ -230,26 +360,36 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceVersionInsert: {
+			rvmanager.SqlResourceVersionInsert: {
 				{
 					Name: "single path",
-					Data: &sqlResourceVersionUpsertRequest{
+					Data: &rvmanager.SqlResourceVersionUpsertRequest{
 						SQLTemplate:     mocks.NewTestingSQLTemplate(),
 						ResourceVersion: int64(12354),
 					},
 				},
 			},
 
+			sqlResourceVersionList: {
+				{
+					Name: "single path",
+					Data: &sqlResourceVersionListRequest{
+						SQLTemplate:          mocks.NewTestingSQLTemplate(),
+						groupResourceVersion: new(groupResourceVersion),
+					},
+				},
+			},
+
 			sqlResourceStats: {
 				{
-					Name: "query",
+					Name: "global",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						MinCount:    10, // Not yet used in query (only response filter)
 					},
 				},
 				{
-					Name: "query-namespace",
+					Name: "namespace",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
@@ -257,12 +397,131 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 				{
-					Name: "query-folder",
+					Name: "folder",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
 						Folder:      "folder",
 						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "resource",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Group:       "dashboard.grafana.app",
+						Resource:    "dashboards",
+					},
+				},
+			},
+			sqlResourceBlobInsert: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						Now: time.UnixMilli(1704056400000).UTC(),
+						Info: &utils.BlobInfo{
+							UID:  "abc",
+							Hash: "xxx",
+							Size: 1234,
+						},
+						ContentType: "text/plain",
+						Value:       []byte("abcdefg"),
+					},
+				},
+			},
+
+			sqlResourceBlobQuery: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						UID: "abc",
+					},
+				},
+				{
+					Name: "resource", // NOTE: this returns multiple values
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+						},
+					},
+				},
+			},
+			sqlResourceHistoryDelete: {
+				{
+					Name: "guid",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUID:        `xxxx`,
+						Namespace:   "ns",
+					},
+				},
+				{
+					Name: "wipe",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "ggg",
+						Resource:    "rrr",
+					},
+				},
+			},
+			sqlResourceInsertFromHistory: {
+				{
+					Name: "update",
+					Data: &sqlResourceInsertFromHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "default",
+							Group:     "dashboard.grafana.app",
+							Resource:  "dashboards",
+						},
+					},
+				},
+			},
+			sqlResourceLastImportTimeInsert: {
+				{
+					Name: "insert",
+					Data: &sqlResourceLastImportTimeInsertRequest{
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Namespace:      "ns",
+						Group:          "group",
+						Resource:       "res",
+						LastImportTime: time.Date(2025, 10, 07, 22, 30, 05, 0, time.UTC),
+					},
+				},
+			},
+			sqlResourceLastImportTimeQuery: {
+				{
+					Name: "insert",
+					Data: &sqlResourceLastImportTimeQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+					},
+				},
+			},
+			sqlResourceLastImportTimeDelete: {
+				{
+					Name: "delete",
+					Data: &sqlResourceLastImportTimeDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Threshold:   time.Date(2025, 10, 15, 14, 30, 05, 0, time.UTC),
 					},
 				},
 			},

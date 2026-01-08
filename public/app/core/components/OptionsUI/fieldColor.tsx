@@ -13,6 +13,7 @@ import {
   FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
@@ -28,22 +29,39 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
 
-  const options = availableOptions
-    .filter((mode) => !mode.excludeFromPicker)
-    .map((mode) => {
-      let suffix = mode.isByValue ? ' (by value)' : '';
+  const filteredOptions = availableOptions.filter((option) => !option.excludeFromPicker);
 
-      return {
-        value: mode.id,
-        label: `${mode.name}${suffix}`,
-        description: mode.description,
-        isContinuous: mode.isContinuous,
-        isByValue: mode.isByValue,
-        component() {
-          return <FieldColorModeViz mode={mode} theme={theme} />;
-        },
-      };
-    });
+  const options: Array<SelectableValue<string>> = [];
+  // collect any grouped options in this map
+  // this allows us to easily push to the child array without having to rescan the options array
+  // it also allows us to maintain group position in the order they're first encountered
+  const groupMap = new Map<string, Array<SelectableValue<string>>>();
+
+  for (const option of filteredOptions) {
+    const suffix = option.isByValue ? ' (by value)' : '';
+
+    const groupName = option.group;
+    const selectOption = {
+      value: option.id,
+      label: `${option.name}${suffix}`,
+      description: option.description,
+      component() {
+        return <FieldColorModeViz mode={option} theme={theme} />;
+      },
+    };
+
+    if (groupName) {
+      let group = groupMap.get(groupName);
+      if (!group) {
+        group = [];
+        groupMap.set(groupName, group);
+        options.push({ label: groupName, options: group });
+      }
+      group.push(selectOption);
+    } else {
+      options.push(selectOption);
+    }
+  }
 
   const onModeChange = (newMode: SelectableValue<string>) => {
     onChange({
@@ -98,7 +116,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
         <div style={{ marginBottom: theme.spacing(2) }}>
           <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
         </div>
-        <Field label="Color series by">
+        <Field label={t('options-ui.field-color.color-by-label', 'Color series by')}>
           <RadioButtonGroup value={value?.seriesBy ?? 'last'} options={seriesModes} onChange={onSeriesModeChange} />
         </Field>
       </>
@@ -138,7 +156,7 @@ const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
       if (gradient === '') {
         gradient = `linear-gradient(90deg, ${color} 0%`;
       } else {
-        const valuePercent = i / (colors.length - 1);
+        const valuePercent = i / colors.length;
         const pos = valuePercent * 100;
         gradient += `, ${lastColor} ${pos}%, ${color} ${pos}%`;
       }

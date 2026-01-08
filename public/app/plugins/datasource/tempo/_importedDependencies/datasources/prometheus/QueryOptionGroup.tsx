@@ -13,9 +13,11 @@ export interface Props {
   collapsedInfo: string[];
   queryStats?: QueryStats | null;
   children: React.ReactNode;
+  onToggle?: (isOpen: boolean) => void;
+  isOpen?: boolean;
 }
 
-export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }: Props) {
+export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, onToggle, isOpen: propsIsOpen }: Props) {
   const [isOpen, toggleOpen] = useToggle(false);
   const styles = useStyles2(getStyles);
 
@@ -23,9 +25,8 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
     <div className={styles.wrapper}>
       <Collapse
         className={styles.collapse}
-        collapsible
-        isOpen={isOpen}
-        onToggle={toggleOpen}
+        isOpen={propsIsOpen ?? isOpen}
+        onToggle={onToggle ?? toggleOpen}
         label={
           <Stack gap={0}>
             <h6 className={styles.title}>{title}</h6>

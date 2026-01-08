@@ -27,3 +27,21 @@ export function usePagination<T>(items: T[], initialPage = 1, itemsPerPage: numb
 
   return { page, onPageChange, numberOfPages, pageItems, pageStart, pageEnd, nextPage, previousPage };
 }
+
+export function useContinuousPagination<T>(items: T[], itemsPerPage: number) {
+  const [pageIndex, setPageIndex] = useState(1);
+
+  const hasMore = items.length > itemsPerPage * pageIndex;
+  const pageItems = items.slice(0, itemsPerPage * pageIndex);
+
+  const loadMore = useCallback(() => {
+    setPageIndex((index) => index + 1);
+  }, []);
+
+  return {
+    pageItems,
+    pageIndex,
+    loadMore,
+    hasMore,
+  };
+}

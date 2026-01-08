@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -27,6 +30,7 @@ var DashboardEditActions = append(DashboardViewActions, []string{dashboards.Acti
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
 func getDashboardViewActions(features featuremgmt.FeatureToggles) []string {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		return append(DashboardViewActions, accesscontrol.ActionAnnotationsRead)
 	}
@@ -34,6 +38,7 @@ func getDashboardViewActions(features featuremgmt.FeatureToggles) []string {
 }
 
 func getDashboardEditActions(features featuremgmt.FeatureToggles) []string {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		return append(DashboardEditActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
 	}
@@ -41,6 +46,7 @@ func getDashboardEditActions(features featuremgmt.FeatureToggles) []string {
 }
 
 func getDashboardAdminActions(features featuremgmt.FeatureToggles) []string {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		return append(DashboardAdminActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
 	}
@@ -93,12 +99,13 @@ func registerDashboardRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderStore folder.Store, service accesscontrol.Service,
+	license licensing.Licensing, dashboardService dashboards.DashboardService, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.RestConfigProvider,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
 		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-		queryResult, err := dashboardStore.GetDashboard(ctx, query)
+		queryResult, err := dashboardService.GetDashboard(ctx, query)
 		if err != nil {
 			return nil, err
 		}
@@ -112,10 +119,12 @@ func ProvideDashboardPermissions(
 	options := resourcepermissions.Options{
 		Resource:          "dashboards",
 		ResourceAttribute: "uid",
+		APIGroup:          dashboardv1.APIGroup,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideDashboardPermissions.ResourceValidator")
 			defer span.End()
 
+			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return err
@@ -128,32 +137,25 @@ func ProvideDashboardPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-			wildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
-			scopes := []string(wildcards)
-
+			ctx, _ = identity.WithServiceIdentity(ctx, orgID)
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return nil, err
 			}
+
+			scopes := []string(accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix))
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
-			// nolint:staticcheck
 			if dashboard.FolderUID != "" {
-				query := &dashboards.GetDashboardQuery{UID: dashboard.FolderUID, OrgID: orgID}
-				queryResult, err := dashboardStore.GetDashboard(ctx, query)
-				if err != nil {
-					return nil, err
-				}
-				parentScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(queryResult.UID)
-
-				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, queryResult.UID, folderStore)
+				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderService)
 				if err != nil {
 					return nil, err
 				}
 
-				scopes = append(scopes, parentScope)
+				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
 				scopes = append(scopes, nestedScopes...)
 				return scopes, nil
 			}
+
 			return append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)), nil
 		},
 		Assignments: resourcepermissions.Assignments{
@@ -167,14 +169,17 @@ func ProvideDashboardPermissions(
 			"Edit":  getDashboardEditActions(features),
 			"Admin": getDashboardAdminActions(features),
 		},
-		ReaderRoleName: "Dashboard permission reader",
-		WriterRoleName: "Dashboard permission writer",
-		RoleGroup:      "Dashboards",
+		ReaderRoleName:     "Permission reader",
+		WriterRoleName:     "Permission writer",
+		RoleGroup:          "Dashboards",
+		RestConfigProvider: restConfigProvider,
 	}
 
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
-	return &DashboardPermissionsService{srv}, nil
+	s := &DashboardPermissionsService{srv}
+	dashboardPermissionsRegistration.RegisterDashboardPermissions(s)
+	return s, nil
 }

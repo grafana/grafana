@@ -33,7 +33,7 @@ func BenchmarkThreshold(b *testing.B) {
 		}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = greater.Execute(ctx, timeNow, vars, trace)
+			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})
 	b.Run("less than", func(b *testing.B) {
@@ -43,7 +43,7 @@ func BenchmarkThreshold(b *testing.B) {
 		}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = greater.Execute(ctx, timeNow, vars, trace)
+			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})
 	b.Run("within range", func(b *testing.B) {
@@ -53,7 +53,7 @@ func BenchmarkThreshold(b *testing.B) {
 		}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = greater.Execute(ctx, timeNow, vars, trace)
+			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})
 	b.Run("within range, no labels", func(b *testing.B) {
@@ -72,7 +72,7 @@ func BenchmarkThreshold(b *testing.B) {
 		}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = greater.Execute(ctx, timeNow, vars, trace)
+			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})
 	b.Run("outside range", func(b *testing.B) {
@@ -82,7 +82,7 @@ func BenchmarkThreshold(b *testing.B) {
 		}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, _ = greater.Execute(ctx, timeNow, vars, trace)
+			_, _ = greater.Execute(ctx, timeNow, vars, trace, nil)
 		}
 	})
 }

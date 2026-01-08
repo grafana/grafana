@@ -1,18 +1,21 @@
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VariableModel, defaultDashboard } from '@grafana/schema';
 import {
   AdhocVariableKind,
-  DashboardV2Spec,
   defaultAdhocVariableSpec,
-  defaultDashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
   defaultGroupByVariableSpec,
   defaultTimeSettingsSpec,
   GroupByVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+  Spec as DashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
+
+import { contextSrv } from '../../../core/services/context_srv';
 
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
@@ -55,9 +58,9 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
     dashboard: {
       ...defaultDashboard,
       uid: '',
-      title: 'New dashboard',
+      title: t('dashboard-scene.build-new-dashboard-save-model.data.title.new-dashboard', 'New dashboard'),
       panels: [],
-      timezone: config.bootData.user?.timezone || defaultDashboard.timezone,
+      timezone: contextSrv.user?.timezone || defaultDashboard.timezone,
     },
   };
 
@@ -91,14 +94,21 @@ export async function buildNewDashboardSaveModelV2(
 
       const filterVariable: AdhocVariableKind = {
         kind: 'AdhocVariable',
-        spec: { ...defaultAdhocVariableSpec(), name: 'Filter', datasource: datasourceRef },
+        group: datasourceRef.type,
+        datasource: {
+          name: datasourceRef.uid,
+        },
+        spec: { ...defaultAdhocVariableSpec(), name: 'Filter' },
       };
 
       const groupByVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
+        group: datasourceRef.type,
+        datasource: {
+          name: datasourceRef.uid,
+        },
         spec: {
           ...defaultGroupByVariableSpec(),
-          datasource: datasourceRef,
           name: 'Group by',
         },
       };
@@ -108,27 +118,25 @@ export async function buildNewDashboardSaveModelV2(
   }
 
   const data: DashboardWithAccessInfo<DashboardV2Spec> = {
-    apiVersion: 'v2alpha0',
+    apiVersion: 'v2beta1',
     kind: 'DashboardWithAccessInfo',
     spec: {
       ...defaultDashboardV2Spec(),
-      title: 'New dashboard',
+      title: t('dashboard-scene.build-new-dashboard-save-model-v2.data.title.new-dashboard', 'New dashboard'),
       timeSettings: {
         ...defaultTimeSettingsSpec(),
-        timezone: config.bootData.user?.timezone || defaultTimeSettingsSpec().timezone,
+        timezone: contextSrv.user?.timezone || defaultTimeSettingsSpec().timezone,
       },
     },
     access: {
       canStar: false,
       canShare: false,
       canDelete: false,
-      // Not sure this should belong here or to metadata.annotations
-      isNew: true,
     },
     metadata: {
       name: '',
       resourceVersion: '0',
-      creationTimestamp: '0',
+      creationTimestamp: new Date().toISOString(),
       annotations: {
         [AnnoKeyFolder]: '',
       },

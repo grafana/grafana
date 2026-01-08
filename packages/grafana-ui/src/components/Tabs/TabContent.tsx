@@ -3,12 +3,15 @@ import { HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-tabs--docs
+ */
 export const TabContent = ({ children, className, ...restProps }: Props) => {
   const styles = useStyles2(getTabContentStyle);
 

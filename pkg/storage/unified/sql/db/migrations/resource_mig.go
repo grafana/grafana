@@ -88,6 +88,46 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	})
 
+	tables = append(tables, migrator.Table{
+		Name: "resource_blob",
+		Columns: []*migrator.Column{
+			{Name: "uuid", Type: migrator.DB_Uuid, Length: 36, Nullable: false, IsPrimaryKey: true},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
+
+			// The raw bytes
+			{Name: "value", Type: migrator.DB_LongBlob, Nullable: false},
+
+			// Used as an etag
+			{Name: "hash", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
+			{Name: "content_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{
+				Cols: []string{"namespace", "group", "resource", "name"},
+				Type: migrator.IndexType,
+				Name: "IDX_resource_history_namespace_group_name",
+			},
+			{Cols: []string{"created"}, Type: migrator.IndexType}, // sort field
+		},
+	})
+
+	resource_last_import_time := migrator.Table{
+		Name: "resource_last_import_time",
+		Columns: []*migrator.Column{
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "last_import_time", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		PrimaryKeys: []string{"group", "resource", "namespace"},
+	}
+	tables = append(tables, resource_last_import_time)
+
 	// Initialize all tables
 	for t := range tables {
 		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
@@ -120,6 +160,62 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("Add column folder in resource", migrator.NewAddColumnMigration(resource_table, &migrator.Column{
 		Name: "folder", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, Default: "''",
 	}))
+
+	mg.AddMigration("Migrate DeletionMarkers to real Resource objects", &deletionMarkerMigrator{})
+
+	mg.AddMigration("Add index to resource_history for get trash", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Name: "IDX_resource_history_namespace_group_resource_action_version",
+		Cols: []string{"namespace", "group", "resource", "action", "resource_version"},
+		Type: migrator.IndexType,
+	}))
+
+	// Add generation column so we can use it for more aggressive pruning
+	mg.AddMigration("Add generation to resource history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
+		Name: "generation", Type: migrator.DB_BigInt, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add generation index to resource history", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"namespace", "group", "resource", "name", "generation"},
+		Type: migrator.IndexType,
+		Name: "IDX_resource_history_namespace_group_resource_name_generation",
+	}))
+
+	mg.AddMigration("Add UQE_resource_last_import_time_last_import_time index", migrator.NewAddIndexMigration(resource_last_import_time, &migrator.Index{
+		Cols: []string{"last_import_time"},
+		Type: migrator.IndexType,
+		Name: "UQE_resource_last_import_time_last_import_time",
+	}))
+
+	mg.AddMigration("Add key_path column to resource_history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
+		Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, Default: "''", IsLatin: true,
+	}))
+
+	resource_events_table := migrator.Table{
+		Name: "resource_events",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_MediumText, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+resource_events_table.Name, migrator.NewAddTableMigration(resource_events_table))
+
+	mg.AddMigration("Add IDX_resource_history_key_path index", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"key_path"},
+		Type: migrator.IndexType,
+		Name: "IDX_resource_history_key_path",
+	}))
+
+	oldResourceVersionUniqueKey := migrator.Index{Cols: []string{"group", "resource"}, Type: migrator.UniqueIndex}
+	updatedResourceVersionTable := migrator.Table{
+		Name: "resource_version",
+		Columns: []*migrator.Column{
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource_version", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		PrimaryKeys: []string{"group", "resource"},
+	}
+
+	migrator.ConvertUniqueKeyToPrimaryKey(mg, oldResourceVersionUniqueKey, updatedResourceVersionTable)
 
 	return marker
 }

@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/authlib/claims"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -17,6 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -158,8 +159,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 	}
 
 	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil && authInfo != nil {
-		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		if login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule) {
+		if hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule) {
 			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
 		}
 	}
@@ -223,7 +223,7 @@ func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Respo
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
+		if err := hs.preferenceService.Delete(ctx, &pref.DeleteCommand{UserID: cmd.UserID}); err != nil {
 			return err
 		}
 		return nil
@@ -368,7 +368,7 @@ func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.SignedInUser.GetID() == claims.NewTypeID(claims.TypeUser, id) {
+	if c.GetID() == authlib.NewTypeID(authlib.TypeUser, id) {
 		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 

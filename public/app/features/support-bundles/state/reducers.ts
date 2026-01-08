@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { SupportBundle, SupportBundleCollector, SupportBundlesState } from 'app/types';
+import { SupportBundlesState, SupportBundle, SupportBundleCollector } from 'app/types/supportBundles';
 
 export const initialState: SupportBundlesState = {
   supportBundles: [],

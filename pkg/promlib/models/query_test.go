@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 	"github.com/grafana/grafana/pkg/promlib/models"
 )
@@ -44,7 +45,7 @@ func TestParse(t *testing.T) {
 			RefID:     "A",
 		}
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, true, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, true)
 		require.NoError(t, err)
 		require.Equal(t, false, res.ExemplarQuery)
 	})
@@ -61,7 +62,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, res.Step)
 	})
@@ -79,7 +80,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, res.Step)
 	})
@@ -97,7 +98,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*20, res.Step)
 	})
@@ -115,7 +116,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, res.Step)
 	})
@@ -133,7 +134,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "240s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "240s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*4, res.Step)
 	})
@@ -152,7 +153,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 		require.Equal(t, 120*time.Second, res.Step)
@@ -173,7 +174,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -192,7 +193,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]})", res.Expr)
 	})
@@ -211,7 +212,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]}) + rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -230,7 +231,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]}) + rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -248,7 +249,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800s]})", res.Expr)
 	})
@@ -266,7 +267,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800]})", res.Expr)
 	})
@@ -284,7 +285,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800s]})", res.Expr)
 	})
@@ -302,7 +303,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [0]})", res.Expr)
 	})
@@ -320,7 +321,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1]})", res.Expr)
 	})
@@ -338,7 +339,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800000]})", res.Expr)
 	})
@@ -356,7 +357,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [20]})", res.Expr)
 	})
@@ -375,7 +376,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [20m0s]})", res.Expr)
 	})
@@ -394,7 +395,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 1*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1m0s]})", res.Expr)
 		require.Equal(t, 1*time.Minute, res.Step)
@@ -413,7 +414,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 2*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [135000]})", res.Expr)
 	})
@@ -431,7 +432,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 2*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [135000]}) + rate(ALERTS{job=\"test\" [2m15s]})", res.Expr)
 	})
@@ -450,7 +451,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 2*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "A", res.RefId)
 	})
@@ -468,7 +469,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, 2*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [135000]}) + rate(ALERTS{job=\"test\" [2m15s]})", res.Expr)
 	})
@@ -487,7 +488,7 @@ func TestParse(t *testing.T) {
 			"range": true
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 	})
@@ -507,7 +508,7 @@ func TestParse(t *testing.T) {
 			"instant": true
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 		require.Equal(t, true, res.InstantQuery)
@@ -526,7 +527,7 @@ func TestParse(t *testing.T) {
 			"refId": "A"
 		}`, timeRange, time.Duration(1)*time.Minute)
 
-		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 	})
@@ -659,7 +660,7 @@ func TestRateInterval(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			q := mockQuery(tt.args.expr, tt.args.interval, tt.args.intervalMs, tt.args.timeRange)
 			q.MaxDataPoints = 12384
-			res, err := models.Parse(span, q, tt.args.dsScrapeInterval, intervalCalculator, false, false)
+			res, err := models.Parse(context.Background(), log.New(), span, q, tt.args.dsScrapeInterval, intervalCalculator, false)
 			require.NoError(t, err)
 			require.Equal(t, tt.want.Expr, res.Expr)
 			require.Equal(t, tt.want.Step, res.Step)
@@ -694,7 +695,7 @@ func TestRateInterval(t *testing.T) {
 			"utcOffsetSec":3600
 		}`),
 		}
-		res, err := models.Parse(span, query, "30s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, query, "30s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "sum(rate(process_cpu_seconds_total[2m0s]))", res.Expr)
 		require.Equal(t, 30*time.Second, res.Step)
@@ -729,7 +730,7 @@ func TestRateInterval(t *testing.T) {
 		    "maxDataPoints": 1055
 		}`),
 		}
-		res, err := models.Parse(span, query, "15s", intervalCalculator, false, false)
+		res, err := models.Parse(context.Background(), log.New(), span, query, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "sum(rate(cache_requests_total[1m0s]))", res.Expr)
 		require.Equal(t, 15*time.Second, res.Step)
@@ -809,6 +810,535 @@ func TestAlignTimeRange(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParseWithAdhocFilters(t *testing.T) {
+	_, span := tracer.Start(context.Background(), "operation")
+	defer span.End()
+
+	t.Run("parsing query with adhoc filters", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "http_requests_total",
+			"refId": "A",
+			"adhocFilters": [
+				{
+					"key": "job",
+					"value": "prometheus", 
+					"operator": "equals"
+				},
+				{
+					"key": "method",
+					"value": "get",
+					"operator": "equals"
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `http_requests_total{job="prometheus",method="get"}`, res.Expr)
+	})
+
+	t.Run("parsing query with adhoc filters using not-equals operator", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "http_requests_total{job=\"grafana\"}",
+			"refId": "A",
+			"adhocFilters": [
+				{
+					"key": "status", 
+					"value": "500",
+					"operator": "not-equals"
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `http_requests_total{job="grafana",status!="500"}`, res.Expr)
+	})
+
+	t.Run("parsing query with adhoc filters using one-of operator", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "http_requests_total", 
+			"refId": "A",
+			"adhocFilters": [
+				{
+					"key": "status",
+					"values": ["200", "201", "202"],
+					"operator": "one-of"
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `http_requests_total{status=~"200|201|202"}`, res.Expr)
+	})
+
+	t.Run("parsing complex query with adhoc filters", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "rate(http_requests_total{job=\"prometheus\"}[5m]) + rate(http_errors_total{job=\"grafana\"}[5m])",
+			"refId": "A", 
+			"adhocFilters": [
+				{
+					"key": "environment",
+					"value": "production",
+					"operator": "equals"
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `rate(http_requests_total{environment="production",job="prometheus"}[5m]) + rate(http_errors_total{environment="production",job="grafana"}[5m])`, res.Expr)
+	})
+}
+
+func TestParseWithScopes(t *testing.T) {
+	_, span := tracer.Start(context.Background(), "operation")
+	defer span.End()
+
+	t.Run("parsing query with scope filters", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "http_requests_total",
+			"refId": "A",
+			"scopes": [
+				{
+					"name": "production-scope",
+					"title": "Production Environment",
+					"filters": [
+						{
+							"key": "environment",
+							"value": "production",
+							"operator": "equals"
+						},
+						{
+							"key": "region", 
+							"value": "us-west-2",
+							"operator": "equals"
+						}
+					]
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `http_requests_total{environment="production",region="us-west-2"}`, res.Expr)
+	})
+
+	t.Run("parsing query with multiple scopes having same filter key", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "http_requests_total",
+			"refId": "A", 
+			"scopes": [
+				{
+					"name": "namespace-scope-1", 
+					"title": "Default Namespace",
+					"filters": [
+						{
+							"key": "namespace",
+							"value": "default",
+							"operator": "equals"
+						}
+					]
+				},
+				{
+					"name": "namespace-scope-2",
+					"title": "Kube System Namespace", 
+					"filters": [
+						{
+							"key": "namespace",
+							"value": "kube-system", 
+							"operator": "equals"
+						}
+					]
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `http_requests_total{namespace=~"default|kube-system"}`, res.Expr)
+	})
+}
+
+func TestParseWithScopesAndAdhocFilters(t *testing.T) {
+	_, span := tracer.Start(context.Background(), "operation")
+	defer span.End()
+
+	t.Run("parsing query with both scopes and adhoc filters", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "http_requests_total",
+			"refId": "A",
+			"scopes": [
+				{
+					"name": "production-scope",
+					"title": "Production Environment", 
+					"filters": [
+						{
+							"key": "environment",
+							"value": "production",
+							"operator": "equals"
+						}
+					]
+				}
+			],
+			"adhocFilters": [
+				{
+					"key": "job",
+					"value": "prometheus",
+					"operator": "equals"
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `http_requests_total{environment="production",job="prometheus"}`, res.Expr)
+	})
+
+	t.Run("adhoc filters override scope filters on conflict", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "http_requests_total",
+			"refId": "A",
+			"scopes": [
+				{
+					"name": "staging-scope",
+					"title": "Staging Environment",
+					"filters": [
+						{
+							"key": "environment", 
+							"value": "staging",
+							"operator": "equals"
+						}
+					]
+				}
+			],
+			"adhocFilters": [
+				{
+					"key": "environment",
+					"value": "production",
+					"operator": "equals"
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `http_requests_total{environment="production"}`, res.Expr)
+	})
+}
+
+func TestParseWithGroupByKeys(t *testing.T) {
+	_, span := tracer.Start(context.Background(), "operation")
+	defer span.End()
+
+	t.Run("parsing query with group by keys", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "sum(http_requests_total)", 
+			"refId": "A",
+			"groupByKeys": ["job", "instance"]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `sum by (job, instance) (http_requests_total)`, res.Expr)
+	})
+
+	t.Run("parsing query with group by keys and existing group by", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "sum by (job) (http_requests_total)",
+			"refId": "A",
+			"groupByKeys": ["status"]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `sum by (job, status) (http_requests_total)`, res.Expr)
+	})
+
+	t.Run("parsing query with filters and group by keys", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "sum(http_requests_total)",
+			"refId": "A",
+			"adhocFilters": [
+				{
+					"key": "job",
+					"value": "prometheus", 
+					"operator": "equals"
+				}
+			],
+			"groupByKeys": ["status", "method"]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `sum by (status, method) (http_requests_total{job="prometheus"})`, res.Expr)
+	})
+}
+
+func TestParseComplexScenariosWithFilters(t *testing.T) {
+	_, span := tracer.Start(context.Background(), "operation")
+	defer span.End()
+
+	t.Run("parsing query with regex filters and variables", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "rate(http_requests_total[$__interval])",
+			"refId": "A",
+			"intervalMs": 60000,
+			"adhocFilters": [
+				{
+					"key": "job",
+					"value": "prometheus.*",
+					"operator": "regex-match" 
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+			Interval:  time.Minute,
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `rate(http_requests_total{job=~"prometheus.*"}[2m])`, res.Expr)
+	})
+
+	t.Run("parsing query with complex expression, scopes, adhoc filters, and group by", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "sum(rate(http_requests_total[5m])) / sum(rate(http_requests_total[5m])) * 100",
+			"refId": "A",
+			"scopes": [
+				{
+					"name": "production-scope",
+					"title": "Production Environment",
+					"filters": [
+						{
+							"key": "environment",
+							"value": "production", 
+							"operator": "equals"
+						}
+					]
+				}
+			],
+			"adhocFilters": [
+				{
+					"key": "region",
+					"values": ["us-west-1", "us-west-2", "us-east-1"],
+					"operator": "one-of"
+				}
+			],
+			"groupByKeys": ["job"]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `sum by (job) (rate(http_requests_total{environment="production",region=~"us-west-1|us-west-2|us-east-1"}[5m])) / sum by (job) (rate(http_requests_total{environment="production",region=~"us-west-1|us-west-2|us-east-1"}[5m])) * 100`, res.Expr)
+	})
+
+	t.Run("parsing query with __name__ selector and filters", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(12 * time.Hour),
+		}
+
+		queryJson := `{
+			"expr": "{__name__=\"http_requests_total\"}",
+			"refId": "A", 
+			"adhocFilters": [
+				{
+					"key": "namespace",
+					"value": "monitoring",
+					"operator": "equals"
+				}
+			]
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, `{__name__="http_requests_total",namespace="monitoring"}`, res.Expr)
+	})
+}
+
+func TestParseNumericFormatError(t *testing.T) {
+	_, span := tracer.Start(context.Background(), "operation")
+	defer span.End()
+
+	timeRange := backend.TimeRange{
+		From: now,
+		To:   now.Add(12 * time.Hour),
+	}
+
+	// Test case where format is sent as a number instead of string
+	queryJson := `{
+		"expr": "up",
+		"format": 0,
+		"refId": "A"
+	}`
+
+	q := backend.DataQuery{
+		JSON:      []byte(queryJson),
+		TimeRange: timeRange,
+		RefID:     "A",
+	}
+
+	res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+
+	require.Error(t, err)
+	require.Nil(t, res)
+
+	require.True(t, backend.IsDownstreamError(err))
+
+	// Error message should indicate unmarshaling issue
+	require.Contains(t, err.Error(), "error unmarshaling query")
+	require.Contains(t, err.Error(), "cannot unmarshal number")
 }
 
 func TestQueryTypeDefinitions(t *testing.T) {

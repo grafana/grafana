@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { memo, type JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -26,6 +26,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: `calc(${theme.spacing(2)} / 2)`,
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
+    whiteSpace: 'nowrap',
   }),
   metaValue: css({
     fontFamily: theme.typography.fontFamilyMonospace,

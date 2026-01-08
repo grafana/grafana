@@ -44,6 +44,20 @@
       "priority": 0
     },
     {
+      "name": "grafana.app/deprecatedInternalID",
+      "type": "number",
+      "format": "int64",
+      "description": "Deprecated legacy id of the resource",
+      "priority": 0
+    },
+    {
+      "name": "manager.kind",
+      "type": "string",
+      "format": "",
+      "description": "Type of manager, which is responsible for managing the resource",
+      "priority": 0
+    },
+    {
       "name": "schema_version",
       "type": "number",
       "format": "int32",
@@ -63,6 +77,111 @@
       "format": "",
       "description": "How many links appear on the page",
       "priority": 0
+    },
+    {
+      "name": "errors_today",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of errors that occurred today",
+      "priority": 0
+    },
+    {
+      "name": "errors_last_1_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of errors that occurred in the last 1 days",
+      "priority": 0
+    },
+    {
+      "name": "errors_last_7_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of errors that occurred in the last 7 days",
+      "priority": 0
+    },
+    {
+      "name": "errors_last_30_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of errors that occurred in the last 30 days",
+      "priority": 0
+    },
+    {
+      "name": "errors_total",
+      "type": "number",
+      "format": "int64",
+      "description": "Total number of errors",
+      "priority": 0
+    },
+    {
+      "name": "queries_today",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of queries that occurred today",
+      "priority": 0
+    },
+    {
+      "name": "queries_last_1_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of queries that occurred in the last 1 days",
+      "priority": 0
+    },
+    {
+      "name": "queries_last_7_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of queries that occurred in the last 7 days",
+      "priority": 0
+    },
+    {
+      "name": "queries_last_30_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of queries that occurred in the last 30 days",
+      "priority": 0
+    },
+    {
+      "name": "queries_total",
+      "type": "number",
+      "format": "int64",
+      "description": "Total number of queries",
+      "priority": 0
+    },
+    {
+      "name": "views_today",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of views that occurred today",
+      "priority": 0
+    },
+    {
+      "name": "views_last_1_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of views that occurred in the last 1 days",
+      "priority": 0
+    },
+    {
+      "name": "views_last_7_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of views that occurred in the last 7 days",
+      "priority": 0
+    },
+    {
+      "name": "views_last_30_days",
+      "type": "number",
+      "format": "int64",
+      "description": "Number of views that occurred in the last 30 days",
+      "priority": 0
+    },
+    {
+      "name": "views_total",
+      "type": "number",
+      "format": "int64",
+      "description": "Total number of views",
+      "priority": 0
     }
   ],
   "rows": [
@@ -74,8 +193,25 @@
           "aa"
         ],
         "zzz",
-        3,
-        0,
+        null,
+        null,
+        null,
+        "repo",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
         null,
         null,
         null
@@ -85,8 +221,7 @@
         "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "ccc",
-          "namespace": "ns",
-          "creationTimestamp": null
+          "namespace": "ns"
         }
       }
     },
@@ -98,8 +233,27 @@
           "aa"
         ],
         "xxx",
-        2,
-        0,
+        null,
+        null,
+        11,
+        "repo",
+        null,
+        null,
+        [
+          "timeseries"
+        ],
+        40,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        100,
         null,
         null,
         null
@@ -109,8 +263,7 @@
         "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "bbb",
-          "namespace": "ns",
-          "creationTimestamp": null
+          "namespace": "ns"
         }
       }
     },
@@ -123,8 +276,28 @@
           "bb"
         ],
         "xxx",
-        1,
-        0,
+        null,
+        null,
+        10,
+        "repo",
+        null,
+        null,
+        [
+          "timeseries",
+          "table"
+        ],
+        25,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        50,
         null,
         null,
         null
@@ -134,8 +307,7 @@
         "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "aaa",
-          "namespace": "ns",
-          "creationTimestamp": null
+          "namespace": "ns"
         }
       }
     }

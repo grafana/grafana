@@ -25,14 +25,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	apivalidation "github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type folderService interface {
@@ -61,13 +62,13 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 	if err != nil {
 		return toNamespaceErrorResponse(dashboards.ErrFolderAccessDenied)
 	}
-	rule, err := validateRuleNode(
+	rule, err := apivalidation.ValidateRuleNode(
 		&body.Rule,
 		body.RuleGroup,
 		srv.cfg.BaseInterval,
-		c.SignedInUser.GetOrgID(),
+		c.GetOrgID(),
 		folder.UID,
-		RuleLimitsFromConfig(srv.cfg, srv.featureManager),
+		apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager),
 	)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -77,6 +78,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to authorize access to rule group", err)
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingQueryOptimization) {
 		if _, err := store.OptimizeAlertQueries(rule.Data); err != nil {
 			return ErrResp(http.StatusInternalServerError, err, "Failed to optimize query")
@@ -111,13 +113,13 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		now,
 		rule,
 		results,
-		state.GetRuleExtraLabels(log.New("testing"), rule, folder.Fullpath, includeFolder),
+		state.GetRuleExtraLabels(log.New("testing"), rule, folder.Fullpath, includeFolder, srv.featureManager),
 		nil,
 	)
 
 	alerts := make([]*amv2.PostableAlert, 0, len(transitions))
 	for _, alertState := range transitions {
-		alerts = append(alerts, state.StateToPostableAlert(alertState, srv.appUrl))
+		alerts = append(alerts, state.StateToPostableAlert(alertState, srv.appUrl, srv.featureManager))
 	}
 
 	return response.JSON(http.StatusOK, alerts)
@@ -176,6 +178,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 	}
 
 	var optimizations []store.Optimization
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingQueryOptimization) {
 		var err error
 		optimizations, err = store.OptimizeAlertQueries(cond.Data)
@@ -221,58 +224,32 @@ func addOptimizedQueryWarnings(evalResults *backend.QueryDataResponse, optimizat
 }
 
 func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimodels.BacktestConfig) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingBacktesting) {
 		return ErrResp(http.StatusNotFound, nil, "Backgtesting API is not enabled")
 	}
 
-	if cmd.From.After(cmd.To) {
-		return ErrResp(400, nil, "From cannot be greater than To")
-	}
-
-	noDataState, err := ngmodels.NoDataStateFromString(string(cmd.NoDataState))
-
+	rule, err := apivalidation.ValidateBacktestConfig(c.GetOrgID(), cmd, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
 	if err != nil {
-		return ErrResp(400, err, "")
-	}
-	forInterval := time.Duration(cmd.For)
-	if forInterval < 0 {
-		return ErrResp(400, nil, "Bad For interval")
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	intervalSeconds, err := validateInterval(time.Duration(cmd.Interval), srv.cfg.BaseInterval)
-	if err != nil {
-		return ErrResp(400, err, "")
-	}
-
-	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, &ngmodels.AlertRule{Data: queries}); err != nil {
+	if err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, rule); err != nil {
 		return errorToResponse(err)
 	}
 
-	rule := &ngmodels.AlertRule{
-		// ID:             0,
-		// Updated:        time.Time{},
-		// Version:        0,
-		// NamespaceUID:   "",
-		// DashboardUID:   nil,
-		// PanelID:        nil,
-		// RuleGroup:      "",
-		// RuleGroupIndex: 0,
-		// ExecErrState:   "",
-		Title: cmd.Title,
-		// prefix backtesting- is to distinguish between executions of regular rule and backtesting in logs (like expression engine, evaluator, state manager etc)
-		UID:             "backtesting-" + util.GenerateShortUID(),
-		OrgID:           c.SignedInUser.GetOrgID(),
-		Condition:       cmd.Condition,
-		Data:            queries,
-		IntervalSeconds: intervalSeconds,
-		NoDataState:     noDataState,
-		For:             forInterval,
-		Annotations:     cmd.Annotations,
-		Labels:          cmd.Labels,
+	// Fetch folder path for alert labels, fallback to "Backtesting" if not available
+	var folderTitle string
+	if cmd.NamespaceUID != "" {
+		f, err := srv.folderService.GetNamespaceByUID(c.Req.Context(), cmd.NamespaceUID, c.OrgID, c.SignedInUser)
+		if err != nil {
+			srv.log.FromContext(c.Req.Context()).Warn("Failed to fetch folder path for alert labels", "error", err)
+		} else {
+			folderTitle = f.Fullpath
+		}
 	}
 
-	result, err := srv.backtesting.Test(c.Req.Context(), c.SignedInUser, rule, cmd.From, cmd.To)
+	result, err := srv.backtesting.Test(c.Req.Context(), c.SignedInUser, rule, cmd.From, cmd.To, folderTitle)
 	if err != nil {
 		if errors.Is(err, backtesting.ErrInvalidInputData) {
 			return ErrResp(400, err, "Failed to evaluate")
@@ -280,9 +257,5 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return ErrResp(500, err, "Failed to evaluate")
 	}
 
-	body, err := data.FrameToJSON(result, data.IncludeAll)
-	if err != nil {
-		return ErrResp(500, err, "Failed to convert frame to JSON")
-	}
-	return response.JSON(http.StatusOK, body)
+	return response.JSONStreaming(http.StatusOK, result)
 }

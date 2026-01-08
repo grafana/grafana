@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
-import { Trans, t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
@@ -42,13 +42,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const retentionPeriodOptions = [
-  { value: 2, label: t('explore.rich-history-settings-tab.retention-period.2-days', '2 days') },
-  { value: 5, label: t('explore.rich-history-settings-tab.retention-period.5-days', '5 days') },
-  { value: 7, label: t('explore.rich-history-settings-tab.retention-period.1-week', '1 week') },
-  { value: 14, label: t('explore.rich-history-settings-tab.retention-period.2-weeks', '2 weeks') },
-];
-
 export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
   const {
     retentionPeriod,
@@ -60,6 +53,13 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
     deleteRichHistory,
   } = props;
   const styles = useStyles2(getStyles);
+
+  const retentionPeriodOptions = [
+    { value: 2, label: t('explore.rich-history-settings-tab.retention-period.2-days', '2 days') },
+    { value: 5, label: t('explore.rich-history-settings-tab.retention-period.5-days', '5 days') },
+    { value: 7, label: t('explore.rich-history-settings-tab.retention-period.1-week', '1 week') },
+    { value: 14, label: t('explore.rich-history-settings-tab.retention-period.2-weeks', '2 weeks') },
+  ];
   const selectedOption = retentionPeriodOptions.find((v) => v.value === retentionPeriod);
 
   const onDelete = () => {

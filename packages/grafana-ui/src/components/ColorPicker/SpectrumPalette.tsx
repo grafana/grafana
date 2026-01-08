@@ -6,7 +6,7 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 
 import ColorInput from './ColorInput';
 
@@ -38,7 +38,7 @@ const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
   return (
     <div className={styles.wrapper}>
       <RgbaStringColorPicker className={styles.root} color={rgbaString} onChange={setColor} />
-      <ColorInput theme={theme} color={rgbaString} onChange={setColor} className={styles.colorInput} />
+      <ColorInput color={rgbaString} onChange={setColor} className={styles.colorInput} />
     </div>
   );
 };

@@ -4,9 +4,9 @@ import { ReactNode, useCallback, useState } from 'react';
 import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzone, ErrorCode } from 'react-dropzone';
 
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 
@@ -47,6 +47,11 @@ export interface FileDropzoneProps {
    */
   fileListRenderer?: (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => ReactNode;
   onFileRemove?: (file: DropzoneFile) => void;
+  /**
+   * Optional id attribute for the underlying input element
+   * Use to link a label to the input for accessibility
+   */
+  id?: string;
 }
 
 export interface DropzoneFile {
@@ -58,7 +63,20 @@ export interface DropzoneFile {
   retryUpload?: () => void;
 }
 
-export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
+/**
+ * A dropzone component to use for file uploads.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-filedropzone--docs
+ */
+export function FileDropzone({
+  options,
+  children,
+  readAs,
+  onLoad,
+  fileListRenderer,
+  onFileRemove,
+  id,
+}: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
 
@@ -189,7 +207,11 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
     const size = formattedValueToString(formattedSize);
     return (
       <div className={styles.errorAlert}>
-        <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
+        <Alert
+          title={t('grafana-ui.file-dropzone.error-title', 'Upload failed')}
+          severity="error"
+          onRemove={clearAlert}
+        >
           {errors.map((error) => {
             switch (error.code) {
               case ErrorCode.FileTooLarge:
@@ -214,7 +236,7 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
   return (
     <div className={styles.container}>
       <div data-testid="dropzone" {...getRootProps({ className: styles.dropzone })}>
-        <input {...getInputProps()} />
+        <input {...getInputProps()} id={id} />
         {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
       {fileErrors.length > 0 && renderErrorMessages(fileErrors)}

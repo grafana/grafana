@@ -4,7 +4,9 @@ import * as React from 'react';
 import { first } from 'rxjs/operators';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -30,6 +32,20 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
   const selectedElements = scene.selecto?.getSelectedTargets();
   const rootLayer: FrameState | undefined = panel.context?.instanceState?.layer;
 
+  useEffect(() => {
+    if (config.featureToggles.canvasPanelPanZoom) {
+      scene.openContextMenu = (position: AnchorPoint) => {
+        setAnchorPoint(position);
+        setIsMenuVisible(true);
+        onVisibilityChange(true);
+      };
+
+      // Clean up the openContextMenu on unmount
+      return () => (scene.openContextMenu = undefined);
+    }
+    return undefined;
+  }, [scene, onVisibilityChange]);
+
   const handleContextMenu = useCallback(
     (event: Event) => {
       if (!(event instanceof MouseEvent) || event.ctrlKey) {
@@ -39,7 +55,9 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       event.preventDefault();
       panel.setActivePanel();
 
-      const shouldSelectElement = event.currentTarget !== scene.div;
+      const shouldSelectElement = config.featureToggles.canvasPanelPanZoom
+        ? event.currentTarget !== scene.viewportDiv
+        : event.currentTarget !== scene.div;
       if (
         shouldSelectElement &&
         (event.currentTarget instanceof HTMLElement || event.currentTarget instanceof SVGElement)
@@ -76,7 +94,11 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
     // This is disabled when panel is in edit mode because opening inline editor over panel editor is not ideal UX
     const openCloseEditorMenuItem = !scene.isPanelEditing && (
       <MenuItem
-        label={inlineEditorOpen ? 'Close Editor' : 'Open Editor'}
+        label={
+          inlineEditorOpen
+            ? t('canvas.canvas-context-menu.close-editor', 'Close Editor')
+            : t('canvas.canvas-context-menu.open-editor', 'Open Editor')
+        }
         onClick={() => {
           if (scene.inlineEditingCallback) {
             if (inlineEditorOpen) {
@@ -102,7 +124,11 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
         return (
           element &&
           element.item.hasEditMode && (
-            <MenuItem label="Edit" onClick={onClickEditElementMenuItem} className={styles.menuItem} />
+            <MenuItem
+              label={t('canvas.canvas-context-menu.render-menu-items.edit-element-menu-item.label-edit', 'Edit')}
+              onClick={onClickEditElementMenuItem}
+              className={styles.menuItem}
+            />
           )
         );
       }
@@ -124,6 +150,10 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
           const sceneContainerDimensions = scene.div.getBoundingClientRect();
           offsetY = (offsetY - sceneContainerDimensions.top) / transformScale;
           offsetX = (offsetX - sceneContainerDimensions.left) / transformScale;
+        } else if (scene.viewportDiv) {
+          const sceneContainerDimensions = scene.viewportDiv.getBoundingClientRect();
+          offsetY -= sceneContainerDimensions.top;
+          offsetX -= sceneContainerDimensions.left;
         }
 
         onAddItem(option, rootLayer, {
@@ -144,7 +174,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
 
     const addItemMenuItem = (
       <MenuItem
-        label="Add item"
+        label={t('canvas.canvas-context-menu.render-menu-items.add-item-menu-item.label-add-item', 'Add item')}
         className={styles.menuItem}
         childItems={getTypeOptionsSubmenu()}
         customSubMenuContainerStyles={{ maxHeight: '150px', overflowY: 'auto' }}
@@ -153,7 +183,10 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
 
     const setBackgroundMenuItem = (
       <MenuItem
-        label={'Set background'}
+        label={t(
+          'canvas.canvas-context-menu.render-menu-items.set-background-menu-item.label-set-background',
+          'Set background'
+        )}
         onClick={() => {
           if (scene.setBackgroundCallback) {
             scene.setBackgroundCallback(anchorPoint);
@@ -169,7 +202,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
         <>
           {editElementMenuItem()}
           <MenuItem
-            label="Delete"
+            label={t('canvas.canvas-context-menu.render-menu-items.label-delete', 'Delete')}
             onClick={() => {
               contextMenuAction(LayerActionID.Delete);
               closeContextMenu();
@@ -177,7 +210,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
             className={styles.menuItem}
           />
           <MenuItem
-            label="Duplicate"
+            label={t('canvas.canvas-context-menu.render-menu-items.label-duplicate', 'Duplicate')}
             onClick={() => {
               contextMenuAction(LayerActionID.Duplicate);
               closeContextMenu();
@@ -185,7 +218,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
             className={styles.menuItem}
           />
           <MenuItem
-            label="Bring to front"
+            label={t('canvas.canvas-context-menu.render-menu-items.label-bring-to-front', 'Bring to front')}
             onClick={() => {
               contextMenuAction(LayerActionID.MoveTop);
               closeContextMenu();
@@ -193,7 +226,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
             className={styles.menuItem}
           />
           <MenuItem
-            label="Send to back"
+            label={t('canvas.canvas-context-menu.render-menu-items.label-send-to-back', 'Send to back')}
             onClick={() => {
               contextMenuAction(LayerActionID.MoveBottom);
               closeContextMenu();

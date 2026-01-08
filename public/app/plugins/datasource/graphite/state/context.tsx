@@ -3,7 +3,7 @@ import { createContext, Dispatch, PropsWithChildren, useContext, useEffect, useM
 import { usePrevious } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
-import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { GraphiteDatasource } from '../datasource';
 import { GraphiteOptions, GraphiteQuery } from '../types';
@@ -88,7 +88,7 @@ export const GraphiteQueryEditorContext = ({
   if (!state) {
     dispatch(
       actions.init({
-        target: query,
+        target: { ...query },
         datasource: datasource,
         range: range,
         templateSrv: getTemplateSrv(),

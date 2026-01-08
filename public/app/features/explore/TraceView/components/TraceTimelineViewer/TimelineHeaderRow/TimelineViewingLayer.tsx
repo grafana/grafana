@@ -17,8 +17,9 @@ import * as React from 'react';
 
 import { stylesFactory } from '@grafana/ui';
 
-import { TNil } from '../../types';
-import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
+import TNil from '../../types/TNil';
+import DraggableManager from '../../utils/DraggableManager/DraggableManager';
+import { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager/types';
 import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 
 // exported for testing

@@ -77,7 +77,7 @@ func parseQueryType(jsonPointerValue *string) (QueryType, error) {
 		case "range":
 			return QueryTypeRange, nil
 		default:
-			return QueryTypeRange, fmt.Errorf("invalid queryType: %s", jsonValue)
+			return QueryTypeRange, backend.DownstreamError(fmt.Errorf("invalid queryType: %s", jsonValue))
 		}
 	}
 }
@@ -97,7 +97,7 @@ func parseDirection(jsonPointerValue *string) (Direction, error) {
 		case "scan":
 			return DirectionBackward, nil
 		default:
-			return DirectionBackward, fmt.Errorf("invalid queryDirection: %s", jsonValue)
+			return DirectionBackward, backend.DownstreamError(fmt.Errorf("invalid queryDirection: %s", jsonValue))
 		}
 	}
 }
@@ -154,7 +154,9 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			return nil, err
 		}
 
-		expr := interpolateVariables(depointerizer(model.Expr), interval, timeRange, queryType, step)
+		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
+
+		limitsConfig := generateLimitsConfig(model, interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {
@@ -192,17 +194,21 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			RefID:               query.RefID,
 			SupportingQueryType: supportingQueryType,
 			Scopes:              model.Scopes,
+			LimitsContext:       limitsConfig,
 		})
 	}
 
 	return qs, nil
 }
 
-func depointerizer[T any](v *T) T {
-	var emptyValue T
-	if v != nil {
-		emptyValue = *v
+func generateLimitsConfig(model *QueryJSONModel, interval time.Duration, timeRange time.Duration, queryType QueryType, step time.Duration) LimitsContext {
+	var limitsConfig LimitsContext
+	// Only supply limits context config if we have expression, and from and to
+	if model.LimitsContext != nil && model.LimitsContext.Expr != "" && model.LimitsContext.From > 0 && model.LimitsContext.To > 0 {
+		// If a limits expression was provided, interpolate it and parse the time range
+		limitsConfig.Expr = interpolateVariables(model.LimitsContext.Expr, interval, timeRange, queryType, step)
+		limitsConfig.From = time.UnixMilli(model.LimitsContext.From)
+		limitsConfig.To = time.UnixMilli(model.LimitsContext.To)
 	}
-
-	return emptyValue
+	return limitsConfig
 }

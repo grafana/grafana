@@ -3,10 +3,10 @@ import { lastValueFrom } from 'rxjs';
 import { SQLQuery } from '@grafana/sql';
 import config from 'app/core/config';
 
-import { getMockDSInstanceSettings, mockBackendService, mockTemplateSrv } from './__mocks__/datasource';
-import { mockInfluxQueryRequest } from './__mocks__/request';
-import { mockInfluxSQLFetchResponse } from './__mocks__/response';
 import InfluxDatasource from './datasource';
+import { getMockDSInstanceSettings, mockBackendService, mockTemplateSrv } from './mocks/datasource';
+import { mockInfluxQueryRequest } from './mocks/request';
+import { mockInfluxSQLFetchResponse } from './mocks/response';
 import { InfluxVersion } from './types';
 
 config.featureToggles.influxdbBackendMigration = true;

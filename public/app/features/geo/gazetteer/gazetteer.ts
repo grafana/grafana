@@ -2,7 +2,6 @@ import { getCenter } from 'ol/extent';
 import { Geometry, Point } from 'ol/geom';
 
 import { DataFrame, Field, FieldType, KeyValue, toDataFrame } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 
 import { frameFromGeoJSON } from '../format/geojson';
 import { pointFieldFromLonLat, pointFieldFromGeohash } from '../format/utils';
@@ -181,7 +180,7 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
 
 const registry: KeyValue<Gazetteer> = {};
 
-export const COUNTRIES_GAZETTEER_PATH = 'public/gazetteer/countries.json';
+export const COUNTRIES_GAZETTEER_PATH = `${window.__grafana_public_path__}build/gazetteer/countries.json`;
 
 /**
  * Given a path to a file return a cached lookup function
@@ -196,7 +195,8 @@ export async function getGazetteer(path?: string): Promise<Gazetteer> {
   if (!lookup) {
     try {
       // block the async function
-      const data = await getBackendSrv().get(path!);
+      const response = await fetch(path);
+      const data = await response.json();
       lookup = loadGazetteer(path, data);
     } catch (err) {
       console.warn('Error loading placename lookup', path, err);

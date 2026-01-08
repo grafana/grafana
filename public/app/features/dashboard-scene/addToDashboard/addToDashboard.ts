@@ -1,9 +1,10 @@
 import { locationUtil, TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import store from 'app/core/store';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
-import { DASHBOARD_FROM_LS_KEY, DashboardDTO } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardDTO } from 'app/types/dashboard';
 
 export enum GenericError {
   UNKNOWN = 'unknown-error',
@@ -25,6 +26,9 @@ interface AddPanelToDashboardOptions {
   dashboardUid?: string;
   openInNewTab?: boolean;
   timeRange?: TimeRange;
+  options?: {
+    useAbsolutePath?: boolean;
+  };
 }
 
 export function addToDashboard({
@@ -32,6 +36,7 @@ export function addToDashboard({
   dashboardUid,
   openInNewTab,
   timeRange,
+  options,
 }: AddPanelToDashboardOptions): SubmissionError | undefined {
   let dto: DashboardDTO = {
     meta: {},
@@ -56,7 +61,10 @@ export function addToDashboard({
   } catch {
     return {
       error: AddToDashboardError.SET_DASHBOARD_LS,
-      message: 'Could not add panel to dashboard. Please try again.',
+      message: t(
+        'dashboard-scene.add-to-dashboard.message.could-panel-dashboard-please-again',
+        'Could not add panel to dashboard. Please try again.'
+      ),
     };
   }
 
@@ -69,14 +77,28 @@ export function addToDashboard({
       store.delete(DASHBOARD_FROM_LS_KEY);
       return {
         error: GenericError.NAVIGATION,
-        message: 'Could not navigate to the selected dashboard. Please try again.',
+        message: t(
+          'dashboard-scene.add-to-dashboard.message.could-navigate-selected-dashboard-please-again',
+          'Could not navigate to the selected dashboard. Please try again.'
+        ),
       };
     }
 
     return;
   }
 
-  locationService.push(locationUtil.stripBaseFromUrl(dashboardURL));
+  let navigateToDashboardUrl = locationUtil.stripBaseFromUrl(dashboardURL);
+
+  // External apps need absolute paths to navigate to dashboards correctly.
+  // Without the leading '/', paths like "dashboard/new" are treated as relative to the current location.
+  // For example, from "/a/grafana-metricsdrilldown-app", this would incorrectly navigate to
+  // "/a/grafana-metricsdrilldown-app/dashboard/new" instead of "/dashboard/new".
+  if (options?.useAbsolutePath) {
+    navigateToDashboardUrl = '/' + navigateToDashboardUrl;
+  }
+
+  locationService.push(navigateToDashboardUrl);
+
   return;
 }
 

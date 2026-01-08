@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
-import { config, FetchError, isFetchError } from '@grafana/runtime';
-import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
+import { Trans, t } from '@grafana/i18n';
+import { FetchError, isFetchError } from '@grafana/runtime';
+import { LibraryPanel } from '@grafana/schema';
 import { Button, Field, Input, Modal, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 
 import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { getLibraryPanelByName } from '../../state/api';
@@ -60,7 +60,6 @@ export const AddLibraryPanelContents = ({
     }
   }, [debouncedPanelName, folderUid]);
 
-  console.log('isValidName:', isValidName);
   const invalidInput =
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 
@@ -85,31 +84,16 @@ export const AddLibraryPanelContents = ({
           'Library panel permissions are derived from the folder permissions'
         )}
       >
-        <FolderPicker
-          onChange={(uid) => setFolderUid(uid)}
-          value={folderUid}
-          inputId="share-panel-library-panel-folder-picker"
-        />
+        <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
       </Field>
-      {config.featureToggles.newDashboardSharingComponent ? (
-        <Stack gap={1} justifyContent={'start'}>
-          <Button onClick={onCreate} disabled={invalidInput}>
-            <Trans i18nKey="share-panel.new-library-panel.create-button">Create library panel</Trans>
-          </Button>
-          <Button variant="secondary" onClick={onDismiss} fill="outline">
-            <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
-          </Button>
-        </Stack>
-      ) : (
-        <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onDismiss} fill="outline">
-            <Trans i18nKey="library-panel.add-modal.cancel">Cancel</Trans>
-          </Button>
-          <Button onClick={onCreate} disabled={invalidInput}>
-            <Trans i18nKey="library-panel.add-modal.create">Create library panel</Trans>
-          </Button>
-        </Modal.ButtonRow>
-      )}
+      <Stack gap={1} justifyContent={'start'}>
+        <Button onClick={onCreate} disabled={invalidInput}>
+          <Trans i18nKey="share-panel.new-library-panel.create-button">Create library panel</Trans>
+        </Button>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
+          <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
+        </Button>
+      </Stack>
     </>
   );
 };
@@ -120,7 +104,11 @@ interface Props extends AddLibraryPanelContentsProps {
 
 export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderUid, ...props }: Props) => {
   return (
-    <Modal title="Create library panel" isOpen={isOpen} onDismiss={props.onDismiss}>
+    <Modal
+      title={t('library-panels.add-library-panel-modal.title-create-library-panel', 'Create library panel')}
+      isOpen={isOpen}
+      onDismiss={props.onDismiss}
+    >
       <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={props.onDismiss} />
     </Modal>
   );

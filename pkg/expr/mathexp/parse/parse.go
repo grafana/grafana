@@ -140,7 +140,10 @@ func (t *Tree) startParse(funcs []map[string]Func, lex *lexer) {
 
 // stopParse terminates parsing.
 func (t *Tree) stopParse() {
-	t.lex = nil
+	if t.lex != nil {
+		t.lex.Close()
+		t.lex = nil
+	}
 }
 
 // Parse parses the expression definition string to construct a representation

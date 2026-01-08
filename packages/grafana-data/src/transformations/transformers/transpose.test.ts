@@ -2,6 +2,7 @@ import { DataTransformerConfig } from '@grafana/schema';
 
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
+import { SpecialValue } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
@@ -86,9 +87,17 @@ describe('Transpose transformer', () => {
         { name: 'env', type: FieldType.string, values: ['dev', 'prod', 'staging', 'release', 'beta'] },
         { name: 'january', type: FieldType.number, values: [11, 12, 13, 14, 15] },
         { name: 'february', type: FieldType.number, values: [6, 7, 8, 9, 10] },
-        { name: 'type', type: FieldType.string, values: ['metricA', 'metricB', 'metricC', 'metricD', 'metricE'] },
+        {
+          name: 'metricName',
+          type: FieldType.string,
+          values: ['metricA', 'metricB', 'metricC', 'metricD', 'metricE'],
+          config: {
+            displayName: 'type',
+          },
+        },
       ],
     });
+
     await expect(transformDataFrame([cfgB], [seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
       expect(result[0].fields).toEqual([
@@ -233,6 +242,49 @@ describe('Transpose transformer', () => {
           labels: { time: '2024-06-10 08:33:00' },
           type: FieldType.number,
           values: [4],
+          config: {},
+        },
+      ]);
+    });
+  });
+
+  it('should fill in empty values with the indicated option', async () => {
+    const cfgC: DataTransformerConfig<TransposeTransformerOptions> = {
+      id: DataTransformerID.transpose,
+      options: {
+        emptyValue: SpecialValue.Zero,
+      },
+    };
+    const seriesC = toDataFrame({
+      name: 'C',
+      fields: [
+        { name: 'A', type: FieldType.string, values: ['apple', undefined] },
+        { name: 'B', type: FieldType.string, values: [undefined, 'orange'] },
+        { name: 'C', type: FieldType.string, values: ['banana', undefined] },
+        { name: 'D', type: FieldType.string, values: ['strawberry', 'pear'] },
+      ],
+    });
+    await expect(transformDataFrame([cfgC], [seriesC])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result[0].fields).toEqual([
+        {
+          name: 'Field',
+          type: FieldType.string,
+          values: ['B', 'C', 'D'],
+          config: {},
+        },
+        {
+          name: 'Value',
+          labels: { A: 'apple' },
+          type: FieldType.string,
+          values: [0, 'banana', 'strawberry'],
+          config: {},
+        },
+        {
+          name: 'Value',
+          labels: { A: 0 },
+          type: FieldType.string,
+          values: ['orange', 0, 'pear'],
           config: {},
         },
       ]);

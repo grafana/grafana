@@ -6,7 +6,7 @@ import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
-import { RawTimeRange, TimeZone } from './time';
+import { AbsoluteTimeRange, RawTimeRange, TimeZone } from './time';
 
 // Plugin Extensions types
 // ---------------------------------------
@@ -14,6 +14,7 @@ import { RawTimeRange, TimeZone } from './time';
 export enum PluginExtensionTypes {
   link = 'link',
   component = 'component',
+  function = 'function',
 }
 
 type PluginExtensionBase = {
@@ -29,14 +30,26 @@ export type PluginExtensionLink = PluginExtensionBase & {
   onClick?: (event?: React.MouseEvent) => void;
   icon?: IconName;
   category?: string;
+  openInNewTab?: boolean;
 };
+
+export type PluginExtensionComponentMeta = Omit<PluginExtensionComponent, 'component'>;
 
 export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
   type: PluginExtensionTypes.component;
   component: React.ComponentType<Props>;
 };
 
-export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;
+export type ComponentTypeWithExtensionMeta<Props = {}> = React.ComponentType<Props> & {
+  meta: PluginExtensionComponentMeta;
+};
+
+export type PluginExtensionFunction<Signature = () => void> = PluginExtensionBase & {
+  type: PluginExtensionTypes.function;
+  fn: Signature;
+};
+
+export type PluginExtension = PluginExtensionLink | PluginExtensionComponent | PluginExtensionFunction;
 
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
@@ -75,6 +88,18 @@ export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionCon
   component: React.ComponentType<Props>;
 };
 
+export type PluginExtensionAddedFunctionConfig<Signature = unknown> = PluginExtensionConfigBase & {
+  /**
+   * The target extension points where the component will be added
+   */
+  targets: string | string[];
+
+  /**
+   * The function to be executed
+   */
+  fn: Signature;
+};
+
 export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Readonly<Context> | undefined) =>
   | Partial<{
       title: string;
@@ -83,6 +108,7 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
       icon: IconName;
       category: string;
+      openInNewTab: boolean;
     }>
   | undefined;
 
@@ -114,6 +140,10 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
 
   // (Optional) A category to be used when grouping the options in the ui
   category?: string;
+
+  // (Optional) If true, opens the link in a new tab (renders with target="_blank")
+  // (Important: this is not guaranteed, depends on the extension point if it implements it.)
+  openInNewTab?: boolean;
 };
 
 export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionConfigBase & {
@@ -129,8 +159,6 @@ export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionC
   component: React.ComponentType<Props>;
 };
 
-export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionComponentConfig;
-
 export type PluginExtensionOpenModalOptions = {
   // The title of the modal
   title: string;
@@ -144,8 +172,31 @@ export type PluginExtensionOpenModalOptions = {
 
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
+  // The ID of the extension point that triggered this event
+  extensionPointId: string;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
+  /**
+   * @internal
+   * Opens the extension sidebar with the registered component.
+   * @param componentTitle The title of the component to be opened in the sidebar.
+   * @param props The props to be passed to the component.
+   */
+  openSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
+  /**
+   * @internal
+   * Closes the extension sidebar.
+   */
+  closeSidebar: () => void;
+  /**
+   * @internal
+   * Toggles the extension sidebar with the registered component.
+   * If the sidebar is open with the same component, it will be closed.
+   * If the sidebar is closed or open with a different component, it will be opened with the specified component.
+   * @param componentTitle The title of the component to be toggled in the sidebar.
+   * @param props The props to be passed to the component.
+   */
+  toggleSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
 };
 
 // Extension Points & Contexts
@@ -157,11 +208,43 @@ export enum PluginExtensionPoints {
   AlertingHomePage = 'grafana/alerting/home',
   AlertingAlertingRuleAction = 'grafana/alerting/alertingrule/action',
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
+  AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
+  DashboardEmpty = 'grafana/dashboard/empty',
   DataSourceConfig = 'grafana/datasources/config',
+  DataSourceConfigActions = 'grafana/datasources/config/actions',
+  DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
+  DataSourceConfigStatus = 'grafana/datasources/config/status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
+  TraceViewDetails = 'grafana/traceview/details',
+  TraceViewHeaderActions = 'grafana/traceview/header/actions',
+  QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
+  TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
+  LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
+  AppChrome = 'grafana/app/chrome/v1',
+  ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+  MegaMenuAction = 'grafana/megamenu/action',
+  SingleTopBarAction = 'grafana/singletopbar/action',
+}
+
+// Don't use directly in a plugin!
+// Extension point IDs that contain dynamic segments and are not valid as static values — they require runtime substitution of certain parts.
+// (They cannot be used as is. E.g. "grafana/nav-landing-page/.*/v1" becomes "grafana/nav-landing-page/observability/v1" during runtime.)
+//
+// IMPORTANT: NavLandingPage and NavLandingPageCards are mutually exclusive.
+// If a plugin extends NavLandingPage, it will replace the entire page content and any NavLandingPageCards extensions will be ignored.
+// Only use NavLandingPageCards if you want to add additional cards to the default landing page layout.
+export enum PluginExtensionPointPatterns {
+  NavLandingPage = 'grafana/dynamic/nav-landing-page/nav-id-.*/v1',
+  NavLandingPageCards = 'grafana/dynamic/nav-landing-page/nav-id-.*/cards/v1',
+}
+
+// Extension Points available in plugins
+export enum PluginExtensionExposedComponents {
+  CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
+  AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
 }
 
 export type PluginExtensionPanelContext = {
@@ -176,7 +259,23 @@ export type PluginExtensionPanelContext = {
   data?: PanelData;
 };
 
-export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJsonData = DataSourceJsonData> = {
+export type CentralAlertHistorySceneV1Props = {
+  defaultLabelsFilter?: string;
+  defaultTimeRange?: { from: string; to: string };
+  hideFilters?: boolean;
+  hideAlertRuleColumn?: boolean;
+};
+
+export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
+  /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
+  contextHints?: string[];
+  query?: DataQuery & { expr?: string };
+};
+
+export type PluginExtensionDataSourceConfigContext<
+  JsonData extends DataSourceJsonData = DataSourceJsonData,
+  SecureJsonData = {},
+> = {
   // The current datasource settings
   dataSource: DataSourceSettings<JsonData>;
 
@@ -192,70 +291,61 @@ export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJs
   // Can be used to update the `jsonData` field on the datasource
   // (Only updates the form, it still needs to be saved by the user)
   setJsonData: (jsonData: JsonData) => void;
+  setSecureJsonData: (secureJsonData: SecureJsonData) => void;
 };
 
 export type PluginExtensionCommandPaletteContext = {};
+
+export type PluginExtensionResourceAttributesContext = {
+  // Key-value pairs of resource attributes, attribute name is the key
+  attributes: Record<string, string[]>;
+  spanAttributes?: Record<string, string[]>;
+  timeRange: AbsoluteTimeRange;
+  datasource: {
+    type: string;
+    uid: string;
+  };
+};
+
+export type DataSourceConfigErrorStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+  };
+  testingStatus: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
+  };
+};
+
+export type PluginExtensionDataSourceConfigActionsContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+};
+
+export type PluginExtensionDataSourceConfigStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+    typeName: string;
+  };
+  testingStatus?: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
+  };
+  severity: 'success' | 'error' | 'warning' | 'info';
+};
 
 type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
-};
-
-// deprecated types
-
-/** @deprecated - use PluginExtensionAddedLinkConfig instead */
-export type PluginExtensionLinkConfig<Context extends object = object> = {
-  type: PluginExtensionTypes.link;
-  title: string;
-  description: string;
-
-  // A URL path that will be used as the href for the rendered link extension
-  // (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
-  path?: string;
-
-  // A function that will be called when the link is clicked
-  // (It is called with the original event object)
-  onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-
-  /**
-   * The unique identifier of the Extension Point
-   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
-   */
-  extensionPointId: string;
-
-  // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
-  configure?: (context?: Readonly<Context>) =>
-    | Partial<{
-        title: string;
-        description: string;
-        path: string;
-        onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-        icon: IconName;
-        category: string;
-      }>
-    | undefined;
-
-  // (Optional) A icon that can be displayed in the ui for the extension option.
-  icon?: IconName;
-
-  // (Optional) A category to be used when grouping the options in the ui
-  category?: string;
-};
-
-/** @deprecated - use PluginAddedLinkConfig instead */
-export type PluginExtensionComponentConfig<Props = {}> = {
-  type: PluginExtensionTypes.component;
-  title: string;
-  description: string;
-
-  // The React component that will be rendered as the extension
-  // (This component receives contextual information as props when it is rendered. You can just return `null` from the component to hide it.)
-  component: React.ComponentType<Props>;
-
-  /**
-   * The unique identifier of the Extension Point
-   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
-   */
-  extensionPointId: string;
 };

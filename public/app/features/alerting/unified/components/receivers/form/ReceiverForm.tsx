@@ -3,6 +3,7 @@ import * as React from 'react';
 import { FieldErrors, FormProvider, SubmitErrorHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -41,6 +42,7 @@ interface Props<R extends ChannelValues> {
   showDefaultRouteWarning?: boolean;
   contactPointId?: string;
   canManagePermissions?: boolean;
+  canEditProtectedFields: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -57,6 +59,7 @@ export function ReceiverForm<R extends ChannelValues>({
   showDefaultRouteWarning,
   contactPointId,
   canManagePermissions,
+  canEditProtectedFields,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -65,15 +68,16 @@ export function ReceiverForm<R extends ChannelValues>({
   // normalize deprecated and new config values
   const normalizedConfig = normalizeFormValues(initialValues);
 
-  const defaultValues = normalizedConfig ?? {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const defaultValues = (normalizedConfig ?? {
     name: '',
     items: [
       {
         ...defaultItem,
         __id: String(Math.random()),
-      } as any,
+      },
     ],
-  };
+  }) as ReceiverFormValues<R>;
 
   const formAPI = useForm<ReceiverFormValues<R>>({
     // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
@@ -92,17 +96,6 @@ export function ReceiverForm<R extends ChannelValues>({
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
-    values.items.forEach((item) => {
-      if (item.secureFields) {
-        // omit secure fields with boolean value as BE expects not touched fields to be omitted: https://github.com/grafana/grafana/pull/71307
-        Object.keys(item.secureFields).forEach((key) => {
-          if (item.secureFields[key] === true || item.secureFields[key] === false) {
-            delete item.secureFields[key];
-          }
-        });
-      }
-    });
-
     try {
       await onSubmit({
         ...values,
@@ -127,26 +120,39 @@ export function ReceiverForm<R extends ChannelValues>({
   return (
     <FormProvider {...formAPI}>
       {showDefaultRouteWarning && (
-        <Alert severity="warning" title="Attention">
-          Because there is no default policy configured yet, this contact point will automatically be set as default.
+        <Alert severity="warning" title={t('alerting.receiver-form.title-attention', 'Attention')}>
+          <Trans i18nKey="alerting.receiver-form.body-attention">
+            Because there is no default policy configured yet, this contact point will automatically be set as default.
+          </Trans>
         </Alert>
       )}
 
       <form onSubmit={handleSubmit(submitCallback, onInvalid)} className={styles.wrapper}>
         <Stack justifyContent="space-between" alignItems="center">
           <h2 className={styles.heading}>
-            {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
+            {!isEditable && t('alerting.receiver-form.contact-point', 'Contact point')}
+            {isEditable && initialValues && t('alerting.receiver-form.contact-point-update', 'Update contact point')}
+            {isEditable && !initialValues && t('alerting.receiver-form.contact-point-create', 'Create contact point')}
           </h2>
           {canManagePermissions && contactPointId && (
             <ManagePermissions
               resource="receivers"
               resourceId={contactPointId}
               resourceName={initialValues?.name}
-              title="Manage contact point permissions"
+              title={t(
+                'alerting.receiver-form.title-manage-contact-point-permissions',
+                'Manage contact point permissions'
+              )}
             />
           )}
         </Stack>
-        <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
+        <Field
+          label={t('alerting.receiver-form.label-name', 'Name')}
+          invalid={!!errors.name}
+          error={errors.name && errors.name.message}
+          required
+          noMargin
+        >
           <Input
             readOnly={!isEditable}
             id="name"
@@ -158,11 +164,11 @@ export function ReceiverForm<R extends ChannelValues>({
               },
             })}
             width={39}
-            placeholder="Name"
+            placeholder={t('alerting.receiver-form.name-placeholder-name', 'Name')}
           />
         </Field>
         {fields.map((field, index) => {
-          const pathPrefix = `items.${index}.`;
+          const pathPrefix = `items.${index}.` as const;
           if (field.__deleted) {
             return <DeletedSubForm key={field.__id} pathPrefix={pathPrefix} />;
           }
@@ -172,6 +178,7 @@ export function ReceiverForm<R extends ChannelValues>({
               defaultValues={field}
               initialValues={initialItem}
               key={field.__id}
+              integrationIndex={index}
               onDuplicate={() => {
                 const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
@@ -187,47 +194,50 @@ export function ReceiverForm<R extends ChannelValues>({
               onDelete={() => remove(index)}
               pathPrefix={pathPrefix}
               notifiers={notifiers}
-              secureFields={initialItem?.secureFields}
-              errors={errors?.items?.[index] as FieldErrors<R>}
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              errors={errors?.items?.[index] as FieldErrors<R> | undefined}
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
               isTestable={isTestable}
+              canEditProtectedFields={canEditProtectedFields}
               customValidators={customValidators ? customValidators[field.type] : undefined}
             />
           );
         })}
-        <>
+        {isEditable && (
+          <Button
+            type="button"
+            icon="plus"
+            variant="secondary"
+            onClick={() => append({ ...defaultItem, __id: String(Math.random()) })}
+          >
+            <Trans i18nKey="alerting.receiver-form.add-contact-point-integration">Add contact point integration</Trans>
+          </Button>
+        )}
+        <div className={styles.buttons}>
           {isEditable && (
-            <Button
-              type="button"
-              icon="plus"
-              variant="secondary"
-              onClick={() => append({ ...defaultItem, __id: String(Math.random()) })}
-            >
-              Add contact point integration
-            </Button>
+            <>
+              {isSubmitting && (
+                <Button disabled={true} icon="spinner" variant="primary">
+                  <Trans i18nKey="alerting.receiver-form.saving">Saving...</Trans>
+                </Button>
+              )}
+              {!isSubmitting && (
+                <Button type="submit">
+                  <Trans i18nKey="alerting.receiver-form.save-contact-point">Save contact point</Trans>
+                </Button>
+              )}
+            </>
           )}
-          <div className={styles.buttons}>
-            {isEditable && (
-              <>
-                {isSubmitting && (
-                  <Button disabled={true} icon="spinner" variant="primary">
-                    Saving...
-                  </Button>
-                )}
-                {!isSubmitting && <Button type="submit">Save contact point</Button>}
-              </>
-            )}
-            <LinkButton
-              disabled={isSubmitting}
-              variant="secondary"
-              data-testid="cancel-button"
-              href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
-            >
-              Cancel
-            </LinkButton>
-          </div>
-        </>
+          <LinkButton
+            disabled={isSubmitting}
+            variant="secondary"
+            data-testid="cancel-button"
+            href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
+          >
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+          </LinkButton>
+        </div>
       </form>
     </FormProvider>
   );

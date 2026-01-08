@@ -7,8 +7,6 @@ import {
   LokiQueryDirection,
 } from './dataquery.gen';
 
-export { LokiQueryDirection, LokiQueryType, SupportingQueryType };
-
 export enum LokiResultType {
   Stream = 'streams',
   Vector = 'vector',
@@ -30,12 +28,6 @@ export interface LokiQuery extends LokiQueryFromSchema {
   // the temporary fix (until this gets improved in the codegen), is to
   // override it here
   queryType?: LokiQueryType;
-
-  /**
-   * This is a property for the experimental query splitting feature.
-   * @experimental
-   */
-  splitDuration?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
@@ -43,7 +35,6 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
   keepCookies?: string[];
-  predefinedOperations?: string;
 }
 
 export interface LokiStreamResult {
@@ -103,6 +94,16 @@ export interface ParserAndLabelKeysResult {
   hasLogfmt: boolean;
   hasPack: boolean;
   unwrapLabelKeys: string[];
+}
+
+export interface DetectedFieldsResult {
+  fields: Array<{
+    label: string;
+    type: 'bytes' | 'float' | 'int' | 'string' | 'duration';
+    cardinality: number;
+    parsers: Array<'logfmt' | 'json'> | null;
+  }>;
+  limit: number;
 }
 
 export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[] };

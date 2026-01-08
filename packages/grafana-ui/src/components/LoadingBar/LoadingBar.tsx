@@ -3,7 +3,7 @@ import { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export interface LoadingBarProps {
   width: number;
@@ -18,6 +18,11 @@ const MAX_DURATION_MS = 4000;
 const DEFAULT_ANIMATION_DELAY = 300;
 const MAX_TRANSLATE_X = (100 / BAR_WIDTH) * 100;
 
+/**
+ * The LoadingBar is used as a simple loading slider animation in the top of its container.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-loadingbar--docs
+ */
 export function LoadingBar({ width, delay = DEFAULT_ANIMATION_DELAY, ariaLabel = 'Loading bar' }: LoadingBarProps) {
   const durationMs = Math.min(Math.max(Math.round(width * MILLISECONDS_PER_PIXEL), MIN_DURATION_MS), MAX_DURATION_MS);
   const styles = useStyles2(getStyles, delay, durationMs);
@@ -27,7 +32,7 @@ export function LoadingBar({ width, delay = DEFAULT_ANIMATION_DELAY, ariaLabel =
 
   return (
     <div style={containerStyles}>
-      <div aria-label={ariaLabel} className={styles.bar} />
+      <div aria-label={ariaLabel} role="status" className={styles.bar} />
     </div>
   );
 }
@@ -47,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2, delay: number, duration: number) => {
     bar: css({
       width: BAR_WIDTH + '%',
       height: 1,
-      background: 'linear-gradient(90deg, rgba(110, 159, 255, 0) 0%, #6E9FFF 80.75%, rgba(110, 159, 255, 0) 100%)',
+      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.primary.main} 80.75%, transparent 100%)`,
       transform: 'translateX(-100%)',
       willChange: 'transform',
       [theme.transitions.handleMotion('no-preference')]: {

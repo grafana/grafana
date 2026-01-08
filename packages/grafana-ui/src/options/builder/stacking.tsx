@@ -5,13 +5,14 @@ import {
   identityOverrideProcessor,
   SelectableValue,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema';
 
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { IconButton } from '../../components/IconButton/IconButton';
 import { Input } from '../../components/Input/Input';
 import { Stack } from '../../components/Layout/Stack/Stack';
-import { graphFieldOptions } from '../../components/uPlot/config';
+import { getGraphFieldOptions } from '../../components/uPlot/config';
 
 export const StackingEditor = ({
   value,
@@ -34,8 +35,14 @@ export const StackingEditor = ({
       {context.isOverride && value?.mode && value?.mode !== StackingMode.None && (
         <Input
           type="text"
-          placeholder="Group"
-          suffix={<IconButton name="question-circle" tooltip="Name of the stacking group" tooltipPlacement="top" />}
+          placeholder={t('grafana-ui.stacking-builder.group', 'Group')}
+          suffix={
+            <IconButton
+              name="question-circle"
+              tooltip={t('grafana-ui.stacking-builder.group-tooltip', 'Name of the stacking group')}
+              tooltipPlacement="top"
+            />
+          }
           defaultValue={value?.group}
           onChange={(v) => {
             onChange({
@@ -54,10 +61,11 @@ export function addStackingConfig(
   defaultConfig?: StackingConfig,
   category = ['Graph styles']
 ) {
+  const graphFieldOptions = getGraphFieldOptions();
   builder.addCustomEditor({
     id: 'stacking',
     path: 'stacking',
-    name: 'Stack series',
+    name: t('grafana-ui.builder.stacking.name-stack-series', 'Stack series'),
     category: category,
     defaultValue: defaultConfig,
     editor: StackingEditor,

@@ -1,4 +1,4 @@
-import { DataSourceJsonData } from '@grafana/data/src';
+import { DataSourceJsonData } from '@grafana/data';
 import { NodeGraphOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 
 import { TempoQuery as TempoBase, TempoQueryType, TraceqlFilter } from './dataquery.gen';
@@ -16,6 +16,7 @@ export interface TempoJsonData extends DataSourceJsonData {
   spanBar?: {
     tag: string;
   };
+  tagLimit?: number;
   traceQuery?: {
     timeShiftEnabled?: boolean;
     spanStartTimeShift?: string;
@@ -24,10 +25,13 @@ export interface TempoJsonData extends DataSourceJsonData {
   streamingEnabled?: {
     search?: boolean;
   };
+  timeRangeForTags?: number;
 }
 
 export interface TempoQuery extends TempoBase {
   queryType: TempoQueryType;
+  serviceMapUseNativeHistograms?: boolean;
+  overrideStreamingEnabled?: boolean;
 }
 
 export interface MyDataSourceOptions extends DataSourceJsonData {}

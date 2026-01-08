@@ -4,6 +4,7 @@ exports[`Updating a Data source managed rule should be able to move a rule if ta
 [
   {
     "body": {
+      "interval": "1m",
       "name": "a new group",
       "rules": [
         {
@@ -144,7 +145,7 @@ exports[`Updating a Grafana managed rule should move a rule in to another group 
 [
   {
     "body": {
-      "interval": "1m",
+      "interval": "5m",
       "name": "grafana-group-2",
       "rules": [
         {

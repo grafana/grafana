@@ -1,14 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createLogRow } from '../../logs/components/__mocks__/logRow';
+import { createLogRow } from '../../logs/components/mocks/logRow';
 
 import { PopoverMenu } from './PopoverMenu';
 
 const row = createLogRow();
 
 test('Does not render if the filter functions are not defined', () => {
-  render(<PopoverMenu selection="test" x={0} y={0} row={row} close={() => {}} />);
+  render(<PopoverMenu selection="test" x={0} y={0} row={row} close={() => {}} onDisable={() => {}} />);
 
   expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
 });
@@ -16,7 +16,15 @@ test('Does not render if the filter functions are not defined', () => {
 test('Renders copy and line contains filter', async () => {
   const onClickFilterString = jest.fn();
   render(
-    <PopoverMenu selection="test" x={0} y={0} row={row} close={() => {}} onClickFilterString={onClickFilterString} />
+    <PopoverMenu
+      selection="test"
+      x={0}
+      y={0}
+      row={row}
+      close={() => {}}
+      onDisable={() => {}}
+      onClickFilterString={onClickFilterString}
+    />
   );
 
   expect(screen.getByText('Copy selection')).toBeInTheDocument();
@@ -37,6 +45,7 @@ test('Renders copy and line does not contain filter', async () => {
       y={0}
       row={row}
       close={() => {}}
+      onDisable={() => {}}
       onClickFilterOutString={onClickFilterOutString}
     />
   );
@@ -58,6 +67,7 @@ test('Renders copy, line contains filter, and line does not contain filter', () 
       y={0}
       row={row}
       close={() => {}}
+      onDisable={() => {}}
       onClickFilterString={() => {}}
       onClickFilterOutString={() => {}}
     />
@@ -77,6 +87,7 @@ test('Can be dismissed with escape', async () => {
       y={0}
       row={row}
       close={close}
+      onDisable={() => {}}
       onClickFilterString={() => {}}
       onClickFilterOutString={() => {}}
     />
@@ -86,4 +97,25 @@ test('Can be dismissed with escape', async () => {
   expect(screen.getByText('Copy selection')).toBeInTheDocument();
   await userEvent.keyboard('{Escape}');
   expect(close).toHaveBeenCalledTimes(1);
+});
+
+test('Can be disabled', async () => {
+  const onDisable = jest.fn();
+  render(
+    <PopoverMenu
+      selection="test"
+      x={0}
+      y={0}
+      row={row}
+      close={() => {}}
+      onDisable={onDisable}
+      onClickFilterString={() => {}}
+      onClickFilterOutString={() => {}}
+    />
+  );
+
+  expect(onDisable).not.toHaveBeenCalled();
+  expect(screen.getByText('Disable menu')).toBeInTheDocument();
+  await userEvent.click(screen.getByText('Disable menu'));
+  expect(onDisable).toHaveBeenCalledTimes(1);
 });

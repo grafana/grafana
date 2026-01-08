@@ -210,12 +210,15 @@ export function fieldToStringField(
       values = values.map((v) => dateTimeParse(v, parseOptions).format(dateFormat));
       break;
 
+    // Handle both "string" and "other" types to ensure compatibility across Grafana versions (10 & 11)
+    // In some cases fields are classified as 'other' in Grafana 10 but as 'string' in Grafana 11
+    case FieldType.string:
     case FieldType.other:
       values = values.map((v) => {
         if (joinWith?.length && Array.isArray(v)) {
           return v.join(joinWith);
         }
-        return JSON.stringify(v); // will quote strings and avoid "object"
+        return JSON.stringify(v);
       });
       break;
 

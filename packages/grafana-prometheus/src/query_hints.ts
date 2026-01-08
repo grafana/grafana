@@ -17,7 +17,7 @@ export const SUM_HINT_THRESHOLD_COUNT = 20;
 export function getQueryHints(query: string, series?: unknown[], datasource?: PrometheusDatasource): QueryHint[] {
   const hints = [];
 
-  const metricsMetadata = datasource?.languageProvider?.metricsMetadata;
+  const metricsMetadata = datasource?.languageProvider?.retrieveMetricsMetadata();
 
   // ..._bucket metric needs a histogram_quantile()
   // this regex also prevents hints from being shown when a query already has a function
@@ -175,10 +175,19 @@ export function getInitHints(datasource: PrometheusDatasource): QueryHint[] {
   return hints;
 }
 
+export function isRuleInQuery(query: string, ruleName: string) {
+  if (!query || !ruleName) {
+    return false;
+  }
+
+  const getRuleRegex = new RegExp(`(?<![\\w:])${ruleName}(?=[\\[{(\\s\\)]|$)`);
+  return getRuleRegex.test(query);
+}
+
 export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): QueryHint[] {
   const hints: QueryHint[] = [];
   const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
-    if (query.search(ruleName) === -1) {
+    if (!isRuleInQuery(query, ruleName)) {
       return acc;
     }
 

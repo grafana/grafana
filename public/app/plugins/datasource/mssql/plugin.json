@@ -15,7 +15,14 @@
       "small": "img/sql_server_logo.svg",
       "large": "img/sql_server_logo.svg"
     },
-    "version": "%VERSION%"
+    "version": "%VERSION%",
+    "links": [
+      { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
+      {
+        "name": "Documentation",
+        "url": "https://grafana.com/docs/grafana/latest/datasources/mssql/"
+      }
+    ]
   },
   "dependencies": {
     "grafanaDependency": ">=10.4.0"
@@ -28,5 +35,26 @@
 
   "queryOptions": {
     "minInterval": true
-  }
+  },
+  "languages": [
+    "en-US",
+    "fr-FR",
+    "es-ES",
+    "de-DE",
+    "pt-BR",
+    "zh-Hans",
+    "it-IT",
+    "ja-JP",
+    "id-ID",
+    "ko-KR",
+    "ru-RU",
+    "cs-CZ",
+    "nl-NL",
+    "hu-HU",
+    "pt-PT",
+    "pl-PL",
+    "sv-SE",
+    "tr-TR",
+    "zh-Hant"
+  ]
 }

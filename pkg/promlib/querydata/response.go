@@ -3,6 +3,7 @@ package querydata
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -28,28 +29,67 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.parseResponse")
 	defer endSpan()
 
-	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-	r := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: true})
-	r.Status = backend.Status(res.StatusCode)
+	statusCode := res.StatusCode
 
-	// Add frame to attach metadata
-	if len(r.Frames) == 0 && !q.ExemplarQuery {
-		r.Frames = append(r.Frames, data.NewFrame(""))
-	}
+	switch {
+	// Status codes that Prometheus might return
+	// so we want to parse the response
+	// https://prometheus.io/docs/prometheus/latest/querying/api/#format-overview
+	case statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices,
+		statusCode == http.StatusBadRequest,
+		statusCode == http.StatusUnprocessableEntity,
+		statusCode == http.StatusServiceUnavailable:
 
-	// The ExecutedQueryString can be viewed in QueryInspector in UI
-	for i, frame := range r.Frames {
-		addMetadataToMultiFrame(q, frame)
-		if i == 0 {
-			frame.Meta.ExecutedQueryString = executedQueryString(q)
+		iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
+		r := converter.ReadPrometheusStyleResult(iter, converter.Options{})
+		r.Status = backend.Status(res.StatusCode)
+
+		// Add frame to attach metadata
+		if len(r.Frames) == 0 && !q.ExemplarQuery {
+			r.Frames = append(r.Frames, data.NewFrame(""))
 		}
-	}
 
-	if r.Error == nil {
-		r = s.processExemplars(ctx, q, r)
-	}
+		// The ExecutedQueryString can be viewed in QueryInspector in UI
+		for i, frame := range r.Frames {
+			addMetadataToMultiFrame(q, frame)
+			if i == 0 {
+				frame.Meta.ExecutedQueryString = executedQueryString(q)
+				if frame.Meta.Custom == nil {
+					frame.Meta.Custom = make(map[string]any)
+				}
+				if custom, ok := frame.Meta.Custom.(map[string]any); ok {
+					// This is required for incremental querying feature
+					// Knowing the calculated minStep is required for merging and caching the frames on frontend side
+					custom["calculatedMinStep"] = q.Step.Milliseconds()
+				}
+			}
+		}
 
-	return r
+		if r.Error == nil {
+			r = s.processExemplars(ctx, q, r)
+		}
+
+		return r
+	default:
+		// Unknown status code. We don't want to parse the response.
+		const maxBodySize = 1024
+		lr := io.LimitReader(res.Body, maxBodySize)
+		tb, _ := io.ReadAll(lr)
+
+		s.log.FromContext(ctx).Error("Unexpected response received", "status", statusCode, "body", tb)
+
+		errResp := backend.DataResponse{
+			Error:       fmt.Errorf("unexpected response with status code %d: %s", statusCode, tb),
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(statusCode),
+		}
+
+		f := data.NewFrame("")
+		addMetadataToMultiFrame(q, f)
+		f.Meta.ExecutedQueryString = executedQueryString(q)
+		errResp.Frames = append(errResp.Frames, f)
+
+		return errResp
+	}
 }
 
 func (s *QueryData) processExemplars(ctx context.Context, q *models.Query, dr backend.DataResponse) backend.DataResponse {

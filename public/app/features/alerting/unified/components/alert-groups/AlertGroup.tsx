@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { createContactPointSearchLink } from '../../utils/misc';
-import { AlertLabels } from '../AlertLabels';
 import { CollapseToggle } from '../CollapseToggle';
 import { MetaText } from '../MetaText';
 
@@ -42,20 +43,24 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
 
               {receiverInGroup && (
                 <MetaText icon="at">
-                  Delivered to{' '}
-                  <TextLink
-                    href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
-                    variant="bodySmall"
-                    color="primary"
-                    inline={false}
-                  >
-                    {group.receiver.name}
-                  </TextLink>
+                  <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
+                    Delivered to{' '}
+                    <TextLink
+                      href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
+                      variant="bodySmall"
+                      color="primary"
+                      inline={false}
+                    >
+                      {'{{name}}'}
+                    </TextLink>
+                  </Trans>
                 </MetaText>
               )}
             </Stack>
           ) : (
-            <span>No grouping</span>
+            <span>
+              <Trans i18nKey="alerting.alert-group.no-grouping">No grouping</Trans>
+            </span>
           )}
         </div>
         <AlertGroupHeader group={group} />
@@ -77,6 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
     backgroundColor: theme.colors.background.secondary,
     width: '100%',

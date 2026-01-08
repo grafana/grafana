@@ -12,16 +12,16 @@ The `grpcserver` package provides the implementation of the gRPC server for hand
 
 ## Usage
 
-Enable the gRPC server in Grafana by setting the `grpcServer` feature toggle to `true` in your `custom.ini` configuration file. 
+Enable the gRPC server in Grafana by setting the `grpcServer` feature toggle to `true` in your `custom.ini` configuration file.
 
-``` ini
+```ini
 [feature_toggles]
 grpcServer = true
 ```
 
 You can specify the gRPC server specific settings in the `grpc_server` section of the configuration file.
 
-``` ini
+```ini
 [grpc_server]
 network = "tcp"
 address = "127.0.0.1:10000"
@@ -34,6 +34,31 @@ enable_logging = false
 max_recv_msg_size =
 # Maximum size of a message that can be sent in bytes. If not set, uses the gRPC default (unlimited).
 max_send_msg_size =
+```
+
+### Optional: Connection Management and Load Balancing
+
+These settings help with:
+
+- **Resource management**: Prevent resource leaks from idle connections
+- **Connection health**: Detect and clean up dead connections
+- **Load balancing**: Force connection recycling for better distribution across multiple server instances
+- **DoS protection**: Rate limit keepalive pings from clients
+
+```ini
+# Connection management options
+# Maximum amount of time a connection may exist before it will be closed
+max_connection_age = 300s
+# Additional time to allow for pending RPCs to complete before forcibly closing connections
+max_connection_age_grace = 10s
+# Maximum amount of idle time before a connection is closed
+max_connection_idle = 300s
+# Frequency of server-to-client pings to check if a connection is still active
+keepalive_time = 30s
+# Amount of time the server waits for a response to keepalive pings before closing the connection
+keepalive_timeout = 5s
+# Minimum amount of time a client should wait before sending a keepalive ping
+keepalive_min_time = 5s
 ```
 
 ## Example Services

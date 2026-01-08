@@ -36,6 +36,13 @@ type configV0 struct {
 	AllowUIUpdates        bool           `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
+// Access to dashboard provisioning config
+// Exposes the internal config outside this package with as few changes as possible
+// NOTE: these provisioning configs will eventually be replaced with: /apis/provisioning.grafana.app/
+type DashboardProvisioning struct {
+	config
+}
+
 type configVersion struct {
 	APIVersion int64 `json:"apiVersion" yaml:"apiVersion"`
 }
@@ -62,11 +69,17 @@ func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *con
 	dash.Dashboard = dashboards.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified
 	dash.Overwrite = true
+	if dash.Dashboard.OrgID > 0 && dash.Dashboard.OrgID != cfg.OrgID {
+		return nil, fmt.Errorf("dashboard orgID (%d) does not match provisioning provider orgID (%d)", dash.Dashboard.OrgID, cfg.OrgID)
+	}
 	dash.OrgID = cfg.OrgID
 	dash.Dashboard.OrgID = cfg.OrgID
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 	// nolint:staticcheck
 	dash.Dashboard.FolderID = folderID
+	if dash.Dashboard.FolderUID != "" && folderUID != dash.Dashboard.FolderUID {
+		return nil, fmt.Errorf("dashboard folderUID (%q) does not match provisioning provider folderUID (%q)", dash.Dashboard.FolderUID, folderUID)
+	}
 	dash.Dashboard.FolderUID = folderUID
 
 	if dash.Dashboard.Title == "" {

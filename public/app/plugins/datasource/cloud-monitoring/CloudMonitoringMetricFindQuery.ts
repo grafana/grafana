@@ -1,6 +1,7 @@
 import { isString } from 'lodash';
 
 import { ALIGNMENT_PERIODS, SELECTORS } from './constants';
+import { ValueTypes, MetricFindQueryTypes } from './dataquery.gen';
 import CloudMonitoringDatasource from './datasource';
 import {
   extractServicesFromMetricDescriptors,
@@ -9,7 +10,6 @@ import {
   getLabelKeys,
   getMetricTypesByService,
 } from './functions';
-import { ValueTypes, MetricFindQueryTypes } from './types/query';
 import { CloudMonitoringVariableQuery, MetricDescriptor } from './types/types';
 
 export default class CloudMonitoringMetricFindQuery {

@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 
-import { TNil } from '../../types';
+import TNil from '../../types/TNil';
 
 import DraggableManager from './DraggableManager';
 import EUpdateTypes from './EUpdateTypes';

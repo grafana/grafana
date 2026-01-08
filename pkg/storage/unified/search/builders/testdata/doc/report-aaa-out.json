@@ -1,0 +1,18 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "reporting.grafana.app",
+    "resource": "reports",
+    "name": "aaa"
+  },
+  "name": "aaa",
+  "rv": 1234,
+  "title": "Test AAA",
+  "title_ngram": "Test AAA",
+  "title_phrase": "test aaa",
+  "labels": {
+    "grafana.app/deprecatedInternalID": "123"
+  },
+  "created": 1706690655000,
+  "createdBy": "user:abc"
+}

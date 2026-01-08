@@ -1,9 +1,9 @@
-import { PureComponent } from 'react';
+import { memo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, LoadingPlaceholder } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { UserDTO, UserOrg } from 'app/types';
+import { Trans, t } from '@grafana/i18n';
+import { Button, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
+import { UserDTO, UserOrg } from 'app/types/user';
 
 export interface Props {
   user: UserDTO | null;
@@ -12,24 +12,26 @@ export interface Props {
   setUserOrg: (org: UserOrg) => void;
 }
 
-export class UserOrganizations extends PureComponent<Props> {
-  render() {
-    const { isLoading, orgs, user } = this.props;
-
-    if (isLoading) {
-      return <LoadingPlaceholder text="Loading organizations..." />;
-    }
-
-    if (orgs.length === 0) {
-      return null;
-    }
-
+export const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg }) => {
+  if (isLoading) {
     return (
-      <div>
-        <h3 className="page-sub-heading">
-          <Trans i18nKey="user-orgs.title">Organizations</Trans>
-        </h3>
+      <LoadingPlaceholder
+        text={t('profile.user-organizations.text-loading-organizations', 'Loading organizations...')}
+      />
+    );
+  }
 
+  if (orgs.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      <h3 className="page-sub-heading">
+        <Trans i18nKey="user-orgs.title">Organizations</Trans>
+      </h3>
+
+      <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
         <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.orgsTable}>
           <thead>
             <tr>
@@ -58,7 +60,7 @@ export class UserOrganizations extends PureComponent<Props> {
                         variant="secondary"
                         size="sm"
                         onClick={() => {
-                          this.props.setUserOrg(org);
+                          setUserOrg(org);
                         }}
                       >
                         <Trans i18nKey="user-orgs.select-org-button">Select organisation</Trans>
@@ -70,9 +72,11 @@ export class UserOrganizations extends PureComponent<Props> {
             })}
           </tbody>
         </table>
-      </div>
-    );
-  }
-}
+      </ScrollContainer>
+    </div>
+  );
+});
+
+UserOrganizations.displayName = 'UserOrganizations';
 
 export default UserOrganizations;

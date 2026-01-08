@@ -1,7 +1,8 @@
-import { withTheme2 } from '../../themes';
+import { t } from '@grafana/i18n';
+
 import { InlineField } from '../Forms/InlineField';
 import { InlineSwitch } from '../Switch/Switch';
-import { PopoverContentProps } from '../Tooltip';
+import { PopoverContentProps } from '../Tooltip/types';
 
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 
@@ -10,17 +11,20 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
   onToggleAxis?: () => void;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-seriescolorpicker--docs
+ */
 export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) => {
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
-
+  const yAxisLabel = t('grafana-ui.series-color-picker-popover.y-axis-usage', 'Use right y-axis');
   const customPickers = onToggleAxis
     ? {
         yaxis: {
           name: 'Y-Axis',
           tabComponent() {
             return (
-              <InlineField labelWidth={20} label="Use right y-axis">
-                <InlineSwitch value={yaxis === 2} label="Use right y-axis" onChange={onToggleAxis} />
+              <InlineField labelWidth={20} label={yAxisLabel}>
+                <InlineSwitch value={yaxis === 2} label={yAxisLabel} onChange={onToggleAxis} />
               </InlineField>
             );
           },
@@ -31,4 +35,4 @@ export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) =
 };
 
 // This component is to enable SeriesColorPickerPopover usage via series-color-picker-popover directive
-export const SeriesColorPickerPopoverWithTheme = withTheme2(SeriesColorPickerPopover);
+export const SeriesColorPickerPopoverWithTheme = SeriesColorPickerPopover;

@@ -2,8 +2,6 @@ package auth
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 type ExternalService struct {
@@ -12,8 +10,17 @@ type ExternalService struct {
 	PrivateKey   string `json:"privateKey"`
 }
 
+type IAM struct {
+	Permissions []Permission `json:"permissions,omitempty"`
+}
+
+type Permission struct {
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
+}
+
 type ExternalServiceRegistry interface {
 	HasExternalService(ctx context.Context, pluginID string) (bool, error)
-	RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*ExternalService, error)
+	RegisterExternalService(ctx context.Context, pluginID string, pType string, svc *IAM) (*ExternalService, error)
 	RemoveExternalService(ctx context.Context, pluginID string) error
 }

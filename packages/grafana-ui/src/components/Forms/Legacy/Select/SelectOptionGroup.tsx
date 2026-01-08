@@ -4,8 +4,9 @@ import { GroupProps } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, withTheme2 } from '../../../../themes';
-import { Themeable2 } from '../../../../types';
+import { withTheme2 } from '../../../../themes/ThemeContext';
+import { stylesFactory } from '../../../../themes/stylesFactory';
+import { Themeable2 } from '../../../../types/theme';
 import { Icon } from '../../../Icon/Icon';
 
 interface ExtendedGroupProps extends Omit<GroupProps<any, any>, 'theme'>, Themeable2 {
@@ -93,4 +94,5 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
   }
 }
 
-export const SelectOptionGroup = withTheme2(UnthemedSelectOptionGroup);
+// TODO: type this properly
+export const SelectOptionGroup: React.FC<ExtendedGroupProps> = withTheme2(UnthemedSelectOptionGroup);

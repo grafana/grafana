@@ -24,31 +24,39 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func setupTestEnv(t testing.TB) *Service {
+func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	t.Helper()
 	cfg := setting.NewCfg()
 
 	ac := &Service{
-		cache:         localcache.ProvideService(),
-		cfg:           cfg,
-		features:      featuremgmt.WithFeatures(),
-		log:           log.New("accesscontrol"),
-		registrations: accesscontrol.RegistrationList{},
-		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		store:         database.ProvideService(db.InitTestDB(t)),
-		permRegistry:  permreg.ProvidePermissionRegistry(),
+		cache:          localcache.ProvideService(),
+		cfg:            cfg,
+		features:       featuremgmt.WithFeatures(),
+		log:            log.New("accesscontrol"),
+		registrations:  accesscontrol.RegistrationList{},
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
+		store:          database.ProvideService(db.InitTestDB(t)),
+		permRegistry:   permreg.ProvidePermissionRegistry(),
+		actionResolver: resourcepermissions.NewActionSetService(),
 	}
-	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
+
+	if registerRoles {
+		require.NoError(t, ac.RegisterFixedRoles(context.Background()))
+	}
+
 	return ac
 }
 
-func TestUsageMetrics(t *testing.T) {
+func TestIntegrationUsageMetrics(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name          string
 		expectedValue int
@@ -71,7 +79,6 @@ func TestUsageMetrics(t *testing.T) {
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest(),
 				nil,
-				nil,
 				permreg.ProvidePermissionRegistry(),
 				nil,
 			)
@@ -80,7 +87,9 @@ func TestUsageMetrics(t *testing.T) {
 	}
 }
 
-func TestService_DeclareFixedRoles(t *testing.T) {
+func TestIntegrationService_DeclareFixedRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name          string
 		registrations []accesscontrol.RoleRegistration
@@ -140,7 +149,7 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ac := setupTestEnv(t)
+			ac := setupTestEnv(t, true)
 
 			// Reset the registations
 			ac.registrations = accesscontrol.RegistrationList{}
@@ -165,7 +174,9 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 	}
 }
 
-func TestService_DeclarePluginRoles(t *testing.T) {
+func TestIntegrationService_DeclarePluginRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name          string
 		pluginID      string
@@ -253,8 +264,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ac := setupTestEnv(t)
-			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+			ac := setupTestEnv(t, true)
 
 			// Reset the registations
 			ac.registrations = accesscontrol.RegistrationList{}
@@ -279,7 +289,9 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 	}
 }
 
-func TestService_RegisterFixedRoles(t *testing.T) {
+func TestIntegrationService_RegisterFixedRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name          string
 		token         licensing.Licensing
@@ -353,7 +365,7 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ac := setupTestEnv(t)
+			ac := setupTestEnv(t, true)
 
 			ac.registrations.Append(tt.registrations...)
 
@@ -372,6 +384,7 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 					builtinRole, ok := ac.roles[br]
 					assert.True(t, ok)
 					for _, expectedPermission := range registration.Role.Permissions {
+						expectedPermission.Kind, expectedPermission.Attribute, expectedPermission.Identifier = accesscontrol.SplitScope(expectedPermission.Scope)
 						assert.Contains(t, builtinRole.Permissions, expectedPermission)
 					}
 				}
@@ -380,7 +393,196 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 	}
 }
 
-func TestService_SearchUsersPermissions(t *testing.T) {
+func TestIntegrationService_DeclarePluginRoles_DynamicRegistration(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name             string
+		postRegister     bool
+		pluginID         string
+		registrations    []plugins.RoleRegistration
+		wantGrantedRoles []string
+		wantPermissions  []string
+		wantPermCount    int
+	}{
+		{
+			name:         "should register plugin roles before initialization",
+			postRegister: false,
+			pluginID:     "test-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name:        "Reader",
+						Description: "Test reader role",
+						Permissions: []plugins.Permission{
+							{Action: "test-app:read", Scope: "test-app:*"},
+						},
+					},
+					Grants: []string{string(identity.RoleViewer)},
+				},
+			},
+			wantGrantedRoles: []string{string(identity.RoleViewer)},
+			wantPermissions:  []string{"test-app:read"},
+			wantPermCount:    1,
+		},
+		{
+			name:         "should register plugin roles dynamically after initialization",
+			postRegister: true,
+			pluginID:     "dynamic-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name:        "DynamicReader",
+						Description: "Dynamic reader role",
+						Permissions: []plugins.Permission{
+							{Action: "dynamic-app:read", Scope: "dynamic-app:*"},
+							{Action: "dynamic-app:query", Scope: "dynamic-app:*"},
+						},
+					},
+					Grants: []string{string(identity.RoleViewer)},
+				},
+			},
+			wantGrantedRoles: []string{string(identity.RoleViewer)},
+			wantPermissions:  []string{"dynamic-app:read", "dynamic-app:query"},
+			wantPermCount:    2,
+		},
+		{
+			name:         "should grant to multiple roles dynamically",
+			postRegister: true,
+			pluginID:     "multi-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name:        "MultiReader",
+						Description: "Multi reader role",
+						Permissions: []plugins.Permission{
+							{Action: "multi-app:read", Scope: "multi-app:*"},
+						},
+					},
+					Grants: []string{string(identity.RoleViewer), string(identity.RoleEditor)},
+				},
+			},
+			wantGrantedRoles: []string{string(identity.RoleViewer), string(identity.RoleEditor)},
+			wantPermissions:  []string{"multi-app:read"},
+			wantPermCount:    1,
+		},
+		{
+			name:         "should register multiple permissions dynamically",
+			postRegister: true,
+			pluginID:     "batch-app",
+			registrations: []plugins.RoleRegistration{
+				{
+					Role: plugins.Role{
+						Name: "BatchReader",
+						Permissions: []plugins.Permission{
+							{Action: "batch-app:read"},
+							{Action: "batch-app:write"},
+							{Action: "batch-app:delete"},
+						},
+					},
+					Grants: []string{string(identity.RoleEditor)},
+				},
+			},
+			wantGrantedRoles: []string{string(identity.RoleEditor)},
+			wantPermissions:  []string{"batch-app:read", "batch-app:write", "batch-app:delete"},
+			wantPermCount:    3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ac := setupTestEnv(t, tt.postRegister)
+			initialPermCounts := make(map[string]int)
+			for _, roleName := range tt.wantGrantedRoles {
+				if role, ok := ac.roles[roleName]; ok {
+					initialPermCounts[roleName] = len(role.Permissions)
+				}
+			}
+
+			err := ac.DeclarePluginRoles(context.Background(), tt.pluginID, tt.pluginID, tt.registrations)
+			require.NoError(t, err)
+
+			if !tt.postRegister {
+				err = ac.RegisterFixedRoles(context.Background())
+				require.NoError(t, err)
+			}
+
+			// Verify permissions were added to expected roles
+			for _, roleName := range tt.wantGrantedRoles {
+				role, ok := ac.roles[roleName]
+				require.True(t, ok, "Role %s should exist", roleName)
+
+				expectedCount := initialPermCounts[roleName] + tt.wantPermCount
+				assert.Equal(t, expectedCount, len(role.Permissions))
+
+				actions := make([]string, 0, len(role.Permissions))
+				for _, perm := range role.Permissions {
+					actions = append(actions, perm.Action)
+				}
+
+				for _, wantAction := range tt.wantPermissions {
+					assert.Contains(t, actions, wantAction, "Role %s should have permission %s", roleName, wantAction)
+				}
+			}
+		})
+	}
+}
+
+func TestIntegrationService_DeclarePluginRoles_UserPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("dynamic registration should be reflected in user permissions", func(t *testing.T) {
+		ac := setupTestEnv(t, true)
+
+		// Create a test user with Viewer role
+		testUser := &user.SignedInUser{
+			UserID:  1,
+			OrgID:   1,
+			OrgRole: identity.RoleViewer,
+		}
+
+		// Get initial permissions
+		initialPerms, err := ac.getUserPermissions(context.Background(), testUser, accesscontrol.Options{})
+		require.NoError(t, err)
+		initialCount := len(initialPerms)
+
+		// Register plugin roles dynamically
+		err = ac.DeclarePluginRoles(context.Background(), "perm-test-app", "Perm Test App", []plugins.RoleRegistration{
+			{
+				Role: plugins.Role{
+					Name:        "PermTester",
+					Description: "Permission test role",
+					Permissions: []plugins.Permission{
+						{Action: "perm-test-app:test", Scope: "perm-test-app:*"},
+					},
+				},
+				Grants: []string{string(identity.RoleViewer)},
+			},
+		})
+		require.NoError(t, err)
+
+		updatedPerms, err := ac.getUserPermissions(context.Background(), testUser, accesscontrol.Options{})
+		require.NoError(t, err)
+
+		require.Greater(t, len(updatedPerms), initialCount)
+		hasNewPerm := false
+		hasNewScope := false
+		for _, perm := range updatedPerms {
+			if perm.Action == "perm-test-app:test" {
+				hasNewPerm = true
+			}
+			if perm.Scope == "perm-test-app:*" {
+				hasNewScope = true
+			}
+		}
+		assert.True(t, hasNewPerm)
+		assert.True(t, hasNewScope)
+	})
+}
+
+func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	searchOption := accesscontrol.SearchOptions{ActionPrefix: "teams"}
 	ctx := context.Background()
 	listAllPerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:*"}}
@@ -574,7 +776,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ac := setupTestEnv(t)
+			ac := setupTestEnv(t, true)
 
 			ac.roles = tt.ramRoles
 			ac.store = actest.FakeStore{
@@ -601,7 +803,9 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 	}
 }
 
-func TestService_SearchUserPermissions(t *testing.T) {
+func TestIntegrationService_SearchUserPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	ctx := context.Background()
 	tests := []struct {
 		name           string
@@ -804,10 +1008,9 @@ func TestService_SearchUserPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ac := setupTestEnv(t)
+			ac := setupTestEnv(t, true)
 			if tt.withActionSets {
-				ac.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
-				actionSetSvc := resourcepermissions.NewActionSetService(ac.features)
+				actionSetSvc := resourcepermissions.NewActionSetService()
 				for set, actions := range tt.actionSets {
 					actionSetName := resourcepermissions.GetActionSetName(strings.Split(set, ":")[0], strings.Split(set, ":")[1])
 					actionSetSvc.StoreActionSet(actionSetName, actions)
@@ -833,7 +1036,9 @@ func TestService_SearchUserPermissions(t *testing.T) {
 	}
 }
 
-func TestService_SaveExternalServiceRole(t *testing.T) {
+func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type run struct {
 		cmd     accesscontrol.SaveExternalServiceRoleCommand
 		wantErr bool
@@ -899,7 +1104,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			ac := setupTestEnv(t)
+			ac := setupTestEnv(t, true)
 			ac.cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 			for _, r := range tt.runs {
@@ -913,13 +1118,22 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 				// Check that the permissions and assignment are stored correctly
 				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
-				assert.ElementsMatch(t, r.cmd.Permissions, perms)
+
+				// Only compare action and scope
+				expPerms := make([]accesscontrol.Permission, len(r.cmd.Permissions))
+				for i, p := range r.cmd.Permissions {
+					expPerms[i] = accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
+				}
+				// shared with me is added by default for all users in pkg/services/accesscontrol/acimpl/service.go
+				assert.Equal(t, append([]accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}, expPerms...), perms)
 			}
 		})
 	}
 }
 
-func TestService_DeleteExternalServiceRole(t *testing.T) {
+func TestIntegrationService_DeleteExternalServiceRole(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	tests := []struct {
 		name              string
 		initCmd           *accesscontrol.SaveExternalServiceRoleCommand
@@ -946,7 +1160,7 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			ac := setupTestEnv(t)
+			ac := setupTestEnv(t, true)
 			ac.cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
@@ -966,8 +1180,46 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 				// Check that the permissions and assignment are removed correctly
 				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: tt.initCmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
-				assert.Empty(t, perms)
+				// shared with me is added by default for all users in pkg/services/accesscontrol/acimpl/service.go
+				assert.Equal(t, []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}, perms)
 			}
 		})
 	}
+}
+
+func TestIntegrationService_GetRoleByName(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Parallel()
+
+	ctx := context.Background()
+
+	t.Run("when the role does not exists, it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		ac := setupTestEnv(t, true)
+		ac.registrations = accesscontrol.RegistrationList{}
+
+		role, err := ac.GetRoleByName(ctx, 0, "not-found-role")
+		require.ErrorIs(t, err, accesscontrol.ErrRoleNotFound)
+		require.Nil(t, role)
+	})
+
+	t.Run("when the role exists, it is returned", func(t *testing.T) {
+		t.Parallel()
+
+		roleName := "fixed:test:test"
+
+		ac := setupTestEnv(t, true)
+		ac.registrations = accesscontrol.RegistrationList{}
+		ac.registrations.Append(accesscontrol.RoleRegistration{
+			Role:   accesscontrol.RoleDTO{Name: roleName},
+			Grants: []string{"Admin"},
+		})
+
+		role, err := ac.GetRoleByName(ctx, 0, roleName)
+		require.NoError(t, err)
+		require.NotNil(t, role)
+		require.Equal(t, roleName, role.Name)
+	})
 }

@@ -28,6 +28,7 @@ import (
 const (
 	defaultMaxQueueCapacity = 10000
 	defaultTimeout          = 10 * time.Second
+	defaultDrainOnShutdown  = true
 )
 
 // ExternalAlertmanager is responsible for dispatching alert notifications to an external Alertmanager service.
@@ -37,32 +38,44 @@ type ExternalAlertmanager struct {
 
 	manager *Manager
 
-	sanitizeLabelSetFn func(lbls models.LabelSet) labels.Labels
-	sdCancel           context.CancelFunc
-	sdManager          *discovery.Manager
+	sdCancel  context.CancelFunc
+	sdManager *discovery.Manager
+	options   *ExternalAMOptions
 }
 
 type ExternalAMcfg struct {
 	URL     string
 	Headers http.Header
+	Timeout time.Duration
+	// InsecureSkipVerify determines whether the server's TLS certificate should be verified.
+	InsecureSkipVerify bool
+	// TLSClientCert specifies the TLS client certificate used for secure communication.
+	TLSClientCert string
+	// TLSClientKey specifies the private key associated with the TLS client certificate for secure communication.
+	TLSClientKey string
 }
 
-type Option func(*ExternalAlertmanager)
+type ExternalAMOptions struct {
+	Options
+	sanitizeLabelSetFn func(lbls models.LabelSet) labels.Labels
+}
+
+type Option func(*ExternalAMOptions)
 
 type doFunc func(context.Context, *http.Client, *http.Request) (*http.Response, error)
 
 // WithDoFunc receives a function to use when making HTTP requests from the Manager.
 func WithDoFunc(doFunc doFunc) Option {
-	return func(s *ExternalAlertmanager) {
-		s.manager.opts.Do = doFunc
+	return func(opts *ExternalAMOptions) {
+		opts.Do = doFunc
 	}
 }
 
 // WithUTF8Labels skips sanitizing labels and annotations before sending alerts to the external Alertmanager(s).
 // It assumes UTF-8 label names are supported by the Alertmanager(s).
 func WithUTF8Labels() Option {
-	return func(s *ExternalAlertmanager) {
-		s.sanitizeLabelSetFn = func(lbls models.LabelSet) labels.Labels {
+	return func(opts *ExternalAMOptions) {
+		opts.sanitizeLabelSetFn = func(lbls models.LabelSet) labels.Labels {
 			ls := make(labels.Labels, 0, len(lbls))
 			for k, v := range lbls {
 				ls = append(ls, labels.Label{Name: k, Value: v})
@@ -72,8 +85,32 @@ func WithUTF8Labels() Option {
 	}
 }
 
+// WithMaxQueueCapacity sets the maximum capacity of the queue used by the sender.
+func WithMaxQueueCapacity(capacity int) Option {
+	return func(opts *ExternalAMOptions) {
+		opts.QueueCapacity = capacity
+	}
+}
+
+// WithMaxBatchSize sets the maximum batch size for sending alerts to the external Alertmanager(s).
+func WithMaxBatchSize(size int) Option {
+	return func(opts *ExternalAMOptions) {
+		opts.MaxBatchSize = size
+	}
+}
+
 func (cfg *ExternalAMcfg) SHA256() string {
-	return asSHA256([]string{cfg.headerString(), cfg.URL})
+	skipVerify := "false"
+	if cfg.InsecureSkipVerify {
+		skipVerify = "true"
+	}
+	return asSHA256([]string{
+		cfg.headerString(),
+		cfg.URL,
+		skipVerify,
+		cfg.TLSClientCert,
+		cfg.TLSClientKey,
+	})
 }
 
 // headersString transforms all the headers in a sorted way as a
@@ -97,31 +134,47 @@ func (cfg *ExternalAMcfg) headerString() string {
 
 func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts ...Option) (*ExternalAlertmanager, error) {
 	sdCtx, sdCancel := context.WithCancel(context.Background())
+
+	options := &ExternalAMOptions{
+		Options: Options{
+			QueueCapacity:   defaultMaxQueueCapacity,
+			MaxBatchSize:    DefaultMaxBatchSize,
+			Registerer:      reg,
+			DrainOnShutdown: defaultDrainOnShutdown,
+		},
+	}
+
+	for _, opt := range opts {
+		opt(options)
+	}
+
 	s := &ExternalAlertmanager{
 		logger:   l,
 		sdCancel: sdCancel,
+		options:  options,
 	}
 
-	s.sanitizeLabelSetFn = s.sanitizeLabelSet
+	if options.sanitizeLabelSetFn == nil {
+		options.sanitizeLabelSetFn = s.sanitizeLabelSet
+	}
+
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg},
-		s.logger,
+		&options.Options,
+		toSlogLogger(s.logger),
 	)
 	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(prometheus.NewRegistry())
 	if err != nil {
 		s.logger.Error("failed to register service discovery metrics", "error", err)
 		return nil, err
 	}
-	s.sdManager = discovery.NewManager(sdCtx, s.logger, prometheus.NewRegistry(), sdMetrics)
+	// Convert s.Logger to slog.Logger using the adapter
+	slogLogger := toSlogLogger(s.logger)
+	s.sdManager = discovery.NewManager(sdCtx, slogLogger, prometheus.NewRegistry(), sdMetrics)
 
 	if s.sdManager == nil {
 		return nil, errors.New("failed to create new discovery manager")
-	}
-
-	for _, opt := range opts {
-		opt(s)
 	}
 
 	return s, nil
@@ -177,6 +230,15 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 	for _, a := range alerts.PostableAlerts {
 		na := s.alertToNotifierAlert(a)
 		as = append(as, na)
+
+		s.logger.Debug(
+			"Sending alert",
+			"alert",
+			na.String(),
+			"starts_at",
+			na.StartsAt,
+			"ends_at",
+			na.EndsAt)
 	}
 
 	s.manager.Send(as...)
@@ -204,25 +266,9 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
 	headers := map[string]http.Header{}
 	for i, am := range alertmanagers {
-		u, err := url.Parse(am.URL)
+		amConfig, err := externalAMcfgToAlertmanagerConfig(am)
 		if err != nil {
 			return nil, nil, err
-		}
-
-		sdConfig := discovery.Configs{
-			discovery.StaticConfig{
-				{
-					Targets: []model.LabelSet{{model.AddressLabel: model.LabelValue(u.Host)}},
-				},
-			},
-		}
-
-		amConfig := &config.AlertmanagerConfig{
-			APIVersion:              config.AlertmanagerAPIVersionV2,
-			Scheme:                  u.Scheme,
-			PathPrefix:              u.Path,
-			Timeout:                 model.Duration(defaultTimeout),
-			ServiceDiscoveryConfigs: sdConfig,
 		}
 
 		if am.Headers != nil {
@@ -231,16 +277,6 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 			headers[fmt.Sprintf("config-%d", i)] = am.Headers
 		}
 
-		// Check the URL for basic authentication information first
-		if u.User != nil {
-			amConfig.HTTPClientConfig.BasicAuth = &common_config.BasicAuth{
-				Username: u.User.Username(),
-			}
-
-			if password, isSet := u.User.Password(); isSet {
-				amConfig.HTTPClientConfig.BasicAuth.Password = common_config.Secret(password)
-			}
-		}
 		amConfigs = append(amConfigs, amConfig)
 	}
 
@@ -253,14 +289,70 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 	return notifierConfig, headers, nil
 }
 
+// externalAMcfgToAlertmanagerConfig converts an ExternalAMcfg to a Prometheus AlertmanagerConfig.
+func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg) (*config.AlertmanagerConfig, error) {
+	u, err := url.Parse(am.URL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse alertmanager URL: %w", err)
+	}
+
+	sdConfig := discovery.Configs{
+		discovery.StaticConfig{
+			{
+				Targets: []model.LabelSet{{model.AddressLabel: model.LabelValue(u.Host)}},
+			},
+		},
+	}
+
+	timeout := am.Timeout
+	if timeout == 0 {
+		timeout = defaultTimeout
+	}
+
+	amConfig := &config.AlertmanagerConfig{
+		APIVersion:              config.AlertmanagerAPIVersionV2,
+		Scheme:                  u.Scheme,
+		PathPrefix:              u.Path,
+		Timeout:                 model.Duration(timeout),
+		ServiceDiscoveryConfigs: sdConfig,
+	}
+
+	// Check the URL for basic authentication information first
+	if u.User != nil {
+		amConfig.HTTPClientConfig.BasicAuth = &common_config.BasicAuth{
+			Username: u.User.Username(),
+		}
+
+		if password, isSet := u.User.Password(); isSet {
+			amConfig.HTTPClientConfig.BasicAuth.Password = common_config.Secret(password)
+		}
+	}
+
+	// Validate that if TLS client cert is provided, key must also be provided (and vice versa)
+	if (am.TLSClientCert != "" && am.TLSClientKey == "") || (am.TLSClientCert == "" && am.TLSClientKey != "") {
+		return nil, fmt.Errorf("TLS client certificate and key must both be provided or both be empty")
+	}
+
+	// Set TLS configuration if any TLS options are provided
+	if am.InsecureSkipVerify || am.TLSClientCert != "" {
+		amConfig.HTTPClientConfig.TLSConfig = common_config.TLSConfig{
+			InsecureSkipVerify: am.InsecureSkipVerify,
+			Cert:               am.TLSClientCert,
+			Key:                common_config.Secret(am.TLSClientKey),
+		}
+	}
+
+	return amConfig, nil
+}
+
 func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
 	return &Alert{
-		Labels:       s.sanitizeLabelSetFn(alert.Alert.Labels),
-		Annotations:  s.sanitizeLabelSetFn(alert.Annotations),
+		Labels:       s.options.sanitizeLabelSetFn(alert.Labels),
+		Annotations:  s.options.sanitizeLabelSetFn(alert.Annotations),
 		StartsAt:     time.Time(alert.StartsAt),
 		EndsAt:       time.Time(alert.EndsAt),
-		GeneratorURL: alert.Alert.GeneratorURL.String(),
+		GeneratorURL: alert.GeneratorURL.String(),
 	}
 }
 

@@ -3,7 +3,7 @@ import { uniqueId } from 'lodash';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 
 import { RadioButtonDot } from './RadioButtonDot';
 
@@ -22,6 +22,11 @@ export interface RadioButtonListProps<T> {
   className?: string;
 }
 
+/**
+ * RadioButtonList is used to select a single value from multiple mutually exclusive options usually in a vertical manner.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-radiobuttonlist--docs
+ */
 export function RadioButtonList<T extends string | number | readonly string[]>({
   name,
   id,

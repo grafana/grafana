@@ -1,12 +1,12 @@
-import { set } from 'lodash';
+import { defaultsDeep, set } from 'lodash';
 import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
+import { PanelModel } from '../types/dashboard';
 import { FieldConfigProperty, FieldConfigSource } from '../types/fieldOverrides';
 import {
   PanelPluginMeta,
-  VisualizationSuggestionsSupplier,
   PanelProps,
   PanelEditorProps,
   PanelMigrationHandler,
@@ -14,10 +14,19 @@ import {
   PanelPluginDataSupport,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
+import {
+  getSuggestionHash,
+  PanelPluginVisualizationSuggestion,
+  VisualizationSuggestion,
+  VisualizationSuggestionsSupplierDeprecated,
+  VisualizationSuggestionsSupplier,
+  VisualizationSuggestionsBuilder,
+} from '../types/suggestions';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
 import { createFieldConfigRegistry } from './registryFactories';
+import { PanelDataSummary } from './suggestions/getPanelDataSummary';
 
 /** @beta */
 export type StandardOptionConfig = {
@@ -108,22 +117,18 @@ export class PanelPlugin<
   };
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
-  private suggestionsSupplier?: VisualizationSuggestionsSupplier;
+  private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
+  shouldMigrate?: (panel: PanelModel) => boolean;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
   dataSupport: PanelPluginDataSupport = {
     annotations: false,
     alertStates: false,
   };
-
-  /**
-   * Legacy angular ctrl. If this exists it will be used instead of the panel
-   */
-  angularPanelCtrl?: any;
 
   constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
     super();
@@ -201,10 +206,15 @@ export class PanelPlugin<
    * This function is called before the panel first loads if
    * the current version is different than the version that was saved.
    *
+   * If shouldMigrate is provided, it will be called regardless of whether
+   * the version has changed, and can explicitly opt into running the
+   * migration handler
+   *
    * This is a good place to support any changes to the options model
    */
-  setMigrationHandler(handler: PanelMigrationHandler<TOptions>) {
+  setMigrationHandler(handler: PanelMigrationHandler<TOptions>, shouldMigrate?: (panel: PanelModel) => boolean) {
     this.onPanelMigration = handler;
+    this.shouldMigrate = shouldMigrate;
     return this;
   }
 
@@ -361,20 +371,84 @@ export class PanelPlugin<
   }
 
   /**
-   * Sets function that can return visualization examples and suggestions.
-   * @alpha
+   * @deprecated use VisualizationSuggestionsSupplier
    */
-  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier) {
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierDeprecated): this;
+  /**
+   * @alpha
+   * sets function that can return visualization examples and suggestions.
+   */
+  setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>): this;
+  setSuggestionsSupplier(
+    supplier:
+      | VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>
+      | VisualizationSuggestionsSupplierDeprecated
+  ): this {
+    if (typeof supplier !== 'function') {
+      deprecationWarning(
+        'PanelPlugin',
+        'plugin.setSuggestionsSupplier(new Supplier())',
+        'plugin.setSuggestionsSupplier(dataSummary => [...])'
+      );
+      return this;
+    }
     this.suggestionsSupplier = supplier;
     return this;
   }
 
   /**
-   * Returns the suggestions supplier
    * @alpha
+   * get suggestions based on the PanelDataSummary
    */
-  getSuggestionsSupplier(): VisualizationSuggestionsSupplier | undefined {
-    return this.suggestionsSupplier;
+  getSuggestions(
+    panelDataSummary: PanelDataSummary
+  ): Array<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>> | void {
+    const withDefaults = (
+      suggestion: VisualizationSuggestion<TOptions, TFieldConfigOptions>
+    ): Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'> =>
+      defaultsDeep(suggestion, {
+        pluginId: this.meta.id,
+        name: this.meta.name,
+        options: {},
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      } satisfies Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'>);
+    return this.suggestionsSupplier?.(panelDataSummary)?.map(
+      (s): PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions> => {
+        const suggestionWithDefaults = withDefaults(s);
+        return Object.assign(suggestionWithDefaults, { hash: getSuggestionHash(suggestionWithDefaults) });
+      }
+    );
+  }
+
+  /**
+   * @deprecated use getSuggestions
+   * we have to keep this method intact to support cloud-onboarding plugin.
+   */
+  getSuggestionsSupplier() {
+    const withDefaults = (
+      suggestion: VisualizationSuggestion<TOptions, TFieldConfigOptions>
+    ): Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'> =>
+      defaultsDeep(suggestion, {
+        pluginId: this.meta.id,
+        name: this.meta.name,
+        options: {},
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      } satisfies Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'>);
+
+    return {
+      getSuggestionsForData: (builder: VisualizationSuggestionsBuilder) => {
+        deprecationWarning('PanelPlugin', 'getSuggestionsSupplier()', 'getSuggestions(panelDataSummary)');
+        this.suggestionsSupplier?.(builder.dataSummary)?.forEach((s) => {
+          builder.getListAppender(withDefaults(s)).append(s);
+        });
+      },
+    };
   }
 
   hasPluginId(pluginId: string) {

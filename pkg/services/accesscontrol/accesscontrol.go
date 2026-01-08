@@ -32,7 +32,6 @@ type AccessControl interface {
 }
 
 type Service interface {
-	registry.BackgroundService
 	registry.ProvidesUsageStats
 	// GetRoleByName returns a role by name
 	GetRoleByName(ctx context.Context, orgID int64, roleName string) (*RoleDTO, error)
@@ -59,6 +58,8 @@ type Service interface {
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	// SyncUserRoles adds provided roles to user
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
+	// GetStaicRoles returns a map where key organization role and value is a static rbac role.
+	GetStaticRoles(ctx context.Context) map[string]*RoleDTO
 }
 
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
@@ -170,7 +171,7 @@ type User struct {
 func HasGlobalAccess(ac AccessControl, authnService authn.Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
 	return func(evaluator Evaluator) bool {
 		var targetOrgID int64 = GlobalOrgID
-		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
+		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.GetID())
 		if err != nil {
 			// This will be an common error for entities that can't authenticate in global scope
 			c.Logger.Debug("Failed to authenticate user in global scope", "error", err)
@@ -184,11 +185,11 @@ func HasGlobalAccess(ac AccessControl, authnService authn.Service, c *contextmod
 		}
 
 		// guard against nil map
-		if c.SignedInUser.Permissions == nil {
-			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+		if c.Permissions == nil {
+			c.Permissions = make(map[int64]map[string][]string)
 		}
 		// set on user so we don't fetch global permissions every time this is called
-		c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
+		c.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 
 		return hasAccess
 	}
@@ -211,13 +212,13 @@ var ReqSignedIn = func(c *contextmodel.ReqContext) bool {
 }
 
 var ReqGrafanaAdmin = func(c *contextmodel.ReqContext) bool {
-	return c.SignedInUser.GetIsGrafanaAdmin()
+	return c.GetIsGrafanaAdmin()
 }
 
 // ReqHasRole generates a fallback to check whether the user has a role
 // ReqHasRole(org.RoleAdmin) will always return true for Grafana server admins, eg, a Grafana Admin / Viewer role combination
 func ReqHasRole(role org.RoleType) func(c *contextmodel.ReqContext) bool {
-	return func(c *contextmodel.ReqContext) bool { return c.SignedInUser.HasRole(role) }
+	return func(c *contextmodel.ReqContext) bool { return c.HasRole(role) }
 }
 
 func BuildPermissionsMap(permissions []Permission) map[string]bool {
@@ -243,10 +244,59 @@ func GroupScopesByActionContext(ctx context.Context, permissions []Permission) m
 	))
 	defer span.End()
 
-	m := make(map[string][]string)
-	for i := range permissions {
-		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
+	// Note: this has been optimized to improve memory usage in large instances
+	// where there are lots of permissions. This isn't quite as fast as it can
+	// be, but we should prioritize memory over speed in this case.
+
+	if len(permissions) == 0 {
+		return make(map[string][]string)
 	}
+
+	// Use index-based approach with cached lookups for better performance
+	// First pass: assign and cache indices for each permission
+	actionIndex := make(map[string]int)
+	indices := make([]int, len(permissions))
+
+	for i := range permissions {
+		action := permissions[i].Action
+		if idx, ok := actionIndex[action]; ok {
+			indices[i] = idx
+		} else {
+			idx = len(actionIndex)
+			actionIndex[action] = idx
+			indices[i] = idx
+		}
+	}
+
+	// Count scopes per action using cached indices
+	actionCounts := make([]int, len(actionIndex))
+	for i := range indices {
+		actionCounts[indices[i]]++
+	}
+
+	// Preallocate slice array with exact capacities
+	scopes := make([][]string, len(actionCounts))
+	for i, count := range actionCounts {
+		scopes[i] = make([]string, 0, count)
+	}
+
+	// Second pass: append scopes using cached indices (no map lookups!)
+	for i := range permissions {
+		idx := indices[i]
+		scopes[idx] = append(scopes[idx], permissions[i].Scope)
+	}
+
+	// Build result map
+	m := make(map[string][]string, len(actionIndex))
+	for action, idx := range actionIndex {
+		m[action] = scopes[idx]
+	}
+
+	span.SetAttributes(
+		attribute.Int("unique_actions", len(actionIndex)),
+		attribute.Float64("avg_scopes_per_action", float64(len(permissions))/float64(len(actionIndex))),
+	)
+
 	return m
 }
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react';
+import { autoUpdate, offset, size, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -10,29 +10,28 @@ import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { Button, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
-import config from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
+import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
-import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
-import { useDatasource } from '../../hooks';
+import { useDatasource, useDatasources } from '../../hooks';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
-const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
-const INTERACTION_ITEM = {
+export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
+export const INTERACTION_ITEM = {
   SEARCH: 'search',
   OPEN_DROPDOWN: 'open_dspicker',
   SELECT_DS: 'select_ds',
-  ADD_FILE: 'add_file',
   OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
   CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
+  TOGGLE_FAVORITE: 'toggle_favorite',
 };
 
 export interface DataSourcePickerProps {
@@ -57,7 +56,6 @@ export interface DataSourcePickerProps {
   alerting?: boolean;
   pluginId?: string;
   logs?: boolean;
-  uploadFile?: boolean;
   filter?: (ds: DataSourceInstanceSettings) => boolean;
 }
 
@@ -98,10 +96,23 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   // Used to move the focus to the footer when tabbing from the input
   const [footerRef, setFooterRef] = useState<HTMLElement | null>();
   const currentDataSourceInstanceSettings = useDatasource(current);
-  const grafanaDS = useDatasource('-- Grafana --');
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
+  const dataSources = useDatasources({
+    alerting: props.alerting,
+    annotations: props.annotations,
+    dashboard: props.dashboard,
+    logs: props.logs,
+    metrics: props.metrics,
+    mixed: props.mixed,
+    pluginId: props.pluginId,
+    tracing: props.tracing,
+    type: props.type,
+    variables: props.variables,
+  });
+  const favoriteDataSources = useFavoriteDatasources();
+  const placement = 'bottom-start';
 
   // the order of middleware is important!
   const middleware = [
@@ -114,18 +125,12 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
         elements.floating.style.minHeight = `${minSize}px`;
       },
     }),
-    flip({
-      fallbackStrategy: 'initialPlacement',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
+    ...floatingUtils.getPositioningMiddleware(placement),
   ];
 
   const { refs, floatingStyles } = useFloating({
     open: isOpen,
-    placement: 'bottom-start',
+    placement,
     onOpenChange: setOpen,
     middleware,
     whileElementsMounted: autoUpdate,
@@ -167,14 +172,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   function openDropdown() {
     setOpen(true);
     markerElement?.focus();
-  }
-
-  function onClickAddCSV() {
-    if (!grafanaDS) {
-      return;
-    }
-
-    onChange(grafanaDS, [defaultFileUploadQuery]);
   }
 
   function onKeyDownInput(keyEvent: React.KeyboardEvent<HTMLInputElement>) {
@@ -235,6 +232,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
             item: INTERACTION_ITEM.OPEN_DROPDOWN,
             creator_team: 'grafana_plugins_catalog',
             schema_version: '1.0.0',
+            total_configured: dataSources.length,
           });
         }}
       >
@@ -242,7 +240,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           id={inputId || 'data-source-picker'}
           className={inputHasFocus ? undefined : styles.input}
           data-testid={selectors.components.DataSourcePicker.inputV2}
-          aria-label="Select a data source"
+          aria-label={t('datasources.data-source-picker.aria-label-select-a-data-source', 'Select a data source')}
           autoComplete="off"
           prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
@@ -282,13 +280,20 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                 onClose();
                 if (ds.uid !== currentValue?.uid) {
                   onChange(ds, defaultQueries);
-                  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SELECT_DS, ds_type: ds.type });
+                  reportInteraction(INTERACTION_EVENT_NAME, {
+                    item: INTERACTION_ITEM.SELECT_DS,
+                    ds_type: ds.type,
+                    is_favorite: favoriteDataSources.enabled
+                      ? favoriteDataSources.isFavoriteDatasource(ds.uid)
+                      : undefined,
+                  });
                 }
               }}
               onClose={onClose}
-              onClickAddCSV={onClickAddCSV}
               onDismiss={onClose}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
+              dataSources={dataSources}
+              favoriteDataSources={favoriteDataSources}
             />
           </div>
         </Portal>
@@ -317,7 +322,6 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
 }
 
 export interface PickerContentProps extends DataSourcePickerProps {
-  onClickAddCSV?: () => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
   style: React.CSSProperties;
   filterTerm?: string;
@@ -325,10 +329,12 @@ export interface PickerContentProps extends DataSourcePickerProps {
   onDismiss: () => void;
   footerRef: (element: HTMLElement | null) => void;
   onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+  dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  favoriteDataSources: FavoriteDatasources;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter } = props;
+  const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources } = props;
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -337,12 +343,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
     [onChange]
   );
 
-  const clickAddCSVCallback = useCallback(() => {
-    onClickAddCSV?.();
-    onClose();
-    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ADD_FILE });
-  }, [onClickAddCSV, onClose]);
-
   const styles = useStyles2(getStylesPickerContent);
 
   return (
@@ -350,6 +350,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
       <ScrollContainer showScrollIndicators>
         <DataSourceList
           {...props}
+          favoriteDataSources={favoriteDataSources}
           enableKeyboardNavigation
           className={styles.dataSourceList}
           current={current}
@@ -360,15 +361,11 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
             })
           }
+          dataSources={dataSources}
         ></DataSourceList>
       </ScrollContainer>
       <FocusScope>
-        <Footer
-          {...props}
-          onClickAddCSV={clickAddCSVCallback}
-          onChange={changeCallback}
-          onNavigateOutsiteFooter={props.onNavigateOutsiteFooter}
-        />
+        <Footer {...props} onChange={changeCallback} onNavigateOutsiteFooter={props.onNavigateOutsiteFooter} />
       </FocusScope>
     </div>
   );
@@ -380,8 +377,10 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      background: theme.colors.background.primary,
+      background: theme.colors.background.elevated,
+      borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
+      overflow: 'hidden',
     }),
     picker: css({
       background: theme.colors.background.secondary,
@@ -403,17 +402,11 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
 
 export interface FooterProps extends PickerContentProps {}
 
-function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
+function Footer({ onClose, onChange, ...props }: FooterProps) {
   const styles = useStyles2(getStylesFooter);
-  const isUploadFileEnabled = props.uploadFile && config.featureToggles.editPanelCSVDragAndDrop;
 
   const onKeyDownLastButton = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Tab') {
-      props.onNavigateOutsiteFooter(e);
-    }
-  };
-  const onKeyDownFirstButton = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'Tab' && e.shiftKey) {
       props.onNavigateOutsiteFooter(e);
     }
   };
@@ -441,29 +434,24 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
                 pluginId: props.pluginId,
                 logs: props.logs,
                 filter: props.filter,
-                uploadFile: props.uploadFile,
                 current: props.current,
                 onDismiss: hideModal,
                 onChange: (ds, defaultQueries) => {
                   onChange(ds, defaultQueries);
                   hideModal();
                 },
+                dataSources: props.dataSources,
               });
               reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
             }}
             ref={props.footerRef}
-            onKeyDown={isUploadFileEnabled ? onKeyDownFirstButton : onKeyDownLastButton}
+            onKeyDown={onKeyDownLastButton}
           >
             <Trans i18nKey="data-source-picker.open-advanced-button">Open advanced data source picker</Trans>
             <Icon name="arrow-right" />
           </Button>
         )}
       </ModalsController>
-      {isUploadFileEnabled && (
-        <Button variant="secondary" size="sm" onClick={onClickAddCSV} onKeyDown={onKeyDownLastButton}>
-          Add csv or spreadsheet
-        </Button>
-      )}
     </div>
   );
 }

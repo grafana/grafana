@@ -10,10 +10,20 @@ import {
   VirtualizedSelectAsyncProps,
 } from './types';
 
+/**
+ * @deprecated Use Combobox component instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
+ */
 export function Select<T, Rest = {}>(props: SelectCommonProps<T> & Rest) {
   return <SelectBase {...props} />;
 }
 
+/**
+ * @deprecated Use Combobox component instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
+ */
 export function MultiSelect<T, Rest = {}>(props: MultiSelectCommonProps<T> & Rest) {
   // @ts-ignore
   return <SelectBase {...props} isMulti />;
@@ -24,14 +34,29 @@ export interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options
   value?: T | SelectableValue<T> | null;
 }
 
+/**
+ * @deprecated Use Combobox component instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
+ */
 export function AsyncSelect<T, Rest = {}>(props: AsyncSelectProps<T> & Rest) {
   return <SelectBase {...props} />;
 }
 
+/**
+ * @deprecated Use Combobox component instead - it's virtualised by default!
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
+ */
 export function VirtualizedSelect<T, Rest = {}>(props: VirtualizedSelectProps<T> & Rest) {
   return <SelectBase virtualized {...props} />;
 }
 
+/**
+ * @deprecated Use Combobox component instead - it's virtualised by default!
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
+ */
 export function AsyncVirtualizedSelect<T, Rest = {}>(props: VirtualizedSelectAsyncProps<T> & Rest) {
   return <SelectBase virtualized {...props} />;
 }
@@ -41,6 +66,11 @@ interface AsyncMultiSelectProps<T> extends Omit<MultiSelectCommonProps<T>, 'opti
   value?: Array<SelectableValue<T>>;
 }
 
+/**
+ * @deprecated Use Combobox component instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
+ */
 export function AsyncMultiSelect<T, Rest = {}>(props: AsyncMultiSelectProps<T> & Rest) {
   // @ts-ignore
   return <SelectBase {...props} isMulti />;

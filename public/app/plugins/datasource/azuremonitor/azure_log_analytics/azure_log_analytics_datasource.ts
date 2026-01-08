@@ -6,17 +6,17 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import ResponseParser from '../azure_monitor/response_parser';
 import { getCredentials } from '../credentials';
+import { AzureQueryType } from '../dataquery.gen';
+import { AzureMonitorQuery } from '../types/query';
 import {
-  AzureAPIResponse,
-  AzureMonitorDataSourceInstanceSettings,
   AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceInstanceSettings,
+  AzureAPIResponse,
   AzureLogsVariable,
-  AzureMonitorQuery,
-  AzureQueryType,
+  Workspace,
   DatasourceValidationResult,
   Subscription,
-  Workspace,
-} from '../types';
+} from '../types/types';
 import { interpolateVariable, routeNames } from '../utils/common';
 
 import { transformMetadataToKustoSchema } from './utils';
@@ -125,6 +125,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         queryType: target.queryType || AzureQueryType.LogAnalytics,
 
         azureLogAnalytics: {
+          builderQuery: item.builderQuery,
           resultFormat: item.resultFormat,
           query,
           resources,

@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Box } from '../Layout/Box/Box';
 
 import { MenuDivider } from './MenuDivider';
@@ -22,9 +22,13 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   onKeyDown?: React.KeyboardEventHandler;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-menu--docs
+ */
 const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
   ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
+    const componentTokens = useComponentTokens();
 
     const localRef = useRef<HTMLDivElement>(null);
     useImperativeHandle(forwardedRef, () => localRef.current!);
@@ -35,13 +39,12 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
       <Box
         {...otherProps}
         aria-label={ariaLabel}
-        backgroundColor="primary"
-        borderRadius="default"
+        backgroundColor="elevated"
+        borderRadius={componentTokens.borderRadius}
         boxShadow="z3"
         display="inline-block"
         onKeyDown={handleKeys}
-        paddingX={0}
-        paddingY={0.5}
+        padding={componentTokens.padding}
         ref={localRef}
         role="menu"
         tabIndex={-1}
@@ -70,13 +73,26 @@ export const Menu = Object.assign(MenuComp, {
   Group: MenuGroup,
 });
 
+const useComponentTokens = () =>
+  useStyles2((theme: GrafanaTheme2) => {
+    const {
+      components: { menu },
+    } = theme;
+
+    return {
+      padding: menu.padding,
+      borderRadius: menu.borderRadius,
+    };
+  });
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
-      padding: theme.spacing(0.5, 1, 1, 1),
+      padding: theme.spacing(0.5, 0.5, 1, 0.5),
     }),
     headerBorder: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      marginBottom: theme.spacing(0.5),
     }),
   };
 };

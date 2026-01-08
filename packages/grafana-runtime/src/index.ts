@@ -9,7 +9,15 @@ export * from './analytics/types';
 export { loadPluginCss, type PluginCssOptions, setPluginImportUtils, getPluginImportUtils } from './utils/plugin';
 export { reportMetaAnalytics, reportInteraction, reportPageview, reportExperimentView } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
-export { logInfo, logDebug, logWarning, logError, createMonitoringLogger } from './utils/logging';
+export {
+  logInfo,
+  logDebug,
+  logWarning,
+  logError,
+  createMonitoringLogger,
+  logMeasurement,
+  type MonitoringLogger,
+} from './utils/logging';
 export {
   DataSourceWithBackend,
   HealthCheckError,
@@ -37,7 +45,7 @@ export {
   getRunRequest,
 } from './services/QueryRunner';
 export { PluginPage } from './components/PluginPage';
-export type { PluginPageType, PluginPageProps } from './components/PluginPage';
+export type { PluginPageType, PluginPageProps, PluginPageBackground } from './components/PluginPage';
 export {
   DataSourcePicker,
   type DataSourcePickerProps,
@@ -51,9 +59,21 @@ export {
 } from './analytics/plugins/eventProperties';
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
 export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPrevious';
+export { setMegaMenuOpenHook, useMegaMenuOpen } from './utils/megaMenuOpen';
 export { setChromeHeaderHeightHook, useChromeHeaderHeight } from './utils/chromeHeaderHeight';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
 export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';
 export { usePluginUserStorage } from './utils/userStorage';
+export { useFavoriteDatasources, type FavoriteDatasources } from './utils/useFavoriteDatasources';
+export { FolderPicker, setFolderPicker } from './components/FolderPicker';
+export {
+  type CorrelationsService,
+  type CorrelationData,
+  type CorrelationsData,
+  type CorrelationExternal,
+  type CorrelationQuery,
+  getCorrelationsService,
+  setCorrelationsService,
+} from './services/CorrelationsService';

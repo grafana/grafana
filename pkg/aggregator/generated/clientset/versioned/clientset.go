@@ -5,8 +5,8 @@
 package versioned
 
 import (
-	"fmt"
-	"net/http"
+	fmt "fmt"
+	http "net/http"
 
 	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/generated/clientset/versioned/typed/aggregation/v0alpha1"
 	discovery "k8s.io/client-go/discovery"

@@ -113,8 +113,8 @@ describe('fieldColorModeRegistry', () => {
     const calcFn1 = mode.getCalculator(frames[0].fields[1], createTheme());
     const calcFn2 = mode.getCalculator(frames[1].fields[1], createTheme());
 
-    expect(calcFn1(0, 0)).toEqual('#82B5D8');
-    expect(calcFn2(0, 0)).toEqual('#FCE2DE');
+    expect(calcFn1(0, 0)).toEqual('#5195CE');
+    expect(calcFn2(0, 0)).toEqual('#37872D');
   });
 
   it('When color.seriesBy is set to last use that instead of v', () => {

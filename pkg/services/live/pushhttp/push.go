@@ -48,7 +48,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 func (g *Gateway) Handle(ctx *contextmodel.ReqContext) {
 	streamID := web.Params(ctx.Req)[":streamId"]
 
-	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgID, liveDto.ScopeStream, streamID)
+	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.OrgID, liveDto.ScopeStream, streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)

@@ -7,11 +7,13 @@ import (
 	"net/textproto"
 	"strings"
 
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -26,6 +28,13 @@ var (
 	errNilRequest = errors.New("req cannot be nil")
 	errNilSender  = errors.New("sender cannot be nil")
 )
+
+// passthroughErrors contains a list of errors that should be returned directly to the caller without wrapping
+var passthroughErrors = []error{
+	plugins.ErrPluginUnavailable,
+	plugins.ErrMethodNotImplemented,
+	plugins.ErrPluginGrpcResourceExhaustedBase,
+}
 
 type Service struct {
 	pluginRegistry registry.Service
@@ -49,11 +58,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	resp, err := p.QueryData(ctx, req)
 	if err != nil {
-		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return nil, err
+		for _, e := range passthroughErrors {
+			if errors.Is(err, e) {
+				return nil, err
+			}
 		}
 
-		if errors.Is(err, plugins.ErrPluginUnavailable) {
+		// If the error is a plugin grpc connection unavailable error, return it directly
+		// This error is created dynamically based on the context, so we need to check for it here
+		if errors.Is(err, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx)) {
 			return nil, err
 		}
 
@@ -61,7 +74,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
 		}
 
-		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to query data: %w", err)
+		if s, ok := grpcstatus.FromError(err); ok && s.Code() == grpccodes.Canceled {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
+		}
+
+		return nil, plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to query data: %w", err)
 	}
 
 	for refID, res := range resp.Responses {
@@ -106,7 +123,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 				res.Headers = map[string][]string{}
 			}
 
-			proxyutil.SetProxyResponseHeaders(res.Headers)
+			SetCSPHeader(res.Headers)
 			ensureContentTypeHeader(res)
 		}
 
@@ -120,7 +137,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
 		}
 
-		return plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to call resources: %w", err)
+		return plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to call resources: %w", err)
 	}
 
 	return nil
@@ -142,7 +159,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: collect metrics request canceled: %w", err)
 		}
 
-		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to collect metrics: %w", err)
+		return nil, plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to collect metrics: %w", err)
 	}
 
 	return resp, nil
@@ -261,6 +278,10 @@ func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionR
 	}
 
 	return plugin.ValidateAdmission(ctx, req)
+}
+
+func SetCSPHeader(header http.Header) {
+	header.Set("Content-Security-Policy", "sandbox")
 }
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned

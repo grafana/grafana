@@ -3,12 +3,13 @@ import { memo, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../../themes';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
-import { t, Trans } from '../../../utils/i18n';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
+import { TextLink } from '../../Link/TextLink';
 import { WeekStart } from '../WeekStartPicker';
 
 import { TimePickerFooter } from './TimePickerFooter';
@@ -234,13 +235,9 @@ const EmptyRecentList = memo(() => {
       </div>
       <Trans i18nKey="time-picker.content.empty-recent-list-docs">
         <div>
-          <a
-            className={styles.link}
-            href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
-            target="_new"
-          >
+          <TextLink href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls" external>
             Read the documentation
-          </a>
+          </TextLink>
           <span> to find out more about how to enter custom time ranges.</span>
         </div>
       </Trans>
@@ -277,7 +274,7 @@ const getStyles = (
   isFullscreen?: boolean
 ) => ({
   container: css({
-    background: theme.colors.background.primary,
+    background: theme.colors.background.elevated,
     boxShadow: theme.shadows.z3,
     width: `${isFullscreen ? '546px' : '262px'}`,
     borderRadius: theme.shape.radius.default,
@@ -370,8 +367,5 @@ const getEmptyListStyles = (theme: GrafanaTheme2) => ({
     'a, span': {
       fontSize: '13px',
     },
-  }),
-  link: css({
-    color: theme.colors.text.link,
   }),
 });

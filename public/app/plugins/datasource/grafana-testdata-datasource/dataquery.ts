@@ -21,12 +21,14 @@ export enum TestDataQueryType {
   NodeGraph = 'node_graph',
   PredictableCSVWave = 'predictable_csv_wave',
   PredictablePulse = 'predictable_pulse',
+  QueryMeta = 'query_meta',
   RandomWalk = 'random_walk',
   RandomWalkTable = 'random_walk_table',
   RandomWalkWithError = 'random_walk_with_error',
   RawFrame = 'raw_frame',
   ServerError500 = 'server_error_500',
   Simulation = 'simulation',
+  Steps = 'steps',
   SlowQuery = 'slow_query',
   StreamingClient = 'streaming_client',
   TableStatic = 'table_static',
@@ -41,7 +43,7 @@ export interface StreamingQuery {
   noise: number;
   speed: number;
   spread: number;
-  type: 'signal' | 'logs' | 'fetch' | 'traces';
+  type: 'signal' | 'logs' | 'fetch' | 'traces' | 'watch';
   url?: string;
 }
 

@@ -1,11 +1,11 @@
 import { cx, css } from '@emotion/css';
-import { cloneElement } from 'react';
+import { cloneElement, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getChildId } from '../../utils/reactUtils';
-import { PopoverContent } from '../Tooltip';
+import { PopoverContent } from '../Tooltip/types';
 
 import { FieldProps } from './Field';
 import { FieldValidationMessage } from './FieldValidationMessage';
@@ -23,12 +23,17 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   /** Make field's background transparent */
   transparent?: boolean;
   /** Error message to display */
-  error?: string | null;
+  error?: ReactNode;
   htmlFor?: string;
   /** Make tooltip interactive */
   interactive?: boolean;
 }
 
+/**
+ * A basic component for rendering form elements, like `Input`, `Checkbox`, `Combobox`, etc, inline together with `InlineLabel`. If the child element has `id` specified, the label's `htmlFor` attribute, pointing to the id, will be added.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-inlinefield--docs
+ */
 export const InlineField = ({
   children,
   label,
@@ -98,7 +103,6 @@ const getStyles = (theme: GrafanaTheme2, grow?: boolean, shrink?: boolean) => {
       position: 'relative',
       flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,
       margin: `0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0`,
-      maxWidth: '100%',
     }),
     childContainer: css({
       flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,

@@ -5,6 +5,8 @@
       - "discovery.type=single-node"
       - "xpack.license.self_generated.type=basic"
       - "xpack.security.enabled=false"
+      - 'ES_JAVA_OPTS=-XX:UseSVE=0'
+      - 'CLI_JAVA_OPTS=-XX:UseSVE=0'
     ports:
       - 9200:9200
 

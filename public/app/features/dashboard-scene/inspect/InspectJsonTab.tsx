@@ -3,11 +3,13 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   SceneDataTransformer,
   sceneGraph,
   SceneGridItemStateLike,
+  SceneGridLayout,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -15,9 +17,9 @@ import {
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema/';
-import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { LibraryPanel } from '@grafana/schema';
+import { Alert, Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelInspectorStyles2 } from 'app/features/inspector/styles';
@@ -26,8 +28,10 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { buildVizPanel } from '../serialization/layoutSerializers/utils';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import {
   getDashboardSceneFor,
   getLibraryPanelBehavior,
@@ -35,6 +39,7 @@ import {
   getQueryRunnerFor,
   isLibraryPanel,
 } from '../utils/utils';
+import { isPanelKindV2 } from '../v2schema/validation';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
@@ -43,6 +48,7 @@ export interface InspectJsonTabState extends SceneObjectState {
   source: ShowContent;
   jsonText: string;
   onClose: () => void;
+  error?: string;
 }
 
 export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
@@ -100,38 +106,83 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   }
 
   public onChangeSource = (value: SelectableValue<ShowContent>) => {
-    this.setState({ source: value.value!, jsonText: getJsonText(value.value!, this.state.panelRef.resolve()) });
+    this.setState({
+      source: value.value!,
+      jsonText: getJsonText(value.value!, this.state.panelRef.resolve()),
+      error: undefined,
+    });
   };
 
   public onApplyChange = () => {
     const panel = this.state.panelRef.resolve();
     const dashboard = getDashboardSceneFor(panel);
-    const jsonObj = JSON.parse(this.state.jsonText);
-
-    const panelModel = new PanelModel(jsonObj);
-    const gridItem = buildGridItemForPanel(panelModel);
-    const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
-
-    if (!(panel.parent instanceof DashboardGridItem)) {
-      console.error('Cannot update state of panel', panel, gridItem);
+    let jsonObj: unknown;
+    try {
+      jsonObj = JSON.parse(this.state.jsonText);
+    } catch (e) {
+      this.setState({
+        error: t('dashboard-scene.inspect-json-tab.error-invalid-json', 'Invalid JSON'),
+      });
       return;
     }
 
-    this.state.onClose();
+    if (isDashboardV2Spec(dashboard.getSaveModel())) {
+      if (!isPanelKindV2(jsonObj)) {
+        this.setState({
+          error: t(
+            'dashboard-scene.inspect-json-tab.error-invalid-v2-panel',
+            'Panel JSON did not pass validation. Please check the JSON and try again.'
+          ),
+        });
+        return;
+      }
+      const vizPanel = buildVizPanel(jsonObj, jsonObj.spec.id);
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+      if (!dashboard.state.isEditing) {
+        dashboard.onEnterEditMode();
+      }
+
+      reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+        panel_type_changed: panel.state.pluginId !== jsonObj.spec.vizConfig.group,
+        panel_id_changed: getPanelIdForVizPanel(panel) !== jsonObj.spec.id,
+        panel_grid_pos_changed: false, // Grid cant be edited from inspect in v2 panels.
+        panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(vizPanel.state.$data)),
+      });
+
+      panel.setState(vizPanel.state);
+      this.state.onClose();
+    } else {
+      const panelModel = new PanelModel(jsonObj);
+      const gridItem = buildGridItemForPanel(panelModel);
+      const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
+
+      if (!(panel.parent instanceof DashboardGridItem)) {
+        console.error('Cannot update state of panel', panel, gridItem);
+        return;
+      }
+
+      this.state.onClose();
+
+      if (!dashboard.state.isEditing) {
+        dashboard.onEnterEditMode();
+      }
+
+      panel.parent.setState(newState);
+
+      // Force the grid layout to re-render with the new positions
+      const layout = sceneGraph.getLayout(panel);
+      if (layout instanceof SceneGridLayout) {
+        layout.forceRender();
+      }
+
+      //Report relevant updates
+      reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+        panel_type_changed: panel.state.pluginId !== panelModel.type,
+        panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
+        panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
+        panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(newState.$data)),
+      });
     }
-
-    panel.parent.setState(newState);
-
-    //Report relevant updates
-    reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
-      panel_type_changed: panel.state.pluginId !== panelModel.type,
-      panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
-      panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
-      panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(newState.$data)),
-    });
   };
 
   public onCodeEditorBlur = (value: string) => {
@@ -159,48 +210,56 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     return dashboard.state.meta.canEdit;
   }
 
-  static Component = ({ model }: SceneComponentProps<InspectJsonTab>) => {
-    const { source: show, jsonText } = model.useState();
-    const styles = useStyles2(getPanelInspectorStyles2);
-    const options = model.getOptions();
+  static Component = InspectJsonTabComponent;
+}
 
-    return (
-      <div className={styles.wrap}>
-        <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
-          <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
-            <Select
-              inputId="select-source-dropdown"
-              options={options}
-              value={options.find((v) => v.value === show) ?? options[0].value}
-              onChange={model.onChangeSource}
-            />
-          </Field>
-          {model.isEditable() && (
-            <Button className={styles.toolbarItem} onClick={model.onApplyChange}>
-              Apply
-            </Button>
-          )}
-        </div>
+function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>) {
+  const { source: show, jsonText, error } = model.useState();
+  const styles = useStyles2(getPanelInspectorStyles2);
+  const options = model.getOptions();
 
-        <div className={styles.content}>
-          <AutoSizer disableWidth>
-            {({ height }) => (
-              <CodeEditor
-                width="100%"
-                height={height}
-                language="json"
-                showLineNumbers={true}
-                showMiniMap={jsonText.length > 100}
-                value={jsonText}
-                readOnly={!model.isEditable()}
-                onBlur={model.onCodeEditorBlur}
-              />
-            )}
-          </AutoSizer>
-        </div>
+  return (
+    <div className={styles.wrap}>
+      <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
+        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1" noMargin>
+          <Select
+            inputId="select-source-dropdown"
+            options={options}
+            value={options.find((v) => v.value === show) ?? options[0].value}
+            onChange={model.onChangeSource}
+          />
+        </Field>
+        {model.isEditable() && (
+          <Button className={styles.toolbarItem} onClick={model.onApplyChange}>
+            <Trans i18nKey="dashboard-scene.inspect-json-tab.apply">Apply</Trans>
+          </Button>
+        )}
       </div>
-    );
-  };
+
+      {error && (
+        <Alert severity="error" title={t('dashboard-scene.inspect-json-tab.validation-error', 'Validation error')}>
+          <p>{error}</p>
+        </Alert>
+      )}
+
+      <div className={styles.content}>
+        <AutoSizer disableWidth>
+          {({ height }) => (
+            <CodeEditor
+              width="100%"
+              height={height}
+              language="json"
+              showLineNumbers={true}
+              showMiniMap={jsonText.length > 100}
+              value={jsonText}
+              readOnly={!model.isEditable()}
+              onBlur={model.onCodeEditorBlur}
+            />
+          )}
+        </AutoSizer>
+      </div>
+    </div>
+  );
 }
 
 function getJsonText(show: ShowContent, panel: VizPanel): string {
@@ -218,8 +277,13 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
         break;
       }
 
-      if (gridItem instanceof DashboardGridItem) {
-        objToStringify = gridItemToPanel(gridItem);
+      if (isDashboardV2Spec(getDashboardSceneFor(panel).getSaveModel())) {
+        objToStringify = vizPanelToSchemaV2(panel);
+        break;
+      } else {
+        if (gridItem instanceof DashboardGridItem) {
+          objToStringify = gridItemToPanel(gridItem);
+        }
       }
 
       break;

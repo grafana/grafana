@@ -1,12 +1,15 @@
+import type { JSX } from 'react';
+
 import { CoreApp, LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
-import { EditorHeader, InlineSelect, FlexItem } from '@grafana/experimental';
+import { EditorHeader, InlineSelect, FlexItem } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';
 
+import { CloudWatchQueryMode } from '../../dataquery.gen';
 import { CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
 import { useIsMonitoringAccount, useRegions } from '../../hooks';
-import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode, MetricQueryType } from '../../types';
+import { CloudWatchJsonData, CloudWatchQuery } from '../../types';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   extraHeaderElementLeft?: JSX.Element;
@@ -47,21 +50,13 @@ const QueryHeader = ({
   const onRegionChange = async (region: string) => {
     if (config.featureToggles.cloudWatchCrossAccountQuerying && isCloudWatchMetricsQuery(query)) {
       const isMonitoringAccount = await datasource.resources.isMonitoringAccount(region);
-      onChange({ ...query, region, accountId: isMonitoringAccount ? query.accountId : undefined });
+      onChange({ ...query, logGroups: [], region, accountId: isMonitoringAccount ? query.accountId : undefined });
     } else {
-      onChange({ ...query, region });
+      onChange({ ...query, logGroups: [], region });
     }
   };
-  const metricInsightsCrossAccountEnabled = config.featureToggles.cloudwatchMetricInsightsCrossAccount;
 
-  const shouldDisplayMonitoringBadge =
-    config.featureToggles.cloudWatchCrossAccountQuerying &&
-    isMonitoringAccount &&
-    (query.queryMode === 'Logs' ||
-      (isCloudWatchMetricsQuery(query) && query.metricQueryType === MetricQueryType.Search) ||
-      (metricInsightsCrossAccountEnabled &&
-        isCloudWatchMetricsQuery(query) &&
-        query.metricQueryType === MetricQueryType.Insights));
+  const shouldDisplayMonitoringBadge = config.featureToggles.cloudWatchCrossAccountQuerying && isMonitoringAccount;
 
   return (
     <>

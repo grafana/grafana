@@ -24,6 +24,8 @@ refs:
   grafana-enterprise:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
   organization-roles:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles
@@ -69,9 +71,8 @@ After you add and configure a data source, you can use it as an input for many o
 
 This documentation describes how to manage data sources in general,
 and how to configure or query the built-in data sources.
-For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
 
-To develop a custom plugin, refer to [Create a data source plugin](#create-a-data-source-plugin).
+For other available plugins, refer to the list of [documented plugins](https://grafana.com/docs/plugins/) or browse the [Plugin catalog](/grafana/plugins/). To develop a custom plugin, refer to [Create a data source plugin](#create-a-data-source-plugin).
 
 ## Manage data sources
 
@@ -84,9 +85,9 @@ For details on data source management, including instructions on how configure u
 
 Before you can create your first dashboard, you need to add your data source.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Only users with the organization admin role can add data sources.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **To add a data source:**
 
@@ -111,13 +112,19 @@ For example, this video demonstrates the visual Prometheus query builder:
 
 For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data](ref:query-transform-data).
 
+## Build a dashboard from the data source
+
+After you've configured a data source, you can start creating a dashboard directly from it, by clicking the **Build a dashboard** button.
+
+For more information, refer to [Begin dashboard creation from data source configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#begin-dashboard-creation-from-connections).
+
 ## Special data sources
 
 Grafana includes three special data sources:
 
 ### Grafana
 
-A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
+A built-in data source that generates random walk data and can poll the [Testdata](testdata/) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
 
 ### Mixed
 
@@ -140,24 +147,24 @@ These built-in core data sources are also included in the Grafana documentation:
 
 {{< column-list >}}
 
-- [Alertmanager]({{< relref "./alertmanager" >}})
-- [AWS CloudWatch]({{< relref "./aws-cloudwatch" >}})
-- [Azure Monitor]({{< relref "./azure-monitor" >}})
-- [Elasticsearch]({{< relref "./elasticsearch" >}})
-- [Google Cloud Monitoring]({{< relref "./google-cloud-monitoring" >}})
-- [Graphite]({{< relref "./graphite" >}})
-- [InfluxDB]({{< relref "./influxdb" >}})
-- [Jaeger]({{< relref "./jaeger" >}})
-- [Loki]({{< relref "./loki" >}})
-- [Microsoft SQL Server (MSSQL)]({{< relref "./mssql" >}})
-- [MySQL]({{< relref "./mysql" >}})
-- [OpenTSDB]({{< relref "./opentsdb" >}})
-- [PostgreSQL]({{< relref "./postgres" >}})
-- [Prometheus]({{< relref "./prometheus" >}})
-- [Pyroscope]({{< relref "./pyroscope" >}})
-- [Tempo]({{< relref "./tempo" >}})
-- [Testdata]({{< relref "./testdata" >}})
-- [Zipkin]({{< relref "./zipkin" >}})
+- [Alertmanager](alertmanager/)
+- [AWS CloudWatch](aws-cloudwatch/)
+- [Azure Monitor](azure-monitor/)
+- [Elasticsearch](elasticsearch/)
+- [Google Cloud Monitoring](google-cloud-monitoring/)
+- [Graphite](graphite/)
+- [InfluxDB](influxdb/)
+- [Jaeger](jaeger/)
+- [Loki](loki/)
+- [Microsoft SQL Server (MSSQL)](mssql/)
+- [MySQL](mysql/)
+- [OpenTSDB](opentsdb/)
+- [PostgreSQL](postgres/)
+- [Prometheus](prometheus/)
+- [Pyroscope](pyroscope/)
+- [Tempo](tempo/)
+- [Testdata](testdata/)
+- [Zipkin](zipkin/)
 
 {{< /column-list >}}
 

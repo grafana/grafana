@@ -9,13 +9,21 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // run tests with cleanup
@@ -23,9 +31,15 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestConcurrentUsersMetrics(t *testing.T) {
+func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore)
+	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
+	}, nil)
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, unifiedStorage, featuremgmt.WithFeatures())
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)
@@ -41,9 +55,15 @@ func TestConcurrentUsersMetrics(t *testing.T) {
 	assert.Equal(t, int32(6), stats["stats.auth_token_per_user_le_inf"])
 }
 
-func TestConcurrentUsersStats(t *testing.T) {
+func TestIntegrationConcurrentUsersStats(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore)
+	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
+	}, nil)
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, unifiedStorage, featuremgmt.WithFeatures())
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)

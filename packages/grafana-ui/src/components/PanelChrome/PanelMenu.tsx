@@ -2,10 +2,11 @@ import { cx } from '@emotion/css';
 import { ReactElement, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
+import { Button } from '../Button/Button';
 import { Dropdown } from '../Dropdown/Dropdown';
-import { ToolbarButton } from '../ToolbarButton';
-import { TooltipPlacement } from '../Tooltip';
+import { TooltipPlacement } from '../Tooltip/types';
 
 interface PanelMenuProps {
   menu: ReactElement | (() => ReactElement);
@@ -39,12 +40,12 @@ export function PanelMenu({
 
   return (
     <Dropdown overlay={menu} placement={placement} offset={offset} onVisibleChange={handleVisibility}>
-      <ToolbarButton
-        aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-        title="Menu"
+      <Button
+        aria-label={t('grafana-ui.panel-menu.label', 'Menu for panel {{ title }}', { title: title ?? 'Untitled' })}
+        title={t('grafana-ui.panel-menu.title', 'Menu')}
         icon="ellipsis-v"
-        iconSize="md"
-        narrow
+        variant="secondary"
+        size="sm"
         data-testid={testId}
         className={cx(menuButtonClass, dragClassCancel)}
       />

@@ -1,20 +1,24 @@
 import { Component } from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
-import { hasVisibleLegendSeries, PlotLegend } from '@grafana/ui/src/components/uPlot/PlotLegend';
-import { UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
-import { withTheme2 } from '@grafana/ui/src/themes/ThemeContext';
+import { withTheme2 } from '@grafana/ui';
+import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder } from '@grafana/ui/internal';
 
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 
-import { preparePlotConfigBuilder } from './utils';
+import { getXAxisConfig, preparePlotConfigBuilder } from './utils';
 
-const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
+const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'annotationLanes', 'theme'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
 export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
-  prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
+  prepConfig = (
+    alignedFrame: DataFrame,
+    allFrames: DataFrame[],
+    getTimeRange: () => TimeRange,
+    annotationLanes?: number
+  ) => {
     const { theme, timeZone, options, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
@@ -28,6 +32,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       tweakAxis,
       hoverProximity: options?.tooltip?.hoverProximity,
       orientation: options?.orientation,
+      xAxisConfig: getXAxisConfig(annotationLanes),
     });
   };
 

@@ -85,6 +85,9 @@ export const versionedPages = {
     dataSources: {
       [MIN_GRAFANA_VERSION]: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
     },
+    dataSourceAddButton: {
+      '12.4.0': 'data-testid data-source-add-button',
+    },
   },
   EditDataSource: {
     url: {
@@ -107,6 +110,14 @@ export const versionedPages = {
     delete: {
       '10.0.0': 'data-testid Confirm Modal Danger Button',
       [MIN_GRAFANA_VERSION]: 'Confirm Modal Danger Button',
+    },
+    input: {
+      '12.2.0': 'data-testid Confirm Modal Input',
+    },
+  },
+  SecretsManagement: {
+    SecretForm: {
+      '12.2.0': 'data-testid Secret Form',
     },
   },
   AddDashboard: {
@@ -163,9 +174,22 @@ export const versionedPages = {
       },
     },
   },
+  ImportDashboard: {
+    url: {
+      [MIN_GRAFANA_VERSION]: '/dashboard/import',
+    },
+  },
   Dashboard: {
     url: {
       [MIN_GRAFANA_VERSION]: (uid: string) => `/d/${uid}`,
+    },
+    Sidebar: {
+      optionsButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar options button',
+      },
+      outlineButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar outline button',
+      },
     },
     DashNav: {
       nav: {
@@ -206,9 +230,6 @@ export const versionedPages = {
           shareSnapshot: {
             '11.2.0': 'data-testid new share button share snapshot',
           },
-          inviteUser: {
-            '11.5.0': 'data-testid new share button invite user',
-          },
         },
       },
       NewExportButton: {
@@ -224,6 +245,9 @@ export const versionedPages = {
           },
           exportAsJson: {
             '11.2.0': 'data-testid new export button export as json',
+          },
+          exportAsImage: {
+            '12.1.0': 'data-testid new export button export as image',
           },
         },
       },
@@ -241,6 +265,9 @@ export const versionedPages = {
     },
     Controls: {
       '11.1.0': 'data-testid dashboard controls',
+    },
+    ControlsButton: {
+      '12.3.0': 'data-testid dashboard controls button',
     },
     SubMenu: {
       submenu: {
@@ -327,6 +354,9 @@ export const versionedPages = {
           },
           showInLabel: {
             '11.1.0': 'data-testid show-in-label',
+          },
+          annotationControlsDisplay: {
+            '12.4.0': 'data-testid annotation-controls-display-label',
           },
           previewInDashboard: {
             '10.0.0': 'data-testid annotations-preview',
@@ -421,6 +451,9 @@ export const versionedPages = {
             generalHideSelectV2: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Hide select',
             },
+            generalDisplaySelect: {
+              '12.4.0': 'data-testid Variable editor Display select',
+            },
             selectionOptionsAllowCustomValueSwitch: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Allow Custom Value switch',
             },
@@ -449,10 +482,22 @@ export const versionedPages = {
             },
           },
           QueryVariable: {
+            closeButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor close button',
+            },
+            editor: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor',
+            },
+            previewButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor preview button',
+            },
             queryOptionsDataSourceSelect: {
               '10.4.0': 'data-testid Select a data source',
               '10.0.0': 'data-testid Data source picker select container',
               [MIN_GRAFANA_VERSION]: 'Data source picker select container',
+            },
+            queryOptionsOpenButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor open button',
             },
             queryOptionsRefreshSelect: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Refresh select',
@@ -466,6 +511,9 @@ export const versionedPages = {
             queryOptionsRegExInputV2: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Query RegEx field',
             },
+            queryOptionsRegExApplyToSelectV2: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Query RegExApplyTo select',
+            },
             queryOptionsSortSelect: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Sort select',
             },
@@ -474,6 +522,12 @@ export const versionedPages = {
             },
             queryOptionsQueryInput: {
               '10.4.0': 'data-testid Variable editor Form Default Variable Query Editor textarea',
+            },
+            queryOptionsStaticOptionsToggle: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options toggle',
+            },
+            queryOptionsStaticOptionsOrderDropdown: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Order dropdown',
             },
             valueGroupsTagsEnabledSwitch: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query UseTags switch',
@@ -497,6 +551,9 @@ export const versionedPages = {
             datasourceSelect: {
               [MIN_GRAFANA_VERSION]: 'data-testid datasource variable datasource type',
             },
+            nameFilter: {
+              [MIN_GRAFANA_VERSION]: 'data-testid datasource variable datasource name filter',
+            },
           },
           TextBoxVariable: {
             textBoxOptionsQueryInput: {
@@ -509,6 +566,15 @@ export const versionedPages = {
           CustomVariable: {
             customValueInput: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-input',
+            },
+            optionsOpenButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-options-open-button',
+            },
+            closeButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-close-button',
+            },
+            applyButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-apply-button',
             },
           },
           IntervalVariable: {
@@ -547,6 +613,37 @@ export const versionedPages = {
               '11.0.0': 'data-testid ad-hoc filters variable mode toggle',
             },
           },
+          SwitchVariable: {
+            valuePairTypeSelect: {
+              ['12.3.0']: 'data-testid switch variable value pair type select',
+            },
+            enabledValueInput: {
+              ['12.3.0']: 'data-testid switch variable enabled value input',
+            },
+            disabledValueInput: {
+              ['12.3.0']: 'data-testid switch variable disabled value input',
+            },
+          },
+          StaticOptionsEditor: {
+            addButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Add button',
+            },
+            labelInput: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Label input',
+            },
+            valueInput: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Value input',
+            },
+            moveButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Move button',
+            },
+            deleteButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Delete button',
+            },
+            row: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Row',
+            },
+          },
         },
       },
     },
@@ -572,6 +669,9 @@ export const versionedPages = {
     dashboards: {
       '10.2.0': (title: string) => `Dashboard search item ${title}`,
     },
+    toggleView: {
+      [MIN_GRAFANA_VERSION]: 'data-testid radio-button',
+    },
   },
   SaveDashboardAsModal: {
     newName: {
@@ -593,6 +693,9 @@ export const versionedPages = {
     },
     saveRefresh: {
       '11.1.0': 'Dashboard settings Save Dashboard Modal Save refresh checkbox',
+    },
+    variablesWarningAlert: {
+      '12.2.0': 'Dashboard settings Save Dashboard Modal Save variables Variables With Errors Warning Alert',
     },
   },
   SharePanelModal: {
@@ -870,6 +973,9 @@ export const versionedPages = {
       scrollView: {
         '9.0.0': 'data-testid explorer scroll view',
       },
+      addFromQueryLibrary: {
+        '11.5.0': 'data-testid explore add from query library button',
+      },
     },
     QueryHistory: {
       container: {
@@ -943,6 +1049,11 @@ export const versionedPages = {
       createButton: {
         '10.2.0': 'data-testid new-folder-create-button',
       },
+    },
+  },
+  SearchDashboards: {
+    table: {
+      '10.2.0': 'Search results table',
     },
   },
   Search: {
@@ -1039,6 +1150,11 @@ export const versionedPages = {
   Plugin: {
     url: {
       [MIN_GRAFANA_VERSION]: (pluginId: string) => `/plugins/${pluginId}`,
+    },
+  },
+  MigrateToCloud: {
+    url: {
+      '11.2.0': '/admin/migrate-to-cloud',
     },
   },
 } satisfies VersionedSelectorGroup;

@@ -5,16 +5,6 @@ import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from './ids';
 import { ByNamesMatcherMode } from './nameMatcher';
 
-// mock the default window.grafanaBootData settings
-// eslint-disable-next-line
-(window as any).grafanaBootData = {
-  settings: {
-    featureToggles: {
-      dataplaneFrontendFallback: true,
-    },
-  },
-};
-
 describe('Field Name by Regexp Matcher', () => {
   it('Match all with wildcard regex', () => {
     const seriesWithNames = toDataFrame({

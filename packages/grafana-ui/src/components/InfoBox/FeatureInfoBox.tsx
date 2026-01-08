@@ -3,7 +3,7 @@ import { memo, forwardRef } from 'react';
 
 import { FeatureState, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { FeatureBadge } from '../FeatureBadge/FeatureBadge';
 
 import { InfoBox, InfoBoxProps } from './InfoBox';

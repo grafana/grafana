@@ -4,4 +4,5 @@
  * @packageDocumentation
  */
 export * from './veneer/common.types';
+export * from './veneer/librarypanel.types';
 export * from './index.gen';

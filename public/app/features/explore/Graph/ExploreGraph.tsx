@@ -8,6 +8,7 @@ import {
   createFieldConfigRegistry,
   DashboardCursorSync,
   DataFrame,
+  DataLinksContext,
   EventBus,
   FieldColorModeId,
   FieldConfigSource,
@@ -20,6 +21,7 @@ import {
 import { PanelRenderer } from '@grafana/runtime';
 import {
   GraphDrawStyle,
+  GraphFieldConfig,
   GraphThresholdsStyleConfig,
   LegendDisplayMode,
   SortOrder,
@@ -28,10 +30,9 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
-import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
-import { ExploreGraphStyle } from 'app/types';
+import { ExploreGraphStyle } from 'app/types/explore';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';
@@ -58,7 +59,7 @@ interface Props {
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
   vizLegendOverrides?: Partial<VizLegendOptions>;
-  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
+  toggleLegendRef?: React.MutableRefObject<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>;
 }
 
 export function ExploreGraph({
@@ -121,9 +122,8 @@ export function ExploreGraph({
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry,
-      dataLinkPostProcessor,
     });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, dataLinkPostProcessor]);
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig]);
 
   const annotationsWithConfig = useMemo(() => {
     return applyFieldOverrides({
@@ -141,27 +141,27 @@ export function ExploreGraph({
 
   const structureRev = useStructureRev(dataWithConfig);
 
-  const onHiddenSeriesChangedRef = useRef(onHiddenSeriesChanged);
   const previousHiddenFrames = useRef<string[] | undefined>(undefined);
 
   useEffect(() => {
-    if (onHiddenSeriesChangedRef.current) {
-      const hiddenFrames: string[] = [];
-      dataWithConfig.forEach((frame) => {
-        const allFieldsHidden = frame.fields.map((field) => field.config?.custom?.hideFrom?.viz).every(identity);
-        if (allFieldsHidden) {
-          hiddenFrames.push(getFrameDisplayName(frame));
-        }
-      });
-      if (
-        previousHiddenFrames.current === undefined ||
-        !isEqual(sortBy(hiddenFrames), sortBy(previousHiddenFrames.current))
-      ) {
-        previousHiddenFrames.current = hiddenFrames;
-        onHiddenSeriesChangedRef.current(hiddenFrames);
-      }
+    if (!onHiddenSeriesChanged) {
+      return;
     }
-  }, [dataWithConfig]);
+    const hiddenFrames: string[] = [];
+    dataWithConfig.forEach((frame) => {
+      const allFieldsHidden = frame.fields.map((field) => field.config?.custom?.hideFrom?.viz).every(identity);
+      if (allFieldsHidden) {
+        hiddenFrames.push(getFrameDisplayName(frame));
+      }
+    });
+    if (
+      previousHiddenFrames.current === undefined ||
+      !isEqual(sortBy(hiddenFrames), sortBy(previousHiddenFrames.current))
+    ) {
+      previousHiddenFrames.current = hiddenFrames;
+      onHiddenSeriesChanged(hiddenFrames);
+    }
+  }, [dataWithConfig, onHiddenSeriesChanged]);
 
   const panelContext: PanelContext = {
     eventsScope: 'explore',
@@ -171,10 +171,16 @@ export function ExploreGraph({
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
-    dataLinkPostProcessor,
   };
 
-  function toggleLegend(name: string, mode: SeriesVisibilityChangeMode) {
+  function toggleLegend(name: string | undefined, mode: SeriesVisibilityChangeMode) {
+    if (!name) {
+      setFieldConfig({
+        ...fieldConfig,
+        overrides: [],
+      });
+      return;
+    }
     setFieldConfig(seriesVisibilityConfigFactory(name, mode, fieldConfig, data));
   }
 
@@ -197,23 +203,25 @@ export function ExploreGraph({
   );
 
   return (
-    <PanelContextProvider value={panelContext}>
-      <PanelRenderer
-        data={{
-          series: dataWithConfig,
-          timeRange,
-          state: loadingState,
-          annotations: annotationsWithConfig,
-          structureRev,
-        }}
-        pluginId="timeseries"
-        title=""
-        width={width}
-        height={height}
-        onChangeTimeRange={onChangeTime}
-        timeZone={timeZone}
-        options={panelOptions}
-      />
-    </PanelContextProvider>
+    <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
+      <PanelContextProvider value={panelContext}>
+        <PanelRenderer
+          data={{
+            series: dataWithConfig,
+            timeRange,
+            state: loadingState,
+            annotations: annotationsWithConfig,
+            structureRev,
+          }}
+          pluginId="timeseries"
+          title=""
+          width={width}
+          height={height}
+          onChangeTimeRange={onChangeTime}
+          timeZone={timeZone}
+          options={panelOptions}
+        />
+      </PanelContextProvider>
+    </DataLinksContext.Provider>
   );
 }

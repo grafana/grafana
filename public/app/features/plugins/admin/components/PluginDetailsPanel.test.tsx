@@ -1,10 +1,22 @@
+import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, SCORE_LEVELS } from '../types';
 
 import { PluginDetailsPanel } from './PluginDetailsPanel';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      pluginInsights: false,
+    },
+  },
+}));
 
 const mockPlugin: CatalogPlugin = {
   description: 'Test plugin description',
@@ -54,17 +66,40 @@ const mockPlugin: CatalogPlugin = {
         name: 'Website',
         url: 'https://test-plugin.com',
       },
+      {
+        name: 'Repository',
+        url: 'https://github.com/grafana/test-plugin',
+      },
+      {
+        name: 'License',
+        url: 'https://github.com/grafana/test-plugin/blob/main/LICENSE',
+      },
+      {
+        name: 'Documentation',
+        url: 'https://test-plugin.com/docs',
+      },
+      {
+        name: 'Raise issue',
+        url: 'https://github.com/grafana/test-plugin/issues/new',
+      },
     ],
+    raiseAnIssueUrl: 'https://github.com/grafana/test-plugin/issues/new',
+    documentationUrl: 'https://test-plugin.com/docs',
+    licenseUrl: 'https://github.com/grafana/test-plugin/blob/main/LICENSE',
+    sponsorshipUrl: 'https://github.com/sponsors/grafana',
+    repositoryUrl: 'https://github.com/grafana/test-plugin',
     grafanaDependency: '>=9.0.0',
     statusContext: 'stable',
   },
   angularDetected: false,
   isFullyInstalled: true,
   accessControl: {},
+  url: 'https://github.com/grafana/test-plugin',
 };
 
 const mockInfo = [
-  { label: 'Version', value: '1.1.0' },
+  { label: 'Installed version', value: '1.0.0' },
+  { label: 'Latest version', value: '1.2.0' },
   { label: 'Author', value: 'Test Author' },
 ];
 
@@ -81,7 +116,7 @@ describe('PluginDetailsPanel', () => {
   it('should render latest version information', () => {
     render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
     expect(screen.getByText('Latest version:')).toBeInTheDocument();
-    expect(screen.getByText('1.1.0')).toBeInTheDocument();
+    expect(screen.getByText('1.2.0')).toBeInTheDocument();
   });
 
   it('should render links section when plugin has links', () => {
@@ -104,7 +139,6 @@ describe('PluginDetailsPanel', () => {
   it('should render report abuse section for non-core plugins', () => {
     render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
     expect(screen.getByText('Report a concern')).toBeInTheDocument();
-    expect(screen.getByText('Contact Grafana Labs')).toBeInTheDocument();
   });
 
   it('should not render report abuse section for core plugins', () => {
@@ -116,6 +150,108 @@ describe('PluginDetailsPanel', () => {
   it('should respect custom width prop', () => {
     render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} width="300px" />);
     const panel = screen.getByTestId('plugin-details-panel');
-    expect(panel).toHaveStyle({ maxWidth: '300px' });
+    expect(panel).toHaveStyle({ width: '300px' });
+  });
+
+  it('should render license, documentation, repository, raise issue, sponsorship links', () => {
+    render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
+    const repositoryLink = screen.getByTestId('plugin-details-repository-link');
+    const licenseLink = screen.getByTestId('plugin-details-license-link');
+    const documentationLink = screen.getByTestId('plugin-details-documentation-link');
+    const raiseIssueLink = screen.getByTestId('plugin-details-raise-issue-link');
+    const sponsorshipLink = screen.getByTestId('plugin-details-sponsorship-link');
+
+    expect(repositoryLink).toBeInTheDocument();
+    expect(repositoryLink).toHaveAttribute('href', 'https://github.com/grafana/test-plugin');
+    expect(licenseLink).toBeInTheDocument();
+    expect(licenseLink).toHaveAttribute('href', 'https://github.com/grafana/test-plugin/blob/main/LICENSE');
+    expect(documentationLink).toBeInTheDocument();
+    expect(documentationLink).toHaveAttribute('href', 'https://test-plugin.com/docs');
+    expect(raiseIssueLink).toBeInTheDocument();
+    expect(raiseIssueLink).toHaveAttribute('href', 'https://github.com/grafana/test-plugin/issues/new');
+    expect(sponsorshipLink).toBeInTheDocument();
+    expect(sponsorshipLink).toHaveAttribute('href', 'https://github.com/sponsors/grafana');
+  });
+
+  it('should not render license, documentation, repository, raise issue links in custom links', () => {
+    render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
+    const repositoryLink = screen.getByTestId('plugin-details-repository-link');
+    const licenseLink = screen.getByTestId('plugin-details-license-link');
+    const documentationLink = screen.getByTestId('plugin-details-documentation-link');
+    const raiseIssueLink = screen.getByTestId('plugin-details-raise-issue-link');
+    const websiteLink = screen.getByText('Website');
+
+    const customLinks = screen.getByTestId('plugin-details-custom-links');
+
+    expect(customLinks).not.toContainElement(repositoryLink);
+    expect(customLinks).not.toContainElement(licenseLink);
+    expect(customLinks).not.toContainElement(documentationLink);
+    expect(customLinks).not.toContainElement(raiseIssueLink);
+    expect(customLinks).toContainElement(websiteLink);
+
+    const regularLinks = screen.getByTestId('plugin-details-regular-links');
+
+    expect(regularLinks).toContainElement(repositoryLink);
+    expect(regularLinks).toContainElement(licenseLink);
+    expect(regularLinks).toContainElement(documentationLink);
+    expect(regularLinks).toContainElement(raiseIssueLink);
+    expect(regularLinks).not.toContainElement(websiteLink);
+  });
+
+  it('should render plugin insights when plugin has insights', async () => {
+    config.featureToggles.pluginInsights = true;
+    const pluginWithInsights = {
+      ...mockPlugin,
+      insights: {
+        id: 1,
+        name: 'test-plugin',
+        version: '1.0.0',
+        insights: [
+          {
+            name: 'security',
+            scoreValue: 90,
+            scoreLevel: SCORE_LEVELS.EXCELLENT,
+            items: [
+              {
+                id: 'signature',
+                name: 'Signature verified',
+                level: 'ok' as const,
+              },
+            ],
+          },
+        ],
+      },
+    };
+    render(<PluginDetailsPanel plugin={pluginWithInsights} pluginExtentionsInfo={mockInfo} />);
+    expect(screen.getByTestId('plugin-insights-container')).toBeInTheDocument();
+    expect(screen.getByText('Plugin insights')).toBeInTheDocument();
+    expect(screen.queryByText('Security')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Security'));
+    expect(screen.getByTestId('plugin-insight-item-signature')).toBeInTheDocument();
+  });
+
+  it('should not render plugin insights when plugin has no insights', () => {
+    const pluginWithoutInsights = {
+      ...mockPlugin,
+      insights: undefined,
+    };
+    render(<PluginDetailsPanel plugin={pluginWithoutInsights} pluginExtentionsInfo={mockInfo} />);
+    expect(screen.queryByTestId('plugin-insights-container')).not.toBeInTheDocument();
+    expect(screen.queryByText('Plugin insights')).not.toBeInTheDocument();
+  });
+
+  it('should not render plugin insights when insights array is empty', () => {
+    const pluginWithEmptyInsights = {
+      ...mockPlugin,
+      insights: {
+        id: 1,
+        name: 'test-plugin',
+        version: '1.0.0',
+        insights: [],
+      },
+    };
+    render(<PluginDetailsPanel plugin={pluginWithEmptyInsights} pluginExtentionsInfo={mockInfo} />);
+    expect(screen.queryByTestId('plugin-insights-container')).not.toBeInTheDocument();
+    expect(screen.queryByText('Plugin insights')).not.toBeInTheDocument();
   });
 });

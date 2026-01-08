@@ -5,13 +5,14 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -27,7 +28,6 @@ func TestContextHandler(t *testing.T) {
 	t.Run("should set auth error if authentication was unsuccessful", func(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedErr: errors.New("some error")},
 			featuremgmt.WithFeatures(),
 		)
@@ -49,7 +49,6 @@ func TestContextHandler(t *testing.T) {
 		id := &authn.Identity{ID: "1", Type: claims.TypeUser, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: id},
 			featuremgmt.WithFeatures(),
 		)
@@ -75,7 +74,6 @@ func TestContextHandler(t *testing.T) {
 		identity := &authn.Identity{ID: "0", Type: claims.TypeAnonymous, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 			featuremgmt.WithFeatures(),
 		)
@@ -97,7 +95,6 @@ func TestContextHandler(t *testing.T) {
 		identity := &authn.Identity{OrgID: 1, AuthenticatedBy: login.RenderModule}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
-			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 			featuremgmt.WithFeatures(),
 		)
@@ -128,7 +125,6 @@ func TestContextHandler(t *testing.T) {
 
 		handler := contexthandler.ProvideService(
 			cfg,
-			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: &authn.Identity{}},
 			featuremgmt.WithFeatures(),
 		)
@@ -157,7 +153,6 @@ func TestContextHandler(t *testing.T) {
 
 			handler := contexthandler.ProvideService(
 				cfg,
-				tracing.InitializeTracerForTest(),
 				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: i, Type: typ}},
 				featuremgmt.WithFeatures(),
 			)
@@ -215,5 +210,51 @@ func TestContextHandler(t *testing.T) {
 			require.Empty(t, res.Header.Get("X-Grafana-Identity-Id"))
 			require.NoError(t, res.Body.Close())
 		})
+	})
+
+	t.Run("openfeature evaluation context defaults", func(t *testing.T) {
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			&authntest.FakeService{ExpectedErr: errors.New("some error")},
+			featuremgmt.WithFeatures(),
+		)
+
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+			evalCtx := openfeature.TransactionContext(c.Req.Context())
+			require.NotNil(t, evalCtx)
+			require.Equal(t, "default", evalCtx.Attribute("namespace"))
+		})
+
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("openfeature evaluation context with user namespace", func(t *testing.T) {
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			&authntest.FakeService{
+				ExpectedIdentity: &authn.Identity{
+					ID:        "1",
+					Type:      claims.TypeUser,
+					Namespace: "org-3",
+				},
+			},
+			featuremgmt.WithFeatures(),
+		)
+
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+			evalCtx := openfeature.TransactionContext(c.Req.Context())
+			require.NotNil(t, evalCtx)
+			require.Equal(t, "org-3", evalCtx.Attribute("namespace"))
+		})
+
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
 	})
 }

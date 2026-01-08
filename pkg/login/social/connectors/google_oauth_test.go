@@ -2,18 +2,24 @@ package connectors
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -204,7 +210,7 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 					AutoAssignOrgRole: "",
 				},
 				nil,
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures())
 
 			got, err := s.retrieveGroups(context.Background(), tt.args.client, tt.args.userData)
@@ -240,6 +246,31 @@ const googleGroupsJSON = `
 }
 `
 
+var testKey = decodePrivateKey([]byte(`
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEID6lXWsmcv/UWn9SptjOThsy88cifgGIBj2Lu0M9I8tQoAoGCCqGSM49
+AwEHoUQDQgAEsf6eNnNMNhl+q7jXsbdUf3ADPh248uoFUSSV9oBzgptyokHCjJz6
+n6PKDm2W7i3S2+dAs5M5f3s7d8KiLjGZdQ==
+-----END EC PRIVATE KEY-----
+`))
+
+func decodePrivateKey(data []byte) *ecdsa.PrivateKey {
+	block, _ := pem.Decode(data)
+	if block == nil {
+		panic("should include PEM block")
+	}
+
+	privateKey, err := x509.ParseECPrivateKey(block.Bytes)
+	if err != nil {
+		panic(fmt.Sprintf("should be able to parse ec private key: %v", err))
+	}
+	if privateKey.Curve.Params().Name != "P-256" {
+		panic("should be valid private key")
+	}
+
+	return privateKey
+}
+
 func TestSocialGoogle_UserInfo(t *testing.T) {
 	cl := jwt.Claims{
 		Subject:   "88888888888888",
@@ -248,7 +279,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		Audience:  jwt.Audience{"823123"},
 	}
 
-	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: []byte("secret")}, (&jose.SignerOptions{}).WithType("JWT"))
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: testKey}, (&jose.SignerOptions{}).WithType("JWT"))
 	require.NoError(t, err)
 	idMap := map[string]any{
 		"email":          "test@example.com",
@@ -257,7 +288,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		"email_verified": true,
 	}
 
-	raw, err := jwt.Signed(sig).Claims(cl).Claims(idMap).CompactSerialize()
+	raw, err := jwt.Signed(sig).Claims(cl).Claims(idMap).Serialize()
 	require.NoError(t, err)
 
 	tokenWithID := (&oauth2.Token{
@@ -693,7 +724,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				},
 				cfg,
 				ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures())
 
 			gotData, err := s.UserInfo(context.Background(), tt.args.client, tt.args.token)
@@ -724,6 +755,7 @@ func TestSocialGoogle_Validate(t *testing.T) {
 					"auth_url":                   "",
 					"token_url":                  "",
 					"api_url":                    "",
+					"login_prompt":               "select_account",
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
@@ -830,11 +862,55 @@ func TestSocialGoogle_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if login prompt is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"login_prompt":               "invalid",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if use_refresh_token is enabled and login prompt is neither empty or 'consent'",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"use_refresh_token": "true",
+					"login_prompt":      "login",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "succeeds if use_refresh_token is enabled and login prompt is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"use_refresh_token": "true",
+					"login_prompt":      "",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if use_refresh_token is enabled and login prompt is consent",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"use_refresh_token": "true",
+					"login_prompt":      "consent",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -845,7 +921,13 @@ func TestSocialGoogle_Validate(t *testing.T) {
 				require.ErrorIs(t, err, tc.wantErr)
 				return
 			}
-			require.NoError(t, err)
+
+			if err != nil {
+				var e errutil.Error
+				require.True(t, errors.As(err, &e))
+				require.NoError(t, e, "expected no error, got %v", e.PublicMessage)
+				return
+			}
 		})
 	}
 }
@@ -870,6 +952,7 @@ func TestSocialGoogle_Reload(t *testing.T) {
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
 					"auth_url":      "some-new-url",
+					"login_prompt":  "login",
 				},
 			},
 			expectError: false,
@@ -877,6 +960,7 @@ func TestSocialGoogle_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
+				LoginPrompt:  "login",
 			},
 			expectedConfig: &oauth2.Config{
 				ClientID:     "new-client-id",
@@ -915,7 +999,7 @@ func TestSocialGoogle_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -968,7 +1052,7 @@ func TestIsHDAllowed(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			info := &social.OAuthInfo{}
 			info.AllowedDomains = tc.allowedDomains
-			s := NewGoogleProvider(info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGoogleProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 			s.validateHD = tc.validateHD
 			err := s.isHDAllowed(tc.email)
 
@@ -978,6 +1062,105 @@ func TestIsHDAllowed(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestSocialGoogle_AuthCodeURL(t *testing.T) {
+	testCases := []struct {
+		name    string
+		info    *social.OAuthInfo
+		opts    []oauth2.AuthCodeOption
+		state   string
+		wantURL *url.URL
+	}{
+		{
+			name: "should return the correct auth code URL",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				AuthUrl:      "https://example.com/auth",
+				LoginPrompt:  "login",
+				Scopes:       []string{"openid", "email", "profile"},
+			},
+			state: "test-state",
+			opts: []oauth2.AuthCodeOption{
+				oauth2.SetAuthURLParam("extra_param", "extra_value"),
+			},
+			wantURL: &url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/auth",
+				RawQuery: url.Values{
+					"state":         {"test-state"},
+					"prompt":        {"login"},
+					"response_type": {"code"},
+					"client_id":     {"client-id"},
+					"redirect_uri":  {"/login/google"},
+					"scope":         {"openid email profile"},
+					"extra_param":   {"extra_value"},
+				}.Encode(),
+			},
+		},
+		{
+			name: "should add access type offline and approval force if use refresh token is enabled",
+			info: &social.OAuthInfo{
+				ClientId:        "client-id",
+				ClientSecret:    "client-secret",
+				AuthUrl:         "https://example.com/auth",
+				Scopes:          []string{"openid", "email", "profile"},
+				UseRefreshToken: true,
+			},
+			state: "test-state",
+			wantURL: &url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/auth",
+				RawQuery: url.Values{
+					"state":         {"test-state"},
+					"prompt":        {"consent"},
+					"response_type": {"code"},
+					"client_id":     {"client-id"},
+					"redirect_uri":  {"/login/google"},
+					"scope":         {"openid email profile"},
+					"access_type":   {"offline"},
+				}.Encode(),
+			},
+		},
+		{
+			name: "should override configured login prompt if use refresh token is enabled",
+			info: &social.OAuthInfo{
+				ClientId:        "client-id",
+				ClientSecret:    "client-secret",
+				AuthUrl:         "https://example.com/auth",
+				Scopes:          []string{"openid", "email", "profile"},
+				UseRefreshToken: true,
+			},
+			state: "test-state",
+			wantURL: &url.URL{
+				Scheme: "https",
+				Host:   "example.com",
+				Path:   "/auth",
+				RawQuery: url.Values{
+					"state":         {"test-state"},
+					"prompt":        {"consent"},
+					"response_type": {"code"},
+					"client_id":     {"client-id"},
+					"redirect_uri":  {"/login/google"},
+					"scope":         {"openid email profile"},
+					"access_type":   {"offline"},
+				}.Encode(),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			gotURL := s.AuthCodeURL(tc.state, tc.opts...)
+			parsedURL, err := url.Parse(gotURL)
+			require.NoError(t, err)
+			require.EqualValues(t, tc.wantURL, parsedURL)
 		})
 	}
 }

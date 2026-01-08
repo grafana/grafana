@@ -74,17 +74,22 @@ Start defining your [contact points](ref:contact-points) to specify how to recei
 
 ## How it works at a glance
 
-- Grafana alerting periodically [evaluates your alert rules](ref:alert-rule-evaluation) and triggers notifications for firing and resolved alert instances.
-- You can configure the alert rule to send notifications to a contact point or route them via Notification Policies for greater flexibility.
-- To minimize alert noise, group similar alerts into a single notification by grouping alert labels and notification timings.
+- Grafana alerting periodically [evaluates your alert rules](ref:alert-rule-evaluation).
+- It triggers notifications for alert instances that are **firing** or **resolved**.
+- You can configure an alert rule to send notifications to a **contact point** or route them through **notification policies** for greater flexibility.
+- To reduce the number of notifications, you can **group related alerts** into a single notification by using label grouping and notification timings.
 
 ## Fundamentals
 
 ### Contact points
 
-[Contact points](ref:contact-points) contain the configuration for sending alert notifications, specifying destinations like email, Slack, OnCall, webhooks, and their notification messages.
+{{< shared id="contact-points-fundamentals" >}}
+
+[Contact points](ref:contact-points) contain the configuration for sending alert notifications, specifying destinations like email, Slack, IRM, webhooks, and their notification messages.
 
 A contact point is a list of integrations, each sending a message to a specific destination.
+
+{{< /shared >}}
 
 By default, notification messages include common alert details, such as the number of alerts, alert names, labels, annotations, and other alert information. You can also customize notification messages and use notification templates.
 
@@ -126,14 +131,15 @@ Grafana Alerting provides advanced notification capabilities that you’ll find 
 
 For instance, you can customize notifications with shared [templates](ref:templates) that provide actionable alert information and can be reused for multiple notifications.
 
-Additionally, you can use [silences](ref:silences) and [mute timings](ref:mute-timings) to pause notifications for a given time window or at regular intervals, respectively.
+Additionally, you can use [silences](ref:silences) and [mute timings](ref:mute-timings) to pause or suppress notifications without interrupting alert evaluation.
 
 ## Architecture
 
-Grafana Alerting is based on the Prometheus model for designing alerting systems. Its architecture decouples the alert generator from the alert notification manager (known as the Alertmanager) to enhance scalability and performance.
+Grafana Alerting is built on the Prometheus model, which separates two main components for scalability and performance:
+
+- **An alert generator** that evaluates alert rules and sends firing and resolved alerts to the alert receiver.
+- **An alert receiver** (also known as Alertmanager) that receives the alerts and is responsible for sending their notifications.
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
-Grafana uses a custom Alertmanager to manage and deliver alert notifications, as detailed in this guide. This custom Alertmanager extends the capabilities of the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/).
-
-If you already run a Prometheus Alertmanager instance, you can configure Grafana Alerting to forward alerts to your [external Alertmanager for handling notifications](ref:configure-alertmanager).
+Grafana includes a custom Alertmanager that extends the Prometheus Alertmanager to manage and deliver alert notifications. You can also [configure Grafana Alerting to work with other Alertmanagers](ref:configure-alertmanager).

@@ -1,10 +1,10 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
-import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { AccessControlAction, useDispatch, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { splitOpen, splitClose, changeCorrelationEditorDetails } from './state/main';
 import { runQueries } from './state/query';
@@ -39,7 +39,7 @@ export const ExploreActions = () => {
         },
         section: exploreSection,
       });
-      if ([panes[1]]) {
+      if (panes[1]) {
         // we should always have the right exploreId if split
         actionsArr.push({
           id: 'explore/run-query-right',
@@ -75,7 +75,7 @@ export const ExploreActions = () => {
         return pane?.datasourceInstance?.uid === MIXED_DATASOURCE_NAME;
       });
 
-      if (config.featureToggles.correlations && canWriteCorrelations && !hasMixed) {
+      if (canWriteCorrelations && !hasMixed) {
         actionsArr.push({
           id: 'explore/correlations-editor',
           name: 'Correlations editor',

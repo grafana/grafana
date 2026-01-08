@@ -16,7 +16,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import store from 'app/core/store';
-import { ExplorePanelData, SupplementaryQueries } from 'app/types';
+import { ExplorePanelData, SupplementaryQueries } from 'app/types/explore';
 
 import { makeDataFramesForLogs, queryLogsSample, queryLogsVolume } from '../../logs/logsModel';
 
@@ -129,7 +129,7 @@ export const getSupplementaryQueryProvider = (
     dsRequest.requestId = `${dsRequest.requestId || ''}_${i}`;
     dsRequest.targets = targets;
 
-    if (hasSupplementaryQuerySupport(datasource, type)) {
+    if (hasSupplementaryQuerySupport(datasource, type, dsRequest)) {
       if (datasource.getDataProvider) {
         return datasource.getDataProvider(type, dsRequest);
       } else if (datasource.getSupplementaryRequest) {

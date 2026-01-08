@@ -1,0 +1,67 @@
+{
+  "title": "V8 InfluxDB Query Test",
+  "schemaVersion": 7,
+  "panels": [
+    {
+      "id": 1,
+      "type": "graph",
+      "targets": [
+        {
+          "fields": [
+            {
+              "name": "value",
+              "func": "mean",
+              "mathExpr": "*2",
+              "asExpr": "doubled"
+            }
+          ],
+          "tags": [
+            {
+              "key": "host",
+              "value": "server1"
+            }
+          ],
+          "groupBy": [
+            {
+              "type": "time",
+              "interval": "1m"
+            },
+            {
+              "type": "tag",
+              "key": "host"
+            }
+          ],
+          "fill": "null"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "graph",
+      "targets": [
+        {
+          "rawQuery": true,
+          "fields": [
+            {
+              "name": "value",
+              "func": "mean"
+            }
+          ],
+          "tags": [
+            {
+              "key": "host",
+              "value": "server1"
+            }
+          ],
+          "groupBy": [
+            {
+              "type": "time",
+              "interval": "1m"
+            }
+          ],
+          "fill": "null"
+        }
+      ]
+    }
+  ]
+}

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/influxdata/influxql"
@@ -351,12 +352,14 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		result := ResponseParse(readJsonFile("error_on_top_level_response"), 400, generateQuery("Test raw query", "time_series", ""))
 		require.Nil(t, result.Frames)
 		require.EqualError(t, result.Error, "InfluxDB returned error: error parsing query: found THING")
+		require.Equal(t, backend.ErrorSourceDownstream, result.ErrorSource)
 	})
 
 	t.Run("Influxdb response parser with error message", func(t *testing.T) {
 		result := ResponseParse(readJsonFile("invalid_response"), 400, generateQuery("Test raw query", "time_series", ""))
 		require.Nil(t, result.Frames)
 		require.EqualError(t, result.Error, "InfluxDB returned error: failed to parse query: found WERE, expected ; at line 1, char 38")
+		require.Equal(t, backend.ErrorSourceDownstream, result.ErrorSource)
 	})
 
 	t.Run("Influxdb response parser parseNumber nil", func(t *testing.T) {

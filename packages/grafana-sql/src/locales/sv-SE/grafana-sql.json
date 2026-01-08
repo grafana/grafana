@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "Byggläge visar inte ändringar gjorda i koden. Frågebyggaren visar de senaste ändringarna du gjorde i byggläget.",
+        "cancel": "Avbryt",
+        "clipboard": "Vill du kopiera din kod till urklippet?",
+        "copy-code-and-switch": "Kopiera kod och växla",
+        "discard-code-and-switch": "Kassera kod och växla",
+        "warning": "Varning"
+      },
+      "connection-limits": {
+        "auto-max-idle": "Automatisk max. inaktiv",
+        "content-auto-max-idle": "",
+        "content-max-idle": "",
+        "content-max-lifetime": "Den maximala tiden i sekunder som en anslutning kan återanvändas. Om inställningen är 0 återanvänds anslutningarna för evigt.",
+        "content-max-open": "",
+        "max-idle": "Max inaktiv",
+        "max-lifetime": "Max livstid",
+        "max-open": "Max öppen",
+        "title-connection-limits": "Anslutningsbegränsningar"
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": "Datauppsättningsväljare"
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "Fel"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": "Makron"
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "Gruppera efter",
+          "title-remove-group-by-column": "Ta bort gruppen efter kolumn"
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "Sortera efter",
+        "label-limit": "Gräns",
+        "label-offset": "Förskjutning",
+        "label-order-by": "Sortera efter"
+      },
+      "preview": {
+        "label-element": {
+          "preview": "Förhandsgranska",
+          "tooltip-copy-to-clipboard": "Kopiera till urklippet"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "",
+        "editor-modes": {
+          "label-builder": "Builder",
+          "label-code": "Kod"
+        },
+        "label-dataset": "Datauppsättning",
+        "label-filter": "Filtrera",
+        "label-format": "Format",
+        "label-group": "Grupp",
+        "label-order": "Beställning",
+        "label-preview": "Förhandsgranska",
+        "label-table": "Tabell",
+        "placeholder-select-format": "Välj format",
+        "run-query": "Kör fråga"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "Tryck på CTRL/CMD+Retur för att köra frågan",
+        "tooltip-collapse": "Minimera redigeraren",
+        "tooltip-expand": "Expandera redigeraren",
+        "tooltip-format-query": "Formatera fråga"
+      },
+      "query-validator": {
+        "query-will-process": "",
+        "validating-query": "Validerar frågan …"
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": "Redigering i expanderad kodredigerare"
+        },
+        "title-query-num": "Fråga {{queryNum}}"
+      },
+      "select-column": {
+        "label-column": "Kolumn"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "Parameter {{index}} för kolumnen {{columnIndex}}",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": "Ta bort parameter"
+          }
+        },
+        "title-add-parameter": "Lägg till parameter"
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "Aggregeringar",
+              "macros": "Makron"
+            }
+          }
+        },
+        "label": {
+          "time": "tid",
+          "value": "värde"
+        },
+        "label-alias": "Alias",
+        "label-data-operations": "Dataåtgärder",
+        "title-add-column": "Lägg till kolumn",
+        "title-remove-column": "Ta bort kolumn"
+      },
+      "settings": {
+        "aria-label-conjunction": "Konjunktion",
+        "aria-label-field": "Fält",
+        "aria-label-operator": "Operatör",
+        "title-button-filter": "{{ buttonLabel }} filter"
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "Laddar redigerare"
+      },
+      "table-selector": {
+        "aria-label-table-selector": "Tabellväljare",
+        "placeholder-loading": "Laddar tabeller",
+        "placeholder-select-table": "Välj tabell"
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "För autentisering med ett TLS-/SSL-klientcertifikat anger du klientcertifikatet här.",
+        "content-tlsssl-client-key": "För autentisering med ett TLS-/SSL-klientcertifikat anger du nyckeln här.",
+        "content-tlsssl-root-certificate": "Om det valda TLS-/SSL-läget kräver ett serverrotcertifikat anger du det här",
+        "tlsssl-client-certificate": "TLS-/SSL-klientcertifikat",
+        "tlsssl-client-key": "TLS/SSL-klientnyckel",
+        "tlsssl-root-certificate": "TLS-/SSL-rotcertifikat"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "Filtrera efter kolumnvärde",
+        "label-group-by-column": "Gruppera efter kolumn"
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": "Makrovärdesväljare"
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": "Valda kolumner"
+      }
+    }
+  }
+}

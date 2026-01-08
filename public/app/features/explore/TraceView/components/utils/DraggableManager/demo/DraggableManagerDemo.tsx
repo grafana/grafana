@@ -14,7 +14,9 @@
 
 import { PureComponent } from 'react';
 
-import { TNil } from '../../../types';
+import { Trans } from '@grafana/i18n';
+
+import TNil from '../../../types/TNil';
 
 import DividerDemo from './DividerDemo';
 import RegionDemo from './RegionDemo';
@@ -47,19 +49,44 @@ export default class DraggableManagerDemo extends PureComponent<{}, DraggableMan
     const { dividerPosition, regionCursor, regionDragging } = this.state;
     return (
       <div className="DraggableManagerDemo">
-        <h1>DraggableManager demo</h1>
+        <h1>
+          <Trans i18nKey="explore.draggable-manager-demo.draggable-manager-demo">DraggableManager demo</Trans>
+        </h1>
         <section className="DraggableManagerDemo--scenario">
-          <h2>Dragging a Divider</h2>
-          <p>Click and drag the gray divider in the colored area, below.</p>
-          <p>Value: {dividerPosition.toFixed(3)}</p>
+          <h2>
+            <Trans i18nKey="explore.draggable-manager-demo.dragging-a-divider">Dragging a divider</Trans>
+          </h2>
+          <p>
+            <Trans i18nKey="explore.draggable-manager-demo.click-and-drag-gray-divider">
+              Click and drag the gray divider in the colored area, below.
+            </Trans>
+          </p>
+          <p>
+            <Trans i18nKey="explore.draggable-manager-demo.value" values={{ dividerPos: dividerPosition.toFixed(3) }}>
+              Value: {'{{ dividerPos }}'}
+            </Trans>
+          </p>
           <div className="DraggableManagerDemo--realm">
             <DividerDemo position={dividerPosition} updateState={this._updateState} />
           </div>
         </section>
         <section className="DraggableManagerDemo--scenario">
-          <h2>Dragging a Sub-Region</h2>
-          <p>Click and drag horizontally somewhere in the colored area, below.</p>
-          <p>Value: {regionDragging && regionDragging.map((n) => n.toFixed(3)).join(', ')}</p>
+          <h2>
+            <Trans i18nKey="explore.draggable-manager-demo.dragging-a-sub-region">Dragging a sub-region</Trans>
+          </h2>
+          <p>
+            <Trans i18nKey="explore.draggable-manager-demo.click-horizontally-somewhere-colored-below">
+              Click and drag horizontally somewhere in the colored area, below.
+            </Trans>
+          </p>
+          <p>
+            <Trans
+              i18nKey="explore.draggable-manager-demo.drag-value"
+              values={{ dragValue: regionDragging && regionDragging.map((n) => n.toFixed(3)).join(', ') }}
+            >
+              Value: {'{{dragValue}}'}
+            </Trans>
+          </p>
           <div className="DraggableManagerDemo--realm">
             <RegionDemo regionCursor={regionCursor} regionDragging={regionDragging} updateState={this._updateState} />
           </div>

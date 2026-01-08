@@ -1,5 +1,5 @@
-import { Component } from 'react';
 import * as React from 'react';
+import { Component } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import {
@@ -15,12 +15,8 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
-import { Themeable2, VizLayout } from '@grafana/ui';
-import { UPlotChart } from '@grafana/ui/src/components/uPlot/Plot';
-import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { Renderers, UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
-import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
-import { pluginLog } from '@grafana/ui/src/components/uPlot/utils';
+import { Themeable2, VizLayout, VizLayoutLegendProps } from '@grafana/ui';
+import { AxisProps, pluginLog, Renderers, ScaleProps, UPlotChart, UPlotConfigBuilder } from '@grafana/ui/internal';
 
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
@@ -44,10 +40,15 @@ export interface GraphNGProps extends Themeable2 {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
-  prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
+  prepConfig: (
+    alignedFrame: DataFrame,
+    allFrames: DataFrame[],
+    getTimeRange: () => TimeRange,
+    annotationLanes?: number
+  ) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
-  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement<VizLayoutLegendProps> | null;
   replaceVariables: InterpolateFunction;
   dataLinkPostProcessor?: DataLinkPostProcessor;
   cursorSync?: DashboardCursorSync;
@@ -67,6 +68,9 @@ export interface GraphNGProps extends Themeable2 {
    * similar to structureRev. then we can drop propsToDiff entirely.
    */
   options?: Record<string, any>;
+
+  // Annotation lanes count
+  annotationLanes?: number;
 }
 
 function sameProps<T extends Record<string, unknown>>(
@@ -195,7 +199,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       let config = this.state?.config;
 
       if (withConfig) {
-        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange);
+        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange, this.props.annotationLanes);
         pluginLog('GraphNG', false, 'config prepared', config);
       }
 
@@ -233,7 +237,12 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           propsChanged;
 
         if (shouldReconfig) {
-          newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
+          newState.config = this.props.prepConfig(
+            newState.alignedFrame,
+            this.props.frames,
+            this.getTimeRange,
+            this.props.annotationLanes
+          );
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
 

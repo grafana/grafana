@@ -2,11 +2,14 @@ package loki
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +30,7 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=logvolhist", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -39,8 +42,58 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=logsample", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+
+	t.Run("X-Loki-Query-Limits-Context header should be set when LimitsContext is provided", func(t *testing.T) {
+		called := false
+		from := time.Now().Truncate(time.Millisecond).Add(-1 * time.Hour)
+		to := time.Now().Truncate(time.Millisecond)
+		limitsContext := LimitsContext{
+			Expr: "{cluster=\"us-central1\"}",
+			From: from,
+			To:   to,
+		}
+
+		limitsContextJson, _ := json.Marshal(limitsContext)
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, string(limitsContextJson), req.Header.Get("X-Loki-Query-Limits-Context"))
+		})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange, LimitsContext: limitsContext}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+
+	t.Run("X-Loki-Query-Limits-Context header should not get set when LimitsContext is missing expr", func(t *testing.T) {
+		called := false
+		from := time.Now().Truncate(time.Millisecond).Add(-1 * time.Hour)
+		to := time.Now().Truncate(time.Millisecond)
+		limitsContext := LimitsContext{
+			Expr: "",
+			From: from,
+			To:   to,
+		}
+
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, "", req.Header.Get("X-Loki-Query-Limits-Context"))
+		})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange, LimitsContext: limitsContext}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+
+	t.Run("X-Loki-Query-Limits-Context header should not get set when LimitsContext is not provided", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, "", req.Header.Get("X-Loki-Query-Limits-Context"))
+		})
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
 		require.True(t, called)
@@ -51,7 +104,7 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=datasample", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryDataSample, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -63,7 +116,7 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryNone, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -75,19 +128,19 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=foo", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryType("foo"), QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
 		require.True(t, called)
 	})
 
-	t.Run("with `structuredMetadata` should set correct http header", func(t *testing.T) {
+	t.Run("should set correct http header", func(t *testing.T) {
 		called := false
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "categorize-labels", req.Header.Get("X-Loki-Response-Encoding-Flags"))
-		}, true)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -111,7 +164,7 @@ func TestInfiniteScroll(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=infinitescroll", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: dataquery.SupportingQueryTypeInfiniteScroll, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -176,7 +229,7 @@ func TestApiUrlHandling(t *testing.T) {
 				wantedPrefix := test.rangeQueryPrefix
 				failMessage := fmt.Sprintf(`wanted prefix: [%s], got string [%s]`, wantedPrefix, urlString)
 				require.True(t, strings.HasPrefix(urlString, wantedPrefix), failMessage)
-			}, false)
+			})
 
 			query := lokiQuery{
 				QueryType: QueryTypeRange,
@@ -197,7 +250,7 @@ func TestApiUrlHandling(t *testing.T) {
 				wantedPrefix := test.instantQueryPrefix
 				failMessage := fmt.Sprintf(`wanted prefix: [%s], got string [%s]`, wantedPrefix, urlString)
 				require.True(t, strings.HasPrefix(urlString, wantedPrefix), failMessage)
-			}, false)
+			})
 
 			query := lokiQuery{
 				QueryType: QueryTypeInstant,
@@ -215,7 +268,7 @@ func TestApiUrlHandling(t *testing.T) {
 			api := makeMockedAPIWithUrl(test.dsUrl, 200, "application/json", response, func(req *http.Request) {
 				called = true
 				require.Equal(t, test.metaUrl, req.URL.String())
-			}, false)
+			})
 
 			_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
 			require.NoError(t, err)
@@ -249,6 +302,7 @@ func TestApiReturnValues(t *testing.T) {
 		require.True(t, called)
 		require.Equal(t, "gzip", encodedBytes.Encoding)
 		require.Equal(t, []byte("{\"message\":\"foo\"}"), encodedBytes.Body)
+		require.Equal(t, 400, encodedBytes.Status)
 	})
 
 	t.Run("Loki should return the error as is", func(t *testing.T) {
@@ -278,5 +332,119 @@ func TestApiReturnValues(t *testing.T) {
 		_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "foo")
+	})
+
+	t.Run("should set status for successful requests", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(200, "application/json", []byte("{\"message\":\"foo\"}"), func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.Equal(t, backend.Status(http.StatusOK), res.Status)
+	})
+}
+
+func TestErrorSources(t *testing.T) {
+	errorResponse := []byte(`{"message": "test error"}`)
+
+	t.Run("should set correct error source for downstream errors", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(http.StatusBadRequest, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+		require.Equal(t, backend.Status(http.StatusBadRequest), res.Status)
+	})
+
+	t.Run("should set correct error source for plugin errors", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(http.StatusNotAcceptable, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourcePlugin, res.ErrorSource)
+		require.Equal(t, backend.Status(http.StatusNotAcceptable), res.Status)
+	})
+
+	t.Run("should set correct error source for server errors", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(http.StatusInternalServerError, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+		require.Equal(t, backend.Status(http.StatusInternalServerError), res.Status)
+	})
+
+	t.Run("should set correct error source for server timeout error", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(http.StatusGatewayTimeout, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+		require.Equal(t, backend.Status(http.StatusGatewayTimeout), res.Status)
+	})
+
+	t.Run("should handle downstream HTTP errors", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(http.StatusBadRequest, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+		require.Contains(t, res.Error.Error(), "test error")
+		require.Equal(t, backend.Status(http.StatusBadRequest), res.Status)
+	})
+
+	t.Run("should handle client errors in RawQuery", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(http.StatusBadRequest, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.RawQuery(context.Background(), "/loki/api/v1/labels")
+		require.NoError(t, err)
+		require.True(t, called)
+		require.Equal(t, http.StatusBadRequest, res.Status)
+		require.Contains(t, string(res.Body), "test error")
+	})
+
+	t.Run("should handle server errors in RawQuery", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(http.StatusInternalServerError, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		})
+
+		res, err := api.RawQuery(context.Background(), "/loki/api/v1/labels")
+		require.Error(t, err)
+		require.True(t, called)
+		require.Contains(t, err.Error(), "test error")
+		// Status code of 0 gets mapped to InternalServerError (500)
+		require.Equal(t, 0, res.Status)
 	})
 }

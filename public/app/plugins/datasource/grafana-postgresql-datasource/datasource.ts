@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { LanguageDefinition } from '@grafana/experimental';
-import { TemplateSrv, config } from '@grafana/runtime';
+import { DataSourceInstanceSettings, ScopedVars, VariableWithMultiSupport } from '@grafana/data';
+import { LanguageDefinition } from '@grafana/plugin-ui';
+import { TemplateSrv } from '@grafana/runtime';
 import {
   COMMON_FNS,
   DB,
@@ -30,6 +30,28 @@ export class PostgresDatasource extends SqlDatasource {
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): PostgresQueryModel {
     return new PostgresQueryModel(target, templateSrv, scopedVars);
   }
+
+  interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
+    if (typeof value === 'string') {
+      // For single string values, just escape quotes (don't add outer quotes)
+      // The quotes are provided by the query template: WHERE x = '$var'
+      // We only escape internal single quotes: O'Brien -> O''Brien
+      return String(value).replace(/'/g, "''");
+    }
+
+    if (typeof value === 'number') {
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      // For arrays, quote each value individually and join with comma
+      // Used in: WHERE x IN ($var) -> WHERE x IN ('val1','val2','val3')
+      const quotedValues = value.map((v) => this.getQueryModel().quoteLiteral(v));
+      return quotedValues.join(',');
+    }
+
+    return value;
+  };
 
   async getVersion(): Promise<string> {
     const value = await this.runSql<{ version: number }>(getVersion());
@@ -94,17 +116,13 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   getFunctions = (): ReturnType<DB['functions']> => {
-    if (config.featureToggles.sqlQuerybuilderFunctionParameters) {
-      const columnParam: FuncParameter = {
-        name: 'Column',
-        required: true,
-        options: (query) => this.fetchFields(query),
-      };
+    const columnParam: FuncParameter = {
+      name: 'Column',
+      required: true,
+      options: (query) => this.fetchFields(query),
+    };
 
-      return [...MACRO_FUNCTIONS(columnParam), ...COMMON_FNS.map((fn) => ({ ...fn, parameters: [columnParam] }))];
-    } else {
-      return COMMON_FNS;
-    }
+    return [...MACRO_FUNCTIONS(columnParam), ...COMMON_FNS.map((fn) => ({ ...fn, parameters: [columnParam] }))];
   };
 
   getDB(): DB {

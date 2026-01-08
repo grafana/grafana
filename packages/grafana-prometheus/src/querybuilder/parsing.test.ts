@@ -3,6 +3,131 @@ import { buildVisualQueryFromString } from './parsing';
 import { PromOperationId, PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
+  describe('info function support', () => {
+    // Currently, the visual query editor throws an error when parsing the 'info' function
+    // because this function is only supported in code mode.
+    // TODO: When visual query editor support for the 'info' function is implemented,
+    // this test should be updated to expect successful parsing instead of an error.
+    it('should throw error when trying to parse info function', () => {
+      expect(
+        buildVisualQueryFromString(
+          'sum by (cluster, sdk_language) ( info( rate(server_req_dur_sec_count{instance="the-instance"}[2m]), {sdk_language="go"} ) )'
+        )
+      ).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'instance',
+              op: '=',
+              value: 'the-instance',
+            },
+            {
+              label: 'sdk_language',
+              op: '=',
+              value: 'go',
+            },
+          ],
+          metric: 'server_req_dur_sec_count',
+          operations: [
+            {
+              id: 'rate',
+              params: ['2m'],
+            },
+            {
+              id: 'info',
+              params: [],
+            },
+            {
+              id: '__sum_by',
+              params: ['cluster', 'sdk_language'],
+            },
+          ],
+        },
+        errors: [
+          {
+            from: 33,
+            text: 'Query parsing is ambiguous.',
+            to: 121,
+          },
+        ],
+      });
+    });
+  });
+
+  describe('utf8 support', () => {
+    it('supports uts-8 label names', () => {
+      expect(buildVisualQueryFromString('{"glück:🍀.dot"="luck"} == 11')).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'glück:🍀.dot',
+              op: '=',
+              value: 'luck',
+            },
+          ],
+          metric: '',
+          operations: [
+            {
+              id: PromOperationId.EqualTo,
+              params: [11, false],
+            },
+          ],
+        },
+        errors: [],
+      });
+    });
+
+    it('supports uts-8 metric names', () => {
+      expect(buildVisualQueryFromString('{"I am a metric"}')).toEqual({
+        query: {
+          labels: [],
+          metric: 'I am a metric',
+          operations: [],
+        },
+        errors: [],
+      });
+    });
+
+    it('supports uts-8 metric names with labels', () => {
+      expect(buildVisualQueryFromString('{"metric.name", label_field="label value"}')).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'label_field',
+              op: '=',
+              value: 'label value',
+            },
+          ],
+          metric: 'metric.name',
+          operations: [],
+        },
+        errors: [],
+      });
+    });
+
+    it('supports uts-8 metric names with utf8 labels', () => {
+      expect(buildVisualQueryFromString('{"metric.name", "glück:🍀.dot"="luck"} == 11')).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'glück:🍀.dot',
+              op: '=',
+              value: 'luck',
+            },
+          ],
+          metric: 'metric.name',
+          operations: [
+            {
+              id: PromOperationId.EqualTo,
+              params: [11, false],
+            },
+          ],
+        },
+        errors: [],
+      });
+    });
+  });
+
   it('creates no errors for empty query', () => {
     expect(buildVisualQueryFromString('')).toEqual(
       noErrors({
@@ -75,49 +200,13 @@ describe('buildVisualQueryFromString', () => {
   });
 
   describe('nested binary operation errors in visual query editor', () => {
-    // Visual query builder does not currently have support for nested binary operations, for now we should throw an error in the UI letting users know that their query will be misinterpreted
-    it('throws error when visual query parse is ambiguous', () => {
+    it('does not throw error when visual query contains binary ops in function argument', () => {
       expect(
         buildVisualQueryFromString('topk(5, node_arp_entries / node_arp_entries{cluster="dev-eu-west-2"})')
       ).toMatchObject({
-        errors: [
-          {
-            from: 8,
-            text: 'Query parsing is ambiguous.',
-            to: 68,
-          },
-        ],
+        errors: [],
       });
     });
-
-    it('throws error when visual query parse with aggregation is ambiguous (scalar)', () => {
-      expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
-        errors: [
-          {
-            from: 8,
-            text: 'Query parsing is ambiguous.',
-            to: 13,
-          },
-        ],
-      });
-    });
-
-    it('throws error when visual query parse with functionCall is ambiguous', () => {
-      expect(
-        buildVisualQueryFromString(
-          'clamp_min(sum by(cluster)(rate(X{le="2.5"}[5m]))+sum by (cluster) (rate(X{le="5"}[5m])), 0.001)'
-        )
-      ).toMatchObject({
-        errors: [
-          {
-            from: 10,
-            text: 'Query parsing is ambiguous.',
-            to: 87,
-          },
-        ],
-      });
-    });
-
     it('does not throw error when visual query parse is unambiguous', () => {
       expect(
         buildVisualQueryFromString('topk(5, node_arp_entries) / node_arp_entries{cluster="dev-eu-west-2"}')
@@ -244,6 +333,31 @@ describe('buildVisualQueryFromString', () => {
     expect(buildVisualQueryFromString('sum without (app, version)(metric_name{instance="internal:3000"})')).toEqual(
       noErrors(visQuery)
     );
+  });
+
+  it('parses query with aggregation by utf8 labels', () => {
+    const visQuery = {
+      metric: 'metric_name',
+      labels: [
+        {
+          label: 'instance',
+          op: '=',
+          value: 'internal:3000',
+        },
+      ],
+      operations: [
+        {
+          id: '__sum_by',
+          params: ['cluster', '"app.version"'],
+        },
+      ],
+    };
+    expect(
+      buildVisualQueryFromString('sum(metric_name{instance="internal:3000"}) by ("app.version", cluster)')
+    ).toEqual(noErrors(visQuery));
+    expect(
+      buildVisualQueryFromString('sum by ("app.version", cluster)(metric_name{instance="internal:3000"})')
+    ).toEqual(noErrors(visQuery));
   });
 
   it('parses aggregation with params', () => {
@@ -794,6 +908,48 @@ describe('buildVisualQueryFromString', () => {
             id: '__group_by',
             params: ['job'],
           },
+        ],
+      })
+    );
+  });
+
+  it('parses query with custom variable', () => {
+    expect(buildVisualQueryFromString('topk($custom, rate(metric_name[$__rate_interval]))')).toEqual(
+      noErrors({
+        metric: 'metric_name',
+        labels: [],
+        operations: [
+          {
+            id: 'rate',
+            params: ['$__rate_interval'],
+          },
+          {
+            id: 'topk',
+            params: ['$custom'],
+          },
+        ],
+      })
+    );
+  });
+
+  it('parses query with functions and binary operations', () => {
+    expect(
+      buildVisualQueryFromString(
+        'clamp(sum(rate(loki_distributor_bytes_received_total{cluster="loki", tenant="kubernetes"}[5m])) / 1024 / 55, 5, 30)'
+      )
+    ).toEqual(
+      noErrors({
+        metric: 'loki_distributor_bytes_received_total',
+        labels: [
+          { label: 'cluster', op: '=', value: 'loki' },
+          { label: 'tenant', op: '=', value: 'kubernetes' },
+        ],
+        operations: [
+          { id: 'rate', params: ['5m'] },
+          { id: 'sum', params: [] },
+          { id: '__divide_by', params: [1024] },
+          { id: '__divide_by', params: [55] },
+          { id: 'clamp', params: [5, 30] },
         ],
       })
     );

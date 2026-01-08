@@ -1,0 +1,102 @@
+import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
+import { useDebounce } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { FilterInput, useStyles2 } from '@grafana/ui';
+
+import { TreeNode } from './types';
+
+export interface ScopesTreeSearchProps {
+  anyChildExpanded: boolean;
+  searchArea: string;
+  treeNode: TreeNode;
+  filterNode: (scopeNodeId: string, query: string) => void;
+  onFocus: () => void;
+  onBlur: () => void;
+  'aria-controls': string;
+  'aria-activedescendant'?: string;
+}
+
+export function ScopesTreeSearch({
+  anyChildExpanded,
+  treeNode,
+  filterNode,
+  searchArea,
+  onFocus,
+  onBlur,
+  'aria-controls': ariaControls,
+  'aria-activedescendant': ariaActivedescendant,
+}: ScopesTreeSearchProps) {
+  const styles = useStyles2(getStyles);
+
+  const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({
+    value: treeNode.query,
+    dirty: false,
+  });
+
+  useEffect(() => {
+    if (!inputState.dirty && inputState.value !== treeNode.query) {
+      setInputState({ value: treeNode.query, dirty: false });
+    }
+  }, [inputState, treeNode.query]);
+
+  useDebounce(
+    () => {
+      if (inputState.dirty) {
+        filterNode(treeNode.scopeNodeId, inputState.value);
+      }
+    },
+    500,
+    [inputState.dirty, inputState.value]
+  );
+
+  if (anyChildExpanded) {
+    return null;
+  }
+
+  const searchLabel = t('scopes.tree.search', 'Search {{parentTitle}}', {
+    parentTitle: searchArea,
+  });
+
+  return (
+    <FilterInput
+      placeholder={searchLabel}
+      // Don't do autofocus for root node
+      autoFocus={treeNode.scopeNodeId !== ''}
+      role="combobox"
+      aria-expanded={true}
+      aria-autocomplete="list"
+      aria-controls={ariaControls}
+      aria-activedescendant={ariaActivedescendant}
+      aria-label={searchLabel}
+      value={inputState.value}
+      className={styles.input}
+      data-testid="scopes-tree-search"
+      escapeRegex={false}
+      onChange={(value) => {
+        setInputState({ value, dirty: true });
+      }}
+      onFocus={onFocus}
+      onBlur={() => {
+        // TODO:Handle weird race condition where the blur event interupts selection of a radio button. This is because disableHighlighting is called, which forces a re-render of the tree. This re-render causes the radio button to lose focus, and the selection to be interrupted.
+        setTimeout(() => {
+          onBlur();
+        }, 0);
+      }}
+    />
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    input: css({
+      margin: theme.spacing(1, 0),
+      minHeight: theme.spacing(4),
+      height: theme.spacing(4),
+      maxHeight: theme.spacing(4),
+      width: `calc(100% - ${theme.spacing(0.5)})`,
+    }),
+  };
+};

@@ -19,6 +19,7 @@ type alertmanagerConfigStore interface {
 type ProvisioningStore interface {
 	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
+	GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 }
@@ -32,10 +33,11 @@ type TransactionManager interface {
 type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *models.GetAlertRuleByUIDQuery) (*models.AlertRule, error)
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
+	ListAlertRulesPaginated(ctx context.Context, query *models.ListAlertRulesExtendedQuery) (models.RulesGroup, string, error)
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
-	InsertAlertRules(ctx context.Context, rule []models.AlertRule) ([]models.AlertRuleKeyWithId, error)
-	UpdateAlertRules(ctx context.Context, rule []models.UpdateRule) error
-	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
+	InsertAlertRules(ctx context.Context, user *models.UserUID, rule []models.InsertRule) ([]models.AlertRuleKeyWithId, error)
+	UpdateAlertRules(ctx context.Context, user *models.UserUID, rule []models.UpdateRule) error
+	DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *models.UserUID, permanently bool, ruleUID ...string) error
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)
 }
 

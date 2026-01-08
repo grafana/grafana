@@ -31,7 +31,7 @@ type StreamSender interface {
 	SendBytes(data []byte) error
 }
 
-func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
+func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *DatasourceInfo) error {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runSearchStream")
 	defer span.End()
 
@@ -43,7 +43,7 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		response.Error = fmt.Errorf("error unmarshaling backend query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("error unmarshaling backend query model: %v", err)
 	}
 
 	var sr *tempopb.SearchRequest
@@ -52,11 +52,11 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	if sr.GetQuery() == "" {
-		return fmt.Errorf("query is empty")
+		return backend.DownstreamErrorf("tempo search query cannot be empty")
 	}
 
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
@@ -72,6 +72,9 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("Error Search()", "err", err)
+		if backend.IsDownstreamHTTPError(err) {
+			return backend.DownstreamError(err)
+		}
 		return err
 	}
 
@@ -89,7 +92,7 @@ func (s *Service) processStream(ctx context.Context, stream tempopb.StreamingQue
 		messageCount++
 		span.SetAttributes(attribute.Int("message_count", messageCount))
 		if errors.Is(err, io.EOF) {
-			if err := s.sendResponse(ctx, &ExtendedResponse{
+			if err := s.sendSearchResponse(ctx, &ExtendedResponse{
 				State: dataquery.SearchStreamingStateDone,
 				SearchResponse: &tempopb.SearchResponse{
 					Metrics: metrics,
@@ -114,7 +117,7 @@ func (s *Service) processStream(ctx context.Context, stream tempopb.StreamingQue
 		traceList = removeDuplicates(traceList)
 		span.SetAttributes(attribute.Int("traces_count", len(traceList)))
 
-		if err := s.sendResponse(ctx, &ExtendedResponse{
+		if err := s.sendSearchResponse(ctx, &ExtendedResponse{
 			State: dataquery.SearchStreamingStateStreaming,
 			SearchResponse: &tempopb.SearchResponse{
 				Metrics: metrics,
@@ -130,30 +133,39 @@ func (s *Service) processStream(ctx context.Context, stream tempopb.StreamingQue
 	return nil
 }
 
-func (s *Service) sendResponse(ctx context.Context, response *ExtendedResponse, sender StreamSender) error {
-	_, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.sendResponse")
+func (s *Service) sendSearchResponse(ctx context.Context, response *ExtendedResponse, sender StreamSender) error {
+	_, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.sendSearchResponse")
 	defer span.End()
 	frame := createResponseDataFrame()
 
 	if response != nil {
 		span.SetAttributes(attribute.Int("trace_count", len(response.Traces)), attribute.String("state", string(response.State)))
-
-		tracesAsJson, err := json.Marshal(response.Traces)
-		if err != nil {
-			return err
-		}
-		tracesRawMessage := json.RawMessage(tracesAsJson)
-		frame.Fields[0].Append(tracesRawMessage)
-
-		metricsAsJson, err := json.Marshal(response.Metrics)
-		if err != nil {
-			return err
-		}
-		metricsRawMessage := json.RawMessage(metricsAsJson)
-		frame.Fields[1].Append(metricsRawMessage)
-		frame.Fields[2].Append(string(response.State))
-		frame.Fields[3].Append("")
+		return s.sendResponse(ctx, response.Traces, response.Metrics, response.State, sender)
 	}
+
+	return sender.SendFrame(frame, data.IncludeAll)
+}
+
+func (s *Service) sendResponse(ctx context.Context, result interface{}, metrics *tempopb.SearchMetrics, state dataquery.SearchStreamingState, sender StreamSender) error {
+	_, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.sendResponse")
+	defer span.End()
+	frame := createResponseDataFrame()
+
+	tracesAsJson, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	tracesRawMessage := json.RawMessage(tracesAsJson)
+	frame.Fields[0].Append(tracesRawMessage)
+
+	metricsAsJson, err := json.Marshal(metrics)
+	if err != nil {
+		return err
+	}
+	metricsRawMessage := json.RawMessage(metricsAsJson)
+	frame.Fields[1].Append(metricsRawMessage)
+	frame.Fields[2].Append(string(state))
+	frame.Fields[3].Append("")
 
 	return sender.SendFrame(frame, data.IncludeAll)
 }
@@ -173,7 +185,7 @@ func sendError(searchErr error, sender StreamSender) error {
 
 func createResponseDataFrame() *data.Frame {
 	frame := data.NewFrame("response")
-	frame.Fields = append(frame.Fields, data.NewField("traces", nil, []json.RawMessage{}))
+	frame.Fields = append(frame.Fields, data.NewField("result", nil, []json.RawMessage{}))
 	frame.Fields = append(frame.Fields, data.NewField("metrics", nil, []json.RawMessage{}))
 	frame.Fields = append(frame.Fields, data.NewField("state", nil, []string{}))
 	frame.Fields = append(frame.Fields, data.NewField("error", nil, []string{}))

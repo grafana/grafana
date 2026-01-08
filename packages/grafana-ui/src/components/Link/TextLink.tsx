@@ -3,8 +3,8 @@ import { AnchorHTMLAttributes, forwardRef } from 'react';
 
 import { GrafanaTheme2, locationUtil, textUtil, ThemeTypographyVariantTypes } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
-import { IconName, IconSize } from '../../types';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { IconName, IconSize } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { customWeight } from '../Text/utils';
 
@@ -43,6 +43,11 @@ const svgSizes: {
   bodySmall: 'xs',
 };
 
+/**
+ * The TextLink component renders an anchor tag `<a>` that takes users to another page, external or internal to Grafana.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/foundations-textlink--docs
+ */
 export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
   (
     { href, color = 'link', external = false, inline = true, variant = 'body', weight, icon, children, ...rest },

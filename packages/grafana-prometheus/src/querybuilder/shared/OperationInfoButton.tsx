@@ -1,24 +1,16 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationInfoButton.tsx
 import { css } from '@emotion/css';
-import {
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
+import { autoUpdate, offset, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
-import { FlexItem } from '@grafana/experimental';
-import { Button, Portal, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { FlexItem } from '@grafana/plugin-ui';
+import { Button, floatingUtils, Portal, useStyles2 } from '@grafana/ui';
 
 import { QueryBuilderOperation, QueryBuilderOperationDef } from './types';
 
-export interface Props {
+interface Props {
   operation: QueryBuilderOperation;
   def: QueryBuilderOperationDef;
 }
@@ -28,16 +20,7 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
   const [show, setShow] = useState(false);
 
   // the order of middleware is important!
-  const middleware = [
-    offset(16),
-    flip({
-      fallbackAxisSideDirection: 'end',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
-  ];
+  const middleware = [offset(16), ...floatingUtils.getPositioningMiddleware()];
 
   const { context, refs, floatingStyles } = useFloating({
     open: show,
@@ -55,7 +38,10 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
   return (
     <>
       <Button
-        title="Click to show description"
+        tooltip={t(
+          'grafana-prometheus.querybuilder.operation-info-button.title-click-to-show-description',
+          'Click to show description'
+        )}
         ref={refs.setReference}
         icon="info-circle"
         size="sm"
@@ -74,7 +60,10 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
                 onClick={() => setShow(false)}
                 fill="text"
                 variant="secondary"
-                title="Remove operation"
+                aria-label={t(
+                  'grafana-prometheus.querybuilder.operation-info-button.title-remove-operation',
+                  'Remove operation'
+                )}
               />
             </div>
             <div
@@ -94,8 +83,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     docBox: css({
       overflow: 'hidden',
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.strong}`,
+      background: theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       maxWidth: '600px',
       padding: theme.spacing(1),

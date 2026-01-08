@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
+import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataFrameView, GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { attachSkeleton, SkeletonComponent } from '@grafana/ui/src/unstable';
+import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 
 import { NewsItem } from '../types';
 
@@ -15,10 +16,10 @@ interface NewsItemProps {
 }
 
 function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
+  const titleId = useId();
   const styles = useStyles2(getStyles);
   const useWideLayout = width > 600;
   const newsItem = data.get(index);
-  const titleId = encodeURI(newsItem.title);
 
   return (
     <article aria-labelledby={titleId} className={cx(styles.item, useWideLayout && styles.itemWide)}>

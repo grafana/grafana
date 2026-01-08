@@ -1,7 +1,7 @@
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { contextSrv } from 'app/core/core';
 import { RouteDescriptor } from 'app/core/navigation/types';
-import { AccessControlAction } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { PluginAdminRoutes } from './types';
 

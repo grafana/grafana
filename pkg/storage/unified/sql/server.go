@@ -2,97 +2,190 @@ package sql
 
 import (
 	"context"
-	"log/slog"
+	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authz"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-// Creates a new ResourceServer
-func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles, docs resource.DocumentBuilderSupplier,
-	tracer tracing.Tracer, reg prometheus.Registerer, ac authz.Client) (resource.ResourceServer, error) {
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-	opts := resource.ResourceServerOptions{
-		Tracer: tracer,
+type QOSEnqueueDequeuer interface {
+	services.Service
+	Enqueue(ctx context.Context, tenantID string, runnable func()) error
+	Dequeue(ctx context.Context) (func(), error)
+}
+
+// ServerOptions contains the options for creating a new ResourceServer
+type ServerOptions struct {
+	Backend          resource.StorageBackend
+	OverridesService *resource.OverridesService
+	DB               infraDB.DB
+	Cfg              *setting.Cfg
+	Tracer           trace.Tracer
+	Reg              prometheus.Registerer
+	AccessClient     types.AccessClient
+	SearchOptions    resource.SearchOptions
+	StorageMetrics   *resource.StorageMetrics
+	IndexMetrics     *resource.BleveIndexMetrics
+	Features         featuremgmt.FeatureToggles
+	QOSQueue         QOSEnqueueDequeuer
+	SecureValues     secrets.InlineSecureValueSupport
+	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
+}
+
+func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+
+	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
+		inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
+			opts.Cfg,
+			opts.Tracer,
+			nil, // not needed for gRPC client mode
+			nil, // not needed for gRPC client mode
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
+		}
+		opts.SecureValues = inlineSecureValueService
+	}
+
+	serverOptions := resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg: reg,
+		Reg:          opts.Reg,
+		SecureValues: opts.SecureValues,
 	}
-	if ac != nil {
-		opts.AccessClient = resource.NewAuthzLimitedClient(ac, resource.AuthzOptions{Tracer: tracer})
+	if opts.AccessClient != nil {
+		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
 	}
 	// Support local file blob
-	if strings.HasPrefix(opts.Blob.URL, "./data/") {
-		dir := strings.Replace(opts.Blob.URL, "./data", cfg.DataPath, 1)
+	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
+		dir := strings.Replace(serverOptions.Blob.URL, "./data", opts.Cfg.DataPath, 1)
 		err := os.MkdirAll(dir, 0700)
 		if err != nil {
 			return nil, err
 		}
-		opts.Blob.URL = "file:///" + dir
+		serverOptions.Blob.URL = "file:///" + dir
 	}
 
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
-	if err != nil {
-		return nil, err
-	}
-	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer})
-	if err != nil {
-		return nil, err
-	}
-	opts.Backend = store
-	opts.Diagnostics = store
-	opts.Lifecycle = store
+	// This is mostly for testing, being able to influence when we paginate
+	// based on the page size during tests.
+	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
+	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
+	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
 
-	// Setup the search server
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		root := cfg.IndexPath
-		if root == "" {
-			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
-		}
-		err = os.MkdirAll(root, 0750)
-		if err != nil {
-			return nil, err
-		}
-		bleve, err := search.NewBleveBackend(search.BleveOptions{
-			Root:          root,
-			FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
-		}, tracer)
+	if opts.Backend != nil {
+		serverOptions.Backend = opts.Backend
+		// TODO: we should probably have a proper interface for diagnostics/lifecycle
+	} else {
+		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
 		if err != nil {
 			return nil, err
 		}
 
-		opts.Search = resource.SearchOptions{
-			Backend:       bleve,
-			Resources:     docs,
-			WorkerThreads: cfg.IndexWorkers,
-			InitMinCount:  cfg.IndexMinCount,
-		}
+		if opts.Cfg.EnableSQLKVBackend {
+			sqlkv, err := resource.NewSQLKV(eDB)
+			if err != nil {
+				return nil, fmt.Errorf("error creating sqlkv: %s", err)
+			}
 
-		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, opts.Search.Backend))
-		if err != nil {
-			slog.Warn("Failed to register indexer metrics", "error", err)
+			kvBackendOpts := resource.KVBackendOptions{
+				KvStore: sqlkv,
+				Tracer:  opts.Tracer,
+				Reg:     opts.Reg,
+			}
+
+			ctx := context.Background()
+			dbConn, err := eDB.Init(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("error initializing DB: %w", err)
+			}
+
+			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+			if dialect == nil {
+				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+			}
+
+			rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+				Dialect: dialect,
+				DB:      dbConn,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+			}
+
+			// TODO add config to decide whether to pass RvManager or not
+			kvBackendOpts.RvManager = rvManager
+			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
+			if err != nil {
+				return nil, fmt.Errorf("error creating kv backend: %s", err)
+			}
+
+			serverOptions.Backend = kvBackend
+			serverOptions.Diagnostics = kvBackend
+		} else {
+			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+				opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
+			backend, err := NewBackend(BackendOptions{
+				DBProvider:           eDB,
+				Reg:                  opts.Reg,
+				IsHA:                 isHA,
+				storageMetrics:       opts.StorageMetrics,
+				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+			})
+			if err != nil {
+				return nil, err
+			}
+			serverOptions.Backend = backend
+			serverOptions.Diagnostics = backend
+			serverOptions.Lifecycle = backend
 		}
 	}
 
-	rs, err := resource.NewResourceServer(opts)
-	if err != nil {
-		return nil, err
+	serverOptions.Search = opts.SearchOptions
+	serverOptions.IndexMetrics = opts.IndexMetrics
+	serverOptions.QOSQueue = opts.QOSQueue
+	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
+	serverOptions.OverridesService = opts.OverridesService
+
+	return resource.NewResourceServer(serverOptions)
+}
+
+// isHighAvailabilityEnabled determines if high availability mode should
+// be enabled based on database configuration. High availability is enabled
+// by default except for SQLite databases.
+func isHighAvailabilityEnabled(dbCfg, resourceAPICfg *setting.DynamicSection) bool {
+	// If the resource API is using a non-SQLite database, we assume it's in HA mode.
+	resourceDBType := resourceAPICfg.Key("db_type").String()
+	if resourceDBType != "" && resourceDBType != migrator.SQLite {
+		return true
 	}
 
-	return rs, nil
+	// Check in the config if HA is enabled - by default we always assume a HA setup.
+	isHA := dbCfg.Key("high_availability").MustBool(true)
+
+	// SQLite is not possible to run in HA, so we force it to false.
+	databaseType := dbCfg.Key("type").String()
+	if databaseType == migrator.SQLite {
+		isHA = false
+	}
+
+	return isHA
 }

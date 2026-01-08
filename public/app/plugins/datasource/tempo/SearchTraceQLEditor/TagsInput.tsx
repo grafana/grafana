@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { AccessoryButton } from '@grafana/plugin-ui';
 import { FetchError } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
@@ -32,6 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 interface Props {
   updateFilter: (f: TraceqlFilter) => void;
   deleteFilter: (f: TraceqlFilter) => void;
+  generateQueryWithoutFilter: (f?: TraceqlFilter) => string;
   filters: TraceqlFilter[];
   datasource: TempoDatasource;
   setError: (error: FetchError | null) => void;
@@ -39,8 +40,9 @@ interface Props {
   isTagsLoading: boolean;
   hideValues?: boolean;
   requireTagAndValue?: boolean;
-  query: string;
   addVariablesToOptions?: boolean;
+  range?: TimeRange;
+  timeRangeForTags?: number;
 }
 const TagsInput = ({
   updateFilter,
@@ -52,8 +54,10 @@ const TagsInput = ({
   isTagsLoading,
   hideValues,
   requireTagAndValue,
-  query,
+  generateQueryWithoutFilter,
   addVariablesToOptions,
+  range,
+  timeRangeForTags,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const handleOnAdd = useCallback(
@@ -89,8 +93,10 @@ const TagsInput = ({
             tags={getTags(f)}
             isTagsLoading={isTagsLoading}
             hideValue={hideValues}
-            query={query}
+            query={generateQueryWithoutFilter(f)}
             addVariablesToOptions={addVariablesToOptions}
+            range={range}
+            timeRangeForTags={timeRangeForTags}
           />
           {(validInput(f) || filters.length > 1) && (
             <AccessoryButton

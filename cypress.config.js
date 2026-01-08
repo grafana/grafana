@@ -13,6 +13,9 @@ module.exports = defineConfig({
   viewportWidth: 1920,
   viewportHeight: 1080,
 
+  env: {
+    LOG_SELECTORS_INFO: false,
+  },
   e2e: {
     supportFile: './e2e/cypress/support/e2e.js',
     setupNodeEvents(on, config) {
@@ -81,6 +84,21 @@ module.exports = defineConfig({
 
         // IMPORTANT: return the updated browser launch options
         return launchOptions;
+      });
+
+      on('after:spec', (_, results) => {
+        if (!results || !results.video || !results.tests) {
+          return;
+        }
+
+        // Do we have failures for any retry attempts?
+        const failures = results.tests.some((test) => test.attempts.some((attempt) => attempt.state === 'failed'));
+        if (failures) {
+          return;
+        }
+
+        // delete the video if the spec passed and no tests retried
+        fs.unlinkSync(results.video);
       });
     },
   },

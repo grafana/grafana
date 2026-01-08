@@ -11,7 +11,8 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from './annotations';
+import { AnnotationSettingsEdit, newAnnotationName } from './annotations/AnnotationSettingsEdit';
+import { AnnotationSettingsList } from './annotations/AnnotationSettingsList';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export enum MoveDirection {
@@ -118,6 +119,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
       name: annotation.name,
       isEnabled: Boolean(annotation.enable),
       isHidden: Boolean(annotation.hide),
+      placement: annotation.placement,
       query: annotation,
     });
 

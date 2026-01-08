@@ -7,4 +7,5 @@ type ShortURL struct {
 
 type CreateShortURLCmd struct {
 	Path string `json:"path"`
+	UID  string `json:"uid,omitempty"`
 }

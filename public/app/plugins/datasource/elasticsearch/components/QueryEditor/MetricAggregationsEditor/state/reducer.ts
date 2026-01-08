@@ -1,9 +1,10 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { defaultMetricAgg } from '../../../../queryDef';
-import { ElasticsearchQuery, MetricAggregation } from '../../../../types';
+import { ElasticsearchDataQuery, MetricAggregation } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+
+import { defaultMetricAgg, queryTypeToMetricType } from '../../../../queryDef';
 import { removeEmpty } from '../../../../utils';
-import { initQuery } from '../../state';
+import { changeEditorTypeAndResetQuery, initQuery } from '../../state';
 import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, isPipelineAggregation } from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
 
@@ -18,7 +19,10 @@ import {
   toggleMetricVisibility,
 } from './actions';
 
-export const reducer = (state: ElasticsearchQuery['metrics'], action: Action): ElasticsearchQuery['metrics'] => {
+export const reducer = (
+  state: ElasticsearchDataQuery['metrics'],
+  action: Action
+): ElasticsearchDataQuery['metrics'] => {
   if (addMetric.match(action)) {
     return [...state!, defaultMetricAgg(action.payload)];
   }
@@ -59,6 +63,11 @@ export const reducer = (state: ElasticsearchQuery['metrics'], action: Action): E
           ...metricAggregationConfig[action.payload.type].defaults,
         } as MetricAggregation;
       });
+  }
+
+  if (changeEditorTypeAndResetQuery.match(action)) {
+    // Reset to default metric when switching to editor types
+    return [defaultMetricAgg('1')];
   }
 
   if (changeMetricField.match(action)) {
@@ -158,7 +167,8 @@ export const reducer = (state: ElasticsearchQuery['metrics'], action: Action): E
     if (state && state.length > 0) {
       return state;
     }
-    return [defaultMetricAgg('1')];
+    const metricType = queryTypeToMetricType(action.payload);
+    return [{ type: metricType, id: '1' }];
   }
 
   return state;

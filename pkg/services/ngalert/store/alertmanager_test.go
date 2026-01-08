@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -21,9 +22,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAlertmanagerStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -114,12 +114,37 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 
 		require.ErrorIs(t, err, ErrVersionLockedObjectNotFound)
 	})
+
+	t.Run("UpdateAlertmanagerConfiguration doesn't update the db if the update is a no-op", func(t *testing.T) {
+		_, configMD5 := setupConfig(t, "my-config", store)
+
+		originalConfig, err := store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
+		require.NoError(t, err)
+		cmd := buildSaveConfigCmd(t, "my-config", 1)
+		cmd.FetchedConfigurationHash = configMD5
+		err = store.UpdateAlertmanagerConfiguration(context.Background(), &cmd)
+		require.NoError(t, err)
+		config, err := store.GetLatestAlertmanagerConfiguration(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, "my-config", config.AlertmanagerConfiguration)
+		require.Equal(t, configMD5, config.ConfigurationHash)
+		// CreatedAt should not have changed as we didn't touch the config in the DB
+		require.Equal(t, originalConfig.CreatedAt, config.CreatedAt)
+	})
+	t.Run("UpdateAlertmanagerConfiguration fails if the config doesn't exist and the hashes in the cmd match", func(t *testing.T) {
+		configRaw := "my-non-existent-config"
+		configHash := fmt.Sprintf("%x", md5.Sum([]byte(configRaw)))
+		cmd := buildSaveConfigCmd(t, configRaw, 1)
+		cmd.FetchedConfigurationHash = configHash
+		err := store.UpdateAlertmanagerConfiguration(context.Background(), &cmd)
+		require.Error(t, err)
+		require.EqualError(t, err, ErrVersionLockedObjectNotFound.Error())
+	})
 }
 
 func TestIntegrationAlertmanagerHash(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -164,9 +189,8 @@ func TestIntegrationAlertmanagerHash(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -257,9 +281,8 @@ func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
 }
 
 func TestIntegrationMarkConfigurationAsApplied(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -312,9 +335,8 @@ func TestIntegrationMarkConfigurationAsApplied(t *testing.T) {
 }
 
 func TestIntegrationGetAppliedConfigurations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,
@@ -377,7 +399,7 @@ func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 		var lastID int64
 		for _, config := range configs {
 			// Check that the returned configurations are the ones that we're expecting.
-			require.NotEqual(tt, config.AlertConfiguration.AlertmanagerConfiguration, unmarkedConfig)
+			require.NotEqual(tt, config.AlertmanagerConfiguration, unmarkedConfig)
 
 			// Configs should only belong to the queried org.
 			require.Equal(tt, org, config.OrgID)
@@ -403,9 +425,8 @@ func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 }
 
 func TestIntegrationGetHistoricalConfiguration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,

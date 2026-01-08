@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
+export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones, ui.OptionsWithAnnotations {
   /**
    * Controls value alignment on the timelines
    */
@@ -41,7 +41,7 @@ export const defaultOptions: Partial<Options> = {
   showValue: ui.VisibilityMode.Auto,
 };
 
-export interface FieldConfig extends ui.HideableFieldConfig {
+export interface FieldConfig extends ui.AxisConfig, ui.HideableFieldConfig {
   fillOpacity?: number;
   lineWidth?: number;
 }

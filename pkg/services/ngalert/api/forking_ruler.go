@@ -124,3 +124,15 @@ func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler,
 	}
 	return f.LotexRuler, nil
 }
+
+func (f *RulerApiHandler) handleRouteGetRuleVersionsByUID(ctx *contextmodel.ReqContext, ruleUID string) response.Response {
+	return f.GrafanaRuler.RouteGetRuleVersionsByUID(ctx, ruleUID)
+}
+
+func (f *RulerApiHandler) handleRouteDeleteRuleFromTrashByGUID(ctx *contextmodel.ReqContext, ruleGUID string) response.Response {
+	return f.GrafanaRuler.RouteDeleteAlertRuleFromTrashByGUID(ctx, ruleGUID)
+}
+
+func (f *RulerApiHandler) handleRouteUpdateNamespaceRules(ctx *contextmodel.ReqContext, body apimodels.UpdateNamespaceRulesRequest, namespace string) response.Response {
+	return f.GrafanaRuler.RouteUpdateNamespaceRules(ctx, body, namespace)
+}

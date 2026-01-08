@@ -5,11 +5,12 @@ import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
-import { Button, LoadingPlaceholder, ConfirmModal, ModalsController, Stack, useStyles2 } from '@grafana/ui';
-import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
+import { Button, ConfirmModal, LoadingPlaceholder, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
@@ -17,25 +18,24 @@ import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/var
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
-import { EditableVariableType, getVariableEditor, hasVariableOptions, isEditableVariableType } from './utils';
+import {
+  EditableVariableType,
+  getVariableEditor,
+  hasVariableOptions,
+  isEditableVariableType,
+  validateVariableName,
+} from './utils';
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
-  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
-export function VariableEditorForm({
-  variable,
-  onTypeChange,
-  onGoBack,
-  onDelete,
-  onValidateVariableName,
-}: VariableEditorFormProps) {
+export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
-  const [nameError, setNameError] = useState<string | null>(null);
-  const { name, type, label, description, hide, key } = variable.useState();
+  const [nameError, setNameError] = useState<string>();
+  const { name, type, label, description, hide: display } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
@@ -48,12 +48,12 @@ export function VariableEditorForm({
 
   const onNameChange = useCallback(
     (e: FormEvent<HTMLInputElement>) => {
-      const [, errorMessage] = onValidateVariableName(e.currentTarget.value, key);
-      if (nameError !== errorMessage) {
-        setNameError(errorMessage);
+      const result = validateVariableName(variable, e.currentTarget.value);
+      if (result.errorMessage !== nameError) {
+        setNameError(result.errorMessage);
       }
     },
-    [key, nameError, onValidateVariableName]
+    [variable, nameError]
   );
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
@@ -65,9 +65,11 @@ export function VariableEditorForm({
   const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
     variable.setState({ description: e.currentTarget.value });
-  const onHideChange = (hide: VariableHide) => variable.setState({ hide });
+  const onDisplayChange = (display: VariableHide) => variable.setState({ hide: display });
 
   const isHasVariableOptions = hasVariableOptions(variable);
+  const optionsForSelect = isHasVariableOptions ? variable.getOptionsForSelect(false) : [];
+  const hasMultiProps = 'valuesFormat' in variable.state && variable.state.valuesFormat === 'json';
 
   const onDeleteVariable = (hideModal: () => void) => () => {
     reportInteraction('Delete variable');
@@ -76,14 +78,21 @@ export function VariableEditorForm({
   };
 
   return (
-    <form aria-label="Variable editor Form">
+    <form
+      aria-label={t('dashboard-scene.variable-editor-form.aria-label-variable-editor-form', 'Variable editor form')}
+    >
       <VariableTypeSelect onChange={onVariableTypeChange} type={type} />
 
-      <VariableLegend>General</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.variable-editor-form.general">General</Trans>
+      </VariableLegend>
       <VariableTextField
-        name="Name"
-        description="The name of the template variable. (Max. 50 characters)"
-        placeholder="Variable name"
+        name={t('dashboard-scene.variable-editor-form.name-name', 'Name')}
+        description={t(
+          'dashboard-scene.variable-editor-form.description-template-variable-characters',
+          'The name of the template variable. (Max. 50 characters)'
+        )}
+        placeholder={t('dashboard-scene.variable-editor-form.placeholder-variable-name', 'Variable name')}
         defaultValue={name ?? ''}
         onChange={onNameChange}
         onBlur={onNameBlur}
@@ -94,26 +103,29 @@ export function VariableEditorForm({
         error={nameError}
       />
       <VariableTextField
-        name="Label"
-        description="Optional display name"
-        placeholder="Label name"
+        name={t('dashboard-scene.variable-editor-form.name-label', 'Label')}
+        description={t(
+          'dashboard-scene.variable-editor-form.description-optional-display-name',
+          'Optional display name'
+        )}
+        placeholder={t('dashboard-scene.variable-editor-form.placeholder-label-name', 'Label name')}
         defaultValue={label ?? ''}
         onBlur={onLabelBlur}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
       />
       <VariableTextAreaField
-        name="Description"
+        name={t('dashboard-scene.variable-editor-form.name-description', 'Description')}
         defaultValue={description ?? ''}
-        placeholder="Descriptive text"
+        placeholder={t('dashboard-scene.variable-editor-form.placeholder-descriptive-text', 'Descriptive text')}
         onBlur={onDescriptionBlur}
         width={52}
       />
 
-      <VariableHideSelect onChange={onHideChange} hide={hide || defaultVariableModel.hide!} type={type} />
+      <VariableDisplaySelect onChange={onDisplayChange} display={display || defaultVariableModel.hide!} type={type} />
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
-      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect()} />}
+      {isHasVariableOptions && <VariableValuesPreview options={optionsForSelect} hasMultiProps={hasMultiProps} />}
 
       <div className={styles.buttonContainer}>
         <Stack gap={2}>
@@ -124,16 +136,19 @@ export function VariableEditorForm({
                 fill="outline"
                 onClick={() => {
                   showModal(ConfirmModal, {
-                    title: 'Delete variable',
+                    title: t('dashboard-scene.variable-editor-form.title.delete-variable', 'Delete variable'),
                     body: `Are you sure you want to delete: ${name}?`,
-                    confirmText: 'Delete variable',
+                    confirmText: t(
+                      'dashboard-scene.variable-editor-form.confirmText.delete-variable',
+                      'Delete variable'
+                    ),
                     onConfirm: onDeleteVariable(hideModal),
                     onDismiss: hideModal,
                     isOpen: true,
                   });
                 }}
               >
-                Delete
+                <Trans i18nKey="dashboard-scene.variable-editor-form.delete">Delete</Trans>
               </Button>
             )}
           </ModalsController>
@@ -142,7 +157,7 @@ export function VariableEditorForm({
             data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
             onClick={onGoBack}
           >
-            Back to list
+            <Trans i18nKey="dashboard-scene.variable-editor-form.back-to-list">Back to list</Trans>
           </Button>
 
           {isHasVariableOptions && (
@@ -153,9 +168,12 @@ export function VariableEditorForm({
               onClick={onRunQuery}
             >
               {runQueryState.loading ? (
-                <LoadingPlaceholder className={styles.loadingPlaceHolder} text="Running query..." />
+                <LoadingPlaceholder
+                  className={styles.loadingPlaceHolder}
+                  text={t('dashboard-scene.variable-editor-form.text-running-query', 'Running query...')}
+                />
               ) : (
-                `Run query`
+                t('dashbaord-scene.variable-editor-form.run-query', 'Run query')
               )}
             </Button>
           )}

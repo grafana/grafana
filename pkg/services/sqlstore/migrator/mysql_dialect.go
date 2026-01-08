@@ -1,15 +1,20 @@
 package migrator
 
 import (
+	"context"
 	"database/sql"
+	"embed"
 	"errors"
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
-	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 type MySQLDialect struct {
@@ -18,8 +23,8 @@ type MySQLDialect struct {
 
 func NewMysqlDialect() Dialect {
 	d := MySQLDialect{}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = MySQL
+	d.dialect = &d
+	d.driverName = MySQL
 	return &d
 }
 
@@ -33,6 +38,13 @@ func (db *MySQLDialect) Quote(name string) string {
 
 func (db *MySQLDialect) AutoIncrStr() string {
 	return "AUTO_INCREMENT"
+}
+
+func (db *MySQLDialect) BooleanValue(value bool) interface{} {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func (db *MySQLDialect) BooleanStr(value bool) string {
@@ -163,7 +175,7 @@ func (db *MySQLDialect) CleanDB(engine *xorm.Engine) error {
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *MySQLDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}
@@ -308,4 +320,88 @@ func (db *MySQLDialect) GetDBName(dsn string) (string, error) {
 	}
 
 	return cfg.DBName, nil
+}
+
+//go:embed snapshot/*.sql
+var sqlFiles embed.FS
+
+func (db *MySQLDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, migrationLogTableName string, logger log.Logger) error {
+	// Entire schema is generated only when called with "migration_log" table.
+	// Normally if schema creates other "*_migration_log" tables, we don't get here. However if new migration table is introduced by later migration,
+	// CreateDatabaseFromSnapshot may be called for given table, but if it wasn't part of original schema, we can't do anything here.
+	if migrationLogTableName != "migration_log" {
+		return nil
+	}
+
+	entries, err := sqlFiles.ReadDir("snapshot")
+	if err != nil {
+		return err
+	}
+
+	logger.Info("creating database schema from snapshot")
+
+	for _, entry := range entries {
+		logger.Debug("using snapshot file", "file", entry.Name())
+		data, err := sqlFiles.ReadFile(path.Join("snapshot", entry.Name()))
+		if err != nil {
+			return err
+		}
+
+		statements := extractStatements(string(data))
+		if err := db.executeStatements(engine, statements); err != nil {
+			return err
+		}
+	}
+
+	logger.Info("successfully created database schema from snapshot")
+	return nil
+}
+
+func extractStatements(schema string) []string {
+	lines := strings.Split(schema, "\n")
+
+	statements := make([]string, 0, len(lines))
+
+	sb := strings.Builder{}
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "--") {
+			continue
+		}
+
+		if line == "" {
+			continue
+		}
+
+		endOfStatement := false
+		if strings.HasSuffix(line, ";") {
+			endOfStatement = true
+			line = strings.TrimSuffix(line, ";")
+		}
+
+		if sb.Len() > 0 {
+			sb.WriteRune('\n')
+		}
+		sb.WriteString(line)
+		if endOfStatement && sb.Len() > 0 {
+			statements = append(statements, sb.String())
+			sb.Reset()
+		}
+	}
+
+	if sb.Len() > 0 {
+		statements = append(statements, sb.String())
+	}
+	return statements
+}
+
+func (s *MySQLDialect) executeStatements(engine *xorm.Engine, statements []string) error {
+	sess := engine.NewSession()
+	for _, s := range statements {
+		_, err := sess.Exec(s)
+		if err != nil {
+			return fmt.Errorf("statement %s failed with error: %v", s, err)
+		}
+	}
+	return nil
 }

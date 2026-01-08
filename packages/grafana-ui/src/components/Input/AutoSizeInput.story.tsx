@@ -1,9 +1,9 @@
 import { StoryFn, Meta } from '@storybook/react';
 
-import { Button, AutoSizeInput } from '@grafana/ui';
-
 import { iconOptions } from '../../utils/storybook/icons';
+import { Button } from '../Button/Button';
 
+import { AutoSizeInput } from './AutoSizeInput';
 import mdx from './AutoSizeInput.mdx';
 import { parseAccessory } from './storyUtils';
 
@@ -18,7 +18,7 @@ const prefixSuffixOpts = {
 };
 
 const meta: Meta = {
-  title: 'Forms/Input/AutoSizeInput',
+  title: 'Inputs/AutoSizeInput',
   component: AutoSizeInput,
   parameters: {
     docs: {

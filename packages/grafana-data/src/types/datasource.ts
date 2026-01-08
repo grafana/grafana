@@ -3,7 +3,9 @@ import { Observable } from 'rxjs';
 
 import { DataSourceRef } from '@grafana/schema';
 
+import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
+import { throwIfAngular } from '../utils/throwIfAngular';
 
 import { ScopedVars } from './ScopedVars';
 import { WithAccessControlMetadata } from './accesscontrol';
@@ -17,6 +19,7 @@ import { DataQuery } from './query';
 import { Scope } from './scopes';
 import { AdHocVariableFilter } from './templateVars';
 import { RawTimeRange, TimeRange } from './time';
+import { UserStorage } from './userStorage';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
 export interface DataSourcePluginOptionsEditorProps<
@@ -50,12 +53,16 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated it will be removed in a future release */
   setConfigCtrl(ConfigCtrl: any) {
+    deprecationWarning('DataSourcePlugin', 'setConfigCtrl');
     this.angularConfigCtrl = ConfigCtrl;
     return this;
   }
 
+  /** @deprecated it will be removed in a future release */
   setQueryCtrl(QueryCtrl: any) {
+    deprecationWarning('DataSourcePlugin', 'setQueryCtrl');
     this.components.QueryCtrl = QueryCtrl;
     return this;
   }
@@ -115,7 +122,7 @@ export class DataSourcePlugin<
   }
 
   setComponentsFromLegacyExports(pluginExports: System.Module) {
-    this.angularConfigCtrl = pluginExports.ConfigCtrl;
+    throwIfAngular(pluginExports);
 
     this.components.QueryCtrl = pluginExports.QueryCtrl;
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
@@ -161,7 +168,9 @@ export interface DataSourcePluginComponents<
   TOptions extends DataSourceJsonData = DataSourceJsonData,
   TSecureOptions = {},
 > {
+  /** @deprecated it will be removed in a future release */
   QueryCtrl?: any;
+  /** @deprecated it will be removed in a future release */
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
@@ -230,6 +239,11 @@ abstract class DataSourceApi<
    */
   interval?: string;
 
+  /**
+   * Initialized in datasource_srv.ts
+   */
+  userStorage?: UserStorage;
+
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -291,6 +305,20 @@ abstract class DataSourceApi<
    * Variable query action.
    */
   metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
+
+  /**
+   * Verify adhoc filters and groupBy keys applicability based on queries and current selected values
+   */
+  getDrilldownsApplicability?(
+    options?: DataSourceGetDrilldownsApplicabilityOptions<TQuery>
+  ): Promise<DrilldownsApplicability[]>;
+
+  /**
+   * Get recommended drilldowns for a dashboard
+   */
+  getRecommendedDrilldowns?(
+    options?: DataSourceGetRecommendedDrilldownsOptions<TQuery>
+  ): Promise<DrilldownRecommendation>;
 
   /**
    * Get tag keys for adhoc filters
@@ -377,13 +405,9 @@ abstract class DataSourceApi<
 }
 
 /**
- * Options argument to DataSourceAPI.getTagKeys
+ * Base options shared across datasource filtering operations.
  */
-export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuery> {
-  /**
-   * The other existing filters or base filters. New in v10.3
-   */
-  filters: AdHocVariableFilter[];
+export interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
   /**
    * Context time range. New in v10.3
    */
@@ -393,20 +417,26 @@ export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuer
 }
 
 /**
+ * Options argument to DataSourceAPI.getTagKeys
+ */
+export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
+  /**
+   * The other existing filters or base filters. New in v10.3
+   */
+  filters: AdHocVariableFilter[];
+}
+
+/**
  * Options argument to DataSourceAPI.getTagValues
  */
-export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQuery> {
+export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
   key: string;
   /**
    * The other existing filters or base filters. New in v10.3
    */
   filters: AdHocVariableFilter[];
-  /**
-   * Context time range. New in v10.3
-   */
-  timeRange?: TimeRange;
-  queries?: TQuery[];
-  scopes?: Scope[] | undefined;
 }
 
 export interface MetadataInspectorProps<
@@ -560,6 +590,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelName?: string;
   panelPluginId?: string;
   dashboardUID?: string;
+  dashboardTitle?: string;
   headers?: Record<string, string>;
 
   /** Filters to dynamically apply to all queries */
@@ -621,6 +652,35 @@ export interface MetricFindValue {
   value?: string | number;
   group?: string;
   expandable?: boolean;
+  properties?: Record<string, string>;
+}
+
+export interface DataSourceGetDrilldownsApplicabilityOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
+}
+
+export interface DataSourceGetRecommendedDrilldownsOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
+  dashboardUid?: string;
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
+}
+
+export interface DrilldownRecommendation {
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
+}
+
+export interface DrilldownsApplicability {
+  key: string;
+  applicable: boolean;
+  // message explaining why the filter is not applicable
+  reason?: string;
+  // needed to differentiate between filters with same key
+  // but different origin
+  origin?: string;
 }
 
 export interface DataSourceJsonData {
@@ -628,6 +688,7 @@ export interface DataSourceJsonData {
   defaultRegion?: string;
   profile?: string;
   manageAlerts?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
   alertmanagerUid?: string;
   disableGrafanaCache?: boolean;
 }

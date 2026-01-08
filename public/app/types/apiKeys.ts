@@ -1,6 +1,4 @@
-﻿import { WithAccessControlMetadata } from '@grafana/data';
-
-import { OrgRole } from './acl';
+﻿import { OrgRole, WithAccessControlMetadata } from '@grafana/data';
 
 export interface ApiKey extends WithAccessControlMetadata {
   id?: number;

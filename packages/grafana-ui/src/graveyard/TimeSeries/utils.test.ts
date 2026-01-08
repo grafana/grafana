@@ -1,5 +1,6 @@
 import { EventBus, FieldType } from '@grafana/data';
-import { getTheme } from '@grafana/ui';
+
+import { getTheme } from '../../themes/getTheme';
 
 import { preparePlotConfigBuilder } from './utils';
 

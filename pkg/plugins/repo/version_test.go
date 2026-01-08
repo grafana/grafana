@@ -73,4 +73,12 @@ func TestSelectSystemCompatibleVersion(t *testing.T) {
 		)
 		require.ErrorContains(t, err, "not compatible")
 	})
+
+	t.Run("Should handle v prefix correctly", func(t *testing.T) {
+		_, err := SelectSystemCompatibleVersion(logger,
+			createPluginVersions(versionArg{version: "v2.0.0"}),
+			"test", "2.0.0", fakeCompatOpts(),
+		)
+		require.NoError(t, err)
+	})
 }

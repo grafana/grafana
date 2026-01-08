@@ -1,6 +1,7 @@
 import { useAsync } from 'react-use';
 
-import { EditorRows, EditorRow, EditorField } from '@grafana/experimental';
+import { t } from '@grafana/i18n';
+import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
 
 import { DB, QueryEditorProps, QueryRowFilter } from '../../types';
 import { QueryToolbox } from '../query-editor-raw/QueryToolbox';
@@ -31,14 +32,17 @@ export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, 
         </EditorRow>
         {queryRowFilter.filter && (
           <EditorRow>
-            <EditorField label="Filter by column value" optional>
+            <EditorField
+              label={t('grafana-sql.components.visual-editor.label-filter-by-column-value', 'Filter by column value')}
+              optional
+            >
               <SQLWhereRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
             </EditorField>
           </EditorRow>
         )}
         {queryRowFilter.group && (
           <EditorRow>
-            <EditorField label="Group by column">
+            <EditorField label={t('grafana-sql.components.visual-editor.label-group-by-column', 'Group by column')}>
               <SQLGroupByRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
             </EditorField>
           </EditorRow>

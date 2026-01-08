@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { MouseEvent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
@@ -27,7 +28,9 @@ export const TutorialCard = ({ card }: Props) => {
     >
       <div className={cardContent}>
         <div className={styles.type}>{card.type}</div>
-        <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
+        <div className={styles.heading}>
+          {card.done ? t('gettingstarted.tutorial-card.complete', 'complete') : card.heading}
+        </div>
         <h4 className={styles.cardTitle}>{card.title}</h4>
         <div className={styles.info}>{card.info}</div>
       </div>

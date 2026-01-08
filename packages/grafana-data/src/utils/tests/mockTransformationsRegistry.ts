@@ -11,6 +11,8 @@ export const mockTransformationsRegistry = (transformers: DataTransformerInfo[])
         transformation: t,
         description: t.description,
         editor: () => null,
+        imageDark: `build/img/${t.id}-dark.abc123.svg`,
+        imageLight: `build/img/${t.id}-light.abc123.svg`,
       };
     });
   });

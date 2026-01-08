@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 
-import { withinQueryHistory } from './setup';
+import { withinQueryHistory, withinQueryLibrary } from './setup';
 
 export const assertQueryHistoryExists = async (query: string) => {
   const selector = withinQueryHistory();
@@ -23,13 +23,24 @@ export const assertQueryHistory = async (expectedQueryTexts: string[]) => {
 };
 
 export const assertQueryLibraryTemplateExists = async (datasource: string, description: string) => {
-  const selector = withinQueryHistory();
+  const selector = withinQueryLibrary();
   await waitFor(() => {
-    const cell = selector.getByRole('cell', {
-      name: new RegExp(`query template for ${datasource.toLowerCase()}: ${description.toLowerCase()}`, 'i'),
+    const cell = selector.getByRole('radio', {
+      name: description,
     });
 
     expect(cell).toBeInTheDocument();
+  });
+};
+
+export const assertQueryLibraryTemplateDoesNotExists = async (description: string) => {
+  const selector = withinQueryLibrary();
+  await waitFor(() => {
+    const cell = selector.queryByRole('radio', {
+      name: description,
+    });
+
+    expect(cell).not.toBeInTheDocument();
   });
 };
 
@@ -39,9 +50,9 @@ export const assertAddToQueryLibraryButtonExists = async (value = true) => {
     expect(withinQueryHistory().getByRole('button', { name: /run query/i })).toBeInTheDocument();
 
     if (value) {
-      expect(withinQueryHistory().queryByRole('button', { name: /add to library/i })).toBeInTheDocument();
+      expect(withinQueryHistory().queryByRole('button', { name: /Save query/i })).toBeInTheDocument();
     } else {
-      expect(withinQueryHistory().queryByRole('button', { name: /add to library/i })).not.toBeInTheDocument();
+      expect(withinQueryHistory().queryByRole('button', { name: /Save query/i })).not.toBeInTheDocument();
     }
   });
 };

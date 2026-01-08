@@ -1,5 +1,5 @@
 // Libraries
-import { defaults } from 'lodash';
+import { defaults, isObject } from 'lodash';
 import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 
 // Types
@@ -115,7 +115,7 @@ export class CSVReader {
                   if (!fields[j].config) {
                     fields[j].config = {};
                   }
-                  const disp = fields[j].config as any; // any lets name lookup
+                  const disp: any = fields[j].config; // any lets name lookup
                   disp[k] = j === 0 ? v : line[j];
                 }
               }
@@ -306,21 +306,27 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
       for (let i = 0; i < length; i++) {
         for (let j = 0; j < fields.length; j++) {
           if (j > 0) {
-            csv = csv + config.delimiter;
+            csv += config.delimiter;
           }
 
           let v = fields[j].values[i];
-          // For FieldType frame, use value if it exists to prevent exporting [object object]
-          if (fields[j].type === FieldType.frame && fields[j].values[i].value) {
-            v = fields[j].values[i].value;
-          }
+
           if (v !== null) {
-            csv = csv + writers[j](v);
+            // For FieldType frame, use value if it exists to prevent exporting [object object]
+            if (fields[j].type === FieldType.frame && 'value' in v) {
+              v = v.value;
+            }
+
+            if (fields[j].type === FieldType.other && isObject(v)) {
+              v = JSON.stringify(v);
+            }
+
+            csv += writers[j](v);
           }
         }
 
         if (i !== length - 1) {
-          csv = csv + config.newline;
+          csv += config.newline;
         }
       }
     }

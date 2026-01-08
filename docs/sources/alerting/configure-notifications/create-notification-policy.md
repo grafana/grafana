@@ -78,9 +78,9 @@ When an alert instance is assigned to a notification policy, the notification po
 - Controlling when notifications are sent using the [timing options](ref:policy-timing-options).
 - Determining the [contact points](ref:configure-contact-points) that receive the alert notification.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The default notification policy and its child policies are assigned to a [specific Alertmanager](ref:alertmanager-architecture), and they cannot use contact points or mute timings from other Alertmanagers.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Edit the default notification policy
 

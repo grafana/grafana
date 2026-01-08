@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
@@ -12,6 +12,11 @@ export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> 
   category?: React.ReactNode[];
 }
 
+/**
+ * The label component can be used to label form inputs with a heading/"Option name" and a description. To automatically have the right arrangement of this component with a form input, use the `Field` component.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-label--docs
+ */
 export const Label = ({ children, description, className, category, ...labelProps }: LabelProps) => {
   const styles = useStyles2(getLabelStyles);
   const categories = category?.map((c, i) => {

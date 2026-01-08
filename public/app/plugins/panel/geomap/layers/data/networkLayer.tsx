@@ -1,7 +1,6 @@
 import { isNumber } from 'lodash';
-import { Feature } from 'ol';
-import { FeatureLike } from 'ol/Feature';
-import Map from 'ol/Map';
+import Feature, { FeatureLike } from 'ol/Feature';
+import OpenLayersMap from 'ol/Map';
 import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
 import VectorImage from 'ol/layer/VectorImage';
 import { Fill, Stroke, Style, Text } from 'ol/style';
@@ -19,7 +18,6 @@ import {
   EventBus,
   DataFrame,
   Field,
-  PluginState,
 } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
@@ -70,16 +68,14 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
   isBaseMap: false,
   showLocation: true,
   hideOpacity: true,
-  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer
    * @param map
    * @param options
-   * @param eventBus
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -90,9 +86,8 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     const edgeStyle = await getStyleConfigState(config.edgeStyle);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
-
     const vectorLayer = new VectorImage({
-      source,
+      source
     });
     const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;
 

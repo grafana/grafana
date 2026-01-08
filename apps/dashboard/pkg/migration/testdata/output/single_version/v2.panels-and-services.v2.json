@@ -1,0 +1,121 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations \u0026 Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "autoMigrateFrom": "graphite",
+      "grid": {
+        "max": 100,
+        "min": 0
+      },
+      "id": 1,
+      "legend": true,
+      "targets": [
+        {
+          "refId": "A",
+          "target": "cpu.usage"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries",
+      "y2_format": "short",
+      "y_format": "percent"
+    },
+    {
+      "autoMigrateFrom": "graph",
+      "grid": {
+        "min": 0
+      },
+      "id": 2,
+      "legend": false,
+      "targets": [
+        {
+          "refId": "A",
+          "target": "memory.usage"
+        }
+      ],
+      "title": "Memory Usage",
+      "type": "timeseries",
+      "y_format": "bytes"
+    },
+    {
+      "grid": {
+        "max": 100,
+        "min": 0
+      },
+      "id": 3,
+      "legend": true,
+      "title": "Server Stats",
+      "type": "table",
+      "y2_format": "bytes",
+      "y_format": "short"
+    },
+    {
+      "autoMigrateFrom": "graphite",
+      "id": 4,
+      "legend": true,
+      "targets": [
+        {
+          "refId": "A",
+          "target": "disk.io"
+        }
+      ],
+      "title": "Disk I/O",
+      "type": "timeseries",
+      "y2_format": "Bps"
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "datasource": "prometheus",
+        "name": "server",
+        "options": [],
+        "query": "label_values(server)",
+        "type": "query"
+      },
+      {
+        "name": "env",
+        "options": [
+          {
+            "text": "Production",
+            "value": "prod"
+          },
+          {
+            "text": "Staging",
+            "value": "stage"
+          }
+        ],
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "V2 Comprehensive Migration Test Dashboard",
+  "weekStart": ""
+}

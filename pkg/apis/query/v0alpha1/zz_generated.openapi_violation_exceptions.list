@@ -1,5 +1,3 @@
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceApiServer,AliasIDs
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1/template,QueryTemplate,Variables
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1/template,replacement,Position
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1/template,replacement,TemplateVariable
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1/template,replacement,format
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceApiServerList,ListMeta
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceConnectionList,ListMeta

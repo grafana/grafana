@@ -29,16 +29,12 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 		return response.Error(http.StatusNotFound, "Data source not found", err)
 	}
 
-	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
-	if errors.As(err, &secretsPlugin) {
-		return response.Error(http.StatusInternalServerError, fmt.Sprint("Secrets Plugin error: ", err.Error()), err)
-	}
-
 	return response.ErrOrFallback(http.StatusInternalServerError, "Query data error", err)
 }
 
 // metrics.go
 func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryServiceRewrite) {
 		// rewrite requests from /ds/query to the new query service
 		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
@@ -56,7 +52,7 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 }
 
 // QueryMetricsV2 returns query metrics.
-// swagger:route POST /ds/query ds queryMetricsWithExpressions
+// swagger:route POST /ds/query datasources queryMetricsWithExpressions
 //
 // DataSource query metrics with expressions.
 //
@@ -76,7 +72,18 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	handleTimeInQuery := c.Req.Header.Get("X-Query-V2") == "true"
+
+	var resp *backend.QueryDataResponse
+	var err error
+
+	hs.log.Debug("QueryMetricsV2: request received", "time_in_query", handleTimeInQuery)
+	if handleTimeInQuery {
+		resp, err = hs.queryDataService.QueryDataNew(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	} else {
+		resp, err = hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	}
+
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}

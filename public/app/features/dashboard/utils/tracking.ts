@@ -1,15 +1,20 @@
-import { Panel, VariableModel } from '@grafana/schema/dist/esm/index';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { VariableModel } from '@grafana/schema/dist/esm/index';
+import {
+  AdhocVariableKind,
+  CustomVariableKind,
+  DatasourceVariableKind,
+  QueryVariableKind,
+  VariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
 
 export function trackDashboardLoaded(dashboard: DashboardModel, duration?: number, versionBeforeMigration?: number) {
   // Count the different types of variables
   const variables = getV1SchemaVariables(dashboard.templating.list);
   // Count the different types of panels
-  const panels = getV1SchemaPanelCounts(dashboard.panels);
+  const panels = getPanelPluginCounts(dashboard.panels.map((p) => p.type));
 
   DashboardInteractions.dashboardInitialized({
     uid: dashboard.uid,
@@ -27,34 +32,106 @@ export function trackDashboardLoaded(dashboard: DashboardModel, duration?: numbe
   });
 }
 
-export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
-  const trackingInformation = dashboard.getTrackingInformation();
-
-  DashboardInteractions.dashboardInitialized({
-    theme: undefined,
-    duration,
-    isScene: true,
-    ...trackingInformation,
-  });
+export function trackDashboardCreatedOrSaved(
+  isNew: boolean | undefined,
+  trackingProps: { name: string; url: string; uid: string; numPanels: number; numRows: number }
+) {
+  DashboardInteractions.dashboardCreatedOrSaved(isNew, trackingProps);
 }
 
-export function getV1SchemaPanelCounts(panels: Panel[] | PanelModel[]) {
-  return panels
-    .map((p) => p.type)
-    .reduce((r: Record<string, number>, p) => {
-      r[panelName(p)] = 1 + r[panelName(p)] || 1;
-      return r;
-    }, {});
+export function getPanelPluginCounts(panels: string[]) {
+  return panels.reduce((r: Record<string, number>, p) => {
+    r[panelName(p)] = 1 + r[panelName(p)] || 1;
+    return r;
+  }, {});
 }
 
 export function getV1SchemaVariables(variableList: VariableModel[]) {
-  return variableList
-    .map((v) => v.type)
-    .reduce((r: Record<string, number>, k) => {
-      r[variableName(k)] = 1 + r[variableName(k)] || 1;
-      return r;
-    }, {});
+  return {
+    // Count variable types
+    ...variableList.reduce<Record<string, number>>((variables, current) => {
+      // track how many custom CSV and custom JSON variables are used in a dashboard
+      if (current.type === 'custom') {
+        const name = variableName(`custom_${current.valuesFormat || 'csv'}`);
+        variables[name] = 1 + (variables[name] || 0);
+      }
+      variables[variableName(current.type)] = 1 + (variables[variableName(current.type)] || 0);
+      return variables;
+    }, {}),
+    // List of variables with data source types
+    varsWithDataSource: variableList.reduce<Array<{ type: string; datasource: string }>>((variablesWithDs, current) => {
+      if (current.datasource?.type) {
+        variablesWithDs.push({
+          type: current.type,
+          datasource: current.datasource.type,
+        });
+      }
+      return variablesWithDs;
+    }, []),
+  };
+}
+
+function mapNewToOldTypes(type: VariableKind['kind']): VariableModel['type'] | undefined {
+  switch (type) {
+    case 'AdhocVariable':
+      return 'adhoc';
+    case 'CustomVariable':
+      return 'custom';
+    case 'QueryVariable':
+      return 'query';
+    case 'IntervalVariable':
+      return 'interval';
+    case 'ConstantVariable':
+      return 'constant';
+    case 'DatasourceVariable':
+      return 'datasource';
+    case 'TextVariable':
+      return 'textbox';
+    case 'GroupByVariable':
+      return 'groupby';
+    default:
+      return undefined;
+  }
+}
+
+export function getV2SchemaVariables(variableList: VariableKind[]) {
+  return {
+    // Count variable types
+    ...variableList.reduce<Record<string, number>>((variables, current) => {
+      const type = mapNewToOldTypes(current.kind);
+      if (type) {
+        // track how many custom CSV and custom JSON variables are used in a dashboard
+        if (isCustomVariable(current)) {
+          const name = variableName(`custom_${current.spec.valuesFormat || 'csv'}`);
+          variables[name] = 1 + (variables[name] || 0);
+        }
+        variables[variableName(type)] = 1 + (variables[variableName(type)] || 0);
+      }
+      return variables;
+    }, {}),
+    // List of variables with data source types
+    varsWithDataSource: variableList.reduce<Array<{ type: string; datasource: string }>>((variablesWithDs, current) => {
+      let datasource = '';
+      const type = mapNewToOldTypes(current.kind);
+      datasource = getDatasourceFromVar(current);
+      if (datasource && type) {
+        variablesWithDs.push({ type, datasource });
+      }
+      return variablesWithDs;
+    }, []),
+  };
 }
 
 export const variableName = (type: string) => `variable_type_${type}_count`;
 const panelName = (type: string) => `panel_type_${type}_count`;
+
+const isAdhocVar: (v: VariableKind) => v is AdhocVariableKind = (v) => v.kind === 'AdhocVariable';
+const isDatasourceVar: (v: VariableKind) => v is DatasourceVariableKind = (v) => v.kind === 'DatasourceVariable';
+const isQueryVar: (v: VariableKind) => v is QueryVariableKind = (v) => v.kind === 'QueryVariable';
+
+const getDatasourceFromVar = (v: VariableKind) =>
+  isAdhocVar(v) ? v.group : isDatasourceVar(v) ? v.spec.pluginId : isQueryVar(v) ? v.spec?.query.group : '';
+
+export function isCustomVariable(variable: VariableKind): variable is CustomVariableKind {
+  return variable.kind === 'CustomVariable';
+}

@@ -1,12 +1,13 @@
 package rbac
 
-import "github.com/grafana/authlib/claims"
+import claims "github.com/grafana/authlib/types"
 
-type CheckRequest struct {
+type checkRequest struct {
 	Namespace    claims.NamespaceInfo
 	IdentityType claims.IdentityType
 	UserUID      string
-	Action       string
+	Action       string // Verb has been mapped into an action
+	ActionSets   []string
 	Group        string
 	Resource     string
 	Verb         string
@@ -14,7 +15,7 @@ type CheckRequest struct {
 	ParentFolder string
 }
 
-type ListRequest struct {
+type listRequest struct {
 	Namespace    claims.NamespaceInfo
 	IdentityType claims.IdentityType
 	UserUID      string
@@ -22,10 +23,10 @@ type ListRequest struct {
 	Resource     string
 	Verb         string
 	Action       string
+	ActionSets   []string
+	Options      *ListRequestOptions
 }
 
-type FolderNode struct {
-	uid          string
-	parentUID    *string
-	childrenUIDs []string
+type ListRequestOptions struct {
+	SkipCache bool
 }

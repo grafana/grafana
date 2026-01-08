@@ -11,6 +11,7 @@ import {
   ScopedVar,
   ScopedVars,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
@@ -69,7 +70,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
             name: dataFrame.name,
             refId: dataFrame.refId,
           },
-          text: 'Series',
+          text: t('panel.get-field-links-supplier.text.series', 'Series'),
         };
 
         const field = value.colIndex !== undefined ? dataFrame.fields[value.colIndex] : undefined;
@@ -80,7 +81,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
               name: field.name,
               labels: field.labels,
             },
-            text: 'Field',
+            text: t('panel.get-field-links-supplier.text.field', 'Field'),
           };
 
           if (value.rowIndex !== undefined && value.rowIndex >= 0) {
@@ -92,7 +93,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
                 text: formattedValueToString(value.display),
                 time: timeField ? timeField.values[value.rowIndex] : undefined,
               },
-              text: 'Value',
+              text: t('panel.get-field-links-supplier.text.value', 'Value'),
             };
           }
 
@@ -107,7 +108,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
                   rowIndex: value.rowIndex!,
                 }),
               },
-              text: 'Data',
+              text: t('panel.get-field-links-supplier.text.data', 'Data'),
             };
           }
         } else {
@@ -119,7 +120,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
               text: formattedValueToString(value.display),
               calc: value.name,
             },
-            text: 'Value',
+            text: t('panel.get-field-links-supplier.text.value', 'Value'),
           };
         }
       } else {

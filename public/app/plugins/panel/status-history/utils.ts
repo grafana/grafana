@@ -1,6 +1,4 @@
-import { ActionModel, Field, InterpolateFunction, LinkModel } from '@grafana/data';
-import { DataFrame } from '@grafana/data/';
-import { config } from '@grafana/runtime';
+import { DataFrame, ActionModel, Field, InterpolateFunction, LinkModel } from '@grafana/data';
 import { getActions } from 'app/features/actions/utils';
 
 export const getDataLinks = (field: Field, rowIdx: number) => {
@@ -28,26 +26,34 @@ export const getFieldActions = (
   dataFrame: DataFrame,
   field: Field,
   replaceVars: InterpolateFunction,
-  rowIndex: number
+  rowIndex: number,
+  visualizationType?: string
 ) => {
-  if (!config.featureToggles?.vizActions) {
-    return [];
-  }
-
   const actions: Array<ActionModel<Field>> = [];
-  const actionLookup = new Set<string>();
 
-  const actionsModel = getActions(dataFrame, field, field.state!.scopedVars!, replaceVars, field.config.actions ?? [], {
-    valueRowIndex: rowIndex,
-  });
+  if (field.state?.scopedVars) {
+    const actionLookup = new Set<string>();
 
-  actionsModel.forEach((action) => {
-    const key = `${action.title}`;
-    if (!actionLookup.has(key)) {
-      actions.push(action);
-      actionLookup.add(key);
-    }
-  });
+    const actionsModel = getActions(
+      dataFrame,
+      field,
+      field.state.scopedVars,
+      replaceVars,
+      field.config.actions ?? [],
+      {
+        valueRowIndex: rowIndex,
+      },
+      visualizationType
+    );
+
+    actionsModel.forEach((action) => {
+      const key = `${action.title}`;
+      if (!actionLookup.has(key)) {
+        actions.push(action);
+        actionLookup.add(key);
+      }
+    });
+  }
 
   return actions;
 };

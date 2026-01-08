@@ -3,15 +3,16 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
+	"unsafe"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	sdkjsoniter "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	jsoniter "github.com/json-iterator/go"
-
-	"golang.org/x/exp/slices"
 )
 
 // helpful while debugging all the options that may appear
@@ -20,11 +21,10 @@ func logf(format string, a ...any) {
 }
 
 type Options struct {
-	Dataplane bool
 }
 
 func rspErr(e error) backend.DataResponse {
-	return backend.DataResponse{Error: e}
+	return backend.DataResponse{Error: e, ErrorSource: status.SourceDownstream}
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
@@ -35,11 +35,12 @@ func ReadPrometheusStyleResult(jIter *jsoniter.Iterator, opt Options) backend.Da
 	errorType := ""
 	promErrString := ""
 	warnings := []data.Notice{}
+	infos := []data.Notice{}
 
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 		if err != nil {
-			return rspErr(err)
+			return rspErr(fmt.Errorf("response from prometheus couldn't be parsed. it is non-json: %w", err))
 		}
 		switch l1Field {
 		case "status":
@@ -68,6 +69,11 @@ l1Fields:
 				return rspErr(err)
 			}
 
+		case "infos":
+			if infos, err = readInfos(iter); err != nil {
+				return rspErr(err)
+			}
+
 		case "":
 			if err != nil {
 				return rspErr(err)
@@ -90,6 +96,10 @@ l1Fields:
 		}
 	}
 
+	if len(infos) > 0 {
+		warnings = append(warnings, infos...)
+	}
+
 	if len(warnings) > 0 {
 		if len(rsp.Frames) == 0 {
 			rsp.Frames = append(rsp.Frames, data.NewFrame("Warnings"))
@@ -106,7 +116,7 @@ l1Fields:
 	return rsp
 }
 
-func readWarnings(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
+func readAnnotations(iter *sdkjsoniter.Iterator, sevLevel data.NoticeSeverity) ([]data.Notice, error) {
 	warnings := []data.Notice{}
 	next, err := iter.WhatIsNext()
 	if err != nil {
@@ -131,7 +141,7 @@ func readWarnings(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
 				return nil, err
 			}
 			notice := data.Notice{
-				Severity: data.NoticeSeverityWarning,
+				Severity: sevLevel,
 				Text:     s,
 			}
 			warnings = append(warnings, notice)
@@ -139,6 +149,14 @@ func readWarnings(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
 	}
 
 	return warnings, nil
+}
+
+func readWarnings(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
+	return readAnnotations(iter, data.NoticeSeverityWarning)
+}
+
+func readInfos(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
+	return readAnnotations(iter, data.NoticeSeverityInfo)
 }
 
 func readPrometheusData(iter *sdkjsoniter.Iterator, opt Options) backend.DataResponse {
@@ -267,7 +285,7 @@ func readResult(resultType string, rsp backend.DataResponse, iter *sdkjsoniter.I
 			return rsp
 		}
 	case "scalar":
-		rsp = readScalar(iter, opt.Dataplane)
+		rsp = readScalar(iter)
 		if rsp.Error != nil {
 			return rsp
 		}
@@ -545,7 +563,7 @@ func readString(iter *sdkjsoniter.Iterator) backend.DataResponse {
 	}
 }
 
-func readScalar(iter *sdkjsoniter.Iterator, dataPlane bool) backend.DataResponse {
+func readScalar(iter *sdkjsoniter.Iterator) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -564,12 +582,9 @@ func readScalar(iter *sdkjsoniter.Iterator, dataPlane bool) backend.DataResponse
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type:   data.FrameTypeNumericMulti,
-		Custom: resultTypeToCustomMeta("scalar"),
-	}
-
-	if dataPlane {
-		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
+		Type:        data.FrameTypeNumericMulti,
+		Custom:      resultTypeToCustomMeta("scalar"),
+		TypeVersion: data.FrameTypeVersion{0, 1},
 	}
 
 	return backend.DataResponse{
@@ -579,17 +594,17 @@ func readScalar(iter *sdkjsoniter.Iterator, dataPlane bool) backend.DataResponse
 
 func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
+	size := 0
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return rspErr(err)
 		}
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-		timeField.Name = data.TimeSeriesTimeFieldName
-		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
-		valueField.Name = data.TimeSeriesValueFieldName
-		valueField.Labels = data.Labels{}
 
+		// First read all values to temporary storage
+		tempTimes := make([]time.Time, 0, size)
+		tempValues := make([]float64, 0, size)
+		var labels data.Labels
 		var histogram *histogramInfo
 
 		for l1Field, err := iter.ReadObject(); l1Field != ""; l1Field, err = iter.ReadObject() {
@@ -598,7 +613,7 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 			}
 			switch l1Field {
 			case "metric":
-				if err = iter.ReadVal(&valueField.Labels); err != nil {
+				if err = iter.ReadVal(&labels); err != nil {
 					return rspErr(err)
 				}
 
@@ -607,10 +622,9 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 				if err != nil {
 					return rspErr(err)
 				}
-				timeField.Append(t)
-				valueField.Append(v)
+				tempTimes = append(tempTimes, t)
+				tempValues = append(tempValues, v)
 
-			// nolint:goconst
 			case "values":
 				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 					if err != nil {
@@ -620,8 +634,8 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 					if err != nil {
 						return rspErr(err)
 					}
-					timeField.Append(t)
-					valueField.Append(v)
+					tempTimes = append(tempTimes, t)
+					tempValues = append(tempValues, v)
 				}
 
 			case "histogram":
@@ -655,28 +669,28 @@ func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt 
 		}
 
 		if histogram != nil {
-			histogram.yMin.Labels = valueField.Labels
-			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
+			histogram.yMin.Labels = labels
+			histogram.yMax.Labels = labels
+			histogram.count.Labels = labels
+			histogram.yLayout.Labels = labels
+			histogram.time.Labels = labels
+			frame := data.NewFrame("", histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
 			frame.Meta = &data.FrameMeta{
 				Type: "heatmap-cells",
 			}
-			if frame.Name == data.TimeSeriesValueFieldName {
-				frame.Name = "" // only set the name if useful
-			}
 			rsp.Frames = append(rsp.Frames, frame)
 		} else {
-			frame := data.NewFrame("", timeField, valueField)
+			frame := data.NewFrame("", data.NewField(data.TimeSeriesTimeFieldName, nil, tempTimes), data.NewField(data.TimeSeriesValueFieldName, labels, tempValues))
 			frame.Meta = &data.FrameMeta{
-				Type:   data.FrameTypeTimeSeriesMulti,
-				Custom: resultTypeToCustomMeta(resultType),
+				Type:        data.FrameTypeTimeSeriesMulti,
+				Custom:      resultTypeToCustomMeta(resultType),
+				TypeVersion: data.FrameTypeVersion{0, 1},
 			}
-			if opt.Dataplane && resultType == "vector" {
+			if resultType == "vector" {
 				frame.Meta.Type = data.FrameTypeNumericMulti
 			}
-			if opt.Dataplane {
-				frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
-			}
 			rsp.Frames = append(rsp.Frames, frame)
+			size = len(tempTimes)
 		}
 	}
 
@@ -839,14 +853,17 @@ func readHistogram(iter *sdkjsoniter.Iterator, hist *histogramInfo) error {
 }
 
 func appendValueFromString(iter *sdkjsoniter.Iterator, field *data.Field) error {
-	var err error
-	var s string
-	if s, err = iter.ReadString(); err != nil {
+	// Read the string directly into our buffer
+	buf, err := iter.ReadStringAsSlice()
+	if err != nil {
 		return err
 	}
 
-	var v float64
-	if v, err = strconv.ParseFloat(s, 64); err != nil {
+	// #nosec G103
+	// Convert string to float64 without allocation
+	// https://github.com/search?q=org%3Agrafana+yoloString&type=code
+	v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&buf)), 64)
+	if err != nil {
 		return err
 	}
 
@@ -1123,8 +1140,8 @@ streamField:
 	return parsedLabelsMap, structuredMetadataMap, nil
 }
 
-func resultTypeToCustomMeta(resultType string) map[string]string {
-	return map[string]string{"resultType": resultType}
+func resultTypeToCustomMeta(resultType string) map[string]any {
+	return map[string]any{"resultType": resultType}
 }
 
 func timeFromFloat(fv float64) time.Time {

@@ -12,17 +12,18 @@ import {
   formattedValueToString,
   Field,
 } from '@grafana/data';
-import { Button, Table } from '@grafana/ui';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { prepDataForStorybook } from '../../utils/storybook/data';
+import { Button } from '../Button/Button';
 
+import { Table } from './Table';
 import mdx from './Table.mdx';
 import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
 
 const meta: Meta<typeof Table> = {
-  title: 'Visualizations/Table',
+  title: 'Plugins/Table',
   component: Table,
   parameters: {
     controls: {
@@ -31,6 +32,8 @@ const meta: Meta<typeof Table> = {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   args: {
     width: 700,
@@ -260,7 +263,16 @@ export const Footer: StoryFn<typeof Table> = (args) => {
   );
 };
 
-export const Pagination: StoryFn<typeof Table> = (args) => <Basic {...args} />;
+export const Pagination: StoryFn<typeof Table> = (args) => {
+  const theme = useTheme2();
+  const data = buildData(theme, {});
+
+  return (
+    <DashboardStoryCanvas>
+      <Table {...args} data={data} />
+    </DashboardStoryCanvas>
+  );
+};
 Pagination.args = {
   enablePagination: true,
 };

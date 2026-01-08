@@ -11,9 +11,13 @@
 import * as common from '@grafana/schema';
 
 export interface TempoQuery extends common.DataQuery {
+  /**
+   * For metric queries, how many exemplars to request, 0 means no exemplars
+   */
+  exemplars?: number;
   filters: Array<TraceqlFilter>;
   /**
-   * Filters that are used to query the metrics summary
+   * deprecated Filters that are used to query the metrics summary
    */
   groupBy?: Array<TraceqlFilter>;
   /**
@@ -24,6 +28,10 @@ export interface TempoQuery extends common.DataQuery {
    * @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   maxDuration?: string;
+  /**
+   * For metric queries, whether to run instant or range queries
+   */
+  metricsQueryType?: MetricsQueryType;
   /**
    * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
@@ -44,6 +52,10 @@ export interface TempoQuery extends common.DataQuery {
    * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}. Providing multiple values will produce union of results for each filter, using PromQL OR operator internally.
    */
   serviceMapQuery?: (string | Array<string>);
+  /**
+   * Whether to use native histograms for service map queries
+   */
+  serviceMapUseNativeHistograms?: boolean;
   /**
    * @deprecated Query traces by service name
    */
@@ -72,6 +84,11 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 };
 
 export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+
+export enum MetricsQueryType {
+  Instant = 'instant',
+  Range = 'range',
+}
 
 /**
  * The state of the TraceQL streaming search query
@@ -110,6 +127,10 @@ export interface TraceqlFilter {
    * Uniquely identify the filter, will not be used in the query generation
    */
   id: string;
+  /**
+   * Whether the value is a custom value typed by the user
+   */
+  isCustomValue?: boolean;
   /**
    * The operator that connects the tag to the value, for example: =, >, !=, =~
    */

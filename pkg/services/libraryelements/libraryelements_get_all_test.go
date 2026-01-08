@@ -2,19 +2,22 @@ package libraryelements
 
 import (
 	"encoding/json"
-	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search"
+	searchmodel "github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestGetAllLibraryElements(t *testing.T) {
+func TestIntegration_GetAllLibraryElements(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testScenario(t, "When an admin tries to get all library panels and none exists, it should return none",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.getAllHandler(sc.reqContext)
@@ -29,141 +32,6 @@ func TestGetAllLibraryElements(t *testing.T) {
 					Elements:   []libraryElement{},
 					Page:       1,
 					PerPage:    100,
-				},
-			}
-			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
-				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-			}
-		})
-
-	scenarioWithPanel(t, "When an admin tries to get all panel elements and both panels and variables exist, it should only return panels",
-		func(t *testing.T, sc scenarioContext) {
-			// nolint:staticcheck
-			command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
-			sc.reqContext.Req.Body = mockRequestBody(command)
-			resp := sc.service.createHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-
-			err := sc.reqContext.Req.ParseForm()
-			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("kind", strconv.FormatInt(int64(model.PanelElement), 10))
-
-			resp = sc.service.getAllHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-
-			var result libraryElementsSearch
-			err = json.Unmarshal(resp.Body(), &result)
-			require.NoError(t, err)
-			var expected = libraryElementsSearch{
-				Result: libraryElementsSearchResult{
-					TotalCount: 1,
-					Page:       1,
-					PerPage:    100,
-					Elements: []libraryElement{
-						{
-							ID:          1,
-							OrgID:       1,
-							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
-							UID:         result.Result.Elements[0].UID,
-							Name:        "Text - Library Panel",
-							Kind:        int64(model.PanelElement),
-							Type:        "text",
-							Description: "A description",
-							Model: map[string]interface{}{
-								"datasource":  "${DS_GDEV-TESTDATA}",
-								"description": "A description",
-								"id":          float64(1),
-								"title":       "Text - Library Panel",
-								"type":        "text",
-							},
-							Version: 1,
-							Meta: model.LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.UID,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
-									Id:        1,
-									Name:      userInDbName,
-									AvatarUrl: userInDbAvatar,
-								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
-									Id:        1,
-									Name:      userInDbName,
-									AvatarUrl: userInDbAvatar,
-								},
-							},
-						},
-					},
-				},
-			}
-			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
-				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-			}
-		})
-
-	scenarioWithPanel(t, "When an admin tries to get all variable elements and both panels and variables exist, it should only return panels",
-		func(t *testing.T, sc scenarioContext) {
-			// nolint:staticcheck
-			command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
-			sc.reqContext.Req.Body = mockRequestBody(command)
-			resp := sc.service.createHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-
-			err := sc.reqContext.Req.ParseForm()
-			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("kind", strconv.FormatInt(int64(model.VariableElement), 10))
-
-			resp = sc.service.getAllHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-
-			var result libraryElementsSearch
-			err = json.Unmarshal(resp.Body(), &result)
-			require.NoError(t, err)
-			var expected = libraryElementsSearch{
-				Result: libraryElementsSearchResult{
-					TotalCount: 1,
-					Page:       1,
-					PerPage:    100,
-					Elements: []libraryElement{
-						{
-							ID:          2,
-							OrgID:       1,
-							FolderID:    1, // nolint:staticcheck
-							FolderUID:   sc.folder.UID,
-							UID:         result.Result.Elements[0].UID,
-							Name:        "query0",
-							Kind:        int64(model.VariableElement),
-							Type:        "query",
-							Description: "A description",
-							Model: map[string]interface{}{
-								"datasource":  "${DS_GDEV-TESTDATA}",
-								"name":        "query0",
-								"type":        "query",
-								"description": "A description",
-							},
-							Version: 1,
-							Meta: model.LibraryElementDTOMeta{
-								FolderName:          "ScenarioFolder",
-								FolderUID:           sc.folder.UID,
-								ConnectedDashboards: 0,
-								Created:             result.Result.Elements[0].Meta.Created,
-								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
-									Id:        1,
-									Name:      userInDbName,
-									AvatarUrl: userInDbAvatar,
-								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
-									Id:        1,
-									Name:      userInDbName,
-									AvatarUrl: userInDbAvatar,
-								},
-							},
-						},
-					},
 				},
 			}
 			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
@@ -215,12 +83,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -251,12 +119,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -281,7 +149,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("sortDirection", search.SortAlphaDesc.Name)
+			sc.reqContext.Req.Form.Add("sortDirection", sort.SortAlphaDesc.Name)
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -318,12 +186,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -354,12 +222,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -443,12 +311,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -479,12 +347,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -539,7 +407,14 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilterUIDs is set to existing folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_NewFolder",
+				Title: "NewFolder",
+			}
+			sc.folderSvc.ExpectedFolder = newFolder
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{newFolder}
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
@@ -581,17 +456,17 @@ func TestGetAllLibraryElements(t *testing.T) {
 							},
 							Version: 1,
 							Meta: model.LibraryElementDTOMeta{
-								FolderName:          "NewFolder",
+								FolderName:          newFolder.Title,
 								FolderUID:           newFolder.UID,
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -608,7 +483,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilter is set to a nonexistent folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, sc.folder.UID, "Text - Library Panel2")
 			sc.reqContext.Req.Body = mockRequestBody(command)
@@ -686,12 +561,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -722,12 +597,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -789,12 +664,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -856,12 +731,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -924,12 +799,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -964,13 +839,14 @@ func TestGetAllLibraryElements(t *testing.T) {
 			require.NoError(t, err)
 			sc.reqContext.Req.Form.Add("perPage", "1")
 			sc.reqContext.Req.Form.Add("page", "1")
-			sc.reqContext.Req.Form.Add("searchString", "description")
+			sc.reqContext.Req.Form.Add("searchString", "DeScRiPtIoN") // mixed case to test case-insensitive search.
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
 			var result libraryElementsSearch
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
+			require.Equal(t, int64(1), result.Result.TotalCount)
 			var expected = libraryElementsSearch{
 				Result: libraryElementsSearchResult{
 					TotalCount: 1,
@@ -1001,12 +877,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -1039,13 +915,14 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("searchString", "Library Panel")
+			sc.reqContext.Req.Form.Add("searchString", "library PANEL") // mixed-case to test case-insensitive search.
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
 			var result libraryElementsSearch
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
+			require.Equal(t, int64(2), result.Result.TotalCount)
 			var expected = libraryElementsSearch{
 				Result: libraryElementsSearchResult{
 					TotalCount: 2,
@@ -1076,12 +953,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -1112,12 +989,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[1].Meta.Created,
 								Updated:             result.Result.Elements[1].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -1181,12 +1058,12 @@ func TestGetAllLibraryElements(t *testing.T) {
 								ConnectedDashboards: 0,
 								Created:             result.Result.Elements[0].Meta.Created,
 								Updated:             result.Result.Elements[0].Meta.Updated,
-								CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								CreatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
 								},
-								UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								UpdatedBy: model.LibraryElementDTOMetaUser{
 									Id:        1,
 									Name:      userInDbName,
 									AvatarUrl: userInDbAvatar,
@@ -1278,8 +1155,8 @@ func TestGetAllLibraryElements(t *testing.T) {
 			require.Equal(t, int64(1), result.Result.Elements[0].FolderID)
 			require.Equal(t, "Text - Library Panel", result.Result.Elements[0].Name)
 
-			sc.reqContext.SignedInUser.OrgID = 2
-			sc.reqContext.SignedInUser.OrgRole = org.RoleAdmin
+			sc.reqContext.OrgID = 2
+			sc.reqContext.OrgRole = org.RoleAdmin
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
@@ -1297,5 +1174,357 @@ func TestGetAllLibraryElements(t *testing.T) {
 			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
+		})
+
+	// Folder name search integration tests
+	scenarioWithPanel(t, "When searching by folder name, it should return panels in that folder",
+		func(t *testing.T, sc scenarioContext) {
+			sc.folderSvc.ExpectedHitList = searchmodel.HitList{
+				{
+					UID:   sc.folder.UID,
+					Title: sc.folder.Title,
+					Type:  searchmodel.DashHitFolder,
+				},
+			}
+
+			// Create a panel in the existing folder
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel in ScenarioFolder")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Search by folder name
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "ScenarioFolder")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Verify folder search finds both panels
+			require.Equal(t, int64(2), result.Result.TotalCount)
+			require.Equal(t, 2, len(result.Result.Elements))
+			require.Equal(t, 1, result.Result.Page)
+			require.Equal(t, 100, result.Result.PerPage)
+			for _, element := range result.Result.Elements {
+				require.Equal(t, int64(1), element.OrgID, "Should be in org 1")
+				require.Equal(t, sc.folder.UID, element.FolderUID, "Should have correct folder UID")
+				require.Equal(t, "ScenarioFolder", element.Meta.FolderName, "All panels should be in ScenarioFolder")
+				require.Equal(t, int64(model.PanelElement), element.Kind, "Should be a panel element")
+				require.Equal(t, "text", element.Type, "Should be text panel")
+				require.NotEmpty(t, element.UID, "Should have a UID")
+				require.NotEmpty(t, element.Name, "Should have a name")
+				require.Equal(t, int64(0), element.Meta.ConnectedDashboards, "Should have no connected dashboards")
+			}
+		})
+
+	scenarioWithPanel(t, "When searching by folder name that doesn't exist, it should return no results",
+		func(t *testing.T, sc scenarioContext) {
+			// Search by non-existent folder name
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "NonExistentFolder")
+			resp := sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Verify no results for non-existent folder
+			expected := libraryElementsSearch{
+				Result: libraryElementsSearchResult{
+					TotalCount: 0,
+					Elements:   []libraryElement{},
+					Page:       1,
+					PerPage:    100,
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+			require.Equal(t, 0, len(result.Result.Elements), "Should return empty elements array")
+		})
+
+	scenarioWithPanel(t, "When searching with folder filter applied, folder name search should be disabled",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a panel in the existing folder
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel for folder filter test")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Search with both searchString and folderFilterUIDs
+			// This should NOT search folder names, only panel names/descriptions within the specified folder
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "ScenarioFolder")
+			sc.reqContext.Req.Form.Add("folderFilterUIDs", sc.folder.UID)
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Folder name search disabled when folder filter applied
+			expected := libraryElementsSearch{
+				Result: libraryElementsSearchResult{
+					TotalCount: 0,
+					Elements:   []libraryElement{},
+					Page:       1,
+					PerPage:    100,
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			require.Equal(t, int64(0), result.Result.TotalCount, "Should not find panels by folder name when folder filter is applied")
+			require.Equal(t, 0, len(result.Result.Elements), "Should return empty elements array")
+		})
+
+	scenarioWithPanel(t, "When searching by partial folder name, it should return panels in matching folders",
+		func(t *testing.T, sc scenarioContext) {
+			sc.folderSvc.ExpectedHitList = searchmodel.HitList{
+				{
+					UID:   sc.folder.UID,
+					Title: sc.folder.Title,
+					Type:  searchmodel.DashHitFolder,
+				},
+			}
+
+			// Create a panel in the existing folder
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Test Panel")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Search by partial folder name
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "Scenario")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Verify partial folder name matching
+			require.Equal(t, int64(2), result.Result.TotalCount, "Should find exactly 2 panels by partial folder name")
+			require.Equal(t, 2, len(result.Result.Elements), "Should return 2 elements")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+
+			for _, element := range result.Result.Elements {
+				require.Equal(t, int64(1), element.OrgID, "Should be in org 1")
+				require.Equal(t, sc.folder.UID, element.FolderUID, "Should have correct folder UID")
+				require.Contains(t, element.Meta.FolderName, "Scenario", "Folder name should contain 'Scenario'")
+				require.Equal(t, "ScenarioFolder", element.Meta.FolderName, "Should be in ScenarioFolder")
+				require.Equal(t, int64(model.PanelElement), element.Kind, "Should be a panel element")
+				require.NotEmpty(t, element.UID, "Should have a UID")
+				require.NotEmpty(t, element.Name, "Should have a name")
+			}
+		})
+
+	scenarioWithPanel(t, "When searching combines panel name and folder name matches, it should return both",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a panel with a specific name
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Marketing Report Panel")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Search for "Marketing" which could match both panel name and folder name
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "Marketing")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Verify panel name matching
+			require.Equal(t, int64(1), result.Result.TotalCount, "Should find exactly 1 panel with 'Marketing' in name")
+			require.Equal(t, 1, len(result.Result.Elements), "Should return 1 element")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+
+			element := result.Result.Elements[0]
+			require.Equal(t, "Marketing Report Panel", element.Name, "Should find panel with correct name")
+			require.Equal(t, int64(1), element.OrgID, "Should be in org 1")
+			require.Equal(t, sc.folder.UID, element.FolderUID, "Should have correct folder UID")
+			require.Equal(t, "ScenarioFolder", element.Meta.FolderName, "Should be in ScenarioFolder")
+			require.Equal(t, int64(model.PanelElement), element.Kind, "Should be a panel element")
+			require.Equal(t, "text", element.Type, "Should be text panel")
+			require.NotEmpty(t, element.UID, "Should have a UID")
+			require.Equal(t, int64(0), element.Meta.ConnectedDashboards, "Should have no connected dashboards")
+		})
+
+	// Non-admin user permission tests
+	scenarioWithPanel(t, "When a non-admin user has folders but none of the library elements are in those folders, it should return empty result",
+		func(t *testing.T, sc scenarioContext) {
+			// Create library panels in the scenario folder
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel2")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Create a different folder that the non-admin user has access to (but has no panels)
+			differentFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_DifferentFolder",
+				Title: "DifferentFolder",
+			}
+
+			// Change user to non-admin and set their accessible folders to only the different folder
+			// This simulates a user who can see a folder but that folder doesn't contain any of the library elements
+			sc.reqContext.OrgRole = org.RoleViewer
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{differentFolder}
+			sc.folderSvc.AddFolder(differentFolder)
+
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// TotalCount should be 0 for non-admin users since they can't access the folders with panels
+			require.Equal(t, int64(0), result.Result.TotalCount, "TotalCount should be 0 since user has no access to folders with panels")
+			require.Equal(t, 0, len(result.Result.Elements), "Elements should be empty since user has no access to folders with panels")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+		})
+
+	scenarioWithPanel(t, "When a non-admin user has folders and some library elements are in those folders, it should return only accessible elements",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a second folder that the non-admin user will have access to
+			accessibleFolder := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_AccessibleFolder",
+				Title: "AccessibleFolder",
+			}
+
+			// Create a library panel in the accessible folder (need to add it to fake service first)
+			sc.folderSvc.ExpectedFolder = accessibleFolder
+			sc.folderSvc.AddFolder(accessibleFolder)
+			// nolint:staticcheck
+			command := getCreatePanelCommand(accessibleFolder.ID, accessibleFolder.UID, "Accessible Panel")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Create another panel in a folder the user won't have access to
+			inaccessibleFolder := &folder.Folder{
+				ID:    3,
+				OrgID: 1,
+				UID:   "uid_for_InaccessibleFolder",
+				Title: "InaccessibleFolder",
+			}
+			sc.folderSvc.ExpectedFolder = inaccessibleFolder
+			sc.folderSvc.AddFolder(inaccessibleFolder)
+			// nolint:staticcheck
+			command = getCreatePanelCommand(inaccessibleFolder.ID, inaccessibleFolder.UID, "Inaccessible Panel")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp = sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Change user to non-admin and set their accessible folders to only the accessible folder and scenario folder
+			// This will filter out the inaccessible folder
+			sc.reqContext.OrgRole = org.RoleViewer
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{sc.folder, accessibleFolder}
+
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// TotalCount should match the number of accessible elements (2) for non-admin users
+			require.Equal(t, int64(2), result.Result.TotalCount, "TotalCount should be 2 (only accessible panels)")
+			require.Equal(t, 2, len(result.Result.Elements), "Elements should contain only 2 accessible panels")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+
+			// Verify the returned panels are from accessible folders only
+			folderUIDs := make(map[string]bool)
+			for _, element := range result.Result.Elements {
+				folderUIDs[element.FolderUID] = true
+				require.Contains(t, []string{sc.folder.UID, accessibleFolder.UID}, element.FolderUID, "Element should be in accessible folder")
+				require.NotEqual(t, inaccessibleFolder.UID, element.FolderUID, "Element should not be from inaccessible folder")
+			}
+			require.True(t, folderUIDs[sc.folder.UID], "Should include panel from scenario folder")
+			require.True(t, folderUIDs[accessibleFolder.UID], "Should include panel from accessible folder")
+		})
+
+	scenarioWithPanel(t, "When a non-admin user has access to all folders containing library elements, it should return all elements",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a second folder that the non-admin user will have access to
+			folder2 := &folder.Folder{
+				ID:    2,
+				OrgID: 1,
+				UID:   "uid_for_Folder2",
+				Title: "Folder2",
+			}
+			sc.folderSvc.ExpectedFolder = folder2
+			sc.folderSvc.AddFolder(folder2)
+
+			// Create a library panel in folder2
+			// nolint:staticcheck
+			command := getCreatePanelCommand(folder2.ID, folder2.UID, "Panel in Folder2")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Create another panel in the original scenario folder
+			sc.folderSvc.ExpectedFolder = sc.folder
+			// nolint:staticcheck
+			command = getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel in ScenarioFolder")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp = sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Change user to non-admin and set their accessible folders to include all folders with panels
+			sc.reqContext.OrgRole = org.RoleViewer
+			sc.folderSvc.ExpectedFolders = []*folder.Folder{sc.folder, folder2}
+
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err := json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Should return all 3 panels (1 from initial setup + 2 created in this test)
+			require.Equal(t, int64(3), result.Result.TotalCount, "Should return all 3 panels")
+			require.Equal(t, 3, len(result.Result.Elements), "Should have 3 elements")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+
+			// Verify all panels are from the accessible folders
+			folderUIDs := make(map[string]int)
+			for _, element := range result.Result.Elements {
+				folderUIDs[element.FolderUID]++
+				require.Contains(t, []string{sc.folder.UID, folder2.UID}, element.FolderUID, "All elements should be in accessible folders")
+				require.Equal(t, int64(model.PanelElement), element.Kind, "Should be a panel element")
+				require.Equal(t, "text", element.Type, "Should be text panel")
+			}
+			require.Equal(t, 2, folderUIDs[sc.folder.UID], "Should have 2 panels in scenario folder")
+			require.Equal(t, 1, folderUIDs[folder2.UID], "Should have 1 panel in folder2")
 		})
 }

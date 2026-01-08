@@ -7,18 +7,19 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types';
+import { IconName } from '../../types/icon';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip/types';
 
-export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
+export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey' | 'brand';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
-  text: React.ReactNode;
+  text?: React.ReactNode;
   color: BadgeColor;
   icon?: IconName;
-  tooltip?: string;
+  tooltip?: PopoverContent;
 }
 
 const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
@@ -46,6 +47,11 @@ const BadgeSkeleton: SkeletonComponent = ({ rootProps }) => {
   return <Skeleton width={60} height={22} containerClassName={styles.container} {...rootProps} />;
 };
 
+/**
+ * The badge component adds meta information to other content, for example about release status or new elements. You can add any `Icon` component or use the badge without an icon.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-badge--docs
+ */
 export const Badge = attachSkeleton(BadgeComponent, BadgeSkeleton);
 
 const getSkeletonStyles = () => ({
@@ -70,16 +76,22 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
     textColor = tinycolor(sourceColor).darken(20).toString();
   }
 
+  if (color === 'brand') {
+    bgColor = theme.colors.gradients.brandHorizontal;
+    borderColor = 'transparent';
+    textColor = theme.colors.primary.contrastText;
+  }
+
   return {
     wrapper: css({
       display: 'inline-flex',
       padding: '1px 4px',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
       background: bgColor,
       border: `1px solid ${borderColor}`,
       color: textColor,
       fontWeight: theme.typography.fontWeightRegular,
-      gap: '2px',
+      gap: theme.spacing(0.5),
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       alignItems: 'center',

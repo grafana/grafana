@@ -18,6 +18,8 @@ import {
   NumberDurationLiteralInDurationContext,
   parser,
   PromQL,
+  QuotedLabelMatcher,
+  QuotedLabelName,
   StringLiteral,
   UnquotedLabelMatcher,
   VectorSelector,
@@ -35,8 +37,10 @@ type NodeTypeId =
   | typeof GroupingLabels
   | typeof Identifier
   | typeof UnquotedLabelMatcher
+  | typeof QuotedLabelMatcher
   | typeof LabelMatchers
   | typeof LabelName
+  | typeof QuotedLabelName
   | typeof PromQL
   | typeof StringLiteral
   | typeof VectorSelector
@@ -80,8 +84,10 @@ function walk(node: SyntaxNode, path: Path): SyntaxNode | null {
   return current;
 }
 
-function getNodeText(node: SyntaxNode, text: string): string {
-  return text.slice(node.from, node.to);
+function getNodeText(node: SyntaxNode, text: string, utf8?: boolean): string {
+  const nodeFrom = utf8 ? node.from + 1 : node.from;
+  const nodeTo = utf8 ? node.to - 1 : node.to;
+  return text.slice(nodeFrom, nodeTo);
 }
 
 function parsePromQLStringLiteral(text: string): string {
@@ -140,6 +146,8 @@ export type Situation =
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME';
       metricName?: string;
       otherLabels: Label[];
+      // utf8 labels must be in quotes
+      betweenQuotes: boolean;
     }
   | {
       type: 'IN_GROUPING';
@@ -171,7 +179,16 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLabelKeysWithEquals,
   },
   {
+    path: [StringLiteral, QuotedLabelName, LabelMatchers, VectorSelector],
+    fun: resolveUtf8LabelKeysWithEquals,
+  },
+  {
     path: [PromQL],
+    fun: resolveTopLevel,
+  },
+  {
+    // Partially written metric name
+    path: [Identifier, VectorSelector, PromQL],
     fun: resolveTopLevel,
   },
   {
@@ -183,12 +200,20 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLabelMatcher,
   },
   {
+    path: [StringLiteral, QuotedLabelMatcher],
+    fun: resolveQuotedLabelMatcher,
+  },
+  {
     path: [ERROR_NODE_NAME, BinaryExpr, PromQL],
     fun: resolveTopLevel,
   },
   {
     path: [ERROR_NODE_NAME, UnquotedLabelMatcher],
     fun: resolveLabelMatcher,
+  },
+  {
+    path: [ERROR_NODE_NAME, QuotedLabelMatcher],
+    fun: resolveQuotedLabelMatcher,
   },
   {
     path: [ERROR_NODE_NAME, NumberDurationLiteralInDurationContext, MatrixSelector],
@@ -217,11 +242,13 @@ function getLabelOp(opNode: SyntaxNode): LabelOperator | null {
 }
 
 function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
-  if (labelMatcherNode.type.id !== UnquotedLabelMatcher) {
+  const allowedMatchers = new Set([UnquotedLabelMatcher, QuotedLabelMatcher]);
+  if (!allowedMatchers.has(labelMatcherNode.type.id)) {
     return null;
   }
 
-  const nameNode = walk(labelMatcherNode, [['firstChild', LabelName]]);
+  const nameNode =
+    walk(labelMatcherNode, [['firstChild', LabelName]]) ?? walk(labelMatcherNode, [['firstChild', QuotedLabelName]]);
 
   if (nameNode === null) {
     return null;
@@ -254,8 +281,17 @@ function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
     return [];
   }
 
-  const labelNodes = labelMatchersNode.getChildren(UnquotedLabelMatcher);
-  return labelNodes.map((ln) => getLabel(ln, text)).filter(notEmpty);
+  const matchers = [UnquotedLabelMatcher, QuotedLabelMatcher];
+
+  return matchers.reduce<Label[]>((acc, matcher) => {
+    labelMatchersNode.getChildren(matcher).forEach((ln) => {
+      const label = getLabel(ln, text);
+      if (notEmpty(label)) {
+        acc.push(label);
+      }
+    });
+    return acc;
+  }, []);
 }
 
 function getNodeChildren(node: SyntaxNode): SyntaxNode[] {
@@ -299,12 +335,20 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
     return null;
   }
 
-  const metricIdNode = getNodeInSubtree(bodyNode, Identifier);
-  if (metricIdNode === null) {
+  const metricIdNode = getNodeInSubtree(bodyNode, Identifier) ?? getNodeInSubtree(bodyNode, StringLiteral);
+
+  if (!metricIdNode) {
     return null;
   }
 
-  const metricName = getNodeText(metricIdNode, text);
+  // Let's check whether it's a utf8 metric.
+  // A utf8 metric must be a StringLiteral and its parent must be a QuotedLabelName
+  if (metricIdNode.type.id === StringLiteral && metricIdNode.parent?.type.id !== QuotedLabelName) {
+    return null;
+  }
+
+  const metricName = getNodeText(metricIdNode, text, metricIdNode.type.id === StringLiteral);
+
   return {
     type: 'IN_GROUPING',
     metricName,
@@ -341,29 +385,54 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   // we need to remove "our" label from all-labels, if it is in there
   const otherLabels = allLabels.filter((label) => label.name !== labelName);
 
-  const metricNameNode = walk(labelMatchersNode, [
-    ['parent', VectorSelector],
-    ['firstChild', Identifier],
-  ]);
+  const metricName = getMetricName(labelMatchersNode, text);
 
-  if (metricNameNode === null) {
-    // we are probably in a situation without a metric name
-    return {
-      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-      labelName,
-      betweenQuotes: inStringNode,
-      otherLabels,
-    };
-  }
-
-  const metricName = getNodeText(metricNameNode, text);
-
+  // we are probably in a situation without a metric name
   return {
     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-    metricName,
     labelName,
     betweenQuotes: inStringNode,
     otherLabels,
+    ...(metricName ? { metricName } : {}),
+  };
+}
+
+function resolveQuotedLabelMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
+  // we can arrive here in two situation. `node` is either:
+  // - a StringNode (like in `{"job"="^"}`)
+  // - or an error node (like in `{"job"=^}`)
+  const inStringNode = !node.type.isError;
+
+  const parent = walk(node, [['parent', QuotedLabelMatcher]]);
+  if (parent === null) {
+    return null;
+  }
+
+  const labelNameNode = walk(parent, [['firstChild', QuotedLabelName]]);
+  if (labelNameNode === null) {
+    return null;
+  }
+
+  const labelName = getNodeText(labelNameNode, text);
+
+  const labelMatchersNode = walk(parent, [['parent', LabelMatchers]]);
+  if (labelMatchersNode === null) {
+    return null;
+  }
+
+  // now we need to find the other names
+  const allLabels = getLabels(labelMatchersNode, text);
+
+  // we need to remove "our" label from all-labels, if it is in there
+  const otherLabels = allLabels.filter((label) => label.name !== labelName);
+  const metricName = getMetricName(parent.parent!, text);
+
+  return {
+    type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+    labelName,
+    betweenQuotes: inStringNode,
+    otherLabels,
+    ...(metricName ? { metricName } : {}),
   };
 }
 
@@ -388,7 +457,7 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Situatio
 function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
   // next false positive:
   // `something{a="1"^}`
-  const child = walk(node, [['firstChild', UnquotedLabelMatcher]]);
+  let child = walk(node, [['firstChild', UnquotedLabelMatcher]]);
   if (child !== null) {
     // means the label-matching part contains at least one label already.
     //
@@ -403,28 +472,72 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
     }
   }
 
-  const metricNameNode = walk(node, [
+  // next false positive:
+  // `{"utf8.metric"^}`
+  child = walk(node, [['firstChild', QuotedLabelName]]);
+  if (child !== null) {
+    // means the label-matching part contains a utf8 metric.
+    //
+    // in this case, we will need to have a `,` character at the end,
+    // to be able to suggest adding the next label.
+    // the area between the end-of-the-child-node and the cursor-pos
+    // must contain a `,` in this case.
+    const textToCheck = text.slice(child.to, pos);
+
+    if (!textToCheck.includes(',')) {
+      return null;
+    }
+  }
+
+  const otherLabels = getLabels(node, text);
+  const metricName = getMetricName(node, text);
+
+  return {
+    type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+    otherLabels,
+    betweenQuotes: false,
+    ...(metricName ? { metricName } : {}),
+  };
+}
+
+function resolveUtf8LabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
+  const otherLabels = getLabels(node, text);
+  const metricName = node.parent?.parent ? getMetricName(node.parent.parent, text) : null;
+
+  return {
+    type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+    otherLabels,
+    betweenQuotes: true,
+    ...(metricName ? { metricName } : {}),
+  };
+}
+
+function getMetricName(node: SyntaxNode, text: string): string | null {
+  // Legacy Metric metric_name{label="value"}
+  const legacyMetricNameNode = walk(node, [
     ['parent', VectorSelector],
     ['firstChild', Identifier],
   ]);
 
-  const otherLabels = getLabels(node, text);
-
-  if (metricNameNode === null) {
-    // we are probably in a situation without a metric name.
-    return {
-      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
-      otherLabels,
-    };
+  if (legacyMetricNameNode) {
+    return getNodeText(legacyMetricNameNode, text);
   }
 
-  const metricName = getNodeText(metricNameNode, text);
+  // check for a utf-8 metric
+  // utf-8 metric {"metric.name", label="value"}
+  const utf8MetricNameNode = walk(node, [
+    ['parent', VectorSelector],
+    ['firstChild', LabelMatchers],
+    ['firstChild', QuotedLabelName],
+    ['firstChild', StringLiteral],
+  ]);
 
-  return {
-    type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
-    metricName,
-    otherLabels,
-  };
+  if (utf8MetricNameNode) {
+    return getNodeText(utf8MetricNameNode, text, true);
+  }
+
+  // no metric name
+  return null;
 }
 
 // we find the first error-node in the tree that is at the cursor-position.
@@ -461,10 +574,10 @@ export function getSituation(text: string, pos: number): Situation | null {
   }
 
   /**
-     PromQL
-     Expr
-     VectorSelector
-     LabelMatchers
+   PromQL
+   Expr
+   VectorSelector
+   LabelMatchers
    */
   const tree = parser.parse(text);
 

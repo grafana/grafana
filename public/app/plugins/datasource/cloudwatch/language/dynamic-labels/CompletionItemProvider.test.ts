@@ -1,9 +1,10 @@
-import { CompletionItemPriority } from '@grafana/experimental';
+import { CompletionItemPriority } from '@grafana/plugin-ui';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-import { afterLabelValue, insideLabelValue } from '../../__mocks__/dynamic-label-test-data';
-import MonacoMock from '../../__mocks__/monarch/Monaco';
-import TextModel from '../../__mocks__/monarch/TextModel';
+import { dynamicLabelTestDataAfterLabelValue } from '../../mocks/dynamic-label-test-data/afterLabelValue';
+import { dynamicLabelTestDataInsideLabelValue } from '../../mocks/dynamic-label-test-data/insideLabelValue';
+import MonacoMock from '../../mocks/monarch/Monaco';
+import TextModel from '../../mocks/monarch/TextModel';
 
 import { DynamicLabelsCompletionItemProvider } from './CompletionItemProvider';
 import cloudWatchDynamicLabelsLanguageDefinition from './definition';
@@ -23,13 +24,13 @@ const getSuggestions = async (value: string, position: monacoTypes.IPosition) =>
 describe('Dynamic labels: CompletionItemProvider', () => {
   describe('getSuggestions', () => {
     it('returns all dynamic labels in case current token is a whitespace', async () => {
-      const { query, position } = afterLabelValue;
+      const { query, position } = dynamicLabelTestDataAfterLabelValue;
       const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toEqual(DYNAMIC_LABEL_PATTERNS.length + 1); // + 1 for the dimension suggestions
     });
 
     it('should return suggestion for dimension label that has high prio', async () => {
-      const { query, position } = afterLabelValue;
+      const { query, position } = dynamicLabelTestDataAfterLabelValue;
       const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toBeTruthy();
       const highPrioSuggestsions = suggestions.filter((s) => s.sortText === CompletionItemPriority.High);
@@ -38,7 +39,7 @@ describe('Dynamic labels: CompletionItemProvider', () => {
     });
 
     it('doesnt return suggestions if cursor is inside a dynamic label', async () => {
-      const { query, position } = insideLabelValue;
+      const { query, position } = dynamicLabelTestDataInsideLabelValue;
       const suggestions = await getSuggestions(query, position);
       expect(suggestions.length).toBe(0);
     });

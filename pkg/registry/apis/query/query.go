@@ -2,34 +2,69 @@ package query
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
-	"time"
+	"strings"
 
+	"github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
+	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"golang.org/x/sync/errgroup"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ds_service "github.com/grafana/grafana/pkg/services/datasources/service"
+	service "github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type queryREST struct {
 	logger  log.Logger
 	builder *QueryAPIBuilder
+}
+
+type MyCacheService struct {
+	legacy ds_service.LegacyDataSourceLookup
+}
+
+func (mcs *MyCacheService) GetDatasource(ctx context.Context, datasourceID int64, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	ref, err := mcs.legacy.GetDataSourceFromDeprecatedFields(ctx, "", datasourceID)
+	if err != nil {
+		return nil, err
+	}
+	return &datasources.DataSource{
+		UID:  ref.UID,
+		Type: ref.Type,
+	}, nil
+}
+
+func (mcs *MyCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID string, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	ref, err := mcs.legacy.GetDataSourceFromDeprecatedFields(ctx, datasourceUID, 0)
+	if err != nil {
+		return nil, err
+	}
+	return &datasources.DataSource{
+		UID:  ref.UID,
+		Type: ref.Type,
+	}, nil
 }
 
 var (
@@ -78,27 +113,56 @@ func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
+// called by mt query service and also when queryServiceFromUI is enabled, can be both mt and st
 func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
 	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
+		r.logger.Debug("Connect name is not name")
 		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
 	}
 	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
+		w.Header().Set("X-Ds-Querier", b.instanceProvider.GetMode())
+
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
-
+		traceId := span.SpanContext().TraceID()
+		connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
 		responder := newResponderWrapper(incomingResponder,
-			func(statusCode int, obj runtime.Object) {
-				if statusCode >= 400 {
-					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
+			func(statusCode *int, obj runtime.Object) {
+				if *statusCode/100 == 4 {
+					span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
 				}
+
+				if *statusCode >= 500 {
+					o, ok := obj.(*query.QueryDataResponse)
+					if ok && o.Responses != nil {
+						for refId, response := range o.Responses {
+							if response.ErrorSource == backend.ErrorSourceDownstream {
+								*statusCode = http.StatusBadRequest //force this to be a 400 since it's downstream
+								span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
+								span.SetAttributes(attribute.String("error.source", "downstream"))
+								break
+							} else if response.Error != nil {
+								connectLogger.Debug("500 error without downstream error source", "error", response.Error, "errorSource", response.ErrorSource, "refId", refId)
+								span.SetStatus(codes.Error, "500 error without downstream error source")
+							} else {
+								span.SetStatus(codes.Error, "500 error without downstream error source and no Error message")
+								span.SetAttributes(attribute.String("error.ref_id", refId))
+							}
+						}
+					}
+				}
+				connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
 			},
+
 			func(err error) {
+				connectLogger.Error("error caught in handler", "err", err, "caller", getCaller(ctx))
 				span.SetStatus(codes.Error, "query error")
+
 				if err == nil {
 					return
 				}
@@ -109,7 +173,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		raw := &query.QueryDataRequest{}
 		err := web.Bind(httpreq, raw)
 		if err != nil {
-			b.log.Error("Hit unexpected error when reading query", "err", err)
+			connectLogger.Error("Hit unexpected error when reading query", "err", err)
 			err = errorsK8s.NewBadRequest("error reading query")
 			// TODO: can we wrap the error so details are not lost?!
 			// errutil.BadRequest(
@@ -119,334 +183,192 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			responder.Error(err)
 			return
 		}
-		// Parses the request and splits it into multiple sub queries (if necessary)
-		req, err := b.parser.parseRequest(ctx, raw)
+
+		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
+
 		if err != nil {
-			var refError ErrorWithRefID
-			statusCode := http.StatusBadRequest
-			message := err
-			refID := "A"
+			connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
+			logEmptyRefids(raw.Queries, connectLogger)
+			if qdr != nil { // if we have a response, we assume the err is set in the response
+				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+					QueryDataResponse: *qdr,
+				})
+				return
+			} else {
+				var errorDataResponse backend.DataResponse
 
-			if errors.Is(err, datasources.ErrDataSourceNotFound) {
-				statusCode = http.StatusNotFound
-				message = errors.New("datasource not found")
-			}
+				badRequestErrors := []error{
+					service.ErrInvalidDatasourceID,
+					service.ErrNoQueriesFound,
+					service.ErrMissingDataSourceInfo,
+					service.ErrQueryParamMismatch,
+					service.ErrDuplicateRefId,
+					datasources.ErrDataSourceNotFound,
+				}
+				isTypedBadRequestError := false
+				for _, badRequestError := range badRequestErrors {
+					if errors.Is(err, badRequestError) {
+						isTypedBadRequestError = true
+					}
+				}
+				if isTypedBadRequestError {
+					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+				} else if strings.Contains(err.Error(), "expression request error") {
+					connectLogger.Error("Error calling TransformData in an expression", "err", err)
+					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+				} else {
+					connectLogger.Error("unknown error, treated as a 500", "err", err)
+					responder.Error(err)
+					return
+				}
+				// TODO ensure errors also return the refId wherever possible
+				errorRefId := raw.Queries[0].RefID
+				if errorRefId == "" {
+					errorRefId = "A"
+				}
 
-			if errors.As(err, &refError) {
-				refID = refError.refId
-			}
-
-			qdr := &query.QueryDataResponse{
-				QueryDataResponse: backend.QueryDataResponse{
-					Responses: backend.Responses{
-						refID: {
-							Error:  message,
-							Status: backend.Status(statusCode),
-						},
+				qdr = &backend.QueryDataResponse{
+					Responses: map[string]backend.DataResponse{
+						errorRefId: errorDataResponse,
 					},
-				},
+				}
+				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+					QueryDataResponse: *qdr,
+				})
+				return
 			}
-
-			b.log.Error("Error parsing query", "refId", refID, "message", message)
-
-			responder.Object(statusCode, qdr)
-			return
 		}
 
-		for i := range req.Requests {
-			req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
-		}
-
-		// Actually run the query
-		rsp, err := b.execute(ctx, req)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
-			QueryDataResponse: *rsp, // wrap the backend response as a QueryDataResponse
+		responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+			QueryDataResponse: *qdr, // wrap the backend response as a QueryDataResponse
 		})
 	}), nil
 }
 
-func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
-	switch len(req.Requests) {
-	case 0:
-		b.log.Debug("executing empty query")
-		qdr = &backend.QueryDataResponse{}
-	case 1:
-		b.log.Debug("executing single query")
-		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-		if alertQueryWithoutExpression(req) {
-			b.log.Debug("handling alert query without expression")
-			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
+type preparedQuery struct {
+	mReq          dtos.MetricRequest
+	cache         datasources.CacheService
+	headers       map[string]string
+	logger        log.Logger
+	builder       dsquerierclient.QSDatasourceClientBuilder
+	exprSvc       *expr.Service
+	reportMetrics func()
+}
+
+func prepareQuery(
+	ctx context.Context,
+	raw query.QueryDataRequest,
+	b QueryAPIBuilder,
+	httpreq *http.Request,
+	connectLogger log.Logger,
+) (*preparedQuery, error) {
+	// Normalize DS refs and build []*simplejson.Json
+	jsonQueries := make([]*simplejson.Json, 0, len(raw.Queries))
+	for _, q := range raw.Queries {
+		if dsRef, derr := getValidDataSourceRef(ctx, q.Datasource, q.DatasourceID, b.legacyDatasourceLookup); derr != nil {
+			connectLogger.Error("error getting valid datasource ref", "err", derr)
+		} else if dsRef != nil {
+			q.Datasource = dsRef
 		}
-	default:
-		b.log.Debug("executing concurrent queries")
-		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
+
+		jsonBytes, err := json.Marshal(q)
+		if err != nil {
+			connectLogger.Error("error marshalling query", "err", err)
+		}
+
+		sjQuery, err := simplejson.NewJson(jsonBytes)
+		if err != nil {
+			connectLogger.Error("error creating simplejson for query", "err", err)
+		}
+
+		jsonQueries = append(jsonQueries, sjQuery)
 	}
 
+	mReq := dtos.MetricRequest{
+		From:    raw.From,
+		To:      raw.To,
+		Queries: jsonQueries,
+	}
+
+	cache := &MyCacheService{
+		legacy: b.legacyDatasourceLookup,
+	}
+	headers := ExtractKnownHeaders(httpreq.Header)
+
+	instance, err := b.instanceProvider.GetInstance(ctx, connectLogger, headers)
 	if err != nil {
-		b.log.Debug("error in query phase, skipping expressions", "error", err)
-		return qdr, err //return early here to prevent expressions from being executed if we got an error during the query phase
-	}
-
-	if len(req.Expressions) > 0 {
-		b.log.Debug("executing expressions")
-		qdr, err = b.handleExpressions(ctx, req, qdr)
-	}
-
-	// Remove hidden results
-	for _, refId := range req.HideBeforeReturn {
-		r, ok := qdr.Responses[refId]
-		if ok && r.Error == nil {
-			delete(qdr.Responses, refId)
-		}
-	}
-	return
-}
-
-// Process a single request
-// See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
-func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req datasourceRequest) (*backend.QueryDataResponse, error) {
-	ctx, span := b.tracer.Start(ctx, "Query.handleQuerySingleDatasource")
-	defer span.End()
-	span.SetAttributes(
-		attribute.String("datasource.type", req.PluginId),
-		attribute.String("datasource.uid", req.UID),
-	)
-
-	allHidden := true
-	for idx := range req.Request.Queries {
-		if !req.Request.Queries[idx].Hide {
-			allHidden = false
-			break
-		}
-	}
-	if allHidden {
-		return &backend.QueryDataResponse{}, nil
-	}
-
-	client, err := b.client.GetDataSourceClient(
-		ctx,
-		v0alpha1.DataSourceRef{
-			Type: req.PluginId,
-			UID:  req.UID,
-		},
-		req.Headers,
-	)
-	if err != nil {
-		b.log.Debug("error getting single datasource client", "error", err, "reqUid", req.UID)
-		qdr := buildErrorResponse(err, req)
-		return qdr, err
-	}
-
-	code, rsp, err := client.QueryData(ctx, *req.Request)
-	if err == nil && rsp != nil {
-		for _, q := range req.Request.Queries {
-			if q.ResultAssertions != nil {
-				result, ok := rsp.Responses[q.RefID]
-				if ok && result.Error == nil {
-					err = q.ResultAssertions.Validate(result.Frames)
-					if err != nil {
-						result.Error = err
-						result.ErrorSource = backend.ErrorSourceDownstream
-						rsp.Responses[q.RefID] = result
-					}
-				}
-			}
-		}
-	}
-
-	// Create a response object with the error when missing (happens for client errors like 404)
-	if rsp == nil && err != nil {
-		rsp = &backend.QueryDataResponse{Responses: make(backend.Responses)}
-		for _, q := range req.Request.Queries {
-			rsp.Responses[q.RefID] = backend.DataResponse{
-				Status: backend.Status(code),
-				Error:  err,
-			}
-		}
-	}
-	return rsp, err
-}
-
-// buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
-func buildErrorResponse(err error, req datasourceRequest) *backend.QueryDataResponse {
-	rsp := backend.NewQueryDataResponse()
-	for _, query := range req.Request.Queries {
-		rsp.Responses[query.RefID] = backend.DataResponse{
-			Error: err,
-		}
-	}
-	return rsp
-}
-
-// executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
-func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []datasourceRequest) (*backend.QueryDataResponse, error) {
-	ctx, span := b.tracer.Start(ctx, "Query.executeConcurrentQueries")
-	defer span.End()
-
-	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(b.concurrentQueryLimit) // prevent too many concurrent requests
-	rchan := make(chan *backend.QueryDataResponse, len(requests))
-
-	// Create panic recovery function for loop below
-	recoveryFn := func(req datasourceRequest) {
-		if r := recover(); r != nil {
-			var err error
-			b.log.Error("query datasource panic", "error", r, "stack", log.Stack(1))
-			if theErr, ok := r.(error); ok {
-				err = theErr
-			} else if theErrString, ok := r.(string); ok {
-				err = errors.New(theErrString)
-			} else {
-				err = fmt.Errorf("unexpected error - %s", b.userFacingDefaultError)
-			}
-			// Due to the panic, there is no valid response for any query for this datasource. Append an error for each one.
-			rchan <- buildErrorResponse(err, req)
-		}
-	}
-
-	// Query each datasource concurrently
-	for idx := range requests {
-		req := requests[idx]
-		g.Go(func() error {
-			defer recoveryFn(req)
-
-			dqr, err := b.handleQuerySingleDatasource(ctx, req)
-			if err == nil {
-				rchan <- dqr
-			} else {
-				rchan <- buildErrorResponse(err, req)
-			}
-			return nil
-		})
-	}
-
-	if err := g.Wait(); err != nil {
+		connectLogger.Error("failed to get instance configuration settings", "err", err)
 		return nil, err
 	}
-	close(rchan)
 
-	// Merge the results from each response
-	resp := backend.NewQueryDataResponse()
-	for result := range rchan {
-		for refId, dataResponse := range result.Responses {
-			resp.Responses[refId] = dataResponse
-		}
-	}
+	instanceConfig := instance.GetSettings()
 
-	return resp, nil
-}
+	dsQuerierLoggerWithSlug := instance.GetLogger()
 
-// Unlike the implementation in expr/node.go, all datasource queries have been processed first
-func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedRequestInfo, data *backend.QueryDataResponse) (qdr *backend.QueryDataResponse, err error) {
-	start := time.Now()
-	ctx, span := b.tracer.Start(ctx, "Query.handleExpressions")
-	traceId := span.SpanContext().TraceID()
-	expressionsLogger := b.log.New("traceId", traceId.String())
-	expressionsLogger.Debug("handling expressions")
-	defer func() {
-		var respStatus string
-		switch {
-		case err == nil:
-			respStatus = "success"
-		default:
-			respStatus = "failure"
-		}
-		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		b.metrics.expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
+	// Datasource client qsDsClientBuilder
+	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
+		instance,
+		ctx,
+		dsQuerierLoggerWithSlug,
+	)
 
-		span.End()
-	}()
-
-	qdr = data
-	if qdr == nil {
-		qdr = &backend.QueryDataResponse{}
-	}
-	if qdr.Responses == nil {
-		qdr.Responses = make(backend.Responses) // avoid NPE for lookup
-	}
-	now := start // <<< this should come from the original query parser
-	vars := make(mathexp.Vars)
-	for _, expression := range req.Expressions {
-		// Setup the variables
-		for _, refId := range expression.Command.NeedsVars() {
-			_, ok := vars[refId]
-			if !ok {
-				dr, ok := qdr.Responses[refId]
-				if ok {
-					allowLongFrames := false // TODO -- depends on input type and only if SQL?
-					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, allowLongFrames)
-					if err != nil {
-						expressionsLogger.Error("error converting frames for expressions", "error", err)
-						res.Error = err
-					}
-					vars[refId] = res
-				} else {
-					expressionsLogger.Error("missing variable in handle expressions", "refId", refId, "expressionRefId", expression.RefID)
-					// This should error in the parsing phase
-					err := fmt.Errorf("missing variable %s for %s", refId, expression.RefID)
-					qdr.Responses[refId] = backend.DataResponse{
-						Error: err,
-					}
-					return qdr, err
-				}
-			}
-		}
-
-		refId := expression.RefID
-		results, err := expression.Command.Execute(ctx, now, vars, b.tracer)
-		if err != nil {
-			expressionsLogger.Error("error executing expression", "error", err)
-			results.Error = err
-		}
-		qdr.Responses[refId] = backend.DataResponse{
-			Error:  results.Error,
-			Frames: results.Values.AsDataFrames(refId),
-		}
-	}
-	return qdr, nil
-}
-
-func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
-	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
-	if len(req.Request.Queries) == 0 {
-		return nil, errors.New("no queries to convert")
-	}
-	if qdr == nil {
-		return nil, errors.New("queryDataResponse is nil")
-	}
-	allowLongFrames := false
-	refID := req.Request.Queries[0].RefID
-	if _, exist := qdr.Responses[refID]; !exist {
-		return nil, fmt.Errorf("refID '%s' does not exist", refID)
-	}
-	frames := qdr.Responses[refID].Frames
-	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, allowLongFrames)
-	if err != nil {
-		results.Error = err
-	}
-	qdr = &backend.QueryDataResponse{
-		Responses: map[string]backend.DataResponse{
-			refID: {
-				Frames: results.Values.AsDataFrames(refID),
-				Error:  results.Error,
-			},
+	// Expressions service
+	exprService := expr.ProvideService(
+		&setting.Cfg{
+			ExpressionsEnabled:            instanceConfig.ExpressionsEnabled,
+			SQLExpressionCellLimit:        instanceConfig.SQLExpressionCellLimit,
+			SQLExpressionOutputCellLimit:  instanceConfig.SQLExpressionOutputCellLimit,
+			SQLExpressionTimeout:          instanceConfig.SQLExpressionTimeout,
+			SQLExpressionQueryLengthLimit: instanceConfig.SQLExpressionQueryLengthLimit,
 		},
+		nil,
+		nil,
+		instanceConfig.FeatureToggles,
+		nil,
+		b.tracer,
+		qsDsClientBuilder,
+	)
+
+	return &preparedQuery{
+		mReq:          mReq,
+		cache:         cache,
+		headers:       headers,
+		logger:        dsQuerierLoggerWithSlug,
+		builder:       qsDsClientBuilder,
+		exprSvc:       exprService,
+		reportMetrics: func() { instance.ReportMetrics() },
+	}, nil
+}
+
+func handlePreparedQuery(ctx context.Context, pq *preparedQuery, concurrentQueryLimit int) (*backend.QueryDataResponse, error) {
+	resp, err := service.QueryData(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers, concurrentQueryLimit)
+	pq.reportMetrics()
+	return resp, err
+}
+
+func handleQuery(
+	ctx context.Context,
+	raw query.QueryDataRequest,
+	b QueryAPIBuilder,
+	httpreq *http.Request,
+	responder responderWrapper,
+	connectLogger log.Logger,
+) (*backend.QueryDataResponse, error) {
+	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
+	if err != nil {
+		responder.Error(err)
+		return nil, err
 	}
-	return qdr, err
+	return handlePreparedQuery(ctx, pq, b.concurrentQueryLimit)
 }
 
 type responderWrapper struct {
 	wrapped    rest.Responder
-	onObjectFn func(statusCode int, obj runtime.Object)
+	onObjectFn func(statusCode *int, obj runtime.Object)
 	onErrorFn  func(err error)
 }
 
-func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
+func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
 	return &responderWrapper{
 		wrapped:    responder,
 		onObjectFn: onObjectFn,
@@ -456,7 +378,7 @@ func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode in
 
 func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
 	if r.onObjectFn != nil {
-		r.onObjectFn(statusCode, obj)
+		r.onObjectFn(&statusCode, obj)
 	}
 
 	r.wrapped.Object(statusCode, obj)
@@ -470,15 +392,102 @@ func (r responderWrapper) Error(err error) {
 	r.wrapped.Error(err)
 }
 
-// Checks if the request only contains a single query and not expression.
-func alertQueryWithoutExpression(req parsedRequestInfo) bool {
-	if len(req.Requests) != 1 {
-		return false
+func logEmptyRefids(queries []v0alpha1.DataQuery, logger log.Logger) {
+	emptyCount := 0
+
+	for _, q := range queries {
+		if q.RefID == "" {
+			emptyCount += 1
+		}
 	}
-	headers := req.Requests[0].Headers
-	_, exist := headers[models.FromAlertHeaderName]
-	if exist && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
-		return true
+
+	if emptyCount > 0 {
+		logger.Info("empty refid found", "empty_count", emptyCount, "query_count", len(queries))
 	}
-	return false
+}
+
+func mergeHeaders(main http.Header, extra http.Header, l log.Logger) {
+	for headerName, extraValues := range extra {
+		mainValues := main.Values(headerName)
+		for _, extraV := range extraValues {
+			if !slices.Contains(mainValues, extraV) {
+				main.Add(headerName, extraV)
+			} else {
+				l.Warn("skipped duplicate response header", "header", headerName, "value", extraV)
+			}
+		}
+	}
+}
+
+/*
+most queries are stored like this:
+
+	{
+		datasource: {
+			uid: "123",
+			type: "cool-ds",
+		}
+	}
+
+but sometimes queries are stored like:
+
+	{
+		datasourceUid: "123",
+		datasource: {
+			type: "cool-ds",
+		}
+	}
+
+this sets the second case to match the first and looks up missing types
+*/
+func getValidDataSourceRef(ctx context.Context, ds *v0alpha1.DataSourceRef, id int64, legacyDatasourceLookup ds_service.LegacyDataSourceLookup) (*v0alpha1.DataSourceRef, error) {
+	if ds == nil {
+		if id == 0 {
+			return nil, fmt.Errorf("missing datasource reference or id")
+		}
+		if legacyDatasourceLookup == nil {
+			return nil, fmt.Errorf("legacy datasource lookup unsupported (id:%d)", id)
+		}
+		return legacyDatasourceLookup.GetDataSourceFromDeprecatedFields(ctx, "", id)
+	}
+
+	// we need to special-case the "grafana" data source
+	if ds.UID == "grafana" {
+		return &v0alpha1.DataSourceRef{
+			// it does not really matter what `type` we set here,
+			// we will always detect this case by `uid` later.
+			// here we go with what the data source's plugin.json says.
+			Type: "grafana",
+			UID:  "grafana",
+		}, nil
+	}
+
+	if ds.Type == "" {
+		if ds.UID == "" {
+			return nil, fmt.Errorf("missing name/uid in data source reference")
+		}
+		if expr.IsDataSource(ds.UID) {
+			return ds, nil
+		}
+		if legacyDatasourceLookup == nil {
+			return nil, fmt.Errorf("legacy datasource lookup unsupported (name:%s)", ds.UID)
+		}
+		return legacyDatasourceLookup.GetDataSourceFromDeprecatedFields(ctx, ds.UID, 0)
+	}
+
+	if ds.UID == "" && expr.IsDataSource(ds.Type) {
+		ds.UID = ds.Type
+		return ds, nil
+	}
+
+	return ds, nil
+}
+
+func getCaller(ctx context.Context) string {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return "<auth-missing>"
+	} else {
+		return strings.Join(authInfo.GetExtra()[authn.ServiceIdentityKey], ",")
+	}
 }

@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	stdlog "log"
 	"math/big"
 	"net"
 	"net/http"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -81,6 +83,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -106,7 +109,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -140,7 +143,7 @@ type HTTPServer struct {
 	License                      licensing.Licensing
 	AccessControl                accesscontrol.AccessControl
 	DataProxy                    *datasourceproxy.DataSourceProxyService
-	PluginRequestValidator       validations.PluginRequestValidator
+	DataSourceRequestValidator   validations.DataSourceRequestValidator
 	pluginClient                 plugins.Client
 	pluginStore                  pluginstore.Store
 	pluginInstaller              plugins.Installer
@@ -149,6 +152,7 @@ type HTTPServer struct {
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
 	pluginAssets                 *pluginassets.Service
+	pluginPreinstall             pluginchecker.Preinstall
 	SearchService                search.Service
 	ShortURLService              shorturls.Service
 	QueryHistoryService          queryhistory.Service
@@ -161,21 +165,19 @@ type HTTPServer struct {
 	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
 	AlertNG                      *ngalert.AlertNG
-	LibraryPanelService          librarypanels.Service
 	LibraryElementService        libraryelements.Service
 	SocialService                social.Service
 	Listener                     net.Listener
 	EncryptionService            encryption.Internal
 	SecretsService               secrets.Service
-	secretsPluginManager         plugins.SecretsPluginManager
 	secretsStore                 secretsKV.SecretsKVStore
-	secretsMigrator              secrets.Migrator
-	secretsPluginMigrator        spm.SecretMigrationProvider
+	SecretsMigrator              secrets.Migrator
+	secretMigrationProvider      spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
-	grafanaUpdateChecker         *updatechecker.GrafanaService
-	pluginsUpdateChecker         *updatechecker.PluginsService
+	grafanaUpdateChecker         *updatemanager.GrafanaService
+	pluginsUpdateChecker         *updatemanager.PluginsService
 	searchUsersService           searchusers.Service
 	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
@@ -201,25 +203,28 @@ type HTTPServer struct {
 	pluginsCDNService            *pluginscdn.Service
 	managedPluginsService        managedplugins.Manager
 
-	userService          user.Service
-	tempUserService      tempUser.Service
-	loginAttemptService  loginAttempt.Service
-	orgService           org.Service
-	TeamService          team.Service
-	accesscontrolService accesscontrol.Service
-	annotationsRepo      annotations.Repository
-	tagService           tag.Service
-	oauthTokenService    oauthtoken.OAuthTokenService
-	statsService         stats.Service
-	authnService         authn.Service
-	starApi              *starApi.API
-	promRegister         prometheus.Registerer
-	promGatherer         prometheus.Gatherer
-	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
-	namespacer           request.NamespaceMapper
-	anonService          anonymous.Service
-	userVerifier         user.Verifier
-	tlsCerts             TLSCerts
+	userService                     user.Service
+	tempUserService                 tempUser.Service
+	loginAttemptService             loginAttempt.Service
+	orgService                      org.Service
+	orgDeletionService              org.DeletionService
+	TeamService                     team.Service
+	accesscontrolService            accesscontrol.Service
+	annotationsRepo                 annotations.Repository
+	tagService                      tag.Service
+	oauthTokenService               oauthtoken.OAuthTokenService
+	statsService                    stats.Service
+	authnService                    authn.Service
+	starApi                         *starApi.API
+	promRegister                    prometheus.Registerer
+	promGatherer                    prometheus.Gatherer
+	clientConfigProvider            grafanaapiserver.DirectRestConfigProvider
+	namespacer                      request.NamespaceMapper
+	anonService                     anonymous.Service
+	userVerifier                    user.Verifier
+	tlsCerts                        TLSCerts
+	htmlHandlerRequestsDuration     *prometheus.HistogramVec
+	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
 }
 
 type TLSCerts struct {
@@ -236,7 +241,7 @@ type ServerOptions struct {
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore db.DB,
-	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
+	dataSourceRequestValidator validations.DataSourceRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
@@ -247,14 +252,13 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler, loggerMiddleware loggermw.Logger, features featuremgmt.FeatureToggles,
 	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer,
-	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
-	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
+	encryptionService encryption.Internal, grafanaUpdateChecker *updatemanager.GrafanaService,
+	pluginsUpdateChecker *updatemanager.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
 	serviceaccountsService serviceaccounts.Service, pluginAssets *pluginassets.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
-	folderStore folder.Store,
 	dsGuardian guardian.DatasourceGuardianProvider,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
@@ -262,15 +266,15 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
-	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
-	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
+	secretsMigrator secrets.Migrator, secretsService secrets.Service,
+	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
-	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
+	loginAttemptService loginAttempt.Service, orgService org.Service, orgDeletionService org.DeletionService, teamService team.Service,
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
-	userVerifier user.Verifier,
+	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -284,7 +288,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		HooksService:                 hooksService,
 		CacheService:                 cacheService,
 		SQLStore:                     sqlStore,
-		PluginRequestValidator:       pluginRequestValidator,
+		DataSourceRequestValidator:   dataSourceRequestValidator,
 		pluginInstaller:              pluginInstaller,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
@@ -295,6 +299,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginFileStore:              pluginFileStore,
 		grafanaUpdateChecker:         grafanaUpdateChecker,
 		pluginsUpdateChecker:         pluginsUpdateChecker,
+		pluginPreinstall:             pluginPreinstall,
 		SettingsProvider:             settingsProvider,
 		DataSourceCache:              dataSourceCache,
 		AuthTokenService:             userTokenService,
@@ -316,7 +321,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ContextHandler:               contextHandler,
 		LoggerMiddleware:             loggerMiddleware,
 		AlertNG:                      alertNG,
-		LibraryPanelService:          libraryPanelService,
 		LibraryElementService:        libraryElementService,
 		QuotaService:                 quotaService,
 		tracer:                       tracer,
@@ -326,9 +330,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SocialService:                socialService,
 		EncryptionService:            encryptionService,
 		SecretsService:               secretsService,
-		secretsPluginManager:         secretsPluginManager,
-		secretsMigrator:              secretsMigrator,
-		secretsPluginMigrator:        secretsPluginMigrator,
+		SecretsMigrator:              secretsMigrator,
+		secretMigrationProvider:      secretMigrationProvider,
 		secretsStore:                 secretsStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
@@ -357,6 +360,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
+		orgDeletionService:           orgDeletionService,
 		TeamService:                  teamService,
 		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
@@ -374,14 +378,28 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
+		htmlHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "html_handler_requests_duration_seconds",
+			Help:      "Duration of requests handled by the index.go HTML handler",
+		}, []string{"handler"}),
+		dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "ds_config_handler_requests_duration_seconds",
+			Help:      "Duration of requests handled by datasource configuration handlers",
+		}, []string{"handler"}),
 	}
+
+	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
+	promRegister.MustRegister(hs.dsConfigHandlerRequestsDuration)
+
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
 	}
 	hs.registerRoutes()
 
 	// Register access control scope resolver for annotations
-	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, features, dashboardService, folderStore))
+	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, features, dashboardService, folderService))
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
@@ -397,6 +415,26 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
+type customErrorLogger struct {
+	log log.Logger
+}
+
+const tlsHandshakeErrorPrefix = "http: TLS handshake error from"
+const tlsHandshakeErrorSuffix = "EOF"
+
+func (w *customErrorLogger) Write(msg []byte) (int, error) {
+	// checks if the error is a TLS handshake error that ends with EOF
+	if strings.Contains(string(msg), tlsHandshakeErrorPrefix) && strings.Contains(string(msg), tlsHandshakeErrorSuffix) {
+		// log at debug level and remove new lines
+		w.log.Debug(strings.ReplaceAll(string(msg), "\n", ""))
+	} else {
+		// log the error as is using the standard logger (the same way as the default http server does)
+		stdlog.Print(string(msg))
+	}
+
+	return len(msg), nil
+}
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
@@ -409,6 +447,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		Handler:     hs.web,
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
+
+	customErrorLogger := &customErrorLogger{
+		log: hs.log,
+	}
+	hs.httpSrv.ErrorLog = stdlog.New(customErrorLogger, "", 0)
+
 	switch hs.Cfg.Protocol {
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		if err := hs.configureTLS(); err != nil {
@@ -594,7 +638,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
 	m.Use(requestmeta.SetupRequestMetadata())
-	m.Use(middleware.RequestTracing(hs.tracer))
+	m.Use(middleware.RequestTracing(hs.tracer, middleware.ShouldTraceWithExceptions))
 	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegister))
 
 	m.UseMiddleware(hs.LoggerMiddleware.Middleware())
@@ -792,13 +836,9 @@ func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []ui
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
 			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		}
 	}
 	if protocol == "h2" {

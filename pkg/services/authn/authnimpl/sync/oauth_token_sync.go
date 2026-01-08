@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -77,6 +78,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 	ctxLogger := s.log.FromContext(ctx).New("userID", userID)
 
 	cacheKey := fmt.Sprintf("token-check-%s", id.GetID())
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		cacheKey = fmt.Sprintf("token-check-%s-%d", id.GetID(), id.SessionToken.Id)
 	}
@@ -92,7 +94,11 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 		defer cancel()
 
-		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id, id.SessionToken)
+		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id, &oauthtoken.TokenRefreshMetadata{
+			ExternalSessionID: id.SessionToken.ExternalSessionId,
+			AuthModule:        id.GetAuthenticatedBy(),
+			AuthID:            id.GetAuthID(),
+		})
 		if refreshErr != nil {
 			if errors.Is(refreshErr, context.Canceled) {
 				return nil, nil
@@ -106,7 +112,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 			ctxLogger.Error("Failed to refresh OAuth access token", "id", id.ID, "error", refreshErr)
 
 			// log the user out
-			if err := s.sessionService.RevokeToken(ctx, id.SessionToken, false); err != nil {
+			if err := s.sessionService.RevokeToken(ctx, id.SessionToken, false); err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 				ctxLogger.Warn("Failed to revoke session token", "id", id.ID, "tokenId", id.SessionToken.Id, "error", err)
 			}
 

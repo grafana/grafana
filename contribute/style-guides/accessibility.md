@@ -17,21 +17,27 @@ The form components from `grafana/ui` provide an easier way to achieve that. The
 For example:
 
 ```tsx
-<Field label="Name">
-  <Input id="name" placeholder="Enter a name" />
-</Field>
+const id = useId(); // React's useId provides a stable globally unique identifier
+
+return (
+  <Field label="Name">
+    <Input id={id} placeholder="Enter a name" />
+  </Field>
+);
 ```
 
 In the previous example, the code is rendered as:
 
 ```html
 <div>
-  <label for="name"> Name </label>
-  <input name="name" type="text" id="name" placeholder="Enter a name" value="" />
+  <label for=":r0:"> Name </label>
+  <input name="name" type="text" id=":r0:" placeholder="Enter a name" value="" />
 </div>
 ```
 
-As long as the form element has a unique `id` attribute specified, it's automatically accessible when rendered.
+As long as the form element has a globally unique `id` attribute specified and is the direct child element of Field, it's automatically accessible when rendered.
+
+Make sure you test that each field can be selected by clicking its label!
 
 ### Write tests with accessibility in mind
 

@@ -130,16 +130,16 @@ exports[`Query and expressions reducer should add reduce expression if there is 
         },
         "expression": "A",
         "reducer": "last",
-        "refId": "B",
+        "refId": "reducer",
         "type": "reduce",
       },
       "queryType": "expression",
-      "refId": "B",
+      "refId": "reducer",
     },
     {
       "datasourceUid": "__expr__",
       "model": {
-        "expression": "B",
+        "expression": "reducer",
         "refId": "C",
         "type": "threshold",
       },
@@ -194,6 +194,31 @@ exports[`Query and expressions reducer should remove an expression or alert quer
 `;
 
 exports[`Query and expressions reducer should remove first reducer 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "refId": "A",
+      },
+      "queryType": "query",
+      "refId": "A",
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "expression": "A",
+        "refId": "C",
+        "type": "threshold",
+      },
+      "queryType": "expression",
+      "refId": "C",
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should remove reducer even if reducer is not the first expression 1`] = `
 {
   "queries": [
     {
@@ -410,58 +435,6 @@ exports[`Query and expressions reducer should update an expression refId and rew
         "expression": "",
         "refId": "B",
         "type": "classic_conditions",
-      },
-      "queryType": "",
-      "refId": "B",
-    },
-  ],
-}
-`;
-
-exports[`Query and expressions reducer should update expression type 1`] = `
-{
-  "queries": [
-    {
-      "datasourceUid": "abc123",
-      "model": {
-        "refId": "A",
-      },
-      "queryType": "query",
-      "refId": "A",
-    },
-    {
-      "datasourceUid": "__expr__",
-      "model": {
-        "conditions": [
-          {
-            "evaluator": {
-              "params": [
-                0,
-                0,
-              ],
-              "type": "gt",
-            },
-            "operator": {
-              "type": "and",
-            },
-            "query": {
-              "params": [],
-            },
-            "reducer": {
-              "params": [],
-              "type": "avg",
-            },
-            "type": "query",
-          },
-        ],
-        "datasource": {
-          "name": "Expression",
-          "type": "__expr__",
-          "uid": "__expr__",
-        },
-        "expression": "",
-        "refId": "B",
-        "type": "reduce",
       },
       "queryType": "",
       "refId": "B",

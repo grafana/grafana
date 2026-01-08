@@ -12,6 +12,7 @@ import (
 
 var (
 	allowedCoreActions = map[string]string{
+		"plugins:write":             "plugins:id:",
 		"plugins.app:access":        "plugins:id:",
 		"folders:create":            "folders:uid:",
 		"folders:read":              "folders:uid:",
@@ -125,7 +126,7 @@ func PluginIDFromName(roleName string) string {
 }
 
 func roleName(pluginID, roleName string) string {
-	return fmt.Sprintf("%v%v:%v", ac.PluginRolePrefix, pluginID, strings.Replace(strings.ToLower(roleName), " ", "-", -1))
+	return fmt.Sprintf("%v%v:%v", ac.PluginRolePrefix, pluginID, strings.ReplaceAll(strings.ToLower(roleName), " ", "-"))
 }
 
 func toPermissions(perms []plugins.Permission) []ac.Permission {

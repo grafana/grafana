@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { max } from 'lodash';
-import { RefCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { RefCallback, useLayoutEffect, useMemo, useRef, type JSX } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { Trans } from '../../utils/i18n';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
@@ -52,9 +52,9 @@ export const SelectMenu = ({
       data-testid={selectors.components.Select.menu}
       className={styles.menu}
       style={{ maxHeight }}
-      aria-label="Select options menu"
+      aria-label={t('grafana-ui.select.menu-label', 'Select options menu')}
     >
-      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators>
+      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators padding={0.5}>
         {toggleAllOptions && (
           <ToggleAllOption
             state={toggleAllOptions.state}
@@ -185,7 +185,7 @@ export const VirtualizedSelectMenu = ({
       className={styles.menu}
       height={heightEstimate}
       width={widthEstimate}
-      aria-label="Select options menu"
+      aria-label={t('grafana-ui.select.menu-label', 'Select options menu')}
       itemCount={flattenedChildren.length}
       itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
     >
@@ -197,7 +197,7 @@ export const VirtualizedSelectMenu = ({
 // check if a child has array children (and is therefore a react-select group)
 // we need to flatten these so the correct count and elements are passed to the virtualized list
 const hasArrayChildren = (child: React.ReactNode) => {
-  return React.isValidElement(child) && Array.isArray(child.props.children);
+  return React.isValidElement<Record<string, unknown>>(child) && Array.isArray(child.props.children);
 };
 
 VirtualizedSelectMenu.displayName = 'VirtualizedSelectMenu';
@@ -245,8 +245,8 @@ const ToggleAllOption = ({
         innerProps: {},
         children: (
           <>
-            <Trans i18nKey="select.select-menu.selected-count">Selected </Trans>
-            {`(${selectedCount ?? 0})`}
+            <Trans i18nKey="select.select-menu.selected-count">Selected</Trans>
+            {` (${selectedCount ?? 0})`}
           </>
         ),
       })}

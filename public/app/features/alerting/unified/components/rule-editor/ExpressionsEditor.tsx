@@ -4,12 +4,12 @@ import { useMemo } from 'react';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { Expression } from '../expressions/Expression';
 
-import { errorFromPreviewData, warningFromSeries } from './util';
+import { errorFromCurrentCondition, errorFromPreviewData, warningFromSeries } from './util';
 
 interface Props {
   condition: string | null;
@@ -18,7 +18,6 @@ interface Props {
   queries: AlertQuery[];
   onRemoveExpression: (refId: string) => void;
   onUpdateRefId: (oldRefId: string, newRefId: string) => void;
-  onUpdateExpressionType: (refId: string, type: ExpressionQueryType) => void;
   onUpdateQueryExpression: (query: ExpressionQuery) => void;
 }
 
@@ -29,12 +28,15 @@ export const ExpressionsEditor = ({
   panelData,
   onUpdateRefId,
   onRemoveExpression,
-  onUpdateExpressionType,
   onUpdateQueryExpression,
 }: Props) => {
   const expressionQueries = useMemo(() => {
     return queries.reduce((acc: ExpressionQuery[], query) => {
-      return isExpressionQuery(query.model) ? acc.concat(query.model) : acc;
+      if (isExpressionQuery(query.model)) {
+        acc.push(query.model);
+      }
+
+      return acc;
     }, []);
   }, [queries]);
   const styles = useStyles2(getStyles);
@@ -45,7 +47,11 @@ export const ExpressionsEditor = ({
         const data = panelData[query.refId];
 
         const isAlertCondition = condition === query.refId;
-        const error = data ? errorFromPreviewData(data) : undefined;
+
+        const errorFromCondition = data && isAlertCondition ? errorFromCurrentCondition(data) : undefined;
+        const errorFromPreview = data ? errorFromPreviewData(data) : undefined;
+        const error = errorFromPreview || errorFromCondition;
+
         const warning = data ? warningFromSeries(data.series) : undefined;
 
         return (
@@ -60,7 +66,6 @@ export const ExpressionsEditor = ({
             onSetCondition={onSetCondition}
             onRemoveExpression={onRemoveExpression}
             onUpdateRefId={onUpdateRefId}
-            onUpdateExpressionType={onUpdateExpressionType}
             onChangeQuery={onUpdateQueryExpression}
           />
         );

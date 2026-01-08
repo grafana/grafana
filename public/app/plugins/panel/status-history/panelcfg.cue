@@ -28,6 +28,7 @@ composableKinds: PanelCfg: {
 					ui.OptionsWithLegend
 					ui.OptionsWithTooltip
 					ui.OptionsWithTimezones
+					ui.OptionsWithAnnotations
 
 					//Set the height of the rows
 					rowHeight: float32 & >=0 & <=1 | *0.9
@@ -35,8 +36,11 @@ composableKinds: PanelCfg: {
 					showValue: ui.VisibilityMode & (*"auto" | _)
 					//Controls the column width
 					colWidth?: float & <=1 | *0.9
+					//Enables pagination when > 0
+					perPage?: number & >=1 | *20
 				} @cuetsy(kind="interface")
 				FieldConfig: {
+					ui.AxisConfig
 					ui.HideableFieldConfig
 					lineWidth?:   uint32 & <=10 | *1
 					fillOpacity?: uint32 & <=100 | *70

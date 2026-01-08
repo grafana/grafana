@@ -3,11 +3,9 @@ import { cloneDeep } from 'lodash';
 import * as React from 'react';
 
 import { LogContext } from '@grafana/faro-web-sdk';
-import { config, createMonitoringLogger } from '@grafana/runtime';
+import { createMonitoringLogger } from '@grafana/runtime';
 
 import { SandboxedPluginObject } from './types';
-
-const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
 export function isSandboxedPluginObject(value: unknown): value is SandboxedPluginObject {
   return !!value && typeof value === 'object' && value?.hasOwnProperty('plugin');
@@ -17,7 +15,7 @@ export function assertNever(x: never): never {
   throw new Error(`Unexpected object: ${x}. This should never happen.`);
 }
 
-const sandboxLogger = createMonitoringLogger('sandbox', { monitorOnly: String(monitorOnly) });
+const sandboxLogger = createMonitoringLogger('sandbox');
 
 export function isReactClassComponent(obj: unknown): obj is React.Component {
   return obj instanceof React.Component;
@@ -80,11 +78,36 @@ export function unboxNearMembraneProxies(structure: unknown): unknown {
   if (Array.isArray(structure)) {
     return structure.map(unboxNearMembraneProxies);
   }
+
+  if (isTransferable(structure)) {
+    return structure;
+  }
+
   if (typeof structure === 'object') {
     return Object.keys(structure).reduce((acc, key) => {
       Reflect.set(acc, key, unboxNearMembraneProxies(Reflect.get(structure, key)));
       return acc;
     }, {});
   }
+
   return structure;
+}
+
+function isTransferable(structure: unknown): structure is Transferable {
+  // We should probably add all of the transferable types here.
+  // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects
+  return (
+    structure instanceof ArrayBuffer ||
+    structure instanceof OffscreenCanvas ||
+    structure instanceof ImageBitmap ||
+    structure instanceof MessagePort ||
+    structure instanceof MediaSourceHandle ||
+    structure instanceof ReadableStream ||
+    structure instanceof WritableStream ||
+    structure instanceof TransformStream ||
+    structure instanceof AudioData ||
+    structure instanceof VideoFrame ||
+    structure instanceof RTCDataChannel ||
+    structure instanceof ArrayBuffer
+  );
 }

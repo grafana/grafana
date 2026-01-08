@@ -1,7 +1,6 @@
-import { config } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
-import { t } from 'app/core/internationalization';
+import { LibraryPanel } from '@grafana/schema';
 import { ShareLibraryPanel } from 'app/features/dashboard/components/ShareModal/ShareLibraryPanel';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -22,9 +21,7 @@ export class ShareLibraryPanelTab extends SceneObjectBase<ShareLibraryPanelTabSt
   static Component = ShareLibraryPanelTabRenderer;
 
   public getTabLabel() {
-    return config.featureToggles.newDashboardSharingComponent
-      ? t('share-panel.drawer.new-library-panel-title', 'New library panel')
-      : t('share-modal.tab-title.library-panel', 'Library panel');
+    return t('share-panel.drawer.new-library-panel-title', 'New library panel');
   }
 }
 

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 
 import { fetchGrafanaAnnotationsAction } from '../state/actions';
@@ -8,15 +8,15 @@ import { AsyncRequestState } from '../utils/redux';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
-export function useManagedAlertStateHistory(alertId: string) {
+export function useManagedAlertStateHistory(ruleUID: string) {
   const dispatch = useDispatch();
   const history = useUnifiedAlertingSelector<AsyncRequestState<StateHistoryItem[]>>(
     (state) => state.managedAlertStateHistory
   );
 
   useEffect(() => {
-    dispatch(fetchGrafanaAnnotationsAction(alertId));
-  }, [dispatch, alertId]);
+    dispatch(fetchGrafanaAnnotationsAction(ruleUID));
+  }, [dispatch, ruleUID]);
 
   return history;
 }

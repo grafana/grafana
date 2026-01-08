@@ -5,15 +5,16 @@ import {
   CoreApp,
   DataFrame,
   dateTimeFormat,
-  Field,
-  LinkModel,
   LogRowContextOptions,
   LogRowModel,
   LogsSortOrder,
+  TimeRange,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
 
@@ -40,7 +41,7 @@ export interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onContextClick?: () => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: GetFieldLinksFn;
   showContextToggle?: (row: LogRowModel) => boolean;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
@@ -63,6 +64,7 @@ export interface Props {
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
+  timeRange: TimeRange;
 }
 
 export const LogRow = ({
@@ -112,10 +114,7 @@ export const LogRow = ({
   );
   const levelStyles = useMemo(() => getLogLevelStyles(theme, row.logLevel), [row.logLevel, theme]);
   const processedRow = useMemo(
-    () =>
-      row.hasUnescapedContent && forceEscape
-        ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
-        : row,
+    () => (row.hasUnescapedContent && forceEscape ? { ...row, entry: escapeUnescapedString(row.entry) } : row),
     [forceEscape, row]
   );
   const errorMessage = checkLogsError(row);
@@ -229,12 +228,16 @@ export const LogRow = ({
           }
         >
           {hasError && (
-            <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
+            <Tooltip
+              content={t('logs.log-row-message.tooltip-error', 'Error: {{errorMessage}}', { errorMessage })}
+              placement="right"
+              theme="error"
+            >
               <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
             </Tooltip>
           )}
           {isSampled && (
-            <Tooltip content={`${sampleMessage}`} placement="right" theme="info">
+            <Tooltip content={sampleMessage} placement="right" theme="info">
               <Icon className={styles.logIconInfo} name="info-circle" size="xs" />
             </Tooltip>
           )}
@@ -244,7 +247,13 @@ export const LogRow = ({
           className={enableLogDetails ? styles.logsRowToggleDetails : ''}
         >
           {enableLogDetails && (
-            <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
+            <button
+              aria-label={t('logs.log-row-message.see-details', `See log details`)}
+              className={styles.detailsToggle}
+              aria-expanded={showDetails}
+            >
+              <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
+            </button>
           )}
         </td>
         {showTime && <td className={styles.logsRowLocalTime}>{timestamp}</td>}
@@ -289,6 +298,7 @@ export const LogRow = ({
             mouseIsOver={mouseIsOver}
             onBlur={onMouseLeave}
             expanded={showDetails}
+            forceEscape={forceEscape}
             logRowMenuIconsBefore={logRowMenuIconsBefore}
             logRowMenuIconsAfter={logRowMenuIconsAfter}
           />
@@ -313,6 +323,7 @@ export const LogRow = ({
           styles={styles}
           isFilterLabelActive={props.isFilterLabelActive}
           pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
+          timeRange={props.timeRange}
         />
       )}
     </>

@@ -1,13 +1,19 @@
 package migrator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/mattn/go-sqlite3"
-	"xorm.io/xorm"
+	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/sqlite"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
+
+var sqliteLogger = log.New("migrator.sqlite_dialect")
 
 type SQLite3 struct {
 	BaseDialect
@@ -15,8 +21,8 @@ type SQLite3 struct {
 
 func NewSQLite3Dialect() Dialect {
 	d := SQLite3{}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = SQLite
+	d.dialect = &d
+	d.driverName = SQLite
 	return &d
 }
 
@@ -30,6 +36,13 @@ func (db *SQLite3) Quote(name string) string {
 
 func (db *SQLite3) AutoIncrStr() string {
 	return "AUTOINCREMENT"
+}
+
+func (db *SQLite3) BooleanValue(value bool) any {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func (db *SQLite3) BooleanStr(value bool) string {
@@ -81,6 +94,17 @@ func (db *SQLite3) IndexCheckSQL(tableName, indexName string) (string, []any) {
 	return sql, args
 }
 
+func (db *SQLite3) ColumnCheckSQL(tableName, columnName string) (string, []any) {
+	// Use PRAGMA table_info to check if a column exists on a table. In SQLite, quoting with backticks inside
+	// pragma_table_info(<expr>) can be interpreted as an identifier/column. Instead, pass the table name as a
+	// string literal to avoid ambiguity. We cannot parameterize identifiers, but pragma_table_info accepts string
+	// literals, so we embed a single-quoted literal safely by replacing single quotes if any.
+	// Note: tableName is expected to be a trusted identifier from migrations.
+	safeTable := strings.ReplaceAll(tableName, "'", "''")
+	sql := "SELECT 1 FROM pragma_table_info('" + safeTable + "') WHERE name = ?"
+	return sql, []any{columnName}
+}
+
 func (db *SQLite3) DropIndexSQL(tableName string, index *Index) string {
 	quote := db.Quote
 	// var unique string
@@ -95,7 +119,26 @@ func (db *SQLite3) CleanDB(engine *xorm.Engine) error {
 // TruncateDBTables deletes all data from all the tables and resets the sequences.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	// Helper providing retry/backoff on busy/locked to reduce flakiness
+	execWithRetry := func(sess *xorm.Session, query string) error {
+		b := backoff.New(context.Background(), backoff.Config{
+			MinBackoff: 100 * time.Millisecond,
+			MaxBackoff: time.Second,
+			MaxRetries: 5,
+		})
+		var lastErr error
+		for b.Ongoing() {
+			_, lastErr = sess.Exec(query)
+			if !sqlite.IsBusyOrLocked(lastErr) {
+				break
+			}
+			sqliteLogger.Warn(fmt.Sprintf("retrying busy or locked error: query=%s, error=%s", query, lastErr))
+			b.Wait()
+		}
+		return errors.Join(lastErr, b.Err())
+	}
+
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}
@@ -109,19 +152,19 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 			continue
 		case "dashboard_acl":
 			// keep default dashboard permissions
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {
+			if err := execWithRetry(sess, fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {
 				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
-			if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 2 WHERE name = '%s';", table.Name); err != nil {
+			if err = execWithRetry(sess, fmt.Sprintf("UPDATE sqlite_sequence SET seq = 2 WHERE name = '%s';", table.Name)); err != nil {
 				return fmt.Errorf("failed to cleanup sqlite_sequence: %w", err)
 			}
 		default:
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %s;", table.Name)); err != nil {
+			if err := execWithRetry(sess, fmt.Sprintf("DELETE FROM %s;", table.Name)); err != nil {
 				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
 		}
 	}
-	if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 0 WHERE name != 'dashboard_acl';"); err != nil {
+	if err := execWithRetry(sess, "UPDATE sqlite_sequence SET seq = 0 WHERE name != 'dashboard_acl';"); err != nil {
 		// if we have not created any autoincrement columns in the database this will fail, the error is expected and we can ignore it
 		// we can't discriminate based on code because sqlite returns a generic error code
 		if err.Error() != "no such table: sqlite_sequence" {
@@ -131,27 +174,12 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 	return nil
 }
 
-func (db *SQLite3) isThisError(err error, errcode int) bool {
-	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
-		if int(driverErr.ExtendedCode) == errcode {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (db *SQLite3) ErrorMessage(err error) string {
-	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
-		return driverErr.Error()
-	}
-	return ""
+	return sqlite.ErrorMessage(err)
 }
 
 func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
-	return db.isThisError(err, int(sqlite3.ErrConstraintUnique)) || db.isThisError(err, int(sqlite3.ErrConstraintPrimaryKey))
+	return sqlite.IsUniqueConstraintViolation(err)
 }
 
 func (db *SQLite3) IsDeadlock(err error) bool {

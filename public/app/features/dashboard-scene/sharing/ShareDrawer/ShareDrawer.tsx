@@ -5,7 +5,8 @@ import { Drawer } from '@grafana/ui';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { ExportAsJson } from '../ExportButton/ExportAsJson';
+import { ExportAsCode } from '../ExportButton/ExportAsCode';
+import { ExportAsImage } from '../ExportButton/ExportAsImage';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';
 import { ShareInternally } from '../ShareButton/share-internally/ShareInternally';
 import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
@@ -38,7 +39,9 @@ export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements Mo
   }
 
   onDismiss = () => {
-    if (this.state.panelRef) {
+    if (this.state.activeShare?.onDismiss) {
+      this.state.activeShare.onDismiss();
+    } else if (this.state.panelRef) {
       const dashboard = getDashboardSceneFor(this);
       dashboard.closeModal();
     } else {
@@ -90,7 +93,9 @@ function getShareView(
     case shareDashboardType.snapshot:
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
     case shareDashboardType.export:
-      return new ExportAsJson({ onDismiss });
+      return new ExportAsCode({ onDismiss });
+    case shareDashboardType.image:
+      return new ExportAsImage({ onDismiss });
     default:
       return new ShareInternally({ onDismiss });
   }

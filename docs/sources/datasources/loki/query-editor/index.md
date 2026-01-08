@@ -55,15 +55,15 @@ To switch between the editor modes, select the corresponding **Builder** and **C
 
 To run a query, select **Run queries** located at the top of the editor.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To run Loki queries in [Explore](ref:explore), select **Run query**.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Each mode is synchronized, so you can switch between them without losing your work, although there are some limitations. Builder mode doesn't support some complex queries.
 When you switch from Code mode to Builder mode with such a query, the editor displays a warning message that explains how you might lose parts of the query if you continue.
 You can then decide whether you still want to switch to Builder mode.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
+You can also augment queries by using [template variables](../template-variables/).
 
 ## Toolbar elements
 
@@ -173,9 +173,7 @@ The following options are the same for both **Builder** and **Code** mode:
 
 - **Direction** - Determines the search order. **Backward** is a backward search starting at the end of the time range. **Forward** is a forward search starting at the beginning of the time range. The default is **Backward**
 
-- **Step** Sets the step parameter of Loki metrics queries. The default value equals to the value of `$__interval` variable, which is calculated using the time range and the width of the graph (the number of pixels).
-
-- **Resolution** Deprecated. Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better.
+- **Step** Sets the step parameter of Loki metrics queries. The default value equals to the value of `$__auto` variable, which is calculated using the time range and the width of the graph (the number of pixels).
 
 ## Create a log query
 
@@ -263,6 +261,6 @@ For more information about metric queries, refer to the [Loki metric queries doc
 [Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
-You can use any non-metric Loki query as a source for annotations.
+You can only use log queries as a source for annotations.
 Grafana automatically uses log content as annotation text and your log stream labels as tags.
 You don't need to create any additional mapping.

@@ -6,13 +6,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -21,7 +27,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -29,12 +38,34 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	db, cfg := db.InitTestDBWithCfg(t)
-	statsService := &sqlStatsService{db: db}
-	populateDB(t, db, cfg)
+	orgSvc := populateDB(t, db, cfg)
+	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(1)).Return(int64(2), nil)
+	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(2)).Return(int64(1), nil)
+	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(3)).Return(int64(0), nil)
+	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 1}).Return([]*dashboards.DashboardTagCloudItem{{Term: "test"}}, nil)
+	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 2}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
+	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 3}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
+
+	folderService := &foldertest.FakeService{}
+	folderService.ExpectedFolders = []*folder.Folder{{ID: 1}, {ID: 2}, {ID: 3}}
+	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 5}},
+	}, nil)
+
+	statsService := &sqlStatsService{
+		db:             db,
+		dashSvc:        dashSvc,
+		orgSvc:         orgSvc,
+		folderSvc:      folderService,
+		features:       featuremgmt.WithFeatures(),
+		namespacer:     request.GetNamespaceMapper(cfg),
+		unifiedStorage: unifiedStorage,
+	}
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
 		query := stats.GetSystemStatsQuery{}
@@ -48,6 +79,9 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), result.LibraryVariables)
 		assert.Equal(t, int64(0), result.APIKeys)
 		assert.Equal(t, int64(2), result.Correlations)
+		assert.Equal(t, int64(3), result.Orgs)
+		assert.Equal(t, int64(3), result.Dashboards)
+		assert.Equal(t, int64(9), result.Folders) // will return 3 folders for each org
 		assert.NotNil(t, result.DatabaseCreatedTime)
 		assert.Equal(t, db.GetDialect().DriverName(), result.DatabaseDriver)
 	})
@@ -78,12 +112,24 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 
 	t.Run("Get admin stats should not result in error", func(t *testing.T) {
 		query := stats.GetAdminStatsQuery{}
-		_, err := statsService.GetAdminStats(context.Background(), &query)
+		stats, err := statsService.GetAdminStats(context.Background(), &query)
 		assert.NoError(t, err)
+		assert.Equal(t, int64(1), stats.Tags)
+		assert.Equal(t, int64(3), stats.Dashboards)
+		assert.Equal(t, int64(3), stats.Orgs)
+	})
+
+	t.Run("Get repository count", func(t *testing.T) {
+		orgs := []*org.OrgDTO{
+			{ID: 1}, {ID: 2}, {ID: 3},
+		}
+		count, err := statsService.getRepositoryCount(context.Background(), orgs)
+		require.NoError(t, err)
+		assert.Equal(t, int64(15), count)
 	})
 }
 
-func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) {
+func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {
 	t.Helper()
 
 	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
@@ -151,16 +197,6 @@ func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) {
 	}
 	err = orgService.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
-}
 
-func TestIntegration_GetAdminStats(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	db, cfg := db.InitTestDBWithCfg(t)
-	statsService := ProvideService(cfg, db)
-
-	query := stats.GetAdminStatsQuery{}
-	_, err := statsService.GetAdminStats(context.Background(), &query)
-	require.NoError(t, err)
+	return orgService
 }

@@ -38,10 +38,11 @@ export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldO
     return (data: DataFrame[]) => {
       if (data.length > 1) {
         if (options.byField && !joinBy) {
-          joinBy = fieldMatchers.get(FieldMatcherID.byName).get(ctx.interpolate(options.byField));
+          joinBy = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
         }
         const joined = joinDataFrames({ frames: data, joinBy, mode: options.mode });
         if (joined) {
+          joined.refId = `${DataTransformerID.joinByField}-${data.map((frame) => frame.refId).join('-')}`;
           return [joined];
         }
       }

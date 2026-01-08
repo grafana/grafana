@@ -62,18 +62,21 @@ export class AddedComponentsRegistry extends Registry<
 
         const result = {
           pluginId,
-          component: wrapWithPluginContext(pluginId, config.component, pointIdLog),
+          component: wrapWithPluginContext({
+            pluginId,
+            extensionTitle: config.title,
+            Component: config.component,
+            log: pointIdLog,
+          }),
           description: config.description,
           title: config.title,
         };
 
         pointIdLog.debug('Added component extension successfully registered');
 
-        if (!(extensionPointId in registry)) {
-          registry[extensionPointId] = [result];
-        } else {
-          registry[extensionPointId].push(result);
-        }
+        // Creating a new array instead of pushing to get a new reference
+        const slice = registry[extensionPointId] ?? [];
+        registry[extensionPointId] = slice.concat(result);
       }
     }
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import {
@@ -8,18 +9,15 @@ import {
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { canEditEntity } from 'app/features/alerting/unified/utils/k8s/utils';
+import { canEditEntity, canModifyProtectedEntity } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
-  TestReceiversAlert,
+  Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import { testReceiversAction } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { shouldUseK8sApi } from '../../../utils/k8s/utils';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -52,8 +50,6 @@ interface Props {
 const { useGrafanaNotifiersQuery } = alertmanagerApi;
 
 export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
-  const dispatch = useDispatch();
-  const useK8sAPI = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
   });
@@ -72,7 +68,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
 
-  const [testChannelValues, setTestChannelValues] = useState<GrafanaChannelValues>();
+  const [testReceivers, setTestReceivers] = useState<Receiver[]>();
 
   // transform receiver DTO to form values
   const [existingValue, id2original] = useMemo((): [
@@ -83,15 +79,15 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       return [undefined, {}];
     }
 
-    return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint), grafanaNotifiers);
-  }, [contactPoint, isLoadingNotifiers, grafanaNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
+    return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint));
+  }, [contactPoint, isLoadingNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
-    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
+    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
 
     try {
       if (editMode) {
-        if (useK8sAPI && contactPoint && contactPoint.id) {
+        if (contactPoint && contactPoint.id) {
           await updateContactPoint.execute({
             contactPoint: newReceiver,
             id: contactPoint.id,
@@ -113,36 +109,30 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   };
 
   const onTestChannel = (values: GrafanaChannelValues) => {
-    setTestChannelValues(values);
+    const existing: GrafanaManagedReceiverConfig | undefined = id2original[values.__id];
+    const chan = formChannelValuesToGrafanaChannelConfig(values, defaultChannelValues, 'test', existing);
+
+    const receivers: Receiver[] = [
+      {
+        name: 'test',
+        grafana_managed_receiver_configs: [chan],
+      },
+    ];
+
+    setTestReceivers(receivers);
   };
 
-  const testNotification = (alert?: TestReceiversAlert) => {
-    if (testChannelValues) {
-      const existing: GrafanaManagedReceiverConfig | undefined = id2original[testChannelValues.__id];
-      const chan = formChannelValuesToGrafanaChannelConfig(testChannelValues, defaultChannelValues, 'test', existing);
-
-      const payload = {
-        alertManagerSourceName: GRAFANA_RULES_SOURCE_NAME,
-        receivers: [
-          {
-            name: 'test',
-            grafana_managed_receiver_configs: [chan],
-          },
-        ],
-        alert,
-      };
-
-      dispatch(testReceiversAction(payload));
-    }
-  };
-
-  const isEditable = Boolean(
-    (!readOnly || (contactPoint && canEditEntity(contactPoint))) && !contactPoint?.provisioned
-  );
+  // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
+  const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
+  const hasScopedEditProtectedPermissions = contactPoint ? canModifyProtectedEntity(contactPoint) : true;
+  const isEditable = !readOnly && hasScopedEditPermissions && !contactPoint?.provisioned;
   const isTestable = !readOnly;
+  const canEditProtectedFields = editMode ? hasScopedEditProtectedPermissions : true;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
-    return <LoadingPlaceholder text="Loading notifiers..." />;
+    return (
+      <LoadingPlaceholder text={t('alerting.grafana-receiver-form.text-loading-notifiers', 'Loading notifiers...')} />
+    );
   }
 
   const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
@@ -155,12 +145,21 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
     return { dto: n };
   });
+
   return (
     <>
       {hasOnCallError && (
-        <Alert severity="error" title="Loading OnCall integration failed">
-          Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
-          plugin configuration
+        <Alert
+          severity="error"
+          title={t(
+            'alerting.grafana-receiver-form.title-loading-on-call-integration-failed',
+            'Loading OnCall integration failed'
+          )}
+        >
+          <Trans i18nKey="alerting.grafana-receiver-form.body-loading-on-call-integration-failed">
+            Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
+            plugin configuration
+          </Trans>
         </Alert>
       )}
 
@@ -181,12 +180,16 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         canManagePermissions={
           editMode && contactPoint && showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
         }
+        canEditProtectedFields={canEditProtectedFields}
       />
-      <TestContactPointModal
-        onDismiss={() => setTestChannelValues(undefined)}
-        isOpen={!!testChannelValues}
-        onTest={(alert) => testNotification(alert)}
-      />
+      {testReceivers && (
+        <TestContactPointModal
+          onDismiss={() => setTestReceivers(undefined)}
+          isOpen={!!testReceivers}
+          alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+          receivers={testReceivers}
+        />
+      )}
     </>
   );
 };

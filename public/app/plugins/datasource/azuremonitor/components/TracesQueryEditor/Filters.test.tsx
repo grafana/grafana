@@ -5,11 +5,11 @@ import { of } from 'rxjs';
 
 import { CoreApp } from '@grafana/data';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockQuery from '../../__mocks__/query';
 import { AzureQueryType } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { AzureMonitorQuery } from '../../types';
+import createMockDatasource from '../../mocks/datasource';
+import createMockQuery from '../../mocks/query';
+import { AzureMonitorQuery } from '../../types/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 
 import Filters from './Filters';
@@ -27,6 +27,7 @@ jest.mock('@grafana/runtime', () => {
     }),
   };
 });
+jest.setTimeout(10000);
 
 const variableOptionGroup = {
   label: 'Template variables',
@@ -264,7 +265,7 @@ describe(`Traces Filters`, () => {
       { property: 'client_Browser', filters: [{ count: 100, value: 'test-client' }], operation: 'ne', index: 1 },
       rerender
     );
-  });
+  }, 10000);
 
   it('should delete a trace filter', async () => {
     let mockQuery = createMockQuery({ azureTraces: { traceTypes: ['customEvents'] } });

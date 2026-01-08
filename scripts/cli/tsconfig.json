@@ -1,11 +1,15 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
-    "module": "commonjs"
+    "moduleResolution": "nodenext",
+    "module": "NodeNext"
   },
   "extends": "../../tsconfig.json",
   "ts-node": {
     "transpileOnly": true,
-    "swc": true
-  }
+    "swc": true,
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
+  "include": ["./**/*.ts", "./**/*.mts", "./**/*.js", "./**/*.mjs"]
 }

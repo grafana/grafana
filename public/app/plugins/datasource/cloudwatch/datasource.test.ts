@@ -4,25 +4,23 @@ import { toArray } from 'rxjs/operators';
 import { CoreApp, Field } from '@grafana/data';
 
 import {
+  CloudWatchLogsQuery,
+  CloudWatchMetricsQuery,
+  LogsQueryLanguage,
+  MetricEditorMode,
+  MetricQueryType,
+} from './dataquery.gen';
+import {
   CloudWatchSettings,
   fieldsVariable,
   logGroupNamesVariable,
   regionVariable,
   setupMockedDataSource,
-} from './__mocks__/CloudWatchDataSource';
-import { setupForLogs } from './__mocks__/logsTestContext';
-import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
-import { TimeRangeMock } from './__mocks__/timeRange';
-import {
-  CloudWatchDefaultQuery,
-  CloudWatchLogsQuery,
-  CloudWatchLogsRequest,
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
-  LogsQueryLanguage,
-  MetricEditorMode,
-  MetricQueryType,
-} from './types';
+} from './mocks/CloudWatchDataSource';
+import { setupForLogs } from './mocks/logsTestContext';
+import { validLogsQuery, validMetricSearchBuilderQuery } from './mocks/queries';
+import { TimeRangeMock } from './mocks/timeRange';
+import { CloudWatchQuery, CloudWatchLogsRequest, CloudWatchDefaultQuery } from './types';
 import * as templateUtils from './utils/templateVariableUtils';
 
 describe('datasource', () => {
@@ -233,7 +231,7 @@ describe('datasource', () => {
 
     it('should interpolate variables in the query', async () => {
       const { datasource, queryMock } = setupMockedDataSource({
-        variables: [fieldsVariable, regionVariable],
+        variables: [fieldsVariable, regionVariable, logGroupNamesVariable],
       });
       await lastValueFrom(
         datasource
@@ -245,6 +243,7 @@ describe('datasource', () => {
                 queryMode: 'Logs',
                 region: '$region',
                 expression: 'fields $fields',
+                logGroups: [{ name: '$groups', arn: '$groups' }],
                 logGroupNames: ['/some/group'],
               },
             ],
@@ -261,6 +260,10 @@ describe('datasource', () => {
       );
       expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject({
         queryString: 'fields templatedField',
+        logGroups: [
+          { name: 'templatedGroup-1', arn: 'templatedGroup-arn-1' },
+          { name: 'templatedGroup-2', arn: 'templatedGroup-arn-2' },
+        ],
         logGroupNames: ['/some/group'],
         region: 'templatedRegion',
       });
@@ -301,7 +304,7 @@ describe('datasource', () => {
       });
     });
 
-    it('should add links to log queries', async () => {
+    it('should add links to log insights queries', async () => {
       const { datasource } = setupForLogs();
 
       const observable = datasource.query({
@@ -339,7 +342,7 @@ describe('datasource', () => {
         },
       ]);
 
-      expect(emits[0].data[0].fields.find((f: Field) => f.name === '@message').config.links).toMatchObject([
+      expect(emits[0].data[0].fields.find((f: Field) => f.name === '').config.links).toMatchObject([
         {
           title: 'View in CloudWatch console',
           url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2016-12-31T16*3a00*3a00.000Z~start~'2016-12-31T15*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'some*20query~isLiveTail~false~source~(~'test))",
@@ -374,21 +377,24 @@ describe('datasource', () => {
     });
 
     it('should replace correct variables in CloudWatchLogsQuery', () => {
-      const { datasource, templateService } = setupMockedDataSource();
-      templateService.replace = jest.fn();
-      const variableName = 'someVar';
+      const { datasource, templateService } = setupMockedDataSource({ variables: [logGroupNamesVariable] });
+      templateService.replace = jest.fn().mockImplementation(() => 'resolved1|resolved2');
       const logQuery: CloudWatchLogsQuery = {
         queryMode: 'Logs',
-        expression: `$${variableName}`,
-        region: `$${variableName}`,
+        expression: `$expressionVar`,
+        region: `$regionVar`,
+        logGroups: [{ name: '$groups', arn: '$groups' }],
         id: '',
         refId: '',
       };
 
       datasource.interpolateVariablesInQueries([logQuery], {});
 
-      expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateService.replace).toHaveBeenCalledTimes(1);
+      expect(templateService.replace).toHaveBeenNthCalledWith(1, '$regionVar', {});
+      expect(templateService.replace).toHaveBeenNthCalledWith(2, '$groups', {}, 'pipe');
+      expect(templateService.replace).toHaveBeenNthCalledWith(3, '$groups', {}, 'text');
+      expect(templateService.replace).toHaveBeenNthCalledWith(4, '$expressionVar', {}, undefined);
+      expect(templateService.replace).toHaveBeenCalledTimes(4);
     });
 
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
@@ -432,7 +438,7 @@ describe('datasource', () => {
       const { datasource } = setupMockedDataSource();
       expect(datasource.getDefaultQuery(CoreApp.PanelEditor).queryMode).toEqual('Metrics');
     });
-    it('should set default log groups in default query', () => {
+    it('should set default log groups in default logs insights query', () => {
       const { datasource } = setupMockedDataSource({
         customInstanceSettings: {
           ...CloudWatchSettings,
@@ -453,7 +459,7 @@ describe('datasource', () => {
       expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).metricEditorMode).toEqual(
         MetricEditorMode.Builder
       );
-      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).matchExact).toEqual(true);
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).matchExact).toEqual(false);
     });
     it('should set default values from logs query', () => {
       const defaultLogGroups = [{ name: 'logName', arn: 'logARN' }];

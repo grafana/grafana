@@ -71,7 +71,7 @@ func TestTeamHTTPHeaders(t *testing.T) {
 			want: &TeamHTTPHeaders{
 				Headers: TeamHeaders{
 					"101": {
-						{Header: "X-CUSTOM-HEADER", Value: "foo"},
+						{Header: "X-CUSTOM-HEADER", LBACRule: "foo"},
 					},
 				},
 			},
@@ -99,6 +99,61 @@ func TestTeamHTTPHeaders(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, test.want, actual)
 			assert.EqualValues(t, test.want, actual)
+		})
+	}
+}
+
+func TestIsSecureSocksDSProxyEnabled(t *testing.T) {
+	testCases := []struct {
+		desc string
+		ds   *DataSource
+		want bool
+	}{
+		{
+			desc: "Empty json",
+			ds: &DataSource{
+				JsonData: simplejson.New(),
+			},
+			want: false,
+		},
+		{
+			desc: "Json with enableSecureSocksProxy",
+			ds: &DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"enableSecureSocksProxy": true,
+				}),
+			},
+			want: true,
+		},
+		{
+			desc: "Json with string enableSecureSocksProxy",
+			ds: &DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"enableSecureSocksProxy": "true",
+				}),
+			},
+			want: false,
+		},
+		{
+			desc: "Json with enableSecureSocksProxy false",
+			ds: &DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"enableSecureSocksProxy": false,
+				}),
+			},
+			want: false,
+		},
+		{
+			desc: "Json with no json data",
+			ds:   &DataSource{},
+			want: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			actual := tc.ds.IsSecureSocksDSProxyEnabled()
+			assert.Equal(t, tc.want, actual)
 		})
 	}
 }

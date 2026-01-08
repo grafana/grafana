@@ -18,6 +18,7 @@ export enum VariableHide {
   dontHide,
   hideLabel,
   hideVariable,
+  inControlsMenu,
 }
 
 export interface VariableModel extends Omit<raw.VariableModel, 'datasource'> {
@@ -61,6 +62,8 @@ export interface DataTransformerConfig<TOptions = any> extends raw.DataTransform
   options: TOptions;
   topic?: DataTopic;
 }
+
+export interface TimeOption extends raw.TimeOption {}
 
 export interface TimePickerConfig extends raw.TimePickerConfig {}
 

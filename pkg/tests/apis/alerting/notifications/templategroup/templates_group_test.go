@@ -6,31 +6,30 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/alerting/templates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -38,29 +37,24 @@ func TestMain(m *testing.M) {
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingApiServer,
-		},
-	})
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
 func TestIntegrationResourceIdentifier(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client := newClient(t, helper.Org1.Admin)
+	client := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	newTemplate := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
@@ -104,13 +98,48 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, actual, resource)
+
+		existingTemplateGroup = actual
+	})
+
+	var defaultTemplateGroup *v0alpha1.TemplateGroup
+	t.Run("default template should be available by the identifier", func(t *testing.T) {
+		actual, err := client.Get(ctx, templates.DefaultTemplateName, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+
+		defaultDefn, err := templates.DefaultTemplate(templates.DefaultTemplatesToOmit)
+		require.NoError(t, err)
+		require.Equal(t, v0alpha1.TemplateGroupSpec{
+			Title:   v0alpha1.DefaultTemplateTitle,
+			Content: defaultDefn.Template,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
+		}, actual.Spec)
+		defaultTemplateGroup = actual
+	})
+
+	var newTemplateWithOverlappingName *v0alpha1.TemplateGroup
+	t.Run("create with reserved default title should work", func(t *testing.T) {
+		template := newTemplate.Copy().(*v0alpha1.TemplateGroup)
+		template.Spec.Title = defaultTemplateGroup.Spec.Title
+		actual, err := client.Create(ctx, template, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+		require.NotEmptyf(t, actual.UID, "Resource UID should not be empty")
+		newTemplateWithOverlappingName = actual
+	})
+
+	t.Run("default template should not be available by calculated UID", func(t *testing.T) {
+		actual, err := client.Get(ctx, newTemplateWithOverlappingName.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+
+		require.Equal(t, newTemplateWithOverlappingName.Spec, actual.Spec) // This is the new template, not the default one.
 	})
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -186,19 +215,20 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	}
 
-	adminClient := newClient(t, org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, org1.Admin)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client := newClient(t, tc.user)
+			client := common.NewTemplateGroupClient(t, tc.user)
 
 			var expected = &v0alpha1.TemplateGroup{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.TemplateGroupSpec{
 					Title:   fmt.Sprintf("template-group-1-%s", tc.user.Identity.GetLogin()),
 					Content: `{{ define "test" }} test {{ end }}`,
+					Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 				},
 			}
 			expected.SetProvenanceStatus("")
@@ -234,7 +264,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				t.Run("should be able to list template groups", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
 					require.NoError(t, err)
-					require.Len(t, list.Items, 1)
+					require.Len(t, list.Items, 2) // Includes default template.
 				})
 
 				t.Run("should be able to read template group by resource identifier", func(t *testing.T) {
@@ -324,10 +354,11 @@ func TestIntegrationAccessControl(t *testing.T) {
 			}
 
 			if tc.canRead {
-				t.Run("should get empty list if no mute timings", func(t *testing.T) {
+				t.Run("should get list with just default template if no template groups", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
 					require.NoError(t, err)
-					require.Len(t, list.Items, 0)
+					require.Len(t, list.Items, 1)
+					require.Equal(t, templates.DefaultTemplateName, list.Items[0].Name)
 				})
 			}
 		})
@@ -335,9 +366,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
@@ -345,10 +374,10 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminClient := newClient(t, admin)
+	adminClient := common.NewTemplateGroupClient(t, admin)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
@@ -356,9 +385,10 @@ func TestIntegrationProvisioning(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}, v1.CreateOptions{})
 	require.NoError(t, err)
@@ -388,22 +418,21 @@ func TestIntegrationProvisioning(t *testing.T) {
 }
 
 func TestIntegrationOptimisticConcurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
@@ -472,22 +501,21 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 }
 
 func TestIntegrationPatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "template-group",
 			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 
@@ -533,21 +561,20 @@ func TestIntegrationPatch(t *testing.T) {
 }
 
 func TestIntegrationListSelector(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
 	template1 := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test1",
 			Content: `{{ define "test1" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 	template1, err := adminClient.Create(ctx, template1, v1.CreateOptions{})
@@ -557,15 +584,16 @@ func TestIntegrationListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TemplateGroupSpec{
 			Title:   "test2",
 			Content: `{{ define "test2" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindGrafana,
 		},
 	}
 	template2, err = adminClient.Create(ctx, template2, v1.CreateOptions{})
 	require.NoError(t, err)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.NotificationTemplate{
@@ -575,11 +603,12 @@ func TestIntegrationListSelector(t *testing.T) {
 
 	require.NoError(t, err)
 
-	templates, err := adminClient.List(ctx, v1.ListOptions{})
+	tmpls, err := adminClient.List(ctx, v1.ListOptions{})
 	require.NoError(t, err)
-	require.Len(t, templates.Items, 2)
+	require.Len(t, tmpls.Items, 3) // Includes default template.
 
 	t.Run("should filter by template name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: "spec.title=" + template1.Spec.Title,
 		})
@@ -598,6 +627,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, v1.ListOptions{
 			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.title=%s", template2.Name, template2.Spec.Title),
 		})
@@ -613,20 +643,57 @@ func TestIntegrationListSelector(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
 	})
+
+	t.Run("should filter by default template name", func(t *testing.T) {
+		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "spec.title=" + v0alpha1.DefaultTemplateTitle,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, templates.DefaultTemplateName, list.Items[0].Name)
+
+		// Now just non-default templates
+		list, err = adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "spec.title!=" + v0alpha1.DefaultTemplateTitle,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[0].Name, "Expected non-default template but got %s", list.Items[0].Name)
+		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[1].Name, "Expected non-default template but got %s", list.Items[1].Name)
+	})
 }
 
-func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList] {
-	t.Helper()
+func TestIntegrationKinds(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
-	client, err := dynamic.NewForConfig(user.NewRestConfig())
-	require.NoError(t, err)
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	client := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 
-	return &apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList]{
-		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.Kind().Group(),
-				Version:  v0alpha1.Kind().Version(),
-				Resource: v0alpha1.Kind().Plural(),
-			}).Namespace("default"),
+	newTemplate := &v0alpha1.TemplateGroup{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TemplateGroupSpec{
+			Title:   "templateGroup",
+			Content: `{{ define "test" }} test {{ end }}`,
+			Kind:    v0alpha1.TemplateGroupTemplateKindMimir,
+		},
 	}
+
+	t.Run("should not let create Mimir template", func(t *testing.T) {
+		_, err := client.Create(ctx, newTemplate, v1.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+	})
+
+	t.Run("should not let change kind", func(t *testing.T) {
+		newTemplate.Spec.Kind = v0alpha1.TemplateGroupTemplateKindGrafana
+		created, err := client.Create(ctx, newTemplate, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		created.Spec.Kind = v0alpha1.TemplateGroupTemplateKindMimir
+		_, err = client.Update(ctx, created, v1.UpdateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+	})
 }

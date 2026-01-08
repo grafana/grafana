@@ -1,0 +1,25 @@
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { Button } from '@grafana/ui';
+import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+
+import { ToolbarActionProps } from '../types';
+
+export const MakeDashboardEditableButton = ({ dashboard }: ToolbarActionProps) => {
+  return (
+    <Button
+      disabled={playlistSrv.state.isPlaying}
+      onClick={() => {
+        trackDashboardSceneEditButtonClicked(dashboard.state.uid);
+        dashboard.onEnterEditMode();
+        dashboard.setState({ meta: { ...dashboard.state.meta, canEdit: true, canSave: true } });
+      }}
+      tooltip={t('dashboard.toolbar.new.enter-edit-mode.tooltip', 'This dashboard was marked as read only')}
+      variant="secondary"
+      data-testid={selectors.components.NavToolbar.editDashboard.editButton}
+    >
+      <Trans i18nKey="dashboard.toolbar.new.enter-edit-mode.label">Make editable</Trans>
+    </Button>
+  );
+};

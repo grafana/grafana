@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { config } from '@grafana/runtime';
-import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
-import { Trans, t } from 'app/core/internationalization';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui';
 import { SessionUser } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { useRevokeAllAccessMutation } from '../../dashboard/api/publicDashboardApi';
@@ -30,21 +29,12 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
         </Trans>
       </p>
       <p className={styles.description}>
-        {config.featureToggles.newDashboardSharingComponent ? (
-          <Trans
-            i18nKey="public-dashboard-users-access-list.delete-user-shared-dashboards-modal.revoke-user-access-modal-desc-line2"
-            shouldUnescape
-          >
-            This action will immediately revoke {{ email: user.email }}&apos;s access to all shared dashboards.
-          </Trans>
-        ) : (
-          <Trans
-            i18nKey="public-dashboard-users-access-list.delete-user-modal.revoke-user-access-modal-desc-line2"
-            shouldUnescape
-          >
-            This action will immediately revoke {{ email: user.email }}&apos;s access to all public dashboards.
-          </Trans>
-        )}
+        <Trans
+          i18nKey="public-dashboard-users-access-list.delete-user-shared-dashboards-modal.revoke-user-access-modal-desc-line2"
+          shouldUnescape
+        >
+          This action will immediately revoke {{ email: user.email }}&apos;s access to all shared dashboards.
+        </Trans>
       </p>
       <Modal.ButtonRow>
         <Button type="button" variant="secondary" onClick={hideModal} fill="outline">

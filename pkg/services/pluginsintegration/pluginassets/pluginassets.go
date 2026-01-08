@@ -70,12 +70,12 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 
 		// Since the parent plugin is not explicitly configured as script loading compatible,
 		// If the plugin is either loaded from the CDN (via its parent) or contains Angular, we should use fetch
-		if s.cdnEnabled(p.Parent.ID, p.Class) || p.Angular.Detected {
+		if s.cdnEnabled(p.Parent.ID, p.FS) || p.Angular.Detected {
 			return plugins.LoadingStrategyFetch
 		}
 	}
 
-	if !s.cdnEnabled(p.ID, p.Class) && !p.Angular.Detected {
+	if !s.cdnEnabled(p.ID, p.FS) && !p.Angular.Detected {
 		return plugins.LoadingStrategyScript
 	}
 
@@ -102,6 +102,7 @@ func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
 }
 
 // moduleHash is the underlying function for ModuleHash. See its documentation for more information.
+// If the plugin is not a CDN plugin, the function will return an empty string.
 // It will read the module hash from the MANIFEST.txt in the [[plugins.FS]] of the provided plugin.
 // If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
 // module.js file, rather than for the provided plugin.
@@ -135,6 +136,14 @@ func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSB
 			childFSBase = p.Base()
 		}
 		return s.moduleHash(ctx, parent, childFSBase)
+	}
+
+	// Only CDN plugins are supported for SRI checks.
+	// CDN plugins have the version as part of the URL, which acts as a cache-buster.
+	// Needed due to: https://github.com/grafana/plugin-tools/pull/1426
+	// FS plugins build before this change will have SRI mismatch issues.
+	if !s.cdnEnabled(p.ID, p.FS) {
+		return "", nil
 	}
 
 	manifest, err := s.signature.ReadPluginManifestFromFS(ctx, p.FS)
@@ -176,8 +185,8 @@ func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
 	return false
 }
 
-func (s *Service) cdnEnabled(pluginID string, class plugins.Class) bool {
-	return s.cdn.PluginSupported(pluginID) || class == plugins.ClassCDN
+func (s *Service) cdnEnabled(pluginID string, fs plugins.FS) bool {
+	return s.cdn.PluginSupported(pluginID) || fs.Type().CDN()
 }
 
 // convertHashForSRI takes a SHA256 hash string and returns it as expected by the browser for SRI checks.

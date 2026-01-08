@@ -5,7 +5,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { AlignItems, Direction, FlexProps, JustifyContent } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 import { getSizeStyles, SizeProps } from '../utils/styles';
@@ -70,6 +70,11 @@ export interface BoxProps extends FlexProps, SizeProps, Omit<React.HTMLAttribute
   position?: ResponsiveProp<Property.Position>;
 }
 
+/**
+ * The Box Component is the most basic layout component. It can be used to build more complex components and layouts with properties that use our design tokens instead of using CSS.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-box--docs
+ */
 export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, ref) => {
   const {
     children,

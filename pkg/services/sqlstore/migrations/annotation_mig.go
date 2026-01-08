@@ -1,7 +1,12 @@
 package migrations
 
 import (
-	"xorm.io/xorm"
+	"fmt"
+	"os"
+	"strconv"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -191,6 +196,12 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Increase new_state column to length 40 not null", NewRawSQLMigration("").
 		Postgres("ALTER TABLE annotation ALTER COLUMN new_state TYPE VARCHAR(40);"). // Does not modify nullability.
 		Mysql("ALTER TABLE annotation MODIFY new_state VARCHAR(40) NOT NULL;"))
+
+	mg.AddMigration("Add dashboard_uid column to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
+
+	mg.AddMigration("Add missing dashboard_uid to annotation table", &SetDashboardUIDMigration{})
 }
 
 type AddMakeRegionSingleRowMigration struct {
@@ -224,4 +235,97 @@ func (m *AddMakeRegionSingleRowMigration) Exec(sess *xorm.Session, mg *Migrator)
 
 	_, err = sess.Exec("DELETE FROM annotation WHERE region_id > 0 AND id <> region_id")
 	return err
+}
+
+type SetDashboardUIDMigration struct {
+	MigrationBase
+}
+
+func (m *SetDashboardUIDMigration) SQL(dialect Dialect) string {
+	return "code migration"
+}
+
+func (m *SetDashboardUIDMigration) Exec(sess *xorm.Session, mg *Migrator) error {
+	return RunDashboardUIDMigrations(sess, mg.Dialect.DriverName(), mg.Logger)
+}
+
+func RunDashboardUIDMigrations(sess *xorm.Session, driverName string, logger log.Logger) error {
+	batchSize := 5000
+	if size := os.Getenv("ANNOTATION_DASHBOARD_UID_MIGRATION_BATCH_SIZE"); size != "" {
+		n, err := strconv.ParseInt(size, 10, 64)
+		if err == nil {
+			batchSize = int(n)
+		}
+	}
+
+	logger.Info("Starting batched dashboard_uid migration for annotations (newest first)", "batchSize", batchSize)
+	updateSQL := `UPDATE annotation
+		SET dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = annotation.dashboard_id)
+		WHERE dashboard_uid IS NULL
+		  AND dashboard_id != 0
+		  AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = annotation.dashboard_id)
+		  AND annotation.id IN (
+			SELECT id FROM annotation
+			WHERE dashboard_uid IS NULL AND dashboard_id != 0
+			ORDER BY id DESC
+			LIMIT ?
+		  )`
+	switch driverName {
+	case Postgres:
+		updateSQL = `UPDATE annotation
+		SET dashboard_uid = dashboard.uid
+		FROM dashboard
+		WHERE annotation.dashboard_id = dashboard.id
+		 AND annotation.dashboard_id != 0
+		 AND annotation.dashboard_uid IS NULL
+		 AND annotation.id IN (
+			SELECT id FROM annotation
+			WHERE dashboard_uid IS NULL AND dashboard_id != 0
+			ORDER BY id DESC
+			LIMIT $1
+		 )`
+	case MySQL:
+		updateSQL = `UPDATE annotation AS a
+		JOIN dashboard AS d ON a.dashboard_id = d.id
+		JOIN (
+		  SELECT id
+		  FROM annotation
+		  WHERE dashboard_uid IS NULL
+		  AND dashboard_id != 0
+		  ORDER BY id DESC
+		  LIMIT ?
+		) AS batch ON batch.id = a.id
+		SET a.dashboard_uid = d.uid
+		  WHERE a.dashboard_uid IS NULL
+		  AND a.dashboard_id != 0`
+	}
+
+	updatedTotal := int64(0)
+	batchNum := 0
+	for {
+		batchNum++
+		result, err := sess.Exec(updateSQL, batchSize)
+		if err != nil {
+			return fmt.Errorf("failed to set dashboard_uid for annotation batch %d: %w", batchNum, err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected for batch %d: %w", batchNum, err)
+		}
+
+		if rowsAffected == 0 {
+			break
+		}
+
+		updatedTotal += rowsAffected
+		logger.Info("Updated annotation batch", "batch", batchNum, "rowsInBatch", rowsAffected, "totalUpdated", updatedTotal)
+
+		if rowsAffected < int64(batchSize) {
+			break
+		}
+	}
+
+	logger.Info("Completed dashboard_uid migration for annotations", "totalUpdated", updatedTotal)
+	return nil
 }

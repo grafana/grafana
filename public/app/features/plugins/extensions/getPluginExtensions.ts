@@ -1,18 +1,21 @@
 import { isString } from 'lodash';
+import { combineLatest, map, Observable } from 'rxjs';
 
 import {
-  type PluginExtension,
   PluginExtensionTypes,
+  type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
 } from '@grafana/data';
-import { GetPluginExtensions } from '@grafana/runtime';
+import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
 import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { RegistryType } from './registry/Registry';
+import { pluginExtensionRegistries } from './registry/setup';
 import type { PluginExtensionRegistries } from './registry/types';
+import { GetExtensions, GetExtensionsOptions, GetPluginExtensions } from './types';
 import {
   getReadOnlyProxy,
   generateExtensionId,
@@ -22,19 +25,50 @@ import {
   getLinkExtensionPathWithTracking,
 } from './utils';
 
-type GetExtensions = ({
-  context,
-  extensionPointId,
-  limitPerPlugin,
-  addedLinksRegistry,
-  addedComponentsRegistry,
-}: {
-  context?: object | Record<string | symbol, unknown>;
-  extensionPointId: string;
-  limitPerPlugin?: number;
-  addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]> | undefined;
-  addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]> | undefined;
-}) => { extensions: PluginExtension[] };
+/**
+ * Returns an observable that emits plugin extensions whenever the core extensions registries change.
+ * The observable will emit the initial state of the extensions and then emit again whenever
+ * either the added components registry or the added links registry changes.
+ *
+ * @param options - The options for getting plugin extensions
+ * @returns An Observable that emits the plugin extensions for the given extension point any time the registries change
+ */
+
+export const getObservablePluginExtensions = (
+  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
+): Observable<ReturnType<GetExtensions>> => {
+  const { extensionPointId } = options;
+  const { addedComponentsRegistry, addedLinksRegistry } = pluginExtensionRegistries;
+
+  return combineLatest([
+    addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
+    addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
+  ]).pipe(
+    map(([components, links]) =>
+      getPluginExtensions({
+        ...options,
+        addedComponentsRegistry: {
+          [extensionPointId]: components,
+        },
+        addedLinksRegistry: {
+          [extensionPointId]: links,
+        },
+      })
+    )
+  );
+};
+
+export const getObservablePluginLinks: GetObservablePluginLinks = (options) => {
+  return getObservablePluginExtensions(options).pipe(
+    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.link))
+  );
+};
+
+export const getObservablePluginComponents: GetObservablePluginComponents = (options) => {
+  return getObservablePluginExtensions(options).pipe(
+    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.component))
+  );
+};
 
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
   let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
@@ -144,7 +178,12 @@ export const getPluginExtensions: GetExtensions = ({
       pluginId: addedComponent.pluginId,
       title: addedComponent.title,
       description: addedComponent.description ?? '',
-      component: wrapWithPluginContext(addedComponent.pluginId, addedComponent.component, componentLog),
+      component: wrapWithPluginContext({
+        pluginId: addedComponent.pluginId,
+        extensionTitle: addedComponent.title,
+        Component: addedComponent.component,
+        log: componentLog,
+      }),
     };
 
     extensions.push(extension);

@@ -5,7 +5,8 @@
 import { AnnotationQuery, getNextRefId } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { CloudWatchMetricsQuery, LegacyAnnotationQuery, MetricQueryType, MetricEditorMode } from '../types';
+import { CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from '../dataquery.gen';
+import { LegacyAnnotationQuery } from '../types';
 
 // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
 export function migrateMultipleStatsMetricsQuery(
@@ -36,15 +37,17 @@ export function migrateMultipleStatsAnnotationQuery(
 ): Array<AnnotationQuery<DataQuery>> {
   const newAnnotations: Array<AnnotationQuery<LegacyAnnotationQuery>> = [];
 
-  if (annotationQuery && 'statistics' in annotationQuery && annotationQuery?.statistics?.length) {
-    for (const stat of annotationQuery.statistics.splice(1)) {
-      const { statistics, name, ...newAnnotation } = annotationQuery;
-      newAnnotations.push({ ...newAnnotation, statistic: stat, name: `${name} - ${stat}` });
-    }
-    annotationQuery.statistic = annotationQuery.statistics[0];
-    // Only change the name of the original if new annotations have been created
-    if (newAnnotations.length !== 0) {
-      annotationQuery.name = `${annotationQuery.name} - ${annotationQuery.statistic}`;
+  if (annotationQuery && 'statistics' in annotationQuery) {
+    if (annotationQuery?.statistics?.length) {
+      for (const stat of annotationQuery.statistics.splice(1)) {
+        const { statistics, name, ...newAnnotation } = annotationQuery;
+        newAnnotations.push({ ...newAnnotation, statistic: stat, name: `${name} - ${stat}` });
+      }
+      annotationQuery.statistic = annotationQuery.statistics[0];
+      // Only change the name of the original if new annotations have been created
+      if (newAnnotations.length !== 0) {
+        annotationQuery.name = `${annotationQuery.name} - ${annotationQuery.statistic}`;
+      }
     }
     delete annotationQuery.statistics;
   }

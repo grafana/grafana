@@ -7,7 +7,7 @@ import {
   ImageRenderType,
 } from '../../public/app/features/transformers/docs/content';
 
-const WRITE_PATH = 'docs/sources/panels-visualizations/query-transform-data/transform-data/index.md';
+const WRITE_PATH = 'docs/sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md';
 
 export const readMeContent = `
   To update this Markdown, navigate to the following Typescript files and edit them based on what you need to update:
@@ -20,7 +20,7 @@ export const readMeContent = `
   To build this Markdown, do the following:
 
   $ cd /docs (from the root of the repository)
-  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md
   $ make docs
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
@@ -34,19 +34,20 @@ comments: |
 ${readMeContent}
 
 aliases:
-  - ../../panels/reference-transformation-functions/
-  - ../../panels/transform-data/
-  - ../../panels/transform-data/about-transformation/
-  - ../../panels/transform-data/add-transformation-to-data/
-  - ../../panels/transform-data/apply-transformation-to-data/
-  - ../../panels/transform-data/debug-transformation/
-  - ../../panels/transform-data/delete-transformation/
-  - ../../panels/transform-data/transformation-functions/
-  - ../../panels/transformations/
-  - ../../panels/transformations/apply-transformations/
-  - ../../panels/transformations/config-from-query/
-  - ../../panels/transformations/rows-to-fields/
-  - ../../panels/transformations/types-options/
+  - ../../../panels/transform-data/ # /docs/grafana/next/panels/transform-data/
+  - ../../../panels/transform-data/about-transformation/ # /docs/grafana/next/panels/transform-data/about-transformation/
+  - ../../../panels/transform-data/add-transformation-to-data/ # /docs/grafana/next/panels/transform-data/add-transformation-to-data/
+  - ../../../panels/transform-data/apply-transformation-to-data/ # /docs/grafana/next/panels/transform-data/apply-transformation-to-data/
+  - ../../../panels/transform-data/debug-transformation/ # /docs/grafana/next/panels/transform-data/debug-transformation/
+  - ../../../panels/transform-data/delete-transformation/ # /docs/grafana/next/panels/transform-data/delete-transformation/
+  - ../../../panels/transform-data/transformation-functions/ # /docs/grafana/next/panels/transform-data/transformation-functions/
+  - ../../../panels/transformations/ # /docs/grafana/next/panels/transformations/
+  - ../../../panels/transformations/apply-transformations/ # /docs/grafana/next/panels/transformations/apply-transformations/
+  - ../../../panels/transformations/config-from-query/ # /docs/grafana/next/panels/transformations/config-from-query/
+  - ../../../panels/transformations/rows-to-fields/ # /docs/grafana/next/panels/transformations/rows-to-fields/
+  - ../../../panels/transformations/types-options/ # /docs/grafana/next/panels/transformations/types-options/
+  - ../../../panels/reference-transformation-functions/ # /docs/grafana/next/panels/reference-transformation-functions/
+  - ../../../panels-visualizations/query-transform-data/transform-data/ # /docs/grafana/next/panels-visualizations/query-transform-data/transform-data/
 labels:
   products:
     - cloud
@@ -102,6 +103,8 @@ Transformations are a powerful way to manipulate data returned by a query before
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
+{{< docs/learning-journeys title="Transform data in a Grafana Cloud dashboard" url="https://grafana.com/docs/learning-journeys/data-transformation/" >}}
+
 For users that rely on multiple views of the same dataset, transformations offer an efficient method of creating and maintaining numerous dashboards.
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
@@ -117,6 +120,16 @@ Grafana provides a number of ways that you can transform data. For a complete li
 When there are multiple transformations, Grafana applies them in the order they are listed. Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
 
 The order in which Grafana applies transformations directly impacts the results. For example, if you use a Reduce transformation to condense all the results of one column into a single value, then you can only apply transformations to that single value.
+
+## Dashboard variables in transformations
+
+All text input fields in transformations accept [variable syntax](ref:dashboard-variable):
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-transformation-variables-v11.6.png" alt="Transformation with a mock variable in a text field" >}}
+
+When you use dashboard variables in transformations, the variables are automatically interpolated before the transformations are applied to the data.
+
+For an example, refer to [Use a dashboard variable](#use-a-dashboard-variable) in the **Filter fields by name** transformation.
 
 ## Add a transformation function to data
 
@@ -204,14 +217,6 @@ ${transformationDocsContent[transformationName].getHelperDocs(ImageRenderType.Sh
   return content;
 }
 
-export function buildMarkdownContent(): void {
-  // Build the path to the Markdown file.
-  const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
-
-  // Write content to the Markdown file.
-  writeFileSync(indexPath, completeTemplate, 'utf-8');
-}
-
 export function getMarkdownContent(): string {
   const rootDir = resolve(__dirname, '../../');
   const pathToMarkdown = resolve(rootDir, WRITE_PATH);
@@ -221,3 +226,9 @@ export function getMarkdownContent(): string {
 export function getJavaScriptContent(): string {
   return completeTemplate;
 }
+
+// Build the path to the Markdown file.
+const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
+
+// Write content to the Markdown file.
+writeFileSync(indexPath, completeTemplate, 'utf-8');

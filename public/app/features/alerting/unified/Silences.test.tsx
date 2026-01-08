@@ -1,10 +1,11 @@
+import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
@@ -15,7 +16,9 @@ import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/moc
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { contextSrv } from '../../../core/services/context_srv';
 
 import NewSilencePage from './NewSilencePage';
 import ExistingSilenceEditorPage from './components/silences/SilencesEditor';
@@ -89,8 +92,8 @@ const ui = {
 };
 
 const setUserLogged = (isLogged: boolean) => {
-  config.bootData.user.isSignedIn = isLogged;
-  config.bootData.user.name = isLogged ? 'admin' : '';
+  contextSrv.user.isSignedIn = isLogged;
+  contextSrv.user.name = isLogged ? 'admin' : '';
 };
 
 const enterSilenceLabel = async (index: number, name: string, matcher: MatcherOperator, value: string) => {
@@ -148,6 +151,28 @@ describe('Silences', () => {
       expect(activeSilences).toHaveLength(expectedActiveSilences);
       expect(activeSilences[0]).toHaveTextContent('foo=bar');
       expect(activeSilences[1]).toHaveTextContent('foo!=bar');
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'fetches silenced alerts with correct filter parameters',
+    async () => {
+      let capturedParams: URLSearchParams | undefined;
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+          capturedParams = new URL(request.url).searchParams;
+          return HttpResponse.json([]);
+        })
+      );
+
+      renderSilences();
+
+      await waitFor(() => expect(capturedParams).toBeDefined());
+
+      expect(capturedParams?.get('silenced')).toBe('true');
+      expect(capturedParams?.get('active')).toBe('false');
+      expect(capturedParams?.get('inhibited')).toBe('false');
     },
     TEST_TIMEOUT
   );

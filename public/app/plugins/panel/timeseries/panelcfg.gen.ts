@@ -10,9 +10,11 @@
 
 import * as common from '@grafana/schema';
 
-export interface Options extends common.OptionsWithTimezones {
+export interface Options extends common.OptionsWithTimezones, common.OptionsWithAnnotations {
+  disableKeyboardEvents?: boolean;
   legend: common.VizLegendOptions;
   orientation?: common.VizOrientation;
+  timeCompare?: common.TimeCompareOptions;
   tooltip: common.VizTooltipOptions;
 }
 

@@ -1,11 +1,11 @@
 import { AbstractLabelOperator, AbstractQuery } from '@grafana/data';
 
 import LanguageProvider from './LanguageProvider';
+import { ElasticsearchDataQuery } from './dataquery.gen';
 import { ElasticDatasource } from './datasource';
 import { createElasticDatasource } from './mocks';
-import { ElasticsearchQuery } from './types';
 
-const baseLogsQuery: Partial<ElasticsearchQuery> = {
+const baseLogsQuery: Partial<ElasticsearchDataQuery> = {
   metrics: [{ type: 'logs', id: '1' }],
 };
 

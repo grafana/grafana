@@ -8,9 +8,11 @@ import {
   toDataFrameDTO,
 } from '@grafana/data';
 
-import { ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
+import { ModelType, getRegressionTransformer, RegressionTransformerOptions } from './regression';
 
-describe('Regression transformation', () => {
+describe('Trendline transformation', () => {
+  const RegressionTransformer = getRegressionTransformer();
+
   it('it should predict a linear regression to exactly fit the data when the data is f(x) = x', () => {
     const source = [
       toDataFrame({
@@ -42,10 +44,10 @@ describe('Regression transformation', () => {
           length: 6,
         }),
         toEquableDataFrame({
-          name: 'linear regression',
+          name: 'Linear regression',
           fields: [
             { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5], config: {} },
-            { name: 'value predicted', type: FieldType.number, values: [0, 1, 2, 3, 4, 5], config: {} },
+            { name: 'value', type: FieldType.number, values: [0, 1, 2, 3, 4, 5], config: {} },
           ],
           length: 6,
         }),
@@ -83,10 +85,10 @@ describe('Regression transformation', () => {
           length: 6,
         }),
         toEquableDataFrame({
-          name: 'linear regression',
+          name: 'Linear regression',
           fields: [
             { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5], config: {} },
-            { name: 'value predicted', type: FieldType.number, values: [1, 1, 1, 1, 1, 1], config: {} },
+            { name: 'value', type: FieldType.number, values: [1, 1, 1, 1, 1, 1], config: {} },
           ],
           length: 6,
         }),
@@ -122,6 +124,7 @@ describe('Regression transformation', () => {
     expect(result[1].fields[1].values[3]).toBeCloseTo(1.86, 1);
     expect(result[1].fields[1].values[4]).toBeCloseTo(1.2, 1);
     expect(result[1].fields[1].values[5]).toBeCloseTo(-0.1, 1);
+    expect(result[1].name).toBe('Quadratic polynomial regression');
   });
 
   it('should have the last x point be equal to the last x point of the data', () => {
@@ -151,6 +154,7 @@ describe('Regression transformation', () => {
     expect(result[1].fields[0].values[4]).toBeCloseTo(1.76, 1);
     expect(result[1].fields[0].values[8]).toBeCloseTo(3.55, 1);
     expect(result[1].fields[0].values[9]).toBe(4);
+    expect(result[1].name).toBe('Quadratic polynomial regression');
   });
 
   it('should filter NaNs', () => {
@@ -179,6 +183,7 @@ describe('Regression transformation', () => {
     expect(result[1].fields[1].values[2]).toBe(2);
     expect(result[1].fields[1].values[3]).toBe(3);
     expect(result[1].fields[1].values[4]).toBe(4);
+    expect(result[1].name).toBe('Linear regression');
   });
 });
 

@@ -1,6 +1,18 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { PermissionLevelString } from 'app/types';
+import { PermissionLevel } from 'app/types/acl';
+
+import { ManagerKind } from '../../apiserver/types';
+
+export interface SortOption {
+  description: string;
+  displayName: string;
+  meta: string;
+  name: string;
+}
+export interface SortOptions {
+  sortOptions: SortOption[];
+}
 
 export interface FacetField {
   field: string;
@@ -17,6 +29,7 @@ export interface SearchQuery {
   tags?: string[];
   kind?: string[];
   panel_type?: string;
+  name?: string[];
   uid?: string[];
   facet?: FacetField[];
   explain?: boolean;
@@ -26,8 +39,9 @@ export interface SearchQuery {
   limit?: number;
   from?: number;
   starred?: boolean;
-  permission?: PermissionLevelString;
+  permission?: PermissionLevel;
   deleted?: boolean;
+  offset?: number;
 }
 
 export interface DashboardQueryResult {
@@ -45,6 +59,7 @@ export interface DashboardQueryResult {
   // debugging fields
   score: number;
   explain: {};
+  managedBy?: ManagerKind;
 
   // enterprise sends extra properties through for sorting (views, errors, etc)
   [key: string]: unknown;
@@ -82,6 +97,7 @@ export interface GrafanaSearcher {
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
+  getLocationInfo: () => Promise<Record<string, LocationInfo>>;
 
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;
@@ -90,4 +106,5 @@ export interface GrafanaSearcher {
 export interface NestedFolderDTO {
   uid: string;
   title: string;
+  managedBy?: ManagerKind;
 }

@@ -82,6 +82,5 @@ They can observe its output into the `public/api-merged.json` and `public/openap
 
 Finally, they can browser and try out both the OpenAPI v2 and v3 via the Swagger UI editor (served by the grafana server) by navigating to `/swagger`.
 
-If there are any issues generating the specifications (e.g., diff containing unrelated changes to your PR or unusually large diff), please run the following two commands to ensure your Swagger version is up to date, then re-run the make commands.
-- `go install github.com/bwplotka/bingo@latest`
-- `bingo get github.com/go-swagger/go-swagger/cmd/swagger@v0.30.2`
+If there are any issues generating the specifications (e.g., diff containing unrelated changes to your PR or unusually large diff), please run the following command to ensure your Swagger version is up to date, then re-run the make commands.
+- `go tool github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6`

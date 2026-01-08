@@ -1,6 +1,6 @@
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
-import { createAsyncThunk } from 'app/types';
+import { createAsyncThunk } from 'app/types/store';
 
 import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
 import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';

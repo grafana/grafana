@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config, GrafanaBootConfig } from '@grafana/runtime';
-import { LinkButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { AccessControlAction } from 'app/types';
+import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { contextSrv } from '../../core/services/context_srv';
 
@@ -43,7 +43,13 @@ export const ServerStats = () => {
           <Trans i18nKey="admin.server-settings.not-found">No stats found.</Trans>
         </p>
       ) : (
-        <div className={styles.row}>
+        <Stack
+          gap={2}
+          direction={{
+            xs: 'column',
+            md: 'row',
+          }}
+        >
           <ServerStatsCard
             isLoading={isLoading}
             content={[
@@ -59,7 +65,7 @@ export const ServerStats = () => {
             }
           />
 
-          <div className={styles.doubleRow}>
+          <Stack direction="column" gap={2}>
             <ServerStatsCard
               isLoading={isLoading}
               content={[{ name: 'Data sources', value: stats?.datasources }]}
@@ -80,7 +86,7 @@ export const ServerStats = () => {
                 </LinkButton>
               }
             />
-          </div>
+          </Stack>
           <ServerStatsCard
             isLoading={isLoading}
             content={[
@@ -98,7 +104,7 @@ export const ServerStats = () => {
               )
             }
           />
-        </div>
+        </Stack>
       )}
     </>
   );
@@ -132,27 +138,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     title: css({
       marginBottom: theme.spacing(4),
-    }),
-    row: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      width: '100%',
-
-      '& > div:not(:last-of-type)': {
-        marginRight: theme.spacing(2),
-      },
-
-      '& > div': {
-        width: '33.3%',
-      },
-    }),
-    doubleRow: css({
-      display: 'flex',
-      flexDirection: 'column',
-
-      '& > div:first-of-type': {
-        marginBottom: theme.spacing(2),
-      },
     }),
     notFound: css({
       fontSize: theme.typography.h6.fontSize,

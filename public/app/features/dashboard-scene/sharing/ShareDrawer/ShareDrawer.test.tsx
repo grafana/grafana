@@ -1,7 +1,7 @@
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, UrlSyncContextProvider } from '@grafana/scenes';
@@ -38,7 +38,7 @@ describe('ShareDrawer', () => {
     expect(locationService.getSearch().get('shareView')).toBe('link');
     expect(await screen.findByText('Share externally')).toBeInTheDocument();
     const closeButton = await screen.findByTestId(selectors.components.Drawer.General.close);
-    await act(() => userEvent.click(closeButton));
+    await userEvent.click(closeButton);
 
     expect(locationService.getSearch().get('shareView')).toBe(null);
   });

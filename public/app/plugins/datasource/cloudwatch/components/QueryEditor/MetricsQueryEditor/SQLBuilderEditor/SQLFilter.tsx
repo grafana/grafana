@@ -3,19 +3,19 @@ import { useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
+import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
+import {
+  CloudWatchMetricsQuery,
+  QueryEditorExpressionType,
+  QueryEditorPropertyType,
+} from 'app/plugins/datasource/cloudwatch/dataquery.gen';
 
 import { CloudWatchDatasource } from '../../../../datasource';
-import {
-  QueryEditorExpressionType,
-  QueryEditorOperatorExpression,
-  QueryEditorPropertyType,
-} from '../../../../expressions';
+import { QueryEditorOperatorExpression } from '../../../../expressions';
 import { useDimensionKeys, useEnsureVariableHasSingleSelection } from '../../../../hooks';
 import { COMPARISON_OPERATORS, EQUALS } from '../../../../language/cloudwatch-sql/language';
-import { CloudWatchMetricsQuery } from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
 
 import {
@@ -113,10 +113,7 @@ const FilterItem = (props: FilterItemProps) => {
     region: query.region,
     namespace,
     metricName,
-    ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
-    config.featureToggles.cloudwatchMetricInsightsCrossAccount
-      ? { accountId: query.accountId }
-      : {}),
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
   });
 
   const loadDimensionValues = async () => {
@@ -130,10 +127,7 @@ const FilterItem = (props: FilterItemProps) => {
         namespace,
         metricName,
         dimensionKey: filter.property.name,
-        ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
-        config.featureToggles.cloudwatchMetricInsightsCrossAccount
-          ? { accountId: query.accountId }
-          : {}),
+        ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
       })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);

@@ -4,44 +4,62 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
-var logger = log.New("tsdb.opentsdb")
+var logger = backend.NewLoggerWith("tsdb.opentsdb")
 
 type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
 }
 
 type datasourceInfo struct {
-	HTTPClient *http.Client
-	URL        string
+	HTTPClient     *http.Client
+	URL            string
+	TSDBVersion    float32
+	TSDBResolution int32
+	LookupLimit    int32
 }
 
 type DsAccess string
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+type JSONData struct {
+	TSDBVersion    float32 `json:"tsdbVersion"`
+	TSDBResolution int32   `json:"tsdbResolution"`
+	LookupLimit    int32   `json:"lookupLimit"`
+}
+
+type QueryModel struct {
+	Metric               string                 `json:"metric"`
+	Aggregator           string                 `json:"aggregator"`
+	DownsampleInterval   string                 `json:"downsampleInterval"`
+	DownsampleAggregator string                 `json:"downsampleAggregator"`
+	DownsampleFillPolicy string                 `json:"downsampleFillPolicy"`
+	DisableDownsampling  bool                   `json:"disableDownsampling"`
+	Filters              []any                  `json:"filters"`
+	Tags                 map[string]interface{} `json:"tags"`
+	ShouldComputeRate    bool                   `json:"shouldComputeRate"`
+	IsCounter            bool                   `json:"isCounter"`
+	CounterMax           string                 `json:"counterMax"`
+	CounterResetValue    string                 `json:"counterResetValue"`
+	ExplicitTags         bool                   `json:"explicitTags"`
+}
+
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
@@ -53,209 +71,139 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
+		jsonData := JSONData{}
+		err = json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
 		model := &datasourceInfo{
-			HTTPClient: client,
-			URL:        settings.URL,
+			HTTPClient:     client,
+			URL:            settings.URL,
+			TSDBVersion:    jsonData.TSDBVersion,
+			TSDBResolution: jsonData.TSDBResolution,
+			LookupLimit:    jsonData.LookupLimit,
 		}
 
 		return model, nil
 	}
 }
 
-func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	var tsdbQuery OpenTsdbQuery
-
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	logger := logger.FromContext(ctx)
 
-	q := req.Queries[0]
-
-	myRefID := q.RefID
-
-	tsdbQuery.Start = q.TimeRange.From.UnixNano() / int64(time.Millisecond)
-	tsdbQuery.End = q.TimeRange.To.UnixNano() / int64(time.Millisecond)
-
-	for _, query := range req.Queries {
-		metric := s.buildMetric(query)
-		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
 	}
 
-	// TODO: Don't use global variable
-	if setting.Env == setting.Dev {
-		logger.Debug("OpenTsdb request", "params", tsdbQuery)
+	u, err := url.Parse(dsInfo.URL)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
 	}
+
+	u.Path = path.Join(u.Path, "api/suggest")
+	query := u.Query()
+	query.Set("q", "cpu")
+	query.Set("type", "metrics")
+	u.RawQuery = query.Encode()
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	res, err := dsInfo.HTTPClient.Do(httpReq)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			logger.Error("Failed to close response body", "error", err)
+		}
+	}()
+
+	if res.StatusCode != 200 {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("OpenTSDB suggest endpoint returned status %d", res.StatusCode),
+		}, nil
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "Data source is working",
+	}, nil
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/suggest", s.HandleSuggestQuery)
+	mux.HandleFunc("/api/aggregators", s.HandleAggregatorsQuery)
+	mux.HandleFunc("/api/config/filters", s.HandleFiltersQuery)
+	mux.HandleFunc("/api/search/lookup", s.HandleLookupQuery)
+
+	handler := httpadapter.New(mux)
+	return handler.CallResource(ctx, req, sender)
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	logger := logger.FromContext(ctx)
 
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
 
-	request, err := s.createRequest(ctx, logger, dsInfo, tsdbQuery)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
-	}
+	result := backend.NewQueryDataResponse()
 
-	res, err := dsInfo.HTTPClient.Do(request)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
-	}
-
-	defer func() {
-		err := res.Body.Close()
-		if err != nil {
-			logger.Warn("failed to close response body", "error", err)
+	for _, query := range req.Queries {
+		tsdbQuery := OpenTsdbQuery{
+			Start: query.TimeRange.From.Unix(),
+			End:   query.TimeRange.To.Unix(),
+			Queries: []map[string]any{
+				BuildMetric(query),
+			},
 		}
-	}()
 
-	result, err := s.parseResponse(logger, res, myRefID)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		httpReq, err := CreateRequest(ctx, logger, dsInfo, tsdbQuery)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err := dsInfo.HTTPClient.Do(httpReq)
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			if cerr := httpRes.Body.Close(); cerr != nil {
+				logger.Warn("failed to close response body", "error", cerr)
+			}
+		}()
+
+		queryRes, err := ParseResponse(logger, httpRes, query.RefID, dsInfo.TSDBVersion)
+		if err != nil {
+			return nil, err
+		}
+
+		result.Responses[query.RefID] = queryRes.Responses[query.RefID]
 	}
 
 	return result, nil
-}
-
-func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *datasourceInfo, data OpenTsdbQuery) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "api/query")
-	queryParams := u.Query()
-	queryParams.Set("arrays", "true")
-	u.RawQuery = queryParams.Encode()
-
-	postData, err := json.Marshal(data)
-	if err != nil {
-		logger.Info("Failed marshaling data", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(string(postData)))
-	if err != nil {
-		logger.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	return req, nil
-}
-
-func (s *Service) parseResponse(logger log.Logger, res *http.Response, myRefID string) (*backend.QueryDataResponse, error) {
-	resp := backend.NewQueryDataResponse()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
-		}
-	}()
-
-	if res.StatusCode/100 != 2 {
-		logger.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("request failed, status: %s", res.Status)
-	}
-
-	var responseData []OpenTsdbResponse
-	err = json.Unmarshal(body, &responseData)
-	if err != nil {
-		logger.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
-		return nil, err
-	}
-
-	frames := data.Frames{}
-	for _, val := range responseData {
-		labels := data.Labels{}
-		for label, value := range val.Tags {
-			labels[label] = value
-		}
-
-		frame := data.NewFrameOfFieldTypes(val.Metric, len(val.DataPoints), data.FieldTypeTime, data.FieldTypeFloat64)
-		frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
-		frame.RefID = myRefID
-		timeField := frame.Fields[0]
-		timeField.Name = data.TimeSeriesTimeFieldName
-		dataField := frame.Fields[1]
-		dataField.Name = "value"
-		dataField.Labels = labels
-
-		points := val.DataPoints
-		for i, point := range points {
-			frame.SetRow(i, time.Unix(int64(point[0]), 0).UTC(), point[1])
-		}
-		frames = append(frames, frame)
-	}
-	result := resp.Responses[myRefID]
-	result.Frames = frames
-	resp.Responses[myRefID] = result
-	return resp, nil
-}
-
-func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
-	metric := make(map[string]any)
-
-	model, err := simplejson.NewJson(query.JSON)
-	if err != nil {
-		return nil
-	}
-
-	// Setting metric and aggregator
-	metric["metric"] = model.Get("metric").MustString()
-	metric["aggregator"] = model.Get("aggregator").MustString()
-
-	// Setting downsampling options
-	disableDownsampling := model.Get("disableDownsampling").MustBool()
-	if !disableDownsampling {
-		downsampleInterval := model.Get("downsampleInterval").MustString()
-		if downsampleInterval == "" {
-			downsampleInterval = "1m" // default value for blank
-		}
-		downsample := downsampleInterval + "-" + model.Get("downsampleAggregator").MustString()
-		if model.Get("downsampleFillPolicy").MustString() != "none" {
-			metric["downsample"] = downsample + "-" + model.Get("downsampleFillPolicy").MustString()
-		} else {
-			metric["downsample"] = downsample
-		}
-	}
-
-	// Setting rate options
-	if model.Get("shouldComputeRate").MustBool() {
-		metric["rate"] = true
-		rateOptions := make(map[string]any)
-		rateOptions["counter"] = model.Get("isCounter").MustBool()
-
-		counterMax, counterMaxCheck := model.CheckGet("counterMax")
-		if counterMaxCheck {
-			rateOptions["counterMax"] = counterMax.MustFloat64()
-		}
-
-		resetValue, resetValueCheck := model.CheckGet("counterResetValue")
-		if resetValueCheck {
-			rateOptions["resetValue"] = resetValue.MustFloat64()
-		}
-
-		if !counterMaxCheck && (!resetValueCheck || resetValue.MustFloat64() == 0) {
-			rateOptions["dropResets"] = true
-		}
-
-		metric["rateOptions"] = rateOptions
-	}
-
-	// Setting tags
-	tags, tagsCheck := model.CheckGet("tags")
-	if tagsCheck && len(tags.MustMap()) > 0 {
-		metric["tags"] = tags.MustMap()
-	}
-
-	// Setting filters
-	filters, filtersCheck := model.CheckGet("filters")
-	if filtersCheck && len(filters.MustArray()) > 0 {
-		metric["filters"] = filters.MustArray()
-	}
-
-	return metric
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
@@ -266,7 +214,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 
 	instance, ok := i.(*datasourceInfo)
 	if !ok {
-		return nil, fmt.Errorf("failed to cast datsource info")
+		return nil, fmt.Errorf("failed to cast datasource info")
 	}
 
 	return instance, nil

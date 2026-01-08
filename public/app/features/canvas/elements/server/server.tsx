@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, LinkModel, OneClickMode } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ColorDimensionConfig, ScalarDimensionConfig } from '@grafana/schema';
 import config from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions';
-import { ColorDimensionEditor, ScalarDimensionEditor } from 'app/features/dimensions/editors';
+import { DimensionContext } from 'app/features/dimensions/context';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps } from '../../element';
 
@@ -83,7 +85,6 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
     config: {
       type: ServerType.Single,
     },
-    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
@@ -104,18 +105,18 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Server'];
+    const category = [t('canvas.server-item.category-server', 'Server')];
     builder
       .addSelect({
         category,
         path: 'config.type',
-        name: 'Type',
+        name: t('canvas.server-item.name-type', 'Type'),
         settings: {
           options: [
-            { value: ServerType.Single, label: ServerType.Single },
-            { value: ServerType.Stack, label: ServerType.Stack },
-            { value: ServerType.Database, label: ServerType.Database },
-            { value: ServerType.Terminal, label: ServerType.Terminal },
+            { value: ServerType.Single, label: t('canvas.server-item.type-options.label-single', 'Single') },
+            { value: ServerType.Stack, label: t('canvas.server-item.type-options.label-stack', 'Stack') },
+            { value: ServerType.Database, label: t('canvas.server-item.type-options.label-database', 'Database') },
+            { value: ServerType.Terminal, label: t('canvas.server-item.type-options.label-terminal', 'Terminal') },
           ],
         },
         defaultValue: ServerType.Single,
@@ -124,7 +125,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
         category,
         id: 'statusColor',
         path: 'config.statusColor',
-        name: 'Status color',
+        name: t('canvas.server-item.name-status-color', 'Status color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
@@ -135,7 +136,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
         category,
         id: 'bulbColor',
         path: 'config.bulbColor',
-        name: 'Bulb color',
+        name: t('canvas.server-item.name-bulb-color', 'Bulb color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
@@ -146,7 +147,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
         category,
         id: 'blinkRate',
         path: 'config.blinkRate',
-        name: 'Blink rate [hz] (0 = off)',
+        name: t('canvas.server-item.name-blink-rate', 'Blink rate [hz] (0 = off)'),
         editor: ScalarDimensionEditor,
         settings: { min: 0, max: 100 },
       });

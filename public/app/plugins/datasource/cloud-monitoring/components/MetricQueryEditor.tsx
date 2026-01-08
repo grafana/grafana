@@ -2,10 +2,12 @@ import { useCallback, useEffect } from 'react';
 import * as React from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
-import { EditorRows, Stack } from '@grafana/experimental';
+import { EditorRows } from '@grafana/plugin-ui';
+import { Stack } from '@grafana/ui';
 
+import { AlignmentTypes, QueryType, TimeSeriesList, TimeSeriesQuery } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
-import { AlignmentTypes, CloudMonitoringQuery, QueryType, TimeSeriesList, TimeSeriesQuery } from '../types/query';
+import { CloudMonitoringQuery } from '../types/query';
 import { CustomMetaData } from '../types/types';
 
 import { AliasBy } from './AliasBy';

@@ -1,17 +1,24 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
-import NativeScrollbar from 'app/core/components/NativeScrollbar';
+import { useSceneObjectState } from '@grafana/scenes';
+import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
+import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { KioskMode } from 'app/types/dashboard';
 
-import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
+import { StarButton } from '../scene/new-toolbar/actions/StarButton';
+import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import { DashboardEditPaneRenderer } from './DashboardEditPane';
-import { useEditPaneCollapsed } from './shared';
+import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
 
 interface Props {
   dashboard: DashboardScene;
@@ -22,8 +29,11 @@ interface Props {
 
 export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
+  const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
-  const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
+  const { isPlaying } = playlistSrv.useState();
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
@@ -37,62 +47,131 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     );
   }
 
-  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
-    useSnappingSplitter({
-      direction: 'row',
-      dragPosition: 'end',
-      initialSize: 0.8,
-      handleSize: 'sm',
-      collapsed: isCollapsed,
+  /**
+   * Adds star button and left side actions to app chrome breadcrumb area
+   */
+  useUpdateAppChromeActions(dashboard);
 
-      paneOptions: {
-        collapseBelowPixels: 250,
-        snapOpenToPixels: 400,
-      },
-    });
-
+  /**
+   * Enable / disable selection based on dashboard isEditing state
+   */
   useEffect(() => {
-    setIsCollapsed(splitterState.collapsed);
-  }, [splitterState.collapsed, setIsCollapsed]);
+    if (isEditing) {
+      editPane.enableSelection();
+    } else {
+      editPane.disableSelection();
+    }
+  }, [isEditing, editPane]);
 
-  const containerStyle: CSSProperties = {};
+  const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
 
-  if (!isEditing) {
-    primaryProps.style.flexGrow = 1;
-    primaryProps.style.width = '100%';
-    primaryProps.style.minWidth = 'unset';
-    containerStyle.overflow = 'unset';
-  }
+  const sidebarContext = useSidebar({
+    hasOpenPane: Boolean(openPane),
+    contentMargin: 1,
+    position: 'right',
+    persistanceKey: 'dashboard',
+    onClosePane: () => editPane.closePane(),
+  });
 
-  const onBodyRef = (ref: HTMLDivElement) => {
-    dashboard.onSetScrollRef(ref);
+  /**
+   * Sync docked state to editPane state
+   */
+  useEffect(() => {
+    editPane.setState({ isDocked: sidebarContext.isDocked });
+  }, [sidebarContext.isDocked, editPane]);
+
+  const onClearSelection: React.PointerEventHandler<HTMLDivElement> = (evt) => {
+    if (evt.shiftKey) {
+      return;
+    }
+
+    editPane.clearSelection();
   };
 
-  return (
-    <div {...containerProps} style={containerStyle}>
-      <div {...primaryProps} className={cx(primaryProps.className, styles.canvasWithSplitter)}>
-        <NavToolbarActions dashboard={dashboard} />
-        <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
-        <div className={styles.bodyWrapper}>
-          <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
-            {body}
-          </div>
+  const onBodyRef = (ref: HTMLDivElement | null) => {
+    if (ref) {
+      dashboard.onSetScrollRef(new DivScrollElement(ref));
+    }
+  };
+
+  function renderBody() {
+    const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
+
+    // In kiosk mode the full document body scrolls so we don't need to wrap in our own scrollbar
+    if (renderWithoutSidebar) {
+      return (
+        <div
+          className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
+          data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+        >
+          <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
         </div>
+      );
+    }
+
+    return (
+      <div
+        className={styles.bodyWrapper}
+        data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+        {...sidebarContext.outerWrapperProps}
+      >
+        <div className={styles.scrollContainer} ref={onBodyRef} onPointerDown={onClearSelection}>
+          {body}
+        </div>
+
+        <Sidebar contextValue={sidebarContext}>
+          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
+        </Sidebar>
       </div>
-      {isEditing && (
-        <>
-          <div {...splitterProps} data-edit-pane-splitter={true} />
-          <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
-            <DashboardEditPaneRenderer
-              editPane={dashboard.state.editPane}
-              isCollapsed={splitterState.collapsed}
-              onToggleCollapse={onToggleCollapse}
-            />
-          </div>
-        </>
-      )}
+    );
+  }
+
+  return (
+    <div className={styles.container}>
+      <ElementSelectionContext.Provider value={selectionContext}>
+        <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
+          {controls}
+        </div>
+        {renderBody()}
+      </ElementSelectionContext.Provider>
     </div>
   );
+}
+
+function useUpdateAppChromeActions(dashboard: DashboardScene) {
+  const { chrome } = useGrafana();
+
+  useLayoutEffect(() => {
+    const hasUid = Boolean(dashboard.state.uid);
+    const canStar = Boolean(dashboard.state.meta.canStar);
+
+    const breadcrumbActions = (
+      <>
+        {hasUid && canStar && <StarButton dashboard={dashboard} />}
+        {hasUid && canStar && <PublicDashboardBadge dashboard={dashboard} />}
+        {renderDynamicNavActions()}
+      </>
+    );
+
+    chrome.update({ breadcrumbActions });
+
+    return () => {
+      chrome.update({ breadcrumbActions: undefined });
+    };
+  }, [chrome, dashboard]);
+}
+
+function renderDynamicNavActions() {
+  const dashboard = getDashboardSrv().getCurrent()!;
+  const showProps = { dashboard };
+
+  return dynamicDashNavActions.left.map((action, index) => {
+    if (action.show(showProps)) {
+      const ActionComponent = action.component;
+      return <ActionComponent key={index} dashboard={dashboard} />;
+    }
+    return null;
+  });
 }
 
 function getStyles(theme: GrafanaTheme2, headerHeight: number) {
@@ -103,14 +182,12 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       flexDirection: 'column',
       flexGrow: 1,
     }),
-    canvasWithSplitter: css({
-      overflow: 'unset',
+    container: css({
+      label: 'container',
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
-    }),
-    canvasWithSplitterEditing: css({
-      overflow: 'unset',
+      position: 'relative',
     }),
     bodyWrapper: css({
       label: 'body-wrapper',
@@ -118,15 +195,33 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       flexDirection: 'column',
       flexGrow: 1,
       position: 'relative',
+      flex: '1 1 0',
+      overflow: 'hidden',
+    }),
+    bodyWrapperKiosk: css({
+      padding: theme.spacing(0, 2, 2, 2),
+      overflow: 'unset',
+    }),
+    scrollContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      minHeight: 0,
+      overflow: 'auto',
+      scrollbarWidth: 'thin',
+      scrollbarGutter: 'stable',
+      // without top padding the fixed controls headers is rendered over the selection outline.
+      padding: theme.spacing(0.125, 1, 2, 2),
     }),
     body: css({
       label: 'body',
       display: 'flex',
       flexGrow: 1,
-      gap: '8px',
+      gap: theme.spacing(1),
       boxSizing: 'border-box',
       flexDirection: 'column',
-      padding: theme.spacing(0, 2, 2, 2),
+      // without top padding the fixed controls headers is rendered over the selection outline.
+      padding: theme.spacing(0.125, 2, 2, 2),
     }),
     bodyEditing: css({
       position: 'absolute',
@@ -136,11 +231,9 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       bottom: 0,
       overflow: 'auto',
       scrollbarWidth: 'thin',
-    }),
-    editPane: css({
-      flexDirection: 'column',
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
+      scrollbarGutter: 'stable',
+      // Because the edit pane splitter handle area adds padding we can reduce it here
+      paddingRight: theme.spacing(1),
     }),
     controlsWrapperSticky: css({
       [theme.breakpoints.up('md')]: {

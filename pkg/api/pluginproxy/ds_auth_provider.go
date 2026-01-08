@@ -32,7 +32,6 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	ctxLogger := logger.FromContext(ctx)
-
 	if len(route.URL) > 0 {
 		interpolatedURL, err := interpolateString(route.URL, data)
 		if err != nil {
@@ -49,7 +48,14 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		req.URL.Scheme = routeURL.Scheme
 		req.URL.Host = routeURL.Host
 		req.Host = routeURL.Host
-		req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
+		req.URL.RawPath = util.JoinURLFragments(routeURL.Path, proxyPath)
+		unescapedPath, err := url.PathUnescape(req.URL.RawPath)
+		if err != nil {
+			ctxLogger.Error("Failed to unescape raw path", "rawPath", req.URL.RawPath, "error", err)
+			return
+		}
+
+		req.URL.Path = unescapedPath
 	}
 
 	if err := addQueryString(req, route, data); err != nil {

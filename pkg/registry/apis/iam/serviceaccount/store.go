@@ -3,20 +3,24 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
-	"strconv"
+	"strings"
 
+	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -25,17 +29,125 @@ var (
 	_ rest.Getter               = (*LegacyStore)(nil)
 	_ rest.Lister               = (*LegacyStore)(nil)
 	_ rest.Storage              = (*LegacyStore)(nil)
+	_ rest.CreaterUpdater       = (*LegacyStore)(nil)
+	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
+	_ rest.CollectionDeleter    = (*LegacyStore)(nil)
 )
 
-var resource = iamv0.ServiceAccountResourceInfo
+var resource = iamv0alpha1.ServiceAccountResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac authz.AccessClient) *LegacyStore {
-	return &LegacyStore{store, ac}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
 }
 
 type LegacyStore struct {
-	store legacy.LegacyIdentityStore
-	ac    authz.AccessClient
+	store               legacy.LegacyIdentityStore
+	ac                  claims.AccessClient
+	enableAuthnMutation bool
+	tracer              trace.Tracer
+}
+
+// DeleteCollection implements rest.CollectionDeleter.
+func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+}
+
+// Delete implements rest.GracefulDeleter.
+func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccount.Delete")
+	defer span.End()
+
+	if !s.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	toBeDeleted, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, toBeDeleted); err != nil {
+			return nil, false, err
+		}
+	}
+
+	err = s.store.DeleteServiceAccount(ctx, ns, legacy.DeleteUserCommand{
+		UID: name,
+	})
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	return &iamv0alpha1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns.Value,
+		},
+	}, true, nil
+}
+
+// Update implements rest.Updater.
+func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+}
+
+// Create implements rest.Creater.
+func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccount.Create")
+	defer span.End()
+
+	if !s.enableAuthnMutation {
+		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	saObj, ok := obj.(*iamv0alpha1.ServiceAccount)
+	if !ok {
+		return nil, fmt.Errorf("expected ServiceAccount object, got %T", obj)
+	}
+
+	if saObj.GenerateName != "" {
+		saObj.Name = saObj.GenerateName + util.GenerateShortUID()
+		saObj.GenerateName = ""
+	}
+
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	login := serviceaccounts.GenerateLogin(serviceaccounts.ServiceAccountPrefix, ns.OrgID, saObj.Spec.Title)
+	if saObj.Spec.Plugin != "" {
+		login = serviceaccounts.ExtSvcLoginPrefix(ns.OrgID) + slugify.Slugify(saObj.Spec.Plugin)
+	}
+
+	createCmd := legacy.CreateServiceAccountCommand{
+		IsDisabled: saObj.Spec.Disabled,
+		Name:       saObj.Spec.Title,
+		UID:        saObj.Name,
+		Login:      strings.ToLower(login),
+		Role:       string(saObj.Spec.Role),
+	}
+
+	result, err := s.store.CreateServiceAccount(ctx, ns, createCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	iamSA := s.toSAItem(result.ServiceAccount, ns.Value)
+	return &iamSA, nil
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -61,9 +173,12 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccount.List")
+	defer span.End()
+
 	res, err := common.List(
-		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0.ServiceAccount], error) {
+		ctx, resource, s.ac, common.PaginationFromListOptions(options),
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.ServiceAccount], error) {
 			found, err := s.store.ListServiceAccounts(ctx, ns, legacy.ListServiceAccountsQuery{
 				Pagination: p,
 			})
@@ -72,12 +187,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			items := make([]iamv0.ServiceAccount, 0, len(found.Items))
+			items := make([]iamv0alpha1.ServiceAccount, 0, len(found.Items))
 			for _, sa := range found.Items {
-				items = append(items, toSAItem(sa, ns.Value))
+				items = append(items, s.toSAItem(sa, ns.Value))
 			}
 
-			return &common.ListResponse[iamv0.ServiceAccount]{
+			return &common.ListResponse[iamv0alpha1.ServiceAccount]{
 				Items:    items,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -89,35 +204,44 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
-	obj := &iamv0.ServiceAccountList{Items: res.Items}
-	obj.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
-	obj.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
+	obj := &iamv0alpha1.ServiceAccountList{Items: res.Items}
+	obj.Continue = common.OptionalFormatInt(res.Continue)
+	obj.ResourceVersion = common.OptionalFormatInt(res.RV)
 	return obj, nil
 }
 
-func toSAItem(sa legacy.ServiceAccount, ns string) iamv0.ServiceAccount {
-	item := iamv0.ServiceAccount{
+func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.ServiceAccount {
+	item := iamv0alpha1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              sa.UID,
 			Namespace:         ns,
 			ResourceVersion:   fmt.Sprintf("%d", sa.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(sa.Created),
 		},
-		Spec: iamv0.ServiceAccountSpec{
+		Spec: iamv0alpha1.ServiceAccountSpec{
+			Plugin:   extractPluginNameFromTitle(sa.Name),
 			Title:    sa.Name,
 			Disabled: sa.Disabled,
+			Role:     iamv0alpha1.ServiceAccountOrgRole(sa.Role),
 		},
 	}
 	obj, _ := utils.MetaAccessor(&item)
 	obj.SetUpdatedTimestamp(&sa.Updated)
-	obj.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name: "SQL",
-		Path: strconv.FormatInt(sa.ID, 10),
-	})
+	obj.SetDeprecatedInternalID(sa.ID) // nolint:staticcheck
 	return item
 }
 
+func extractPluginNameFromTitle(title string) string {
+	if strings.HasPrefix(title, serviceaccounts.ExtSvcPrefix) {
+		return strings.TrimLeft(title, serviceaccounts.ExtSvcPrefix)
+	}
+	return ""
+}
+
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "serviceaccount.Get")
+	defer span.End()
+
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -135,6 +259,6 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, resource.NewNotFound(name)
 	}
 
-	res := toSAItem(found.Items[0], ns.Value)
+	res := s.toSAItem(found.Items[0], ns.Value)
 	return &res, nil
 }

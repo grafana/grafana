@@ -6,11 +6,11 @@ import { InsightsMenuButton } from '../../InsightsMenuButton';
 
 export function getEvalSuccessVsFailuresScene(datasource: DataSourceRef, panelTitle: string) {
   const exprA = INSTANCE_ID
-    ? `sum(grafanacloud_instance_rule_evaluations_total:rate5m{id="${INSTANCE_ID}) - sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m{id="${INSTANCE_ID})`
+    ? `sum(grafanacloud_instance_rule_evaluations_total:rate5m{stack_id="${INSTANCE_ID}"}) - sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m{stack_id="${INSTANCE_ID}"})`
     : `sum(grafanacloud_instance_rule_evaluations_total:rate5m) - sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m)`;
 
   const exprB = INSTANCE_ID
-    ? `sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m{id="${INSTANCE_ID})`
+    ? `sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m{stack_id="${INSTANCE_ID}"})`
     : `sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m)`;
 
   const query = new SceneQueryRunner({

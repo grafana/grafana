@@ -9,9 +9,12 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	ngalertapi "github.com/grafana/grafana/pkg/services/ngalert/api"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	ngalertapi "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -79,6 +82,13 @@ type contactPoint struct {
 }
 
 func (s *Service) getContactPoints(ctx context.Context, signedInUser *user.SignedInUser) ([]contactPoint, error) {
+	userIsOrgAdmin := signedInUser.HasRole(org.RoleAdmin)
+	hasAccess, _ := s.accessControl.Evaluate(ctx, signedInUser, ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets, models.ScopeReceiversAll))
+	if !userIsOrgAdmin && !hasAccess {
+		msg := "user '%s' is not allowed to read contact point secrets, missing 'alert.notifications.receivers.secrets:read' permission, which can be granted through the 'Admin' or 'Alerting > Full admin access' roles"
+		return nil, fmt.Errorf(msg, signedInUser.UserUID)
+	}
+
 	query := provisioning.ContactPointQuery{
 		OrgID:   signedInUser.GetOrgID(),
 		Decrypt: true, // needed to recreate the settings in the target instance.
@@ -92,6 +102,12 @@ func (s *Service) getContactPoints(ctx context.Context, signedInUser *user.Signe
 	contactPoints := make([]contactPoint, 0, len(embeddedContactPoints))
 
 	for _, embeddedContactPoint := range embeddedContactPoints {
+		// This happens in the default contact point, and would otherwise fail to migrate because it has no UID.
+		// If that contact point is edited in any way, an UID is generated.
+		if embeddedContactPoint.UID == "" {
+			continue
+		}
+
 		contactPoints = append(contactPoints, contactPoint{
 			UID:                   embeddedContactPoint.UID,
 			Name:                  embeddedContactPoint.Name,
@@ -135,7 +151,6 @@ type alertRule struct {
 	Title                string                                     `json:"title"`
 	ExecErrState         string                                     `json:"execErrState"`
 	Data                 []definitions.AlertQuery                   `json:"data"`
-	ID                   int64                                      `json:"id"`
 	For                  model.Duration                             `json:"for"`
 	OrgID                int64                                      `json:"orgID"`
 	IsPaused             bool                                       `json:"isPaused"`
@@ -158,7 +173,6 @@ func (s *Service) getAlertRules(ctx context.Context, signedInUser *user.SignedIn
 		}
 
 		provisionedAlertRules = append(provisionedAlertRules, alertRule{
-			ID:                   rule.ID,
 			UID:                  rule.UID,
 			OrgID:                rule.OrgID,
 			FolderUID:            rule.NamespaceUID,
@@ -179,4 +193,61 @@ func (s *Service) getAlertRules(ctx context.Context, signedInUser *user.SignedIn
 	}
 
 	return provisionedAlertRules, nil
+}
+
+type alertRuleGroup struct {
+	Title     string      `json:"title"`
+	FolderUID string      `json:"folderUid"`
+	Interval  int64       `json:"interval"`
+	Rules     []alertRule `json:"rules"`
+}
+
+func (s *Service) getAlertRuleGroups(ctx context.Context, signedInUser *user.SignedInUser) ([]alertRuleGroup, error) {
+	alertRuleGroupsWithFolder, err := s.ngAlert.Api.AlertRules.GetAlertGroupsWithFolderFullpath(ctx, signedInUser, nil)
+	if err != nil {
+		return nil, fmt.Errorf("fetching alert rule groups with folders: %w", err)
+	}
+
+	settingAlertRulesPaused := s.cfg.CloudMigration.AlertRulesState == setting.GMSAlertRulesPaused
+
+	alertRuleGroups := make([]alertRuleGroup, 0, len(alertRuleGroupsWithFolder))
+
+	for _, ruleGroup := range alertRuleGroupsWithFolder {
+		provisionedAlertRules := make([]alertRule, 0, len(ruleGroup.Rules))
+
+		for _, rule := range ruleGroup.Rules {
+			isPaused := rule.IsPaused
+			if settingAlertRulesPaused {
+				isPaused = true
+			}
+
+			provisionedAlertRules = append(provisionedAlertRules, alertRule{
+				UID:                  rule.UID,
+				OrgID:                rule.OrgID,
+				FolderUID:            rule.NamespaceUID,
+				RuleGroup:            rule.RuleGroup,
+				Title:                rule.Title,
+				For:                  model.Duration(rule.For),
+				Condition:            rule.Condition,
+				Data:                 ngalertapi.ApiAlertQueriesFromAlertQueries(rule.Data),
+				Updated:              rule.Updated,
+				NoDataState:          rule.NoDataState.String(),
+				ExecErrState:         rule.ExecErrState.String(),
+				Annotations:          rule.Annotations,
+				Labels:               rule.Labels,
+				IsPaused:             isPaused,
+				NotificationSettings: ngalertapi.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
+				Record:               ngalertapi.ApiRecordFromModelRecord(rule.Record),
+			})
+		}
+
+		alertRuleGroups = append(alertRuleGroups, alertRuleGroup{
+			Title:     ruleGroup.Title,
+			FolderUID: ruleGroup.FolderUID,
+			Interval:  ruleGroup.Interval,
+			Rules:     provisionedAlertRules,
+		})
+	}
+
+	return alertRuleGroups, nil
 }

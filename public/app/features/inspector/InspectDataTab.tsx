@@ -14,10 +14,10 @@ import {
   transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
@@ -48,7 +48,7 @@ interface State {
   dataFrameIndex: number;
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
   transformedData: DataFrame[];
-  downloadForExcel: boolean;
+  excelCompatibilityMode: boolean;
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
@@ -61,7 +61,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       transformId: DataTransformerID.noop,
       transformationOptions: buildTransformationOptions(),
       transformedData: props.data ?? [],
-      downloadForExcel: false,
+      excelCompatibilityMode: false,
     };
   }
 
@@ -102,7 +102,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       reportInteraction('grafana_logs_download_clicked', { app: this.props.app, format: 'csv' });
     }
 
-    downloadDataFrameAsCsv(dataFrame, dataName, { useExcelHeader: this.state.downloadForExcel }, transformId);
+    downloadDataFrameAsCsv(dataFrame, dataName, {}, transformId, this.state.excelCompatibilityMode);
   }
 
   onExportLogsAsTxt = () => {
@@ -167,9 +167,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   };
 
-  onToggleDownloadForExcel = () => {
+  onToggleExcelCompatibilityMode = () => {
     this.setState((prevState) => ({
-      downloadForExcel: !prevState.downloadForExcel,
+      excelCompatibilityMode: !prevState.excelCompatibilityMode,
     }));
   };
 
@@ -223,7 +223,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         <Button variant="primary" onClick={() => this.exportCsv(dataFrames, hasLogs)} size="sm">
           <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
         </Button>
-        {hasLogs && (
+        {hasLogs && !config.exploreHideLogsDownload && (
           <Button variant="primary" onClick={this.onExportLogsAsTxt} size="sm">
             <Trans i18nKey="dashboard.inspect-data.download-logs">Download logs</Trans>
           </Button>
@@ -244,13 +244,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   render() {
     const { isLoading, options, data, formattedDataDescription, onOptionsChange, hasTransformations } = this.props;
-    const { dataFrameIndex, transformationOptions, selectedDataFrame, downloadForExcel } = this.state;
+    const { dataFrameIndex, transformationOptions, selectedDataFrame, excelCompatibilityMode } = this.state;
     const styles = getPanelInspectorStyles();
 
     if (isLoading) {
       return (
         <div>
-          <Spinner inline={true} /> Loading
+          <Spinner inline={true} /> <Trans i18nKey="inspector.inspect-data-tab.loading">Loading</Trans>
         </div>
       );
     }
@@ -258,7 +258,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const dataFrames = this.getProcessedData();
 
     if (!dataFrames || !dataFrames.length) {
-      return <div>No Data</div>;
+      return (
+        <div>
+          <Trans i18nKey="inspector.inspect-data-tab.no-data">No data</Trans>
+        </div>
+      );
     }
 
     // let's make sure we don't try to render a frame that doesn't exists
@@ -278,11 +282,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
             dataFrames={dataFrames}
             transformationOptions={transformationOptions}
             selectedDataFrame={selectedDataFrame}
-            downloadForExcel={downloadForExcel}
             formattedDataDescription={formattedDataDescription}
             onOptionsChange={onOptionsChange}
             onDataFrameChange={this.onDataFrameChange}
-            toggleDownloadForExcel={this.onToggleDownloadForExcel}
+            excelCompatibilityMode={excelCompatibilityMode}
+            toggleExcelCompatibilityMode={this.onToggleExcelCompatibilityMode}
             actions={this.renderActions(dataFrames, hasLogs, hasTraces, hasServiceGraph)}
           />
         </div>

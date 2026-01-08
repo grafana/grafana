@@ -2,17 +2,23 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { mockTimeRange } from '@grafana/plugin-ui';
+
+import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../utils';
 
 import { LogRows, Props } from './LogRows';
-import { createLogRow } from './__mocks__/logRow';
+import { createLogRow } from './mocks/logRow';
+
+jest.mock('../utils', () => ({
+  ...jest.requireActual('../utils'),
+  isPopoverMenuDisabled: jest.fn(),
+  disablePopoverMenu: jest.fn(),
+  enablePopoverMenu: jest.fn(),
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    featureToggles: {
-      logRowsPopoverMenu: true,
-    },
-  },
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 describe('LogRows', () => {
@@ -34,6 +40,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
 
@@ -63,6 +70,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
     expect(screen.queryAllByRole('row')).toHaveLength(2);
@@ -93,6 +101,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
 
@@ -123,6 +132,7 @@ describe('LogRows', () => {
         onClickHideField={() => {}}
         onClickShowField={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
       />
     );
 
@@ -150,11 +160,15 @@ describe('Popover menu', () => {
         onClickFilterOutString={() => {}}
         onClickFilterString={() => {}}
         scrollElement={null}
+        timeRange={mockTimeRange()}
         {...overrides}
       />
     );
   }
   let orgGetSelection: () => Selection | null;
+  beforeEach(() => {
+    jest.mocked(isPopoverMenuDisabled).mockReturnValue(false);
+  });
   beforeAll(() => {
     orgGetSelection = document.getSelection;
     jest.spyOn(document, 'getSelection').mockReturnValue({
@@ -176,6 +190,27 @@ describe('Popover menu', () => {
     expect(screen.getByText('Copy selection')).toBeInTheDocument();
     expect(screen.getByText('Add as line contains filter')).toBeInTheDocument();
     expect(screen.getByText('Add as line does not contain filter')).toBeInTheDocument();
+  });
+  it('Can be disabled', async () => {
+    setup();
+    await userEvent.click(screen.getByText('log message 1'));
+    await userEvent.click(screen.getByText('Disable menu'));
+    await userEvent.click(screen.getByText('Confirm'));
+    expect(disablePopoverMenu).toHaveBeenCalledTimes(1);
+  });
+  it('Does not appear when disabled', async () => {
+    jest.mocked(isPopoverMenuDisabled).mockReturnValue(true);
+    setup();
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+  });
+  it('Can be re-enabled', async () => {
+    jest.mocked(isPopoverMenuDisabled).mockReturnValue(true);
+    const user = userEvent.setup();
+    setup();
+    await user.keyboard('[AltLeft>]'); // Press Alt (without releasing it)
+    await user.click(screen.getByText('log message 1'));
+    expect(enablePopoverMenu).toHaveBeenCalledTimes(1);
   });
   it('Does not appear when the props are not defined', async () => {
     setup({
