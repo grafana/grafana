@@ -124,7 +124,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 		assert.Equal(t, "1.0.0", manifest.Version)
 		assert.Equal(t, int64(1605807018050), manifest.Time)
 		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
-		assert.Equal(t, "2.0.0", manifest.ManifestVersion)
+		assert.Equal(t, "2.0.0", manifest.ManifestVer)
 		assert.Equal(t, plugins.SignatureTypePrivate, manifest.SignatureType)
 		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
 		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
@@ -751,8 +751,8 @@ func createV2Manifest(t *testing.T, cbs ...func(*PluginManifest)) *PluginManifes
 		Files: map[string]string{
 			"plugin.json": "55556b845e91935cc48fae3aa67baf0f22694c3f",
 		},
-		ManifestVersion: "2.0.0",
-		SignatureType:   plugins.SignatureTypeGrafana,
+		ManifestVer:   "2.0.0",
+		SignatureType: plugins.SignatureTypeGrafana,
 		SignedByOrg:     "grafana",
 		SignedByOrgName: "grafana",
 	}

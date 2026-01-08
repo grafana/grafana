@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"io/fs"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -160,4 +161,36 @@ type KeyRetriever interface {
 type PluginModuleInfo interface {
 	LoadingStrategy(ctx context.Context, pluginID, version string) LoadingStrategy
 	ModuleHash(ctx context.Context, pluginID, version string) string
+}
+
+// PluginManifest represents a plugin manifest.
+type PluginManifest interface {
+	ManifestVersion() string
+	FileHashes() map[string]string
+	PluginIdentity() PluginManifestPluginIdentity
+	SignatureInfo() PluginManifestSignatureInfo
+}
+
+// IsManifestV2 returns true if the manifest version indicates a V2 manifest.
+func IsManifestV2(version string) bool {
+	return strings.HasPrefix(version, "2.")
+}
+
+// PluginManifestPluginIdentity contains plugin identification information.
+type PluginManifestPluginIdentity struct {
+	PluginID string
+	Version  string
+}
+
+// PluginManifestSignatureInfo contains signature-related metadata.
+type PluginManifestSignatureInfo struct {
+	Type            SignatureType
+	SignedByOrg     string
+	SignedByOrgName string
+	RootURLs        []string
+}
+
+// PluginManifestReader is an interface for reading plugin manifests.
+type PluginManifestReader interface {
+	ReadPluginManifestFromFS(ctx context.Context, pfs FS) (PluginManifest, error)
 }

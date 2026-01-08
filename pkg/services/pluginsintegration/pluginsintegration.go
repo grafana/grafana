@@ -117,6 +117,7 @@ var WireSet = wire.NewSet(
 	filestore.ProvideService,
 	wire.Bind(new(plugins.FileStore), new(*filestore.Service)),
 	wire.Bind(new(plugins.SignatureCalculator), new(*signature.Signature)),
+	wire.Bind(new(plugins.PluginManifestReader), new(*signature.Signature)),
 	signature.ProvideService,
 	wire.Bind(new(plugins.KeyStore), new(*keystore.Service)),
 	keystore.ProvideService,

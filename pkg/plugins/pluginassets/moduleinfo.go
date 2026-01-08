@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
@@ -32,14 +31,14 @@ var (
 type Service struct {
 	cfg       *config.PluginManagementCfg
 	cdn       *pluginscdn.Service
-	signature *signature.Signature
+	signature plugins.PluginManifestReader
 	registry  registry.Service
 	log       log.Logger
 
 	moduleHashCache sync.Map
 }
 
-func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, sig *signature.Signature, reg registry.Service) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, sig plugins.PluginManifestReader, reg registry.Service) *Service {
 	return &Service{
 		cfg:       cfg,
 		cdn:       cdn,
@@ -164,7 +163,7 @@ func (s *Service) moduleHash(ctx context.Context, p *plugins.Plugin, childFSBase
 	if err != nil {
 		return "", fmt.Errorf("read plugin manifest: %w", err)
 	}
-	if !manifest.IsV2() {
+	if !plugins.IsManifestV2(manifest.ManifestVersion()) {
 		return "", nil
 	}
 
@@ -178,7 +177,7 @@ func (s *Service) moduleHash(ctx context.Context, p *plugins.Plugin, childFSBase
 		// MANIFETS.txt uses forward slashes as path separators.
 		childPath = filepath.ToSlash(childPath)
 	}
-	moduleHash, ok := manifest.Files[path.Join(childPath, "module.js")]
+	moduleHash, ok := manifest.FileHashes()[path.Join(childPath, "module.js")]
 	if !ok {
 		return "", nil
 	}
