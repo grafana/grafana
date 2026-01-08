@@ -656,8 +656,14 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 	// GUID should be non-empty
 	require.NotEmpty(t, record.GUID, "GUID should not be empty")
 
-	// Resource version should be positive
-	require.Greater(t, record.ResourceVersion, int64(0), "Resource version should be positive")
+	// Resource version should match the expected version for test-resource-3 (updated version)
+	expectedRV := resourceVersions[2][1] // test-resource-3's update version
+	if strings.Contains(namespace, "-kv") {
+		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV), 
+			"Resource version should match (KV backend snowflake format)")
+	} else {
+		require.Equal(t, expectedRV, record.ResourceVersion)
+	}
 }
 
 // verifyResourceVersionTable validates the resource_version table
