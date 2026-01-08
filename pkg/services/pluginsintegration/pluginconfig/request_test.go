@@ -259,6 +259,24 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 	})
 }
 
+func TestRequestConfigProvider_PluginRequestConfig_liveClientQueueMaxSize(t *testing.T) {
+	t.Run("Sets the live client queue max size only for Tempo", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.LiveClientQueueMaxSize = 123
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "tempo", nil), map[string]string{
+			"GF_LIVE_CLIENT_QUEUE_MAX_SIZE": "123",
+		})
+
+		require.NotContains(t, p.PluginRequestConfig(context.Background(), "prometheus", nil), "GF_LIVE_CLIENT_QUEUE_MAX_SIZE")
+	})
+}
+
 func TestRequestConfigProvider_PluginRequestConfig_azureAuthEnabled(t *testing.T) {
 	t.Run("Uses the configured azureAuthEnabled", func(t *testing.T) {
 		cfg := &PluginInstanceCfg{
