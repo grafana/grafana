@@ -1,41 +1,8 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { PluginDashboard } from 'app/types/plugins';
-
 import { DashboardCard } from './DashboardCard';
-import { GnetDashboard } from './types';
-
-// Helper functions for creating mock objects
-const createMockPluginDashboard = (overrides: Partial<PluginDashboard> = {}): PluginDashboard => ({
-  dashboardId: 1,
-  description: 'Test description',
-  imported: false,
-  importedRevision: 0,
-  importedUri: '',
-  importedUrl: '',
-  path: '',
-  pluginId: 'test-plugin',
-  removed: false,
-  revision: 1,
-  slug: 'test-dashboard',
-  title: 'Test Dashboard',
-  uid: 'test-uid',
-  ...overrides,
-});
-
-const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}): GnetDashboard => ({
-  id: 123,
-  name: 'Test Dashboard',
-  description: 'Test description',
-  datasource: 'Prometheus',
-  orgName: 'Test Org',
-  userName: 'testuser',
-  publishedAt: '',
-  updatedAt: '',
-  downloads: 0,
-  ...overrides,
-});
+import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
 
 const createMockDetails = (overrides = {}) => ({
   id: '123',

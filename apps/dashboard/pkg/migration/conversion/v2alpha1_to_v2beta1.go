@@ -685,6 +685,7 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 				SkipUrlSync:      in.CustomVariableKind.Spec.SkipUrlSync,
 				Description:      in.CustomVariableKind.Spec.Description,
 				AllowCustomValue: in.CustomVariableKind.Spec.AllowCustomValue,
+				ValuesFormat:     convertCustomValuesFormat_V2alpha1_to_V2beta1(in.CustomVariableKind.Spec.ValuesFormat),
 			},
 		}
 	}
@@ -756,6 +757,23 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	}
 
 	return nil
+}
+
+func convertCustomValuesFormat_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardCustomVariableSpecValuesFormat) *dashv2beta1.DashboardCustomVariableSpecValuesFormat {
+	if in == nil {
+		return nil
+	}
+
+	switch *in {
+	case dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson:
+		v := dashv2beta1.DashboardCustomVariableSpecValuesFormatJson
+		return &v
+	case dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv:
+		v := dashv2beta1.DashboardCustomVariableSpecValuesFormatCsv
+		return &v
+	default:
+		return nil
+	}
 }
 
 func convertQueryVariableSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQueryVariableSpec, out *dashv2beta1.DashboardQueryVariableSpec, scope conversion.Scope) error {
