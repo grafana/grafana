@@ -255,14 +255,22 @@ const LogLineComponent = memo(
               ...(collapsed && virtualization
                 ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
                 : {}),
-              ...( {
+              ...(displayedFields.length > 0
+                ? {
                     display: 'grid',
-                    gridTemplateColumns: `auto auto ${displayedFields
-                      .map((field) => (field === LOG_LINE_BODY_FIELD_NAME ? '10fr' : '1fr'))
+                    gridTemplateColumns: `auto ${log.displayLevel || !wrapLogMessage ? '0.4fr ' : ''}${displayedFields
+                      .map((field) =>
+                        field === LOG_LINE_BODY_FIELD_NAME
+                          ? log.displayLevel || !wrapLogMessage
+                            ? '10fr'
+                            : '10.4fr'
+                          : '1fr'
+                      )
                       .join(' ')}`,
                     gridColumnGap: '8px',
-                width:"100%"
-                  }),
+                    width: '100%',
+                  }
+                : {}),
             }}
           >
             <Log
