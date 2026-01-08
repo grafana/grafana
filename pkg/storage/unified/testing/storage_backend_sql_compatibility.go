@@ -490,7 +490,7 @@ type ResourceVersionRecord struct {
 
 // verifyResourceHistoryTable validates all resource_history entries
 func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, resources []struct{ name, folder string }, resourceVersions [][]int64) {
-	ctx := context.Background()
+	ctx := t.Context()
 	query := buildCrossDatabaseQuery(db.DriverName(), `
 		SELECT guid, "group", resource, namespace, name, value, action, folder,
 		       previous_resource_version, generation, resource_version
@@ -601,7 +601,7 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 
 // verifyResourceTable validates the resource table (latest state only)
 func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources []struct{ name, folder string }, resourceVersions [][]int64) {
-	ctx := context.Background()
+	ctx := t.Context()
 	query := buildCrossDatabaseQuery(db.DriverName(), `
 		SELECT guid, "group", resource, namespace, name, value, action, folder,
 		       previous_resource_version, resource_version
@@ -668,7 +668,7 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 
 // verifyResourceVersionTable validates the resource_version table
 func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, resources []struct{ name, folder string }, resourceVersions [][]int64) {
-	ctx := context.Background()
+	ctx := t.Context()
 	query := buildCrossDatabaseQuery(db.DriverName(), `
 		SELECT "group", resource, resource_version
 		FROM resource_version
