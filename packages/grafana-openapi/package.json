@@ -43,7 +43,7 @@
     "copy:dist": "cp ./src/apis/* ./dist/apis && cp ./src/api/* ./dist/api",
     "create:folders": "mkdir -p dist/api dist/apis",
     "format": "prettier \"**/*.json\" --write --log-level=warn",
-    "generate:openapi": "make -C ../../ all-openapi3-gen",
+    "generate:openapi": "make -C ../../ generate-openapi",
     "typecheck": "",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
