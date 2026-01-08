@@ -13,7 +13,7 @@ title: Configure anonymous access
 weight: 250
 ---
 
-# Anonymous authentication
+# Configure anonymous access
 
 You can make Grafana accessible without any login required by enabling anonymous access in the configuration file.
 
@@ -38,13 +38,6 @@ Users can now view anonymous usage statistics, including the count of devices an
 
 The number of anonymous devices is not limited by default. The configuration option `device_limit` allows you to enforce a limit on the number of anonymous devices. This enables you to have greater control over the usage within your Grafana instance and keep the usage within the limits of your environment. Once the limit is reached, any new devices that try to access Grafana will be denied access.
 
-To display anonymous users and devices for versions 10.2, 10.3, 10.4, you need to enable the feature toggle `displayAnonymousStats`
-
-```bash
-[feature_toggles]
-enable = displayAnonymousStats
-```
-
 ## Configuration
 
 Example:
@@ -67,3 +60,15 @@ device_limit =
 ```
 
 If you change your organization name in the Grafana UI this setting needs to be updated to match the new name.
+
+## Licensing for anonymous access
+
+Grafana Enterprise (self-managed) licenses anonymous access as active users.
+
+Anonymous access lets people use Grafana without login credentials. It was an early way to share dashboards, but Public dashboards gives you a more secure way to share dashboards.
+
+### How anonymous usage is counted
+
+Grafana estimates anonymous active users from anonymous devices:
+
+- **Counting rule**: Grafana counts 1 anonymous user for every 3 anonymous devices detected.
