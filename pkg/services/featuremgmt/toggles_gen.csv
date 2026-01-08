@@ -79,7 +79,6 @@ dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,false
-kubernetesDashboardsV2,experimental,@grafana/dashboards-squad,false,false,false
 dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
@@ -91,7 +90,6 @@ pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 timeComparison,experimental,@grafana/dataviz-squad,false,false,true
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
-kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
@@ -282,3 +280,6 @@ rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,t
 kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
 useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
 multiPropsVariables,experimental,@grafana/dashboards-squad,false,false,true
+smoothingTransformation,experimental,@grafana/datapro,false,false,true
+secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
+profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false

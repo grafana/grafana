@@ -9,7 +9,7 @@ import { UserIcon } from './UserIcon';
 import { UserView } from './types';
 
 export interface UsersIndicatorProps {
-  /** An object that contains the user's details and 'lastActiveAt' status */
+  /** An object that contains the user's details and an optional 'lastActiveAt' status */
   users: UserView[];
   /** A limit of how many user icons to show before collapsing them and showing a number of users instead */
   limit?: number;
@@ -40,7 +40,7 @@ export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProp
       aria-label={t('grafana-ui.users-indicator.container-label', 'Users indicator container')}
     >
       {limitReached && (
-        <UserIcon onClick={onClick} userView={{ user: { name: 'Extra users' }, lastActiveAt: '' }} showTooltip={false}>
+        <UserIcon onClick={onClick} userView={{ user: { name: 'Extra users' } }} showTooltip={false}>
           {tooManyUsers
             ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               '...'

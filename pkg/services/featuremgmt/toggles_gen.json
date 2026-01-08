@@ -2017,8 +2017,9 @@
     {
       "metadata": {
         "name": "kubernetesDashboardsV2",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-12-02T08:42:19Z"
+        "resourceVersion": "1764236054307",
+        "creationTimestamp": "2025-11-27T09:34:14Z",
+        "deletionTimestamp": "2025-12-05T13:43:57Z"
       },
       "spec": {
         "description": "Use the v2 kubernetes API in the frontend for dashboards",
@@ -2043,7 +2044,8 @@
       "metadata": {
         "name": "kubernetesFeatureToggles",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-01-18T05:32:44Z"
+        "creationTimestamp": "2024-01-18T05:32:44Z",
+        "deletionTimestamp": "2026-01-07T12:02:51Z"
       },
       "spec": {
         "description": "Use the kubernetes API for feature toggle management in the frontend",
@@ -2867,6 +2869,18 @@
     },
     {
       "metadata": {
+        "name": "profilesExemplars",
+        "resourceVersion": "1767777507980",
+        "creationTimestamp": "2026-01-07T09:18:27Z"
+      },
+      "spec": {
+        "description": "Enables profiles exemplars support in profiles drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling"
+      }
+    },
+    {
+      "metadata": {
         "name": "prometheusAzureOverrideAudience",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2022-05-30T15:43:32Z",
@@ -3255,6 +3269,22 @@
     },
     {
       "metadata": {
+        "name": "secretsManagementAppPlatformAwsKeeper",
+        "resourceVersion": "1767706420889",
+        "creationTimestamp": "2026-01-06T12:55:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-06 13:33:40.889447 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the creation of keepers that manage secrets stored on AWS secrets manager",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "secretsManagementAppPlatformUI",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-31T22:56:50Z",
@@ -3290,6 +3320,19 @@
         "description": "Show warnings when dashboards do not validate against the schema",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "smoothingTransformation",
+        "resourceVersion": "1767349656275",
+        "creationTimestamp": "2026-01-02T10:27:36Z"
+      },
+      "spec": {
+        "description": "Enables the ASAP smoothing transformation for time series data",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
       }
     },
     {

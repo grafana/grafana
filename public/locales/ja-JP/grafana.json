@@ -3124,9 +3124,12 @@
       "table": "テーブル"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "アラートルールが発生される前に満たすべき条件を定義します",
       "description-configure-firing-alert-instances-routed-contact": "発生中のアラートインスタンスを連絡先にルーティングする方法を設定",
       "description-configure-receives-notifications": "通知の受信者と送信方法を設定",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "アラートルール",
       "title-contact-points": "コンタクトポイント",
       "title-notification-policies": "通知ポリシー"
@@ -3740,7 +3743,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4394,6 +4396,7 @@
       },
       "no-properties-changed": "関連するプロパティは変更されていません",
       "table": {
+        "notes": "",
         "updated": "日付",
         "updatedBy": "更新者",
         "version": "バージョン"
@@ -4852,7 +4855,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "カンマで区切った値"
         },
         "datasource-options": {
           "name-filter": "名前フィルター",
@@ -5776,6 +5780,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5943,8 +5948,14 @@
     },
     "custom-variable-form": {
       "custom-options": "カスタムオプション",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "カンマ区切りの値",
       "selection-options": "選択オプション"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "一覧に戻る",
@@ -6525,6 +6536,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "ダッシュボードが保存されました"
     },
@@ -6548,6 +6564,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6607,8 +6624,8 @@
       "tooltip-show-usages": "使用状況を表示"
     },
     "variable-values-preview": {
-      "preview-of-values": "値のプレビュー",
-      "show-more": "さらに表示"
+      "show-more": "さらに表示",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -12464,6 +12481,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14329,6 +14352,17 @@
       },
       "name": {
         "series-to-rows": "系列を行に変換"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

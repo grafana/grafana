@@ -287,6 +287,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/snapshots/delete/${queryArg.deleteKey}`, method: 'DELETE' }),
         invalidatesTags: ['Snapshot'],
       }),
+      getSnapshotSettings: build.query<GetSnapshotSettingsApiResponse, GetSnapshotSettingsApiArg>({
+        query: () => ({ url: `/snapshots/settings` }),
+        providesTags: ['Snapshot'],
+      }),
       getSnapshot: build.query<GetSnapshotApiResponse, GetSnapshotApiArg>({
         query: (queryArg) => ({
           url: `/snapshots/${queryArg.name}`,
@@ -748,6 +752,8 @@ export type DeleteWithKeyApiArg = {
   /** unique key returned in create */
   deleteKey: string;
 };
+export type GetSnapshotSettingsApiResponse = /** status 200 undefined */ any;
+export type GetSnapshotSettingsApiArg = void;
 export type GetSnapshotApiResponse = /** status 200 OK */ Snapshot;
 export type GetSnapshotApiArg = {
   /** name of the Snapshot */
@@ -1279,6 +1285,8 @@ export const {
   useLazyListSnapshotQuery,
   useCreateSnapshotMutation,
   useDeleteWithKeyMutation,
+  useGetSnapshotSettingsQuery,
+  useLazyGetSnapshotSettingsQuery,
   useGetSnapshotQuery,
   useLazyGetSnapshotQuery,
   useDeleteSnapshotMutation,

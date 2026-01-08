@@ -1786,6 +1786,13 @@
           "skipUrlSync": {
             "type": "boolean",
             "default": false
+          },
+          "valuesFormat": {
+            "enum": [
+              "csv",
+              "json"
+            ],
+            "type": "string"
           }
         },
         "additionalProperties": false

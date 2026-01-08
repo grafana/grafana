@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -218,11 +219,21 @@ func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKe
 }
 
 func newContextWithNamespace() context.Context {
+	return newContextWithNamespaceAndPermissions()
+}
+
+func newContextWithNamespaceAndPermissions(perms ...string) context.Context {
 	ctx := context.Background()
 	ctx = claims.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 		Rest: authnlib.AccessTokenClaims{
-			Namespace: "*",
+			Namespace:            "*",
+			Permissions:          perms,
+			DelegatedPermissions: perms,
 		},
 	}))
 	return ctx
+}
+
+func newContextWithZanzanaUpdatePermission() context.Context {
+	return newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUpdate)
 }
