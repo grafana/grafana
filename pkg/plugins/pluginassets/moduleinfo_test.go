@@ -158,7 +158,7 @@ func TestService_LoadingStrategy(t *testing.T) {
 				PluginSettings:        tc.pluginSettings,
 			}
 			s := ProvideService(cfg, pluginscdn.ProvideService(cfg), signature.ProvideService(cfg, statickey.New()), reg)
-			got := s.LoadingStrategy(context.Background(), tc.plugin.ID, tc.plugin.JSONData.Info.Version)
+			got := s.LoadingStrategy(context.Background(), tc.plugin.ID, tc.plugin.Info.Version)
 			assert.Equal(t, tc.expected, got, "unexpected loading strategy")
 		})
 	}
@@ -402,7 +402,7 @@ func TestService_ModuleHash(t *testing.T) {
 				signature.ProvideService(pCfg, statickey.New()),
 				reg,
 			)
-			mh := svc.ModuleHash(context.Background(), tc.plugin.ID, tc.plugin.JSONData.Info.Version)
+			mh := svc.ModuleHash(context.Background(), tc.plugin.ID, tc.plugin.Info.Version)
 			require.Equal(t, tc.expModuleHash, mh)
 		})
 	}
@@ -543,7 +543,7 @@ func newTestPlugin(pluginID string, opts ...func(*plugins.Plugin)) *plugins.Plug
 
 func withTestInfo(info plugins.Info) func(*plugins.Plugin) {
 	return func(p *plugins.Plugin) {
-		p.JSONData.Info = info
+		p.Info = info
 	}
 }
 
