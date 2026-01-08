@@ -74,7 +74,9 @@ func (r *ExternalGroupMappingAuthorizer) BeforeDelete(ctx context.Context, obj r
 
 // BeforeUpdate implements ResourceStorageAuthorizer.
 func (r *ExternalGroupMappingAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
-	return r.beforeWrite(ctx, obj)
+	// Update is not supported for ExternalGroupMapping resources and update attempts are blocked at a lower level,
+	// so this is just a safeguard.
+	return apierrors.NewMethodNotSupported(iamv0.ExternalGroupMappingResourceInfo.GroupResource(), "PUT/PATCH")
 }
 
 func (r *ExternalGroupMappingAuthorizer) beforeWrite(ctx context.Context, obj runtime.Object) error {

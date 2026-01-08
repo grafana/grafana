@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/types"
@@ -163,49 +164,20 @@ func TestExternalGroupMapping_BeforeCreate(t *testing.T) {
 func TestExternalGroupMapping_BeforeUpdate(t *testing.T) {
 	mapping := newExternalGroupMapping("team-1", "mapping-1")
 
-	tests := []struct {
-		name        string
-		shouldAllow bool
-	}{
-		{
-			name:        "allow update",
-			shouldAllow: true,
-		},
-		{
-			name:        "deny update",
-			shouldAllow: false,
+	accessClient := &fakeAccessClient{
+		checkFunc: func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
+			require.Fail(t, "check should not be called")
+			return types.CheckResponse{}, nil
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
-				require.NotNil(t, id)
-				require.Equal(t, "user:u001", id.GetUID())
-				require.Equal(t, "org-2", id.GetNamespace())
+	authz := NewExternalGroupMappingAuthorizer(accessClient)
+	ctx := types.WithAuthInfo(context.Background(), user)
 
-				require.Equal(t, "org-2", req.Namespace)
-				require.Equal(t, iamv0.GROUP, req.Group)
-				require.Equal(t, iamv0.TeamResourceInfo.GetName(), req.Resource)
-				require.Equal(t, "team-1", req.Name)
-				require.Equal(t, utils.VerbSetPermissions, req.Verb)
-				require.Equal(t, "", folder)
-
-				return types.CheckResponse{Allowed: tt.shouldAllow}, nil
-			}
-
-			accessClient := &fakeAccessClient{checkFunc: checkFunc}
-			authz := NewExternalGroupMappingAuthorizer(accessClient)
-			ctx := types.WithAuthInfo(context.Background(), user)
-
-			err := authz.BeforeUpdate(ctx, mapping)
-			if tt.shouldAllow {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-			}
-			require.True(t, accessClient.checkCalled)
-		})
-	}
+	err := authz.BeforeUpdate(ctx, mapping)
+	require.Error(t, err)
+	require.True(t, apierrors.IsMethodNotSupported(err))
+	require.Contains(t, err.Error(), "PUT/PATCH")
+	require.False(t, accessClient.checkCalled)
 }
 
 func TestExternalGroupMapping_BeforeDelete(t *testing.T) {
