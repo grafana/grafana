@@ -155,3 +155,9 @@ type KeyStore interface {
 type KeyRetriever interface {
 	GetPublicKey(ctx context.Context, keyID string) (string, error)
 }
+
+// PluginModuleInfo is an interface for providing plugin module information.
+type PluginModuleInfo interface {
+	LoadingStrategy(ctx context.Context, pluginID, version string) LoadingStrategy
+	ModuleHash(ctx context.Context, pluginID, version string) string
+}
