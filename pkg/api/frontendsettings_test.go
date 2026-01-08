@@ -405,13 +405,13 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				}
 			},
 			cfg: func() *setting.Cfg {
-				return &setting.Cfg{
-					PluginSettings: map[string]map[string]string{
-						"test-app": {
-							pluginassets2.CreatePluginVersionCfgKey: pluginassets2.CreatePluginVersionScriptSupportEnabled,
-						},
+				cfg := setting.NewCfg()
+				cfg.PluginSettings = map[string]map[string]string{
+					"test-app": {
+						pluginassets2.CreatePluginVersionCfgKey: pluginassets2.CreatePluginVersionScriptSupportEnabled,
 					},
 				}
+				return cfg
 			},
 			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
