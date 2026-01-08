@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	pluginassetsmoduleinfo "github.com/grafana/grafana/pkg/plugins/pluginassets"
+	pluginassets2 "github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -94,7 +94,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	var pluginsAssets = passets
 	if pluginsAssets == nil {
 		sig := signature.ProvideService(pluginsCfg, statickey.New())
-		pluginAssetsService := pluginassetsmoduleinfo.ProvideService(pluginsCfg, pluginsCDN, sig, pluginReg)
+		pluginAssetsService := pluginassets2.ProvideService(pluginsCfg, pluginsCDN, sig, pluginReg)
 		pluginsAssets = pluginassets.NewService(pluginAssetsService)
 	}
 
@@ -261,11 +261,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	}
 
 	tests := []struct {
-		desc           string
-		pluginStore    func() pluginstore.Store
-		pluginSettings func() pluginsettings.Service
-		pluginAssets   func() *pluginassets.Service
-		expected       settings
+		desc              string
+		pluginStore       func() pluginstore.Store
+		pluginSettingsSvc func() pluginsettings.Service
+		pluginAssets      func() *pluginassets.Service
+		cfg               func() *setting.Cfg
+		expected          settings
 	}{
 		{
 			desc: "disabled app with preload",
@@ -286,7 +287,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", false),
 				}
@@ -324,7 +325,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
 				}
@@ -362,7 +363,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
 				}
@@ -398,9 +399,18 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
+				}
+			},
+			cfg: func() *setting.Cfg {
+				return &setting.Cfg{
+					PluginSettings: map[string]map[string]string{
+						"test-app": {
+							pluginassets2.CreatePluginVersionCfgKey: pluginassets2.CreatePluginVersionScriptSupportEnabled,
+						},
+					},
 				}
 			},
 			pluginAssets: func() *pluginassets.Service { return nil },
@@ -437,7 +447,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
 				}
@@ -459,16 +469,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			// Set plugin settings for the "app plugin with create plugin version compatible with script loading strategy" test
-			if test.desc == "app plugin with create plugin version compatible with script loading strategy" {
-				cfg.PluginSettings = map[string]map[string]string{
-					"test-app": {
-						pluginassetsmoduleinfo.CreatePluginVersionCfgKey: pluginassetsmoduleinfo.CreatePluginVersionScriptSupportEnabled,
-					},
+			if test.cfg == nil {
+				test.cfg = func() *setting.Cfg {
+					return setting.NewCfg()
 				}
 			}
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings(), test.pluginAssets())
+			m, _ := setupTestEnvironment(t, test.cfg(), featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettingsSvc(), test.pluginAssets())
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()
@@ -722,17 +728,6 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 			require.Equal(t, http.StatusOK, recorder.Code)
 			require.EqualValues(t, test.expected, got)
 		})
-	}
-}
-
-func newPluginAssets() func() *pluginassets.Service {
-	return newPluginAssetsWithConfig(&config.PluginManagementCfg{})
-}
-
-func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *pluginassets.Service {
-	return func() *pluginassets.Service {
-		pluginAssetsService := pluginassetsmoduleinfo.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), signature.ProvideService(pCfg, statickey.New()), registry.ProvideService())
-		return pluginassets.NewService(pluginAssetsService)
 	}
 }
 
