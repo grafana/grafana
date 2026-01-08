@@ -341,6 +341,8 @@ location / {
 
 ## Multi-tenancy issues
 
+The following errors occur when using Loki in multi-tenant mode.
+
 ### No org id
 
 **Error message:** "no org id" or "X-Scope-OrgID header required"
