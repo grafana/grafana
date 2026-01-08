@@ -17,13 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-
 const (
-	sqlite3TXLock = "immediate"
+	sqlite3TXLock      = "immediate"
 	sqlite3BusyTimeout = "5000"
-	sqlite3SyncFlag = "NORMAL"
-	sqlite3CacheSize = "2000"
-	sqlite3Mode = "rwc"
+	sqlite3SyncFlag    = "NORMAL"
+	sqlite3CacheSize   = "2000"
+	sqlite3Mode        = "rwc"
 )
 
 type DatabaseConfig struct {
