@@ -50,6 +50,8 @@ export enum QueryFormat {
   Table = 'table',
 }
 
+export type SQLQueryMeta = { valueField?: string; textField?: string };
+
 export interface SQLQuery extends DataQuery {
   alias?: string;
   format?: QueryFormat;
@@ -59,6 +61,7 @@ export interface SQLQuery extends DataQuery {
   sql?: SQLExpression;
   editorMode?: EditorMode;
   rawQuery?: boolean;
+  meta?: SQLQueryMeta;
 }
 
 export interface NameValue {
