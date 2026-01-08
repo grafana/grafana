@@ -52,11 +52,11 @@ var (
 
 func main() {
 	var (
-		endpoint       = flag.String("endpoint", "localhost:4317", "OTLP gRPC endpoint")
-		intervalMs     = flag.Int("interval", 1000, "Interval between log emissions in milliseconds")
-		auditRatio     = flag.Float64("audit-ratio", 0.3, "Ratio of audit logs (0.0 to 1.0)")
-		serviceName    = flag.String("service", "test-app", "Service name for logs")
-		insecure       = flag.Bool("insecure", true, "Use insecure connection (no TLS)")
+		endpoint    = flag.String("endpoint", "localhost:4317", "OTLP gRPC endpoint")
+		intervalMs  = flag.Int("interval", 1000, "Interval between log emissions in milliseconds")
+		auditRatio  = flag.Float64("audit-ratio", 0.3, "Ratio of audit logs (0.0 to 1.0)")
+		serviceName = flag.String("service", "test-app", "Service name for logs")
+		insecure    = flag.Bool("insecure", true, "Use insecure connection (no TLS)")
 	)
 	flag.Parse()
 
@@ -184,4 +184,3 @@ func emitRegularLog(ctx context.Context, logger otellog.Logger, counter int) {
 	logger.Emit(ctx, record)
 	log.Printf("[REGULAR] #%d %s (severity: %s)", counter, message, severity.String())
 }
-
