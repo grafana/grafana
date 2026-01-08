@@ -293,15 +293,15 @@ overrides_path = overrides.yaml
 overrides_reload_period = 5s
 ```
 
-To overrides the default quota for a tenant, add the following to the overrides.yaml file:
+To override the default quota for a tenant, add the following to the `overrides.yaml` file:
 ```yaml
 overrides:
   <NAMESPACE>:
     quotas:
-      <GROUP>.<RESOURCE>:
+      <GROUP>/<RESOURCE>:
         limit: 10
 ```
-Unless otherwise set, the NAMESPACE when running locally is `default`.
+Unless otherwise set, the `NAMESPACE` when running locally is `default`.
 
 To access quotas, use the following API endpoint:
 ```
@@ -806,8 +806,10 @@ flowchart TD
 
 #### Setting Dual Writer Mode
 ```ini
-[unified_storage.{resource}.{kind}.{group}]
-dualWriterMode = {0-5}
+; [unified_storage.{resource}.{group}]
+[unified_storage.dashboards.dashboard.grafana.app]
+; modes {0-5}
+dualWriterMode = 0
 ```
 
 #### Background Sync Configuration
@@ -1376,4 +1378,3 @@ disable_data_migrations = false
 ### Documentation
 
 For detailed information about migration architecture, validators, and troubleshooting, refer to [migrations/README.md](./migrations/README.md).
- 

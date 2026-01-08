@@ -353,7 +353,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	if err != nil {
 		return err
 	}
-	storage[extGroupMappingResource.StoragePath()] = extGroupMappingUniStore
+
+	var extGroupMappingStore storewrapper.K8sStorage = extGroupMappingUniStore
 
 	if b.externalGroupMappingStorage != nil {
 		extGroupMappingLegacyStore, err := NewLocalStore(extGroupMappingResource, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.externalGroupMappingStorage)
@@ -365,8 +366,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		if err != nil {
 			return err
 		}
-		storage[extGroupMappingResource.StoragePath()] = dw
+
+		var ok bool
+		extGroupMappingStore, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
 	}
+
+	authzWrapper := storewrapper.New(extGroupMappingStore, iamauthorizer.NewExternalGroupMappingAuthorizer(b.accessClient))
+	storage[extGroupMappingResource.StoragePath()] = authzWrapper
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis) {

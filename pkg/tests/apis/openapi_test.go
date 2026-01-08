@@ -30,7 +30,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
@@ -96,9 +95,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "iam.grafana.app",
-		Version: "v0alpha1",
-	}, {
-		Group:   "investigations.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "advisor.grafana.app",

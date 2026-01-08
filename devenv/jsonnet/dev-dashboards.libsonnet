@@ -24,6 +24,7 @@
     "canvas-connection-examples": (import '../dev-dashboards/panel-canvas/canvas-connection-examples.json'),
     "canvas-datalinks": (import '../dev-dashboards/panel-canvas/canvas-datalinks.json'),
     "canvas-examples": (import '../dev-dashboards/panel-canvas/canvas-examples.json'),
+    "canvas_kitchen_sink": (import '../dev-dashboards/panel-canvas/canvas_kitchen_sink.json'),
     "color_modes": (import '../dev-dashboards/panel-common/color_modes.json'),
     "config-from-query": (import '../dev-dashboards/transforms/config-from-query.json'),
     "dashlist": (import '../dev-dashboards/panel-dashlist/dashlist.json'),

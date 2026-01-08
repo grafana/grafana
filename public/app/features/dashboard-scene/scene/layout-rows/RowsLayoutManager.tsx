@@ -398,8 +398,7 @@ export class RowsLayoutManager
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
               rowConfig.isDraggable ?? layout.state.grid.state.isDraggable,
-              rowConfig.isResizable ?? layout.state.grid.state.isResizable,
-              layout.state.grid.state.isLazy
+              rowConfig.isResizable ?? layout.state.grid.state.isResizable
             ),
           })
       );
