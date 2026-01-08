@@ -17,6 +17,7 @@
     "directory": "packages/grafana-openapi"
   },
   "exports": {
+    "./package.json": "./package.json",
     "./api/*": {
       "import": "./dist/api/*.json",
       "require": "./dist/api/*.json"
