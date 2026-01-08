@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useLayoutEffect } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,9 +26,10 @@ interface Props {
   isEditing?: boolean;
   body?: React.ReactNode;
   controls?: React.ReactNode;
+  isEmptyDashboard?: boolean;
 }
 
-export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
+export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls, isEmptyDashboard = false }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
@@ -63,10 +65,16 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     }
   }, [isEditing, editPane]);
 
+  useEffectOnce(() => {
+    if (isEmptyDashboard) {
+      editPane.openPane('add');
+    }
+  });
+
   const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
 
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane),
+    hasOpenPane: Boolean(openPane) || isEmptyDashboard,
     contentMargin: 1,
     position: 'right',
     persistanceKey: 'dashboard',
@@ -120,7 +128,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         </div>
 
         <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
+          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
         </Sidebar>
       </div>
     );
