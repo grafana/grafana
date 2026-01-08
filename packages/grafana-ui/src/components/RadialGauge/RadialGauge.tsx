@@ -96,7 +96,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     roundedBars = true,
     thresholdsBar = false,
     showScaleLabels = false,
-    neutral: rawNeutral,
+    neutral,
     endpointMarker,
     onClick,
     values,
@@ -119,8 +119,6 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const displayValue = values[barIndex];
-    const [min, max] = getFieldConfigMinMax(displayValue);
-    const neutral = typeof rawNeutral === 'number' ? Math.min(Math.max(min, rawNeutral), max) : undefined;
     const { startValueAngle, endValueAngle, angleRange } = getValueAngleForValue(
       displayValue,
       startAngle,

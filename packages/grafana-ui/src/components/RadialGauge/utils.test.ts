@@ -283,7 +283,37 @@ describe('RadialGauge utils', () => {
       expect(result.endValueAngle).toBe(240);
     });
 
-    // TODO add tests for neutral handling once implemented
+    it('should handle neutral values', () => {
+      const fieldDisplay = createFieldDisplay(75, 0, 100);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, 50);
+
+      expect(result.startValueAngle).toBe(180); // Neutral at 50% of 360°
+      expect(result.endValueAngle).toBe(90); // 75% - 50% = 25% of 360°
+    });
+
+    it('should handle neutral values equal to value', () => {
+      const fieldDisplay = createFieldDisplay(50, 0, 100);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, 50);
+
+      expect(result.startValueAngle).toBe(180); // Neutral at 50% of 360°
+      expect(result.endValueAngle).toBe(0); // No difference
+    });
+
+    it('should handle neutral values greater than value', () => {
+      const fieldDisplay = createFieldDisplay(25, 0, 100);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, 150);
+
+      expect(result.startValueAngle).toBe(90);
+      expect(result.endValueAngle).toBe(270); // remaining angle to 360
+    });
+
+    it('should handle neutral values below range', () => {
+      const fieldDisplay = createFieldDisplay(25, 0, 100);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, -50);
+
+      expect(result.startValueAngle).toBe(0);
+      expect(result.endValueAngle).toBe(90);
+    });
   });
 
   describe('drawRadialArcPath', () => {

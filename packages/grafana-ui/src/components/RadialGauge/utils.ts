@@ -39,7 +39,9 @@ export function getValueAngleForValue(
 
   let startValueAngle = 0;
   if (typeof neutral === 'number') {
-    const neutralAngle = getValuePercentageForValue(fieldDisplay, neutral) * angleRange;
+    const [min, max] = getFieldConfigMinMax(fieldDisplay);
+    const clampedNeutral = Math.min(Math.max(min, neutral), max);
+    const neutralAngle = getValuePercentageForValue(fieldDisplay, clampedNeutral) * angleRange;
     if (neutralAngle <= valueAngle) {
       startValueAngle = neutralAngle;
       endValueAngle = valueAngle - neutralAngle;
