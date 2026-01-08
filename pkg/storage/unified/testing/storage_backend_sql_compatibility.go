@@ -236,7 +236,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 
 	err = rows.Scan(&keyPath, &actualRV, &actualAction, &actualFolder)
 	require.NoError(t, err)
-	
+
 	// Ensure there's exactly one row and no errors
 	require.False(t, rows.Next())
 	require.NoError(t, rows.Err())
