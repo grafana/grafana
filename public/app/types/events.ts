@@ -67,7 +67,11 @@ export interface DashScrollPayload {
   pos?: number;
 }
 
-export interface PanelChangeViewPayload {}
+export interface PanelChangeViewPayload { }
+
+export interface PluginReloadedEventPayload {
+  pluginId: string;
+}
 
 /**
  * Events
@@ -220,4 +224,8 @@ export class PanelEditExitedEvent extends BusEventWithPayload<number> {
 
 export class RecordHistoryEntryEvent extends BusEventWithPayload<HistoryEntryView> {
   static type = 'record-history-entry';
+}
+
+export class PluginReloadedEvent extends BusEventWithPayload<PluginReloadedEventPayload> {
+  static type = 'plugin-reloaded';
 }
