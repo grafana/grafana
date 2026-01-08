@@ -3,7 +3,9 @@ import { Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
+import { RepoType } from '../Wizard/types';
 import { CONNECTIONS_URL } from '../constants';
+import { getRepositoryTypeConfigs } from '../utils/repositoryTypes';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 import { DeleteConnectionButton } from './DeleteConnectionButton';
@@ -15,9 +17,9 @@ interface Props {
 export function ConnectionListItem({ connection }: Props) {
   const { metadata, spec, status } = connection;
   const name = metadata?.name ?? '';
-  const providerType = spec?.type;
   const url = spec?.url;
-
+  const providerType: RepoType = spec?.type ?? 'github';
+  const repoConfig = getRepositoryTypeConfigs().find((config) => config.type === providerType);
   return (
     <Card noMargin key={name}>
       <Card.Figure>
@@ -25,8 +27,8 @@ export function ConnectionListItem({ connection }: Props) {
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">
-          <Text variant="h3">{name}</Text>
-          <ConnectionStatusBadge status={status} />
+          {repoConfig && <Text variant="h3">{`${repoConfig.label} app connection`}</Text>}
+          {status?.state && <ConnectionStatusBadge status={status} />}
         </Stack>
       </Card.Heading>
 
