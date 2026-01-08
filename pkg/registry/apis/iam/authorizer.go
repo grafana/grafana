@@ -53,7 +53,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
-	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = allowAuthorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
