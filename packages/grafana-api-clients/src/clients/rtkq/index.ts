@@ -41,6 +41,9 @@ export const allMiddleware = [
   historianAlertingAPIv0alpha1.middleware,
   logsdrilldownAPIv1alpha1.middleware,
   logsdrilldownAPIv1beta1.middleware,
+  logsdrilldownAPIv1alpha1.middleware,
+  logsdrilldownAPIv1beta1.middleware,
+  logsdrilldownAPIv1alpha1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
 
