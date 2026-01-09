@@ -23,6 +23,8 @@ export function ConnectionList({ items }: Props) {
     return name.includes(lowerQuery) || providerType.includes(lowerQuery);
   });
 
+  const isEmpty = items.length === 0;
+
   return (
     <Stack direction={'column'} gap={3}>
       <FilterInput
@@ -35,8 +37,12 @@ export function ConnectionList({ items }: Props) {
           filteredItems.map((item) => <ConnectionListItem key={item.metadata?.name} connection={item} />)
         ) : (
           <EmptyState
-            variant="not-found"
-            message={t('provisioning.connections.no-results', 'No results matching your query')}
+            variant={isEmpty ? 'completed' : 'not-found'}
+            message={
+              isEmpty
+                ? t('provisioning.connections.no-connections', 'No connections configured')
+                : t('provisioning.connections.no-results', 'No results matching your query')
+            }
           />
         )}
       </Stack>

@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
 import { Button, Combobox, Field, Input, Stack } from '@grafana/ui';
-import { Connection, ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
+import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { SecretTextArea } from '../Shared/SecretTextArea';
