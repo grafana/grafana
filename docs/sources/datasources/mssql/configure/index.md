@@ -97,13 +97,28 @@ This document provides instructions for configuring the Microsoft SQL Server dat
 
 ## Before you begin
 
-- Grafana comes with a built-in MSSQL data source plugin, eliminating the need to install a plugin.
+Before configuring the Microsoft SQL Server data source, ensure you have the following:
 
-- You must have the `Organization administrator` role to configure the MSSQL data source. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
+- **Grafana permissions:** You must have the `Organization administrator` role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
-- Familiarize yourself with your MSSQL security configuration and gather any necessary security certificates and client keys.
+- **A running SQL Server instance:** Microsoft SQL Server 2005 or newer, Azure SQL Database, or Azure SQL Managed Instance.
 
-- Verify that data from MSSQL is being written to your Grafana instance.
+- **Network access:** Grafana must be able to reach your SQL Server. The default port is `1433`.
+
+- **Authentication credentials:** Depending on your authentication method, you need one of:
+  - SQL Server login credentials (username and password)
+  - Windows/Kerberos credentials and configuration
+  - Azure Entra ID app registration or managed identity
+
+- **Security certificates:** If using encrypted connections, gather any necessary TLS/SSL certificates.
+
+{{< admonition type="note" >}}
+Grafana ships with a built-in Microsoft SQL Server data source plugin. No additional installation is required.
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+**Grafana Cloud users:** If your SQL Server is in a private network, configure [Private data source connect](ref:private-data-source-connect) to establish connectivity.
+{{< /admonition >}}
 
 ## Add the MSSQL data source
 
