@@ -1,7 +1,6 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { isFetchError } from '@grafana/runtime';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
@@ -14,7 +13,6 @@ jest.mock('../hooks/useCreateOrUpdateConnection', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  isFetchError: jest.fn(),
   reportInteraction: jest.fn(),
 }));
 
@@ -22,7 +20,6 @@ const mockSubmitData = jest.fn();
 const mockUseCreateOrUpdateConnection = useCreateOrUpdateConnection as jest.MockedFunction<
   typeof useCreateOrUpdateConnection
 >;
-const mockIsFetchError = isFetchError as jest.MockedFunction<typeof isFetchError>;
 
 type MockRequestState = {
   status: QueryStatus;
@@ -92,10 +89,10 @@ describe('ConnectionForm', () => {
     it('should render all form fields', () => {
       setup();
 
-      expect(screen.getByDisplayValue('GitHub')).toBeInTheDocument(); // Provider combobox
-      expect(screen.getByPlaceholderText('123456')).toBeInTheDocument(); // App ID
-      expect(screen.getByPlaceholderText('12345678')).toBeInTheDocument(); // Installation ID
-      expect(screen.getByPlaceholderText(/-----BEGIN RSA PRIVATE KEY-----/i)).toBeInTheDocument(); // Private Key
+      expect(screen.getByLabelText(/^Provider/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^GitHub App ID/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^GitHub Installation ID/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toBeInTheDocument();
     });
 
     it('should render Save button', () => {
@@ -104,7 +101,7 @@ describe('ConnectionForm', () => {
       expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
     });
 
-    it('should NOT render Delete button in create mode', () => {
+    it('should not render Delete button in create mode', () => {
       setup();
 
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
@@ -113,47 +110,33 @@ describe('ConnectionForm', () => {
     it('should have Provider field disabled', () => {
       setup();
 
-      expect(screen.getByDisplayValue('GitHub')).toBeDisabled();
+      expect(screen.getByLabelText(/^Provider/)).toBeDisabled();
     });
   });
 
   describe('Rendering - Edit Mode', () => {
     it('should populate form fields with existing connection data', () => {
-      const mockData = createMockConnection();
-      setup({ data: mockData });
+      setup({ data: createMockConnection() });
 
-      expect(screen.getByPlaceholderText('123456')).toHaveValue('123456');
-      expect(screen.getByPlaceholderText('12345678')).toHaveValue('12345678');
+      expect(screen.getByLabelText(/^GitHub App ID/)).toHaveValue('123456');
+      expect(screen.getByLabelText(/^GitHub Installation ID/)).toHaveValue('12345678');
     });
 
     it('should render Delete button in edit mode', () => {
-      const mockData = createMockConnection();
-      setup({ data: mockData });
+      setup({ data: createMockConnection() });
 
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     });
 
     it('should show configured state for private key', () => {
-      const mockData = createMockConnection();
-      setup({ data: mockData });
+      setup({ data: createMockConnection() });
 
-      expect(screen.getByDisplayValue('configured')).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toHaveValue('configured');
     });
   });
 
   describe('Form Validation', () => {
-    it('should show required error when fields are empty on submit', async () => {
-      const { user } = setup();
-
-      const saveButton = screen.getByRole('button', { name: /^save$/i });
-      await user.click(saveButton);
-
-      await waitFor(() => {
-        expect(screen.getAllByText('This field is required')).toHaveLength(3);
-      });
-    });
-
-    it('should not submit when required fields are missing', async () => {
+    it('should show required error and not submit when fields are empty', async () => {
       const { user, mockSubmitData } = setup();
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
@@ -171,12 +154,9 @@ describe('ConnectionForm', () => {
     it('should call submitData with correct data on valid submission', async () => {
       const { user, mockSubmitData } = setup();
 
-      await user.type(screen.getByPlaceholderText('123456'), '123456');
-      await user.type(screen.getByPlaceholderText('12345678'), '12345678');
-      await user.type(
-        screen.getByPlaceholderText(/-----BEGIN RSA PRIVATE KEY-----/i),
-        '-----BEGIN RSA PRIVATE KEY-----'
-      );
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);
@@ -198,8 +178,7 @@ describe('ConnectionForm', () => {
 
   describe('Form Submission - Edit', () => {
     it('should allow submission without changing private key', async () => {
-      const mockData = createMockConnection();
-      const { user, mockSubmitData } = setup({ data: mockData });
+      const { user, mockSubmitData } = setup({ data: createMockConnection() });
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);
@@ -238,24 +217,14 @@ describe('ConnectionForm', () => {
     it('should map API error for appID to form field', async () => {
       const { user, mockSubmitData } = setup();
 
-      mockIsFetchError.mockReturnValue(true);
       mockSubmitData.mockRejectedValue({
-        data: {
-          errors: [
-            {
-              field: 'appID',
-              detail: 'Invalid App ID',
-            },
-          ],
-        },
+        status: 400,
+        data: { errors: [{ field: 'appID', detail: 'Invalid App ID' }] },
       });
 
-      await user.type(screen.getByPlaceholderText('123456'), '123456');
-      await user.type(screen.getByPlaceholderText('12345678'), '12345678');
-      await user.type(
-        screen.getByPlaceholderText(/-----BEGIN RSA PRIVATE KEY-----/i),
-        '-----BEGIN RSA PRIVATE KEY-----'
-      );
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);
@@ -268,24 +237,14 @@ describe('ConnectionForm', () => {
     it('should map API error for installationID to form field', async () => {
       const { user, mockSubmitData } = setup();
 
-      mockIsFetchError.mockReturnValue(true);
       mockSubmitData.mockRejectedValue({
-        data: {
-          errors: [
-            {
-              field: 'installationID',
-              detail: 'Invalid Installation ID',
-            },
-          ],
-        },
+        status: 400,
+        data: { errors: [{ field: 'installationID', detail: 'Invalid Installation ID' }] },
       });
 
-      await user.type(screen.getByPlaceholderText('123456'), '123456');
-      await user.type(screen.getByPlaceholderText('12345678'), '12345678');
-      await user.type(
-        screen.getByPlaceholderText(/-----BEGIN RSA PRIVATE KEY-----/i),
-        '-----BEGIN RSA PRIVATE KEY-----'
-      );
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);
@@ -298,21 +257,14 @@ describe('ConnectionForm', () => {
     it('should map API error for privateKey to form field', async () => {
       const { user, mockSubmitData } = setup();
 
-      mockIsFetchError.mockReturnValue(true);
       mockSubmitData.mockRejectedValue({
-        data: {
-          errors: [
-            {
-              field: 'secure.privateKey',
-              detail: 'Invalid Private Key format',
-            },
-          ],
-        },
+        status: 400,
+        data: { errors: [{ field: 'secure.privateKey', detail: 'Invalid Private Key format' }] },
       });
 
-      await user.type(screen.getByPlaceholderText('123456'), '123456');
-      await user.type(screen.getByPlaceholderText('12345678'), '12345678');
-      await user.type(screen.getByPlaceholderText(/-----BEGIN RSA PRIVATE KEY-----/i), 'invalid-key');
+      await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
+      await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
+      await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'invalid-key');
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);

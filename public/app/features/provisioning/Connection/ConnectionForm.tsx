@@ -87,6 +87,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       <Stack direction="column" gap={2}>
         <Field
           noMargin
+          htmlFor="type"
           label={t('provisioning.connection-form.label-provider', 'Provider')}
           description={t('provisioning.connection-form.description-provider', 'Select the provider type')}
         >
@@ -95,6 +96,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             control={control}
             render={({ field: { ref, onChange, ...field } }) => (
               <Combobox
+                id="type"
                 disabled // TODO enable when other providers are supported
                 options={providerOptions}
                 onChange={(option) => onChange(option?.value)}
@@ -113,6 +115,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           required
         >
           <Input
+            id="appID"
             {...register('appID', {
               required: t('provisioning.connection-form.error-required', 'This field is required'),
             })}
@@ -132,6 +135,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           required
         >
           <Input
+            id="installationID"
             {...register('installationID', {
               required: t('provisioning.connection-form.error-required', 'This field is required'),
             })}
@@ -141,6 +145,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
         <Field
           noMargin
+          htmlFor="privateKey"
           label={t('provisioning.connection-form.label-private-key', 'Private Key (PEM)')}
           description={t(
             'provisioning.connection-form.description-private-key',
