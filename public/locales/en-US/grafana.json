@@ -11833,6 +11833,7 @@
     },
     "connections": {
       "add-connection": "Add connection",
+      "cancel": "Cancel",
       "delete": "Delete",
       "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
       "delete-title": "Delete connection",
@@ -11849,6 +11850,7 @@
       "view": "View"
     },
     "delete-repository-button": {
+      "button-cancel": "Cancel",
       "button-delete": "Delete",
       "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
       "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
