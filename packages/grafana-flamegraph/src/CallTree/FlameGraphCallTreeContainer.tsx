@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState, useRef, useEffect } from 'react';
 import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } from 'react-table';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -30,6 +30,9 @@ const FlameGraphCallTreeContainer = memo(
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
+    // Ref for the matched search row to enable auto-scrolling
+    const searchMatchRowRef = useRef<HTMLTableRowElement | null>(null);
+
     // Use package-based color scheme by default
     const colorScheme = data.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.PackageBased;
 
@@ -38,6 +41,11 @@ const FlameGraphCallTreeContainer = memo(
 
     // Callers state - track which function's callers we're showing
     const [callersNodeLabel, setCallersNodeLabel] = useState<string | undefined>(undefined);
+
+    // Search state
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(0);
+    const [searchError, setSearchError] = useState<string | undefined>(undefined);
 
     // Wrapper functions for mutual exclusivity
     const handleSetFocusMode = (nodeIdOrLabel: string | undefined, isLabel: boolean = false) => {
@@ -63,7 +71,7 @@ const FlameGraphCallTreeContainer = memo(
       }
     };
 
-    // Build nodes
+    // Build nodes - dependencies include currentSearchMatchId to force rebuild when search match changes
     const { nodes, focusedNode, callersNode } = useMemo(() => {
       const allNodes = buildAllCallTreeNodes(data);
 
@@ -146,9 +154,139 @@ const FlameGraphCallTreeContainer = memo(
       return { nodes: nodesToUse, focusedNode: focused, callersNode: callersTargetNode };
     }, [data, focusedNodeId, callersNodeLabel]);
 
+    // Search function - finds matching nodes in the tree
+    const searchNodes = useMemo(() => {
+      if (!searchQuery.trim()) {
+        return [];
+      }
+
+      const MAX_MATCHES = 50;
+      const matches: Array<{ id: string; total: number }> = [];
+
+      // Determine if the query is a regex pattern (contains regex special chars)
+      const regexChars = /[.*+?^${}()|[\]\\]/;
+      let isRegexQuery = regexChars.test(searchQuery);
+      let searchRegex: RegExp | null = null;
+
+      if (isRegexQuery) {
+        try {
+          searchRegex = new RegExp(searchQuery, 'i');
+          setSearchError(undefined);
+        } catch (e) {
+          setSearchError('Invalid regex pattern');
+          return [];
+        }
+      }
+
+      // Recursive search through nodes
+      const search = (nodesToSearch: CallTreeNode[]) => {
+        for (const node of nodesToSearch) {
+          if (matches.length >= MAX_MATCHES) {
+            break;
+          }
+
+          // Match against node label
+          let isMatch = false;
+          if (searchRegex) {
+            isMatch = searchRegex.test(node.label);
+          } else {
+            isMatch = node.label.toLowerCase().includes(searchQuery.toLowerCase());
+          }
+
+          if (isMatch) {
+            matches.push({ id: node.id, total: node.total });
+          }
+
+          // Recursively search children
+          if (node.subRows && matches.length < MAX_MATCHES) {
+            search(node.subRows);
+          }
+        }
+      };
+
+      search(nodes);
+
+      // Sort by total time descending (most significant first)
+      matches.sort((a, b) => b.total - a.total);
+
+      const matchIds = matches.map(m => m.id);
+
+      setSearchError(undefined);
+      return matchIds;
+    }, [searchQuery, nodes]);
+
+    // Reset current match index when search results change
+    const searchResultKey = searchNodes.join(',');
+    useEffect(() => {
+      setCurrentMatchIndex(searchNodes.length > 0 ? 0 : -1);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchResultKey]);
+
+    // Navigation functions for search results
+    const navigateToNextMatch = () => {
+      if (searchNodes.length > 0) {
+        setCurrentMatchIndex((prev) => (prev + 1) % searchNodes.length);
+      }
+    };
+
+    const navigateToPrevMatch = () => {
+      if (searchNodes.length > 0) {
+        setCurrentMatchIndex((prev) => (prev - 1 + searchNodes.length) % searchNodes.length);
+      }
+    };
+
+    const clearSearch = () => {
+      setSearchQuery('');
+      setCurrentMatchIndex(-1);
+      setSearchError(undefined);
+    };
+
+    // Get current search match node ID
+    const currentSearchMatchId = useMemo(() => {
+      if (searchNodes.length > 0 && currentMatchIndex >= 0 && currentMatchIndex < searchNodes.length) {
+        return searchNodes[currentMatchIndex];
+      }
+      return undefined;
+    }, [searchNodes, currentMatchIndex]);
+
+    // Auto-scroll to the matched row when current match changes
+    useEffect(() => {
+      if (searchMatchRowRef.current) {
+        searchMatchRowRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }
+    }, [currentMatchIndex, currentSearchMatchId]);
+
     // Calculate expanded state
     const calculatedExpanded = useMemo(() => {
       const baseExpanded = getInitialExpandedState(nodes, 1);
+
+      // If there's a search match, expand path to show it
+      if (currentSearchMatchId) {
+        // Expand all nodes along the path to the current match
+        const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
+          for (const node of nodes) {
+            if (node.id === targetId) {
+              // Found the target
+              return true;
+            }
+            if (node.subRows && node.hasChildren) {
+              // Check if target is in this subtree
+              const foundInSubtree = expandPathToNode(node.subRows, targetId);
+              if (foundInSubtree) {
+                // Target is in this subtree, so expand this node
+                baseExpanded[node.id] = true;
+                return true;
+              }
+            }
+          }
+          return false;
+        };
+
+        expandPathToNode(nodes, currentSearchMatchId);
+      }
 
       // If there's a focused node, expand to show its children
       if (focusedNodeId && nodes.length > 0) {
@@ -206,16 +344,7 @@ const FlameGraphCallTreeContainer = memo(
       }
 
       return baseExpanded;
-    }, [nodes, focusedNodeId, callersNodeLabel, callersNode]);
-
-    // Create a key that changes when expansion should reset, forcing table remount
-    const tableKey = useMemo(() => {
-      // Include matchingIds in the key so table remounts when search results change
-      const expandedKeys = Object.keys(calculatedExpanded).filter(k => calculatedExpanded[k]).sort().join(',');
-      const focusPart = focusedNodeId ? `-focus-${focusedNodeId}` : '';
-      const callersPart = callersNodeLabel ? `-callers-${callersNodeLabel}` : '';
-      return `table-${expandedKeys}${focusPart}${callersPart}`;
-    }, [calculatedExpanded, focusedNodeId, callersNodeLabel]);
+    }, [nodes, focusedNodeId, callersNodeLabel, callersNode, currentSearchMatchId]);
 
     // Define columns
     const columns = useMemo<Column<CallTreeNode>[]>(() => {
@@ -380,18 +509,25 @@ const FlameGraphCallTreeContainer = memo(
     // toggleRowExpanded is used in the Cell renderers but doesn't need to be in the dependencies
     // because it's accessed at render time, not definition time
 
+    // Create a stable nodes reference that changes when search match changes
+    // This triggers autoResetExpanded in the table
+    const tableNodes = useMemo(() => {
+      // Return a shallow copy to force reference change
+      return [...nodes];
+    }, [nodes, currentSearchMatchId]);
+
     // Setup table instance with expand and sort
-    // Using initialState - expansion resets when data changes so new initialState takes effect
+    // Using autoResetExpanded: true so expansion resets when data changes
     const tableInstance = useTable<CallTreeNode>(
       {
         columns,
-        data: nodes,
+        data: tableNodes,
         getSubRows: (row) => row.subRows || [],
         initialState: {
-          expanded: calculatedExpanded,
           sortBy: [{ id: 'total', desc: true }],
+          expanded: calculatedExpanded,
         },
-        autoResetExpanded: true, // Reset expansion when data changes so initialState applies
+        autoResetExpanded: true, // Reset to initialState when data changes
         autoResetSortBy: false,
       },
       useSortBy,
@@ -405,12 +541,56 @@ const FlameGraphCallTreeContainer = memo(
         {/* Toolbar */}
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
-            <Input
-              value={''}
-              disabled
-              placeholder={'Search...'}
-              className={styles.searchInput}
-            />
+            <div className={styles.searchContainer}>
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                placeholder="Search..."
+                className={styles.searchInput}
+                suffix={
+                  searchQuery && (
+                    <Button
+                      icon="times"
+                      fill="text"
+                      size="sm"
+                      onClick={clearSearch}
+                      tooltip="Clear search"
+                      aria-label="Clear search"
+                    />
+                  )
+                }
+              />
+              {searchNodes.length > 0 && (
+                <div className={styles.searchNavigation}>
+                  <span className={styles.searchCounter}>
+                    {currentMatchIndex + 1} of {searchNodes.length}
+                    {searchNodes.length >= 50 && '+'}
+                  </span>
+                  <Button
+                    icon="angle-up"
+                    fill="text"
+                    size="sm"
+                    onClick={navigateToPrevMatch}
+                    tooltip="Previous match"
+                    aria-label="Previous match"
+                  />
+                  <Button
+                    icon="angle-down"
+                    fill="text"
+                    size="sm"
+                    onClick={navigateToNextMatch}
+                    tooltip="Next match"
+                    aria-label="Next match"
+                  />
+                </div>
+              )}
+              {searchQuery && searchNodes.length === 0 && !searchError && (
+                <span className={styles.searchNoResults}>No matches found</span>
+              )}
+              {searchError && (
+                <span className={styles.searchError}>{searchError}</span>
+              )}
+            </div>
           </div>
 
           {focusedNode && (
@@ -447,7 +627,7 @@ const FlameGraphCallTreeContainer = memo(
           </div>
         </div>
 
-        <AutoSizer key={tableKey} style={{ width: '100%', height: 'calc(100% - 50px)' }}>
+        <AutoSizer style={{ width: '100%', height: 'calc(100% - 50px)' }}>
           {({ width, height }) => {
             if (width < 3 || height < 3) {
               return null;
@@ -493,14 +673,17 @@ const FlameGraphCallTreeContainer = memo(
                       const { key, ...rowProps } = row.getRowProps();
                       const isFocusedRow = row.original.id === focusedNodeId;
                       const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
+                      const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
                       return (
                         <tr
                           key={key}
                           {...rowProps}
+                          ref={isSearchMatchRow ? searchMatchRowRef : null}
                           className={cx(
                             styles.tr,
                             (isFocusedRow || (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label)) && styles.focusedRow,
-                            isCallersTargetRow && styles.callersTargetRow
+                            isCallersTargetRow && styles.callersTargetRow,
+                            isSearchMatchRow && styles.searchMatchRow
                           )}
                         >
                           {row.cells.map((cell) => {
@@ -907,6 +1090,33 @@ function getStyles(theme: GrafanaTheme2) {
     searchInput: css({
       width: '100%',
     }),
+    searchContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      width: '100%',
+      flexWrap: 'wrap',
+    }),
+    searchNavigation: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: `0 ${theme.spacing(1)}`,
+    }),
+    searchCounter: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      whiteSpace: 'nowrap',
+    }),
+    searchNoResults: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      fontStyle: 'italic',
+    }),
+    searchError: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.error.text,
+    }),
     table: css({
       width: '100%',
       borderCollapse: 'collapse',
@@ -952,6 +1162,14 @@ function getStyles(theme: GrafanaTheme2) {
       fontWeight: theme.typography.fontWeightMedium,
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+      },
+    }),
+    searchMatchRow: css({
+      backgroundColor: theme.colors.warning.transparent,
+      borderLeft: `3px solid ${theme.colors.warning.main}`,
+      fontWeight: theme.typography.fontWeightMedium,
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.warning.transparent, 0.1),
       },
     }),
     td: css({
