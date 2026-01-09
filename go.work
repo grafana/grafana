@@ -17,7 +17,6 @@ use (
 	./apps/example
 	./apps/folder
 	./apps/iam
-	./apps/investigations
 	./apps/logsdrilldown
 	./apps/playlist
 	./apps/plugins
@@ -33,6 +32,7 @@ use (
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/codegen
+	./pkg/plugins
 	./pkg/plugins/codegen
 	./pkg/promlib
 	./pkg/semconv

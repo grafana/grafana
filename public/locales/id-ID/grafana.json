@@ -3743,7 +3743,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4397,6 +4396,7 @@
       },
       "no-properties-changed": "Tidak ada properti yang relevan yang diubah",
       "table": {
+        "notes": "",
         "updated": "Tanggal",
         "updatedBy": "Diperbarui Oleh",
         "version": "Versi"
@@ -4855,7 +4855,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Nilai dipisahkan dengan koma"
         },
         "datasource-options": {
           "name-filter": "Filter nama",
@@ -5947,6 +5948,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Opsi kustom",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Nilai dipisahkan dengan koma",
       "selection-options": "Opsi pemilihan"
     },
@@ -6532,6 +6536,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dasbor disimpan"
     },
@@ -6555,6 +6564,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6614,8 +6624,8 @@
       "tooltip-show-usages": "Tampilkan penggunaan"
     },
     "variable-values-preview": {
-      "preview-of-values": "Pratinjau nilai",
-      "show-more": "Tampilkan lebih banyak"
+      "show-more": "Tampilkan lebih banyak",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10666,18 +10676,6 @@
     "help/documentation": "Dokumentasi",
     "help/keyboard-shortcuts": "Pintasan keyboard",
     "help/support": "Dukungan",
-    "history-container": {
-      "drawer-tittle": "Sejarah"
-    },
-    "history-wrapper": {
-      "collapse": "Ciutkan",
-      "expand": "Perluas",
-      "icon-selected": "Entri yang dipilih",
-      "icon-unselected": "Entri Normal",
-      "show-more": "Tampilkan lebih banyak",
-      "today": "Hari ini",
-      "yesterday": "Kemarin"
-    },
     "home": {
       "title": "Beranda"
     },
