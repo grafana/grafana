@@ -89,6 +89,26 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
+  mssql-query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
+  mssql-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  mssql-troubleshoot:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
 ---
 
 # Configure the Microsoft SQL Server data source
@@ -397,3 +417,48 @@ datasources:
     secureJsonData:
       password: 'Password!'
 ```
+
+### Configure with Terraform
+
+You can configure the Microsoft SQL Server data source using [Terraform](https://www.terraform.io/) with the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+
+For more information about provisioning resources with Terraform, refer to the [Grafana as code using Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/) documentation.
+
+#### Terraform example
+
+The following example creates a basic Microsoft SQL Server data source:
+
+```hcl
+resource "grafana_data_source" "mssql" {
+  name = "MSSQL"
+  type = "mssql"
+  url  = "localhost:1433"
+  user = "grafana"
+
+  json_data_encoded = jsonencode({
+    database           = "grafana"
+    maxOpenConns       = 100
+    maxIdleConns       = 100
+    maxIdleConnsAuto   = true
+    connMaxLifetime    = 14400
+    connectionTimeout  = 0
+    encrypt            = "false"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    password = "Password!"
+  })
+}
+```
+
+For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
+
+## Next steps
+
+After configuring your Microsoft SQL Server data source, you can:
+
+- [Write queries](ref:mssql-query-editor) using the query editor to explore and visualize your data
+- [Create template variables](ref:mssql-template-variables) to build dynamic, reusable dashboards
+- [Add annotations](ref:annotate-visualizations) to overlay SQL Server events on your graphs
+- [Set up alerting](ref:alerting) to create alert rules based on your SQL Server data
+- [Troubleshoot issues](ref:mssql-troubleshoot) if you encounter problems with your data source
