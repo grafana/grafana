@@ -817,8 +817,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
+			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
+			go connInformer.Informer().Run(postStartHookCtx.Done())
 
 			// Create the repository resources factory
 			repositoryListerWrapper := func(ctx context.Context) ([]provisioning.Repository, error) {
@@ -938,6 +940,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+
+			// Create and run connection controller
+			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
+			connController, err := controller.NewConnectionController(
+				b.GetClient(),
+				connInformer,
+				connStatusPatcher,
+			)
+			if err != nil {
+				return err
+			}
+			go connController.Run(postStartHookCtx.Context, repoControllerWorkers)
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {

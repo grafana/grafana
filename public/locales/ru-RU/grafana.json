@@ -10808,18 +10808,6 @@
     "help/documentation": "Документация",
     "help/keyboard-shortcuts": "Сочетания клавиш",
     "help/support": "Поддержка",
-    "history-container": {
-      "drawer-tittle": "История"
-    },
-    "history-wrapper": {
-      "collapse": "Свернуть",
-      "expand": "Развернуть",
-      "icon-selected": "Выделенная запись",
-      "icon-unselected": "Обычная запись",
-      "show-more": "Показать еще",
-      "today": "Сегодня",
-      "yesterday": "Вчера"
-    },
     "home": {
       "title": "Главная"
     },

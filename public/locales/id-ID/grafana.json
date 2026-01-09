@@ -10676,18 +10676,6 @@
     "help/documentation": "Dokumentasi",
     "help/keyboard-shortcuts": "Pintasan keyboard",
     "help/support": "Dukungan",
-    "history-container": {
-      "drawer-tittle": "Sejarah"
-    },
-    "history-wrapper": {
-      "collapse": "Ciutkan",
-      "expand": "Perluas",
-      "icon-selected": "Entri yang dipilih",
-      "icon-unselected": "Entri Normal",
-      "show-more": "Tampilkan lebih banyak",
-      "today": "Hari ini",
-      "yesterday": "Kemarin"
-    },
     "home": {
       "title": "Beranda"
     },

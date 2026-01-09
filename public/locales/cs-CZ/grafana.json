@@ -10808,18 +10808,6 @@
     "help/documentation": "Dokumentace",
     "help/keyboard-shortcuts": "Klávesové zkratky",
     "help/support": "Podpora",
-    "history-container": {
-      "drawer-tittle": "Historie"
-    },
-    "history-wrapper": {
-      "collapse": "Sbalit",
-      "expand": "Rozbalit",
-      "icon-selected": "Vybraný záznam",
-      "icon-unselected": "Normální záznam",
-      "show-more": "Zobrazit více",
-      "today": "Dnes",
-      "yesterday": "Včera"
-    },
     "home": {
       "title": "Domů"
     },

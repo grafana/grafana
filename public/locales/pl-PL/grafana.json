@@ -10808,18 +10808,6 @@
     "help/documentation": "Dokumentacja",
     "help/keyboard-shortcuts": "Skróty klawiaturowe",
     "help/support": "Wsparcie",
-    "history-container": {
-      "drawer-tittle": "Historia"
-    },
-    "history-wrapper": {
-      "collapse": "Zwiń",
-      "expand": "Rozwiń",
-      "icon-selected": "Zaznaczony wpis",
-      "icon-unselected": "Normalny wpis",
-      "show-more": "Pokaż więcej",
-      "today": "Dzisiaj",
-      "yesterday": "Wczoraj"
-    },
     "home": {
       "title": "Strona główna"
     },
