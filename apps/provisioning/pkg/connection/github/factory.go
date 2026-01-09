@@ -18,7 +18,7 @@ type Factory struct {
 	Client *http.Client
 }
 
-func ProvideFactory() *Factory {
+func ProvideFactory() GithubFactory {
 	return &Factory{}
 }
 
