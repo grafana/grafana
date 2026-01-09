@@ -24,11 +24,9 @@ export function DeleteConnectionButton({ name, connection }: Props) {
     setShowModal(false);
   }, [deleteConnection, name, connection]);
 
-  const isLoading = deleteRequest.isLoading;
-
   return (
     <>
-      <Button variant="destructive" size="md" disabled={isLoading} onClick={() => setShowModal(true)}>
+      <Button variant="destructive" size="md" disabled={deleteRequest.isLoading} onClick={() => setShowModal(true)}>
         <Trans i18nKey="provisioning.connections.delete">Delete</Trans>
       </Button>
       <ConfirmModal

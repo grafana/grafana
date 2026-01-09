@@ -3,7 +3,7 @@ import { Badge, IconName } from '@grafana/ui';
 import { ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 interface Props {
-  status?: ConnectionStatus;
+  status: ConnectionStatus;
 }
 
 interface BadgeConfig {
@@ -12,15 +12,7 @@ interface BadgeConfig {
   icon: IconName;
 }
 
-function getBadgeConfig(status?: ConnectionStatus): BadgeConfig {
-  if (!status) {
-    return {
-      color: 'darkgrey',
-      text: t('provisioning.connections.status-unknown', 'Unknown'),
-      icon: 'question-circle',
-    };
-  }
-
+function getBadgeConfig(status: ConnectionStatus): BadgeConfig {
   switch (status.state) {
     case 'connected':
       return {

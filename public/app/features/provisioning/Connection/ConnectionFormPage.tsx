@@ -12,7 +12,7 @@ import { ConnectionForm } from './ConnectionForm';
 
 export default function ConnectionFormPage() {
   const { name = '' } = useParams();
-  const isCreate = name === 'new';
+  const isCreate = !name;
 
   const query = useGetConnectionQuery(isCreate ? skipToken : { name });
 
