@@ -229,7 +229,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
  * This ensures v2→Scene→v1 conversion produces the same output as the Go backend,
  * which does NOT add panel-level datasource for non-mixed panels.
  */
-function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
+export function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   const queries = panel.spec.data?.spec.queries;
   if (!queries?.length) {
     return undefined;
