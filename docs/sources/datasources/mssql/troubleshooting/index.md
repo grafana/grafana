@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Troubleshooting
-title: Troubleshoot the Microsoft SQL Server data source
+title: Troubleshoot Microsoft SQL Server data source issues
 weight: 400
 refs:
   configure-mssql-data-source:
