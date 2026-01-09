@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
+import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
+
 import {
   getFilesRecursively,
   normalizeBackendOutputForFrontendComparison,
@@ -225,22 +227,26 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       delete dashboardSpec.snapshot;
 
       // Wrap in DashboardDTO structure that transformSaveModelToScene expects
-      const scene = transformSaveModelToScene({
-        dashboard: dashboardSpec,
-        meta: {
-          isNew: false,
-          isFolder: false,
-          canSave: true,
-          canEdit: true,
-          canDelete: false,
-          canShare: false,
-          canStar: false,
-          canAdmin: false,
-          isSnapshot: false,
-          provisioned: false,
-          version: 1,
+      const scene = transformSaveModelToScene(
+        {
+          dashboard: dashboardSpec,
+          meta: {
+            isNew: false,
+            isFolder: false,
+            canSave: true,
+            canEdit: true,
+            canDelete: false,
+            canShare: false,
+            canStar: false,
+            canAdmin: false,
+            isSnapshot: false,
+            provisioned: false,
+            version: 1,
+          },
         },
-      });
+        undefined,
+        getSceneCreationOptions()
+      );
 
       const frontendOutput = transformSceneToSaveModelSchemaV2(scene, false);
 
@@ -306,22 +312,26 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       delete dashboardSpec.snapshot;
 
       // Wrap in DashboardDTO structure that transformSaveModelToScene expects
-      const scene = transformSaveModelToScene({
-        dashboard: dashboardSpec,
-        meta: {
-          isNew: false,
-          isFolder: false,
-          canSave: true,
-          canEdit: true,
-          canDelete: false,
-          canShare: false,
-          canStar: false,
-          canAdmin: false,
-          isSnapshot: false,
-          provisioned: false,
-          version: 1,
+      const scene = transformSaveModelToScene(
+        {
+          dashboard: dashboardSpec,
+          meta: {
+            isNew: false,
+            isFolder: false,
+            canSave: true,
+            canEdit: true,
+            canDelete: false,
+            canShare: false,
+            canStar: false,
+            canAdmin: false,
+            isSnapshot: false,
+            provisioned: false,
+            version: 1,
+          },
         },
-      });
+        undefined,
+        getSceneCreationOptions()
+      );
 
       const frontendOutput = transformSceneToSaveModelSchemaV2(scene, false);
 

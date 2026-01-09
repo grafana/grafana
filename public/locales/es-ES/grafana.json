@@ -3759,7 +3759,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4416,6 +4415,7 @@
       },
       "no-properties-changed": "No se ha cambiado ninguna propiedad relevante",
       "table": {
+        "notes": "",
         "updated": "Fecha",
         "updatedBy": "Actualizada por",
         "version": "Versión"
@@ -4874,7 +4874,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Valores separados por coma"
         },
         "datasource-options": {
           "name-filter": "Nombrar filtro",
@@ -5968,6 +5969,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Opciones personalizadas",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Valores separados por comas",
       "selection-options": "Opciones de selección"
     },
@@ -6555,6 +6559,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard guardado"
     },
@@ -6578,6 +6587,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6637,8 +6647,9 @@
       "tooltip-show-usages": "Mostrar usos"
     },
     "variable-values-preview": {
-      "preview-of-values": "Vista previa de los valores",
-      "show-more": "Mostrar más"
+      "show-more": "Mostrar más",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10709,18 +10720,6 @@
     "help/documentation": "Documentación",
     "help/keyboard-shortcuts": "Atajos de teclado",
     "help/support": "Asistencia",
-    "history-container": {
-      "drawer-tittle": "Historial"
-    },
-    "history-wrapper": {
-      "collapse": "Contraer",
-      "expand": "Expandir",
-      "icon-selected": "Entrada seleccionada",
-      "icon-unselected": "Entrada normal",
-      "show-more": "Mostrar más",
-      "today": "Hoy",
-      "yesterday": "Ayer"
-    },
     "home": {
       "title": "Inicio"
     },
