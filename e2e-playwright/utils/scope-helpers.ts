@@ -162,26 +162,6 @@ export async function clearScopeRoutes(page: Page): Promise<void> {
   await page.unroute(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_navigations*`);
 }
 
-/**
- * Clears the RTK Query cache for the scope API.
- * Call this when you need to invalidate cached responses (e.g., when mock data changes).
- */
-export async function clearScopeApiCache(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    // RTK Query reset action for the scope API
-    const resetAction = { type: 'scopeAPIv0alpha1/resetApiState' };
-
-    // Access Grafana's Redux store exposed on window for E2E tests
-    // The store is exposed in public/app/store/store.ts via setStore()
-    const store: { dispatch?: (action: { type: string }) => void } | undefined =
-      // @ts-expect-error - __grafanaStore is set by Grafana for E2E testing
-      window.__grafanaStore;
-    if (store?.dispatch) {
-      store.dispatch(resetAction);
-    }
-  });
-}
-
 export type TestScope = {
   name: string;
   title: string;
