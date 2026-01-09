@@ -685,6 +685,12 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	// TODO: complete this as part of https://github.com/grafana/git-ui-sync-project/issues/700
 	c, ok := obj.(*provisioning.Connection)
 	if ok {
+		// Add finalizer on create to prevent deletion while repositories reference it
+		if len(c.Finalizers) == 0 && a.GetOperation() == admission.Create {
+			c.Finalizers = []string{
+				connectionvalidation.BlockDeletionFinalizer,
+			}
+		}
 		return connectionvalidation.MutateConnection(c)
 	}
 
@@ -1014,6 +1020,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.GetClient(),
 				connInformer,
 				connStatusPatcher,
+				b.store,
 			)
 			if err != nil {
 				return err
