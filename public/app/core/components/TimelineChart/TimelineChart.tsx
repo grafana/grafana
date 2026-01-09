@@ -83,7 +83,7 @@ export const TimelineChart = (props: TimelineProps) => {
       }
 
       return (
-        <VizLayout.Legend placement={legend.placement}>
+        <VizLayout.Legend placement={legend.placement} width={legend.width}>
           <VizLegend
             placement={legend.placement}
             items={legendItems}

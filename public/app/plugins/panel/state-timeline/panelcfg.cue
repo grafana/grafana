@@ -28,7 +28,7 @@ composableKinds: PanelCfg: {
 				
 				StateTimelineLegendOptions: {
 					ui.VizLegendOptions
-					reducers: [...StateTimelineLegendReducers]
+					reducers: [...StateTimelineLegendReducers] | *[]
 				} @cuetsy(kind="interface")
 				
 				Options: {

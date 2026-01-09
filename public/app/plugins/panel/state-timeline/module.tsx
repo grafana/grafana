@@ -17,7 +17,6 @@ import { NullEditorSettings } from '../timeseries/config';
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
 import { defaultFieldConfig, defaultOptions, FieldConfig, Options, StateTimelineLegendReducers } from './panelcfg.gen';
-import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
