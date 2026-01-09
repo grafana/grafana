@@ -3,11 +3,10 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
-import { Button, Combobox, Field, Input, Stack } from '@grafana/ui';
+import { Button, Combobox, Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
-import { SecretTextArea } from '../Shared/SecretTextArea';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
@@ -175,6 +174,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
                   setPrivateKeyConfigured(false);
                 }}
                 rows={8}
+                grow
               />
             )}
           />
