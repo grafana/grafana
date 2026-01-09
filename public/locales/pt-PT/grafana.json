@@ -10720,18 +10720,6 @@
     "help/documentation": "Documentação",
     "help/keyboard-shortcuts": "Atalhos de teclado",
     "help/support": "Apoio",
-    "history-container": {
-      "drawer-tittle": "Histórico"
-    },
-    "history-wrapper": {
-      "collapse": "Recolher",
-      "expand": "Expandir",
-      "icon-selected": "Entrada selecionada",
-      "icon-unselected": "Entrada normal",
-      "show-more": "Mostrar mais",
-      "today": "Hoje",
-      "yesterday": "Ontem"
-    },
     "home": {
       "title": "Início"
     },

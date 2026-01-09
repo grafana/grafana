@@ -10720,18 +10720,6 @@
     "help/documentation": "Documentazione",
     "help/keyboard-shortcuts": "Scelte rapide da tastiera",
     "help/support": "Servizio Clienti",
-    "history-container": {
-      "drawer-tittle": "Cronologia"
-    },
-    "history-wrapper": {
-      "collapse": "Riduci",
-      "expand": "Espandi",
-      "icon-selected": "Voce selezionata",
-      "icon-unselected": "Ingresso normale",
-      "show-more": "Mostra di più",
-      "today": "Oggi",
-      "yesterday": "Ieri"
-    },
     "home": {
       "title": "Home"
     },

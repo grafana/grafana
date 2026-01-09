@@ -10676,18 +10676,6 @@
     "help/documentation": "文件",
     "help/keyboard-shortcuts": "鍵盤捷徑",
     "help/support": "支援",
-    "history-container": {
-      "drawer-tittle": "歷史紀錄"
-    },
-    "history-wrapper": {
-      "collapse": "收闔",
-      "expand": "展開",
-      "icon-selected": "已選取條目",
-      "icon-unselected": "一般條目",
-      "show-more": "顯示更多",
-      "today": "今天",
-      "yesterday": "昨天"
-    },
     "home": {
       "title": "首頁"
     },

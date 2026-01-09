@@ -10720,18 +10720,6 @@
     "help/documentation": "Belgeler",
     "help/keyboard-shortcuts": "Klavye kısayolları",
     "help/support": "Destek",
-    "history-container": {
-      "drawer-tittle": "Geçmiş"
-    },
-    "history-wrapper": {
-      "collapse": "Daralt",
-      "expand": "Genişlet",
-      "icon-selected": "Seçili giriş",
-      "icon-unselected": "Normal Giriş",
-      "show-more": "Daha fazla göster",
-      "today": "Bugün",
-      "yesterday": "Dün"
-    },
     "home": {
       "title": "Ana sayfa"
     },

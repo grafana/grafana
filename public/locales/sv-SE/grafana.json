@@ -10720,18 +10720,6 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tangentbordsgenvägar",
     "help/support": "Support",
-    "history-container": {
-      "drawer-tittle": "Historik"
-    },
-    "history-wrapper": {
-      "collapse": "Minimera",
-      "expand": "Expandera",
-      "icon-selected": "Markerad inmatning",
-      "icon-unselected": "Normal inmatning",
-      "show-more": "Visa mer",
-      "today": "Idag",
-      "yesterday": "Igår"
-    },
     "home": {
       "title": "Hem"
     },
