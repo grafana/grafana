@@ -26,7 +26,13 @@ import {
   PluginExtensionPoints,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction, renderLimitedComponents, usePluginComponents, usePluginLinks } from '@grafana/runtime';
+import {
+  reportInteraction,
+  renderLimitedComponents,
+  usePluginComponents,
+  usePluginLinks,
+  config,
+} from '@grafana/runtime';
 import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
@@ -46,7 +52,6 @@ import {
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { config } from '../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
 import { ViewRangeTimeUpdate, TUpdateViewRangeTimeFunction, ViewRange } from '../TraceTimelineViewer/types';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';

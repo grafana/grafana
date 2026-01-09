@@ -22,7 +22,7 @@ import {
   PluginExtensionPoints,
   PluginExtensionTypes,
 } from '@grafana/data';
-import { usePluginLinks, usePluginComponents } from '@grafana/runtime';
+import { usePluginLinks, usePluginComponents, config } from '@grafana/runtime';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { TraceViewPluginExtensionContext } from '../types/trace';
@@ -45,13 +45,6 @@ jest.mock('app/core/copy/appNotification', () => ({
     warning: jest.fn(),
     error: jest.fn(),
   })),
-}));
-
-// Mock config
-jest.mock('../../../../../core/config', () => ({
-  config: {
-    feedbackLinksEnabled: false, // Default to false to avoid interference with tests
-  },
 }));
 
 // Mock navigator.clipboard
@@ -127,6 +120,7 @@ describe('TracePageHeader test', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockWindowOpen.mockClear();
+    config.feedbackLinksEnabled = false; // Default to false to avoid interference with tests
   });
 
   it('should render the new trace header', () => {
@@ -438,9 +432,7 @@ describe('TracePageHeader test', () => {
     });
 
     it('should render feedback button when feedbackLinksEnabled is true', () => {
-      // Mock config with feedbackLinksEnabled = true
-      const mockConfig = require('../../../../../core/config');
-      mockConfig.config.feedbackLinksEnabled = true;
+      config.feedbackLinksEnabled = true;
 
       setup();
 
@@ -453,9 +445,7 @@ describe('TracePageHeader test', () => {
     it('should display tooltip for feedback button', async () => {
       const user = userEvent.setup();
 
-      // Mock config with feedbackLinksEnabled = true
-      const mockConfig = require('../../../../../core/config');
-      mockConfig.config.feedbackLinksEnabled = true;
+      config.feedbackLinksEnabled = true;
 
       setup();
 
@@ -469,9 +459,7 @@ describe('TracePageHeader test', () => {
     });
 
     it('should render feedback button with correct styling and icon', () => {
-      // Mock config with feedbackLinksEnabled = true
-      const mockConfig = require('../../../../../core/config');
-      mockConfig.config.feedbackLinksEnabled = true;
+      config.feedbackLinksEnabled = true;
 
       setup();
 

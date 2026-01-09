@@ -8,7 +8,7 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 interface Props {
   map: Map;

@@ -18,7 +18,7 @@ import {
   standardTransformers,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**

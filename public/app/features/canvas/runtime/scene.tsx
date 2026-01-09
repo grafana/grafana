@@ -6,7 +6,7 @@ import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import Selecto from 'selecto';
 
 import { AppEvents, PanelData, OneClickMode, ActionType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,
@@ -17,7 +17,6 @@ import {
   DirectionDimensionConfig,
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
 import {
   getColorDimensionFromData,
