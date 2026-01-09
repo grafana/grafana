@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
 import { memo, type MouseEventHandler } from 'react';
+import { useMeasure } from 'react-use';
 
 import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
 import { PercentChangeColorMode, VizTextDisplayOptions } from '@grafana/schema';
@@ -18,6 +19,7 @@ export enum BigValueColorMode {
   Value = 'value',
 }
 
+/** @deprecated use `sparkline` to configure the graph */
 export enum BigValueGraphMode {
   None = 'none',
   Line = 'line',
@@ -40,11 +42,11 @@ export enum BigValueTextMode {
   None = 'none',
 }
 
-export interface Props extends Themeable2 {
+export interface BigValueProps extends Themeable2 {
   /** Height of the component */
-  height: number;
+  height?: number;
   /** Width of the component */
-  width: number;
+  width?: number;
   /** Value displayed as Big Value */
   value: DisplayValue;
   /** Sparkline values for showing a graph under/behind the value  */
@@ -55,8 +57,6 @@ export interface Props extends Themeable2 {
   className?: string;
   /** Color mode for coloring the value or the background */
   colorMode: BigValueColorMode;
-  /** Show a graph behind/under the value */
-  graphMode: BigValueGraphMode;
   /** Auto justify value and text or center it */
   justifyMode?: BigValueJustifyMode;
   /** Factors that should influence the positioning of the text  */
@@ -80,6 +80,9 @@ export interface Props extends Themeable2 {
    * Disable the wide layout for the BigValue
    */
   disableWideLayout?: boolean;
+
+  /** @deprecated use `sparkline` to configure the graph */
+  graphMode?: BigValueGraphMode;
 }
 
 /**
@@ -87,10 +90,22 @@ export interface Props extends Themeable2 {
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-bigvalue--docs
  */
-export const BigValue = memo<Props>((props) => {
-  const { onClick, className, hasLinks, theme, justifyMode = BigValueJustifyMode.Auto } = props;
+export const BigValue = memo<BigValueProps>((props) => {
+  const {
+    onClick,
+    className,
+    hasLinks,
+    theme,
+    justifyMode = BigValueJustifyMode.Auto,
+    height: propsHeight,
+    width: propsWidth,
+  } = props;
+  const [wrapperRef, { width: calcWidth, height: calcHeight }] = useMeasure<HTMLDivElement>();
 
-  const layout = buildLayout({ ...props, justifyMode });
+  const height = propsHeight ?? calcHeight;
+  const width = propsWidth ?? calcWidth;
+
+  const layout = buildLayout({ ...props, justifyMode, height, width });
   const panelStyles = layout.getPanelStyles();
   const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
   const valueStyles = layout.getValueStyles();
@@ -105,7 +120,7 @@ export const BigValue = memo<Props>((props) => {
 
   if (!onClick) {
     return (
-      <div className={className} style={panelStyles} title={tooltip}>
+      <div ref={wrapperRef} className={className} style={panelStyles} title={tooltip}>
         <div style={valueAndTitleContainerStyles}>
           {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
           <FormattedValueDisplay value={textValues} style={valueStyles} />
@@ -129,7 +144,7 @@ export const BigValue = memo<Props>((props) => {
       onClick={onClick}
       title={tooltip}
     >
-      <div style={valueAndTitleContainerStyles}>
+      <div ref={wrapperRef} style={valueAndTitleContainerStyles}>
         {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
         <FormattedValueDisplay value={textValues} style={valueStyles} />
       </div>
