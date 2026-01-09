@@ -36,9 +36,6 @@ export const Basic: StoryObj<typeof meta> = {
         onSymbolClick={(symbol) => {
           console.log('Symbol clicked:', symbol);
         }}
-        onSearch={(search) => {
-          console.log('Search:', search);
-        }}
         onSandwich={(item) => {
           console.log('Sandwich:', item);
         }}

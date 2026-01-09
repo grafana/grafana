@@ -126,86 +126,151 @@ export function buildAllCallTreeNodes(data: FlameGraphDataContainer): CallTreeNo
   return rootNodes;
 }
 
-export interface FilterResult {
-  visibleNodes: CallTreeNode[];
-  matchingNodeIds: Set<string>;
-}
-
 /**
- * Recursively collect all matching node IDs from the tree.
+ * Build call tree nodes from an array of levels (from mergeParentSubtrees).
+ * This is used for the callers view where we get LevelItem[][] from getSandwichLevels.
+ * Unlike buildCallTreeNode which recursively processes children, this function
+ * processes pre-organized levels and builds the hierarchy from them.
  */
-function collectMatchingNodes(node: CallTreeNode, matchedLabels: Set<string>, matchingIds: Set<string>): boolean {
-  let hasMatch = false;
-
-  // Check if current node matches
-  if (matchedLabels.has(node.label)) {
-    matchingIds.add(node.id);
-    hasMatch = true;
+export function buildCallTreeFromLevels(
+  levels: LevelItem[][],
+  data: FlameGraphDataContainer,
+  rootTotal: number
+): CallTreeNode[] {
+  if (levels.length === 0 || levels[0].length === 0) {
+    return [];
   }
 
-  // Check children
-  if (node.subRows) {
-    for (const child of node.subRows) {
-      if (collectMatchingNodes(child, matchedLabels, matchingIds)) {
-        hasMatch = true;
+  // Map to track LevelItem -> CallTreeNode for building relationships
+  const levelItemToNode = new Map<LevelItem, CallTreeNode>();
+
+  // Process each level and build nodes
+  levels.forEach((level, levelIndex) => {
+    level.forEach((levelItem, itemIndex) => {
+      // Get values from data
+      const itemDataIndex = levelItem.itemIndexes[0];
+      const label = data.getLabel(itemDataIndex);
+      const self = data.getSelf(itemDataIndex);
+      const total = data.getValue(itemDataIndex);
+      const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
+      const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
+
+      // For diff profiles
+      let selfRight: number | undefined;
+      let totalRight: number | undefined;
+      let selfPercentRight: number | undefined;
+      let totalPercentRight: number | undefined;
+      let diffPercent: number | undefined;
+
+      if (data.isDiffFlamegraph()) {
+        selfRight = data.getSelfRight(itemDataIndex);
+        totalRight = data.getValueRight(itemDataIndex);
+        selfPercentRight = rootTotal > 0 ? (selfRight / rootTotal) * 100 : 0;
+        totalPercentRight = rootTotal > 0 ? (totalRight / rootTotal) * 100 : 0;
+
+        // Calculate diff percentage
+        if (self > 0) {
+          diffPercent = ((selfRight - self) / self) * 100;
+        } else if (selfRight > 0) {
+          diffPercent = Infinity;
+        } else {
+          diffPercent = 0;
+        }
       }
-    }
-  }
 
-  return hasMatch;
-}
+      // Determine parent (if exists)
+      let parentId: string | undefined;
+      let depth = levelIndex;
 
-/**
- * Recursively filter tree to show only matching nodes and their ancestors/descendants.
- * Returns a new tree with filtered structure.
- */
-function filterNode(node: CallTreeNode, matchedLabels: Set<string>, matchingIds: Set<string>): CallTreeNode | null {
-  // First, filter children recursively
-  let filteredSubRows: CallTreeNode[] | undefined;
-  if (node.subRows) {
-    filteredSubRows = node.subRows
-      .map((child) => filterNode(child, matchedLabels, matchingIds))
-      .filter((child): child is CallTreeNode => child !== null);
-  }
+      if (levelItem.parents && levelItem.parents.length > 0) {
+        const parentNode = levelItemToNode.get(levelItem.parents[0]);
+        if (parentNode) {
+          parentId = parentNode.id;
+          depth = parentNode.depth + 1;
+        }
+      }
 
-  // Check if this node or any descendant matches
-  const nodeMatches = matchingIds.has(node.id);
-  const hasMatchingDescendants = filteredSubRows && filteredSubRows.length > 0;
+      // Generate path-based ID
+      // For root nodes, use index at level 0
+      // For child nodes, append index to parent ID
+      let nodeId: string;
+      if (!parentId) {
+        nodeId = `${itemIndex}`;
+      } else {
+        // Find index among siblings
+        const parent = levelItemToNode.get(levelItem.parents![0]);
+        const siblingIndex = parent?.subRows?.length || 0;
+        nodeId = `${parentId}.${siblingIndex}`;
+      }
 
-  // Keep node if it matches or has matching descendants
-  if (nodeMatches || hasMatchingDescendants) {
-    return {
-      ...node,
-      subRows: filteredSubRows,
-      hasChildren: filteredSubRows ? filteredSubRows.length > 0 : false,
-    };
-  }
+      // Create the node (without children initially)
+      const node: CallTreeNode = {
+        id: nodeId,
+        label,
+        self,
+        total,
+        selfPercent,
+        totalPercent,
+        depth,
+        parentId,
+        hasChildren: levelItem.children.length > 0,
+        childCount: levelItem.children.length,
+        subtreeSize: 0, // Will be calculated later
+        levelItem,
+        subRows: undefined,
+        isLastChild: false,
+        selfRight,
+        totalRight,
+        selfPercentRight,
+        totalPercentRight,
+        diffPercent,
+      };
 
-  return null;
-}
+      // Add to map
+      levelItemToNode.set(levelItem, node);
 
-/**
- * Filter call tree to show only matching nodes and their ancestors.
- * Non-matching ancestors are kept for context but will be visually dimmed.
- */
-export function filterCallTree(nodes: CallTreeNode[], matchedLabels?: Set<string>): FilterResult {
-  if (!matchedLabels || matchedLabels.size === 0) {
-    return { visibleNodes: nodes, matchingNodeIds: new Set() };
-  }
-
-  const matchingNodeIds = new Set<string>();
-
-  // First pass: collect all matching node IDs
-  nodes.forEach((node) => {
-    collectMatchingNodes(node, matchedLabels, matchingNodeIds);
+      // Add as child to parent
+      if (levelItem.parents && levelItem.parents.length > 0) {
+        const parentNode = levelItemToNode.get(levelItem.parents[0]);
+        if (parentNode) {
+          if (!parentNode.subRows) {
+            parentNode.subRows = [];
+          }
+          parentNode.subRows.push(node);
+          // Mark if this is the last child
+          const isLastChild = parentNode.subRows.length === parentNode.childCount;
+          node.isLastChild = isLastChild;
+        }
+      }
+    });
   });
 
-  // Second pass: filter tree structure
-  const visibleNodes = nodes
-    .map((node) => filterNode(node, matchedLabels, matchingNodeIds))
-    .filter((node): node is CallTreeNode => node !== null);
+  // Calculate subtreeSize for all nodes (bottom-up)
+  const calculateSubtreeSize = (node: CallTreeNode): number => {
+    if (!node.subRows || node.subRows.length === 0) {
+      node.subtreeSize = 0;
+      return 0;
+    }
 
-  return { visibleNodes, matchingNodeIds };
+    const size = node.subRows.reduce((sum, child) => {
+      return sum + calculateSubtreeSize(child) + 1;
+    }, 0);
+
+    node.subtreeSize = size;
+    return size;
+  };
+
+  // Collect root nodes (level 0)
+  const rootNodes: CallTreeNode[] = [];
+  levels[0].forEach((levelItem) => {
+    const node = levelItemToNode.get(levelItem);
+    if (node) {
+      calculateSubtreeSize(node);
+      rootNodes.push(node);
+    }
+  });
+
+  return rootNodes;
 }
 
 /**
@@ -240,50 +305,276 @@ export function getInitialExpandedState(nodes: CallTreeNode[], levelsToExpand: n
 }
 
 /**
- * Recursively collect expanded state to reveal matching nodes.
+ * Restructure the callers tree to show a specific target node at the root.
+ * In the callers view, we want to show the target function with its callers as children.
+ * This function finds the target node and collects all paths that lead to it,
+ * then restructures them so the target is at the root.
  */
-function collectExpandedForMatches(
-  node: CallTreeNode,
-  matchingNodeIds: Set<string>,
-  expanded: Record<string, boolean>
-): boolean {
-  let hasMatchingDescendant = false;
+export function restructureCallersTree(
+  nodes: CallTreeNode[],
+  targetLabel: string
+): { restructuredTree: CallTreeNode[]; targetNode: CallTreeNode | undefined } {
+  // First, find all paths from root to target node
+  const findPathsToTarget = (
+    nodes: CallTreeNode[],
+    targetLabel: string,
+    currentPath: CallTreeNode[] = []
+  ): CallTreeNode[][] => {
+    const paths: CallTreeNode[][] = [];
 
-  // Check if this node matches
-  if (matchingNodeIds.has(node.id)) {
-    hasMatchingDescendant = true;
+    for (const node of nodes) {
+      const newPath = [...currentPath, node];
+
+      if (node.label === targetLabel) {
+        // Found a path to the target
+        paths.push(newPath);
+      }
+
+      if (node.subRows && node.subRows.length > 0) {
+        // Continue searching in children
+        const childPaths = findPathsToTarget(node.subRows, targetLabel, newPath);
+        paths.push(...childPaths);
+      }
+    }
+
+    return paths;
+  };
+
+  const paths = findPathsToTarget(nodes, targetLabel);
+
+  if (paths.length === 0) {
+    // Target not found, return original tree
+    return { restructuredTree: nodes, targetNode: undefined };
   }
 
-  // Check children
-  if (node.subRows) {
-    for (const child of node.subRows) {
-      if (collectExpandedForMatches(child, matchingNodeIds, expanded)) {
-        hasMatchingDescendant = true;
+  // Get the target node from the first path (they should all have the same target node)
+  const targetNode = paths[0][paths[0].length - 1];
+
+  // Now restructure: create a new tree with target at root
+  // Each path to the target becomes a branch under the target
+  // For example, if we have: root -> A -> B -> target
+  // We want: target -> B -> A -> root (inverted)
+
+  const buildInvertedChildren = (paths: CallTreeNode[][]): CallTreeNode[] => {
+    // Group paths by their immediate caller (the node right before target)
+    const callerGroups = new Map<string, CallTreeNode[][]>();
+
+    for (const path of paths) {
+      if (path.length <= 1) {
+        // Path is just the target node itself, no callers
+        continue;
+      }
+
+      // The immediate caller is the node right before the target
+      const immediateCaller = path[path.length - 2];
+      const callerKey = immediateCaller.label;
+
+      if (!callerGroups.has(callerKey)) {
+        callerGroups.set(callerKey, []);
+      }
+      callerGroups.get(callerKey)!.push(path);
+    }
+
+    // Build nodes for each immediate caller
+    const callerNodes: CallTreeNode[] = [];
+    let callerIndex = 0;
+
+    for (const [, callerPaths] of callerGroups.entries()) {
+      // Get the immediate caller node from one of the paths
+      const immediateCallerNode = callerPaths[0][callerPaths[0].length - 2];
+
+      // For this caller, recursively build its callers (from the remaining path)
+      const remainingPaths = callerPaths.map((path) => path.slice(0, -1)); // Remove target from paths
+      const grandCallers = buildInvertedChildren(remainingPaths);
+
+      // Create a new node for this caller as a child of the target
+      const newCallerId = `0.${callerIndex}`;
+      const callerNode: CallTreeNode = {
+        ...immediateCallerNode,
+        id: newCallerId,
+        depth: 1,
+        parentId: '0',
+        subRows: grandCallers.length > 0 ? grandCallers : undefined,
+        hasChildren: grandCallers.length > 0,
+        childCount: grandCallers.length,
+        isLastChild: callerIndex === callerGroups.size - 1,
+      };
+
+      // Update IDs of grandCallers
+      if (grandCallers.length > 0) {
+        grandCallers.forEach((grandCaller, idx) => {
+          updateNodeIds(grandCaller, newCallerId, idx);
+        });
+      }
+
+      callerNodes.push(callerNode);
+      callerIndex++;
+    }
+
+    return callerNodes;
+  };
+
+  // Helper to recursively update node IDs
+  const updateNodeIds = (node: CallTreeNode, parentId: string, index: number) => {
+    node.id = `${parentId}.${index}`;
+    node.parentId = parentId;
+    node.depth = parentId.split('.').length;
+
+    if (node.subRows) {
+      node.subRows.forEach((child, idx) => {
+        updateNodeIds(child, node.id, idx);
+      });
+    }
+  };
+
+  // Build the inverted children for the target
+  const invertedChildren = buildInvertedChildren(paths);
+
+  // Create the restructured target node as root
+  const restructuredTarget: CallTreeNode = {
+    ...targetNode,
+    id: '0',
+    depth: 0,
+    parentId: undefined,
+    subRows: invertedChildren.length > 0 ? invertedChildren : undefined,
+    hasChildren: invertedChildren.length > 0,
+    childCount: invertedChildren.length,
+    subtreeSize: invertedChildren.reduce((sum, child) => sum + child.subtreeSize + 1, 0),
+    isLastChild: false,
+  };
+
+  return { restructuredTree: [restructuredTarget], targetNode: restructuredTarget };
+}
+
+/**
+ * Build a callers tree directly from sandwich levels data.
+ * This creates an inverted tree where the target function is at the root
+ * and its callers are shown as children.
+ */
+export function buildCallersTreeFromLevels(
+  levels: LevelItem[][],
+  targetLabel: string,
+  data: FlameGraphDataContainer,
+  rootTotal: number
+): { tree: CallTreeNode[]; targetNode: CallTreeNode | undefined } {
+  if (levels.length === 0) {
+    return { tree: [], targetNode: undefined };
+  }
+
+  // Find the target node in the levels
+  let targetLevelIndex = -1;
+  let targetItem: LevelItem | undefined;
+
+  for (let i = 0; i < levels.length; i++) {
+    for (const item of levels[i]) {
+      const label = data.getLabel(item.itemIndexes[0]);
+      if (label === targetLabel) {
+        targetLevelIndex = i;
+        targetItem = item;
+        break;
+      }
+    }
+    if (targetItem) break;
+  }
+
+  if (!targetItem || targetLevelIndex === -1) {
+    // Target not found
+    return { tree: [], targetNode: undefined };
+  }
+
+  // Create a map from LevelItem to all items that reference it as a parent
+  const childrenMap = new Map<LevelItem, LevelItem[]>();
+
+  for (const level of levels) {
+    for (const item of level) {
+      if (item.parents) {
+        for (const parent of item.parents) {
+          if (!childrenMap.has(parent)) {
+            childrenMap.set(parent, []);
+          }
+          childrenMap.get(parent)!.push(item);
+        }
       }
     }
   }
 
-  // Expand this node if it has matching descendants
-  if (hasMatchingDescendant && node.hasChildren) {
-    expanded[node.id] = true;
-  }
+  // Build the inverted tree recursively
+  // For callers view: the target is root, and parents become children
+  const buildInvertedNode = (
+    item: LevelItem,
+    nodeId: string,
+    depth: number,
+    parentId: string | undefined
+  ): CallTreeNode => {
+    const itemIdx = item.itemIndexes[0];
+    const label = data.getLabel(itemIdx);
+    const self = data.getSelf(itemIdx);
+    const total = data.getValue(itemIdx);
+    const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
+    const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
 
-  return hasMatchingDescendant;
-}
+    // For diff profiles
+    let selfRight: number | undefined;
+    let totalRight: number | undefined;
+    let selfPercentRight: number | undefined;
+    let totalPercentRight: number | undefined;
+    let diffPercent: number | undefined;
 
-/**
- * Get expanded state to reveal matching nodes when filtering.
- * Expands ancestors of matching nodes.
- */
-export function getExpandedStateForMatches(
-  nodes: CallTreeNode[],
-  matchingNodeIds: Set<string>
-): Record<string, boolean> {
-  const expanded: Record<string, boolean> = {};
+    if (data.isDiffFlamegraph()) {
+      selfRight = data.getSelfRight(itemIdx);
+      totalRight = data.getValueRight(itemIdx);
+      selfPercentRight = rootTotal > 0 ? (selfRight / rootTotal) * 100 : 0;
+      totalPercentRight = rootTotal > 0 ? (totalRight / rootTotal) * 100 : 0;
 
-  nodes.forEach((node) => {
-    collectExpandedForMatches(node, matchingNodeIds, expanded);
-  });
+      if (self > 0) {
+        diffPercent = ((selfRight - self) / self) * 100;
+      } else if (selfRight > 0) {
+        diffPercent = Infinity;
+      } else {
+        diffPercent = 0;
+      }
+    }
 
-  return expanded;
+    // In the inverted tree, parents become children (callers)
+    const callers = item.parents || [];
+    const subRows =
+      callers.length > 0
+        ? callers.map((caller, idx) => {
+            const callerId = `${nodeId}.${idx}`;
+            const callerNode = buildInvertedNode(caller, callerId, depth + 1, nodeId);
+            callerNode.isLastChild = idx === callers.length - 1;
+            return callerNode;
+          })
+        : undefined;
+
+    const childCount = callers.length;
+    const subtreeSize = subRows ? subRows.reduce((sum, child) => sum + child.subtreeSize + 1, 0) : 0;
+
+    return {
+      id: nodeId,
+      label,
+      self,
+      total,
+      selfPercent,
+      totalPercent,
+      depth,
+      parentId,
+      hasChildren: callers.length > 0,
+      childCount,
+      subtreeSize,
+      levelItem: item,
+      subRows,
+      isLastChild: false,
+      selfRight,
+      totalRight,
+      selfPercentRight,
+      totalPercentRight,
+      diffPercent,
+    };
+  };
+
+  // Build tree with target as root
+  const targetNode = buildInvertedNode(targetItem, '0', 0, undefined);
+
+  return { tree: [targetNode], targetNode };
 }
