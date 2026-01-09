@@ -684,6 +684,20 @@ func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resou
 	// Create isolated namespace for mixed operations
 	mixedNamespace := nsPrefix + "-concurrent-mixed"
 
+	// do a single create using the sql backend to initialize the resource_version table
+	// without this, both backend may try to insert the same group+resource to the resource_version which breaks the
+	// tests
+	initNamespace := mixedNamespace + "-init"
+	initOpts := PlaylistResourceOptions{
+		Name:       "init-resource",
+		Namespace:  initNamespace,
+		UID:        "init-uid",
+		Generation: 1,
+		Title:      "Init Resource",
+		Folder:     "",
+	}
+	createPlaylistResource(t, sqlServer, ctx, initOpts)
+
 	// Heavy Mixed Concurrent Operations
 	t.Run("Mixed Concurrent Operations", func(t *testing.T) {
 		runMixedConcurrentOperations(t, sqlServer, kvServer, mixedNamespace, ctx)
