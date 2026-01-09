@@ -13,9 +13,9 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.284.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/stretchr/testify v1.11.1
-	k8s.io/apimachinery v0.34.3
-	k8s.io/apiserver v0.34.3
-	k8s.io/client-go v0.34.3
+	k8s.io/apimachinery v0.35.0
+	k8s.io/apiserver v0.35.0
+	k8s.io/client-go v0.35.0
 	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
 )
 
@@ -54,12 +54,10 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.5.0 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
-	github.com/Machiel/slugify v1.0.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
-	github.com/ProtonMail/go-crypto v1.1.6 // indirect
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
@@ -88,7 +86,6 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -166,7 +163,6 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250804150913-990f1c69ecc2 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/grafana/sqlds/v5 v5.0.3 // indirect
@@ -325,11 +321,11 @@ require (
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.34.3 // indirect
+	k8s.io/api v0.35.0 // indirect
 	k8s.io/apiextensions-apiserver v0.34.3 // indirect
-	k8s.io/component-base v0.34.3 // indirect
+	k8s.io/component-base v0.35.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kms v0.34.3 // indirect
+	k8s.io/kms v0.35.0 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
