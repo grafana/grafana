@@ -6,11 +6,29 @@ interface ZodSchema {
   safeParse: (data: unknown) => { success: boolean; data?: unknown; error?: unknown };
 }
 
+export interface DashboardMutationResult {
+  success: boolean;
+  error?: string;
+  changes: Array<{ path: string; previousValue: unknown; newValue: unknown }>;
+  warnings?: string[];
+  data?: unknown;
+}
+
+export interface DashboardMutationAPI {
+  /**
+   * Execute a mutation on the active dashboard.
+   * Throws if no dashboard is currently loaded.
+   */
+  execute(mutation: { type: string; payload: unknown }): Promise<DashboardMutationResult>;
+  /** Get the Zod payload schema for a command (e.g. "ADD_VARIABLE"). */
+  getPayloadSchema(commandId: string): ZodSchema | null;
+}
+
 export interface RestrictedGrafanaApisContextTypeInternal {
   // Add types for restricted Grafana APIs here
   // (Make sure that they are typed as optional properties)
-  // e.g. addPanel?: (vizPanel: VizPanel) => void;
   alertingAlertRuleFormSchema?: ZodSchema;
+  dashboardMutationAPI?: DashboardMutationAPI;
 }
 
 // We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).
@@ -50,7 +68,7 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
         (apiAllowList[api].includes(pluginId) ||
           apiAllowList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId)))
       ) {
-        allowedApis[api] = apis[api];
+        Object.assign(allowedApis, { [api]: apis[api] });
         continue;
       }
 
@@ -64,7 +82,7 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
           apiBlockList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId))
         )
       ) {
-        allowedApis[api] = apis[api];
+        Object.assign(allowedApis, { [api]: apis[api] });
       }
     }
 

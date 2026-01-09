@@ -12,9 +12,15 @@ const mockAlertRuleFormSchema = {
   safeParse: jest.fn((data: unknown) => ({ success: true, data })),
 };
 
+const mockDashboardMutationAPI = {
+  execute: jest.fn(async () => ({ success: true, changes: [] })),
+  getPayloadSchema: jest.fn(() => null),
+};
+
 describe('RestrictedGrafanaApis', () => {
   const apis: RestrictedGrafanaApisContextType = {
     alertingAlertRuleFormSchema: mockAlertRuleFormSchema,
+    dashboardMutationAPI: mockDashboardMutationAPI,
   };
 
   beforeEach(() => {
@@ -192,5 +198,59 @@ describe('RestrictedGrafanaApis', () => {
       ),
     });
     expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
+  });
+
+  describe('dashboardMutationAPI', () => {
+    it('should share dashboardMutationAPI with allowed plugins', () => {
+      const { result } = renderHook(() => useRestrictedGrafanaApis(), {
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <RestrictedGrafanaApisContextProvider
+            apis={apis}
+            pluginId={'grafana-assistant-app'}
+            apiAllowList={{ dashboardMutationAPI: ['grafana-assistant-app'] }}
+          >
+            {children}
+          </RestrictedGrafanaApisContextProvider>
+        ),
+      });
+
+      expect(result.current.dashboardMutationAPI).toBe(mockDashboardMutationAPI);
+    });
+
+    it('should not share dashboardMutationAPI with non-allowed plugins', () => {
+      const { result } = renderHook(() => useRestrictedGrafanaApis(), {
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <RestrictedGrafanaApisContextProvider
+            apis={apis}
+            pluginId={'malicious-plugin'}
+            apiAllowList={{ dashboardMutationAPI: ['grafana-assistant-app'] }}
+          >
+            {children}
+          </RestrictedGrafanaApisContextProvider>
+        ),
+      });
+
+      expect(result.current.dashboardMutationAPI).not.toBeDefined();
+    });
+
+    it('should share dashboardMutationAPI independently from other APIs', () => {
+      const { result } = renderHook(() => useRestrictedGrafanaApis(), {
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <RestrictedGrafanaApisContextProvider
+            apis={apis}
+            pluginId={'grafana-assistant-app'}
+            apiAllowList={{
+              dashboardMutationAPI: ['grafana-assistant-app'],
+              alertingAlertRuleFormSchema: ['some-other-plugin'],
+            }}
+          >
+            {children}
+          </RestrictedGrafanaApisContextProvider>
+        ),
+      });
+
+      expect(result.current.dashboardMutationAPI).toBe(mockDashboardMutationAPI);
+      expect(result.current.alertingAlertRuleFormSchema).not.toBeDefined();
+    });
   });
 });
