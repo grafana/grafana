@@ -242,7 +242,7 @@ Grafana has a number of keyboard shortcuts available. Press `?` on your keyboard
 - `Ctrl+K`: Opens the command palette.
 - `Esc`: Exits panel when in full screen view or edit mode. Also returns you to the dashboard from dashboard settings.
 
-**Focused panel**
+### Focused panel
 
 By hovering over a panel with the mouse you can use some shortcuts that will target that panel.
 
