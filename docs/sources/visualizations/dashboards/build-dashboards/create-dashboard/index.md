@@ -104,9 +104,7 @@ Each panel needs at least one query to display a visualization.
 **Before you begin:**
 
 - Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions](ref:about-users-and-permissions).
-- Identify the dashboard to which you want to add the panel.
 - Understand the query language of the target data source.
-- Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source](ref:add-a-data-source) if you need instructions.
 
 ## Create a dashboard
 
@@ -152,16 +150,16 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back to dashboard**.
-1. (Optional) Continue building your dashboard by doing one or more of the following:
+1. (Optional) Continue building your dashboard by clicking one or more of the following options:
 
-   - **+ Add panel**: Set panel options in the edit pane or click **Configure** to do full panel setup.
+   - **+ Add panel**: Set panel options in the edit pane or click **Configure** to complete panel setup.
    - **+ Add variable**: Follow the steps to [add a variable to the dashboard](#add-variables).
    - **Group panels**: Choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
-   - **Dashboard options** icon: Open the edit pane to access [panel layout options](#panel-layouts) and the dashboard title and description.
+   - **Dashboard options** icon: Open the edit pane to access [panel layout options](#panel-layouts).
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**
+1. Click **Save**.
 1. Click **Exit edit**.
 
 ## Dashboard edit
@@ -171,35 +169,31 @@ You can make several updates without leaving the dashboard by using the edit pan
 
 ### The edit pane and sidebar
 
-The _edit pane_ allows you to make changes without leaving the dashboard.
-When the dashboard is in edit mode, the edit pane displays options associated with the part of the dashboard that's in focus.
-For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for it:
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-edit-pane-focus-v12.png" max-width="750px" alt="Dashboard with a panel in focus" >}}
-
-The _sidebar_ is on the right side of the edit pane, and it includes options that are useful to have available all the time.
+The _edit pane_ allows you to make changes without leaving the dashboard, by displaying options associated with the part of the dashboard that's in focus.
+The _sidebar_ is on the next to the edit pane, and it includes options that are useful to have available all the time.
 The following image shows the parts of the edit pane and the sidebar:
 
+{{< figure src="/media/docs/grafana/dashboards/screenshot-edit-pane-focus-v12.png" max-width="750px" alt="Dashboard with a panel in focus" >}}
 <!-- screenshot here with annotations for sidebar options including which ones are only in edit mode
 
 | Option | View mode | Edit mode |
 | ------ | --------- | --------- |
-| Settings | | x |
+| Dashboard options | | x |
 | Feedback | | x |
 | Export | x | x |
 | Content outline | x | x |
 | Dashboard insights | x | x | -->
 
-The sidebar includes the following options:
+The sidebar includes the icons for the following options:
 
-- Settings
+- Dashboard options (opens the edit pane)
 - Feedback
-- Export
+- [Export](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards)
 - [Content outline](#navigate-using-the-content-outline)
-- Dashboard insights
+- [Dashboard insights](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/)
 
 {{< admonition type="note" >}}
-The sidebar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** options aren't available in view mode.
+The sidebar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
 {{< /admonition >}}
 
 You can dock, undock, and resize the edit pane.
@@ -207,23 +201,22 @@ When the edit pane is closed, you can resize the sidebar so the icon names are v
 
 <!-- Screen recording here -->
 
-All of the available configuration options for groupings (rows and tabs) are available in the edit pane.
+The available configuration options in the edit pane differ depending on the selected dashboard element:
 
-- For panels, high-level options are in the edit pane and further configuration options are in the **Edit panel** view.
-- For dashboards, high-level options are in the edit pane and further configuration options are in the **Settings** page.
+- Dashboards: High-level options are in the edit pane and further configuration options are in the **Settings** page.
+- Groupings (rows and tabs): All configuration options are available in the edit pane.
+- Panels: High-level options are in the edit pane and further configuration options are in the **Edit panel** view.
 
 ### Navigate using the content outline
 
-The **Content outline** provides a tree-like structure that shows you all of the parts of your dashboard and their relationships to each other including panels, rows, tabs, and variables.
-The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element to work with it.
-By default, the outline is collapsed.
+The **Content outline** provides a tree-like structure that shows you all the parts of the dashboard and their relationships to each other, including panels, rows, tabs, and variables.
+The outline also lets you quickly navigate the dashboard and is available in both view and edit modes (note that variables are only included in edit mode).
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-outline-v12.png" max-width="750px" alt="Dashboard with outline open showing panel in focus" >}}
 <!-- update this -->
 
 To navigate the dashboard using the outline, follow these steps:
 
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to view or update.
 1. In the right sidebar, click the **Content outline** icon to open it.
 1. Expand the outline to find the part of the dashboard you want to view or update.
@@ -235,7 +228,7 @@ To edit a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the part of the dashboard you want to work with to open the edit pane with the relevant options displayed or click **Dashboard options** to open the edit pane.
+1. Click the part of the dashboard you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
@@ -243,26 +236,27 @@ To edit a dashboard, follow these steps:
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Back to dashboard** if needed.
+1. Click **Back to dashboard**, if needed.
 1. Click **Exit edit**
 
 ## Panel layouts
 
-There are two panel layout options available:
+Panel layouts control the size and arrangement of panels in the dashboard.
+There are two panel layout options:
 
 - **Custom**: You can position and size panels individually. This is the default selection. **Show/hide rules** are not supported.
 - **Auto grid**: Panels resize and fit automatically to create a uniform grid. You can't make manual changes to this layout. **Show/hide rules** are supported.
 
-Both layout options are supported in row and tab groupings.
+You can use both layouts in row or tab groupings.
 
 ### Auto grid layout
 
-With the auto grid layout, the layout of the dashboard is automatically adjusted as you add panels.
+In the auto grid layout, panels are automatically sized and positioned as you add them.
 There are default parameters to constrain the layout, and you can update these to have more control over the display:
 
-- **Min column width**: Set the minimum width of the columns in the layout grid. Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
-- **Max columns**: Set the maximum number of columns that layout can have up to 10.
-- **Row height**: Set the height of the rows in the layout grid. Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the minimum width in pixels.
+- **Min column width**: Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
+- **Max columns**: Set a number up to 10.
+- **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
 - **Fill screen**: Toggle the switch on to have the dashboard fill the entire screen, as shown in the following screen recording:
 
    {{< video-embed src="layout-fillscreen.mp4" >}}
@@ -272,14 +266,10 @@ There are default parameters to constrain the layout, and you can update these t
 
 To update the panel layout, follow these steps:
 
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Do one of the following:
-
-   - If the panel layout you want to change isn't contained in a grouping, click the dashboard outside of a grouping, and then click the **Dashboard options** icon to open the edit pane.
-   - Open the **Content outline** and use it to navigate to the grouping that contains the panel layout you want to update. Click the grouping to open the edit pane with the relevant options displayed.
-
+1. Click the dashboard or the grouping that contains the panel layout you want to update.
+1. Click the **Dashboard options** icon to open the edit pane, if needed.
 1. Under **Layout**, select **Custom** or **Auto grid**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -291,16 +281,14 @@ To update the panel layout, follow these steps:
 To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
 Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
 
-You can think of the dashboard as a series of nested containers: the dashboard is the largest container and it can contain panels, rows, or tabs.
+You can think of the dashboard as a series of nested containers: the dashboard is the largest container and it contains panels, rows, or tabs.
 Rows and tabs are the next largest containers, and they contain panels.
 
 You can also nest:
 
-- Rows in rows
-- Rows in tabs
-- Tabs in rows
-
-While you can only have one row inside a row, when you have multiple rows in tabs and vice versa.
+- Row in a row
+- Rows in a tab
+- Tabs in a row
 
 You can nest up to two levels deep, which means your dashboard can have a maximum of four configuration levels:
 
@@ -309,35 +297,39 @@ You can nest up to two levels deep, which means your dashboard can have a maximu
 - Grouping 2 - Row or tab
 - Panels
 
-When you choose the grouping type, row or tab, at Grouping 1-level, you can only add more of that grouping type at that level.
-Inside of those groupings however, you have to freedom to add rows, tabs (as long as it's not a tab), and panels.
+You can only have one type of grouping at each level.
+Inside of those groupings however, you have to freedom to add different elements.
+Also, custom and auto grid panel layouts are supported for rows and tabs, so each of your groupings can have a different panel layout.
 
-<!--maybe a video or screenshot with limitations here -->
+<!-- screenshots with limitations here -->
 
-Custom and auto grid panel layouts are supported for rows and tabs, so each of your groupings can have a different panel layout.
+The following sections describe:
 
-The following sections describe the configuration options and layouts for grouping panels into tabs and rows, as well as how to add and remove groupings.
+- [Grouping configuration options](#grouping-configuration-options)
+- [Grouping layouts](#grouping-layouts)
+- [How to group panels](#group-panels)
+- [How to ungroup panels](#ungroup-panels)
 
 ### Grouping configuration options
 
-The following table describes the options you can set for a row or tab.
+The following table describes the options you can set for a row or tab:
 
 <!-- prettier-ignore-start -->
 
-| Option                   | Description                                                                 |
-| -------------------------| --------------------------------------------------------------------------- |
-| Title                    | Title of the row or tab.                                                    |
-| Fill screen (rows only)  | Toggle the switch on to make the row fill the screen. Only applies to rows. |
-| Hide row header (rows only) | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. |
-| Layout                   | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](#panel-layouts) and [Grouping layouts](#grouping-layouts). |
+| Option          | Description                                                                 |
+| ----------------| --------------------------------------------------------------------------- |
+| Title           | Title of the row or tab.                                                    |
+| Fill screen     | Toggle the switch on to make the row fill the screen. Rows only. |
+| Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
+| Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](#panel-layouts) or [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
-| Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variables or a time range. |
+| Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on query results, variable values, or a time range. |
 
 <!-- prettier-ignore-end -->
 
 ### Grouping layouts
 
-When you have panels grouped into rows or tabs, the **Layout** options available depend on what element in the dashboard you have selected and the nesting level.
+When you have panels grouped into rows or tabs, the **Layout** options available depend on which dashboard element is selected and the nesting level of that element.
 
 You can nest up to two levels deep, which means your dashboard can have a maximum of four configuration levels, with the following layout options:
 
@@ -346,7 +338,7 @@ You can nest up to two levels deep, which means your dashboard can have a maximu
 - **Grouping 2 (inner)**: Layout options allow you to choose between custom and auto grid (refer to [Panel layouts](#panel-layouts)).
 - **Panels**: No layout options
 
-You can switch between rows and tabs or update the panel layout by selecting the parent container, or next level up, and changing the layout selection.
+You can switch between rows and tabs or update the panel layout by clicking the parent container and changing the layout selection.
 
 ### Group panels
 
@@ -360,8 +352,8 @@ To group panels, follow these steps:
 
 1. Select **Group into row** or **Group into tab**.
 
-   All the panels are moved into the grouping and a dotted blue line surrounds the row or tab.
-   The edit pane opens displaying the relevant options.
+   All the panels are moved into the grouping, and a dotted blue line surrounds the row or tab.
+   The edit pane opens, displaying the relevant options.
 
 1. Set the [grouping configuration options](#grouping-configuration-options) in the edit pane.
 1. (Optional) Add one or both of the following:
@@ -378,7 +370,7 @@ To group panels, follow these steps:
 
 To add a second-level, or nested, grouping, follow these steps:
 
-1. In the existing first-level grouping, under the panels, click **Group panels**.
+1. In the existing grouping, under the panels, click **Group panels**.
 1. Click **Group into row** or **Group into tab** (**Group into tab** is only available if the parent grouping is a row).
 
    The new grouping is added inside the first grouping, and the panels are moved into the nested grouping.
@@ -406,13 +398,13 @@ To add more first-level groupings, follow these steps:
 
 ### Ungroup panels
 
-You can ungroup panels from the dashboard at any time without losing your panels.
-Ungrouping behavior depends on whether you're dealing with first-level or nested groupings:
+You can ungroup some or all your groupings without losing your panels.
+Ungrouping behavior depends on whether you're working with first-level or nested groupings:
 
 | Grouping | Action and outcome |
 | -------- | ------------------ |
-| Rows | **Ungroup rows** ungroups all rows in the dashboard including any nested groupings. |
-| Tabs | **Ungroup tabs** ungroups all tabs in the dashboard including any nested groupings. |
+| Rows | **Ungroup rows** ungroups all first-level rows in the dashboard and all of their nested groupings. |
+| Tabs | **Ungroup tabs** ungroups all first-level tabs in the dashboard and all of their nested groupings. |
 | Row > row | **Ungroup rows** ungroups the nested row. |
 | Row > tabs | **Ungroup tabs** ungroups all the nested tabs in that row. Tabs in other rows are not affected. |
 | Tab > rows | **Ungroup rows** ungroups all the nested rows in that tab. Rows in other tabs are not affected. |
@@ -420,7 +412,7 @@ Ungrouping behavior depends on whether you're dealing with first-level or nested
 <!-- screenshot or recording here -->
 
 {{< admonition type="caution" >}}
-If you delete a grouping, rather than ungrouping, then the panels are deleted as well.
+If you delete a grouping, rather than ungrouping it, its panels are deleted as well.
 {{< /admonition >}}
 
 To remove groupings, follow these steps:
@@ -430,34 +422,34 @@ To remove groupings, follow these steps:
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
 1. Do one of the following:
 
-   - Click **Ungroup rows** or **Ungroup tabs** at the bottom of the dashboard to ungroup all rows or tabs including any nested groupings.
+   - Click **Ungroup rows** or **Ungroup tabs** at the bottom of the dashboard to ungroup all rows or tabs, including any nested groupings.
    - Click in a grouping and click **Ungroup rows** or **Ungroup tabs** to ungroup only the tabs or rows nested in that grouping.
 
-1. If ungrouping mixes panels that were previously in different layouts, you'll be prompted to select a layout type to convert to; click **Convert to Auto grid** or **Convert to Custom**.
-1. Click **Save** at the top-right corner of the dashboard.
+1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto grid** or **Convert to Custom**.
+1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
 
 ## Configure repeat options
 
-You can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of that variable.
-Variables dynamically change your queries across all rows in a dashboard.
+You can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of a variable.
+Variables dynamically change your queries across all panels, rows, or tabs in a dashboard.
 
 This only applies to queries that include a multi-value variable.
 
 To configure repeats, follow these steps:
 
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the panel, row, or tab you want to work with to open the edit pane with the relevant options displayed.
+1. Click the panel, row, or tab you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
 
-   If the dashboard is large, open the **Content outline** and use it to navigate to the panel, row, or tab.
+   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
 1. For panels in a custom layout, set the following options:
+
    1. Under **Repeat direction**, choose one of the following:
       - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can’t mix other panels on a row with a repeated panel.
       - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
@@ -484,9 +476,9 @@ For example, in a dashboard:
 ## Show/hide rules
 
 You can configure panels, rows, and tabs to be shown or hidden based on rules.
-For example, you might want to set a panel to be hidden if there's no data returned by a query, or for a tab to only be shown based on a variable being present.
+For example, you can set a panel to be hidden if there's no data returned by a query or a tab to only be shown if a specific variable value is present.
 
-There are three types of show/hide rules to choose from, which are described in the following sections:
+There are three types of show/hide rules to choose from:
 
 - [Query result](#query-result-rule)
 - [Template variable](#template-variable-rule)
@@ -501,14 +493,14 @@ You can only configure show/hide rules for panels in the **Auto grid** layout. S
 ### Query result rule
 
 Show or hide a panel based on whether or not the query returns any results.
-The rule provides **Has data** and **No data** options, so you can choose to how or hide the panel based on the presence of data or no data.
+The rule provides **Has data** and **No data** options, so you can choose to show or hide the panel based on the presence or absence of data.
 
 For example, if you have a dashboard with several panels and only want panels that return data to appear, set the rule as follows:
 
 - Panel visibility > Show
 - Query result > Has data
 
-You might also want to troubleshoot a dashboard with several panels to see which ones contain broken queries that aren't returning any results.
+Alternatively, you might also want to troubleshoot a dashboard with several panels to see which ones contain broken queries that aren't returning any results.
 In this case, you'd set the rule as follows:
 
 - Panel visibility > Show
@@ -524,22 +516,22 @@ You can select any variable that's configured for the dashboard and choose from 
 - Matches
 - Not matches
 
-You can add more variables on the fly without leaving the dashboard using the outline.
-For more information, refer to [Add variables using the content outline](#add-variables-using-the-content-outline).
+You can also [add more variables](#add-variables) as needed without leaving the dashboard using the outline.
 
 ### Time range less than rule
 
 Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range.
 This ensures that as you change the time range of the dashboard, you only see data relevant to that time period.
 
-For example, a dashboard is tracking adoption of a feature over time with the following setup:
+For example, a dashboard is tracking adoption of a feature over time has the following setup:
 
-- The dashboard has a time of the **Last 7 days**.
-- There are a set of panels that track weekly stats and a set that track daily stats.
+- Dashboard time range is **Last 7 days**
+- One panel tracks weekly stats
+- One panel tracks daily stats
 
-For the panels that track weekly stats, a rule is set up to hide them if the dashboard time range is less than 7 days.
-For the daily stats, a rule is set up to hide them if the dashboard time range is less 24 hours.
-This configuration ensures that these time-sensitive panels are only displayed when enough time has passed to make them relevant.
+For the panel tracking weekly stats, a rule is set up to hide it if the dashboard time range is less than 7 days.
+For the panel tracking daily stats, a rule is set up to hide it if the dashboard time range is less 24 hours.
+This configuration ensures that these time-based panels are only displayed when enough time has passed to make them relevant.
 
 For this rule type, you can select time ranges from **5 minutes** to **5 years**.
 
@@ -547,28 +539,24 @@ For this rule type, you can select time ranges from **5 minutes** to **5 years**
 
 To configure show/hide rules, follow these steps:
 
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the panel, row, or tab you want to work with to open the edit pane with the relevant options displayed.
+1. Click the panel, row, or tab you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
 
-   If the dashboard is large, open the **Content outline** and use it to navigate to the panel, row, or tab.
+   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
 1. Expand the **Show / hide rules** section.
 1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
 1. Click **+ Add rule**.
 1. Select a rule type:
-   - **Query result** - Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
-   - **Template variable** - Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
-   - **Time range less than** - Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
 
-1. Configure the rule.
+   - **Query result**: Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
+   - **Template variable**: Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
+   - **Time range less than**: Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
 
-   If you've set a hide rule, the panel, row, or tab isn't visible when the dashboard is in view mode. In edit mode, an icon indicating the panel, row, or tab isn't visible is displayed on the dashboard element.
-
-1. Under **Match rules**, select one of the following:
-   - **Match all** - The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
-   - **Match any** - The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
+1. If you've configured more than rule, under **Match rules**, select one of the following:
+   - **Match all**: The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
+   - **Match any**: The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
 
    This option is only displayed if you add multiple rules.
 
@@ -576,6 +564,9 @@ To configure show/hide rules, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**
+
+Hidden panels, rows, or tabs aren't visible when the dashboard is in view mode.
+In edit mode, hidden dashboard elements are displayed with an icon indicating this.
 
 ## Move or resize a panel
 
@@ -604,10 +595,9 @@ To move or resize, follow these steps:
 
 To add variables without leaving the dashboard, follow these steps:
 
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the **+ Add variable** button at the top of the dashboard.
+1. Click **+ Add variable** at the top of the dashboard.
 1. Choose a variable type from the list.
 1. Set the options for the variable.
 1. Click **Save**.
@@ -619,12 +609,11 @@ To add variables without leaving the dashboard, follow these steps:
 
 You can also add variables without leaving the dashboard using the content outline.
 
-To access the variables addition flow, follow these steps:
+To access the variables creation flow this way, follow these steps:
 
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the **Content outline** icon to open it.
+1. Click the **Content outline** icon.
 1. Click **Variables** in the outline.
 1. Click **+ Add variable**.
 1. Complete the rest of the steps to [add a variable without leaving the dashboard](#add-variables).
@@ -633,7 +622,6 @@ To access the variables addition flow, follow these steps:
 
 To make a copy of a dashboard, follow these steps:
 
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the **Save** drop-down list and select **Save as copy**.
