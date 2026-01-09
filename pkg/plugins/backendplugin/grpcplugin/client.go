@@ -1,6 +1,7 @@
 package grpcplugin
 
 import (
+	"os"
 	"os/exec"
 	"runtime"
 
@@ -84,6 +85,12 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 
 	if descriptor.runnerFunc != nil {
 		cfg.RunnerFunc = descriptor.runnerFunc
+		td, err := os.MkdirTemp("", "plugin")
+		if err != nil {
+			// TODO: what do we do here?
+			td = "/tmp"
+		}
+		cfg.UnixSocketConfig = &goplugin.UnixSocketConfig{TempDir: td}
 		logger.Debug("Using runner mode", "os", runtime.GOOS, "executablePath", executablePath)
 	} else {
 		logger.Debug("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
