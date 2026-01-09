@@ -107,9 +107,7 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
               size="md"
               disabled={newTagName.length <= 0 || isTagTooLong}
               title={
-                isTagTooLong
-                  ? t('grafana-ui.tags-input.tag-too-long', 'Tag too long, max 50 characters')
-                  : undefined
+                isTagTooLong ? t('grafana-ui.tags-input.tag-too-long', 'Tag too long, max 50 characters') : undefined
               }
             >
               <Trans i18nKey="grafana-ui.tags-input.add">Add</Trans>
