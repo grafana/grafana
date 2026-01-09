@@ -6,8 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/util"
 )
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -43,26 +42,13 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	s.logger.Debug("New stream call", "path", request.Path)
 	tempoDatasource, dsInfoErr := s.getDSInfo(ctx, request.PluginContext)
 
-	// get team http headers.
-	plugin := backend.PluginConfigFromContext(ctx)
-	headers := map[string]string{}
-	b := plugin.DataSourceInstanceSettings.JSONData
-	js, err := simplejson.NewJson(b)
+	// get incoming and team http headers and append to stream request.
+	headers, err := util.SetHeadersFromIncomingContext(ctx)
 	if err != nil {
 		return err
 	}
-	teamHttpHeaders, err := datasources.GetTeamHTTPHeaders(js)
-	if err != nil {
-		return err
-	}
-
-	for _, ruleValue := range teamHttpHeaders.Headers {
-		for _, accessRule := range ruleValue {
-			headers[accessRule.Header] = accessRule.LBACRule
-		}
-	}
-	backend.Logger.Warn("Team HTTP Headers: %v", headers)
 	request.Headers = headers
+
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
 		if dsInfoErr != nil {
 			return backend.DownstreamErrorf("failed to get datasource information: %w", dsInfoErr)

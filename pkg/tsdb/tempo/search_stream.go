@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"io"
 
-	"google.golang.org/grpc/metadata"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/util"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -34,7 +33,6 @@ type StreamSender interface {
 func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *DatasourceInfo) error {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runSearchStream")
 	defer span.End()
-	backend.Logger.Warn("runSearchStream called heeer")
 	response := &backend.DataResponse{}
 
 	var backendQuery *backend.DataQuery
@@ -56,21 +54,14 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	}
 
 	if sr.GetQuery() == "" {
-		return backend.DownstreamErrorf("tempo run search query cannot be empty")
+		return backend.DownstreamErrorf("tempo search query cannot be empty")
 	}
 
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
 	sr.End = uint32(backendQuery.TimeRange.To.Unix())
 
-	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
-	// changes or updates, so we have to get it from context.
-	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
-	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
-	// append the rest of the headers
-	backend.Logger.Warn("Headers:", "headers", req.Headers)
-	for key, value := range req.Headers {
-		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
-	}
+	ctx = util.AppendHeadersToOutgoingContext(ctx, req)
+
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {
 		span.RecordError(err)
