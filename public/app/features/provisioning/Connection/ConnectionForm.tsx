@@ -9,16 +9,10 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { SecretTextArea } from '../Shared/SecretTextArea';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
+import { ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
-
-export interface ConnectionFormData {
-  type: 'github' | 'gitlab' | 'bitbucket';
-  appID: string;
-  installationID: string;
-  privateKey?: string;
-}
 
 interface ConnectionFormProps {
   data?: Connection;
@@ -66,7 +60,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
   const onSubmit = async (form: ConnectionFormData) => {
     try {
-      const spec: ConnectionSpec = {
+      const spec = {
         type: form.type,
         github: {
           appID: form.appID,
@@ -103,7 +97,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
               <Combobox
                 disabled // TODO enable when other providers are supported
                 options={providerOptions}
-                onChange={(option) => onChange(option?.value || 'github')}
+                onChange={(option) => onChange(option?.value)}
                 {...field}
               />
             )}

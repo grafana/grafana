@@ -2,9 +2,8 @@ import { Path } from 'react-hook-form';
 
 import { ErrorDetails } from 'app/api/clients/provisioning/v0alpha1';
 
-import { ConnectionFormData } from '../Connection/ConnectionForm';
 import { WizardFormData } from '../Wizard/types';
-import { RepositoryFormData } from '../types';
+import { ConnectionFormData, RepositoryFormData } from '../types';
 
 export type RepositoryField = keyof WizardFormData['repository'];
 export type RepositoryFormPath = `repository.${RepositoryField}` | 'repository.sync.intervalSeconds';
