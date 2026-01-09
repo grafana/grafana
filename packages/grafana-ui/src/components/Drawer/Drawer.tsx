@@ -129,15 +129,7 @@ export function Drawer({
       }}
     >
       <FloatingFocusManager context={context} modal>
-        <div
-          aria-label={
-            typeof title === 'string'
-              ? selectors.components.Drawer.General.title(title)
-              : selectors.components.Drawer.General.title('no title')
-          }
-          className={styles.container}
-          ref={refs.setFloating}
-        >
+        <div className={styles.container} ref={refs.setFloating}>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             className={cx(dragStyles.dragHandleVertical, styles.resizer)}
