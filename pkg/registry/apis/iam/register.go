@@ -341,7 +341,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 	if err != nil {
 		return err
 	}
-	storage[teamBindingResource.StoragePath()] = teamBindingUniStore
+	var teamBindingStore storewrapper.K8sStorage = teamBindingUniStore
 
 	// Only teamBindingStore exposes the AfterCreate, AfterDelete, and BeginUpdate hooks
 	if enableZanzanaSync {
@@ -356,8 +356,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		if err != nil {
 			return err
 		}
-		storage[teamBindingResource.StoragePath()] = dw
+
+		var ok bool
+		teamBindingStore, ok = dw.(storewrapper.K8sStorage)
+		if !ok {
+			return fmt.Errorf("expected storewrapper.K8sStorage, got %T", dw)
+		}
 	}
+
+	authzWrapper := storewrapper.New(teamBindingStore, iamauthorizer.NewTeamBindingAuthorizer(b.accessClient))
+	storage[teamBindingResource.StoragePath()] = authzWrapper
 	return nil
 }
 
