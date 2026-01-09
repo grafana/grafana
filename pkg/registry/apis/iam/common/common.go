@@ -73,7 +73,7 @@ func List[T metav1.Object](
 		check, _, err = ac.Compile(ctx, ident, authlib.ListRequest{
 			Resource:  resource.GroupResource().Resource,
 			Group:     resource.GroupResource().Group,
-			Verb:      utils.VerbGet,
+			Verb:      utils.VerbList,
 			Namespace: ns.Value,
 		})
 
