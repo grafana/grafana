@@ -73,3 +73,61 @@ func TestCreateDashboardSnapshot_DashboardNotFound(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Dashboard not found", response["message"])
 }
+
+func TestCreateDashboardSnapshot_PublicModeSkipsValidation(t *testing.T) {
+	mockService := NewMockService(t)
+	cfg := snapshot.SnapshotSharingOptions{
+		SnapshotsEnabled: true,
+		ExternalEnabled:  false,
+		PublicMode:       true,
+	}
+	testUser := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  1,
+		Login:  "testuser",
+		Name:   "Test User",
+		Email:  "test@example.com",
+	}
+	dashboard := &common.Unstructured{}
+	dashboardData := map[string]interface{}{
+		"uid": "test-dashboard-uid",
+		"id":  123,
+	}
+	dashboardBytes, _ := json.Marshal(dashboardData)
+	_ = json.Unmarshal(dashboardBytes, dashboard)
+
+	cmd := CreateDashboardSnapshotCommand{
+		DashboardCreateCommand: snapshot.DashboardCreateCommand{
+			Dashboard: dashboard,
+			Name:      "Test Snapshot",
+		},
+	}
+
+	// Mock CreateDashboardSnapshot to return a successful result
+	mockService.On("CreateDashboardSnapshot", mock.Anything, mock.Anything).
+		Return(&DashboardSnapshot{
+			Key:       "test-key",
+			DeleteKey: "test-delete-key",
+		}, nil)
+
+	req, _ := http.NewRequest("POST", "/api/snapshots", nil)
+	req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+
+	recorder := httptest.NewRecorder()
+	ctx := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  req,
+			Resp: web.NewResponseWriter("POST", recorder),
+		},
+		SignedInUser: testUser,
+		Logger:       log.NewNopLogger(),
+	}
+
+	// Call with snapshotsPublicMode = true
+	CreateDashboardSnapshot(ctx, cfg, cmd, mockService)
+
+	// Verify ValidateDashboardExists was NOT called when in public mode
+	mockService.AssertNotCalled(t, "ValidateDashboardExists", mock.Anything, mock.Anything, mock.Anything)
+
+	assert.Equal(t, http.StatusOK, recorder.Code)
+}

@@ -43,36 +43,41 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 	}
 
 	uid := cmd.Dashboard.GetNestedString("uid")
-	user, err := identity.GetRequester(c.Req.Context())
-	if err != nil {
-		c.JsonApiErr(http.StatusBadRequest, "missing user in context", nil)
-		return
-	}
 
-	err = svc.ValidateDashboardExists(c.Req.Context(), user.GetOrgID(), uid)
-	if err != nil {
-		if errors.Is(err, dashboards.ErrDashboardNotFound) {
-			c.JsonApiErr(http.StatusBadRequest, "Dashboard not found", err)
+	var user identity.Requester
+	var err error
+	var originalDashboardURL string
+	// In Grafana is running in snapshots.public_mode, skip this validation since the public server does not contain dashboard information
+	if !cfg.PublicMode {
+		user, err = identity.GetRequester(c.Req.Context())
+		if err != nil {
+			c.JsonApiErr(http.StatusBadRequest, "missing user in context", nil)
 			return
 		}
-		c.JsonApiErr(http.StatusInternalServerError, "Failed to get dashboard", err)
-		return
-	}
 
+		err = svc.ValidateDashboardExists(c.Req.Context(), user.GetOrgID(), uid)
+		if err != nil {
+			if errors.Is(err, dashboards.ErrDashboardNotFound) {
+				c.JsonApiErr(http.StatusBadRequest, "Dashboard not found", err)
+				return
+			}
+			c.JsonApiErr(http.StatusInternalServerError, "Failed to get dashboard", err)
+			return
+		}
+		cmd.ExternalURL = ""
+		cmd.OrgID = user.GetOrgID()
+		cmd.UserID, _ = identity.UserIdentifier(user.GetID())
+		originalDashboardURL, err = createOriginalDashboardURL(&cmd)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)
+			return
+		}
+	}
 	if cmd.Name == "" {
 		cmd.Name = "Unnamed snapshot"
 	}
 
 	var snapshotUrl string
-	cmd.ExternalURL = ""
-	cmd.OrgID = user.GetOrgID()
-	cmd.UserID, _ = identity.UserIdentifier(user.GetID())
-	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
-	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)
-		return
-	}
-
 	if cmd.External {
 		if !cfg.ExternalEnabled {
 			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
