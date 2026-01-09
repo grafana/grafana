@@ -1,147 +1,236 @@
 import { css, cx } from '@emotion/css';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } from 'react-table';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { useDebounce, usePrevious } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Dropdown, Input, Menu, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Input, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from '../FlameGraph/colors';
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { labelSearch } from '../FlameGraphContainer';
 import { ColorScheme, ColorSchemeDiff } from '../types';
 import {
   buildAllCallTreeNodes,
+  buildCallersTreeFromLevels,
   CallTreeNode,
-  filterCallTree,
-  getExpandedStateForMatches,
   getInitialExpandedState,
 } from './utils';
 
 type Props = {
   data: FlameGraphDataContainer;
   onSymbolClick: (symbol: string) => void;
-  search?: string;
-  matchedLabels?: Set<string>;
   sandwichItem?: string;
-  onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
 };
 
 const FlameGraphCallTreeContainer = memo(
-  ({ data, onSymbolClick, search, matchedLabels, onSearch, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme }: Props) => {
+  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme }: Props) => {
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
-    // Color scheme state
-    const [colorScheme, setColorScheme] = useState<ColorScheme | ColorSchemeDiff>(initialColorScheme);
+    // Use package-based color scheme by default
+    const colorScheme = data.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.PackageBased;
 
     // Focus state - track which node is focused
     const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>(undefined);
 
-    // Update color scheme when prop changes
-    useEffect(() => {
-      setColorScheme(initialColorScheme);
-    }, [initialColorScheme]);
+    // Callers state - track which function's callers we're showing
+    const [callersNodeLabel, setCallersNodeLabel] = useState<string | undefined>(undefined);
 
-    // Search with debouncing
-    const [localSearch, setLocalSearch] = useSearchInput(search || '', onSearch);
-
-    // Get matched labels from search
-    const searchMatchedLabels = useMemo(() => {
-      if (!localSearch) {
-        return undefined;
+    // Wrapper functions for mutual exclusivity
+    const handleSetFocusMode = (nodeIdOrLabel: string | undefined, isLabel: boolean = false) => {
+      if (nodeIdOrLabel === undefined) {
+        setFocusedNodeId(undefined);
+      } else if (isLabel) {
+        // When switching from callers mode, we need to find the node by label in the normal tree
+        // We'll set a special marker that the useMemo will use to find the node
+        setFocusedNodeId(`label:${nodeIdOrLabel}`);
+      } else {
+        setFocusedNodeId(nodeIdOrLabel);
       }
-      return labelSearch(localSearch, data);
-    }, [localSearch, data]);
 
-    // Use search-based matched labels if available, otherwise use prop
-    const effectiveMatchedLabels = searchMatchedLabels || matchedLabels;
+      if (nodeIdOrLabel !== undefined) {
+        setCallersNodeLabel(undefined);
+      }
+    };
 
-    // Build and filter nodes
-    const { nodes, matchingIds, focusedNode } = useMemo(() => {
+    const handleSetCallersMode = (label: string | undefined) => {
+      setCallersNodeLabel(label);
+      if (label !== undefined) {
+        setFocusedNodeId(undefined);
+      }
+    };
+
+    // Build nodes
+    const { nodes, focusedNode, callersNode } = useMemo(() => {
       const allNodes = buildAllCallTreeNodes(data);
 
-      // If there's a focused node, find it and use its subtree
+      // If there's a focused node, find it and use its subtree with parent
       let nodesToUse = allNodes;
       let focused: CallTreeNode | undefined;
+      let callersTargetNode: CallTreeNode | undefined;
 
       if (focusedNodeId) {
+        // Check if we're searching by label (when switching from callers mode)
+        const isLabelSearch = focusedNodeId.startsWith('label:');
+        const searchKey = isLabelSearch ? focusedNodeId.substring(6) : focusedNodeId;
+
         // Find the focused node in the tree
-        const findNode = (nodes: CallTreeNode[], id: string): CallTreeNode | undefined => {
+        const findNode = (nodes: CallTreeNode[], searchKey: string, byLabel: boolean): CallTreeNode | undefined => {
           for (const node of nodes) {
-            if (node.id === id) {
+            if (byLabel ? node.label === searchKey : node.id === searchKey) {
               return node;
             }
             if (node.subRows) {
-              const found = findNode(node.subRows, id);
+              const found = findNode(node.subRows, searchKey, byLabel);
               if (found) return found;
             }
           }
           return undefined;
         };
 
-        focused = findNode(allNodes, focusedNodeId);
+        focused = findNode(allNodes, searchKey, isLabelSearch);
         if (focused) {
-          // Use the focused node as the root
-          nodesToUse = [focused];
+          // If we searched by label, update the focusedNodeId to use the actual ID
+          if (isLabelSearch) {
+            // Update state to use the actual ID for future operations
+            // We do this asynchronously to avoid updating state during render
+            setTimeout(() => setFocusedNodeId(focused!.id), 0);
+          }
+
+          // If the focused node has a parent, show parent with focused node as only child
+          if (focused.parentId) {
+            const parent = findNode(allNodes, focused.parentId, false);
+            if (parent) {
+              // Create a modified parent that only shows the focused node as its child
+              const modifiedParent: CallTreeNode = {
+                ...parent,
+                subRows: [focused],
+                hasChildren: true,
+                childCount: 1,
+              };
+              nodesToUse = [modifiedParent];
+            } else {
+              // Parent not found, just use focused node
+              nodesToUse = [focused];
+            }
+          } else {
+            // No parent, use the focused node as the root
+            nodesToUse = [focused];
+          }
         }
       }
 
-      const { visibleNodes, matchingNodeIds } = filterCallTree(nodesToUse, effectiveMatchedLabels);
-      return { nodes: visibleNodes, matchingIds: matchingNodeIds, focusedNode: focused };
-    }, [data, effectiveMatchedLabels, focusedNodeId]);
+      // If there's a callers mode active, build the inverted tree
+      if (callersNodeLabel) {
+        const [callers, _] = data.getSandwichLevels(callersNodeLabel);
 
-    // Calculate expanded state based on search
-    const calculatedExpanded = useMemo(() => {
-      const baseExpanded = getInitialExpandedState(nodes, 2);
-      console.log('Calculated base expanded:', {
-        numBaseExpanded: Object.keys(baseExpanded).filter(k => baseExpanded[k]).length,
-        totalNodes: nodes.length,
-        firstNode: nodes[0]?.id,
-        expandedKeys: Object.keys(baseExpanded).filter(k => baseExpanded[k]),
-      });
+        if (callers.length > 0 && callers[0].length > 0) {
+          const levels = data.getLevels();
+          const rootTotal = levels.length > 0 ? levels[0][0].value : 0;
 
-      if (effectiveMatchedLabels && effectiveMatchedLabels.size > 0) {
-        const matchExpanded = getExpandedStateForMatches(nodes, matchingIds);
-        console.log('Adding match expansion:', {
-          numMatchExpanded: Object.keys(matchExpanded).filter(k => matchExpanded[k]).length,
-          matchExpandedKeys: Object.keys(matchExpanded).filter(k => matchExpanded[k]),
-          matchingIds: Array.from(matchingIds),
-          hasSearch: true,
-        });
-        return { ...baseExpanded, ...matchExpanded };
+          // Build inverted tree directly with target as root and callers as children
+          const { tree, targetNode } = buildCallersTreeFromLevels(callers, callersNodeLabel, data, rootTotal);
+
+          nodesToUse = tree;
+          callersTargetNode = targetNode;
+        } else {
+          // No callers found - show empty tree
+          nodesToUse = [];
+          callersTargetNode = undefined;
+        }
       }
+
+      return { nodes: nodesToUse, focusedNode: focused, callersNode: callersTargetNode };
+    }, [data, focusedNodeId, callersNodeLabel]);
+
+    // Calculate expanded state
+    const calculatedExpanded = useMemo(() => {
+      const baseExpanded = getInitialExpandedState(nodes, 1);
+
+      // If there's a focused node, expand to show its children
+      if (focusedNodeId && nodes.length > 0) {
+        const rootNode = nodes[0];
+
+        // Check if focusedNodeId is a label-based search
+        const isLabelSearch = focusedNodeId.startsWith('label:');
+        const searchLabel = isLabelSearch ? focusedNodeId.substring(6) : undefined;
+
+        // Always expand the root to show the focused node
+        if (rootNode.hasChildren) {
+          baseExpanded['0'] = true;
+        }
+
+        // If the root is the parent (not the focused node itself), also expand the focused node
+        const isRootTheFocusedNode = isLabelSearch
+          ? rootNode.label === searchLabel
+          : rootNode.id === focusedNodeId;
+
+        if (!isRootTheFocusedNode && rootNode.hasChildren) {
+          // The focused node is at "0.0" (first child of parent)
+          baseExpanded['0.0'] = true;
+        }
+      }
+
+      // If in callers mode, expand to show the target node
+      if (callersNodeLabel && callersNode && nodes.length > 0) {
+        // Find path from root to target node and expand all nodes along the path
+        const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
+          for (const node of nodes) {
+            if (node.id === targetId) {
+              // Found the target - don't expand it yet, but confirm path
+              return true;
+            }
+            if (node.subRows && node.hasChildren) {
+              // Check if target is in this subtree
+              const foundInSubtree = expandPathToNode(node.subRows, targetId);
+              if (foundInSubtree) {
+                // Target is in this subtree, so expand this node
+                baseExpanded[node.id] = true;
+                return true;
+              }
+            }
+          }
+          return false;
+        };
+
+        // Expand path to target
+        expandPathToNode(nodes, callersNode.id);
+
+        // Also expand the target node itself to show its immediate callers (children in this view)
+        if (callersNode.hasChildren) {
+          baseExpanded[callersNode.id] = true;
+        }
+      }
+
       return baseExpanded;
-    }, [nodes, effectiveMatchedLabels, matchingIds]);
+    }, [nodes, focusedNodeId, callersNodeLabel, callersNode]);
 
     // Create a key that changes when expansion should reset, forcing table remount
     const tableKey = useMemo(() => {
       // Include matchingIds in the key so table remounts when search results change
       const expandedKeys = Object.keys(calculatedExpanded).filter(k => calculatedExpanded[k]).sort().join(',');
       const focusPart = focusedNodeId ? `-focus-${focusedNodeId}` : '';
-      return `table-${expandedKeys}${focusPart}`;
-    }, [calculatedExpanded, focusedNodeId]);
+      const callersPart = callersNodeLabel ? `-callers-${callersNodeLabel}` : '';
+      return `table-${expandedKeys}${focusPart}${callersPart}`;
+    }, [calculatedExpanded, focusedNodeId, callersNodeLabel]);
 
     // Define columns
-    const columns: Column<CallTreeNode>[] = useMemo(() => {
+    const columns = useMemo<Column<CallTreeNode>[]>(() => {
       if (data.isDiffFlamegraph()) {
         return [
           {
             Header: '',
             id: 'actions',
-            Cell: ({ row }: { row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode> }) => (
+            Cell: ({ row }: any) => (
               <ActionsCell
                 row={row}
-                onFocus={(nodeId) => {
-                  setFocusedNodeId(nodeId);
-                  setLocalSearch('');
-                }}
-                isFocusedRoot={row.id === '0'}
+                onFocus={handleSetFocusMode}
+                onShowCallers={handleSetCallersMode}
+                focusedNodeId={focusedNodeId}
+                callersNodeLabel={callersNodeLabel}
                 styles={styles}
               />
             ),
@@ -160,8 +249,6 @@ const FlameGraphCallTreeContainer = memo(
                 hasChildren={row.original.hasChildren}
                 rowIndex={rowIndex}
                 rows={tableInstance.rows}
-                isMatching={matchingIds.has(row.original.id)}
-                hasFilter={effectiveMatchedLabels !== undefined && effectiveMatchedLabels.size > 0}
                 onSymbolClick={onSymbolClick}
                 styles={styles}
                 allNodes={nodes}
@@ -174,7 +261,7 @@ const FlameGraphCallTreeContainer = memo(
             Header: '',
             id: 'colorBar',
             Cell: ({ row }: { row: Row<CallTreeNode> }) => (
-              <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} />
+              <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} focusedNode={focusedNode} callersNode={callersNode} />
             ),
             minWidth: 200,
             width: 200,
@@ -209,14 +296,13 @@ const FlameGraphCallTreeContainer = memo(
           {
             Header: '',
             id: 'actions',
-            Cell: ({ row }: { row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode> }) => (
+            Cell: ({ row }: any) => (
               <ActionsCell
                 row={row}
-                onFocus={(nodeId) => {
-                  setFocusedNodeId(nodeId);
-                  setLocalSearch('');
-                }}
-                isFocusedRoot={row.id === '0'}
+                onFocus={handleSetFocusMode}
+                onShowCallers={handleSetCallersMode}
+                focusedNodeId={focusedNodeId}
+                callersNodeLabel={callersNodeLabel}
                 styles={styles}
               />
             ),
@@ -235,8 +321,6 @@ const FlameGraphCallTreeContainer = memo(
                 hasChildren={row.original.hasChildren}
                 rowIndex={rowIndex}
                 rows={tableInstance.rows}
-                isMatching={matchingIds.has(row.original.id)}
-                hasFilter={effectiveMatchedLabels !== undefined && effectiveMatchedLabels.size > 0}
                 onSymbolClick={onSymbolClick}
                 styles={styles}
                 allNodes={nodes}
@@ -249,7 +333,7 @@ const FlameGraphCallTreeContainer = memo(
             Header: '',
             id: 'colorBar',
             Cell: ({ row }: { row: Row<CallTreeNode> }) => (
-              <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} />
+              <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} focusedNode={focusedNode} callersNode={callersNode} />
             ),
             minWidth: 200,
             width: 200,
@@ -291,7 +375,7 @@ const FlameGraphCallTreeContainer = memo(
           },
         ];
       }
-    }, [data, effectiveMatchedLabels, matchingIds, onSymbolClick, colorScheme, theme, styles, setLocalSearch]);
+    }, [data, onSymbolClick, colorScheme, theme, styles, focusedNode, callersNode, callersNodeLabel]);
 
     // toggleRowExpanded is used in the Cell renderers but doesn't need to be in the dependencies
     // because it's accessed at render time, not definition time
@@ -314,35 +398,7 @@ const FlameGraphCallTreeContainer = memo(
       useExpanded
     );
 
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, state } = tableInstance;
-
-    console.log('Table state:', {
-      visibleRows: rows.length,
-      expandedState: Object.keys(state.expanded).filter(k => state.expanded[k]).length,
-      expandedIds: Object.keys(state.expanded).filter(k => state.expanded[k]),
-      firstFewRows: rows.slice(0, 5).map(r => ({
-        id: r.id,
-        originalId: r.original.id,
-        label: r.original.label,
-        isExpanded: (r as any).isExpanded,
-        hasSubRows: !!r.original.subRows
-      })),
-      rootNodeSubRows: nodes[0]?.subRows?.length,
-    });
-
-    const clearSearchSuffix =
-      localSearch !== '' ? (
-        <Button
-          icon="times"
-          fill="text"
-          size="sm"
-          onClick={() => {
-            setLocalSearch('');
-          }}
-        >
-          Clear
-        </Button>
-      ) : null;
+    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
 
     return (
       <div className={styles.container} data-testid="callTree">
@@ -350,33 +406,44 @@ const FlameGraphCallTreeContainer = memo(
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
             <Input
-              value={localSearch}
-              onChange={(v) => {
-                setLocalSearch(v.currentTarget.value);
-              }}
+              value={''}
+              disabled
               placeholder={'Search...'}
-              suffix={clearSearchSuffix}
               className={styles.searchInput}
             />
           </div>
 
           {focusedNode && (
             <div className={styles.focusedItem}>
-              <Button icon="eye" fill="text" size="sm" disabled aria-label="Focused" />
-              <span className={styles.focusedItemLabel}>{focusedNode.label}</span>
+              <Button icon="compress-arrows" fill="text" size="sm" disabled aria-label="Callees view" />
+              <span className={styles.focusedItemLabel}>Showing callees of: {focusedNode.label}</span>
               <Button
                 icon="times"
                 fill="text"
                 size="sm"
-                onClick={() => setFocusedNodeId(undefined)}
-                tooltip="Clear focus"
-                aria-label="Clear focus"
+                onClick={() => handleSetFocusMode(undefined)}
+                tooltip="Clear callees view"
+                aria-label="Clear callees view"
+              />
+            </div>
+          )}
+
+          {callersNode && (
+            <div className={styles.callersItem}>
+              <Button icon="expand-arrows-alt" fill="text" size="sm" disabled aria-label="Callers view" />
+              <span className={styles.callersItemLabel}>Showing callers of: {callersNodeLabel}</span>
+              <Button
+                icon="times"
+                fill="text"
+                size="sm"
+                onClick={() => handleSetCallersMode(undefined)}
+                tooltip="Clear callers view"
+                aria-label="Clear callers view"
               />
             </div>
           )}
 
           <div className={styles.toolbarRight}>
-            <ColorSchemeButton value={colorScheme} onChange={setColorScheme} isDiffMode={data.isDiffFlamegraph()} />
           </div>
         </div>
 
@@ -424,8 +491,18 @@ const FlameGraphCallTreeContainer = memo(
                     {rows.map((row, rowIndex) => {
                       prepareRow(row);
                       const { key, ...rowProps } = row.getRowProps();
+                      const isFocusedRow = row.original.id === focusedNodeId;
+                      const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
                       return (
-                        <tr key={key} {...rowProps} className={styles.tr}>
+                        <tr
+                          key={key}
+                          {...rowProps}
+                          className={cx(
+                            styles.tr,
+                            (isFocusedRow || (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label)) && styles.focusedRow,
+                            isCallersTargetRow && styles.callersTargetRow
+                          )}
+                        >
                           {row.cells.map((cell) => {
                             const { key: cellKey, ...cellProps } = cell.getCellProps();
                             const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
@@ -456,67 +533,6 @@ const FlameGraphCallTreeContainer = memo(
 );
 
 FlameGraphCallTreeContainer.displayName = 'FlameGraphCallTreeContainer';
-
-// ColorSchemeButton component
-type ColorSchemeButtonProps = {
-  value: ColorScheme | ColorSchemeDiff;
-  onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
-  isDiffMode: boolean;
-};
-
-function ColorSchemeButton(props: ColorSchemeButtonProps) {
-  const styles = useStyles2(getStyles);
-
-  let menu = (
-    <Menu>
-      <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
-      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
-    </Menu>
-  );
-
-  const colorDotStyle =
-    {
-      [ColorScheme.ValueBased]: styles.colorDotByValue,
-      [ColorScheme.PackageBased]: styles.colorDotByPackage,
-      [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
-      [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
-    }[props.value] || styles.colorDotByValue;
-
-  let contents = <span className={cx(styles.colorDot, colorDotStyle)} />;
-
-  if (props.isDiffMode) {
-    menu = (
-      <Menu>
-        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
-        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
-      </Menu>
-    );
-
-    contents = (
-      <div className={cx(styles.colorDotDiff, colorDotStyle)}>
-        <div>-100% (removed)</div>
-        <div>0%</div>
-        <div>+100% (added)</div>
-      </div>
-    );
-  }
-
-  return (
-    <Dropdown overlay={menu}>
-      <Button
-        variant={'secondary'}
-        fill={'outline'}
-        size={'sm'}
-        tooltip={'Change color scheme'}
-        onClick={() => {}}
-        className={styles.buttonSpacing}
-        aria-label={'Change color scheme'}
-      >
-        {contents}
-      </Button>
-    </Dropdown>
-  );
-}
 
 // Helper function to get row background color
 function getRowBackgroundColor(
@@ -559,30 +575,82 @@ function getRowBackgroundColor(
 function ActionsCell({
   row,
   onFocus,
-  isFocusedRoot,
+  onShowCallers,
+  focusedNodeId,
+  callersNodeLabel,
   styles,
 }: {
   row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>;
-  onFocus: (nodeId: string) => void;
-  isFocusedRoot: boolean;
+  onFocus: (nodeIdOrLabel: string, isLabel?: boolean) => void;
+  onShowCallers: (label: string) => void;
+  focusedNodeId: string | undefined;
+  callersNodeLabel: string | undefined;
   styles: any;
 }) {
+  const hasChildren = row.original.hasChildren;
+  const isTheFocusedNode = row.original.id === focusedNodeId ||
+                           (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label);
+  const isTheCallersTarget = row.original.label === callersNodeLabel;
+  const inCallersMode = callersNodeLabel !== undefined;
+  const inFocusMode = focusedNodeId !== undefined;
+  const isRootNode = row.original.depth === 0 && !row.original.parentId;
+
+  // Show focus button if:
+  // - Node has children AND
+  // - Node is not the currently focused node AND
+  // - If it's the root node, only show when in focus mode (as parent)
+  // Allow switching from callers mode to focus mode
+  const shouldShowFocusButton = hasChildren && !isTheFocusedNode && !(isRootNode && !inFocusMode);
+
+  // Show callers button if:
+  // - Node is not the current callers target AND
+  // - Node is not the root node
+  // Allow switching from focus mode to callers mode
+  const shouldShowCallersButton = !isTheCallersTarget && !isRootNode;
+
   return (
     <div className={styles.actionsCell}>
-      {!isFocusedRoot && (
-        <Button
-          icon="eye"
-          fill="text"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onFocus(row.original.id);
-          }}
-          tooltip="Focus on this subtree"
-          aria-label="Focus"
-          className={styles.actionButton}
-        />
-      )}
+      <div className={styles.actionButtonSlot}>
+        {shouldShowFocusButton ? (
+          <Button
+            icon="compress-arrows"
+            fill="text"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              // When in callers mode, switch by label; otherwise use ID
+              if (inCallersMode) {
+                onFocus(row.original.label, true);
+              } else {
+                onFocus(row.original.id, false);
+              }
+            }}
+            tooltip="Show callees of this function"
+            aria-label="Show callees"
+            className={styles.actionButton}
+          />
+        ) : (
+          <div className={styles.actionButtonPlaceholder} />
+        )}
+      </div>
+      <div className={styles.actionButtonSlot}>
+        {shouldShowCallersButton ? (
+          <Button
+            icon="expand-arrows-alt"
+            fill="text"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onShowCallers(row.original.label);
+            }}
+            tooltip="Show callers of this function"
+            aria-label="Show callers"
+            className={styles.actionButton}
+          />
+        ) : (
+          <div className={styles.actionButtonPlaceholder} />
+        )}
+      </div>
     </div>
   );
 }
@@ -594,8 +662,6 @@ function FunctionCellWithExpander({
   hasChildren,
   rowIndex,
   rows,
-  isMatching,
-  hasFilter,
   onSymbolClick,
   styles,
   allNodes,
@@ -606,15 +672,10 @@ function FunctionCellWithExpander({
   hasChildren: boolean;
   rowIndex?: number;
   rows: Array<Row<CallTreeNode>>;
-  isMatching: boolean;
-  hasFilter: boolean;
   onSymbolClick: (symbol: string) => void;
   styles: any;
   allNodes: CallTreeNode[];
 }) {
-  const opacity = hasFilter && !isMatching ? 0.5 : 1;
-  const fontWeight = hasFilter && isMatching ? 'bold' : 'normal';
-
   const handleClick = () => {
     if (hasChildren) {
       row.toggleRowExpanded();
@@ -719,7 +780,7 @@ function FunctionCellWithExpander({
   const connector = buildTreeConnector();
 
   return (
-    <div className={styles.functionCellContainer} style={{ opacity, fontWeight }}>
+    <div className={styles.functionCellContainer}>
       {connector && <span className={styles.treeConnector}>{connector} </span>}
       <Button fill="text" size="sm" onClick={handleClick} className={styles.functionButton}>
         {value}
@@ -740,15 +801,37 @@ function ColorBarCell({
   colorScheme,
   theme,
   styles,
+  focusedNode,
+  callersNode,
 }: {
   node: CallTreeNode;
   data: FlameGraphDataContainer;
   colorScheme: ColorScheme | ColorSchemeDiff;
   theme: GrafanaTheme2;
   styles: any;
+  focusedNode?: CallTreeNode;
+  callersNode?: CallTreeNode;
 }) {
   const barColor = getRowBackgroundColor(node, data, colorScheme, theme);
-  const barWidth = `${Math.min(node.totalPercent, 100)}%`;
+
+  // Calculate bar width
+  let barWidth: string;
+
+  if (focusedNode) {
+    // In focused state - scale bars relative to focused node
+    if (node.id === focusedNode.parentId) {
+      // This is the parent node - skip the bar
+      barWidth = '0%';
+    } else {
+      // Scale relative to the focused node's total
+      const relativePercent = focusedNode.total > 0 ? (node.total / focusedNode.total) * 100 : 0;
+      barWidth = `${Math.min(relativePercent, 100)}%`;
+    }
+  } else {
+    // Not in focused state (normal mode or callers mode) - use the original percentage
+    // In callers mode, we keep original scaling to show relative impact of different caller paths
+    barWidth = `${Math.min(node.totalPercent, 100)}%`;
+  }
 
   return (
     <div className={styles.colorBarContainer}>
@@ -789,33 +872,6 @@ function DiffCell({
   return <span style={{ color, fontWeight: 'bold' }}>{displayValue}</span>;
 }
 
-// Search hook with debouncing
-function useSearchInput(
-  search: string,
-  setSearch: (search: string) => void
-): [string, (search: string) => void] {
-  const [localSearchState, setLocalSearchState] = useState(search);
-  const prevSearch = usePrevious(search);
-
-  // Debouncing cause changing parent search triggers rerender
-  useDebounce(
-    () => {
-      setSearch(localSearchState);
-    },
-    250,
-    [localSearchState]
-  );
-
-  // Make sure we still handle updates from parent (from clicking on a table item for example)
-  useEffect(() => {
-    if (prevSearch !== search && search !== localSearchState) {
-      setLocalSearchState(search);
-    }
-  }, [search, prevSearch, localSearchState]);
-
-  return [localSearchState, setLocalSearchState];
-}
-
 // Styles
 
 function getStyles(theme: GrafanaTheme2) {
@@ -851,39 +907,6 @@ function getStyles(theme: GrafanaTheme2) {
     searchInput: css({
       width: '100%',
     }),
-    buttonSpacing: css({
-      marginRight: theme.spacing(1),
-    }),
-    colorDot: css({
-      display: 'inline-block',
-      width: '10px',
-      height: '10px',
-      borderRadius: theme.shape.radius.circle,
-    }),
-    colorDotDiff: css({
-      display: 'flex',
-      width: '200px',
-      height: '12px',
-      color: 'white',
-      fontSize: 9,
-      lineHeight: 1.3,
-      fontWeight: 300,
-      justifyContent: 'space-between',
-      padding: '0 2px',
-      borderRadius: '2px',
-    }),
-    colorDotByValue: css({
-      background: byValueGradient,
-    }),
-    colorDotByPackage: css({
-      background: byPackageGradient,
-    }),
-    colorDotDiffDefault: css({
-      background: diffDefaultGradient,
-    }),
-    colorDotDiffColorBlind: css({
-      background: diffColorBlindGradient,
-    }),
     table: css({
       width: '100%',
       borderCollapse: 'collapse',
@@ -913,6 +936,22 @@ function getStyles(theme: GrafanaTheme2) {
     tr: css({
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+      },
+    }),
+    focusedRow: css({
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
+      borderLeft: `3px solid ${theme.colors.primary.main}`,
+      fontWeight: theme.typography.fontWeightMedium,
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+      },
+    }),
+    callersTargetRow: css({
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
+      borderLeft: `3px solid ${theme.colors.info.main}`,
+      fontWeight: theme.typography.fontWeightMedium,
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
       },
     }),
     td: css({
@@ -985,7 +1024,20 @@ function getStyles(theme: GrafanaTheme2) {
     actionsCell: css({
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'flex-end',
       gap: theme.spacing(0.5),
+      height: '20px',
+      minWidth: '60px', // Fixed width to ensure consistent alignment
+    }),
+    actionButtonSlot: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '24px', // Fixed width for each button slot
+      height: '20px',
+    }),
+    actionButtonPlaceholder: css({
+      width: '24px',
       height: '20px',
     }),
     actionsColumnCell: css({
@@ -1013,6 +1065,20 @@ function getStyles(theme: GrafanaTheme2) {
       border: `1px solid ${theme.colors.border.weak}`,
     }),
     focusedItemLabel: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.primary,
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
+    callersItem: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.weak}`,
+    }),
+    callersItemLabel: css({
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.primary,
       fontWeight: theme.typography.fontWeightMedium,
