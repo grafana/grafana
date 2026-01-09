@@ -11,7 +11,7 @@ import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } f
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { isK8sEntityProvisioned, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAPINamespace } from '../../../../../api/utils';
@@ -21,7 +21,6 @@ import { useAsync } from '../../hooks/useAsync';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import { addReceiverAction, deleteReceiverAction, updateReceiverAction } from '../../reducers/alertmanager/receivers';
-import { KnownProvenance } from '../../types/knownProvenance';
 import { getIrmIfPresentOrOnCallPluginId } from '../../utils/config';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
