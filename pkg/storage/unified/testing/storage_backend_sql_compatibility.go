@@ -884,7 +884,6 @@ type BackendOperationCounts struct {
 	Deletes int
 }
 
-
 // runBackendOperationsWithCounts performs configurable create, update, delete operations on a backend
 func runBackendOperationsWithCounts(ctx context.Context, server resource.ResourceServer, namespace, backendType string, counts BackendOperationCounts) error {
 	// Create resources
