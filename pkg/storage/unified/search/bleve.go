@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
 	"math"
 	"os"
 	"path/filepath"
@@ -22,7 +23,6 @@ import (
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
-	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
 	bolterrors "go.etcd.io/bbolt/errors"
@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 
+	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -1300,43 +1301,27 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	if access != nil {
-		auth, ok := authlib.AuthInfoFrom(ctx)
-		if !ok {
-			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))
-		}
 		verb := utils.VerbList
 		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
 			verb = utils.VerbPatch
 		}
 
-		checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
-			Namespace: b.key.Namespace,
-			Group:     b.key.Group,
-			Resource:  b.key.Resource,
-			Verb:      verb,
-		})
-		if err != nil {
-			return nil, resource.AsErrorResult(err)
-		}
-		checkers := map[string]authlib.ItemChecker{
-			b.key.Resource: checker,
+		// Build resource -> verb mapping for batch authorization
+		resources := map[string]string{
+			b.key.Resource: verb,
 		}
 
-		// handle federation
+		// Handle federation
 		for _, federated := range req.Federated {
-			checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
-				Namespace: federated.Namespace,
-				Group:     federated.Group,
-				Resource:  federated.Resource,
-				Verb:      utils.VerbList,
-			})
-			if err != nil {
-				return nil, resource.AsErrorResult(err)
-			}
-			checkers[federated.Resource] = checker
+			resources[federated.Resource] = utils.VerbList
 		}
 
-		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, checkers)
+		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, permissionScopedQueryConfig{
+			access:    access,
+			namespace: b.key.Namespace,
+			group:     b.key.Group,
+			resources: resources,
+		})
 	}
 
 	for k, v := range req.Facet {
@@ -1866,71 +1851,239 @@ func newResponseFacet(v *search.FacetResult) *resourcepb.ResourceSearchResponse_
 
 type permissionScopedQuery struct {
 	query.Query
-	checkers map[string]authlib.ItemChecker // one checker per resource
-	log      log.Logger
+	access    authlib.AccessClient
+	namespace string
+	group     string
+	resources map[string]string // resource -> verb mapping
+	log       log.Logger
 }
 
-func newPermissionScopedQuery(q query.Query, checkers map[string]authlib.ItemChecker) *permissionScopedQuery {
+type permissionScopedQueryConfig struct {
+	access    authlib.AccessClient
+	namespace string
+	group     string
+	resources map[string]string // resource -> verb mapping
+}
+
+func newPermissionScopedQuery(q query.Query, cfg permissionScopedQueryConfig) *permissionScopedQuery {
 	return &permissionScopedQuery{
-		Query:    q,
-		checkers: checkers,
-		log:      log.New("search_permissions"),
+		Query:     q,
+		access:    cfg.access,
+		namespace: cfg.namespace,
+		group:     cfg.group,
+		resources: cfg.resources,
+		log:       log.New("search_permissions"),
 	}
 }
 
 func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReader, m mapping.IndexMapping, options search.SearcherOptions) (search.Searcher, error) {
-	// Get a new logger from context, to pass traceIDs etc.
 	logger := q.log.FromContext(ctx)
 	searcher, err := q.Query.Searcher(ctx, i, m, options)
 	if err != nil {
 		return nil, err
 	}
+
 	dvReader, err := i.DocValueReader([]string{"folder"})
 	if err != nil {
 		return nil, err
 	}
-	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, func(d *search.DocumentMatch) bool {
-		// The doc ID has the format: <namespace>/<group>/<resourceType>/<name>
-		// IndexInternalID will be the same as the doc ID when using an in-memory index, but when using a file-based
-		// index it becomes a binary encoded number that has some other internal meaning. Using ExternalID() will get the
-		// correct doc ID regardless of the index type.
-		d.ID, err = i.ExternalID(d.IndexInternalID)
-		if err != nil {
-			logger.Debug("Error getting external ID", "error", err)
-			return false
-		}
 
-		parts := strings.Split(d.ID, "/")
-		// Exclude doc if id isn't expected format
-		if len(parts) != 4 {
-			logger.Debug("Unexpected document ID format", "id", d.ID)
-			return false
-		}
-		ns := parts[0]
-		resource := parts[2]
-		name := parts[3]
-		folder := ""
-		err = dvReader.VisitDocValues(d.IndexInternalID, func(field string, value []byte) {
-			if field == "folder" {
-				folder = string(value)
+	return newBatchAuthzSearcher(ctx, searcher, i, dvReader, q.access, q.namespace, q.group, q.resources, logger), nil
+}
+
+// docInfo holds document information for authorization
+type docInfo struct {
+	doc          *search.DocumentMatch
+	resourceType string
+	name         string
+	folder       string
+	verb         string
+}
+
+// batchAuthzSearcher implements a batch-aware authorization filtering searcher
+// using FilterAuthorized with iter.Pull2 for efficient batched authorization
+type batchAuthzSearcher struct {
+	ctx         context.Context
+	searcher    search.Searcher
+	indexReader index.IndexReader
+	dvReader    index.DocValueReader
+	access      authlib.AccessClient
+	namespace   string
+	group       string
+	resources   map[string]string // resource -> verb mapping
+	log         log.Logger
+
+	// Pull iterator state (lazily initialized)
+	searchCtx *search.SearchContext
+	next      func() (docInfo, error, bool)
+	stop      func()
+}
+
+func newBatchAuthzSearcher(
+	ctx context.Context,
+	searcher search.Searcher,
+	indexReader index.IndexReader,
+	dvReader index.DocValueReader,
+	access authlib.AccessClient,
+	namespace string,
+	group string,
+	resources map[string]string,
+	logger log.Logger,
+) *batchAuthzSearcher {
+	return &batchAuthzSearcher{
+		ctx:         ctx,
+		searcher:    searcher,
+		indexReader: indexReader,
+		dvReader:    dvReader,
+		access:      access,
+		namespace:   namespace,
+		group:       group,
+		resources:   resources,
+		log:         logger,
+	}
+}
+
+func (s *batchAuthzSearcher) Next(searchCtx *search.SearchContext) (*search.DocumentMatch, error) {
+	// Lazy initialization of pull iterator
+	if s.next == nil {
+		s.searchCtx = searchCtx
+		s.initPullIterator()
+	}
+
+	info, err, ok := s.next()
+	if !ok {
+		return nil, nil // No more documents
+	}
+	if err != nil {
+		return nil, err
+	}
+	return info.doc, nil
+}
+
+// initPullIterator sets up the FilterAuthorized iterator as a pull iterator
+func (s *batchAuthzSearcher) initPullIterator() {
+	// Create iter.Seq that pulls documents from searcher and parses them
+	candidates := func(yield func(docInfo) bool) {
+		for {
+			doc, err := s.searcher.Next(s.searchCtx)
+			if err != nil {
+				s.log.Debug("Error getting next document", "error", err)
+				return
 			}
-		})
-		if err != nil {
-			logger.Debug("Error reading doc values", "error", err)
-			return false
-		}
-		if _, ok := q.checkers[resource]; !ok {
-			logger.Debug("No resource checker found", "resource", resource)
-			return false
-		}
-		allowed := q.checkers[resource](name, folder)
-		if !allowed {
-			logger.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
-		}
-		return allowed
-	})
+			if doc == nil {
+				return // No more documents
+			}
 
-	return filteringSearcher, nil
+			info, ok := s.parseDocInfo(doc)
+			if !ok {
+				continue // Skip invalid documents
+			}
+
+			if !yield(info) {
+				return
+			}
+		}
+	}
+
+	extractFn := func(info docInfo) authz.BatchCheckItem {
+		return authz.BatchCheckItem{
+			Name:      info.name,
+			Folder:    info.folder,
+			Verb:      info.verb,
+			Group:     s.group,
+			Resource:  info.resourceType,
+			Namespace: s.namespace,
+		}
+	}
+
+	// FilterAuthorized extracts auth from context and batches internally
+	authzIter := authz.FilterAuthorized(s.ctx, s.access, candidates, extractFn).Items
+
+	// Convert push iterator to pull iterator
+	s.next, s.stop = iter.Pull2(authzIter)
+}
+
+// parseDocInfo extracts document information needed for authorization
+func (s *batchAuthzSearcher) parseDocInfo(doc *search.DocumentMatch) (docInfo, bool) {
+	// Get external ID
+	externalID, err := s.indexReader.ExternalID(doc.IndexInternalID)
+	if err != nil {
+		s.log.Debug("Error getting external ID", "error", err)
+		return docInfo{}, false
+	}
+	doc.ID = externalID
+
+	// Parse doc ID: <namespace>/<group>/<resourceType>/<name>
+	parts := strings.Split(doc.ID, "/")
+	if len(parts) != 4 {
+		s.log.Debug("Unexpected document ID format", "id", doc.ID)
+		return docInfo{}, false
+	}
+
+	resourceType := parts[2]
+	name := parts[3]
+
+	// Get folder from doc values
+	folder := ""
+	err = s.dvReader.VisitDocValues(doc.IndexInternalID, func(field string, value []byte) {
+		if field == "folder" {
+			folder = string(value)
+		}
+	})
+	if err != nil {
+		s.log.Debug("Error reading doc values", "error", err)
+		return docInfo{}, false
+	}
+
+	// Check if we have a verb for this resource type
+	verb, ok := s.resources[resourceType]
+	if !ok {
+		s.log.Debug("No verb found for resource", "resource", resourceType)
+		return docInfo{}, false
+	}
+
+	return docInfo{
+		doc:          doc,
+		resourceType: resourceType,
+		name:         name,
+		folder:       folder,
+		verb:         verb,
+	}, true
+}
+
+func (s *batchAuthzSearcher) Advance(searchCtx *search.SearchContext, ID index.IndexInternalID) (*search.DocumentMatch, error) {
+	return s.searcher.Advance(searchCtx, ID)
+}
+
+func (s *batchAuthzSearcher) Close() error {
+	if s.stop != nil {
+		s.stop()
+	}
+	return s.searcher.Close()
+}
+
+func (s *batchAuthzSearcher) Size() int {
+	return s.searcher.Size()
+}
+
+func (s *batchAuthzSearcher) DocumentMatchPoolSize() int {
+	return s.searcher.DocumentMatchPoolSize()
+}
+
+func (s *batchAuthzSearcher) Min() int {
+	return s.searcher.Min()
+}
+
+func (s *batchAuthzSearcher) Count() uint64 {
+	return s.searcher.Count()
+}
+
+func (s *batchAuthzSearcher) SetQueryNorm(qnorm float64) {
+	s.searcher.SetQueryNorm(qnorm)
+}
+
+func (s *batchAuthzSearcher) Weight() float64 {
+	return s.searcher.Weight()
 }
 
 // hasTerms - any value that will be split into multiple tokens

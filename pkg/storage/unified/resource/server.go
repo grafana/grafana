@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 
@@ -1051,78 +1052,93 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	rsp := &resourcepb.ListResponse{}
 
 	key := req.Options.Key
-	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-		Verb:      utils.VerbGet,
-	})
-	var trashChecker claims.ItemChecker // only for trash
+
+	// Determine verb for authorization
+	verb := utils.VerbGet
 	if req.Source == resourcepb.ListRequest_TRASH {
-		trashChecker, _, err = s.access.Compile(ctx, user, claims.ListRequest{
-			Group:     key.Group,
-			Resource:  key.Resource,
-			Namespace: key.Namespace,
-			Verb:      utils.VerbSetPermissions, // Basically Admin
-		})
-		if err != nil {
-			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-		}
-	}
-	if err != nil {
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-	}
-	if checker == nil {
-		return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
-			Code: http.StatusForbidden,
-		}}, nil
+		verb = utils.VerbSetPermissions // Basically Admin for trash
 	}
 
+	// Candidate item for batch authorization
+	type candidateItem struct {
+		name            string
+		folder          string
+		resourceVersion int64
+		value           []byte
+		continueToken   string
+	}
+
+	var nextToken string
+	var iterErr error
+
+	// Process items in batches within the iterator
 	iterFunc := func(iter ListIterator) error {
-		for iter.Next() {
-			if err := iter.Error(); err != nil {
+		// Convert ListIterator to iter.Seq
+		candidates := func(yield func(candidateItem) bool) {
+			for iter.Next() {
+				if !yield(candidateItem{
+					name:            iter.Name(),
+					folder:          iter.Folder(),
+					resourceVersion: iter.ResourceVersion(),
+					value:           iter.Value(),
+					continueToken:   iter.ContinueToken(),
+				}) {
+					return
+				}
+			}
+		}
+
+		extractFn := func(c candidateItem) authz.BatchCheckItem {
+			return authz.BatchCheckItem{
+				Name:      c.name,
+				Folder:    c.folder,
+				Verb:      verb,
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Namespace: key.Namespace,
+			}
+		}
+
+		for item, err := range authz.FilterAuthorized(ctx, s.access, candidates, extractFn).Items {
+			if err != nil {
 				return err
 			}
 
-			// Trash is only accessible to admins or the user who deleted the object
+			// For trash items, also check if user is the one who deleted it
 			if req.Source == resourcepb.ListRequest_TRASH {
-				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
+				if !s.isTrashItemAuthorizedByValue(ctx, item.value, true) {
 					continue
 				}
-			} else if !checker(iter.Name(), iter.Folder()) {
-				continue
 			}
 
-			item := &resourcepb.ResourceWrapper{
-				ResourceVersion: iter.ResourceVersion(),
-				Value:           iter.Value(),
-			}
+			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+				ResourceVersion: item.resourceVersion,
+				Value:           item.value,
+			})
+			pageBytes += len(item.value)
 
-			pageBytes += len(item.Value)
-			rsp.Items = append(rsp.Items, item)
+			// Check if we've reached the page limit
 			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
-				t := iter.ContinueToken()
-				if iter.Next() {
-					rsp.NextPageToken = t
-				}
-				return iter.Error()
+				nextToken = item.continueToken
+				break
 			}
 		}
+
 		return iter.Error()
 	}
 
 	var rv int64
 	switch req.Source {
 	case resourcepb.ListRequest_STORE:
-		rv, err = s.backend.ListIterator(ctx, req, iterFunc)
+		rv, iterErr = s.backend.ListIterator(ctx, req, iterFunc)
 	case resourcepb.ListRequest_HISTORY, resourcepb.ListRequest_TRASH:
-		rv, err = s.backend.ListHistory(ctx, req, iterFunc)
+		rv, iterErr = s.backend.ListHistory(ctx, req, iterFunc)
 	default:
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
 	}
 
-	if err != nil {
-		rsp.Error = AsErrorResult(err)
+	if iterErr != nil {
+		rsp.Error = AsErrorResult(iterErr)
 		return rsp, nil
 	}
 
@@ -1134,18 +1150,21 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		return rsp, nil
 	}
 	rsp.ResourceVersion = rv
-	return rsp, err
+
+	rsp.NextPageToken = nextToken
+	return rsp, nil
 }
 
-// isTrashItemAuthorized checks if the user has access to the trash item.
-func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, trashChecker claims.ItemChecker) bool {
+// isTrashItemAuthorizedByValue checks if the user has access to the trash item using the raw value.
+// hasAdminPermission indicates whether the user has admin permission (from BatchCheck).
+func (s *server) isTrashItemAuthorizedByValue(ctx context.Context, value []byte, hasAdminPermission bool) bool {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return false
 	}
 
 	partial := &metav1.PartialObjectMetadata{}
-	err := json.Unmarshal(iter.Value(), partial)
+	err := json.Unmarshal(value, partial)
 	if err != nil {
 		return false
 	}
@@ -1161,7 +1180,7 @@ func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, t
 	}
 
 	// Trash is only accessible to admins or the user who deleted the object
-	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
+	return obj.GetUpdatedBy() == user.GetUID() || hasAdminPermission
 }
 
 func (s *server) initWatcher() error {
@@ -1202,18 +1221,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	key := req.Options.Key
-	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-		Verb:      utils.VerbGet,
-	})
-	if err != nil {
-		return err
-	}
-	if checker == nil {
-		return apierrors.NewUnauthorized("not allowed to list anything") // ?? or a single error?
-	}
 
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
@@ -1267,22 +1274,56 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	var initialEventsRV int64 // resource version coming from the initial events
 	if req.SendInitialEvents {
-		// Backfill the stream by adding every existing entities.
+		// Backfill the stream by adding every existing entities with batch authorization
+		type candidateEvent struct {
+			name    string
+			folder  string
+			value   []byte
+			version int64
+		}
+
 		initialEventsRV, err = s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
-			for iter.Next() {
-				if err := iter.Error(); err != nil {
+			// Convert ListIterator to iter.Seq
+			candidates := func(yield func(candidateEvent) bool) {
+				for iter.Next() {
+					if !yield(candidateEvent{
+						name:    iter.Name(),
+						folder:  iter.Folder(),
+						value:   iter.Value(),
+						version: iter.ResourceVersion(),
+					}) {
+						return
+					}
+				}
+			}
+
+			extractFn := func(c candidateEvent) authz.BatchCheckItem {
+				return authz.BatchCheckItem{
+					Name:      c.name,
+					Folder:    c.folder,
+					Verb:      utils.VerbGet,
+					Group:     key.Group,
+					Resource:  key.Resource,
+					Namespace: key.Namespace,
+				}
+			}
+
+			for item, err := range authz.FilterAuthorized(ctx, s.access, candidates, extractFn).Items {
+				if err != nil {
 					return err
 				}
+
 				if err := srv.Send(&resourcepb.WatchEvent{
 					Type: resourcepb.WatchEvent_ADDED,
 					Resource: &resourcepb.WatchEvent_Resource{
-						Value:   iter.Value(),
-						Version: iter.ResourceVersion(),
+						Value:   item.value,
+						Version: item.version,
 					},
 				}); err != nil {
 					return err
 				}
 			}
+
 			return iter.Error()
 		})
 		if err != nil {
@@ -1309,6 +1350,127 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	default:
 		since = req.Since
 	}
+
+	// Type to hold candidate events for batch authorization
+	type candidateWatchEvent struct {
+		event *WrittenEvent
+	}
+
+	// Type to hold authorized event with its fetched previous object
+	type authorizedEvent struct {
+		event    *WrittenEvent
+		previous *resourcepb.ReadResponse // nil if no previous or fetch failed
+	}
+
+	const maxBatchSize = 100
+
+	// processEventBatch authorizes and sends a batch of events.
+	// Errors are logged but never returned to keep the watch running.
+	processEventBatch := func(batch []*WrittenEvent) {
+		if len(batch) == 0 {
+			return
+		}
+
+		// Convert batch to iter.Seq for FilterAuthorized
+		candidates := func(yield func(candidateWatchEvent) bool) {
+			for _, event := range batch {
+				if !yield(candidateWatchEvent{event: event}) {
+					return
+				}
+			}
+		}
+
+		extractFn := func(c candidateWatchEvent) authz.BatchCheckItem {
+			return authz.BatchCheckItem{
+				Name:      c.event.Key.Name,
+				Folder:    c.event.Folder,
+				Verb:      utils.VerbGet,
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Namespace: key.Namespace,
+			}
+		}
+
+		// Step 1: Collect all authorized events
+		var authorizedEvents []authorizedEvent
+		for item, err := range authz.FilterAuthorized(ctx, s.access, candidates, extractFn).Items {
+			if err != nil {
+				s.log.Error("error during batch authorization", "error", err)
+				continue
+			}
+			authorizedEvents = append(authorizedEvents, authorizedEvent{event: item.event})
+		}
+
+		if len(authorizedEvents) == 0 {
+			return
+		}
+
+		// Step 2: Fetch previous objects concurrently for events that need them
+		var wg sync.WaitGroup
+		for i := range authorizedEvents {
+			if authorizedEvents[i].event.PreviousRV > 0 {
+				wg.Add(1)
+				go func(idx int) {
+					defer wg.Done()
+					event := authorizedEvents[idx].event
+					prevObj, readErr := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
+					if readErr != nil {
+						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", readErr)
+						return
+					}
+					if prevObj.Error != nil {
+						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
+						return
+					}
+					if prevObj.ResourceVersion != event.PreviousRV {
+						s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
+						return
+					}
+					authorizedEvents[idx].previous = prevObj
+				}(i)
+			}
+		}
+		wg.Wait()
+
+		// Step 3: Send all events in order
+		for _, authEvent := range authorizedEvents {
+			event := authEvent.event
+			value := event.Value
+			// remove the delete marker stored in the value for deleted objects
+			if event.Type == resourcepb.WatchEvent_DELETED {
+				value = []byte{}
+			}
+			resp := &resourcepb.WatchEvent{
+				Timestamp: event.Timestamp,
+				Type:      event.Type,
+				Resource: &resourcepb.WatchEvent_Resource{
+					Value:   value,
+					Version: event.ResourceVersion,
+				},
+			}
+			if authEvent.previous != nil {
+				resp.Previous = &resourcepb.WatchEvent_Resource{
+					Value:   authEvent.previous.Value,
+					Version: authEvent.previous.ResourceVersion,
+				}
+			}
+			if err := srv.Send(resp); err != nil {
+				s.log.Error("error sending watch event", "key", event.Key, "error", err)
+				continue
+			}
+
+			if s.storageMetrics != nil {
+				// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
+				latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+				if latencySeconds > 0 {
+					s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+				}
+			}
+		}
+	}
+
+	// Main event loop with batching
+	var batch []*WrittenEvent
 	for {
 		select {
 		case <-ctx.Done():
@@ -1316,57 +1478,40 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 		case event, ok := <-stream:
 			if !ok {
+				// Process any remaining events in the batch before closing
+				processEventBatch(batch)
 				s.log.Debug("watch events closed")
 				return nil
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Name, event.Folder) {
-					continue
-				}
+				batch = append(batch, event)
+			}
 
-				value := event.Value
-				// remove the delete marker stored in the value for deleted objects
-				if event.Type == resourcepb.WatchEvent_DELETED {
-					value = []byte{}
-				}
-				resp := &resourcepb.WatchEvent{
-					Timestamp: event.Timestamp,
-					Type:      event.Type,
-					Resource: &resourcepb.WatchEvent_Resource{
-						Value:   value,
-						Version: event.ResourceVersion,
-					},
-				}
-				if event.PreviousRV > 0 {
-					prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
-					if err != nil {
-						// This scenario should never happen, but if it does, we should log it and continue
-						// sending the event without the previous object. The client will decide what to do.
-						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
-					} else {
-						if prevObj.ResourceVersion != event.PreviousRV {
-							s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
-							return fmt.Errorf("resource version mismatch")
-						}
-						resp.Previous = &resourcepb.WatchEvent_Resource{
-							Value:   prevObj.Value,
-							Version: prevObj.ResourceVersion,
-						}
+			// Drain any additional events that are already available (non-blocking)
+			// Stop draining when we reach maxBatchSize to bound memory and latency
+			draining := true
+			for draining && len(batch) < maxBatchSize {
+				select {
+				case event, ok := <-stream:
+					if !ok {
+						// Process the batch before closing
+						processEventBatch(batch)
+						s.log.Debug("watch events closed")
+						return nil
 					}
-				}
-				if err := srv.Send(resp); err != nil {
-					return err
-				}
-
-				if s.storageMetrics != nil {
-					// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
-					latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
-					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+					s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
+					if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
+						batch = append(batch, event)
 					}
+				default:
+					draining = false
 				}
 			}
+
+			// Process the collected batch
+			processEventBatch(batch)
+			batch = batch[:0] // Reset batch for reuse
 		}
 	}
 }
