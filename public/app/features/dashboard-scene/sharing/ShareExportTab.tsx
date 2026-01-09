@@ -103,28 +103,16 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   public getExportableDashboardJson = async (): Promise<{
     json: Dashboard | DashboardJson | DashboardV2Spec | ExportableResource | { error: unknown };
     hasLibraryPanels?: boolean;
-    initialSaveModelVersion: 'v1' | 'v2';
   }> => {
     const { isSharingExternally, exportMode } = this.state;
 
     const scene = getDashboardSceneFor(this);
     const exportableDashboard = await scene.serializer.makeExportableExternally(scene);
-    const initialSaveModel = scene.getInitialSaveModel();
-    const initialSaveModelVersion = initialSaveModel && isDashboardV2Spec(initialSaveModel) ? 'v2' : 'v1';
     const origDashboard = scene.serializer.getSaveModel(scene);
     const exportable = isSharingExternally ? exportableDashboard : origDashboard;
     const metadata = getMetadata(scene, Boolean(isSharingExternally));
 
-    if (
-      isDashboardV2Spec(origDashboard) &&
-      'elements' in exportable &&
-      initialSaveModelVersion === 'v2' &&
-      exportMode !== ExportMode.V1Resource
-    ) {
-      this.setState({
-        exportMode: ExportMode.V2Resource,
-      });
-
+    if (isDashboardV2Spec(origDashboard) && 'elements' in exportable && exportMode !== ExportMode.V1Resource) {
       // For automatic V2 path, also process library panels when sharing externally
       let finalSpec = exportable;
       if (isSharingExternally && isDashboardV2Spec(exportable)) {
@@ -133,7 +121,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
         if ('error' in result) {
           return {
             json: { error: result.error },
-            initialSaveModelVersion,
             hasLibraryPanels: Object.values(origDashboard.elements).some((element) => element.kind === 'LibraryPanel'),
           };
         }
@@ -148,14 +135,13 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
           spec: finalSpec,
           status: {},
         },
-        initialSaveModelVersion,
         hasLibraryPanels: Object.values(origDashboard.elements).some((element) => element.kind === 'LibraryPanel'),
       };
     }
 
     if (exportMode === ExportMode.V1Resource) {
       // Check if source is V2 and auto-transform to V1
-      if (isDashboardV2Spec(origDashboard) && initialSaveModelVersion === 'v2') {
+      if (isDashboardV2Spec(origDashboard)) {
         try {
           const spec = transformSceneToSaveModelSchemaV2(scene);
           const metadata = getMetadata(scene, Boolean(isSharingExternally));
@@ -186,7 +172,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
               spec: exportableV1,
               status: {},
             },
-            initialSaveModelVersion,
             hasLibraryPanels: hasLibraryPanelsInV1Dashboard(spec1),
           };
         } catch (err) {
@@ -194,7 +179,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
             json: {
               error: `Failed to convert dashboard to v1. ${err}`,
             },
-            initialSaveModelVersion,
             hasLibraryPanels: undefined,
           };
         }
@@ -210,7 +194,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
             spec,
             status: {},
           },
-          initialSaveModelVersion,
           hasLibraryPanels: hasLibraryPanelsInV1Dashboard(spec),
         };
       }
@@ -244,7 +227,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       // Check if dashboard contains library panels based on dashboard version
       let hasLibraryPanels = false;
       // Case: V1 dashboard loaded (with kubernetesDashboards enabled and dashboardNewLayouts disabled), and user explicitly selected V2Resource export mode
-      if (initialSaveModelVersion === 'v1' && !isDashboardV2Spec(origDashboard)) {
+      if (!isDashboardV2Spec(origDashboard)) {
         hasLibraryPanels = hasLibraryPanelsInV1Dashboard(origDashboard);
       } else if (isDashboardV2Spec(origDashboard)) {
         // Case: V2 dashboard (either originally V2 or transformed from V1) being exported as V2Resource
@@ -260,32 +243,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
           spec: exportableV2,
           status: {},
         },
-        initialSaveModelVersion,
         hasLibraryPanels,
-      };
-    }
-
-    // Classic mode
-    // This handles a case when:
-    // 1. dashboardNewLayouts feature toggle is enabled
-    // 2. v1 dashboard is loaded
-    // 3. dashboard hasn't been edited yet - if it was edited, user would be forced to save it in v2 version
-    if (
-      initialSaveModelVersion === 'v1' &&
-      isDashboardV2Spec(origDashboard) &&
-      initialSaveModel &&
-      'panels' in initialSaveModel
-    ) {
-      const oldModel = new DashboardModel(initialSaveModel, undefined, {
-        getVariablesFromState: () => {
-          return getVariablesCompatibility(window.__grafanaSceneContext);
-        },
-      });
-      const exportableV1 = isSharingExternally ? await makeExportableV1(oldModel) : initialSaveModel;
-      return {
-        json: exportableV1,
-        hasLibraryPanels: hasLibraryPanelsInV1Dashboard(initialSaveModel),
-        initialSaveModelVersion,
       };
     }
 
@@ -297,7 +255,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
         'error' in exportable || !isV1ClassicDashboard(origDashboard)
           ? false
           : hasLibraryPanelsInV1Dashboard(origDashboard),
-      initialSaveModelVersion,
     };
   };
 
@@ -318,9 +275,11 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const extension = isViewingYAML ? 'yaml' : 'json';
     saveAs(blob, `${title}-${time}.${extension}`);
 
+    const isV2Dashboard = 'spec' in dashboard.json && 'elements' in dashboard.json.spec;
+
     DashboardInteractions.exportDownloadJsonClicked({
       externally: isSharingExternally,
-      dashboard_schema_version: dashboard.initialSaveModelVersion,
+      dashboard_schema_version: isV2Dashboard ? 'v2' : 'v1',
       has_library_panels: Boolean(dashboard.hasLibraryPanels),
       format: isViewingYAML ? 'yaml' : 'json',
       action: 'download',
@@ -331,9 +290,11 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const dashboard = await this.getExportableDashboardJson();
     const { isSharingExternally, isViewingYAML, exportMode } = this.state;
 
+    const isV2Dashboard = 'spec' in dashboard.json && 'elements' in dashboard.json.spec;
+
     DashboardInteractions.exportCopyJsonClicked({
       externally: isSharingExternally,
-      dashboard_schema_version: dashboard.initialSaveModelVersion,
+      dashboard_schema_version: isV2Dashboard ? 'v2' : 'v1',
       has_library_panels: Boolean(dashboard.hasLibraryPanels),
       export_mode: exportMode || 'classic',
       format: isViewingYAML ? 'yaml' : 'json',
@@ -423,7 +384,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
             />
           ) : (
             <Stack gap={2} direction="column">
-              <Field label={exportExternallyTranslation}>
+              <Field noMargin label={exportExternallyTranslation}>
                 <Switch
                   id="share-externally-toggle"
                   value={isSharingExternally}
