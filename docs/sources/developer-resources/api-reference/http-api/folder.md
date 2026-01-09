@@ -259,6 +259,11 @@ JSON Body schema:
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the parent folder under which the folder should be created. Requires nested folders to be enabled.
 - **spec.title** – The title of the folder.
 
+{{< admonition type="note" >}}
+Custom labels and annotations in the metadata field are not currently supported and are ignored during folder creates. 
+Support will be added in a future release.
+{{< /admonition >}}
+
 **Example Response**:
 
 ```http
@@ -336,6 +341,11 @@ JSON Body schema:
 - **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}) of the folder.
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the parent folder under which the folder should be - update this to move the folder under a different parent folder. Requires nested folders to be enabled.
 - **spec.title** – The title of the folder.
+
+{{< admonition type="note" >}}
+Custom labels and annotations in the metadata field are not currently supported and are ignored during folder updates. 
+Support will be added in a future release.
+{{< /admonition >}}
 
 **Example Response**:
 
