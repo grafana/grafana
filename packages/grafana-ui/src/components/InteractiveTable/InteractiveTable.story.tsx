@@ -5,9 +5,11 @@ import { CellProps } from 'react-table';
 import { LinkButton } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
+import { Checkbox } from '../Forms/Checkbox';
 
 import { FetchDataArgs, InteractiveTable, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
+import { Icon } from '../Icon/Icon';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
 
@@ -297,4 +299,33 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
   return <InteractiveTable {...args} data={data} pageSize={15} fetchData={fetchData} />;
 };
 
+export const WithCustomHeader: TableStoryObj = {
+  args: {
+    columns: [
+      // React element header
+      {
+        id: 'checkbox',
+        header: <Checkbox />,
+        cell: () => <Checkbox />,
+      },
+      // Function renderer header
+      {
+        id: 'firstName',
+        header: () => (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <Icon name="user" size="sm" />
+            <span>First Name</span>
+          </span>
+        ),
+        sortType: 'string',
+      },
+      // String header
+      { id: 'lastName', header: 'Last name', sortType: 'string' },
+      { id: 'car', header: 'Car', sortType: 'string' },
+      { id: 'age', header: 'Age', sortType: 'number' },
+    ],
+    data: pageableData.slice(0, 10),
+    getRowId: (r) => r.id,
+  },
+};
 export default meta;
