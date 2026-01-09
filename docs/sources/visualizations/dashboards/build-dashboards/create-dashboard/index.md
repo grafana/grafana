@@ -233,7 +233,6 @@ To navigate the dashboard using the outline, follow these steps:
 
 To edit a dashboard, follow these steps:
 
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. Click the part of the dashboard you want to work with to open the edit pane with the relevant options displayed or click **Dashboard options** to open the edit pane.
@@ -301,6 +300,8 @@ You can also nest:
 - Rows in tabs
 - Tabs in rows
 
+While you can only have one row inside a row, when you have multiple rows in tabs and vice versa.
+
 You can nest up to two levels deep, which means your dashboard can have a maximum of four configuration levels:
 
 - Dashboard
@@ -351,21 +352,23 @@ You can switch between rows and tabs or update the panel layout by selecting the
 
 To group panels, follow these steps:
 
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. On the dashboard beneath a panel, click **Group panels**.
+1. Under a panel, click **Group panels**.
 
    While grouping is typically used for multiple panels, you can start a grouping with just one panel.
 
 1. Select **Group into row** or **Group into tab**.
 
-   All of the panels on the dashboard are placed in the selected grouping type and a dotted blue line surrounds row or tab.
-   The edit pane displays the relevant options.
+   All the panels are moved into the grouping and a dotted blue line surrounds the row or tab.
+   The edit pane opens displaying the relevant options.
 
 1. Set the [grouping configuration options](#grouping-configuration-options) in the edit pane.
-1. (Optional) Add a [nested grouping](#add-nested-groupings).
-1. (Optional) Add other [groupings at the same level](#add-more-groupings-at-the-same-level).
+1. (Optional) Add one or both of the following:
+
+   - A [nested grouping](#add-nested-groupings)
+   - Other [groupings at the same level](#add-more-groupings-at-the-same-level).
+
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -373,14 +376,15 @@ To group panels, follow these steps:
 
 #### Add nested groupings
 
-To nest the panels in a second-level grouping, follow these steps:
+To add a second-level, or nested, grouping, follow these steps:
 
-1. In the existing first-level grouping, beneath the panels, click **Group panels**.
+1. In the existing first-level grouping, under the panels, click **Group panels**.
 1. Click **Group into row** or **Group into tab** (**Group into tab** is only available if the parent grouping is a row).
 
    The new grouping is added inside the first grouping, and the panels are moved into the nested grouping.
+   The edit pane opens displaying the relevant options.
 
-1. Set the grouping configuration options.
+1. Set the configuration options for the nested grouping.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -391,9 +395,8 @@ To nest the panels in a second-level grouping, follow these steps:
 To add more first-level groupings, follow these steps:
 
 1. On the dashboard, outside the existing first-level grouping, click **New row** or **New tab** (only one option will be available).
-1. Set the grouping configuration options.
-1. Click **+ Add panel** to begin adding panels
-1. Click **Group panels** beneath the panels to add a nested grouping, if needed (refer to the previous set of directions).
+1. Set the configuration options for the new grouping.
+1. Click **+ Add panel** to begin adding panels.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -403,28 +406,38 @@ To add more first-level groupings, follow these steps:
 
 ### Ungroup panels
 
-You can remove groupings from the dashboard at any time without losing your panels.
-If you have nested groupings, removing the grouping closest to the dashboard level also automatically removes the grouping closest to the panels.
+You can ungroup panels from the dashboard at any time without losing your panels.
+Ungrouping behavior depends on whether you're dealing with first-level or nested groupings:
+
+| Grouping | Action and outcome |
+| -------- | ------------------ |
+| Rows | **Ungroup rows** ungroups all rows in the dashboard including any nested groupings. |
+| Tabs | **Ungroup tabs** ungroups all tabs in the dashboard including any nested groupings. |
+| Row > row | **Ungroup rows** ungroups the nested row. |
+| Row > tabs | **Ungroup tabs** ungroups all the nested tabs in that row. Tabs in other rows are not affected. |
+| Tab > rows | **Ungroup rows** ungroups all the nested rows in that tab. Rows in other tabs are not affected. |
 
 <!-- screenshot or recording here -->
 
-To remove grouping, follow these steps:
+{{< admonition type="caution" >}}
+If you delete a grouping, rather than ungrouping, then the panels are deleted as well.
+{{< /admonition >}}
 
-1. Click **Dashboards** in the main menu.
+To remove groupings, follow these steps:
+
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
-1. Click the grouping to bring it into focus.
+1. Do one of the following:
 
-   A dotted blue line surrounds highlights the grouping.
+   - Click **Ungroup rows** or **Ungroup tabs** at the bottom of the dashboard to ungroup all rows or tabs including any nested groupings.
+   - Click in a grouping and click **Ungroup rows** or **Ungroup tabs** to ungroup only the tabs or rows nested in that grouping.
 
-1. Click **Ungroup rows** or **Ungroup tabs**.
+1. If ungrouping mixes panels that were previously in different layouts, you'll be prompted to select a layout type to convert to; click **Convert to Auto grid** or **Convert to Custom**.
 1. Click **Save** at the top-right corner of the dashboard.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-
-<!-- you gotta ungroup everything -->
-Note that if you delete a grouping, then the panels are lost.
+1. Click **Exit edit**.
 
 ## Configure repeat options
 
