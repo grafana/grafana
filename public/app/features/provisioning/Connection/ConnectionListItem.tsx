@@ -40,14 +40,9 @@ export function ConnectionListItem({ connection }: Props) {
       )}
 
       <Card.Actions>
-        <Stack gap={1} direction="row">
-          <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}`} variant="primary" size="md">
-            <Trans i18nKey="provisioning.connections.view">View</Trans>
-          </LinkButton>
-          <LinkButton variant="secondary" icon="cog" href={`${CONNECTIONS_URL}/${name}/edit`} size="md">
-            <Trans i18nKey="provisioning.connections.settings">Settings</Trans>
-          </LinkButton>
-        </Stack>
+        <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}/edit`} variant="primary" size="md">
+          <Trans i18nKey="provisioning.connections.view">View</Trans>
+        </LinkButton>
       </Card.Actions>
     </Card>
   );

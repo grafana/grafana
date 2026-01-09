@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
@@ -13,9 +14,7 @@ export default function ConnectionFormPage() {
   const { name = '' } = useParams();
   const isCreate = name === 'new';
 
-  const query = useGetConnectionQuery(isCreate ? { name: '' } : { name }, {
-    skip: isCreate,
-  });
+  const query = useGetConnectionQuery(isCreate ? skipToken : { name });
 
   //@ts-expect-error TODO add error types
   const notFound = !isCreate && query.isError && query.error?.status === 404;

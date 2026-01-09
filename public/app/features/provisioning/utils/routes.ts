@@ -43,14 +43,6 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: `${CONNECTIONS_URL}/:name`,
-      component: SafeDynamicImport(
-        () =>
-          import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
-      ),
-    },
-
-    {
       path: `${CONNECTIONS_URL}/:name/edit`,
       component: SafeDynamicImport(
         () =>

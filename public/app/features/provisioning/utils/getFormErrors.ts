@@ -2,6 +2,7 @@ import { Path } from 'react-hook-form';
 
 import { ErrorDetails } from 'app/api/clients/provisioning/v0alpha1';
 
+import { ConnectionFormData } from '../Connection/ConnectionForm';
 import { WizardFormData } from '../Wizard/types';
 import { RepositoryFormData } from '../types';
 
@@ -85,6 +86,23 @@ export const getConfigFormErrors = (errors?: ErrorDetails[]): ConfigFormErrorTup
     token: 'token',
     tokenUser: 'tokenUser',
     'sync.intervalSeconds': 'sync.intervalSeconds',
+  };
+
+  return mapErrorsToField(errors, fieldMap, { allowPartial: true });
+};
+
+// Connection form errors
+export type ConnectionFormPath = Path<ConnectionFormData>;
+export type ConnectionFormErrorTuple = GenericFormErrorTuple<ConnectionFormPath>;
+
+export const getConnectionFormErrors = (errors?: ErrorDetails[]): ConnectionFormErrorTuple => {
+  const fieldMap: Record<string, ConnectionFormPath> = {
+    appID: 'appID',
+    installationID: 'installationID',
+    'github.appID': 'appID',
+    'github.installationID': 'installationID',
+    'secure.privateKey': 'privateKey',
+    privateKey: 'privateKey',
   };
 
   return mapErrorsToField(errors, fieldMap, { allowPartial: true });

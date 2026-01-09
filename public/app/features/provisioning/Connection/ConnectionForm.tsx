@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getAppEvents, isFetchError, reportInteraction } from '@grafana/runtime';
+import { isFetchError, reportInteraction } from '@grafana/runtime';
 import { Button, Combobox, Field, Input, Stack } from '@grafana/ui';
 import { Connection, ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -12,10 +11,11 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { SecretTextArea } from '../Shared/SecretTextArea';
 import { CONNECTIONS_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
+import { getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
-interface ConnectionFormData {
+export interface ConnectionFormData {
   type: 'github' | 'gitlab' | 'bitbucket';
   appID: string;
   installationID: string;
@@ -31,8 +31,8 @@ const providerOptions = [{ value: 'github', label: 'GitHub' }];
 export function ConnectionForm({ data }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
   const isEdit = Boolean(connectionName);
-  const [privateKeyConfigured, setPrivateKeyConfigured] = useState(isEdit);
-  const [isLoading, setIsLoading] = useState(false);
+  const privateKey = data?.secure?.privateKey;
+  const [privateKeyConfigured, setPrivateKeyConfigured] = useState(Boolean(privateKey));
   const [submitData, request] = useCreateOrUpdateConnection(connectionName);
   const navigate = useNavigate();
 
@@ -44,12 +44,13 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     formState: { errors, isDirty },
     setValue,
     getValues,
+    setError,
   } = useForm<ConnectionFormData>({
     defaultValues: {
       type: data?.spec?.type || 'github',
       appID: data?.spec?.github?.appID || '',
       installationID: data?.spec?.github?.installationID || '',
-      privateKey: '',
+      privateKey: privateKey?.name || '',
     },
   });
 
@@ -69,8 +70,23 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     }
   }, [request.isSuccess, reset, getValues, navigate, connectionName]);
 
+  useEffect(() => {
+    if (!isEdit || !data) {
+      return;
+    }
+
+    const isConfigured = Boolean(privateKey);
+    setPrivateKeyConfigured(isConfigured);
+
+    if (!isConfigured) {
+      setError('privateKey', {
+        type: 'manual',
+        message: t('provisioning.connection-form.error-required', 'This field is required'),
+      });
+    }
+  }, [data, isEdit, setError, privateKey]);
+
   const onSubmit = async (form: ConnectionFormData) => {
-    setIsLoading(true);
     try {
       const spec: ConnectionSpec = {
         type: form.type,
@@ -83,23 +99,13 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       await submitData(spec, form.privateKey);
     } catch (err) {
       if (isFetchError(err)) {
-        // Map API errors to form fields if possible
-        const message = err.data?.message || err.statusText;
-        if (message) {
-          getAppEvents().publish({
-            type: AppEvents.alertError.name,
-            payload: [message],
-          });
+        const [field, errorMessage] = getConnectionFormErrors(err.data?.errors);
+
+        if (field && errorMessage) {
+          setError(field, errorMessage);
+          return;
         }
-      } else {
-        // fallback for non-fetch errors
-        getAppEvents().publish({
-          type: AppEvents.alertError.name,
-          payload: [t('provisioning.connection-form.error-save', 'Failed to save connection')],
-        });
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -198,8 +204,8 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
         </Field>
 
         <Stack gap={2}>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading
+          <Button type="submit" disabled={request.isLoading}>
+            {request.isLoading
               ? t('provisioning.connection-form.button-saving', 'Saving...')
               : t('provisioning.connection-form.button-save', 'Save')}
           </Button>
