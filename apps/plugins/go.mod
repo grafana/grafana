@@ -8,12 +8,17 @@ replace github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 
 replace github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 
+replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
+
+replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
+
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.48.7
 	github.com/grafana/grafana-app-sdk/logging v0.48.7
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
+	github.com/grafana/grafana/pkg/plugins v0.0.0
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.34.3
 	k8s.io/apiserver v0.34.3
@@ -26,7 +31,7 @@ require (
 	cel.dev/expr v0.25.1 // indirect
 	github.com/Machiel/slugify v1.0.1 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
-	github.com/ProtonMail/go-crypto v1.1.6 // indirect
+	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apache/arrow-go/v18 v18.4.1 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
@@ -101,7 +106,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.284.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250804150913-990f1c69ecc2 // indirect
+	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/grafana/sqlds/v5 v5.0.3 // indirect

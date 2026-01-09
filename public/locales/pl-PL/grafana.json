@@ -3791,7 +3791,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4454,6 +4453,7 @@
       },
       "no-properties-changed": "Nie zmieniono istotnych właściwości",
       "table": {
+        "notes": "",
         "updated": "Data",
         "updatedBy": "Zaktualizowane przez",
         "version": "Wersja"
@@ -4912,7 +4912,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Wartości rozdzielone przecinkami"
         },
         "datasource-options": {
           "name-filter": "Filtr nazwy",
@@ -6010,6 +6011,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Opcje niestandardowe",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Wartości rozdzielone przecinkami",
       "selection-options": "Opcje wyboru"
     },
@@ -6601,6 +6605,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Pulpit został zapisany"
     },
@@ -6624,6 +6633,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6683,8 +6693,11 @@
       "tooltip-show-usages": "Wyświetl użycie"
     },
     "variable-values-preview": {
-      "preview-of-values": "Podgląd wartości",
-      "show-more": "Pokaż więcej"
+      "show-more": "Pokaż więcej",
+      "preview-of-values_one": "",
+      "preview-of-values_few": "",
+      "preview-of-values_many": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10795,18 +10808,6 @@
     "help/documentation": "Dokumentacja",
     "help/keyboard-shortcuts": "Skróty klawiaturowe",
     "help/support": "Wsparcie",
-    "history-container": {
-      "drawer-tittle": "Historia"
-    },
-    "history-wrapper": {
-      "collapse": "Zwiń",
-      "expand": "Rozwiń",
-      "icon-selected": "Zaznaczony wpis",
-      "icon-unselected": "Normalny wpis",
-      "show-more": "Pokaż więcej",
-      "today": "Dzisiaj",
-      "yesterday": "Wczoraj"
-    },
     "home": {
       "title": "Strona główna"
     },

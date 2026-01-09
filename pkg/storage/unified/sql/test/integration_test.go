@@ -107,16 +107,20 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	t.Cleanup(db.CleanupTestDB)
 
+	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
+		return unitest.NewTestSqlKvBackend(t, ctx, true)
+	}
+
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
 			return newTestBackend(t, true, 0)
-		}, nil)
+		}, newKvBackend, nil)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
 			return newTestBackend(t, false, 0)
-		}, nil)
+		}, newKvBackend, nil)
 	})
 }
 
