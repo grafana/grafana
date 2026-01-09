@@ -437,7 +437,7 @@ func (w *sqlWriteCloser) Close() error {
 
 	_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResourceHistory, sqlKVSaveRequest{
 		SQLTemplate:     sqltemplate.New(w.kv.dialect),
-		sqlKVSectionKey: w.sectionKey,
+		sqlKVSectionKey: w.sectionKey, // unused: key_path is set by rvmanager
 		Value:           value,
 		GUID:            dataKey.GUID,
 		Group:           dataKey.Group,

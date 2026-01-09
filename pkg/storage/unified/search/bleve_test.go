@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	bolterrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/goleak"
 
@@ -1584,7 +1585,7 @@ func docCount(t *testing.T, idx resource.ResourceIndex) int {
 	return int(cnt)
 }
 
-func TestBleveBackendFallsBackToMemory(t *testing.T) {
+func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
 	ns := resource.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
@@ -1607,51 +1608,17 @@ func TestBleveBackendFallsBackToMemory(t *testing.T) {
 
 	// Now create a second backend using the same directory
 	// This simulates another instance trying to open the same index
-	backend2, reg2 := setupBleveBackend(t, withRootDir(tmpDir))
-
-	// BuildIndex should detect the file is locked and fallback to memory
-	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
-	require.NoError(t, err)
-	require.NotNil(t, index2)
-
-	// Verify second index fell back to in-memory despite size being above file threshold
-	bleveIdx2, ok := index2.(*bleveIndex)
-	require.True(t, ok)
-	require.Equal(t, indexStorageMemory, bleveIdx2.indexStorage)
-
-	// Verify metrics show 1 memory index and 0 file indexes for backend2
-	checkOpenIndexes(t, reg2, 1, 0)
-
-	// Verify the in-memory index works correctly
-	require.Equal(t, 10, docCount(t, index2))
-
-	// Clean up: close first backend to release the file lock
-	backend1.Stop()
-}
-
-func TestBleveSkipCleanOldIndexesOnMemoryFallback(t *testing.T) {
-	ns := resource.NamespacedResource{
-		Namespace: "test",
-		Group:     "group",
-		Resource:  "resource",
-	}
-
-	tmpDir := t.TempDir()
-
-	backend1, _ := setupBleveBackend(t, withRootDir(tmpDir))
-	_, err := backend1.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
-	require.NoError(t, err)
-
-	// Now create a second backend using the same directory
-	// This simulates another instance trying to open the same index
 	backend2, _ := setupBleveBackend(t, withRootDir(tmpDir))
 
-	// BuildIndex should detect the file is locked and fallback to memory
-	_, err = backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	// BuildIndex should detect the file is locked and return an error after timeout
+	now := time.Now()
+	timeout, err := time.ParseDuration(boltTimeout)
 	require.NoError(t, err)
-
-	// Verify that the index directory still exists (i.e., cleanOldIndexes was skipped)
-	verifyDirEntriesCount(t, backend2.getResourceDir(ns), 1)
+	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.Error(t, err)
+	require.ErrorIs(t, err, bolterrors.ErrTimeout)
+	require.Nil(t, index2)
+	require.GreaterOrEqual(t, time.Since(now).Milliseconds(), timeout.Milliseconds()-500, "BuildIndex should have waited for approximately boltTimeout duration")
 
 	// Clean up: close first backend to release the file lock
 	backend1.Stop()

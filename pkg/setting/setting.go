@@ -588,8 +588,10 @@ type Cfg struct {
 	// Unified Storage
 	UnifiedStorage map[string]UnifiedStorageConfig
 	// DisableDataMigrations will disable resources data migration to unified storage at startup
-	DisableDataMigrations                      bool
-	MaxPageSizeBytes                           int
+	DisableDataMigrations bool
+	MaxPageSizeBytes      int
+	// IndexPath the directory where index files are stored.
+	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexRebuildWorkers                        int
