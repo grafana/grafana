@@ -151,6 +151,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
+		ns := request.GetNamespaceMapper(hs.Cfg)(1)
+		ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, ns)
 		evalCtx := openfeature.TransactionContext(c.Req.Context())
 		editingEnabled, err := openfeature.NewDefaultClient().BooleanValueDetails(c.Req.Context(), featuremgmt.FlagEnableDatagridEditing, false, evalCtx)
 		if err != nil {
