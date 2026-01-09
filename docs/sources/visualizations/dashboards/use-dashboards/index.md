@@ -21,6 +21,136 @@ menuTitle: Use dashboards
 title: Use dashboards
 description: Learn about the features of a Grafana dashboard
 weight: 100
+title: My Page
+image_maps:
+  - key: annotated-dashboard
+    src: /media/docs/grafana/dashboards/screenshot-ann-dashboards-v12.4.png
+    alt: An annotated image of a Grafana dashboard
+    points:
+      - x_coord: 8
+        y_coord: 5
+        content: |
+          **Dashboard folder**
+
+          When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](ref:dashboard-folders).
+      - x_coord: 17
+        y_coord: 5
+        content: |
+          **2. Dashboard title**
+          
+          You can create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
+      - x_coord: 23
+        y_coord: 5
+        content: |
+          **3. Dashboard title**
+      - x_coord: 27
+        y_coord: 5
+        content: |
+          **4. Dashboard title**
+      - x_coord: 84
+        y_coord: 5
+        content: |
+          **5. Dashboard title**
+      - x_coord: 89
+        y_coord: 5
+        content: |
+          **6. Dashboard title**
+      - x_coord: 32
+        y_coord: 23
+        content: |
+          **7. Cafe Terrace**
+
+          Small cozy cafe, open 7am–7pm.
+      - x_coord: 45
+        y_coord: 23
+        content: |
+          **Cafe Terrace**
+
+          Small cozy cafe, open 7am–7pm.
+      - x_coord: 59
+        y_coord: 29
+        content: |
+          **City Park**
+
+          Playground, pond, and walking trails.
+      - x_coord: 67
+        y_coord: 29
+        content: |
+          **City Park**
+
+          Playground, pond, and walking trails.
+      - x_coord: 73
+        y_coord: 29
+        content: |
+          **City Park**
+
+          Playground, pond, and walking trails.
+      - x_coord: 78
+        y_coord: 29
+        content: |
+          **City Park**
+
+          Playground, pond, and walking trails.
+      - x_coord: 85
+        y_coord: 29
+        content: |
+          **City Park**
+
+          Playground, pond, and walking trails.
+      - x_coord: 98
+        y_coord: 22.5
+        content: |
+          **City Park**
+
+          Playground, pond, and walking trails.
+      - x_coord: 98
+        y_coord: 31
+        content: |
+          **City Park**
+
+          Playground, pond, and walking trails.
+      - x_coord: 98
+        y_coord: 39
+        content: |
+          **City Park**
+
+          Playground, pond, and walking trails.
+      - x_coord: 98
+        y_coord: 47
+        content: |
+          **City Park**
+
+          Playground, pond, and walking trails.
+      - x_coord: 11
+        y_coord: 30
+        content: |
+          **18. Grouping title (row)**
+
+          Built 1895 — guided tours available.
+      - x_coord: 20
+        y_coord: 36
+        content: |
+          **19. Grouping title (tab)**
+
+          Built 1895 — guided tours available.
+      - x_coord: 21
+        y_coord: 45
+        content: |
+          **20. Panel title**
+
+          Built 1895 — guided tours available.
+      - x_coord: 27
+        y_coord: 63
+        content: |
+          **21. Visualization**
+
+          Built 1895 — guided tours available.
+      - x_coord: 19
+        y_coord: 91
+        content: |
+          **22. Panel legend**
+
+          Built 1895 — guided tours available.
 refs:
   dashboard-analytics:
     - pattern: /docs/grafana/
@@ -96,7 +226,7 @@ The dashboard user interface provides a number of features that you can use to c
 
 The following image and descriptions highlight all dashboard features.
 
-![An annotated image of a dashboard](/media/docs/grafana/dashboards/screenshot-dashboard-annotated-v11.3-2.png)
+<!-- ![An annotated image of a dashboard](/media/docs/grafana/dashboards/screenshot-dashboard-annotated-v11.3-2.png)
 
 1. **Dashboard folder** - When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](ref:dashboard-folders).
 1. **Dashboard title** - You can create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
@@ -120,7 +250,9 @@ The following image and descriptions highlight all dashboard features.
    - Panels inside a collapsed row do not issue queries.
    - Use [repeating rows](ref:repeating-rows) to dynamically create rows based on a template variable.
 1. **Dashboard panel** - The [panel](ref:panel-overview) is the primary building block of a dashboard.
-1. **Panel legend** - Change series colors as well as y-axis and series visibility directly from the legend.
+1. **Panel legend** - Change series colors as well as y-axis and series visibility directly from the legend. -->
+
+{{< image-map key="annotated-dashboard" >}}
 
 ## Keyboard shortcuts
 
