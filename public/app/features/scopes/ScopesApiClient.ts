@@ -8,8 +8,9 @@ import { ScopeNavigation } from './dashboards/types';
 
 export class ScopesApiClient {
   async fetchScope(name: string): Promise<Scope | undefined> {
+    const subscription = dispatch(scopeAPIv0alpha1.endpoints.getScope.initiate({ name }, { subscribe: false }));
     try {
-      const result = await dispatch(scopeAPIv0alpha1.endpoints.getScope.initiate({ name }, { subscribe: false }));
+      const result = await subscription;
 
       if ('data' in result && result.data) {
         // The generated API returns a Scope type compatible with @grafana/data Scope
@@ -26,6 +27,10 @@ export class ScopesApiClient {
       const errorMessage = getMessageFromError(err);
       console.error(`Failed to fetch scope "${name}":`, errorMessage);
       return undefined;
+    } finally {
+      // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
+      // the request completes before return, so this is mostly a no-op
+      subscription.unsubscribe();
     }
   }
 
@@ -58,10 +63,11 @@ export class ScopesApiClient {
       return Promise.resolve([]);
     }
 
+    const subscription = dispatch(
+      scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate({ names }, { subscribe: false })
+    );
     try {
-      const result = await dispatch(
-        scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate({ names }, { subscribe: false })
-      );
+      const result = await subscription;
 
       if ('data' in result && result.data) {
         // The generated API returns items compatible with @grafana/data ScopeNode
@@ -78,6 +84,10 @@ export class ScopesApiClient {
       const errorMessage = getMessageFromError(err);
       console.error(`Failed to fetch multiple scope nodes [${names.join(', ')}]:`, errorMessage);
       return [];
+    } finally {
+      // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
+      // the request completes before return, so this is mostly a no-op
+      subscription.unsubscribe();
     }
   }
 
@@ -97,17 +107,18 @@ export class ScopesApiClient {
       throw new Error('Limit must be between 1 and 10000');
     }
 
+    const subscription = dispatch(
+      scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate(
+        {
+          parent: options.parent,
+          query: options.query,
+          limit,
+        },
+        { subscribe: false, forceRefetch: true } // Froce refetch for search. Revisit this when necessary
+      )
+    );
     try {
-      const result = await dispatch(
-        scopeAPIv0alpha1.endpoints.getFindScopeNodeChildrenResults.initiate(
-          {
-            parent: options.parent,
-            query: options.query,
-            limit,
-          },
-          { subscribe: false, forceRefetch: true } // Froce refetch for search. Revisit this when necessary
-        )
-      );
+      const result = await subscription;
 
       if ('data' in result && result.data) {
         // The generated API returns items compatible with @grafana/data ScopeNode
@@ -138,21 +149,26 @@ export class ScopesApiClient {
         .join(', ');
       console.error(`Failed to fetch scope nodes (${context}):`, errorMessage);
       return [];
+    } finally {
+      // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
+      // the request completes before return, so this is mostly a no-op
+      subscription.unsubscribe();
     }
   }
 
   public fetchDashboards = async (scopeNames: string[]): Promise<ScopeDashboardBinding[]> => {
+    const subscription = dispatch(
+      // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
+      scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate(
+        {
+          name: '',
+          scope: scopeNames,
+        },
+        { subscribe: false }
+      )
+    );
     try {
-      const result = await dispatch(
-        // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
-        scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate(
-          {
-            name: '',
-            scope: scopeNames,
-          },
-          { subscribe: false }
-        )
-      );
+      const result = await subscription;
 
       if ('data' in result && result.data) {
         // The generated API returns items compatible with @grafana/data ScopeDashboardBinding
@@ -169,21 +185,26 @@ export class ScopesApiClient {
       const errorMessage = getMessageFromError(err);
       console.error(`Failed to fetch dashboards for scopes [${scopeNames.join(', ')}]:`, errorMessage);
       return [];
+    } finally {
+      // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
+      // the request completes before return, so this is mostly a no-op
+      subscription.unsubscribe();
     }
   };
 
   public fetchScopeNavigations = async (scopeNames: string[]): Promise<ScopeNavigation[]> => {
+    const subscription = dispatch(
+      // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
+      scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate(
+        {
+          name: '',
+          scope: scopeNames,
+        },
+        { subscribe: false }
+      )
+    );
     try {
-      const result = await dispatch(
-        // Note: `name` is required by generated types but ignored by the query builder (codegen bug)
-        scopeAPIv0alpha1.endpoints.getFindScopeNavigationsResults.initiate(
-          {
-            name: '',
-            scope: scopeNames,
-          },
-          { subscribe: false }
-        )
-      );
+      const result = await subscription;
 
       if ('data' in result && result.data) {
         // The generated API returns items compatible with ScopeNavigation
@@ -200,6 +221,10 @@ export class ScopesApiClient {
       const errorMessage = getMessageFromError(err);
       console.error(`Failed to fetch scope navigations for scopes [${scopeNames.join(', ')}]:`, errorMessage);
       return [];
+    } finally {
+      // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
+      // the request completes before return, so this is mostly a no-op
+      subscription.unsubscribe();
     }
   };
 
@@ -208,10 +233,11 @@ export class ScopesApiClient {
       return Promise.resolve(undefined);
     }
 
+    const subscription = dispatch(
+      scopeAPIv0alpha1.endpoints.getScopeNode.initiate({ name: scopeNodeId }, { subscribe: false })
+    );
     try {
-      const result = await dispatch(
-        scopeAPIv0alpha1.endpoints.getScopeNode.initiate({ name: scopeNodeId }, { subscribe: false })
-      );
+      const result = await subscription;
 
       if ('data' in result && result.data) {
         // The generated API returns a ScopeNode type compatible with @grafana/data ScopeNode
@@ -228,6 +254,10 @@ export class ScopesApiClient {
       const errorMessage = getMessageFromError(err);
       console.error(`Failed to fetch scope node "${scopeNodeId}":`, errorMessage);
       return undefined;
+    } finally {
+      // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
+      // the request completes before return, so this is mostly a no-op
+      subscription.unsubscribe();
     }
   };
 }
