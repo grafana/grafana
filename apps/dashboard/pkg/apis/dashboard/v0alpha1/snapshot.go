@@ -23,6 +23,7 @@ type SnapshotSharingOptions struct {
 	ExternalSnapshotURL  string `json:"externalSnapshotURL,omitempty"`
 	ExternalSnapshotName string `json:"externalSnapshotName,omitempty"`
 	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
+	PublicMode           bool   `json:"publicMode,omitempty"`
 }
 
 // These are the values expected to be sent from an end user

@@ -90,6 +90,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 		ExternalEnabled:      hs.Cfg.ExternalEnabled,
 		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,
 		ExternalSnapshotURL:  hs.Cfg.ExternalSnapshotUrl,
+		PublicMode:           hs.Cfg.SnapshotPublicMode,
 	}, cmd, hs.dashboardsnapshotsService)
 }
 
