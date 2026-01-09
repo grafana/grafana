@@ -703,10 +703,6 @@ export interface FeatureToggles {
   */
   passwordlessMagicLinkAuthentication?: boolean;
   /**
-  * Display Related Logs in Grafana Metrics Drilldown
-  */
-  exploreMetricsRelatedLogs?: boolean;
-  /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   */
   prometheusSpecialCharsInLabelValues?: boolean;

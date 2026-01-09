@@ -1408,7 +1408,8 @@
       "metadata": {
         "name": "exploreMetricsRelatedLogs",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-11-05T16:28:43Z"
+        "creationTimestamp": "2024-11-05T16:28:43Z",
+        "deletionTimestamp": "2026-01-09T22:14:53Z"
       },
       "spec": {
         "description": "Display Related Logs in Grafana Metrics Drilldown",
