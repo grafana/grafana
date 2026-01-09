@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
@@ -60,35 +61,37 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
-	var appID int64 = 123456
-	var updatedAppID int64 = 456789
-	var installationID int64 = 454545
-	appSlug := "appSlug"
-	connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
-	connectionFactory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatch(
-			ghmock.GetApp,
-			github.App{
-				ID:   &appID,
-				Slug: &appSlug,
-			},
-			github.App{
-				ID:   &updatedAppID,
-				Slug: &appSlug,
-			},
-		),
-		ghmock.WithRequestMatch(
-			ghmock.GetAppInstallationsByInstallationId,
-			github.Installation{
-				ID: &installationID,
-			},
-			github.Installation{
-				ID: &installationID,
-			}),
-	)
-	helper.SetGithubConnectionFactory(connectionFactory)
-
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
+		var appID int64 = 123456
+		appSlug := "appSlug"
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					app := github.App{
+						ID:   &appID,
+						Slug: &appSlug,
+					}
+					w.Write(ghmock.MustMarshal(app))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					id := r.URL.Query().Get("installation_id")
+					idInt, _ := strconv.ParseInt(id, 10, 64)
+					w.WriteHeader(http.StatusOK)
+					installation := github.Installation{
+						ID:   &idInt,
+					}
+					w.Write(ghmock.MustMarshal(installation))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
@@ -146,8 +149,8 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			"spec": map[string]any{
 				"type": "github",
 				"github": map[string]any{
-					"appID":          "456789",
-					"installationID": "454545",
+					"appID":          "123456",
+					"installationID": "454546",
 				},
 			},
 			"secure": map[string]any{
@@ -161,7 +164,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		spec = res.Object["spec"].(map[string]any)
 		require.Contains(t, spec, "github")
 		githubInfo = spec["github"].(map[string]any)
-		assert.Equal(t, "456789", githubInfo["appID"], "appID should be updated")
+		assert.Equal(t, "454546", githubInfo["installationID"], "installationID should be updated")
 
 		// DELETE
 		require.NoError(t, helper.Connections.Resource.Delete(ctx, "connection", metav1.DeleteOptions{}), "failed to delete resource")
@@ -244,7 +247,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		}}
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "repository type \"\" is not supported")
+		assert.Contains(t, err.Error(), "connection type \"\" is not supported")
 	})
 
 	t.Run("should fail when type is invalid", func(t *testing.T) {
@@ -266,7 +269,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		}}
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "repository type \"some-invalid-type\" is not supported")
+		assert.Contains(t, err.Error(), "connection type \"some-invalid-type\" is not supported")
 	})
 
 	t.Run("should fail when type is github but 'github' field is not there", func(t *testing.T) {
@@ -341,7 +344,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		assert.Contains(t, err.Error(), "clientSecret is forbidden in GitHub connection")
 	})
 
-	t.Run("should fail when github is unavaliable", func(t *testing.T) {
+	t.Run("should fail when github is unavailable", func(t *testing.T) {
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
 			ghmock.WithRequestMatchHandler(

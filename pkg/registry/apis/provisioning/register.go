@@ -114,9 +114,9 @@ type APIBuilder struct {
 	connectionFactory connection.Factory
 	client            client.ProvisioningV0alpha1Interface
 	access            auth.AccessChecker
-	accessWithAdmin  auth.AccessChecker
-	accessWithEditor auth.AccessChecker
-	accessWithViewer auth.AccessChecker
+	accessWithAdmin   auth.AccessChecker
+	accessWithEditor  auth.AccessChecker
+	accessWithViewer  auth.AccessChecker
 	statusPatcher     *appcontroller.RepositoryStatusPatcher
 	healthChecker     *controller.HealthChecker
 	repoValidator     repository.RepositoryValidator
@@ -749,7 +749,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	// Validate connections
 	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		conn, err := b.asConnection(ctx, c, nil)
+		conn, err := b.asConnection(ctx, c, a.GetOldObject())
 		if err != nil {
 			return err
 		}
