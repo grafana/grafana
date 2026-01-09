@@ -304,8 +304,15 @@ type DeleteDashboardCommand struct {
 	RemovePermissions      bool
 }
 
+type ProvisioningConfig struct {
+	Name           string
+	OrgID          int64
+	Folder         string
+	AllowUIUpdates bool
+}
+
 type DeleteOrphanedProvisionedDashboardsCommand struct {
-	ReaderNames []string
+	Config []ProvisioningConfig
 }
 
 type DashboardProvisioningSearchResults struct {
@@ -405,6 +412,8 @@ type DashboardSearchProjection struct {
 	FolderTitle string
 	SortMeta    int64
 	Tags        []string
+	ManagedBy   utils.ManagerKind
+	ManagerId   string
 	Deleted     *time.Time
 }
 

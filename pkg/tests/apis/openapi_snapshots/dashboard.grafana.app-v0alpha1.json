@@ -1803,6 +1803,15 @@
             }
           },
           {
+            "name": "facetLimit",
+            "in": "query",
+            "description": "maximum number of terms to return per facet (default 50, max 1000)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
             "name": "tags",
             "in": "query",
             "description": "tag query filter",

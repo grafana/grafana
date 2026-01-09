@@ -202,6 +202,11 @@ func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.S
 	if query.Title != "" {
 		// allow wildcard search
 		request.Query = "*" + strings.ToLower(query.Title) + "*"
+		// or perform exact match if requested
+		if query.TitleExactMatch {
+			request.Query = query.Title
+		}
+
 		// if using query, you need to specify the fields you want
 		request.Fields = dashboardsearch.IncludeFields
 	}
