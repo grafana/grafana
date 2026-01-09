@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Troubleshoot
+menuTitle: Troubleshooting
 title: Troubleshoot the Microsoft SQL Server data source
 weight: 400
 refs:
