@@ -15,6 +15,12 @@ interface Props {
 
 export const EditorTypeSelector = ({ value, onChange }: Props) => {
   return (
-      <RadioButtonGroup<EditorType> data-testid="elasticsearch-editor-type-toggle" size="sm" options={BASE_OPTIONS} value={value} onChange={onChange} />
+    <RadioButtonGroup<EditorType>
+      data-testid="elasticsearch-editor-type-toggle"
+      size="sm"
+      options={BASE_OPTIONS}
+      value={value}
+      onChange={onChange}
+    />
   );
 };
