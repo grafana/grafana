@@ -5,7 +5,11 @@ import { config, locationService } from '@grafana/runtime';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 // Import mock data for subScope tests
-import { navigationWithSubScope, navigationWithSubScope2, navigationWithSubScopeAndGroups } from '../tests/utils/mocks';
+import {
+  navigationWithSubScope,
+  navigationWithSubScope2,
+  navigationWithSubScopeAndGroups,
+} from '../tests/utils/mockData';
 
 import { ScopesDashboardsService, filterItemsWithSubScopesInPath } from './ScopesDashboardsService';
 import { ScopeNavigation } from './types';

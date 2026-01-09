@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { applyScopes, openScopesSelector, selectScope } from '../utils/scope-helpers';
+import { applyScopes, openScopesSelector, selectScope, setupScopeRoutes } from '../utils/scope-helpers';
 import { testScopesWithRedirect } from '../utils/scopes';
 
 test.use({
@@ -16,8 +16,13 @@ test.describe('Scope Redirect Functionality', () => {
   test('should redirect to custom URL when scope has redirectUrl', async ({ page, gotoDashboardPage }) => {
     const scopes = testScopesWithRedirect();
 
-    await test.step('Navigate to dashboard and open scopes selector', async () => {
+    await test.step('Set up routes and navigate to dashboard', async () => {
+      // Set up routes BEFORE navigation to ensure all requests are mocked
+      await setupScopeRoutes(page, scopes);
       await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
+    });
+
+    await test.step('Open scopes selector', async () => {
       await openScopesSelector(page, scopes);
     });
 
@@ -40,8 +45,12 @@ test.describe('Scope Redirect Functionality', () => {
   test('should prioritize redirectUrl over scope navigation fallback', async ({ page, gotoDashboardPage }) => {
     const scopes = testScopesWithRedirect();
 
-    await test.step('Navigate to dashboard and open scopes selector', async () => {
+    await test.step('Set up routes and navigate to dashboard', async () => {
+      await setupScopeRoutes(page, scopes);
       await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
+    });
+
+    await test.step('Open scopes selector', async () => {
       await openScopesSelector(page, scopes);
     });
 
@@ -68,8 +77,12 @@ test.describe('Scope Redirect Functionality', () => {
   }) => {
     const scopes = testScopesWithRedirect();
 
-    await test.step('Navigate to dashboard and select scope', async () => {
+    await test.step('Set up routes and navigate to dashboard', async () => {
+      await setupScopeRoutes(page, scopes);
       await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
+    });
+
+    await test.step('Select and apply scope', async () => {
       await openScopesSelector(page, scopes);
       await selectScope(page, 'sn-redirect-fallback', scopes[1]);
       await applyScopes(page, [scopes[1]]);
@@ -112,8 +125,12 @@ test.describe('Scope Redirect Functionality', () => {
   }) => {
     const scopes = testScopesWithRedirect();
 
-    await test.step('Navigate to dashboard and select scope', async () => {
+    await test.step('Set up routes and navigate to dashboard', async () => {
+      await setupScopeRoutes(page, scopes);
       await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
+    });
+
+    await test.step('Select and apply scope', async () => {
       await openScopesSelector(page, scopes);
       await selectScope(page, 'sn-redirect-fallback', scopes[1]);
       await applyScopes(page, [scopes[1]]);
@@ -151,9 +168,13 @@ test.describe('Scope Redirect Functionality', () => {
   test('should not redirect to redirectPath when on active scope navigation', async ({ page, gotoDashboardPage }) => {
     const scopes = testScopesWithRedirect();
 
+    await test.step('Set up routes and navigate to dashboard', async () => {
+      await setupScopeRoutes(page, scopes);
+      await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
+    });
+
     await test.step('Set up scope navigation to dashboard-1', async () => {
       // First, apply a scope that creates scope navigation to dashboard-1 (without redirectPath)
-      await gotoDashboardPage({ uid: 'cuj-dashboard-1' });
       await openScopesSelector(page, scopes);
       await selectScope(page, 'sn-redirect-setup', scopes[2]);
       await applyScopes(page, [scopes[2]]);

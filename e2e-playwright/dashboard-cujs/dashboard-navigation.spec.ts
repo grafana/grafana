@@ -1,8 +1,11 @@
+import { Page } from '@playwright/test';
+
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { setScopes } from '../utils/scope-helpers';
 
 import {
+  clickFirstScopesDashboard,
   getAdHocFilterPills,
   getGroupByInput,
   getGroupByValues,
@@ -21,6 +24,7 @@ test.use({
   },
 });
 
+const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
 const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 const DASHBOARD_UNDER_TEST_2 = 'cuj-dashboard-2';
 const NAVIGATE_TO = 'cuj-dashboard-3';
@@ -74,7 +78,7 @@ test.describe(
 
         await expect(markdownContent).toContainText(`now-12h`);
 
-        await scopesDashboards.first().click();
+        await clickFirstScopesDashboard(page);
         await page.waitForURL('**/d/**');
 
         await expect(markdownContent).toBeVisible();
@@ -117,10 +121,10 @@ test.describe(
             await groupByVariable.press('Enter');
             await groupByVariable.press('Escape');
 
-            await expect(scopesDashboards.first()).toBeVisible();
-
             const { getRequests, waitForExpectedRequests } = await trackDashboardReloadRequests(page);
-            await scopesDashboards.first().click();
+
+            await clickFirstScopesDashboard(page);
+            await page.waitForURL('**/d/**');
             await waitForExpectedRequests();
             await page.waitForLoadState('networkidle');
 
@@ -158,8 +162,7 @@ test.describe(
         const oldFilters = `GroupByVar: ${selectedValues}\n\nAdHocVar: ${processedPills}`;
         await expect(markdownContent).toContainText(oldFilters);
 
-        await expect(scopesDashboards.first()).toBeVisible();
-        await scopesDashboards.first().click();
+        await clickFirstScopesDashboard(page);
         await page.waitForURL('**/d/**');
 
         const newPillCount = await adhocFilterPills.count();

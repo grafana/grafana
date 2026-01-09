@@ -66,6 +66,15 @@ export function getScopesDashboards(page: Page) {
   return page.locator('[data-testid^="scopes-dashboards-"][role="treeitem"]');
 }
 
+/**
+ * Clicks the first available dashboard in the scopes dashboard list.
+ */
+export async function clickFirstScopesDashboard(page: Page) {
+  const dashboards = getScopesDashboards(page);
+  await dashboards.first().waitFor({ state: 'visible', timeout: 10000 });
+  await dashboards.first().click();
+}
+
 export function getScopesDashboardsSearchInput(page: Page) {
   return page.getByTestId('scopes-dashboards-search');
 }
