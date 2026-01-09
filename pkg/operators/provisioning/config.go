@@ -128,9 +128,6 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Repository factory and decrypter are not set up here - they're set up separately in operators that need them
-	// (repo_operator.go and enterprise_jobs_operator.go)
-
 	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
 	// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
 	// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
@@ -234,7 +231,6 @@ func setupRepoFactory(
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 	repoTypes := provisioningSec.Key("repository_types").Strings("|")
 	if len(repoTypes) == 0 {
-		// Default to github if repository_types is not set (for backward compatibility)
 		repoTypes = []string{"github"}
 	}
 
