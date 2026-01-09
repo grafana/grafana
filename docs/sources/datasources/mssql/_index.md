@@ -104,6 +104,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
+  postgres:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/
+  mysql:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/
 ---
 
 # Microsoft SQL Server (MSSQL) data source
@@ -142,7 +152,7 @@ The Microsoft SQL Server data source supports:
 - **Stored procedures:** Execute stored procedures and visualize results.
 - **Macros:** Simplify queries with built-in macros for time filtering and grouping.
 
-## Get the most out of the data source
+## Additional resources
 
 After configuring the Microsoft SQL Server data source, you can:
 
