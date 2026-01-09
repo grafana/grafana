@@ -17,6 +17,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
+import { KnownProvenance } from '../../../types/knownProvenance';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import {
   formChannelValuesToGrafanaChannelConfig,
@@ -125,7 +126,11 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
   const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
   const hasScopedEditProtectedPermissions = contactPoint ? canModifyProtectedEntity(contactPoint) : true;
-  const isEditable = !readOnly && hasScopedEditPermissions && !contactPoint?.provisioned;
+  const isProvisioned =
+    contactPoint?.provenance !== undefined &&
+    contactPoint?.provenance !== null &&
+    contactPoint?.provenance !== KnownProvenance.None;
+  const isEditable = !readOnly && hasScopedEditPermissions && !isProvisioned;
   const isTestable = !readOnly;
   const canEditProtectedFields = editMode ? hasScopedEditProtectedPermissions : true;
 
@@ -163,7 +168,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         </Alert>
       )}
 
-      {contactPoint?.provisioned && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
+      {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
 
       <ReceiverForm<GrafanaChannelValues>
         contactPointId={contactPoint?.id}

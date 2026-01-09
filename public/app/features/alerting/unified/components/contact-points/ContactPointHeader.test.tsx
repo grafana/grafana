@@ -6,10 +6,8 @@ import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';
-import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { ContactPointHeader } from './ContactPointHeader';
-import { VANILLA_ALERTMANAGER_DATASOURCE_UID } from './mocks/vanillaAlertmanagerServer';
 import { ContactPointWithMetadata } from './utils';
 
 setupMswServer();
