@@ -35,108 +35,32 @@ type ListOptions struct {
 	Limit    int64     // maximum number of results to return. 0 means no limit.
 }
 
-// CompareTarget specifies what to compare in a transaction
-type CompareTarget int
+// BatchOpMode controls the semantics of each operation in a batch
+type BatchOpMode int
 
 const (
-	CompareExists CompareTarget = iota // Check if key exists (Value: bool)
-	CompareValue                       // Compare actual value (Value: []byte)
+	// BatchOpPut performs an upsert: create or update (never fails on key state)
+	BatchOpPut BatchOpMode = iota
+	// BatchOpCreate creates a new key, fails if the key already exists
+	BatchOpCreate
+	// BatchOpUpdate updates an existing key, fails if the key doesn't exist
+	BatchOpUpdate
+	// BatchOpDelete removes a key, idempotent (never fails on key state)
+	BatchOpDelete
 )
 
-// CompareResult specifies the comparison operator
-type CompareResult int
-
-const (
-	CompareEqual CompareResult = iota
-	CompareNotEqual
-	CompareGreater
-	CompareLess
-)
-
-// Compare represents a single comparison in a transaction.
-// Use the constructor functions CompareKeyExists, CompareKeyNotExists, and CompareKeyValue to create comparisons.
-type Compare struct {
-	Key    string
-	Target CompareTarget
-	Result CompareResult // Only used for CompareValue
-	Exists bool          // Used when Target == CompareExists
-	Value  []byte        // Used when Target == CompareValue
-}
-
-// CompareKeyExists creates a comparison that succeeds if the key exists.
-func CompareKeyExists(key string) Compare {
-	return Compare{Key: key, Target: CompareExists, Exists: true}
-}
-
-// CompareKeyNotExists creates a comparison that succeeds if the key does not exist.
-func CompareKeyNotExists(key string) Compare {
-	return Compare{Key: key, Target: CompareExists, Exists: false}
-}
-
-// CompareKeyValue creates a comparison that compares the value of a key.
-// The comparison succeeds if the stored value matches the expected value according to the result operator.
-func CompareKeyValue(key string, result CompareResult, value []byte) Compare {
-	return Compare{Key: key, Target: CompareValue, Result: result, Value: value}
-}
-
-// TxnOpType specifies the type of operation in a transaction
-type TxnOpType int
-
-const (
-	TxnOpPut TxnOpType = iota
-	TxnOpDelete
-)
-
-// TxnOp represents an operation in a transaction.
-// Use the constructor functions TxnPut and TxnDelete to create operations.
-type TxnOp struct {
-	Type  TxnOpType
+// BatchOp represents a single operation in an atomic batch
+type BatchOp struct {
+	Mode  BatchOpMode
 	Key   string
-	Value []byte // For Put operations
+	Value []byte // For Put/Create/Update operations, nil for Delete
 }
 
-// TxnPut creates a Put operation that stores a value at the given key.
-func TxnPut(key string, value []byte) TxnOp {
-	return TxnOp{Type: TxnOpPut, Key: key, Value: value}
-}
+// Maximum limit for batch operations
+const MaxBatchOps = 20
 
-// TxnDelete creates a Delete operation that removes the given key.
-func TxnDelete(key string) TxnOp {
-	return TxnOp{Type: TxnOpDelete, Key: key}
-}
-
-// TxnResponse contains the result of a transaction
-type TxnResponse struct {
-	// Succeeded indicates whether the comparisons passed (true) or failed (false)
-	Succeeded bool
-}
-
-// Maximum limits for transaction operations
-const (
-	MaxTxnCompares = 8
-	MaxTxnOps      = 8
-)
-
-// ValidateTxnRequest validates the transaction request parameters.
-func ValidateTxnRequest(section string, cmps []Compare, successOps []TxnOp, failureOps []TxnOp) error {
-	if section == "" {
-		return fmt.Errorf("section is required")
-	}
-
-	if len(cmps) > MaxTxnCompares {
-		return fmt.Errorf("too many comparisons: %d > %d", len(cmps), MaxTxnCompares)
-	}
-
-	if len(successOps) > MaxTxnOps {
-		return fmt.Errorf("too many success operations: %d > %d", len(successOps), MaxTxnOps)
-	}
-
-	if len(failureOps) > MaxTxnOps {
-		return fmt.Errorf("too many failure operations: %d > %d", len(failureOps), MaxTxnOps)
-	}
-
-	return nil
-}
+// ErrKeyAlreadyExists is returned when BatchOpCreate is used on an existing key
+var ErrKeyAlreadyExists = errors.New("key already exists")
 
 type KV interface {
 	// Keys returns all the keys in the store
@@ -164,10 +88,16 @@ type KV interface {
 	// This is used to ensure the server and client are not too far apart in time.
 	UnixTimestamp(ctx context.Context) (int64, error)
 
-	// Txn executes a transaction with compare-and-swap semantics.
-	// If all comparisons succeed, successOps are executed; otherwise failureOps are executed.
-	// Limited to MaxTxnCompares comparisons and MaxTxnOps operations each for success/failure.
-	Txn(ctx context.Context, section string, cmps []Compare, successOps []TxnOp, failureOps []TxnOp) (*TxnResponse, error)
+	// Batch executes all operations atomically within a single transaction.
+	// If any operation fails, all operations are rolled back.
+	// Operations are executed in order; the batch stops on first failure.
+	//
+	// Operation semantics:
+	//   - BatchOpPut: Upsert (create or update), never fails on key state
+	//   - BatchOpCreate: Fail with ErrKeyAlreadyExists if key exists
+	//   - BatchOpUpdate: Fail with ErrNotFound if key doesn't exist
+	//   - BatchOpDelete: Idempotent, never fails on key state
+	Batch(ctx context.Context, section string, ops []BatchOp) error
 }
 
 var _ KV = &badgerKV{}
@@ -469,101 +399,68 @@ func (k *badgerKV) BatchDelete(ctx context.Context, section string, keys []strin
 	return txn.Commit()
 }
 
-func (k *badgerKV) Txn(ctx context.Context, section string, cmps []Compare, successOps []TxnOp, failureOps []TxnOp) (*TxnResponse, error) {
+func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
 	if k.db.IsClosed() {
-		return nil, fmt.Errorf("database is closed")
+		return fmt.Errorf("database is closed")
 	}
 
-	if err := ValidateTxnRequest(section, cmps, successOps, failureOps); err != nil {
-		return nil, err
+	if section == "" {
+		return fmt.Errorf("section is required")
+	}
+
+	if len(ops) > MaxBatchOps {
+		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
 	}
 
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
 
-	// Evaluate all comparisons
-	succeeded := true
-	for _, cmp := range cmps {
-		keyWithSection := section + "/" + cmp.Key
-		item, err := txn.Get([]byte(keyWithSection))
-		keyExists := err == nil
-		if err != nil && !errors.Is(err, badger.ErrKeyNotFound) {
-			return nil, err
-		}
-
-		switch cmp.Target {
-		case CompareExists:
-			if keyExists != cmp.Exists {
-				succeeded = false
-			}
-
-		case CompareValue:
-			if !keyExists {
-				// Key doesn't exist, comparison fails unless comparing for not-equal
-				if cmp.Result != CompareNotEqual {
-					succeeded = false
-				}
-			} else {
-				itemValue, err := item.ValueCopy(nil)
-				if err != nil {
-					return nil, err
-				}
-				if !compareBytes(itemValue, cmp.Value, cmp.Result) {
-					succeeded = false
-				}
-			}
-
-		default:
-			return nil, fmt.Errorf("unknown compare target: %d", cmp.Target)
-		}
-
-		if !succeeded {
-			break
-		}
-	}
-
-	// Execute the appropriate operations
-	ops := successOps
-	if !succeeded {
-		ops = failureOps
-	}
-
 	for _, op := range ops {
 		keyWithSection := section + "/" + op.Key
-		switch op.Type {
-		case TxnOpPut:
+
+		switch op.Mode {
+		case BatchOpCreate:
+			// Check that key doesn't exist, then set
+			_, err := txn.Get([]byte(keyWithSection))
+			if err == nil {
+				return ErrKeyAlreadyExists
+			}
+			if !errors.Is(err, badger.ErrKeyNotFound) {
+				return err
+			}
 			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
-				return nil, err
+				return err
 			}
-		case TxnOpDelete:
+
+		case BatchOpUpdate:
+			// Check that key exists, then set
+			_, err := txn.Get([]byte(keyWithSection))
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return ErrNotFound
+			}
+			if err != nil {
+				return err
+			}
+			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
+				return err
+			}
+
+		case BatchOpPut:
+			// Upsert: create or update
+			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
+				return err
+			}
+
+		case BatchOpDelete:
+			// Idempotent delete - don't error if not found
 			if err := txn.Delete([]byte(keyWithSection)); err != nil {
-				return nil, err
+				return err
 			}
+
 		default:
-			return nil, fmt.Errorf("unknown operation type: %d", op.Type)
+			return fmt.Errorf("unknown operation mode: %d", op.Mode)
 		}
 	}
 
-	if err := txn.Commit(); err != nil {
-		return nil, err
-	}
-
-	return &TxnResponse{Succeeded: succeeded}, nil
-}
-
-// compareBytes compares two byte slices based on the comparison result type
-func compareBytes(a, b []byte, result CompareResult) bool {
-	cmp := bytes.Compare(a, b)
-	switch result {
-	case CompareEqual:
-		return cmp == 0
-	case CompareNotEqual:
-		return cmp != 0
-	case CompareGreater:
-		return cmp > 0
-	case CompareLess:
-		return cmp < 0
-	default:
-		return false
-	}
+	return txn.Commit()
 }

@@ -28,7 +28,7 @@ const (
 	TestKVUnixTimestamp  = "unix timestamp"
 	TestKVBatchGet       = "batch get operations"
 	TestKVBatchDelete    = "batch delete operations"
-	TestKVTxn            = "transaction operations"
+	TestKVBatch          = "batch operations"
 )
 
 // NewKVFunc is a function that creates a new KV instance for testing
@@ -70,7 +70,7 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 		{TestKVUnixTimestamp, runTestKVUnixTimestamp},
 		{TestKVBatchGet, runTestKVBatchGet},
 		{TestKVBatchDelete, runTestKVBatchDelete},
-		{TestKVTxn, runTestKVTxn},
+		{TestKVBatch, runTestKVBatch},
 	}
 
 	for _, tc := range cases {
@@ -804,150 +804,70 @@ func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, ke
 	require.NoError(t, err)
 }
 
-func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
+func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	section := nsPrefix + "-txn"
+	section := nsPrefix + "-batch"
 
-	t.Run("txn with empty section", func(t *testing.T) {
-		_, err := kv.Txn(ctx, "", nil, nil, nil)
+	t.Run("batch with empty section", func(t *testing.T) {
+		err := kv.Batch(ctx, "", nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "section is required")
 	})
 
-	t.Run("txn with no comparisons executes success ops", func(t *testing.T) {
-		// With no comparisons, all comparisons "pass" so success ops should run
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "no-cmp-key", Value: []byte("success-value")},
+	t.Run("batch with empty ops succeeds", func(t *testing.T) {
+		err := kv.Batch(ctx, section, nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("batch put creates new key", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "put-key", Value: []byte("put-value")},
 		}
 
-		resp, err := kv.Txn(ctx, section, nil, successOps, nil)
+		err := kv.Batch(ctx, section, ops)
 		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
 
 		// Verify the key was created
-		reader, err := kv.Get(ctx, section, "no-cmp-key")
+		reader, err := kv.Get(ctx, section, "put-key")
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
-		assert.Equal(t, "success-value", string(value))
+		assert.Equal(t, "put-value", string(value))
 		err = reader.Close()
 		require.NoError(t, err)
 	})
 
-	t.Run("txn compare exists false for non-existent key", func(t *testing.T) {
-		// Key doesn't exist, so exists should be false
-		cmps := []resource.Compare{
-			resource.CompareKeyNotExists("non-existent-key"),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "created-key", Value: []byte("created-value")},
-		}
-		failureOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "non-existent-failure-marker", Value: []byte("failure-executed")},
-		}
-
-		resp, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
-		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
-
-		// Verify the key was created
-		reader, err := kv.Get(ctx, section, "created-key")
-		require.NoError(t, err)
-		value, err := io.ReadAll(reader)
-		require.NoError(t, err)
-		assert.Equal(t, "created-value", string(value))
-		err = reader.Close()
-		require.NoError(t, err)
-
-		// Verify failure op was not executed
-		_, err = kv.Get(ctx, section, "non-existent-failure-marker")
-		assert.Error(t, err)
-	})
-
-	t.Run("txn compare exists true for existing key", func(t *testing.T) {
+	t.Run("batch put updates existing key", func(t *testing.T) {
 		// First create a key
-		saveKVHelper(t, kv, ctx, section, "existing-key", strings.NewReader("existing-value"))
+		saveKVHelper(t, kv, ctx, section, "put-update-key", strings.NewReader("original-value"))
 
-		// Key exists, so exists should be true
-		cmps := []resource.Compare{
-			resource.CompareKeyExists("existing-key"),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "existing-key", Value: []byte("updated-value")},
-		}
-		failureOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "existing-failure-marker", Value: []byte("failure-executed")},
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "put-update-key", Value: []byte("updated-value")},
 		}
 
-		resp, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
+		err := kv.Batch(ctx, section, ops)
 		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
 
 		// Verify the key was updated
-		reader, err := kv.Get(ctx, section, "existing-key")
+		reader, err := kv.Get(ctx, section, "put-update-key")
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
 		assert.Equal(t, "updated-value", string(value))
 		err = reader.Close()
 		require.NoError(t, err)
-
-		// Verify failure op was not executed
-		_, err = kv.Get(ctx, section, "existing-failure-marker")
-		assert.Error(t, err)
 	})
 
-	t.Run("txn compare exists fails when key exists but expected not to", func(t *testing.T) {
-		// First create a key
-		saveKVHelper(t, kv, ctx, section, "exists-fail-key", strings.NewReader("some-value"))
-
-		// Key exists but we expect it not to
-		cmps := []resource.Compare{
-			resource.CompareKeyNotExists("exists-fail-key"),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "exists-fail-result", Value: []byte("should-not-exist")},
-		}
-		failureOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "exists-fail-marker", Value: []byte("failure-executed")},
+	t.Run("batch create succeeds for new key", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpCreate, Key: "create-new-key", Value: []byte("new-value")},
 		}
 
-		resp, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
+		err := kv.Batch(ctx, section, ops)
 		require.NoError(t, err)
-		assert.False(t, resp.Succeeded)
 
-		// Verify success op was not executed
-		_, err = kv.Get(ctx, section, "exists-fail-result")
-		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
-
-		// Verify failure ops were executed
-		reader, err := kv.Get(ctx, section, "exists-fail-marker")
-		require.NoError(t, err)
-		value, err := io.ReadAll(reader)
-		require.NoError(t, err)
-		assert.Equal(t, "failure-executed", string(value))
-		err = reader.Close()
-		require.NoError(t, err)
-	})
-
-	t.Run("txn compare value equals", func(t *testing.T) {
-		// First create a key with known value
-		saveKVHelper(t, kv, ctx, section, "value-cmp-key", strings.NewReader("expected-value"))
-
-		cmps := []resource.Compare{
-			resource.CompareKeyValue("value-cmp-key", resource.CompareEqual, []byte("expected-value")),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "value-cmp-key", Value: []byte("new-value")},
-		}
-
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
-		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
-
-		// Verify the key was updated
-		reader, err := kv.Get(ctx, section, "value-cmp-key")
+		// Verify the key was created
+		reader, err := kv.Get(ctx, section, "create-new-key")
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
@@ -956,218 +876,186 @@ func runTestKVTxn(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 	})
 
-	t.Run("txn compare value fails executes failure ops", func(t *testing.T) {
-		// First create a key with known value
-		saveKVHelper(t, kv, ctx, section, "value-fail-key", strings.NewReader("actual-value"))
+	t.Run("batch create fails for existing key", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "create-exists-key", strings.NewReader("existing-value"))
 
-		cmps := []resource.Compare{
-			resource.CompareKeyValue("value-fail-key", resource.CompareEqual, []byte("wrong-value")),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "value-fail-key", Value: []byte("should-not-be-set")},
-		}
-		failureOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "failure-marker", Value: []byte("failure-executed")},
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpCreate, Key: "create-exists-key", Value: []byte("new-value")},
 		}
 
-		resp, err := kv.Txn(ctx, section, cmps, successOps, failureOps)
-		require.NoError(t, err)
-		assert.False(t, resp.Succeeded)
+		err := kv.Batch(ctx, section, ops)
+		assert.ErrorIs(t, err, resource.ErrKeyAlreadyExists)
 
-		// Verify the original key was not changed
-		reader, err := kv.Get(ctx, section, "value-fail-key")
+		// Verify the original value is unchanged
+		reader, err := kv.Get(ctx, section, "create-exists-key")
 		require.NoError(t, err)
 		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
-		assert.Equal(t, "actual-value", string(value))
+		assert.Equal(t, "existing-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("batch update succeeds for existing key", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "update-exists-key", strings.NewReader("original-value"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpUpdate, Key: "update-exists-key", Value: []byte("updated-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify the key was updated
+		reader, err := kv.Get(ctx, section, "update-exists-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "updated-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("batch update fails for non-existent key", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpUpdate, Key: "update-nonexistent-key", Value: []byte("new-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+
+		// Verify the key was not created
+		_, err = kv.Get(ctx, section, "update-nonexistent-key")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+	})
+
+	t.Run("batch delete removes existing key", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "delete-exists-key", strings.NewReader("to-be-deleted"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpDelete, Key: "delete-exists-key"},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify the key was deleted
+		_, err = kv.Get(ctx, section, "delete-exists-key")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+	})
+
+	t.Run("batch delete is idempotent for non-existent key", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpDelete, Key: "delete-nonexistent-key"},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err) // Should succeed even though key doesn't exist
+	})
+
+	t.Run("batch multiple operations atomic success", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "multi-key1", Value: []byte("value1")},
+			{Mode: resource.BatchOpPut, Key: "multi-key2", Value: []byte("value2")},
+			{Mode: resource.BatchOpPut, Key: "multi-key3", Value: []byte("value3")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify all keys were created
+		for i := 1; i <= 3; i++ {
+			key := fmt.Sprintf("multi-key%d", i)
+			reader, err := kv.Get(ctx, section, key)
+			require.NoError(t, err)
+			value, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Equal(t, fmt.Sprintf("value%d", i), string(value))
+			err = reader.Close()
+			require.NoError(t, err)
+		}
+	})
+
+	t.Run("batch multiple operations atomic rollback on failure", func(t *testing.T) {
+		// First create a key that will cause the batch to fail
+		saveKVHelper(t, kv, ctx, section, "rollback-exists", strings.NewReader("existing"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "rollback-new1", Value: []byte("value1")},
+			{Mode: resource.BatchOpCreate, Key: "rollback-exists", Value: []byte("should-fail")}, // This will fail
+			{Mode: resource.BatchOpPut, Key: "rollback-new2", Value: []byte("value2")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		assert.ErrorIs(t, err, resource.ErrKeyAlreadyExists)
+
+		// Verify rollback: the first operation should NOT have persisted
+		_, err = kv.Get(ctx, section, "rollback-new1")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+
+		// Verify the third operation was not executed
+		_, err = kv.Get(ctx, section, "rollback-new2")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+	})
+
+	t.Run("batch mixed operations", func(t *testing.T) {
+		// Setup: create a key to update and one to delete
+		saveKVHelper(t, kv, ctx, section, "mixed-update", strings.NewReader("original"))
+		saveKVHelper(t, kv, ctx, section, "mixed-delete", strings.NewReader("to-delete"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpCreate, Key: "mixed-create", Value: []byte("created")},
+			{Mode: resource.BatchOpUpdate, Key: "mixed-update", Value: []byte("updated")},
+			{Mode: resource.BatchOpDelete, Key: "mixed-delete"},
+			{Mode: resource.BatchOpPut, Key: "mixed-put", Value: []byte("put")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify create
+		reader, err := kv.Get(ctx, section, "mixed-create")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "created", string(value))
 		err = reader.Close()
 		require.NoError(t, err)
 
-		// Verify failure ops were executed
-		reader, err = kv.Get(ctx, section, "failure-marker")
+		// Verify update
+		reader, err = kv.Get(ctx, section, "mixed-update")
 		require.NoError(t, err)
 		value, err = io.ReadAll(reader)
 		require.NoError(t, err)
-		assert.Equal(t, "failure-executed", string(value))
+		assert.Equal(t, "updated", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+
+		// Verify delete
+		_, err = kv.Get(ctx, section, "mixed-delete")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+
+		// Verify put
+		reader, err = kv.Get(ctx, section, "mixed-put")
+		require.NoError(t, err)
+		value, err = io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "put", string(value))
 		err = reader.Close()
 		require.NoError(t, err)
 	})
 
-	t.Run("txn delete operation", func(t *testing.T) {
-		// First create a key
-		saveKVHelper(t, kv, ctx, section, "delete-txn-key", strings.NewReader("to-be-deleted"))
-
-		cmps := []resource.Compare{
-			resource.CompareKeyExists("delete-txn-key"),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpDelete, Key: "delete-txn-key"},
-		}
-
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
-		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
-
-		// Verify the key was deleted
-		_, err = kv.Get(ctx, section, "delete-txn-key")
-		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
-	})
-
-	t.Run("txn multiple comparisons all must pass", func(t *testing.T) {
-		// Create two keys
-		saveKVHelper(t, kv, ctx, section, "multi-cmp-key1", strings.NewReader("value1"))
-		saveKVHelper(t, kv, ctx, section, "multi-cmp-key2", strings.NewReader("value2"))
-
-		cmps := []resource.Compare{
-			resource.CompareKeyValue("multi-cmp-key1", resource.CompareEqual, []byte("value1")),
-			resource.CompareKeyValue("multi-cmp-key2", resource.CompareEqual, []byte("value2")),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "multi-success", Value: []byte("both-passed")},
-		}
-
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
-		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
-
-		// Verify success op was executed
-		reader, err := kv.Get(ctx, section, "multi-success")
-		require.NoError(t, err)
-		value, err := io.ReadAll(reader)
-		require.NoError(t, err)
-		assert.Equal(t, "both-passed", string(value))
-		err = reader.Close()
-		require.NoError(t, err)
-	})
-
-	t.Run("txn multiple comparisons one fails", func(t *testing.T) {
-		// Create two keys
-		saveKVHelper(t, kv, ctx, section, "multi-fail-key1", strings.NewReader("value1"))
-		saveKVHelper(t, kv, ctx, section, "multi-fail-key2", strings.NewReader("value2"))
-
-		cmps := []resource.Compare{
-			resource.CompareKeyValue("multi-fail-key1", resource.CompareEqual, []byte("value1")),
-			resource.CompareKeyValue("multi-fail-key2", resource.CompareEqual, []byte("wrong-value")),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "multi-fail-success", Value: []byte("should-not-exist")},
-		}
-
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
-		require.NoError(t, err)
-		assert.False(t, resp.Succeeded)
-
-		// Verify success op was not executed
-		_, err = kv.Get(ctx, section, "multi-fail-success")
-		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
-	})
-
-	t.Run("txn too many comparisons", func(t *testing.T) {
-		cmps := make([]resource.Compare, resource.MaxTxnCompares+1)
-		for i := range cmps {
-			cmps[i] = resource.CompareKeyNotExists(fmt.Sprintf("key-%d", i))
-		}
-
-		_, err := kv.Txn(ctx, section, cmps, nil, nil)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "too many comparisons")
-	})
-
-	t.Run("txn too many success operations", func(t *testing.T) {
-		ops := make([]resource.TxnOp, resource.MaxTxnOps+1)
+	t.Run("batch too many operations", func(t *testing.T) {
+		ops := make([]resource.BatchOp, resource.MaxBatchOps+1)
 		for i := range ops {
-			ops[i] = resource.TxnOp{Type: resource.TxnOpPut, Key: fmt.Sprintf("key-%d", i), Value: []byte("value")}
+			ops[i] = resource.BatchOp{Mode: resource.BatchOpPut, Key: fmt.Sprintf("key-%d", i), Value: []byte("value")}
 		}
 
-		_, err := kv.Txn(ctx, section, nil, ops, nil)
+		err := kv.Batch(ctx, section, ops)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "too many success operations")
-	})
-
-	t.Run("txn too many failure operations", func(t *testing.T) {
-		ops := make([]resource.TxnOp, resource.MaxTxnOps+1)
-		for i := range ops {
-			ops[i] = resource.TxnOp{Type: resource.TxnOpPut, Key: fmt.Sprintf("key-%d", i), Value: []byte("value")}
-		}
-
-		_, err := kv.Txn(ctx, section, nil, nil, ops)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "too many failure operations")
-	})
-
-	t.Run("txn compare greater than", func(t *testing.T) {
-		saveKVHelper(t, kv, ctx, section, "greater-key", strings.NewReader("bbb"))
-
-		cmps := []resource.Compare{
-			resource.CompareKeyValue("greater-key", resource.CompareGreater, []byte("aaa")),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "greater-result", Value: []byte("passed")},
-		}
-
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
-		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
-	})
-
-	t.Run("txn compare less than", func(t *testing.T) {
-		saveKVHelper(t, kv, ctx, section, "less-key", strings.NewReader("aaa"))
-
-		cmps := []resource.Compare{
-			resource.CompareKeyValue("less-key", resource.CompareLess, []byte("bbb")),
-		}
-		successOps := []resource.TxnOp{
-			{Type: resource.TxnOpPut, Key: "less-result", Value: []byte("passed")},
-		}
-
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
-		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
-	})
-
-	t.Run("txn compare not equal for non-existent value key", func(t *testing.T) {
-		// Key doesn't exist, comparing value should fail for equal but pass for not-equal
-		cmps := []resource.Compare{
-			resource.CompareKeyValue("non-existent-value-key", resource.CompareNotEqual, []byte("any-value")),
-		}
-		successOps := []resource.TxnOp{
-			resource.TxnPut("not-equal-result", []byte("passed")),
-		}
-
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
-		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
-	})
-
-	t.Run("txn using constructor functions", func(t *testing.T) {
-		// Test that constructor functions work correctly
-		saveKVHelper(t, kv, ctx, section, "constructor-key", strings.NewReader("constructor-value"))
-
-		cmps := []resource.Compare{
-			resource.CompareKeyExists("constructor-key"),
-		}
-		successOps := []resource.TxnOp{
-			resource.TxnPut("constructor-new", []byte("new-value")),
-			resource.TxnDelete("constructor-key"),
-		}
-
-		resp, err := kv.Txn(ctx, section, cmps, successOps, nil)
-		require.NoError(t, err)
-		assert.True(t, resp.Succeeded)
-
-		// Verify the operations actually happened
-		_, err = kv.Get(ctx, section, "constructor-key")
-		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
-
-		reader, err := kv.Get(ctx, section, "constructor-new")
-		require.NoError(t, err)
-		value, err := io.ReadAll(reader)
-		require.NoError(t, err)
-		assert.Equal(t, "new-value", string(value))
-		err = reader.Close()
-		require.NoError(t, err)
+		assert.Contains(t, err.Error(), "too many operations")
 	})
 }
