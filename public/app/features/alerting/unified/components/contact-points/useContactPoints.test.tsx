@@ -211,7 +211,7 @@ describe('useContactPoints', () => {
         expect(contactPoint?.provenance).toBe(KnownProvenance.ConvertedPrometheus);
       });
 
-      it('should map "none" provenance annotation to KnownProvenance.Empty', async () => {
+      it('should map "none" provenance annotation to undefined', async () => {
         const config: AlertManagerCortexConfig = {
           template_files: {},
           alertmanager_config: {
@@ -254,8 +254,8 @@ describe('useContactPoints', () => {
         const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'none-provenance-contact-point');
         expect(contactPoint).toBeDefined();
         // The mock handler sets PROVENANCE_NONE ('none') when no provenance is found
-        // parseK8sReceiver converts 'none' to KnownProvenance.Empty
-        expect(contactPoint?.provenance).toBe(KnownProvenance.Empty);
+        // parseK8sReceiver converts 'none' to undefined
+        expect(contactPoint?.provenance).toBeUndefined();
       });
 
       it('should handle missing annotations gracefully', async () => {
@@ -300,8 +300,8 @@ describe('useContactPoints', () => {
 
         const contactPoint = result.current.contactPoints?.find((cp) => cp.name === 'no-annotations-contact-point');
         expect(contactPoint).toBeDefined();
-        // When annotations are missing, the mock handler should still provide a default
-        expect(contactPoint?.provenance).toBeDefined();
+        // When annotations are missing, the mock handler should set provenance to undefined
+        expect(contactPoint?.provenance).toBeUndefined();
       });
     });
 

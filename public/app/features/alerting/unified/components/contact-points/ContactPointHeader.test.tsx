@@ -33,74 +33,30 @@ describe('ContactPointHeader', () => {
   const mockContactPoint: ContactPointWithMetadata = {
     id: 'test-contact-point',
     name: 'Test Contact Point',
-    provisioned: true,
+    provenance: KnownProvenance.API,
     policies: [],
     grafana_managed_receiver_configs: [],
   };
 
-  describe('K8s API provenance badges', () => {
-    it('shows Provisioned badge when contact point has file provenance via K8s annotations', () => {
-      const contactPointWithFile = {
-        ...mockContactPoint,
-        metadata: {
-          annotations: {
-            [K8sAnnotations.Provenance]: KnownProvenance.File,
-          },
-        },
-      };
+  it('shows Provisioned badge when contact point has file provenance via K8s annotations', () => {
+    const contactPointWithFile = {
+      ...mockContactPoint,
+      provenance: KnownProvenance.File,
+    };
 
-      renderWithProvider(<ContactPointHeader contactPoint={contactPointWithFile} onDelete={jest.fn()} />);
+    renderWithProvider(<ContactPointHeader contactPoint={contactPointWithFile} onDelete={jest.fn()} />);
 
-      expect(screen.getByText('Provisioned')).toBeInTheDocument();
-    });
-
-    it('shows correct badge when contact point has converted_prometheus provenance via K8s annotations', () => {
-      const contactPointWithConvertedPrometheus = {
-        ...mockContactPoint,
-        metadata: {
-          annotations: {
-            [K8sAnnotations.Provenance]: KnownProvenance.ConvertedPrometheus,
-          },
-        },
-      };
-
-      renderWithProvider(
-        <ContactPointHeader contactPoint={contactPointWithConvertedPrometheus} onDelete={jest.fn()} />
-      );
-
-      expect(screen.getByText('Imported from Prometheus/Mimir')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Provisioned')).toBeInTheDocument();
   });
 
-  describe('Non-K8s API provenance badges', () => {
-    it('shows Provisioned badge when contact point has file provenance via non-K8s API', () => {
-      const contactPointNonK8s = {
-        ...mockContactPoint,
-        provenance: KnownProvenance.File,
-        metadata: undefined,
-      };
+  it('shows correct badge when contact point has converted_prometheus provenance', () => {
+    const contactPointWithConvertedPrometheus = {
+      ...mockContactPoint,
+      provenance: KnownProvenance.ConvertedPrometheus,
+    };
 
-      renderWithProvider(
-        <ContactPointHeader contactPoint={contactPointNonK8s} onDelete={jest.fn()} />,
-        VANILLA_ALERTMANAGER_DATASOURCE_UID
-      );
+    renderWithProvider(<ContactPointHeader contactPoint={contactPointWithConvertedPrometheus} onDelete={jest.fn()} />);
 
-      expect(screen.getByText('Provisioned')).toBeInTheDocument();
-    });
-
-    it('shows correct badge when contact point has converted_prometheus provenance via non-K8s API', () => {
-      const contactPointNonK8s = {
-        ...mockContactPoint,
-        provenance: KnownProvenance.ConvertedPrometheus,
-        metadata: undefined,
-      };
-
-      renderWithProvider(
-        <ContactPointHeader contactPoint={contactPointNonK8s} onDelete={jest.fn()} />,
-        VANILLA_ALERTMANAGER_DATASOURCE_UID
-      );
-
-      expect(screen.getByText('Imported from Prometheus/Mimir')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Imported from Prometheus/Mimir')).toBeInTheDocument();
   });
 });

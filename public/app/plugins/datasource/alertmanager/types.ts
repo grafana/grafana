@@ -104,7 +104,6 @@ export interface GrafanaManagedContactPoint {
   /** If parsed from k8s API, we'll have an ID property */
   id?: string;
   metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
-  provisioned?: boolean;
   provenance?: string;
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
 }

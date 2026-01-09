@@ -81,12 +81,11 @@ type K8sReceiver = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Re
 
 const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
   const metadataProvenance = item.metadata.annotations?.[K8sAnnotations.Provenance];
-  const provenance = metadataProvenance === 'none' ? KnownProvenance.Empty : metadataProvenance;
+  const provenance = metadataProvenance === 'none' ? undefined : metadataProvenance;
 
   return {
     id: item.metadata.name || item.metadata.uid || item.spec.title,
     name: item.spec.title,
-    provisioned: isK8sEntityProvisioned(item),
     provenance: provenance,
     grafana_managed_receiver_configs: item.spec.integrations,
     metadata: item.metadata,
