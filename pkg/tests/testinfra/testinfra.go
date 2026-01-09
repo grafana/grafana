@@ -320,8 +320,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
 	require.NoError(t, err)
-	if !opts.OpenFeatureAPIEnabled {
-		_, err = openFeatureSect.NewKey("provider", "static") // in practice, APIEnabled being false goes with goff type, but trying to make tests work
+
+	if opts.OpenFeatureAPIEnabled {
+		_, err = openFeatureSect.NewKey("provider", "static")
 		require.NoError(t, err)
 		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
 		require.NoError(t, err)
@@ -366,6 +367,39 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		authzSect, err := cfg.NewSection("authorization")
 		require.NoError(t, err)
 		_, err = authzSect.NewKey("cache_ttl", "0")
+		require.NoError(t, err)
+	}
+
+	if opts.DisableZanzanaServerCheckQueryCache {
+		zanzanaServerSect, err := cfg.NewSection("zanzana.server")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_cache_limit", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("cache_controller_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("cache_controller_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_query_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_query_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_max_results", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_max_results", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("shared_iterator_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("shared_iterator_limit", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("shared_iterator_ttl", "0")
 		require.NoError(t, err)
 	}
 
@@ -556,6 +590,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = section.NewKey("enableMigration", fmt.Sprintf("%t", v.EnableMigration))
 			require.NoError(t, err)
+			_, err = section.NewKey("autoMigrationThreshold", fmt.Sprintf("%d", v.AutoMigrationThreshold))
+			require.NoError(t, err)
 		}
 	}
 	if opts.UnifiedStorageEnableSearch {
@@ -638,9 +674,14 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_open_conn", "2")
+	maxConns := opts.DBMaxConns
+	if maxConns <= 0 {
+		maxConns = 2
+	}
+
+	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_idle_conn", "2")
+	_, err = dbSection.NewKey("max_idle_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -703,6 +744,10 @@ type GrafanaOpts struct {
 	DisableAuthZClientCache               bool
 	ZanzanaReconciliationInterval         time.Duration
 	DisableZanzanaCache                   bool
+	DisableZanzanaServerCheckQueryCache   bool
+
+	// If set to 0, the default (2) is used.
+	DBMaxConns int
 
 	// Allow creating grafana dir beforehand
 	Dir     string

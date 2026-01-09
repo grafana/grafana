@@ -811,7 +811,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return merge(
       ...targets.map((target) =>
         doTempoSearchStreaming(
-          { ...target, query },
+          { ...target, query: this.applyVariables(target, options.scopedVars).query },
           this, // the datasource
           options,
           this.instanceSettings
@@ -857,7 +857,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return merge(
       ...targets.map((target) =>
         doTempoMetricsStreaming(
-          { ...target, query },
+          { ...target, query: this.applyVariables(target, options.scopedVars).query },
           this, // the datasource
           options
         )
@@ -1168,7 +1168,7 @@ export function getEscapedRegexValues(values: string[]) {
 }
 
 export function getEscapedValues(values: string[]) {
-  return values.map((value: string) => value.replace(/["\\]/g, '\\$&'));
+  return values.map((value: string) => value.replace(/["\\]/g, '\\$&').replace(/[\n]/g, '\\n'));
 }
 
 export function getFieldConfig(
