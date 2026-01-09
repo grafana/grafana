@@ -4,7 +4,7 @@ import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } fr
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Input, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -23,10 +23,12 @@ type Props = {
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  search: string;
+  compact?: boolean;
 };
 
 const FlameGraphCallTreeContainer = memo(
-  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme }: Props) => {
+  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme, search, compact = false }: Props) => {
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
@@ -42,8 +44,8 @@ const FlameGraphCallTreeContainer = memo(
     // Callers state - track which function's callers we're showing
     const [callersNodeLabel, setCallersNodeLabel] = useState<string | undefined>(undefined);
 
-    // Search state
-    const [searchQuery, setSearchQuery] = useState<string>('');
+    // Search state - use search from parent (shared with TopTable and FlameGraph)
+    const searchQuery = search;
     const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(0);
     const [searchError, setSearchError] = useState<string | undefined>(undefined);
 
@@ -235,12 +237,6 @@ const FlameGraphCallTreeContainer = memo(
       }
     };
 
-    const clearSearch = () => {
-      setSearchQuery('');
-      setCurrentMatchIndex(-1);
-      setSearchError(undefined);
-    };
-
     // Get current search match node ID
     const currentSearchMatchId = useMemo(() => {
       if (searchNodes.length > 0 && currentMatchIndex >= 0 && currentMatchIndex < searchNodes.length) {
@@ -349,7 +345,7 @@ const FlameGraphCallTreeContainer = memo(
     // Define columns
     const columns = useMemo<Column<CallTreeNode>[]>(() => {
       if (data.isDiffFlamegraph()) {
-        return [
+        const cols: Column<CallTreeNode>[] = [
           {
             Header: '',
             id: 'actions',
@@ -381,12 +377,16 @@ const FlameGraphCallTreeContainer = memo(
                 onSymbolClick={onSymbolClick}
                 styles={styles}
                 allNodes={nodes}
+                compact={compact}
               />
             ),
             minWidth: 200,
             width: undefined,
           },
-          {
+        ];
+
+        if (!compact) {
+          cols.push({
             Header: '',
             id: 'colorBar',
             Cell: ({ row }: { row: Row<CallTreeNode> }) => (
@@ -395,7 +395,10 @@ const FlameGraphCallTreeContainer = memo(
             minWidth: 200,
             width: 200,
             disableSortBy: true,
-          },
+          });
+        }
+
+        cols.push(
           {
             Header: 'Baseline %',
             accessor: 'selfPercent',
@@ -418,10 +421,12 @@ const FlameGraphCallTreeContainer = memo(
             ),
             sortType: 'basic',
             width: 100,
-          },
-        ];
+          }
+        );
+
+        return cols;
       } else {
-        return [
+        const cols: Column<CallTreeNode>[] = [
           {
             Header: '',
             id: 'actions',
@@ -453,58 +458,67 @@ const FlameGraphCallTreeContainer = memo(
                 onSymbolClick={onSymbolClick}
                 styles={styles}
                 allNodes={nodes}
+                compact={compact}
               />
             ),
             minWidth: 200,
             width: undefined,
           },
-          {
-            Header: '',
-            id: 'colorBar',
-            Cell: ({ row }: { row: Row<CallTreeNode> }) => (
-              <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} focusedNode={focusedNode} callersNode={callersNode} />
-            ),
-            minWidth: 200,
-            width: 200,
-            disableSortBy: true,
-          },
-          {
-            Header: 'Self',
-            accessor: 'self',
-            Cell: ({ row }: { row: Row<CallTreeNode> }) => {
-              const displaySelf = data.getSelfDisplay([row.original.levelItem.itemIndexes[0]]);
-              const formattedValue = displaySelf.suffix ? displaySelf.text + displaySelf.suffix : displaySelf.text;
-              return (
-                <div className={styles.valueCell}>
-                  <span className={styles.valueNumber}>{formattedValue}</span>
-                  <span className={styles.percentNumber}>{row.original.selfPercent.toFixed(2)}%</span>
-                </div>
-              );
-            },
-            sortType: 'basic',
-            minWidth: 120,
-            width: 120,
-          },
-          {
-            Header: 'Total',
-            accessor: 'total',
-            Cell: ({ row }: { row: Row<CallTreeNode> }) => {
-              const displayValue = data.valueDisplayProcessor(row.original.total);
-              const formattedValue = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
-              return (
-                <div className={styles.valueCell}>
-                  <span className={styles.valueNumber}>{formattedValue}</span>
-                  <span className={styles.percentNumber}>{row.original.totalPercent.toFixed(2)}%</span>
-                </div>
-              );
-            },
-            sortType: 'basic',
-            minWidth: 120,
-            width: 120,
-          },
         ];
+
+        if (!compact) {
+          cols.push(
+            {
+              Header: '',
+              id: 'colorBar',
+              Cell: ({ row }: { row: Row<CallTreeNode> }) => (
+                <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} focusedNode={focusedNode} callersNode={callersNode} />
+              ),
+              minWidth: 200,
+              width: 200,
+              disableSortBy: true,
+            },
+            {
+              Header: 'Self',
+              accessor: 'self',
+              Cell: ({ row }: { row: Row<CallTreeNode> }) => {
+                const displaySelf = data.getSelfDisplay([row.original.levelItem.itemIndexes[0]]);
+                const formattedValue = displaySelf.suffix ? displaySelf.text + displaySelf.suffix : displaySelf.text;
+                return (
+                  <div className={styles.valueCell}>
+                    <span className={styles.valueNumber}>{formattedValue}</span>
+                    <span className={styles.percentNumber}>{row.original.selfPercent.toFixed(2)}%</span>
+                  </div>
+                );
+              },
+              sortType: 'basic',
+              minWidth: 120,
+              width: 120,
+            }
+          );
+        }
+
+        cols.push({
+          Header: 'Total',
+          accessor: 'total',
+          Cell: ({ row }: { row: Row<CallTreeNode> }) => {
+            const displayValue = data.valueDisplayProcessor(row.original.total);
+            const formattedValue = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
+            return (
+              <div className={styles.valueCell}>
+                <span className={styles.valueNumber}>{formattedValue}</span>
+                <span className={styles.percentNumber}>{row.original.totalPercent.toFixed(2)}%</span>
+              </div>
+            );
+          },
+          sortType: 'basic',
+          minWidth: 120,
+          width: 120,
+        });
+
+        return cols;
       }
-    }, [data, onSymbolClick, colorScheme, theme, styles, focusedNode, callersNode, callersNodeLabel]);
+    }, [data, onSymbolClick, colorScheme, theme, styles, focusedNode, callersNode, callersNodeLabel, compact]);
 
     // toggleRowExpanded is used in the Cell renderers but doesn't need to be in the dependencies
     // because it's accessed at render time, not definition time
@@ -541,56 +555,38 @@ const FlameGraphCallTreeContainer = memo(
         {/* Toolbar */}
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
-            <div className={styles.searchContainer}>
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.currentTarget.value)}
-                placeholder="Search..."
-                className={styles.searchInput}
-                suffix={
-                  searchQuery && (
+            {searchQuery && (
+              <div className={styles.searchContainer}>
+                {searchNodes.length > 0 && (
+                  <div className={styles.searchNavigation}>
+                    <span className={styles.searchCounter}>
+                      {currentMatchIndex + 1} of {searchNodes.length}
+                      {searchNodes.length >= 50 && '+'}
+                    </span>
                     <Button
-                      icon="times"
+                      icon="angle-up"
                       fill="text"
                       size="sm"
-                      onClick={clearSearch}
-                      tooltip="Clear search"
-                      aria-label="Clear search"
+                      onClick={navigateToPrevMatch}
+                      tooltip="Previous match"
+                      aria-label="Previous match"
                     />
-                  )
-                }
-              />
-              {searchNodes.length > 0 && (
-                <div className={styles.searchNavigation}>
-                  <span className={styles.searchCounter}>
-                    {currentMatchIndex + 1} of {searchNodes.length}
-                    {searchNodes.length >= 50 && '+'}
-                  </span>
-                  <Button
-                    icon="angle-up"
-                    fill="text"
-                    size="sm"
-                    onClick={navigateToPrevMatch}
-                    tooltip="Previous match"
-                    aria-label="Previous match"
-                  />
-                  <Button
-                    icon="angle-down"
-                    fill="text"
-                    size="sm"
-                    onClick={navigateToNextMatch}
-                    tooltip="Next match"
-                    aria-label="Next match"
-                  />
-                </div>
-              )}
-              {searchQuery && searchNodes.length === 0 && !searchError && (
-                <span className={styles.searchNoResults}>No matches found</span>
-              )}
-              {searchError && (
-                <span className={styles.searchError}>{searchError}</span>
-              )}
-            </div>
+                    <Button
+                      icon="angle-down"
+                      fill="text"
+                      size="sm"
+                      onClick={navigateToNextMatch}
+                      tooltip="Next match"
+                      aria-label="Next match"
+                    />
+                  </div>
+                )}
+                {searchQuery && searchNodes.length === 0 && !searchError && (
+                  <span className={styles.searchNoResults}>No matches found</span>
+                )}
+                {searchError && <span className={styles.searchError}>{searchError}</span>}
+              </div>
+            )}
           </div>
 
           {focusedNode && (
@@ -848,6 +844,7 @@ function FunctionCellWithExpander({
   onSymbolClick,
   styles,
   allNodes,
+  compact = false,
 }: {
   row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>;
   value: string;
@@ -858,6 +855,7 @@ function FunctionCellWithExpander({
   onSymbolClick: (symbol: string) => void;
   styles: any;
   allNodes: CallTreeNode[];
+  compact?: boolean;
 }) {
   const handleClick = () => {
     if (hasChildren) {
@@ -968,7 +966,7 @@ function FunctionCellWithExpander({
       <Button fill="text" size="sm" onClick={handleClick} className={styles.functionButton}>
         {value}
       </Button>
-      {row.original.childCount > 0 && (
+      {!compact && row.original.childCount > 0 && (
         <span className={styles.nodeBadge}>
           {row.original.childCount} {row.original.childCount === 1 ? 'child' : 'children'}, {row.original.subtreeSize} {row.original.subtreeSize === 1 ? 'node' : 'nodes'}
         </span>
@@ -1077,9 +1075,9 @@ function getStyles(theme: GrafanaTheme2) {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     toolbarLeft: css({
-      flexGrow: 1,
-      minWidth: '150px',
-      maxWidth: '350px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
     }),
     toolbarRight: css({
       display: 'flex',
@@ -1087,14 +1085,10 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       gap: theme.spacing(1),
     }),
-    searchInput: css({
-      width: '100%',
-    }),
     searchContainer: css({
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      width: '100%',
       flexWrap: 'wrap',
     }),
     searchNavigation: css({

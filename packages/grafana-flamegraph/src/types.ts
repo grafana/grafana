@@ -21,6 +21,18 @@ export enum SelectedView {
   TopTable = 'topTable',
   FlameGraph = 'flameGraph',
   Both = 'both',
+  CallTree = 'callTree',
+}
+
+export enum ViewMode {
+  Single = 'single',
+  Split = 'split',
+}
+
+export enum PaneView {
+  TopTable = 'topTable',
+  FlameGraph = 'flameGraph',
+  CallTree = 'callTree',
 }
 
 export interface TableData {

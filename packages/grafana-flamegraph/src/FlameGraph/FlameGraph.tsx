@@ -19,8 +19,10 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { Icon } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Button, ButtonGroup, Dropdown, Icon, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
+import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './colors';
 import { PIXELS_PER_LEVEL } from '../constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
 
@@ -39,11 +41,14 @@ type Props = {
   onItemFocused: (data: ClickedItemData) => void;
   focusedItemData?: ClickedItemData;
   textAlign: TextAlign;
+  onTextAlignChange: (align: TextAlign) => void;
   sandwichItem?: string;
   onSandwich: (label: string) => void;
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
   showFlameGraphOnly?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   collapsing?: boolean;
@@ -63,11 +68,14 @@ const FlameGraph = ({
   onItemFocused,
   focusedItemData,
   textAlign,
+  onTextAlignChange,
   onSandwich,
   sandwichItem,
   onFocusPillClick,
   onSandwichPillClick,
   colorScheme,
+  onColorSchemeChange,
+  isDiffMode,
   showFlameGraphOnly,
   getExtraContextMenuButtons,
   collapsing,
@@ -76,7 +84,7 @@ const FlameGraph = ({
   collapsedMap,
   setCollapsedMap,
 }: Props) => {
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
   const [levels, setLevels] = useState<LevelItem[][]>();
   const [levelsCallers, setLevelsCallers] = useState<LevelItem[][]>();
@@ -175,27 +183,182 @@ const FlameGraph = ({
     );
   }
 
+  const alignOptions: Array<SelectableValue<TextAlign>> = [
+    { value: 'left', description: 'Align text left', icon: 'align-left' },
+    { value: 'right', description: 'Align text right', icon: 'align-right' },
+  ];
+
   return (
     <div className={styles.graph}>
-      <FlameGraphMetadata
-        data={data}
-        focusedItem={focusedItemData}
-        sandwichedLabel={sandwichItem}
-        totalTicks={totalViewTicks}
-        onFocusPillClick={onFocusPillClick}
-        onSandwichPillClick={onSandwichPillClick}
-      />
+      <div className={styles.toolbar}>
+        <FlameGraphMetadata
+          data={data}
+          focusedItem={focusedItemData}
+          sandwichedLabel={sandwichItem}
+          totalTicks={totalViewTicks}
+          onFocusPillClick={onFocusPillClick}
+          onSandwichPillClick={onSandwichPillClick}
+        />
+        <div className={styles.controls}>
+          <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
+          <ButtonGroup className={styles.buttonSpacing}>
+            <Button
+              variant={'secondary'}
+              fill={'outline'}
+              size={'sm'}
+              tooltip={'Expand all groups'}
+              onClick={() => {
+                setCollapsedMap(collapsedMap.setAllCollapsedStatus(false));
+              }}
+              aria-label={'Expand all groups'}
+              icon={'angle-double-down'}
+            />
+            <Button
+              variant={'secondary'}
+              fill={'outline'}
+              size={'sm'}
+              tooltip={'Collapse all groups'}
+              onClick={() => {
+                setCollapsedMap(collapsedMap.setAllCollapsedStatus(true));
+              }}
+              aria-label={'Collapse all groups'}
+              icon={'angle-double-up'}
+            />
+          </ButtonGroup>
+          <RadioButtonGroup<TextAlign>
+            size="sm"
+            options={alignOptions}
+            value={textAlign}
+            onChange={onTextAlignChange}
+          />
+        </div>
+      </div>
       {canvas}
     </div>
   );
 };
 
-const getStyles = () => ({
+type ColorSchemeButtonProps = {
+  value: ColorScheme | ColorSchemeDiff;
+  onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
+};
+
+function ColorSchemeButton(props: ColorSchemeButtonProps) {
+  const styles = useStyles2(getStyles);
+  let menu = (
+    <Menu>
+      <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
+      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
+    </Menu>
+  );
+
+  // Show a bit different gradient as a way to indicate selected value
+  const colorDotStyle =
+    {
+      [ColorScheme.ValueBased]: styles.colorDotByValue,
+      [ColorScheme.PackageBased]: styles.colorDotByPackage,
+      [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
+      [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
+    }[props.value] || styles.colorDotByValue;
+
+  let contents = <span className={cx(styles.colorDot, colorDotStyle)} />;
+
+  if (props.isDiffMode) {
+    menu = (
+      <Menu>
+        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
+        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
+      </Menu>
+    );
+
+    contents = (
+      <div className={cx(styles.colorDotDiff, colorDotStyle)}>
+        <div>-100% (removed)</div>
+        <div>0%</div>
+        <div>+100% (added)</div>
+      </div>
+    );
+  }
+
+  return (
+    <Dropdown overlay={menu}>
+      <Button
+        variant={'secondary'}
+        fill={'outline'}
+        size={'sm'}
+        tooltip={'Change color scheme'}
+        onClick={() => {}}
+        className={styles.buttonSpacing}
+        aria-label={'Change color scheme'}
+      >
+        {contents}
+      </Button>
+    </Dropdown>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
   graph: css({
     label: 'graph',
     overflow: 'auto',
     flexGrow: 1,
     flexBasis: '50%',
+  }),
+  toolbar: css({
+    label: 'toolbar',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing(1),
+  }),
+  controls: css({
+    label: 'controls',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  buttonSpacing: css({
+    label: 'buttonSpacing',
+    marginRight: theme.spacing(1),
+  }),
+  colorDot: css({
+    label: 'colorDot',
+    display: 'inline-block',
+    width: '10px',
+    height: '10px',
+    borderRadius: theme.shape.radius.circle,
+  }),
+  colorDotDiff: css({
+    label: 'colorDotDiff',
+    display: 'flex',
+    width: '200px',
+    height: '12px',
+    color: 'white',
+    fontSize: 9,
+    lineHeight: 1.3,
+    fontWeight: 300,
+    justifyContent: 'space-between',
+    padding: '0 2px',
+    // We have a specific sizing for this so probably makes sense to use hardcoded value here
+    // eslint-disable-next-line @grafana/no-border-radius-literal
+    borderRadius: '2px',
+  }),
+  colorDotByValue: css({
+    label: 'colorDotByValue',
+    background: byValueGradient,
+  }),
+  colorDotByPackage: css({
+    label: 'colorDotByPackage',
+    background: byPackageGradient,
+  }),
+  colorDotDiffDefault: css({
+    label: 'colorDotDiffDefault',
+    background: diffDefaultGradient,
+  }),
+  colorDotDiffColorBlind: css({
+    label: 'colorDotDiffColorBlind',
+    background: diffColorBlindGradient,
   }),
   sandwichCanvasWrapper: css({
     label: 'sandwichCanvasWrapper',

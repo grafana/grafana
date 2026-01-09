@@ -13,6 +13,7 @@ const meta: Meta<typeof FlameGraphCallTreeContainer> = {
   component: FlameGraphCallTreeContainer,
   args: {
     colorScheme: ColorScheme.PackageBased,
+    search: '',
   },
   decorators: [
     (Story) => (

@@ -5,30 +5,29 @@ import { useDebounce, usePrevious } from 'react-use';
 
 import { ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
-import { CollapsedMap } from './FlameGraph/dataTransform';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
-import { ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
+import { PaneView, SelectedView, ViewMode } from './types';
 
 type Props = {
   search: string;
   setSearch: (search: string) => void;
   selectedView: SelectedView;
   setSelectedView: (view: SelectedView) => void;
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
+  leftPaneView: PaneView;
+  setLeftPaneView: (view: PaneView) => void;
+  rightPaneView: PaneView;
+  setRightPaneView: (view: PaneView) => void;
+  singleView: PaneView;
+  setSingleView: (view: PaneView) => void;
   containerWidth: number;
   onReset: () => void;
-  textAlign: TextAlign;
-  onTextAlignChange: (align: TextAlign) => void;
   showResetButton: boolean;
-  colorScheme: ColorScheme | ColorSchemeDiff;
-  onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
   stickyHeader: boolean;
   vertical?: boolean;
-  isDiffMode: boolean;
-  setCollapsedMap: (collapsedMap: CollapsedMap) => void;
-  collapsedMap: CollapsedMap;
 
   extraHeaderElements?: React.ReactNode;
 
@@ -40,19 +39,20 @@ const FlameGraphHeader = ({
   setSearch,
   selectedView,
   setSelectedView,
+  viewMode,
+  setViewMode,
+  leftPaneView,
+  setLeftPaneView,
+  rightPaneView,
+  setRightPaneView,
+  singleView,
+  setSingleView,
   containerWidth,
   onReset,
-  textAlign,
-  onTextAlignChange,
   showResetButton,
-  colorScheme,
-  onColorSchemeChange,
   stickyHeader,
   extraHeaderElements,
   vertical,
-  isDiffMode,
-  setCollapsedMap,
-  collapsedMap,
   assistantContext,
 }: Props) => {
   const styles = useStyles2(getStyles);
@@ -87,6 +87,25 @@ const FlameGraphHeader = ({
         />
       </div>
 
+      {selectedView === SelectedView.Both && viewMode === ViewMode.Split && (
+        <div className={styles.middleContainer}>
+          <RadioButtonGroup<PaneView>
+            size="sm"
+            options={paneViewOptions}
+            value={leftPaneView}
+            onChange={setLeftPaneView}
+            className={styles.buttonSpacing}
+          />
+          <RadioButtonGroup<PaneView>
+            size="sm"
+            options={paneViewOptions}
+            value={rightPaneView}
+            onChange={setRightPaneView}
+            className={styles.buttonSpacing}
+          />
+        </div>
+      )}
+
       <div className={styles.rightContainer}>
         {!!assistantContext?.length && (
           <div className={styles.buttonSpacing}>
@@ -111,129 +130,62 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
-        <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
-        <ButtonGroup className={styles.buttonSpacing}>
-          <Button
-            variant={'secondary'}
-            fill={'outline'}
-            size={'sm'}
-            tooltip={'Expand all groups'}
-            onClick={() => {
-              setCollapsedMap(collapsedMap.setAllCollapsedStatus(false));
-            }}
-            aria-label={'Expand all groups'}
-            icon={'angle-double-down'}
-            disabled={selectedView === SelectedView.TopTable}
+        {selectedView === SelectedView.Both ? (
+          <>
+            <RadioButtonGroup<ViewMode>
+              size="sm"
+              options={viewModeOptions}
+              value={viewMode}
+              onChange={setViewMode}
+              className={styles.buttonSpacing}
+            />
+            {viewMode === ViewMode.Single && (
+              <RadioButtonGroup<PaneView>
+                size="sm"
+                options={paneViewOptions}
+                value={singleView}
+                onChange={setSingleView}
+                className={styles.buttonSpacing}
+              />
+            )}
+          </>
+        ) : (
+          <RadioButtonGroup<SelectedView>
+            size="sm"
+            options={getViewOptions(containerWidth, vertical)}
+            value={selectedView}
+            onChange={setSelectedView}
           />
-          <Button
-            variant={'secondary'}
-            fill={'outline'}
-            size={'sm'}
-            tooltip={'Collapse all groups'}
-            onClick={() => {
-              setCollapsedMap(collapsedMap.setAllCollapsedStatus(true));
-            }}
-            aria-label={'Collapse all groups'}
-            icon={'angle-double-up'}
-            disabled={selectedView === SelectedView.TopTable}
-          />
-        </ButtonGroup>
-        <RadioButtonGroup<TextAlign>
-          size="sm"
-          disabled={selectedView === SelectedView.TopTable}
-          options={alignOptions}
-          value={textAlign}
-          onChange={onTextAlignChange}
-          className={styles.buttonSpacing}
-        />
-        <RadioButtonGroup<SelectedView>
-          size="sm"
-          options={getViewOptions(containerWidth, vertical)}
-          value={selectedView}
-          onChange={setSelectedView}
-        />
+        )}
         {extraHeaderElements && <div className={styles.extraElements}>{extraHeaderElements}</div>}
       </div>
     </div>
   );
 };
 
-type ColorSchemeButtonProps = {
-  value: ColorScheme | ColorSchemeDiff;
-  onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
-  isDiffMode: boolean;
-};
-function ColorSchemeButton(props: ColorSchemeButtonProps) {
-  // TODO: probably create separate getStyles
-  const styles = useStyles2(getStyles);
-  let menu = (
-    <Menu>
-      <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
-      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
-    </Menu>
-  );
+const viewModeOptions: Array<SelectableValue<ViewMode>> = [
+  { value: ViewMode.Single, label: 'Single', description: 'Single view' },
+  { value: ViewMode.Split, label: 'Split', description: 'Split view' },
+];
 
-  // Show a bit different gradient as a way to indicate selected value
-  const colorDotStyle =
-    {
-      [ColorScheme.ValueBased]: styles.colorDotByValue,
-      [ColorScheme.PackageBased]: styles.colorDotByPackage,
-      [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
-      [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
-    }[props.value] || styles.colorDotByValue;
-
-  let contents = <span className={cx(styles.colorDot, colorDotStyle)} />;
-
-  if (props.isDiffMode) {
-    menu = (
-      <Menu>
-        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
-        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
-      </Menu>
-    );
-
-    contents = (
-      <div className={cx(styles.colorDotDiff, colorDotStyle)}>
-        <div>-100% (removed)</div>
-        <div>0%</div>
-        <div>+100% (added)</div>
-      </div>
-    );
-  }
-
-  return (
-    <Dropdown overlay={menu}>
-      <Button
-        variant={'secondary'}
-        fill={'outline'}
-        size={'sm'}
-        tooltip={'Change color scheme'}
-        onClick={() => {}}
-        className={styles.buttonSpacing}
-        aria-label={'Change color scheme'}
-      >
-        {contents}
-      </Button>
-    </Dropdown>
-  );
-}
-
-const alignOptions: Array<SelectableValue<TextAlign>> = [
-  { value: 'left', description: 'Align text left', icon: 'align-left' },
-  { value: 'right', description: 'Align text right', icon: 'align-right' },
+const paneViewOptions: Array<SelectableValue<PaneView>> = [
+  { value: PaneView.TopTable, label: 'Table' },
+  { value: PaneView.FlameGraph, label: 'Flame' },
+  { value: PaneView.CallTree, label: 'Tree' },
 ];
 
 function getViewOptions(width: number, vertical?: boolean): Array<SelectableValue<SelectedView>> {
   let viewOptions: Array<{ value: SelectedView; label: string; description: string }> = [
     { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
     { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
+    { value: SelectedView.CallTree, label: 'Call Tree', description: 'Only show call tree' },
   ];
 
   if (width >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH || vertical) {
     viewOptions.push({
       value: SelectedView.Both,
       label: 'Both',
-      description: 'Show both the top table and flame graph',
+      description: 'Show split or single view with multiple visualizations',
     });
   }
 
@@ -273,10 +225,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
     width: '100%',
     top: 0,
     gap: theme.spacing(1),
     marginTop: theme.spacing(1),
+    position: 'relative',
   }),
   stickyHeader: css({
     zIndex: theme.zIndex.navbarFixed,
@@ -285,9 +239,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   inputContainer: css({
     label: 'inputContainer',
-    flexGrow: 1,
+    flexGrow: 0,
     minWidth: '150px',
     maxWidth: '350px',
+  }),
+  middleContainer: css({
+    label: 'middleContainer',
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    position: 'absolute',
+    left: '50%',
+    transform: 'translateX(-50%)',
   }),
   rightContainer: css({
     label: 'rightContainer',
@@ -308,44 +272,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'resetButtonIcon',
     padding: '0 5px',
     color: theme.colors.text.disabled,
-  }),
-  colorDot: css({
-    label: 'colorDot',
-    display: 'inline-block',
-    width: '10px',
-    height: '10px',
-    borderRadius: theme.shape.radius.circle,
-  }),
-  colorDotDiff: css({
-    label: 'colorDotDiff',
-    display: 'flex',
-    width: '200px',
-    height: '12px',
-    color: 'white',
-    fontSize: 9,
-    lineHeight: 1.3,
-    fontWeight: 300,
-    justifyContent: 'space-between',
-    padding: '0 2px',
-    // We have a specific sizing for this so probably makes sense to use hardcoded value here
-    // eslint-disable-next-line @grafana/no-border-radius-literal
-    borderRadius: '2px',
-  }),
-  colorDotByValue: css({
-    label: 'colorDotByValue',
-    background: byValueGradient,
-  }),
-  colorDotByPackage: css({
-    label: 'colorDotByPackage',
-    background: byPackageGradient,
-  }),
-  colorDotDiffDefault: css({
-    label: 'colorDotDiffDefault',
-    background: diffDefaultGradient,
-  }),
-  colorDotDiffColorBlind: css({
-    label: 'colorDotDiffColorBlind',
-    background: diffColorBlindGradient,
   }),
   extraElements: css({
     label: 'extraElements',
