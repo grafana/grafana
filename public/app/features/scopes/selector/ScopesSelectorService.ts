@@ -371,19 +371,35 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
+  // If the current path is within a subscope's navigations, apply the subscope and set navigation scope.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
-    // Check if we are currently on an active scope navigation
+    // Check if we are currently on an active scope navigation (including those loaded by subscopes)
     const currentPath = locationService.getLocation().pathname;
-    const activeScopeNavigation = this.dashboardsService.state.scopeNavigations.find((s) => {
-      if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
-        return false;
+    const navigationInfo = this.dashboardsService.findNavigationInfo(currentPath);
+
+    // If we're on a navigation within a subscope:
+    // - Set the navigation scope to the current applied scope (so drawer keeps showing original items)
+    // - Apply the nearest subscope as the new scope
+    // - Set the navScopePath to expand the folders
+    if (navigationInfo.found && navigationInfo.nearestSubscope && navigationInfo.subscopePath) {
+      const currentAppliedScopeId = this.state.appliedScopes[0]?.scopeId;
+      if (currentAppliedScopeId) {
+        // Set navigation scope to current scope, then apply the subscope
+        this.dashboardsService.setNavigationScope(currentAppliedScopeId, undefined, navigationInfo.subscopePath);
+        // Apply the nearest subscope as the new applied scope (redirectOnApply=false to avoid recursion)
+        this.changeScopes([navigationInfo.nearestSubscope], undefined, undefined, false);
       }
-      return isCurrentPath(currentPath, s.spec.url);
-    });
+      return;
+    }
+
+    // If we're on a top-level navigation, no redirect needed
+    if (navigationInfo.found) {
+      return;
+    }
 
     // Only redirect to redirectPath if we are not currently on an active scope navigation
     if (
-      !activeScopeNavigation &&
+      !navigationInfo.found &&
       scopeNode &&
       scopeNode.spec.redirectPath &&
       typeof scopeNode.spec.redirectPath === 'string' &&
@@ -395,7 +411,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
-    if (!activeScopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
+    if (!navigationInfo.found && this.dashboardsService.state.scopeNavigations.length > 0) {
       // Redirect to the first available scopeNavigation
       const firstScopeNavigation = this.dashboardsService.state.scopeNavigations[0];
 
