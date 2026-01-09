@@ -4,9 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -14,9 +19,11 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	connectionvalidation "github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"k8s.io/apimachinery/pkg/fields"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -41,6 +48,11 @@ type ConnectionStatusPatcher interface {
 	Patch(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) error
 }
 
+// RepositoryLister interface for listing repositories
+type RepositoryLister interface {
+	List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error)
+}
+
 // ConnectionController controls Connection resources.
 type ConnectionController struct {
 	client     client.ProvisioningV0alpha1Interface
@@ -49,6 +61,7 @@ type ConnectionController struct {
 	logger     logging.Logger
 
 	statusPatcher ConnectionStatusPatcher
+	repoLister    RepositoryLister
 
 	queue workqueue.TypedRateLimitingInterface[*connectionQueueItem]
 }
@@ -58,6 +71,7 @@ func NewConnectionController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	connInformer informer.ConnectionInformer,
 	statusPatcher ConnectionStatusPatcher,
+	repoLister RepositoryLister,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -70,6 +84,7 @@ func NewConnectionController(
 			},
 		),
 		statusPatcher: statusPatcher,
+		repoLister:    repoLister,
 		logger:        logging.DefaultLogger.With("logger", connectionLoggerName),
 	}
 
@@ -171,10 +186,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
-	// Skip if being deleted
+	// Handle deletion if being deleted
 	if conn.DeletionTimestamp != nil {
-		logger.Info("connection is being deleted, skipping")
-		return nil
+		return cc.handleDelete(ctx, conn)
 	}
 
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
@@ -226,6 +240,82 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	logger.Info("connection reconciled successfully")
+	return nil
+}
+
+func (cc *ConnectionController) handleDelete(ctx context.Context, conn *provisioning.Connection) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("handle connection delete")
+
+	// Check if finalizer is present
+	hasFinalizer := false
+	for _, f := range conn.Finalizers {
+		if f == connectionvalidation.BlockDeletionFinalizer {
+			hasFinalizer = true
+			break
+		}
+	}
+
+	if !hasFinalizer {
+		logger.Info("no finalizer to process")
+		return nil
+	}
+
+	// Check if any repositories reference this connection using field selector
+	fieldSelector := fields.OneTermEqualSelector("spec.connection.name", conn.Name)
+	var allRepos []provisioning.Repository
+	continueToken := ""
+	var err error
+
+	for {
+		var obj runtime.Object
+		obj, err = cc.repoLister.List(ctx, &internalversion.ListOptions{
+			Limit:         100,
+			Continue:      continueToken,
+			FieldSelector: fieldSelector,
+		})
+		if err != nil {
+			logger.Error("failed to check for connected repositories", "error", err)
+			return fmt.Errorf("check for connected repositories: %w", err)
+		}
+
+		repositoryList, ok := obj.(*provisioning.RepositoryList)
+		if !ok {
+			logger.Error("expected repository list", "type", fmt.Sprintf("%T", obj))
+			return fmt.Errorf("expected repository list, got %T", obj)
+		}
+
+		allRepos = append(allRepos, repositoryList.Items...)
+
+		continueToken = repositoryList.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+
+	if len(allRepos) > 0 {
+		repoNames := make([]string, 0, len(allRepos))
+		for _, repo := range allRepos {
+			repoNames = append(repoNames, repo.Name)
+		}
+		logger.Info("cannot delete connection while repositories reference it", "repositories", repoNames)
+		// Don't remove finalizer - this will prevent deletion
+		// The connection will remain in deletion state until repositories are removed
+		return fmt.Errorf("cannot delete connection while repositories are using it: %s", strings.Join(repoNames, ", "))
+	}
+
+	// No repositories reference this connection, remove finalizer to allow deletion
+	logger.Info("no repositories reference connection, removing finalizer")
+	_, err = cc.client.Connections(conn.GetNamespace()).
+		Patch(ctx, conn.Name, types.JSONPatchType, []byte(`[
+			{ "op": "remove", "path": "/metadata/finalizers" }
+		]`), metav1.PatchOptions{
+			FieldManager: "provisioning-connection-controller",
+		})
+	if err != nil {
+		return fmt.Errorf("remove finalizer: %w", err)
+	}
+
 	return nil
 }
 
