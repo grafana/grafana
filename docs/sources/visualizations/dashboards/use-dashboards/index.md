@@ -32,125 +32,127 @@ image_maps:
         content: |
           **Dashboard folder**
 
-          When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](ref:dashboard-folders).
+          When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/).
       - x_coord: 17
         y_coord: 5
         content: |
-          **2. Dashboard title**
+          **Dashboard title**
           
           You can create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
       - x_coord: 23
         y_coord: 5
         content: |
-          **3. Dashboard title**
+          **Mark as favorite**
+          
+          Mark the dashboard as one of your favorites so it's included in your list of **Starred** dashboards in the main menu.
       - x_coord: 27
         y_coord: 5
         content: |
-          **4. Dashboard title**
+          **Public label**
+          
+          When you [share a dashboard externally](ref:shared-dashboards), it's marked with the **Public** label.
       - x_coord: 84
         y_coord: 5
         content: |
-          **5. Dashboard title**
+          **Grafana Assistant**
       - x_coord: 89
         y_coord: 5
         content: |
-          **6. Dashboard title**
+          **Invite new users**
       - x_coord: 32
         y_coord: 23
         content: |
-          **7. Cafe Terrace**
+          **Variables**
 
-          Small cozy cafe, open 7am–7pm.
+          Use [variables](ref:variables), including ad hoc filters, to create more interactive and dynamic dashboards.
       - x_coord: 45
         y_coord: 23
         content: |
-          **Cafe Terrace**
+          **Dashboard links**
 
-          Small cozy cafe, open 7am–7pm.
+          Link to other dashboards, panels, and external websites. Learn more about [dashboard links](ref:dashboard-links).
       - x_coord: 59
         y_coord: 29
         content: |
-          **City Park**
-
-          Playground, pond, and walking trails.
+          **Current dashboard time range and time picker**
+          
+          Click to select [relative time range](#relative-time-range) options and set custom [absolute time ranges](#absolute-time-range).
+           - You can change the **Timezone** and **Fiscal year** settings from the time range controls by clicking the **Change time settings** button.
+           - Time settings are saved on a per-dashboard basis.
       - x_coord: 67
         y_coord: 29
         content: |
-          **City Park**
-
-          Playground, pond, and walking trails.
+          **Time range zoom out**
+          
+          Click to zoom out the time range. Learn more about how to use [common time range controls](#common-time-range-controls).
       - x_coord: 73
         y_coord: 29
         content: |
-          **City Park**
-
-          Playground, pond, and walking trails.
+          **Refresh dashboard**
+          
+          Click to immediately trigger queries and refresh dashboard data.
       - x_coord: 78
         y_coord: 29
         content: |
-          **City Park**
-
-          Playground, pond, and walking trails.
+          **Auto refresh control**
+          
+          Click to select a dashboard auto refresh time interval.
       - x_coord: 85
         y_coord: 29
         content: |
-          **City Park**
-
-          Playground, pond, and walking trails.
+          **Share dashboard**
+          
+          Access several [dashboard sharing](ref:sharing) options.
       - x_coord: 98
         y_coord: 22.5
         content: |
-          **City Park**
-
-          Playground, pond, and walking trails.
+          **Edit**
+          
+          Click to leave view-only mode and enter edit mode, where you can make changes directly to the dashboard and access dashboard settings, as well as several panel editing functions.
       - x_coord: 98
         y_coord: 31
         content: |
-          **City Park**
-
-          Playground, pond, and walking trails.
+          **Export**
+          
+          Access [dashboard exporting](ref:export-dashboards) options.
       - x_coord: 98
         y_coord: 39
         content: |
-          **City Park**
-
-          Playground, pond, and walking trails.
+          **Content outline**
       - x_coord: 98
         y_coord: 47
         content: |
-          **City Park**
-
-          Playground, pond, and walking trails.
+          **Dashboard insights**
+          
+          Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics](ref:dashboard-analytics).
       - x_coord: 11
         y_coord: 30
         content: |
-          **18. Grouping title (row)**
+          **Grouping title (row)**
 
-          Built 1895 — guided tours available.
+          A row one grouping option within a dashboard that groups panels together.
       - x_coord: 20
         y_coord: 36
         content: |
-          **19. Grouping title (tab)**
+          **Grouping title (tab)**
 
-          Built 1895 — guided tours available.
+          A tab one grouping option within a dashboard that groups panels together.
       - x_coord: 21
         y_coord: 45
         content: |
-          **20. Panel title**
-
-          Built 1895 — guided tours available.
+          **Panel title**
       - x_coord: 27
         y_coord: 63
         content: |
-          **21. Visualization**
-
-          Built 1895 — guided tours available.
+          **Dashboard panel**
+          
+          The [panel](ref:panel-overview) is the primary building block of a dashboard.
       - x_coord: 19
         y_coord: 91
         content: |
-          **22. Panel legend**
-
-          Built 1895 — guided tours available.
+          **Panel legend**
+          
+          Change series colors as well as y-axis and series visibility directly from the legend.
 refs:
   dashboard-analytics:
     - pattern: /docs/grafana/
@@ -225,32 +227,6 @@ This topic provides an overview of dashboard features and shortcuts, and describ
 The dashboard user interface provides a number of features that you can use to customize the presentation of your data.
 
 The following image and descriptions highlight all dashboard features.
-
-<!-- ![An annotated image of a dashboard](/media/docs/grafana/dashboards/screenshot-dashboard-annotated-v11.3-2.png)
-
-1. **Dashboard folder** - When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](ref:dashboard-folders).
-1. **Dashboard title** - You can create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
-1. **Kiosk mode** - Click to display the dashboard on a large screen such as a TV or a kiosk. Kiosk mode hides the main menu, navbar, and dashboard controls. Learn more about kiosk mode in our [How to Create Kiosks to Display Dashboards on a TV blog post](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/). Press `Esc` to leave kiosk mode.
-1. **Mark as favorite** - Mark the dashboard as one of your favorites so it's included in your list of **Starred** dashboards in the main menu.
-1. **Public label** - When you [share a dashboard externally](ref:shared-dashboards), it's marked with the **Public** label.
-1. **Dashboard insights** - Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics](ref:dashboard-analytics).
-1. **Edit** - Click to leave view-only mode and enter edit mode, where you can make changes directly to the dashboard and access dashboard settings, as well as several panel editing functions.
-1. **Export** - Access [dashboard exporting](ref:export-dashboards) options.
-1. **Share dashboard** - Access several [dashboard sharing](ref:sharing) options.
-1. **Variables** - Use [variables](ref:variables), including ad hoc filters, to create more interactive and dynamic dashboards.
-1. **Dashboard links** - Link to other dashboards, panels, and external websites. Learn more about [dashboard links](ref:dashboard-links).
-1. **Current dashboard time range and time picker** - Click to select [relative time range](#relative-time-range) options and set custom [absolute time ranges](#absolute-time-range).
-   - You can change the **Timezone** and **Fiscal year** settings from the time range controls by clicking the **Change time settings** button.
-   - Time settings are saved on a per-dashboard basis.
-1. **Time range zoom out** - Click to zoom out the time range. Learn more about how to use [common time range controls](#common-time-range-controls).
-1. **Refresh dashboard** - Click to immediately trigger queries and refresh dashboard data.
-1. **Auto refresh control** - Click to select a dashboard auto refresh time interval.
-1. **Dashboard row** - A dashboard row is a logical divider within a dashboard that groups panels together.
-   - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
-   - Panels inside a collapsed row do not issue queries.
-   - Use [repeating rows](ref:repeating-rows) to dynamically create rows based on a template variable.
-1. **Dashboard panel** - The [panel](ref:panel-overview) is the primary building block of a dashboard.
-1. **Panel legend** - Change series colors as well as y-axis and series visibility directly from the legend. -->
 
 {{< image-map key="annotated-dashboard" >}}
 
