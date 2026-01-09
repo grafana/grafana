@@ -117,6 +117,36 @@ export const MyComponent = () => {
 };
 ```
 
+### Custom Header Rendering
+
+Column headers can be customized using strings, React elements, or renderer functions. The `header` property accepts any value that matches React Table's `Renderer` type.
+
+**Important:** When using custom header content, prefer inline elements (like `<span>`) over block elements (like `<div>`) to avoid layout issues. Block-level elements can cause extra spacing and alignment problems in table headers because they disrupt the table's inline flow. Use `display: inline-flex` or `display: inline-block` when you need flexbox or block-like behavior.
+
+```tsx
+const columns: Array<Column<TableData>> = [
+  // React element header
+  {
+    id: 'checkbox',
+    header: <Checkbox />,
+  },
+
+  // Function renderer header
+  {
+    id: 'firstName',
+    header: () => (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        <Icon name="user" size="sm" />
+        <span>First Name</span>
+      </span>
+    ),
+  },
+
+  // String header
+  { id: 'lastName', header: 'Last name' },
+];
+```
+
 ### Custom Cell Rendering
 
 Individual cells can be rendered using custom content dy defining a `cell` property on the column definition.
