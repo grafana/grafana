@@ -1,9 +1,11 @@
 package setting
 
 import (
-	"strconv"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
@@ -12,17 +14,16 @@ func TestFeatureToggles(t *testing.T) {
 	testCases := []struct {
 		name            string
 		conf            map[string]string
-		err             error
-		expectedToggles map[string]bool
+		expectedToggles map[string]memprovider.InMemoryFlag
 	}{
 		{
 			name: "can parse feature toggles passed in the `enable` array",
 			conf: map[string]string{
 				"enable": "feature1,feature2",
 			},
-			expectedToggles: map[string]bool{
-				"feature1": true,
-				"feature2": true,
+			expectedToggles: map[string]memprovider.InMemoryFlag{
+				"feature1": NewInMemoryFlag("feature1", true),
+				"feature2": NewInMemoryFlag("feature2", true),
 			},
 		},
 		{
@@ -31,10 +32,10 @@ func TestFeatureToggles(t *testing.T) {
 				"enable":   "feature1,feature2",
 				"feature3": "true",
 			},
-			expectedToggles: map[string]bool{
-				"feature1": true,
-				"feature2": true,
-				"feature3": true,
+			expectedToggles: map[string]memprovider.InMemoryFlag{
+				"feature1": NewInMemoryFlag("feature1", true),
+				"feature2": NewInMemoryFlag("feature2", true),
+				"feature3": NewInMemoryFlag("feature3", true),
 			},
 		},
 		{
@@ -43,19 +44,26 @@ func TestFeatureToggles(t *testing.T) {
 				"enable":   "feature1,feature2",
 				"feature2": "false",
 			},
-			expectedToggles: map[string]bool{
-				"feature1": true,
-				"feature2": false,
+			expectedToggles: map[string]memprovider.InMemoryFlag{
+				"feature1": NewInMemoryFlag("feature1", true),
+				"feature2": NewInMemoryFlag("feature2", false),
 			},
 		},
 		{
-			name: "invalid boolean value should return syntax error",
+			name: "feature flags of different types are handled correctly",
 			conf: map[string]string{
-				"enable":   "feature1,feature2",
-				"feature2": "invalid",
+				"feature1": "1", "feature2": "1.0",
+				"feature3": `{"foo":"bar"}`, "feature4": "bar",
+				"feature5": "t", "feature6": "T",
 			},
-			expectedToggles: map[string]bool{},
-			err:             strconv.ErrSyntax,
+			expectedToggles: map[string]memprovider.InMemoryFlag{
+				"feature1": NewInMemoryFlag("feature1", 1),
+				"feature2": NewInMemoryFlag("feature2", 1.0),
+				"feature3": NewInMemoryFlag("feature3", map[string]any{"foo": "bar"}),
+				"feature4": NewInMemoryFlag("feature4", "bar"),
+				"feature5": NewInMemoryFlag("feature5", true),
+				"feature6": NewInMemoryFlag("feature6", true),
+			},
 		},
 	}
 
@@ -69,12 +77,35 @@ func TestFeatureToggles(t *testing.T) {
 		}
 
 		featureToggles, err := ReadFeatureTogglesFromInitFile(toggles)
-		require.ErrorIs(t, err, tc.err)
+		require.NoError(t, err)
 
-		if err == nil {
-			for k, v := range featureToggles {
-				require.Equal(t, tc.expectedToggles[k], v, tc.name)
-			}
+		for k, v := range featureToggles {
+			toggle := tc.expectedToggles[k]
+			require.Equal(t, toggle, v, tc.name)
+		}
+	}
+}
+
+func TestFlagValueSerialization(t *testing.T) {
+	testCases := []memprovider.InMemoryFlag{
+		NewInMemoryFlag("int", 1),
+		NewInMemoryFlag("1.0f", 1.0),
+		NewInMemoryFlag("1.01f", 1.01),
+		NewInMemoryFlag("1.10f", 1.10),
+		NewInMemoryFlag("struct", map[string]any{"foo": "bar"}),
+		NewInMemoryFlag("string", "bar"),
+		NewInMemoryFlag("true", true),
+		NewInMemoryFlag("false", false),
+	}
+
+	for _, tt := range testCases {
+		asStringMap := AsStringMap(map[string]memprovider.InMemoryFlag{tt.Key: tt})
+
+		deserialized, err := ParseFlag(tt.Key, asStringMap[tt.Key])
+		assert.NoError(t, err)
+
+		if diff := cmp.Diff(tt, deserialized); diff != "" {
+			t.Errorf("(-want, +got) = %v", diff)
 		}
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
@@ -92,4 +93,145 @@ ABCD = true
 	// compare enabled feature flags match between StaticFlagEvaluator and Feature Manager
 	enabledFeatureManager := mgr.GetEnabled(ctx)
 	assert.Equal(t, openFeatureEnabledFlags, enabledFeatureManager)
+}
+
+func Test_StaticProvider_TypedFlags(t *testing.T) {
+	tests := []struct {
+		flags         FeatureFlag
+		defaultValue  any
+		expectedValue any
+	}{
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "true",
+			},
+			defaultValue:  false,
+			expectedValue: true,
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "1.0",
+			},
+			defaultValue:  0.0,
+			expectedValue: 1.0,
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "blue",
+			},
+			defaultValue:  "red",
+			expectedValue: "blue",
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: "1",
+			},
+			defaultValue:  int64(0),
+			expectedValue: int64(1),
+		},
+		{
+			flags: FeatureFlag{
+				Name:       "Flag",
+				Expression: `{ "foo": "bar" }`,
+			},
+			expectedValue: map[string]any{"foo": "bar"},
+		},
+	}
+
+	for _, tt := range tests {
+		provider, err := newStaticProvider(nil, []FeatureFlag{tt.flags})
+		assert.NoError(t, err)
+
+		var result any
+		switch tt.expectedValue.(type) {
+		case bool:
+			result = provider.BooleanEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(bool), openfeature.FlattenedContext{}).Value
+		case float64:
+			result = provider.FloatEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(float64), openfeature.FlattenedContext{}).Value
+		case string:
+			result = provider.StringEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(string), openfeature.FlattenedContext{}).Value
+		case int64:
+			result = provider.IntEvaluation(t.Context(), tt.flags.Name, tt.defaultValue.(int64), openfeature.FlattenedContext{}).Value
+		case map[string]any:
+			result = provider.ObjectEvaluation(t.Context(), tt.flags.Name, tt.defaultValue, openfeature.FlattenedContext{}).Value
+		}
+
+		assert.Equal(t, tt.expectedValue, result)
+	}
+}
+func Test_StaticProvider_ConfigOverride(t *testing.T) {
+	tests := []struct {
+		name          string
+		originalValue string
+		configValue   any
+	}{
+		{
+			name:          "bool",
+			originalValue: "false",
+			configValue:   true,
+		},
+		{
+			name:          "int",
+			originalValue: "0",
+			configValue:   int64(1),
+		},
+		{
+			name:          "float",
+			originalValue: "0.0",
+			configValue:   1.0,
+		},
+		{
+			name:          "string",
+			originalValue: "foo",
+			configValue:   "bar",
+		},
+		{
+			name:          "structure",
+			originalValue: "{}",
+			configValue:   make(map[string]any),
+		},
+	}
+
+	for _, tt := range tests {
+		configFlags, standardFlags := makeFlags(tt)
+		provider, err := newStaticProvider(configFlags, standardFlags)
+		assert.NoError(t, err)
+
+		var result any
+		switch tt.configValue.(type) {
+		case bool:
+			result = provider.BooleanEvaluation(t.Context(), tt.name, false, openfeature.FlattenedContext{}).Value
+		case float64:
+			result = provider.FloatEvaluation(t.Context(), tt.name, 0.0, openfeature.FlattenedContext{}).Value
+		case string:
+			result = provider.StringEvaluation(t.Context(), tt.name, "foo", openfeature.FlattenedContext{}).Value
+		case int64:
+			result = provider.IntEvaluation(t.Context(), tt.name, 1, openfeature.FlattenedContext{}).Value
+		case map[string]any:
+			result = provider.ObjectEvaluation(t.Context(), tt.name, make(map[string]any), openfeature.FlattenedContext{}).Value
+		}
+
+		assert.Equal(t, tt.configValue, result)
+	}
+}
+
+func makeFlags(tt struct {
+	name          string
+	originalValue string
+	configValue   any
+}) (map[string]memprovider.InMemoryFlag, []FeatureFlag) {
+	orig := FeatureFlag{
+		Name:       tt.name,
+		Expression: tt.originalValue,
+	}
+
+	config := map[string]memprovider.InMemoryFlag{
+		tt.name: setting.NewInMemoryFlag(tt.name, tt.configValue),
+	}
+
+	return config, []FeatureFlag{orig}
 }
