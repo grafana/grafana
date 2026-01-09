@@ -107,6 +107,9 @@ function UnconfiguredPanelComp(props: PanelProps) {
           // Set the query in the panel
           queryRunner.setState({ queries: [enrichedQuery] });
 
+          // TODO: Update this to utilize viz suggestions
+          panel.changePluginType('table');
+
           // Update datasource if needed
           if (enrichedQuery.datasource?.uid) {
             const dsSettings = await getDataSourceSrv().get({ uid: enrichedQuery.datasource.uid });
@@ -115,7 +118,10 @@ function UnconfiguredPanelComp(props: PanelProps) {
 
           locationService.partial({ editPanel: props.id });
 
-          queryRunner.runQueries();
+          // This is needed to ensure the query runner is initialized before running queries
+          setTimeout(() => {
+            queryRunner.runQueries();
+          }, 0);
         } catch (error) {
           console.error('Failed to set query from library:', error);
         }
