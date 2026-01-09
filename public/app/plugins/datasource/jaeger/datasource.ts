@@ -106,6 +106,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       ...expandedQuery,
       service: this.templateSrv.replace(query.service ?? '', scopedVars),
       operation: this.templateSrv.replace(query.operation ?? '', scopedVars),
+      query: this.templateSrv.replace(query.query ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
     };
