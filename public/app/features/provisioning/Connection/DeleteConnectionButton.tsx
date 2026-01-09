@@ -6,6 +6,8 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { Connection, useDeleteConnectionMutation } from 'app/api/clients/provisioning/v0alpha1';
 
+import { CONNECTIONS_URL } from '../constants';
+
 interface Props {
   name: string;
   connection: Connection;
