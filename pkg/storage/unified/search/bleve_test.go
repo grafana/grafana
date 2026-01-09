@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	bolterrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/goleak"
 
@@ -1615,7 +1616,7 @@ func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
 	require.NoError(t, err)
 	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
 	require.Error(t, err)
-	require.ErrorIs(t, err, errIndexLocked)
+	require.ErrorIs(t, err, bolterrors.ErrTimeout)
 	require.Nil(t, index2)
 	require.GreaterOrEqual(t, time.Since(now).Milliseconds(), timeout.Milliseconds()-500, "BuildIndex should have waited for approximately boltTimeout duration")
 
