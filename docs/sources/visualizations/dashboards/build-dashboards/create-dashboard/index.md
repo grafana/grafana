@@ -125,7 +125,11 @@ To create a dashboard, follow these steps:
 
    For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
 
-1. Write or construct a query in the query language of your data source.
+1. To create a query, do one of the following:
+   - Write or construct a query in the query language of your data source.
+   - Open the **Saved queries** drop-down menu and click **Replace query** to reuse a [saved query](ref:saved-queries).
+
+1. (Optional) To [save the query](ref:save-query) for reuse, open the **Saved queries** drop-down menu and click the **Save query** option.
 1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.
 

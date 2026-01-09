@@ -293,15 +293,15 @@ overrides_path = overrides.yaml
 overrides_reload_period = 5s
 ```
 
-To overrides the default quota for a tenant, add the following to the overrides.yaml file:
+To override the default quota for a tenant, add the following to the `overrides.yaml` file:
 ```yaml
 overrides:
   <NAMESPACE>:
     quotas:
-      <GROUP>.<RESOURCE>:
+      <GROUP>/<RESOURCE>:
         limit: 10
 ```
-Unless otherwise set, the NAMESPACE when running locally is `default`.
+Unless otherwise set, the `NAMESPACE` when running locally is `default`.
 
 To access quotas, use the following API endpoint:
 ```
@@ -806,8 +806,10 @@ flowchart TD
 
 #### Setting Dual Writer Mode
 ```ini
-[unified_storage.{resource}.{kind}.{group}]
-dualWriterMode = {0-5}
+; [unified_storage.{resource}.{group}]
+[unified_storage.dashboards.dashboard.grafana.app]
+; modes {0-5}
+dualWriterMode = 0
 ```
 
 #### Background Sync Configuration
@@ -1346,4 +1348,33 @@ Key metrics for monitoring Unified Search:
 - `unified_search_shadow_requests_total`: Shadow traffic request counts
 - `unified_search_ring_members`: Number of active search server instances
 
+## Data migrations
 
+Unified storage includes an automated migration system that transfers resources from legacy SQL tables to unified storage. Migrations run automatically during Grafana startup when enabled.
+
+### Supported resources
+
+- Folders
+- Dashboards
+- Library panels
+- Playlists
+
+### Validation
+
+Built-in validators ensure data integrity after migration:
+
+- **CountValidator**: Verifies resource counts match between legacy and unified storage
+- **FolderTreeValidator**: Validates folder parent-child relationships are preserved
+
+### Configuration
+
+Enable migrations in `grafana.ini`:
+
+```ini
+[unified_storage]
+disable_data_migrations = false
+```
+
+### Documentation
+
+For detailed information about migration architecture, validators, and troubleshooting, refer to [migrations/README.md](./migrations/README.md).

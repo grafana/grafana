@@ -8,7 +8,8 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "strict": true,
-    "rootDirs": ["."]
+    "rootDirs": ["."],
+    "moduleResolution": "bundler"
   },
   "exclude": ["dist/**/*"],
   "include": ["src/**/*.ts*", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts"]

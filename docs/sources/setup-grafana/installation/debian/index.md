@@ -46,7 +46,7 @@ Complete the following steps to install Grafana from the APT repository:
 1. Install the prerequisite packages:
 
    ```bash
-   sudo apt-get install -y apt-transport-https software-properties-common wget
+   sudo apt-get install -y apt-transport-https wget
    ```
 
 1. Import the GPG key:

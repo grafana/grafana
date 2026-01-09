@@ -387,7 +387,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Namespace: "grafana",
 			Name:      "ds_config_handler_requests_duration_seconds",
 			Help:      "Duration of requests handled by datasource configuration handlers",
-		}, []string{"code_path", "handler"}),
+		}, []string{"handler"}),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
@@ -638,7 +638,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
 	m.Use(requestmeta.SetupRequestMetadata())
-	m.Use(middleware.RequestTracing(hs.tracer, middleware.SkipTracingPaths))
+	m.Use(middleware.RequestTracing(hs.tracer, middleware.ShouldTraceWithExceptions))
 	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegister))
 
 	m.UseMiddleware(hs.LoggerMiddleware.Middleware())

@@ -10,7 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -28,7 +30,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
@@ -36,6 +37,11 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
+		},
+		// Explicitly configure with mode 5 the resources supported by provisioning.
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
 	})
 
@@ -89,9 +95,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "iam.grafana.app",
-		Version: "v0alpha1",
-	}, {
-		Group:   "investigations.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "advisor.grafana.app",

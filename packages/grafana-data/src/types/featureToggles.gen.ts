@@ -126,11 +126,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Writes error logs to the request logger
-  * @default true
-  */
-  unifiedRequestLog?: boolean;
-  /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
   */
   renderAuthJWT?: boolean;
@@ -211,6 +206,10 @@ export interface FeatureToggles {
   * Enables rendering retries for the reporting feature
   */
   reportingRetries?: boolean;
+  /**
+  * Enables CSV encoding options in the reporting feature
+  */
+  reportingCsvEncodingOptions?: boolean;
   /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
@@ -309,10 +308,6 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
-  * Routes explore requests to the new query service
-  */
-  queryServiceFromExplore?: boolean;
-  /**
   * Runs CloudWatch metrics queries as separate batches
   */
   cloudWatchBatchQueries?: boolean;
@@ -365,10 +360,6 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Use the v2 kubernetes API in the frontend for dashboards
-  */
-  kubernetesDashboardsV2?: boolean;
-  /**
   * Enables undo/redo in dynamic dashboards
   */
   dashboardUndoRedo?: boolean;
@@ -376,6 +367,10 @@ export interface FeatureToggles {
   * Enables unlimited dashboard panel grouping
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
+  */
+  drilldownRecommendations?: boolean;
   /**
   * Enables viewing non-applicable drilldowns on a panel level
   */
@@ -409,10 +404,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Use the kubernetes API for feature toggle management in the frontend
-  */
-  kubernetesFeatureToggles?: boolean;
-  /**
   * Enabled grafana cloud specific RBAC roles
   */
   cloudRBACRoles?: boolean;
@@ -425,6 +416,10 @@ export interface FeatureToggles {
   * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
+  /**
+  * Enable audit logging with Kubernetes under app platform
+  */
+  auditLoggingAppPlatform?: boolean;
   /**
   * Enable the secrets management API and services under app platform
   */
@@ -499,6 +494,10 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
+  * Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
+  */
+  dashboardAdHocAndGroupByWrapper?: boolean;
+  /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
   */
@@ -535,6 +534,10 @@ export interface FeatureToggles {
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables saved searches for alert rules list
+  */
+  alertingSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
@@ -779,19 +782,10 @@ export interface FeatureToggles {
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
-  * Displays the navigation history so the user can navigate back to previous pages
-  */
-  unifiedHistory?: boolean;
-  /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
   */
   lokiLabelNamesQueryApi?: boolean;
-  /**
-  * Enable the investigations backend API
-  * @default false
-  */
-  investigationsBackend?: boolean;
   /**
   * Enable folder's api server counts
   * @default false
@@ -827,6 +821,10 @@ export interface FeatureToggles {
   * Use a POST request to list rules by passing down the namespaces user has access to
   */
   fetchRulesUsingPost?: boolean;
+  /**
+  * Add compact=true when fetching rules
+  */
+  fetchRulesInCompactMode?: boolean;
   /**
   * Enables the new logs panel
   * @default true
@@ -1161,6 +1159,11 @@ export interface FeatureToggles {
   */
   externalVizSuggestions?: boolean;
   /**
+  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
+  * @default false
+  */
+  heatmapRowsAxisOptions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1184,6 +1187,11 @@ export interface FeatureToggles {
   * @default true
   */
   onlyStoreActionSets?: boolean;
+  /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
   /**
   * Enables a new panel time settings drawer
   */
@@ -1238,4 +1246,16 @@ export interface FeatureToggles {
   * Enables support for variables whose values can have multiple properties
   */
   multiPropsVariables?: boolean;
+  /**
+  * Enables the ASAP smoothing transformation for time series data
+  */
+  smoothingTransformation?: boolean;
+  /**
+  * Enables the creation of keepers that manage secrets stored on AWS secrets manager
+  */
+  secretsManagementAppPlatformAwsKeeper?: boolean;
+  /**
+  * Enables profiles exemplars support in profiles drilldown
+  */
+  profilesExemplars?: boolean;
 }

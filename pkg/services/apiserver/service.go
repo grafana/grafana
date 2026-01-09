@@ -28,6 +28,7 @@ import (
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -115,8 +116,8 @@ type service struct {
 	builderMetrics                    *builder.BuilderMetrics
 	dualWriterMetrics                 *grafanarest.DualWriterMetrics
 
-	auditBackend             audit.Backend
-	auditPolicyRuleEvaluator audit.PolicyRuleEvaluator
+	auditBackend            audit.Backend
+	auditPolicyRuleProvider auditing.PolicyRuleProvider
 }
 
 func ProvideService(
@@ -142,7 +143,7 @@ func ProvideService(
 	appInstallers []appsdkapiserver.AppInstaller,
 	builderMetrics *builder.BuilderMetrics,
 	auditBackend audit.Backend,
-	auditPolicyRuleEvaluator audit.PolicyRuleEvaluator,
+	auditPolicyRuleProvider auditing.PolicyRuleProvider,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -154,7 +155,7 @@ func ProvideService(
 		features:                          features,
 		rr:                                rr,
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
+		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           reg,
@@ -174,7 +175,7 @@ func ProvideService(
 		builderMetrics:                    builderMetrics,
 		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
 		auditBackend:                      auditBackend,
-		auditPolicyRuleEvaluator:          auditPolicyRuleEvaluator,
+		auditPolicyRuleProvider:           auditPolicyRuleProvider,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -365,7 +366,7 @@ func (s *service) start(ctx context.Context) error {
 
 	// Auditing Options
 	serverConfig.AuditBackend = s.auditBackend
-	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleEvaluator
+	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleProvider.PolicyRuleProvider(builder.EvaluatorPolicyRuleFromBuilders(s.builders))
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
@@ -440,6 +441,19 @@ func (s *service) start(ctx context.Context) error {
 		serverConfig.MergedResourceConfig,
 	); err != nil {
 		return err
+	}
+
+	// Augment existing WebServices with custom routes from builders
+	// This directly adds routes to existing WebServices using the OpenAPI specs from builders
+	if server.Handler != nil && server.Handler.GoRestfulContainer != nil {
+		if err := builder.AugmentWebServicesWithCustomRoutes(
+			server.Handler.GoRestfulContainer,
+			builders,
+			s.metrics,
+			serverConfig.MergedResourceConfig,
+		); err != nil {
+			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
+		}
 	}
 
 	// stash the options for later use

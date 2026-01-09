@@ -32,6 +32,7 @@ type EventKey struct {
 	ResourceVersion int64
 	Action          DataAction
 	Folder          string
+	GUID            string
 }
 
 func (k EventKey) String() string {
