@@ -552,6 +552,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// gets dashboards that the user was granted read access to
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
+	folderPermissions := permissions[dashboards.ActionFoldersRead]
 	dashboardUids := make([]string, 0)
 	sharedDashboards := make([]string, 0)
 
@@ -559,6 +560,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		if dashboardUid, found := strings.CutPrefix(dashboardPermission, dashboards.ScopeDashboardsPrefix); found {
 			if !slices.Contains(dashboardUids, dashboardUid) {
 				dashboardUids = append(dashboardUids, dashboardUid)
+			}
+		}
+	}
+	for _, folderPermissions := range folderPermissions {
+		if folderUid, found := strings.CutPrefix(folderPermissions, dashboards.ScopeFoldersPrefix); found {
+			if !slices.Contains(dashboardUids, folderUid) && folderUid != foldermodel.SharedWithMeFolderUID && folderUid != foldermodel.GeneralFolderUID {
+				dashboardUids = append(dashboardUids, folderUid)
 			}
 		}
 	}
@@ -572,9 +580,15 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
+	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
+	if err != nil {
+		return sharedDashboards, err
+	}
+
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields: []string{"folder"},
-		Limit:  int64(len(dashboardUids)),
+		Federated: []*resourcepb.ResourceKey{folderKey},
+		Fields:    []string{"folder"},
+		Limit:     int64(len(dashboardUids)),
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{{
@@ -610,12 +624,6 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 
-	// only folders the user has access to will be returned here
-	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
-	if err != nil {
-		return sharedDashboards, err
-	}
-
 	folderSearchRequest := &resourcepb.ResourceSearchRequest{
 		Fields: []string{"folder"},
 		Limit:  int64(len(allFolders)),
@@ -628,6 +636,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
+	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
 	if err != nil {
 		return sharedDashboards, err
