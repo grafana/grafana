@@ -18,17 +18,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, userService user.Service) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, folderLegacyService folder.LegacyService, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, userService user.Service) *LibraryElementService {
 	l := &LibraryElementService{
-		Cfg:               cfg,
-		SQLStore:          sqlStore,
-		RouteRegister:     routeRegister,
-		folderService:     folderService,
-		dashboardsService: dashboardsService,
-		log:               log.New("library-elements"),
-		features:          features,
-		AccessControl:     ac,
-		k8sHandler:        newLibraryElementsK8sHandler(cfg, clientConfigProvider, folderService, userService, dashboardsService),
+		Cfg:                 cfg,
+		SQLStore:            sqlStore,
+		RouteRegister:       routeRegister,
+		folderService:       folderService,
+		folderLegacyService: folderLegacyService,
+		dashboardsService:   dashboardsService,
+		log:                 log.New("library-elements"),
+		features:            features,
+		AccessControl:       ac,
+		k8sHandler:          newLibraryElementsK8sHandler(cfg, clientConfigProvider, folderService, userService, dashboardsService),
 	}
 
 	l.registerAPIEndpoints()
@@ -52,15 +53,16 @@ type Service interface {
 
 // LibraryElementService is the service for the Library Element feature.
 type LibraryElementService struct {
-	Cfg               *setting.Cfg
-	SQLStore          db.DB
-	RouteRegister     routing.RouteRegister
-	folderService     folder.Service
-	dashboardsService dashboards.DashboardService
-	log               log.Logger
-	features          featuremgmt.FeatureToggles
-	AccessControl     accesscontrol.AccessControl
-	k8sHandler        *libraryElementsK8sHandler
+	Cfg                 *setting.Cfg
+	SQLStore            db.DB
+	RouteRegister       routing.RouteRegister
+	folderService       folder.Service
+	folderLegacyService folder.LegacyService
+	dashboardsService   dashboards.DashboardService
+	log                 log.Logger
+	features            featuremgmt.FeatureToggles
+	AccessControl       accesscontrol.AccessControl
+	k8sHandler          *libraryElementsK8sHandler
 }
 
 var _ Service = (*LibraryElementService)(nil)

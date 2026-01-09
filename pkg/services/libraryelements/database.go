@@ -483,8 +483,14 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		retDTOs := make([]model.LibraryElementDTO, 0)
+
 		// getting all folders a user can see
-		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
+		// TODO: this is a temporary solution to get all folders a user can see. We should refactor this to use the unified folder service but
+		// it requires code changes to improve performance when getting all folders and then filter them by library panels.
+		// It should retrieve only folders a user can see and not all folders.
+		fs, err := l.folderLegacyService.GetFoldersLegacy(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
+		//fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
+
 		if err != nil {
 			return err
 		}
