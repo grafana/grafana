@@ -129,6 +129,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   /**
    * Determines the path to a scope node, preferring defaultPath from scope metadata.
    * This is the single source of truth for path resolution.
+   *
+   * TODO: Consider making this public and exposing via a hook to avoid duplication
+   * with getScopesPath in ScopesInput.tsx
+   *
    * @param scopeId - The scope ID to get the path for
    * @param scopeNodeId - Optional scope node ID to fall back to if no defaultPath
    * @returns Promise resolving to array of ScopeNode objects representing the path
@@ -156,11 +160,13 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   ): Promise<{ path: ScopeNode[]; tree: TreeNode }> => {
     let nodePath: ScopeNode[];
 
-    // Use unified path resolution method
-    if (scopeId) {
-      nodePath = await this.getPathForScope(scopeId, scopeNodeId);
+    // Check if scope has defaultPath for optimized resolution
+    const scope = scopeId ? this.state.scopes[scopeId] : undefined;
+    if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 0) {
+      // Use batch-fetched defaultPath (most efficient)
+      nodePath = await this.getPathForScope(scopeId!, scopeNodeId);
     } else {
-      // Fall back to node-based path when no scopeId provided
+      // Fall back to node-based path resolution
       nodePath = await this.getNodePath(scopeNodeId);
     }
 
@@ -427,51 +433,53 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       const newScopesState = { ...this.state.scopes };
 
-      // Handle case where API returns non-array
-      if (Array.isArray(fetchedScopes)) {
-        for (const scope of fetchedScopes) {
-          newScopesState[scope.metadata.name] = scope;
-        }
-
-        // Pre-fetch the first scope's defaultPath to improve performance
-        // This makes the selector open instantly since all nodes are already cached
-        // We only need the first scope since that's what's used for expansion
-        const firstScope = fetchedScopes[0];
-        if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
-          // Deduplicate and filter out already cached nodes
-          const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
-          const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
-
-          if (nodesToFetch.length > 0) {
-            await this.getScopeNodes(nodesToFetch);
-          }
-        }
-
-        // Get scopeNode and parentNode, preferring defaultPath as the source of truth
-        let scopeNode: ScopeNode | undefined;
-        let parentNode: ScopeNode | undefined;
-        let scopeNodeId: string | undefined;
-
-        if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 1) {
-          // Extract from defaultPath (most reliable source)
-          // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
-          scopeNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 1];
-          const parentNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 2];
-
-          scopeNode = scopeNodeId ? this.state.nodes[scopeNodeId] : undefined;
-          parentNode = parentNodeId && parentNodeId !== '' ? this.state.nodes[parentNodeId] : undefined;
-        } else {
-          // Fallback to old approach for backwards compatibility
-          scopeNodeId = scopes[0]?.scopeNodeId;
-          scopeNode = scopeNodeId ? this.state.nodes[scopeNodeId] : undefined;
-
-          const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
-          parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
-        }
-
-        this.addRecentScopes(fetchedScopes, parentNode, scopeNodeId);
+      // Validate API response is an array
+      if (!Array.isArray(fetchedScopes)) {
+        console.error('Expected fetchedScopes to be an array, got:', typeof fetchedScopes);
+        this.updateState({ scopes: newScopesState, loading: false });
+        return;
       }
 
+      for (const scope of fetchedScopes) {
+        newScopesState[scope.metadata.name] = scope;
+      }
+
+      // Pre-fetch the first scope's defaultPath to improve performance
+      // This makes the selector open instantly since all nodes are already cached
+      // We only need the first scope since that's what's used for expansion
+      const firstScope = fetchedScopes[0];
+      if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
+        // Deduplicate and filter out already cached nodes
+        const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
+        const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
+
+        if (nodesToFetch.length > 0) {
+          await this.getScopeNodes(nodesToFetch);
+        }
+      }
+
+      // Get scopeNode and parentNode, preferring defaultPath as the source of truth
+      let parentNode: ScopeNode | undefined;
+      let scopeNodeId: string | undefined;
+
+      if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 1) {
+        // Extract from defaultPath (most reliable source)
+        // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
+        scopeNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 1];
+        const parentNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 2];
+
+        scopeNode = scopeNodeId ? this.state.nodes[scopeNodeId] : undefined;
+        parentNode = parentNodeId && parentNodeId !== '' ? this.state.nodes[parentNodeId] : undefined;
+      } else {
+        // Fallback to next in priority order
+        scopeNodeId = scopes[0]?.scopeNodeId;
+        scopeNode = scopeNodeId ? this.state.nodes[scopeNodeId] : undefined;
+
+        const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
+        parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
+      }
+
+      this.addRecentScopes(fetchedScopes, parentNode, scopeNodeId);
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };

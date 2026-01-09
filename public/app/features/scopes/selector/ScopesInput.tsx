@@ -41,7 +41,7 @@ export function ScopesInput({
     // Extract scopeNodeId from the last element of defaultPath
     scopeNodeId = scope.spec.defaultPath[scope.spec.defaultPath.length - 1];
   } else {
-    // Fallback to scopeNodeId from appliedScopes for backwards compatibility
+    // Fallback to next in priority order: scopeNodeId from appliedScopes
     scopeNodeId = firstScope?.scopeNodeId;
   }
 
@@ -119,17 +119,20 @@ export function ScopesInput({
   );
 }
 
-const getScopesPath = (appliedScopes: SelectedScope[], nodes: NodesMap, scopes: ScopesMap) => {
+const getScopesPath = (
+  appliedScopes: SelectedScope[],
+  nodes: NodesMap,
+  defaultPath?: string[]
+): string[] | undefined => {
   let nicePath: string[] | undefined;
 
   if (appliedScopes.length > 0) {
     const firstScope = appliedScopes[0];
-    const scope = scopes[firstScope.scopeId];
 
     // Prefer defaultPath from scope metadata
-    if (scope?.spec.defaultPath && scope.spec.defaultPath.length > 1) {
+    if (defaultPath && defaultPath.length > 1) {
       // Get all nodes except the last one (which is the scope itself)
-      const pathNodeIds = scope.spec.defaultPath.slice(0, -1);
+      const pathNodeIds = defaultPath.slice(0, -1);
       nicePath = pathNodeIds.map((nodeId) => nodes[nodeId]?.spec.title).filter((title) => title);
     }
     // Fallback to walking the node tree
@@ -159,7 +162,9 @@ function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disable
     return t('scopes.selector.input.tooltip', 'Select scope');
   }
 
-  const nicePath = getScopesPath(appliedScopes, nodes, scopes);
+  const firstScope = appliedScopes[0];
+  const scope = scopes[firstScope?.scopeId];
+  const nicePath = getScopesPath(appliedScopes, nodes, scope?.spec.defaultPath);
   const scopeNames = appliedScopes.map((s) => {
     if (s.scopeNodeId) {
       return nodes[s.scopeNodeId]?.spec.title || s.scopeNodeId;

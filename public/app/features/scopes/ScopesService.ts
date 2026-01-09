@@ -276,7 +276,7 @@ export class ScopesService implements ScopesContextValue {
       return scope.spec.defaultPath[scope.spec.defaultPath.length - 1];
     }
 
-    // Fallback to scopeNodeId from appliedScopes for backwards compatibility
+    // Fallback to next in priority order: scopeNodeId from appliedScopes
     return firstScope.scopeNodeId;
   }
 

@@ -19,6 +19,7 @@ import {
 } from './utils/actions';
 import {
   expectRecentScope,
+  expectRecentScopeNotPresent,
   expectRecentScopeNotPresentInDocument,
   expectRecentScopesSection,
   expectResultApplicationsGrafanaSelected,
@@ -136,17 +137,15 @@ describe('Selector', () => {
 
       expectScopesSelectorValue('Grafana');
 
-      // With defaultPath auto-expansion, tree expands to show selected scope
-      // So we need to clear selection first to see recent scopes again
-      await hoverSelector();
-      await clearSelector();
-
       await openSelector();
+      // Collapse tree to root level to see recent scopes section
+      await expandResultApplications();
+
       await expandRecentScopes();
       expectRecentScope('Grafana, Mimir Applications');
-      expectRecentScope('Grafana Applications');
+      expectRecentScopeNotPresent('Grafana Applications');
+      expectRecentScopeNotPresent('Mimir Applications');
       await selectRecentScope('Grafana, Mimir Applications');
-      await jest.runOnlyPendingTimersAsync();
 
       expectScopesSelectorValue('Grafana + Mimir');
     });
@@ -158,8 +157,8 @@ describe('Selector', () => {
       await applyScopes();
 
       await openSelector();
-      // With defaultPath auto-expansion, tree expands to show selected scope
-      // So recent scopes are not visible (they only show at root with tree collapsed)
+      // Tree expands to show selected scope, so recent scopes are not visible
+      // (recent scopes only show at root level with tree collapsed)
       expectRecentScopeNotPresentInDocument();
     });
 
