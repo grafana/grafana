@@ -1,104 +1,68 @@
 /**
- * POC/Demo utilities for integration versioning
+ * Utilities for integration versioning
  *
- * This file simulates backend support for integration versioning
- * by creating legacy (v0) versions of selected integrations.
- *
- * In production, this data should come from the backend.
+ * These utilities help get version-specific options from the backend response
+ * (via /api/alert-notifiers?version=2)
  */
 
-import { NotifierDTO } from '../types/alerting';
-
-import { canCreateVersion, isDeprecatedVersion } from './integration-versions';
+import { NotificationChannelOption, NotifierDTO } from '../types/alerting';
 
 /**
- * Version identifiers
- */
-const MIMIR_VERSION = 'v0';
-const GRAFANA_VERSION = 'v1';
-
-/**
- * Simulates backend response with versioned integrations
- * Creates a single Slack v0 integration for testing purposes
+ * Checks if a notifier can be used to create new integrations.
+ * A notifier can be created if it has at least one version with canCreate: true,
+ * or if it has no versions array (legacy behavior).
  *
- * @param notifiers - Original notifiers from the API
- * @returns Enriched notifiers array with v1 versions and one Slack v0
+ * @param notifier - The notifier DTO to check
+ * @returns True if the notifier can be used to create new integrations
  */
-export function enrichNotifiersWithVersionsPOC(notifiers: NotifierDTO[]): Array<NotifierDTO<string>> {
-  const result: Array<NotifierDTO<string>> = [];
+export function canCreateNotifier(notifier: NotifierDTO): boolean {
+  // If no versions array, assume it can be created (legacy behavior)
+  if (!notifier.versions || notifier.versions.length === 0) {
+    return true;
+  }
 
-  notifiers.forEach((notifier) => {
-    // Add the current version (v1 - Grafana) for all integrations
-    const grafanaVersion: NotifierDTO<string> = {
-      ...notifier,
-      currentVersion: GRAFANA_VERSION,
-    };
-    result.push(grafanaVersion);
-
-    // Only add a v0 version for Slack to test legacy integration behavior
-    if (notifier.type === 'slack') {
-      const mimirVersion: NotifierDTO<string> = {
-        ...notifier,
-        // Use a synthetic type identifier to distinguish v0 from v1 in the dropdown
-        // When saving, the actual contact point will use type: "slack" with version: "v0"
-        type: `${notifier.type}_${MIMIR_VERSION}`,
-        name: notifier.name,
-        description: `${notifier.description} (Legacy version)`,
-        currentVersion: MIMIR_VERSION,
-      };
-      result.push(mimirVersion);
-    }
-  });
-
-  return result;
+  // Check if any version has canCreate: true (or undefined, which defaults to true)
+  return notifier.versions.some((v) => v.canCreate !== false);
 }
 
 /**
- * Groups notifiers by their base name (without version suffix)
- * Used for displaying only the latest version in dropdowns
+ * Checks if a specific version is legacy (cannot be created).
+ * A version is legacy if it has canCreate: false in the notifier's versions array.
+ *
+ * @param notifier - The notifier DTO containing versions array
+ * @param version - The version string to check (e.g., 'v0mimir1', 'v1')
+ * @returns True if the version is legacy (canCreate: false)
  */
-function groupNotifiersByName(notifiers: Array<NotifierDTO<string>>): Record<string, Array<NotifierDTO<string>>> {
-  return notifiers.reduce<Record<string, Array<NotifierDTO<string>>>>((acc, notifier) => {
-    const baseName = notifier.name;
-    if (!acc[baseName]) {
-      acc[baseName] = [];
-    }
-    acc[baseName].push(notifier);
-    return acc;
-  }, {});
+export function isLegacyVersion(notifier: NotifierDTO, version?: string): boolean {
+  // If no version specified or no versions array, it's not legacy
+  if (!version || !notifier.versions || notifier.versions.length === 0) {
+    return false;
+  }
+
+  // Find the matching version and check its canCreate property
+  const versionData = notifier.versions.find((v) => v.version === version);
+
+  // A version is legacy if canCreate is explicitly false
+  return versionData?.canCreate === false;
 }
 
 /**
- * Gets the latest (non-deprecated) version of each integration
- * Used for dropdown display when creating new integrations
+ * Gets the options for a specific version of a notifier.
+ * Used to display the correct form fields based on integration version.
+ *
+ * @param notifier - The notifier DTO containing versions array
+ * @param version - The version to get options for (e.g., 'v0', 'v1')
+ * @returns The options for the specified version, or default options if version not found
  */
-export function getLatestVersions(notifiers: Array<NotifierDTO<string>>): Array<NotifierDTO<string>> {
-  const grouped = groupNotifiersByName(notifiers);
-  const latest: Array<NotifierDTO<string>> = [];
+export function getOptionsForVersion(notifier: NotifierDTO, version?: string): NotificationChannelOption[] {
+  // If no version specified or no versions array, use default options
+  if (!version || !notifier.versions || notifier.versions.length === 0) {
+    return notifier.options;
+  }
 
-  Object.values(grouped).forEach((versions) => {
-    // Sort by version descending (v1 > v0)
-    const sorted = versions.sort((a, b) => {
-      const versionA = a.currentVersion || 'v1';
-      const versionB = b.currentVersion || 'v1';
-      // Simple string comparison for version strings (v1, v0, etc.)
-      if (versionB > versionA) {
-        return 1;
-      }
-      if (versionB < versionA) {
-        return -1;
-      }
-      return 0;
-    });
+  // Find the matching version
+  const versionData = notifier.versions.find((v) => v.version === version);
 
-    // Find first non-deprecated version, or fallback to first
-    const latestVersion = sorted.find((v) => !isDeprecatedVersion(v.currentVersion)) || sorted[0];
-
-    // Only include if it can be created
-    if (canCreateVersion(latestVersion.currentVersion)) {
-      latest.push(latestVersion);
-    }
-  });
-
-  return latest;
+  // Return version-specific options if found, otherwise fall back to default
+  return versionData?.options ?? notifier.options;
 }

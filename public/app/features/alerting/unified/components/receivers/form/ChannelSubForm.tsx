@@ -16,8 +16,7 @@ import {
   GrafanaChannelValues,
   ReceiverFormValues,
 } from '../../../types/receiver-form';
-import { isDeprecatedVersion } from '../../../utils/integration-versions';
-import { getLatestVersions } from '../../../utils/notifier-versions';
+import { canCreateNotifier, getOptionsForVersion, isLegacyVersion } from '../../../utils/notifier-versions';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
@@ -167,35 +166,18 @@ export function ChannelSubForm<R extends ChannelValues>({
   };
 
   const typeOptions = useMemo((): SelectableValue[] => {
-    // Group notifiers by name to handle versioning
-    // Only show latest (creatable) versions in the dropdown
-    const notifierDTOs = notifiers.map((n) => n.dto);
-    const latestVersions = getLatestVersions(notifierDTOs);
+    // Filter out notifiers that can't be created (e.g., v0-only integrations like WeChat)
+    // These are legacy integrations that only exist in Mimir and can't be created in Grafana
+    const creatableNotifiers = notifiers.filter(({ dto }) => canCreateNotifier(dto));
 
-    // Create a map of latest version types to their notifier objects
-    const latestVersionsMap = new Map(latestVersions.map((dto) => [dto.type, dto]));
-
-    // Filter notifiers to include:
-    // 1. Latest versions (v1) - available for creation
-    // 2. Currently selected type - even if it's a legacy version (v0)
-    //    This ensures editing an existing v0 integration shows its type instead of "Choose"
-    const notifiersToShow = notifiers.filter(
-      (notifier) => latestVersionsMap.has(notifier.dto.type) || notifier.dto.type === selectedType
-    );
-
-    return sortBy(notifiersToShow, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
-      ({ dto: { name, type, currentVersion }, meta }) => {
-        // Add version suffix to distinguish between v0 and v1 of the same integration
-        // Example: "Slack (v0)" vs "Slack" when editing a legacy integration
-        const versionSuffix = currentVersion && currentVersion !== 'v1' ? ` (${currentVersion})` : '';
-        const labelText = `${name}${versionSuffix}`;
-
+    return sortBy(creatableNotifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
+      ({ dto: { name, type }, meta }) => {
         return {
           // ReactNode is supported in Select label, but types don't reflect it
           /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
           label: (
             <Stack alignItems="center" gap={1}>
-              {labelText}
+              {name}
               {meta?.badge}
             </Stack>
           ) as any,
@@ -206,7 +188,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         };
       }
     );
-  }, [notifiers, selectedType]);
+  }, [notifiers]);
 
   const handleTest = async () => {
     await trigger();
@@ -223,16 +205,21 @@ export function ChannelSubForm<R extends ChannelValues>({
   // Cloud AM takes no value at all
   const isParseModeNone = parse_mode === 'None' || !parse_mode;
   const showTelegramWarning = isTelegram && !isParseModeNone;
+
+  // Check if current integration is a legacy version (canCreate: false)
+  // Legacy integrations are read-only and cannot be edited
+  // Read version from existing integration data (stored in receiver config)
+  const integrationVersion = initialValues?.version || defaultValues.version;
+  const isLegacy = notifier ? isLegacyVersion(notifier.dto, integrationVersion) : false;
+
+  // Get the correct options based on the integration's version
+  // This ensures legacy (v0) integrations display the correct schema
+  const versionedOptions = notifier ? getOptionsForVersion(notifier.dto, integrationVersion) : [];
+
   // if there are mandatory options defined, optional options will be hidden by a collapse
   // if there aren't mandatory options, all options will be shown without collapse
-  const mandatoryOptions = notifier?.dto.options.filter((o) => o.required) ?? [];
-  const optionalOptions = notifier?.dto.options.filter((o) => !o.required) ?? [];
-
-  // Check if current integration is a legacy/Mimir version (v0)
-  // Legacy integrations are read-only and cannot be edited
-  // Read version from existing integration data, not from notifier list
-  const integrationVersion = initialValues?.version || defaultValues.version || notifier?.dto.currentVersion;
-  const isLegacyVersion = isDeprecatedVersion(integrationVersion);
+  const mandatoryOptions = versionedOptions.filter((o) => o.required);
+  const optionalOptions = versionedOptions.filter((o) => !o.required);
 
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
@@ -263,44 +250,31 @@ export function ChannelSubForm<R extends ChannelValues>({
                   )}
                 />
               </Stack>
-              {isLegacyVersion && integrationVersion && (
-                <Stack direction="row" gap={0.5}>
-                  <Badge
-                    text={t('alerting.channel-sub-form.badge-legacy-mimir', 'Legacy (Mimir)')}
-                    color="orange"
-                    icon="exclamation-triangle"
-                    tooltip={t(
-                      'alerting.channel-sub-form.tooltip-legacy-mimir',
-                      'This is a legacy integration imported from Mimir. Settings are read-only but you can change to a different integration type to convert.'
-                    )}
-                  />
-                  <Badge
-                    text={integrationVersion.toUpperCase()}
-                    color="orange"
-                    tooltip={t('alerting.channel-sub-form.tooltip-version', 'Integration version: {{version}}', {
-                      version: integrationVersion,
-                    })}
-                  />
-                </Stack>
+              {integrationVersion && (
+                <Badge
+                  text={integrationVersion.toUpperCase()}
+                  color={isLegacy ? 'orange' : 'blue'}
+                  icon={isLegacy ? 'exclamation-triangle' : undefined}
+                  tooltip={t('alerting.channel-sub-form.tooltip-version', 'Integration version: {{version}}', {
+                    version: integrationVersion,
+                  })}
+                />
               )}
             </Stack>
           </Field>
         </div>
         <div className={styles.buttons}>
-          {/* Don't show Test, Duplicate, or Delete buttons for legacy (v0) integrations */}
-          {isTestable && onTest && isTestAvailable && !isLegacyVersion && (
+          {isTestable && onTest && isTestAvailable && (
             <Button size="xs" variant="secondary" type="button" onClick={() => handleTest()} icon="message">
               <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
           {isEditable && (
             <>
-              {!isLegacyVersion && (
-                <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-                  <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
-                </Button>
-              )}
-              {onDelete && !isLegacyVersion && (
+              <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
+                <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
+              </Button>
+              {onDelete && (
                 <Button
                   data-testid={`${pathPrefix}delete-button`}
                   size="xs"
@@ -318,17 +292,6 @@ export function ChannelSubForm<R extends ChannelValues>({
       </div>
       {notifier && (
         <div className={styles.innerContent}>
-          {isLegacyVersion && (
-            <Alert
-              title={t('alerting.channel-sub-form.legacy-read-only-title', 'Legacy Integration - Read Only')}
-              severity="info"
-            >
-              <Trans i18nKey="alerting.channel-sub-form.legacy-read-only-body">
-                This integration was imported from Mimir and is currently in read-only mode. To edit or update this
-                integration, you will need to convert it to the latest version first.
-              </Trans>
-            </Alert>
-          )}
           {showTelegramWarning && (
             <Alert
               title={t(
@@ -351,7 +314,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             onResetSecureField={onResetSecureField}
             onDeleteSubform={onDeleteSubform}
             integrationPrefix={channelFieldPath}
-            readOnly={!isEditable || isLegacyVersion}
+            readOnly={!isEditable}
             canEditProtectedFields={canEditProtectedFields}
             customValidators={customValidators}
           />
@@ -373,7 +336,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 onDeleteSubform={onDeleteSubform}
                 errors={errors}
                 integrationPrefix={channelFieldPath}
-                readOnly={!isEditable || isLegacyVersion}
+                readOnly={!isEditable}
                 canEditProtectedFields={canEditProtectedFields}
                 customValidators={customValidators}
               />
@@ -382,7 +345,7 @@ export function ChannelSubForm<R extends ChannelValues>({
           <CollapsibleSection
             label={t('alerting.channel-sub-form.label-notification-settings', 'Notification settings')}
           >
-            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable || isLegacyVersion} />
+            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable} />
           </CollapsibleSection>
         </div>
       )}

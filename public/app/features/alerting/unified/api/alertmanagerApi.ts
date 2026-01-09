@@ -123,15 +123,17 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           ),
         });
 
-        const result = response.map((notifier) => ({
+        // Keep versions array intact for version-specific options lookup
+        // Transform options with secureFieldKey population
+        return response.map((notifier) => ({
           ...notifier,
-          // IMPORTANT: Use fallback array to handle notifiers without options
-          options: (notifier.options || []).map((option) => {
-            return populateSecureFieldKey(option, '');
-          }),
+          options: (notifier.options || []).map((option) => populateSecureFieldKey(option, '')),
+          // Also transform options within each version
+          versions: notifier.versions?.map((version) => ({
+            ...version,
+            options: (version.options || []).map((option) => populateSecureFieldKey(option, '')),
+          })),
         }));
-
-        return result;
       },
     }),
 

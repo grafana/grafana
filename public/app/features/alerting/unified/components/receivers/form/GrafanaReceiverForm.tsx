@@ -18,7 +18,6 @@ import {
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { enrichNotifiersWithVersionsPOC } from '../../../utils/notifier-versions';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -136,16 +135,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     );
   }
 
-  // POC: Enrich notifiers with version information for Grafana Alert Manager
-  // This simulates backend support for integration versioning during Single Alert Manager migration
-  // In production, this data should come from the backend via /api/alert-notifiers
-  // TODO: Remove before merging
-  const enrichedNotifiers = enrichNotifiersWithVersionsPOC(grafanaNotifiers);
-
-  // Cast to any to work around type incompatibility between NotifierDTO<string> and NotifierDTO<NotifierType>
-  // This is needed because we use synthetic type identifiers like "slack_v0" for versioning in the dropdown
+  // Map notifiers to Notifier[] format for ReceiverForm
+  // The grafanaNotifiers include version-specific options via the versions array from the backend
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-  const notifiers: Notifier[] = enrichedNotifiers.map((n) => {
+  const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
     if (n.type === ReceiverTypes.OnCall) {
       return {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
