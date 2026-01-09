@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
@@ -658,5 +659,19 @@ func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector
 		},
 		Units: "count",
 		Label: "test",
+	}, nil
+}
+
+func (f *FakeClient) GetHeatmap(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64, queryType querierv1.HeatmapQueryType) (*HeatmapResponse, error) {
+	return &HeatmapResponse{
+		Series: []*HeatmapSeries{
+			{
+				Labels: []*LabelPair{{Name: "foo", Value: "bar"}},
+				Points: []*HeatmapPoint{
+					{Timestamp: start, YMin: []float64{0, 100, 200}, Counts: []int64{5, 10, 3}},
+				},
+			},
+		},
+		Units: "nanoseconds",
 	}, nil
 }

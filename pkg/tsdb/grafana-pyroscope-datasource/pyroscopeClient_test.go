@@ -158,6 +158,22 @@ func (f *FakePyroscopeConnectClient) SelectSeries(ctx context.Context, req *conn
 	}, nil
 }
 
+func (f *FakePyroscopeConnectClient) SelectHeatmap(ctx context.Context, req *connect.Request[querierv1.SelectHeatmapRequest]) (*connect.Response[querierv1.SelectHeatmapResponse], error) {
+	f.Req = req
+	return &connect.Response[querierv1.SelectHeatmapResponse]{
+		Msg: &querierv1.SelectHeatmapResponse{
+			Series: []*typesv1.HeatmapSeries{
+				{
+					Labels: []*typesv1.LabelPair{{Name: "foo", Value: "bar"}},
+					Slots: []*typesv1.HeatmapSlot{
+						{Timestamp: int64(1000), YMin: []float64{0, 100, 200}, Counts: []int32{5, 10, 3}},
+					},
+				},
+			},
+		},
+	}, nil
+}
+
 func (f *FakePyroscopeConnectClient) SelectMergeProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeProfileRequest]) (*connect.Response[googlev1.Profile], error) {
 	panic("implement me")
 }

@@ -25,6 +25,7 @@ export const mockExplorePanelData = (props?: MockProps): Observable<ExplorePanel
     nodeGraphFrames: [],
     rawPrometheusFrames: [],
     rawPrometheusResult: null,
+    heatmapFrames: [],
     series: [],
     state: LoadingState.Done,
     tableFrames: [],

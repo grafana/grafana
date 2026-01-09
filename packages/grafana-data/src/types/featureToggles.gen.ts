@@ -1258,4 +1258,8 @@ export interface FeatureToggles {
   * Enables profiles exemplars support in profiles drilldown
   */
   profilesExemplars?: boolean;
+  /**
+  * Enables heatmap visualization support for Pyroscope profiles
+  */
+  profilesHeatmap?: boolean;
 }
