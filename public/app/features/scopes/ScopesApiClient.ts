@@ -76,7 +76,7 @@ export class ScopesApiClient {
             query: options.query,
             limit,
           },
-          { subscribe: false }
+          { subscribe: false, forceRefetch: true } // Froce refetch for search. Revisit this when necessary
         )
       );
 

@@ -151,17 +151,6 @@ export async function setupScopeRoutes(page: Page, scopes: TestScope[]): Promise
   // with scope-specific URL patterns to avoid cache issues. They are not set up here.
 }
 
-/**
- * Clears all scope-related routes.
- * Call this before setting up new routes to ensure clean state.
- */
-export async function clearScopeRoutes(page: Page): Promise<void> {
-  await page.unroute(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_node_children*`);
-  await page.unroute(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/scopes/*`);
-  await page.unroute(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings*`);
-  await page.unroute(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_navigations*`);
-}
-
 export type TestScope = {
   name: string;
   title: string;
@@ -454,18 +443,19 @@ export async function applyScopes(page: Page, scopes?: TestScope[]) {
 
 /**
  * Searches for scopes in the tree and waits for results.
- * The frontend uses a 500ms debounce, so we wait for the actual search response.
+ * Sets up a route dynamically with filtered results to return only matching scopes.
  */
 export async function searchScopes(page: Page, value: string, resultScopes?: TestScope[]) {
-  // Set up promise to wait for the search API response (triggered after debounce). These are not cached, so we should be good.
-  const responsePromise = page.waitForResponse(
-    (response) => response.url().includes('/find/scope_node_children') && response.url().includes('query='),
-    { timeout: 10000 }
-  );
+  const click = async () => await page.getByTestId('scopes-tree-search').fill(value);
 
-  await page.getByTestId('scopes-tree-search').fill(value);
+  if (!resultScopes || USE_LIVE_DATA) {
+    await click();
+    return;
+  }
 
-  // Wait for the debounced search request to complete
+  const responsePromise = scopeNodeChildrenRequest(page, resultScopes);
+
+  await click();
   await responsePromise;
 }
 
