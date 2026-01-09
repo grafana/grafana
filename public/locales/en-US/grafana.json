@@ -11805,19 +11805,21 @@
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
     "connection-form": {
+      "alert-connection-deleted": "Connection deleted",
+      "alert-connection-saved": "Connection saved",
+      "alert-connection-updated": "Connection updated",
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
       "description-app-id": "The ID of your GitHub App",
       "description-installation-id": "The installation ID of your GitHub App",
-      "description-name": "A unique identifier for this connection",
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
+      "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
-      "error-save": "Failed to save connection",
+      "error-save-connection": "Failed to save connection",
       "label-app-id": "GitHub App ID",
       "label-installation-id": "GitHub Installation ID",
-      "label-name": "Connection name",
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
       "not-found": "Connection not found",
@@ -11827,7 +11829,6 @@
       "page-title-edit": "Edit connection",
       "placeholder-app-id": "123456",
       "placeholder-installation-id": "12345678",
-      "placeholder-name": "my-github-connection",
       "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----..."
     },
     "connections": {
@@ -12110,6 +12111,7 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
+      "connections": "Connections",
       "settings": "Settings",
       "source-code": "Source code"
     },
@@ -12214,6 +12216,10 @@
         }
       },
       "title-error-saving-file": "Error saving file"
+    },
+    "secret-textarea": {
+      "configured": "configured",
+      "reset": "Reset"
     },
     "setup-modal": {
       "done": "Done",
