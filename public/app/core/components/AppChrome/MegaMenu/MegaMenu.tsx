@@ -11,6 +11,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
+import { shouldUseAlertingNavigationV2 } from 'app/features/alerting/unified/featureToggles';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -37,9 +38,25 @@ export const MegaMenu = memo(
     const pinnedItems = usePinnedItems();
 
     // Remove profile + help from tree
+    // For Alerting V2 navigation, flatten the sidebar to show only top-level items (hide nested children/tabs)
+    const useV2Nav = shouldUseAlertingNavigationV2();
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
-      .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
+      .map((item) => {
+        const enriched = enrichWithInteractionTracking(item, state.megaMenuDocked);
+        // If this is Alerting section and V2 navigation is enabled, flatten children for sidebar display
+        // Children are still available in navIndex for breadcrumbs and page navigation
+        if (useV2Nav && item.id === 'alerting' && enriched.children) {
+          return {
+            ...enriched,
+            children: enriched.children.map((child) => ({
+              ...child,
+              children: undefined, // Remove nested children from sidebar, but keep them for page navigation
+            })),
+          };
+        }
+        return enriched;
+      });
 
     const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
     if (bookmarksItem) {
