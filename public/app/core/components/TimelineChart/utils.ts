@@ -631,7 +631,14 @@ function calculateStateDurations(config: DurationCalculationConfig): Map<string,
   const needsCount = reducers.includes(StateTimelineLegendReducers.Count);
 
   const needsTimeProcessing = needsDuration || needsPercentage;
-  const timeValues = needsTimeProcessing ? fields[0].values : null;
+
+  const timeField = needsTimeProcessing ? fields.find((f) => f.type === FieldType.time) : null;
+  const timeValues = timeField?.values || null;
+
+  if (needsTimeProcessing && !timeValues) {
+    return undefined;
+  }
+
   const rangeEnd = needsTimeProcessing ? timeRange.to.valueOf() : 0;
   const rangeStart = needsTimeProcessing ? timeRange.from.valueOf() : 0;
   const totalTimeRange = needsPercentage ? rangeEnd - rangeStart : 0;
@@ -665,12 +672,18 @@ function calculateStateDurations(config: DurationCalculationConfig): Map<string,
         const startTime = timeValues[i];
         const endTime = timeValues[i + 1] ?? rangeEnd;
 
-        if (startTime != null && endTime != null) {
-          const duration = endTime - startTime;
-          newDuration = currentInfo.duration + duration;
+        if (startTime != null && endTime != null && typeof startTime === 'number' && typeof endTime === 'number') {
+          // Clamp duration to be within visible time range
+          const clampedStartTime = Math.max(startTime, rangeStart);
+          const clampedEndTime = Math.min(endTime, rangeEnd);
 
-          if (needsPercentage) {
-            newPercentage = (newDuration / totalTimeRange) * 100;
+          if (clampedEndTime > clampedStartTime) {
+            const duration = clampedEndTime - clampedStartTime;
+            newDuration = currentInfo.duration + duration;
+
+            if (needsPercentage) {
+              newPercentage = (newDuration / totalTimeRange) * 100;
+            }
           }
         }
       }
