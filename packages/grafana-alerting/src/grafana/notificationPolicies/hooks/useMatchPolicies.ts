@@ -1,6 +1,10 @@
 import { useCallback } from 'react';
 
-import { RoutingTree, notificationsAPI } from '../../api/notifications/v0alpha1/notifications.api.gen';
+import {
+  RoutingTree,
+  generatedAPI as notificationsAPIv0alpha1,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
 import { Label } from '../../matchers/types';
 import { USER_DEFINED_TREE_NAME } from '../consts';
 import { Route, RouteWithID } from '../types';
@@ -24,6 +28,11 @@ export type InstanceMatchResult = {
   matchedRoutes: RouteMatch[];
 };
 
+interface UseMatchInstancesToRouteTreesReturnType
+  extends ReturnType<typeof notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery> {
+  matchInstancesToRouteTrees: (instances: Label[][]) => InstanceMatchResult[];
+}
+
 /**
  * React hook that finds notification policy routes in all routing trees that match the provided set of alert instances.
  *
@@ -35,8 +44,8 @@ export type InstanceMatchResult = {
  * @returns An object containing a `matchInstancesToRoutingTrees` function that takes alert instances
  *          and returns an array of InstanceMatchResult objects, each containing the matched routes and matching details
  */
-export function useMatchInstancesToRouteTrees() {
-  const { data, ...rest } = notificationsAPI.endpoints.listRoutingTree.useQuery(
+export function useMatchInstancesToRouteTrees(): UseMatchInstancesToRouteTreesReturnType {
+  const { data, ...rest } = notificationsAPIv0alpha1.endpoints.listRoutingTree.useQuery(
     {},
     {
       refetchOnFocus: true,

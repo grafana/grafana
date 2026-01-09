@@ -30,11 +30,13 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// AlertRuleMaxTitleLength is the maximum length of the alert rule title
-const AlertRuleMaxTitleLength = 190
+const (
+	// AlertRuleMaxTitleLength is the maximum length of the alert rule title
+	AlertRuleMaxTitleLength = 190
 
-// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
-const AlertRuleMaxRuleGroupNameLength = 190
+	// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
+	AlertRuleMaxRuleGroupNameLength = 190
+)
 
 var (
 	ErrOptimisticLock = errors.New("version conflict while updating a record in the database with optimistic locking")
@@ -237,6 +239,27 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 		return 0
 	})
 	return alertRules, nil
+}
+
+// GetAlertRuleVersionFolders retrieves a list of unique folder UIDs that the given rule guid has belonged to.
+// Returned slice is ordered with more recent folders first.
+func (st DBstore) GetAlertRuleVersionFolders(ctx context.Context, orgID int64, guid string) ([]string, error) {
+	folders := make([]string, 0)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		if err := sess.Table(new(alertRuleVersion)).
+			Select("rule_namespace_uid").
+			Where("rule_org_id = ? AND rule_guid = ?", orgID, guid).
+			GroupBy("rule_namespace_uid").
+			OrderBy("MAX(version) DESC").
+			Find(&folders); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return folders, nil
 }
 
 // ListDeletedRules retrieves a list of deleted alert rules for the specified organization ID from the database.
@@ -621,6 +644,23 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			_ = rows.Close()
 		}()
 
+		opts := AlertRuleConvertOptions{}
+		if query.Compact {
+			opts.ExcludeAlertQueries = true
+			opts.ExcludeNotificationSettings = true
+			opts.ExcludeMetadata = true
+
+			if query.ReceiverName != "" || query.TimeIntervalName != "" {
+				// Need NotificationSettings for these filters
+				opts.ExcludeNotificationSettings = false
+			}
+
+			if query.HasPrometheusRuleDefinition != nil {
+				// Need Metadata for this filter
+				opts.ExcludeMetadata = false
+			}
+		}
+
 		// Process rules and implement per-group pagination
 		var groupsFetched int64
 		var rulesFetched int64
@@ -632,12 +672,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 				continue
 			}
 
-			var converted ngmodels.AlertRule
-			if query.Compact {
-				converted, err = alertRuleToModelsAlertRuleCompact(*rule, st.Logger)
-			} else {
-				converted, err = alertRuleToModelsAlertRule(*rule, st.Logger)
-			}
+			converted, err := convertAlertRuleToModel(*rule, st.Logger, opts)
 
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, cannot convert, ignoring it", "func", "ListAlertRulesByGroup", "error", err)
@@ -932,6 +967,13 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 
 	if len(query.LabelMatchers) > 0 {
 		q, err = st.filterByLabelMatchers(query.LabelMatchers, q)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+	}
+
+	if query.PluginOriginFilter != ngmodels.PluginOriginFilterNone {
+		q, err = st.filterByPluginOrigin(query.PluginOriginFilter, q)
 		if err != nil {
 			return nil, groupsSet, err
 		}
@@ -1392,6 +1434,32 @@ func (st DBstore) filterByLabelMatchers(matchers labels.Matchers, sess *xorm.Ses
 		sess = sess.And(sql, args...)
 	}
 	return sess, nil
+}
+
+// filterByPluginOrigin adds filtering for plugin-originated rules based on the __grafana_origin label.
+func (st DBstore) filterByPluginOrigin(filter ngmodels.PluginOriginFilter, sess *xorm.Session) (*xorm.Session, error) {
+	if filter == ngmodels.PluginOriginFilterNone {
+		return sess, nil
+	}
+
+	var sql string
+	var args []any
+	var err error
+
+	switch filter {
+	case ngmodels.PluginOriginFilterHide:
+		sql, args, err = buildLabelKeyMissingCondition(st.SQLStore.GetDialect(), "labels", ngmodels.PluginGrafanaOriginLabel)
+	case ngmodels.PluginOriginFilterOnly:
+		sql, args, err = buildLabelKeyExistsCondition(st.SQLStore.GetDialect(), "labels", ngmodels.PluginGrafanaOriginLabel)
+	default:
+		return nil, fmt.Errorf("unknown plugin origin filter %q", filter)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return sess.And(sql, args...), nil
 }
 
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {

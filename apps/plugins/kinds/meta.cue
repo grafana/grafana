@@ -5,7 +5,25 @@ metaV0Alpha1: {
 	scope: "Namespaced"
 	schema: {
 		spec: {
-			pluginJSON: #JSONData,
+			pluginJson: #JSONData
+			class: "core" | "external"
+			module?: {
+				path:             string
+				hash?:            string
+				loadingStrategy?: "fetch" | "script"
+			}
+			baseURL?: string
+			signature?: {
+				status: "internal" | "valid" | "invalid" | "modified" | "unsigned"
+				type?:  "grafana" | "commercial" | "community" | "private" | "private-glob"
+				org?:   string
+			}
+			angular?: {
+				detected: bool
+			}
+			translations?: [string]: string
+			// +listType=atomic
+			children?: [...string]
 		}
 	}
 }
@@ -119,7 +137,7 @@ metaV0Alpha1: {
 	type?:       "dashboard" | "page" | "panel" | "datasource"
 	name?:       string
 	component?:  string
-	role?:       "Admin" | "Editor" | "Viewer"
+	role?:       "Admin" | "Editor" | "Viewer" | "None"
 	action?:     string
 	path?:       string
 	addToNav?:   bool
@@ -194,6 +212,13 @@ metaV0Alpha1: {
 	}]
 	// +listType=atomic
 	addedLinks?: [...{
+		// +listType=set
+		targets: [...string]
+		title:        string
+		description?: string
+	}]
+	// +listType=atomic
+	addedFunctions?: [...{
 		// +listType=set
 		targets: [...string]
 		title:        string

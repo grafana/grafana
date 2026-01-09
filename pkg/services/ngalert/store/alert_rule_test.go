@@ -1727,6 +1727,55 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	// Setup.
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
+	sqlStore := db.InitTestDB(t)
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+	orgID := int64(1)
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
+
+	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: gen.Generate()}})
+	require.NoError(t, err)
+	ruleV1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: inserted[0].UID})
+	require.NoError(t, err)
+
+	oldRule := ruleV1
+	updatedRule := ruleV1
+	updateRule := func(title string, folderUID string) {
+		oldRule = updatedRule
+		updatedRule = models.CopyRule(oldRule, gen.WithTitle(title), gen.WithNamespaceUID(folderUID))
+		require.NoError(t, store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{{Existing: oldRule, New: *updatedRule}}))
+		updatedRule.Version++ // Simulate version increment after update to avoid conflict errors.
+	}
+
+	// Update rule a couple of times to create versions.
+	originalFolder := oldRule.NamespaceUID
+	updateRule(util.GenerateShortUID(), originalFolder)
+	updateRule(util.GenerateShortUID(), "newfolder-1")
+	updateRule(util.GenerateShortUID(), "newfolder-2")
+	updateRule(util.GenerateShortUID(), "newfolder-2")
+	updateRule(util.GenerateShortUID(), originalFolder)
+	updateRule(util.GenerateShortUID(), "current-folder")
+
+	t.Run("should return rule versions folders sorted in decreasing order", func(t *testing.T) {
+		historicalFolders, err := store.GetAlertRuleVersionFolders(context.Background(), updatedRule.OrgID, updatedRule.GUID)
+		require.NoError(t, err)
+		assert.Equal(t, []string{ // Return folders with more recent first.
+			"current-folder",
+			originalFolder,
+			"newfolder-2",
+			"newfolder-1",
+		}, historicalFolders)
+	})
+}
+
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
@@ -2405,7 +2454,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			ruleGen.WithLabels(map[string]string{"glob": "*[?]"}),
 			ruleGen.WithTitle("rule_glob")))
 		ruleSpecialChars := createRule(t, store, ruleGen.With(
-			ruleGen.WithLabels(map[string]string{"json": "line1\nline2\\end\"quote"}),
+			ruleGen.WithLabels(map[string]string{"label-with-hyphen": "line1\nline2\\end\"quote"}),
 			ruleGen.WithTitle("rule_special_chars")))
 		ruleEmpty := createRule(t, store, ruleGen.With(
 			ruleGen.WithLabels(map[string]string{"empty": ""}),
@@ -2413,6 +2462,12 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		ruleNonempty := createRule(t, store, ruleGen.With(
 			ruleGen.WithLabels(map[string]string{"empty": "nonempty"}),
 			ruleGen.WithTitle("rule_nonempty")))
+		// include a rule with no labels at all,
+		// to ensure we handle that case correctly.
+		// JSON functions need to be able to handle null and empty string values.
+		ruleNoLabels := createRule(t, store, ruleGen.With(
+			ruleGen.WithLabels(map[string]string{}),
+			ruleGen.WithTitle("rule_no_labels")))
 
 		tc := []struct {
 			name          string
@@ -2438,7 +2493,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchNotEqual, "team", "alerting"); return m }(),
 				},
-				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
+				expectedRules: []*models.AlertRule{ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty, ruleNoLabels},
 			},
 			{
 				name: "special characters in labels are handled correctly",
@@ -2476,7 +2531,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				name: "JSON escape characters are handled correctly",
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher {
-						m, _ := labels.NewMatcher(labels.MatchEqual, "json", "line1\nline2\\end\"quote")
+						m, _ := labels.NewMatcher(labels.MatchEqual, "label-with-hyphen", "line1\nline2\\end\"quote")
 						return m
 					}(),
 				},
@@ -2487,7 +2542,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher { m, _ := labels.NewMatcher(labels.MatchEqual, "empty", ""); return m }(),
 				},
-				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNoLabels},
 			},
 			{
 				name: "inequality matcher on non-existent label matches all rules",
@@ -2497,7 +2552,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 						return m
 					}(),
 				},
-				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty},
+				expectedRules: []*models.AlertRule{ruleLower, ruleUpper, ruleSpecial, ruleGlob, ruleSpecialChars, ruleEmpty, ruleNonempty, ruleNoLabels},
 			},
 		}
 
@@ -2536,6 +2591,54 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			require.Error(t, err)
 			require.ErrorContains(t, err, "is not supported")
 		})
+	})
+
+	t.Run("filter by PluginOriginFilter", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+		testOrgID := int64(12345)
+		testRuleGen := ruleGen.With(models.RuleMuts.WithOrgID(testOrgID))
+
+		regularRule := createRule(t, store, testRuleGen)
+		pluginRule := createRule(t, store, testRuleGen.With(
+			models.RuleMuts.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
+		))
+
+		tc := []struct {
+			name          string
+			filter        models.PluginOriginFilter
+			expectedRules []*models.AlertRule
+		}{
+			{
+				name:          "should return all rules when PluginOriginFilterNone",
+				filter:        models.PluginOriginFilterNone,
+				expectedRules: []*models.AlertRule{regularRule, pluginRule},
+			},
+			{
+				name:          "should filter out plugin rules when PluginOriginFilterHide",
+				filter:        models.PluginOriginFilterHide,
+				expectedRules: []*models.AlertRule{regularRule},
+			},
+			{
+				name:          "should return only plugin rules when PluginOriginFilterOnly",
+				filter:        models.PluginOriginFilterOnly,
+				expectedRules: []*models.AlertRule{pluginRule},
+			},
+		}
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesExtendedQuery{
+					ListAlertRulesQuery: models.ListAlertRulesQuery{
+						OrgID: testOrgID,
+					},
+					PluginOriginFilter: tt.filter,
+				}
+				result, _, err := store.ListAlertRulesByGroup(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
 	})
 }
 

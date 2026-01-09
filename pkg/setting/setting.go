@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
@@ -208,7 +209,7 @@ type Cfg struct {
 	// Plugins
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
-	PluginSettings                   PluginSettings
+	PluginSettings                   config.PluginSettings
 	PluginsAllowUnsigned             []string
 	PluginCatalogURL                 string
 	PluginCatalogHiddenPlugins       []string
@@ -414,6 +415,7 @@ type Cfg struct {
 	RudderstackDataPlaneURL             string
 	RudderstackWriteKey                 string
 	RudderstackSDKURL                   string
+	RudderstackV3SDKURL                 string
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
@@ -586,8 +588,10 @@ type Cfg struct {
 	// Unified Storage
 	UnifiedStorage map[string]UnifiedStorageConfig
 	// DisableDataMigrations will disable resources data migration to unified storage at startup
-	DisableDataMigrations                      bool
-	MaxPageSizeBytes                           int
+	DisableDataMigrations bool
+	MaxPageSizeBytes      int
+	// IndexPath the directory where index files are stored.
+	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexRebuildWorkers                        int
@@ -632,6 +636,11 @@ type UnifiedStorageConfig struct {
 	DataSyncerInterval time.Duration
 	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
 	DataSyncerRecordsLimit int
+	// EnableMigration indicates whether migration is enabled for the resource.
+	// If not set, will use the default from MigratedUnifiedResources.
+	EnableMigration bool
+	// AutoMigrationThreshold is the threshold below which a resource is automatically migrated.
+	AutoMigrationThreshold int
 }
 
 type InstallPlugin struct {
@@ -1278,6 +1287,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
+	cfg.RudderstackV3SDKURL = analytics.Key("rudderstack_v3_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
@@ -2162,7 +2172,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
-		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
+		cfg.ProvisioningAllowedTargets = []string{"folder"}
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)

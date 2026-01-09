@@ -1,3 +1,3 @@
-import { createMonitoringLogger } from '@grafana/runtime';
+import { createMonitoringLogger, MonitoringLogger } from '@grafana/runtime';
 
-export const sqlPluginLogger = createMonitoringLogger('features.plugins.sql');
+export const sqlPluginLogger: MonitoringLogger = createMonitoringLogger('features.plugins.sql');

@@ -219,6 +219,10 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+type ConnectionInfo struct {
+	Name string `json:"name"`
+}
+
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
 	Title string `json:"title"`
@@ -256,6 +260,10 @@ type RepositorySpec struct {
 	// The repository on GitLab.
 	// Mutually exclusive with local | github | git.
 	GitLab *GitLabRepositoryConfig `json:"gitlab,omitempty"`
+
+	// The connection the repository references.
+	// This means the Repository is interacting with git via a Connection.
+	Connection *ConnectionInfo `json:"connection,omitempty"`
 }
 
 // SyncTargetType defines where we want all values to resolve

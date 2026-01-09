@@ -78,6 +78,16 @@ test.describe('Panels test: StateTimeine', { tag: ['@panels', '@state-timeline']
     await dashboardPage.getByGrafanaSelector(selectors.components.Portal.container).getByLabel('Close').click();
     await expect(tooltip, 'tooltip closed on "x" click').toBeHidden();
 
+    // test that CMD/CTRL+C doesn't dismiss the tooltip
+    await stateTimelineUplot.click({ position: { x: 100, y: 50 } });
+    await expect(tooltip, 'tooltip appears on click').toBeVisible();
+    await page.keyboard.press('Meta+C');
+    await expect(tooltip, 'tooltip persists after CMD/CTRL+C').toBeVisible();
+
+    // test that Escape key dismisses the tooltip
+    await page.keyboard.press('Escape');
+    await expect(tooltip, 'tooltip closed on Escape key').toBeHidden();
+
     // disable tooltips
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Tooltip Tooltip mode'))

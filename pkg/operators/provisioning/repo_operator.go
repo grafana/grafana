@@ -85,7 +85,6 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		resourceLister,
 		controllerCfg.clients,
 		jobs,
-		nil, // dualwrite -- standalone operator assumes it is backed by unified storage
 		healthChecker,
 		statusPatcher,
 		deps.Registerer,
@@ -107,6 +106,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 
 type repoControllerConfig struct {
 	provisioningControllerConfig
+	repoFactory         repository.Factory
 	workerCount         int
 	parallelOperations  int
 	allowedTargets      []string
@@ -120,6 +120,17 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 		return nil, err
 	}
 
+	// Setup repository factory for repo controller
+	decrypter, err := setupDecrypter(cfg, tracing.NewNoopTracerService(), controllerCfg.tokenExchangeClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
+	}
+
+	repoFactory, err := setupRepoFactory(cfg, decrypter, controllerCfg.provisioningClient, registry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup repository factory: %w", err)
+	}
+
 	allowedTargets := []string{}
 	cfg.SectionWithEnvOverrides("provisioning").Key("allowed_targets").Strings("|")
 	if len(allowedTargets) == 0 {
@@ -128,6 +139,7 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 
 	return &repoControllerConfig{
 		provisioningControllerConfig: *controllerCfg,
+		repoFactory:                  repoFactory,
 		allowedTargets:               allowedTargets,
 		workerCount:                  cfg.SectionWithEnvOverrides("operator").Key("worker_count").MustInt(1),
 		parallelOperations:           cfg.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),

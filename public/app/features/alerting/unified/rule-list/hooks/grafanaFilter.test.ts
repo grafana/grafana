@@ -429,7 +429,7 @@ describe('grafana-managed rules', () => {
         ]);
       });
 
-      it('should still apply other frontend filters', () => {
+      it('should include plugins in backend filter and skip frontend filtering', () => {
         // Set up test plugin as installed
         config.apps[SupportedPlugin.Slo] = pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]);
 
@@ -445,14 +445,15 @@ describe('grafana-managed rules', () => {
           alerts: [],
         });
 
-        // Plugins filter should still work on frontend
-        const { frontendFilter } = getGrafanaFilter(getFilter({ plugins: 'hide' }));
+        // Plugins filter should be handled by backend
+        const { backendFilter, frontendFilter } = getGrafanaFilter(getFilter({ plugins: 'hide' }));
 
-        // Non-plugin rules should pass through
+        // Backend filter should include plugins parameter
+        expect(backendFilter.plugins).toBe('hide');
+
+        // Frontend filter should pass through all rules (no filtering)
         expect(frontendFilter.ruleMatches(regularRule)).toBe(true);
-
-        // Plugin-provided rules should be filtered out
-        expect(frontendFilter.ruleMatches(pluginRule)).toBe(false);
+        expect(frontendFilter.ruleMatches(pluginRule)).toBe(true);
       });
     });
 
@@ -808,7 +809,10 @@ describe('grafana-managed rules', () => {
 
       it('should return true for client-side only filters', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
-        expect(hasGrafanaClientSideFilters(getFilter({ plugins: 'hide' }))).toBe(true);
+      });
+
+      it('should return false for plugins filter (handled by backend when feature toggle is enabled)', () => {
+        expect(hasGrafanaClientSideFilters(getFilter({ plugins: 'hide' }))).toBe(false);
       });
 
       it('should return false for backend-only filters (state, health, contactPoint)', () => {
@@ -831,13 +835,15 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
 
-        // Should return true for: frontend-handled filters (labels, namespace, plugins)
+        // Should return true for: frontend-handled filters (labels, namespace)
         expect(hasGrafanaClientSideFilters(getFilter({ freeFormWords: ['cpu'] }))).toBe(true);
         expect(hasGrafanaClientSideFilters(getFilter({ ruleName: 'alert' }))).toBe(true);
         expect(hasGrafanaClientSideFilters(getFilter({ groupName: 'test-group' }))).toBe(true);
         expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
         expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(true);
-        expect(hasGrafanaClientSideFilters(getFilter({ plugins: 'hide' }))).toBe(true);
+
+        // plugins is backend-handled when alertingUIUseFullyCompatBackendFilters is enabled
+        expect(hasGrafanaClientSideFilters(getFilter({ plugins: 'hide' }))).toBe(false);
       });
     });
 
@@ -856,9 +862,11 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
 
-        // Should return true for: always-frontend filters only (namespace, plugins)
+        // Should return true for: always-frontend filters only (namespace)
         expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
-        expect(hasGrafanaClientSideFilters(getFilter({ plugins: 'hide' }))).toBe(true);
+
+        // plugins is backend-handled when both feature toggles are enabled
+        expect(hasGrafanaClientSideFilters(getFilter({ plugins: 'hide' }))).toBe(false);
 
         // Should return false for: backend-handled filters when both feature toggles are enabled
         expect(hasGrafanaClientSideFilters(getFilter({ dataSourceNames: ['prometheus'] }))).toBe(false);

@@ -37,6 +37,7 @@ interface Props<R extends ChannelValues> {
   onDelete?: () => void;
   isEditable?: boolean;
   isTestable?: boolean;
+  canEditProtectedFields: boolean;
 
   customValidators?: React.ComponentProps<typeof ChannelOptions>['customValidators'];
 }
@@ -54,6 +55,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   commonSettingsComponent: CommonSettingsComponent,
   isEditable = true,
   isTestable,
+  canEditProtectedFields,
   customValidators = {},
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
@@ -350,6 +352,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             onDeleteSubform={onDeleteSubform}
             integrationPrefix={channelFieldPath}
             readOnly={!isEditable || isLegacyVersion}
+            canEditProtectedFields={canEditProtectedFields}
             customValidators={customValidators}
           />
           {!!(mandatoryOptions.length && optionalOptions.length) && (
@@ -371,6 +374,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 errors={errors}
                 integrationPrefix={channelFieldPath}
                 readOnly={!isEditable || isLegacyVersion}
+                canEditProtectedFields={canEditProtectedFields}
                 customValidators={customValidators}
               />
             </CollapsibleSection>
