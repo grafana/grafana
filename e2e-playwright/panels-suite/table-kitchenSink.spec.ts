@@ -82,9 +82,9 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // click cell inspect, check that cell inspection pops open in the side as we'd expect.
-    await loremIpsumCell.getByLabel('Inspect value').click();
     const loremIpsumText = await loremIpsumCell.textContent();
     expect(loremIpsumText).toBeDefined();
+    await loremIpsumCell.getByLabel('Inspect value').click();
     await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
   });
 
