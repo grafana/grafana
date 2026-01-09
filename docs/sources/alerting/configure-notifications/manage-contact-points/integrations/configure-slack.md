@@ -92,8 +92,8 @@ You can configure additional settings to customize your Slack notifications beyo
 You can customize how the bot appears in Slack channels:
 
 - **Username**: Override the default bot username that appears in Slack. Set the `username` field to customize the display name.
-- **Icon emoji**: Provide an emoji to use as the icon for the bot's message. Set the `icon_emoji` field (for example, `:rocket:`). This overrides the icon URL.
-- **Icon URL**: Provide a URL to an image to use as the icon for the bot's message. Set the `icon_url` field with the image URL.
+- **Icon emoji**: Provide an emoji to use as the icon for the message. Set the `icon_emoji` field (for example, `:rocket:`). This overrides the icon URL.
+- **Icon URL**: Provide a URL to an image to use as the icon for the message. Set the `icon_url` field with the image URL.
 
 ### Configure mentions
 
@@ -122,7 +122,7 @@ You can customize the notification message using [notification templates](ref:no
 
 For specialized environments, you can override the default Slack API endpoint:
 
-- **Endpoint URL**: Specify a custom Slack API endpoint for non-webhook requests. Set the `endpointUrl` field to your custom endpoint. The default is `https://slack.com/api/chat.postMessage`. 
+- **Endpoint URL**: Specify a custom Slack API endpoint for non-webhook requests. Set the `endpointUrl` field to your custom endpoint. The default is `https://slack.com/api/chat.postMessage`.
 
 ## Next steps
 
