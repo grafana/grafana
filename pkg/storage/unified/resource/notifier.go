@@ -78,13 +78,13 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 	cache := gocache.New(cacheTTL, cacheCleanupInterval)
 	events := make(chan Event, opts.BufferSize)
 
-	initialRV, err := n.lastEventResourceVersion(ctx)
+	lastRV, err := n.lastEventResourceVersion(ctx)
 	if errors.Is(err, ErrNotFound) {
-		initialRV = snowflakeFromTime(time.Now()) // No events yet, start from the beginning
+		lastRV = 0 // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
 	}
-	lastRV := initialRV + 1 // We want to start watching from the next event
+	lastRV = lastRV + 1 // We want to start watching from the next event
 
 	go func() {
 		defer close(events)
@@ -110,7 +110,7 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 					}
 
 					// Skip old events lower than the requested resource version
-					if evt.ResourceVersion <= initialRV {
+					if evt.ResourceVersion < lastRV {
 						continue
 					}
 
