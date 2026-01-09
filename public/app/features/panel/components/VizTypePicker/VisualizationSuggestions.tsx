@@ -77,7 +77,7 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
 
-  const getPanelState = useCallback((): PanelState => {
+  const panelState = useMemo((): PanelState => {
     if (isUnconfiguredPanel) {
       return PANEL_STATES.UNCONFIGURED_PANEL;
     }
@@ -111,7 +111,6 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
 
   const applySuggestion = useCallback(
     (suggestion: PanelPluginVisualizationSuggestion, isPreview: boolean, isAutoSelected = false) => {
-      const panelState = getPanelState();
       if (isPreview) {
         VizSuggestionsInteractions.suggestionPreviewed({
           pluginId: suggestion.pluginId,
@@ -140,7 +139,7 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
         isPreview ? editPreview : undefined
       );
     },
-    [onChange, editPreview, getPanelState]
+    [onChange, editPreview, panelState]
   );
 
   useEffect(() => {
