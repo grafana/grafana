@@ -222,7 +222,8 @@
                     "insertNulls": false,
                     "lineWidth": 0,
                     "spanNulls": false
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -318,7 +319,8 @@
                     "insertNulls": false,
                     "lineWidth": 0,
                     "spanNulls": false
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -424,7 +426,8 @@
                     "insertNulls": false,
                     "lineWidth": 0,
                     "spanNulls": false
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -507,7 +510,8 @@
                     "insertNulls": false,
                     "lineWidth": 0,
                     "spanNulls": false
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }

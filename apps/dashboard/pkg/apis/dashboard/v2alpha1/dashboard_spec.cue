@@ -258,7 +258,17 @@ FieldConfig: {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: {...}
+
+	// Calculate min max per field
+	fieldMinMax?: bool
+
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode
 }
+
+// How null values should be handled
+NullValueMode: "null" | "connected" | "null as zero"
 
 DynamicConfigValue: {
 	id:     string | *""

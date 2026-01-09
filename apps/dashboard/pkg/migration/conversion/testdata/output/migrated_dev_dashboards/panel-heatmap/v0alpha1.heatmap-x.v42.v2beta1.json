@@ -175,8 +175,7 @@
                   "le": 1e-9
                 },
                 "legend": {
-                  "show": true,
-                  "showLegend": true
+                  "show": true
                 },
                 "rowsFrame": {
                   "layout": "auto"
@@ -347,8 +346,7 @@
                   "le": 1e-9
                 },
                 "legend": {
-                  "show": true,
-                  "showLegend": true
+                  "show": true
                 },
                 "rowsFrame": {
                   "layout": "auto"
@@ -420,8 +418,7 @@
                   "le": 1e-9
                 },
                 "legend": {
-                  "show": true,
-                  "showLegend": true
+                  "show": true
                 },
                 "rowsFrame": {
                   "layout": "auto"
