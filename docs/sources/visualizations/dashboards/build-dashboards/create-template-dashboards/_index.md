@@ -68,7 +68,7 @@ To begin building a dashboard directly from a data source, follow these steps:
    The empty dashboard page opens.
 
 1. Select one of the suggested dashboards by clicking its **Use dashboard** button. This can be helpful when you're not sure how to most effectively visualize your data.
-     The suggested dashboards are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch). If there are more than three dashboard suggestions, you can click **View all** to see the rest of them.
+   The suggested dashboards are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch). If there are more than three dashboard suggestions, you can click **View all** to see the rest of them.
 
    ![Empty dashboard with add visualization and suggested dashboard options](/media/docs/grafana/dashboards/screenshot-suggested-dashboards-v12.3.png)
 
