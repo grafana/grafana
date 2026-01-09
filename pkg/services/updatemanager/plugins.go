@@ -140,11 +140,7 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 // checkAndUpdate checks for updates and applies them if auto-update is enabled.
 func (s *PluginsService) checkAndUpdate(ctx context.Context) {
 	s.instrumentedCheckForUpdates(ctx)
-	flag, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
-	if err != nil {
-		s.log.Error("flag evaluation error", "flag", featuremgmt.FlagPluginsAutoUpdate, "error", err)
-	}
-	if flag.Value {
+	if s.checkFlagPluginsAutoUpdate(ctx) {
 		s.updateAll(ctx)
 	}
 }
