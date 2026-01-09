@@ -232,7 +232,7 @@ JSON Body schema:
 - **spec** – The dashboard json.
 
 {{< admonition type="note" >}}
-Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet available on your instance, they will be ignored.
+Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
 {{< /admonition >}}
 
 **Example Response**:
@@ -526,7 +526,7 @@ JSON Body schema:
 - **spec** – The dashboard json.
 
 {{< admonition type="note" >}}
-Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet available on your instance, they will be ignored.
+Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
 {{< /admonition >}}
 
 **Example Response**:
