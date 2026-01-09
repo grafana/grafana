@@ -9,7 +9,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Create template dashboards
+menuTitle: Create template and suggested dashboards
 title: Create dashboards from templates and suggestions
 description: Learn how to create dashboards from templates and suggestions
 weight: 3
@@ -54,7 +54,7 @@ To create a dashboard from a template, follow these steps:
 
 1. Click **Save dashboard**.
 
-## Begin dashboard creation from data source configuration
+## Create dashboards from suggestions
 
 You can start the process of creating a dashboard directly from a data source rather than from the **Dashboards** page to access suggestions based on the data source.
 
