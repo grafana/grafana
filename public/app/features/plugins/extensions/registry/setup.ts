@@ -1,7 +1,7 @@
 import { PluginExtensionExposedComponents } from '@grafana/data';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
-import { PrometheusQueryResultsContainer } from 'app/features/explore/PrometheusQueryResults/PrometheusQueryResultsContainer';
+import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
