@@ -70,7 +70,8 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 	}{
 		{"key_path generation", runTestIntegrationBackendKeyPathGeneration},
 		{"sql backend fields compatibility", runTestSQLBackendFieldsCompatibility},
-		{"concurrent backend operations", runTestConcurrentBackendOperations},
+		{"cross backend consistency", runTestCrossBackendConsistency},
+		{"concurrent operations stress", runTestConcurrentOperationsStress},
 	}
 
 	for _, tc := range cases {
@@ -629,8 +630,8 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	require.LessOrEqual(t, record.ResourceVersion, maxRV+100, "resource_version shouldn't be much higher than expected")
 }
 
-// runTestConcurrentBackendOperations tests that SQL and KV backends can operate simultaneously without conflicts
-func runTestConcurrentBackendOperations(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+// runTestCrossBackendConsistency tests basic consistency between SQL and KV backends (lightweight)
+func runTestCrossBackendConsistency(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
 	ctx := testutil.NewDefaultTestContext(t)
 
 	// Create storage servers from both backends
@@ -649,26 +650,43 @@ func runTestConcurrentBackendOperations(t *testing.T, sqlBackend, kvBackend reso
 	// Create isolated namespaces for each test phase
 	sqlNamespace := nsPrefix + "-concurrent-sql"
 	kvNamespace := nsPrefix + "-concurrent-kv"
-	mixedNamespace := nsPrefix + "-concurrent-mixed"
 
-	// Phase A: Write to SQL, Read from Both
 	t.Run("Write to SQL, Read from Both", func(t *testing.T) {
 		runWriteToOneReadFromBoth(t, sqlServer, kvServer, sqlNamespace+"-writeSQL", ctx, "sql")
 	})
 
-	// Phase B: Write to KV, Read from Both
 	t.Run("Write to KV, Read from Both", func(t *testing.T) {
 		runWriteToOneReadFromBoth(t, kvServer, sqlServer, kvNamespace+"-writeKV", ctx, "kv")
 	})
 
-	// Phase C: Mixed Concurrent Operations
-	t.Run("Mixed Concurrent Operations", func(t *testing.T) {
-		runMixedConcurrentOperations(t, sqlServer, kvServer, mixedNamespace, ctx)
-	})
-
-	// Phase D: Resource Version Consistency
 	t.Run("Resource Version Consistency", func(t *testing.T) {
 		runResourceVersionConsistencyTest(t, sqlServer, kvServer, nsPrefix+"-rv-consistency", ctx)
+	})
+}
+
+// runTestConcurrentOperationsStress tests heavy concurrent operations between SQL and KV backends
+func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	// Create storage servers from both backends
+	sqlServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      sqlBackend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+
+	kvServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      kvBackend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+
+	// Create isolated namespace for mixed operations
+	mixedNamespace := nsPrefix + "-concurrent-mixed"
+
+	// Heavy Mixed Concurrent Operations
+	t.Run("Mixed Concurrent Operations", func(t *testing.T) {
+		runMixedConcurrentOperations(t, sqlServer, kvServer, mixedNamespace, ctx)
 	})
 }
 
