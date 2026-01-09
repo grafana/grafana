@@ -9,8 +9,8 @@ import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
 import { ThemeDemo } from '@grafana/ui/internal';
 import { Page } from 'app/core/components/Page/Page';
 
-import { notifyApp } from '../../core/actions';
 import { createErrorNotification } from '../../core/copy/appNotification';
+import { notifyApp } from '../../core/reducers/appNotification';
 import { HOME_NAV_ID } from '../../core/reducers/navModel';
 import { getNavModel } from '../../core/selectors/navModel';
 import { ThemeProvider } from '../../core/utils/ConfigProvider';
