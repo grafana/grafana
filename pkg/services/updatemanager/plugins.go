@@ -136,7 +136,11 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 // checkAndUpdate checks for updates and applies them if auto-update is enabled.
 func (s *PluginsService) checkAndUpdate(ctx context.Context) {
 	s.instrumentedCheckForUpdates(ctx)
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
+	flag, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
+	if err != nil {
+		s.log.Error("flag evaluation error", "flag", featuremgmt.FlagPluginsAutoUpdate, "error", err)
+	}
+	if flag.Value {
 		s.updateAll(ctx)
 	}
 }
@@ -227,7 +231,11 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 		return false
 	}
 
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
+	flag, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
+	if err != nil {
+		s.log.Error("flag evaluation error", "flag", featuremgmt.FlagPluginsAutoUpdate, "error", err)
+	}
+	if flag.Value {
 		return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, s.updateStrategy == setting.PluginUpdateStrategyMinor)
 	}
 
