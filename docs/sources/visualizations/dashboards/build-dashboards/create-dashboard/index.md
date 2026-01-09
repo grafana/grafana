@@ -135,7 +135,7 @@ To create a dashboard, follow these steps:
 
    For more information about configuring individual visualizations, refer to [Visualizations options](ref:visualizations-options).
 
-1. Under **Panel options**, enter a title and description for your panel or have Grafana create them using [generative AI features](ref:generative-ai-features).
+1. Under **Panel options**, enter a title and description for the panel or have Grafana create them using [generative AI features](ref:generative-ai-features).
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
@@ -145,12 +145,12 @@ To create a dashboard, follow these steps:
    - [Configure thresholds](ref:configure-thresholds)
    - [Configure standard options](ref:configure-standard-options)
 
-1. When you've finished editing your panel, click **Save**.
-1. Enter a title and description for your dashboard if you haven't already or have Grafana create them using [generative AI features](ref:generative-ai-features).
+1. When you've finished editing the panel, click **Save**.
+1. Enter a title and description for the dashboard if you haven't already or have Grafana create them using [generative AI features](ref:generative-ai-features).
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back to dashboard**.
-1. (Optional) Continue building your dashboard by clicking one or more of the following options:
+1. (Optional) Continue building the dashboard by clicking one or more of the following options:
 
    - **+ Add panel**: Set panel options in the edit pane or click **Configure** to complete panel setup.
    - **+ Add variable**: Follow the steps to [add a variable to the dashboard](#add-variables).
@@ -290,7 +290,7 @@ You can also nest:
 - Rows in a tab
 - Tabs in a row
 
-You can nest up to two levels deep, which means your dashboard can have a maximum of four configuration levels:
+You can nest up to two levels deep, which means a dashboard can have a maximum of four configuration levels:
 
 - Dashboard
 - Grouping 1 - Row or tab
@@ -299,7 +299,7 @@ You can nest up to two levels deep, which means your dashboard can have a maximu
 
 You can only have one type of grouping at each level.
 Inside of those groupings however, you have to freedom to add different elements.
-Also, custom and auto grid panel layouts are supported for rows and tabs, so each of your groupings can have a different panel layout.
+Also, custom and auto grid panel layouts are supported for rows and tabs, so each grouping can have a different panel layout.
 
 <!-- screenshots with limitations here -->
 
@@ -331,7 +331,7 @@ The following table describes the options you can set for a row or tab:
 
 When you have panels grouped into rows or tabs, the **Layout** options available depend on which dashboard element is selected and the nesting level of that element.
 
-You can nest up to two levels deep, which means your dashboard can have a maximum of four configuration levels, with the following layout options:
+You can nest up to two levels deep, which means a dashboard can have a maximum of four configuration levels, with the following layout options:
 
 - **Dashboard**: Layout options allow you to choose between rows or tabs.
 - **Grouping 1 (outer)**: Layout options allow you to choose between rows or tabs.
@@ -398,7 +398,7 @@ To add more first-level groupings, follow these steps:
 
 ### Ungroup panels
 
-You can ungroup some or all your groupings without losing your panels.
+You can ungroup some or all of the dashboard groupings without losing your panels.
 Ungrouping behavior depends on whether you're working with first-level or nested groupings:
 
 | Grouping | Action and outcome |
@@ -568,24 +568,38 @@ To configure show/hide rules, follow these steps:
 Hidden panels, rows, or tabs aren't visible when the dashboard is in view mode.
 In edit mode, hidden dashboard elements are displayed with an icon indicating this.
 
-## Move or resize a panel
+## Move a panel
 
-When your dashboard has a **Custom** layout, you can manually resize or move a panel.
-If the dashboard has rows or tabs, you can only move panels to other rows or tabs; panels can't be placed on the dashboard outside of a grouping.
+To move a panel, follow these steps:
 
-To move or resize, follow these steps:
-
-1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Navigate to the panel you want to move or resize.
+1. Navigate to the panel you want to move.
 
-   If the dashboard is large, open the **Content outline** and use it to navigate to the panel, row, or tab.
+   If the dashboard is large, open the **Content outline** and use it to navigate to the panel.
 
-1. Do one of the following:
-   - Click the panel title and drag the panel to another row or tab, or to a new position on the dashboard.
-   - Click and drag the lower-right corner of the panel to change the size of the panel.
+1. Click the panel title and drag the panel to another row or tab, or to a new position on the dashboard.
 
+   If the dashboard has groupings, you can only move the panel to another grouping. 
+
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**
+
+## Resize a panel
+
+When your dashboard or grouping has a **Custom** layout, you can manually resize a panel.
+
+To resize a panel, follow these steps:
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Navigate to the panel you want to resize.
+
+   If the dashboard is large, open the **Content outline** and use it to navigate to the panel.
+
+1. Click and drag the lower-right corner of the panel to change the size of the panel.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
