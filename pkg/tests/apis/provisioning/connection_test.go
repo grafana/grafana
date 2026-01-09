@@ -2,11 +2,13 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/util/testutil"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,12 +19,42 @@ import (
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 )
 
+//nolint:gosec // Test RSA private key (generated for testing purposes only)
+const testPrivateKeyPEM = `-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAoInVbLY9io2Q/wHvUIXlEHg2Qyvd8eRzBAVEJ92DS6fx9H10
+06V0VRm78S0MXyo6i+n8ZAbZ0/R+GWpP2Ephxm0Gs2zo+iO2mpB19xQFI4o6ZTOw
+b2WyjSaa2Vr4oyDkqti6AvfjW4VUAu932e08GkgwmmQSHXj7FX2CMWjgUwTTcuaX
+65SHNKLNYLUP0HTumLzoZeqDTdoMMpKNdgH9Avr4/8vkVJ0mD6rqvxnw3JHsseNO
+WdQTxf2aApBNHIIKxWZ2i/ZmjLNey7kltgjEquGiBdJvip3fHhH5XHdkrXcjRtnw
+OJDnDmi5lQwv5yUBOSkbvbXRv/L/m0YLoD/fbwIDAQABAoIBAFfl//hM8/cnuesV
++R1Con/ZAgTXQOdPqPXbmEyniVrkMqMmCdBUOBTcST4s5yg36+RtkeaGpb/ajyyF
+PAB2AYDucwvMpudGpJWOYTiOOp4R8hU1LvZfXVrRd1lo6NgQi4NLtNUpOtACeVQ+
+H4Yv0YemXQ47mnuOoRNMK/u3q5NoIdSahWptXBgUno8KklNpUrH3IYWaUxfBzDN3
+2xsVRTn2SfTSyoDmTDdTgptJONmoK1/sV7UsgWksdFc6XyYhsFAZgOGEJrBABRvF
+546dyQ0cWxuPyVXpM7CN3tqC5ssvLjElg3LicK1V6gnjpdRnnvX88d1Eh3Uc/9IM
+OZInT2ECgYEA6W8sQXTWinyEwl8SDKKMbB2ApIghAcFgdRxprZE4WFxjsYNCNL70
+dnSB7MRuzmxf5W77cV0N7JhH66N8HvY6Xq9olrpQ5dNttR4w8Pyv3wavDe8x7seL
+5L2Xtbu7ihDr8Dk27MjiBSin3IxhBP5CJS910+pR6LrAWtEuU+FzFfECgYEAsA6y
+qxHhCMXlTnauXhsnmPd1g61q7chW8kLQFYtHMLlQlgjHTW7irDZ9cPbPYDNjwRLO
+7KLorcpv2NKe7rqq2ZyCm6hf1b9WnlQjo3dLpNWMu6fhy/smK8MgbRqcWpX+oTKF
+79mK6hbY7o6eBzsQHBl7Z+LBNuwYmp9qOodPa18CgYEArv6ipKdcNhFGzRfMRiCN
+OHederp6VACNuP2F05IsNUF9kxOdTEFirnKE++P+VU01TqA2azOhPp6iO+ohIGzi
+MR06QNSH1OL9OWvasK4dggpWrRGF00VQgDgJRTnpS4WH+lxJ6pRlrAxgWpv6F24s
+VAgSQr1Ejj2B+hMasdMvHWECgYBJ4uE4yhgXBnZlp4kmFV9Y4wF+cZkekaVrpn6N
+jBYkbKFVVfnOlWqru3KJpgsB5I9IyAvvY68iwIKQDFSG+/AXw4dMrC0MF3DSoZ0T
+TU2Br92QI7SvVod+djV1lGVp3ukt3XY4YqPZ+hywgUnw3uiz4j3YK2HLGup4ec6r
+IX5DIQKBgHRLzvT3zqtlR1Oh0vv098clLwt+pGzXOxzJpxioOa5UqK13xIpFXbcg
+iWUVh5YXCcuqaICUv4RLIEac5xQitk9Is/9IhP0NJ/81rHniosvdSpCeFXzxTImS
+B8Uc0WUgheB4+yVKGnYpYaSOgFFI5+1BYUva/wDHLy2pWHz39Usb
+-----END RSA PRIVATE KEY-----`
+
 func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -41,7 +73,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
-					"create": "someSecret",
+					"create": privateKeyBase64,
 				},
 			},
 		}}
@@ -87,7 +119,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
-					"create": "someSecret",
+					"create": privateKeyBase64,
 				},
 			},
 		}}
@@ -122,7 +154,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
-					"create": "someSecret",
+					"create": privateKeyBase64,
 				},
 			},
 		}}
@@ -158,6 +190,10 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 	helper := runGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	// TODO(ferruvich): have better control over this.
+	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient()
 
 	t.Run("should fail when type is empty", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -172,7 +208,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
-					"create": "someSecret",
+					"create": privateKeyBase64,
 				},
 			},
 		}}
@@ -194,7 +230,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
-					"create": "someSecret",
+					"create": privateKeyBase64,
 				},
 			},
 		}}
@@ -216,7 +252,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
-					"create": "someSecret",
+					"create": privateKeyBase64,
 				},
 			},
 		}}
@@ -246,7 +282,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		assert.Contains(t, err.Error(), "privateKey must be specified for GitHub connection")
 	})
 
-	t.Run("should fail when type is github but a client Secret is specified", func(t *testing.T) {
+	t.Run("should fail when type is github but a client Secret is also specified", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
@@ -263,7 +299,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
-					"create": "someSecret",
+					"create": privateKeyBase64,
 				},
 				"clientSecret": map[string]any{
 					"create": "someSecret",
