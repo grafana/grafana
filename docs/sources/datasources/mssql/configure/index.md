@@ -116,8 +116,8 @@ Before configuring the Microsoft SQL Server data source, ensure you have the fol
 Grafana ships with a built-in Microsoft SQL Server data source plugin. No additional installation is required.
 {{< /admonition >}}
 
-{{< admonition type="note" >}}
-**Grafana Cloud users:** If your SQL Server is in a private network, configure [Private data source connect](ref:private-data-source-connect) to establish connectivity.
+{{< admonition type="tip" >}}
+**Grafana Cloud users:** If your SQL Server is in a private network, you can configure [Private data source connect](ref:private-data-source-connect) to establish connectivity.
 {{< /admonition >}}
 
 ## Add the MSSQL data source
