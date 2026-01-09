@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 
 import { render } from '../../../test/test-utils';
+import { contextSrv } from '../../core/services/context_srv';
 
 import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
 import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
@@ -17,7 +18,26 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    user: {
+      uid: 'user123',
+    },
+    hasRole: jest.fn(),
+    hasPermission: jest.fn(),
+    isEditor: true,
+    isSignedIn: true,
+  },
+}));
+
+const mockContextSrv = contextSrv as jest.Mocked<typeof contextSrv>;
+
 describe('SecondaryActions', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
+  });
+
   it('should render component with two buttons', () => {
     render(
       <QueryLibraryContextProviderMock>
@@ -65,6 +85,7 @@ describe('SecondaryActions', () => {
   });
 
   it('should disable both add query buttons when addQueryRowButtonDisabled=true and saved queries is enabled', () => {
+    mockContextSrv.hasPermission.mockReturnValue(true);
     render(
       <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
         <SecondaryActions
