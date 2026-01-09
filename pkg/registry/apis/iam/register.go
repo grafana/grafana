@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"strings"
+	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
@@ -211,7 +212,8 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	client := openfeature.NewDefaultClient()
-	ctx := context.Background()
+	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancelFn()
 
 	// Check if any of the AuthZ APIs are enabled
 	enableCoreRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzCoreRolesApi, false, openfeature.TransactionContext(ctx))
@@ -253,7 +255,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage := map[string]rest.Storage{}
 
 	client := openfeature.NewDefaultClient()
-	ctx := context.Background()
+	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancelFn()
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	enableZanzanaSync := b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzZanzanaSync)
