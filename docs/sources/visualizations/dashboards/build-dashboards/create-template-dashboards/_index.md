@@ -15,13 +15,13 @@ description: Learn how to create dashboards from templates and suggestions
 weight: 3
 ---
 
-{{< docs/public-preview product="Dashboard templates and suggested dashboards" >}}
-
 # Create dashboards from templates and suggestions
 
 Grafana provides alternative ways to start building a dashboard.
 
 ## Create dashboards from templates
+
+{{< docs/public-preview product="Dashboard templates" >}}
 
 Grafana provides a variety of pre-built dashboard templates that you can use to quickly set up visualizations for your data. These dashboards use sample data, which you can replace with your own data, making it easier to get started with monitoring and analysis.
 
@@ -56,7 +56,9 @@ To create a dashboard from a template, follow these steps:
 
 ## Create dashboards from suggestions
 
-You can start the process of creating a dashboard directly from a data source rather than from the **Dashboards** page to access suggestions based on the data source.
+{{< docs/public-preview product="Suggested dashboards" >}}
+
+You can start the process of creating a dashboard directly from a data source rather than from the **Dashboards** page, which gives you access to suggestions based on the data source.
 
 To begin building a dashboard directly from a data source, follow these steps:
 
