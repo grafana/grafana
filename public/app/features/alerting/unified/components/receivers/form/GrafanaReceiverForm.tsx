@@ -18,12 +18,13 @@ import {
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { hasLegacyIntegrations } from '../../../utils/notifier-versions';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
 } from '../../../utils/receiver-form';
-import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { ImportedContactPointAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
 import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
@@ -39,6 +40,7 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   secureFields: {},
   disableResolveMessage: false,
   type: 'email',
+  version: 'v1', // New integrations default to v1 (Grafana version)
 });
 
 interface Props {
@@ -67,7 +69,6 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   } = useOnCallIntegration();
 
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
-
   const [testReceivers, setTestReceivers] = useState<Receiver[]>();
 
   // transform receiver DTO to form values
@@ -135,15 +136,20 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     );
   }
 
+  // Map notifiers to Notifier[] format for ReceiverForm
+  // The grafanaNotifiers include version-specific options via the versions array from the backend
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
   const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
     if (n.type === ReceiverTypes.OnCall) {
       return {
-        dto: extendOnCallNotifierFeatures(n),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+        dto: extendOnCallNotifierFeatures(n as any) as any,
         meta: onCallNotifierMeta,
       };
     }
 
-    return { dto: n };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+    return { dto: n as any };
   });
 
   return (
@@ -163,7 +169,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         </Alert>
       )}
 
-      {contactPoint?.provisioned && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
+      {contactPoint?.provisioned && hasLegacyIntegrations(contactPoint) && <ImportedContactPointAlert />}
+      {contactPoint?.provisioned && !hasLegacyIntegrations(contactPoint) && (
+        <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />
+      )}
 
       <ReceiverForm<GrafanaChannelValues>
         contactPointId={contactPoint?.id}

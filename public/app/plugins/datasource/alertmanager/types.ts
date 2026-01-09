@@ -86,6 +86,10 @@ export type GrafanaManagedReceiverConfig = {
   settings: GrafanaManagedReceiverConfigSettings;
   type: string;
   /**
+   * Version of the integration (e.g. "v0" for Mimir legacy, "v1" for Grafana)
+   */
+  version?: string;
+  /**
    * Name of the _receiver_, which in most cases will be the
    * same as the contact point's name. This should not be used, and is optional because the
    * kubernetes API does not return it for us (and we don't want to/shouldn't use it)
