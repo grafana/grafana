@@ -11,7 +11,7 @@ import type { AppPluginMetas } from './types';
 
 let apps: AppPluginMetas = {};
 
-function intialized(): boolean {
+function initialized(): boolean {
   return Boolean(Object.keys(apps).length);
 }
 
@@ -28,7 +28,7 @@ async function initAppPluginMetas(): Promise<void> {
 }
 
 export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
-  if (!intialized()) {
+  if (!initialized()) {
     await initAppPluginMetas();
   }
 
@@ -36,7 +36,7 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
 }
 
 export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfig | null> {
-  if (!intialized()) {
+  if (!initialized()) {
     await initAppPluginMetas();
   }
 
@@ -44,11 +44,21 @@ export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfi
   return app ? cloneDeep(app) : null;
 }
 
+/**
+ * Check if an app plugin is installed.
+ * @param pluginId - The id of the app plugin.
+ * @returns True if the app plugin is installed, false otherwise.
+ */
 export async function isAppPluginInstalled(pluginId: string): Promise<boolean> {
   const app = await getAppPluginMeta(pluginId);
   return Boolean(app);
 }
 
+/**
+ * Get the version of an app plugin.
+ * @param pluginId - The id of the app plugin.
+ * @returns The version of the app plugin, or null if the plugin is not installed.
+ */
 export async function getAppPluginVersion(pluginId: string): Promise<string | null> {
   const app = await getAppPluginMeta(pluginId);
   return app?.version ?? null;

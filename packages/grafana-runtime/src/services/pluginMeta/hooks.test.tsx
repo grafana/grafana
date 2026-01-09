@@ -33,31 +33,31 @@ describe('useAppPluginMeta', () => {
   it('should return correct default values', async () => {
     const { result } = renderHook(() => useAppPluginMeta('grafana-exploretraces-app'));
 
-    expect(result.current.appPluginMetaLoading).toEqual(true);
-    expect(result.current.appPluginMetaError).toBeUndefined();
-    expect(result.current.appPluginMeta).toBeUndefined();
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
 
-    await waitFor(() => expect(result.current.appPluginMetaLoading).toEqual(true));
+    await waitFor(() => expect(result.current.loading).toEqual(true));
   });
 
   it('should return correct values after loading', async () => {
     const { result } = renderHook(() => useAppPluginMeta('grafana-exploretraces-app'));
 
-    await waitFor(() => expect(result.current.appPluginMetaLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginMetaLoading).toEqual(false);
-    expect(result.current.appPluginMetaError).toBeUndefined();
-    expect(result.current.appPluginMeta).toEqual(apps['grafana-exploretraces-app']);
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(apps['grafana-exploretraces-app']);
   });
 
   it('should return correct values if the pluginId does not exist', async () => {
     const { result } = renderHook(() => useAppPluginMeta('otherorg-otherplugin-app'));
 
-    await waitFor(() => expect(result.current.appPluginMetaLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginMetaLoading).toEqual(false);
-    expect(result.current.appPluginMetaError).toBeUndefined();
-    expect(result.current.appPluginMeta).toEqual(null);
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(null);
   });
 
   it('should return correct values if useAppPluginMeta throws', async () => {
@@ -65,11 +65,11 @@ describe('useAppPluginMeta', () => {
 
     const { result } = renderHook(() => useAppPluginMeta('otherorg-otherplugin-app'));
 
-    await waitFor(() => expect(result.current.appPluginMetaLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginMetaLoading).toEqual(false);
-    expect(result.current.appPluginMetaError).toEqual(new Error('Some error'));
-    expect(result.current.appPluginMeta).toBeUndefined();
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
   });
 });
 
@@ -83,21 +83,21 @@ describe('useAppPluginMetas', () => {
   it('should return correct default values', async () => {
     const { result } = renderHook(() => useAppPluginMetas());
 
-    expect(result.current.appPluginMetasLoading).toEqual(true);
-    expect(result.current.appPluginMetasError).toBeUndefined();
-    expect(result.current.appPluginMetas).toBeUndefined();
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
 
-    await waitFor(() => expect(result.current.appPluginMetasLoading).toEqual(true));
+    await waitFor(() => expect(result.current.loading).toEqual(true));
   });
 
   it('should return correct values after loading', async () => {
     const { result } = renderHook(() => useAppPluginMetas());
 
-    await waitFor(() => expect(result.current.appPluginMetasLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginMetasLoading).toEqual(false);
-    expect(result.current.appPluginMetasError).toBeUndefined();
-    expect(result.current.appPluginMetas).toEqual(Object.values(apps));
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(Object.values(apps));
   });
 
   it('should return correct values if useAppPluginMetas throws', async () => {
@@ -105,11 +105,11 @@ describe('useAppPluginMetas', () => {
 
     const { result } = renderHook(() => useAppPluginMetas());
 
-    await waitFor(() => expect(result.current.appPluginMetasLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginMetasLoading).toEqual(false);
-    expect(result.current.appPluginMetasError).toEqual(new Error('Some error'));
-    expect(result.current.appPluginMetas).toBeUndefined();
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
   });
 });
 
@@ -123,31 +123,31 @@ describe('useAppPluginInstalled', () => {
   it('should return correct default values', async () => {
     const { result } = renderHook(() => useAppPluginInstalled('grafana-exploretraces-app'));
 
-    expect(result.current.appPluginInstalledLoading).toEqual(true);
-    expect(result.current.appPluginInstalledError).toBeUndefined();
-    expect(result.current.appPluginInstalled).toBeUndefined();
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
 
-    await waitFor(() => expect(result.current.appPluginInstalledLoading).toEqual(true));
+    await waitFor(() => expect(result.current.loading).toEqual(true));
   });
 
   it('should return correct values after loading', async () => {
     const { result } = renderHook(() => useAppPluginInstalled('grafana-exploretraces-app'));
 
-    await waitFor(() => expect(result.current.appPluginInstalledLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginInstalledLoading).toEqual(false);
-    expect(result.current.appPluginInstalledError).toBeUndefined();
-    expect(result.current.appPluginInstalled).toEqual(true);
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(true);
   });
 
   it('should return correct values if the pluginId does not exist', async () => {
     const { result } = renderHook(() => useAppPluginInstalled('otherorg-otherplugin-app'));
 
-    await waitFor(() => expect(result.current.appPluginInstalledLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginInstalledLoading).toEqual(false);
-    expect(result.current.appPluginInstalledError).toBeUndefined();
-    expect(result.current.appPluginInstalled).toEqual(false);
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(false);
   });
 
   it('should return correct values if isAppPluginInstalled throws', async () => {
@@ -155,11 +155,11 @@ describe('useAppPluginInstalled', () => {
 
     const { result } = renderHook(() => useAppPluginInstalled('otherorg-otherplugin-app'));
 
-    await waitFor(() => expect(result.current.appPluginInstalledLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginInstalledLoading).toEqual(false);
-    expect(result.current.appPluginInstalledError).toEqual(new Error('Some error'));
-    expect(result.current.appPluginInstalled).toBeUndefined();
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
   });
 });
 
@@ -173,31 +173,31 @@ describe('useAppPluginVersion', () => {
   it('should return correct default values', async () => {
     const { result } = renderHook(() => useAppPluginVersion('grafana-exploretraces-app'));
 
-    expect(result.current.appPluginVersionLoading).toEqual(true);
-    expect(result.current.appPluginVersionError).toBeUndefined();
-    expect(result.current.appPluginVersion).toBeUndefined();
+    expect(result.current.loading).toEqual(true);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toBeUndefined();
 
-    await waitFor(() => expect(result.current.appPluginVersionLoading).toEqual(true));
+    await waitFor(() => expect(result.current.loading).toEqual(true));
   });
 
   it('should return correct values after loading', async () => {
     const { result } = renderHook(() => useAppPluginVersion('grafana-exploretraces-app'));
 
-    await waitFor(() => expect(result.current.appPluginVersionLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginVersionLoading).toEqual(false);
-    expect(result.current.appPluginVersionError).toBeUndefined();
-    expect(result.current.appPluginVersion).toEqual('1.2.2');
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual('1.2.2');
   });
 
   it('should return correct values if the pluginId does not exist', async () => {
     const { result } = renderHook(() => useAppPluginVersion('otherorg-otherplugin-app'));
 
-    await waitFor(() => expect(result.current.appPluginVersionLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginVersionLoading).toEqual(false);
-    expect(result.current.appPluginVersionError).toBeUndefined();
-    expect(result.current.appPluginVersion).toEqual(null);
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.value).toEqual(null);
   });
 
   it('should return correct values if getAppPluginVersion throws', async () => {
@@ -205,10 +205,10 @@ describe('useAppPluginVersion', () => {
 
     const { result } = renderHook(() => useAppPluginVersion('otherorg-otherplugin-app'));
 
-    await waitFor(() => expect(result.current.appPluginVersionLoading).toEqual(false));
+    await waitFor(() => expect(result.current.loading).toEqual(false));
 
-    expect(result.current.appPluginVersionLoading).toEqual(false);
-    expect(result.current.appPluginVersionError).toEqual(new Error('Some error'));
-    expect(result.current.appPluginVersion).toBeUndefined();
+    expect(result.current.loading).toEqual(false);
+    expect(result.current.error).toEqual(new Error('Some error'));
+    expect(result.current.value).toBeUndefined();
   });
 });
