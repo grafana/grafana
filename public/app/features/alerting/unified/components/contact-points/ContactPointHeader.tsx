@@ -17,14 +17,13 @@ import {
 } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
-import { KnownProvenance } from '../../types/knownProvenance';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { UnusedContactPointBadge } from './components/UnusedBadge';
-import { ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
+import { ContactPointWithMetadata, isProvisionedContactPoint, showManageContactPointPermissions } from './utils';
 
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
@@ -39,7 +38,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 
   const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
 
-  const isProvisioned = provenance !== undefined && provenance !== null && provenance !== KnownProvenance.None;
+  const isProvisioned = isProvisionedContactPoint(provenance);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
