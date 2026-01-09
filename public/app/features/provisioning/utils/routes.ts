@@ -3,7 +3,7 @@ import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { checkRequiredFeatures } from '../GettingStarted/features';
-import { PROVISIONING_URL, CONNECTIONS_URL, CONNECT_URL, GETTING_STARTED_URL } from '../constants';
+import { CONNECTIONS_URL, CONNECT_URL, GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
   if (!checkRequiredFeatures()) {
@@ -46,14 +46,14 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       path: `${CONNECTIONS_URL}/:name/edit`,
       component: SafeDynamicImport(
         () =>
-          import(/* webpackChunkName: "EditRepositoryPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
+          import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
       ),
     },
     {
       path: `${CONNECTIONS_URL}/new`,
       component: SafeDynamicImport(
         () =>
-          import(/* webpackChunkName: "EditRepositoryPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
+          import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
       ),
     },
     {

@@ -24,9 +24,7 @@ const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title:
   if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
     if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
       const statusError: Status = e.error.data;
-      dispatch(
-        notifyApp(createErrorNotification(title, new Error(statusError.message || 'Unknown error')))
-      );
+      dispatch(notifyApp(createErrorNotification(title, new Error(statusError.message || 'Unknown error'))));
       return;
     }
 

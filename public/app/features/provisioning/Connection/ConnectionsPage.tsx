@@ -9,10 +9,8 @@ import { getErrorMessage } from '../utils/httpUtils';
 import { ConnectionList } from './ConnectionList';
 
 export default function ConnectionsPage() {
-  const [items, isLoading] = useConnectionList();
-
-  const hasError = !isLoading && !items;
-  const hasNoConnections = !isLoading && items?.length === 0;
+  const [items, isLoading, error] = useConnectionList();
+  const hasNoConnections = !isLoading && !error && items?.length === 0;
 
   return (
     <Page
@@ -29,9 +27,9 @@ export default function ConnectionsPage() {
     >
       <Page.Contents isLoading={isLoading}>
         <Stack direction={'column'} gap={3}>
-          {hasError && (
+          {!!error && (
             <Alert severity="error" title={t('provisioning.connections.error-loading', 'Failed to load connections')}>
-              {getErrorMessage(hasError)}
+              {getErrorMessage(error)}
             </Alert>
           )}
 
@@ -49,7 +47,7 @@ export default function ConnectionsPage() {
             </EmptyState>
           )}
 
-          {items && items.length > 0 && <ConnectionList items={items} />}
+          {!!items?.length && <ConnectionList items={items} />}
         </Stack>
       </Page.Contents>
     </Page>

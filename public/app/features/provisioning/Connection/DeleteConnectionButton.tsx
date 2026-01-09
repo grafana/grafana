@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function DeleteConnectionButton({ name, connection }: Props) {
+  const navigate = useNavigate();
   const [deleteConnection, deleteRequest] = useDeleteConnectionMutation();
   const [showModal, setShowModal] = useState(false);
 
@@ -22,7 +24,9 @@ export function DeleteConnectionButton({ name, connection }: Props) {
 
     await deleteConnection({ name });
     setShowModal(false);
-  }, [deleteConnection, name, connection]);
+
+    navigate(CONNECTIONS_URL);
+  }, [deleteConnection, name, connection, navigate]);
 
   return (
     <>
