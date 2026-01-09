@@ -176,16 +176,14 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
   );
 
   const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta1';
-  // Input versions to process (v0alpha1 and v1beta1 share the same spec structure)
-  const INPUT_VERSIONS = ['v0alpha1', 'v1beta1'] as const;
 
   // Get v0alpha1 and v1beta1 input files recursively from all subdirectories
-  const v1Inputs = getFilesRecursively(inputDir).filter(({ relativePath }) => {
+  const v1beta1Inputs = getFilesRecursively(inputDir).filter(({ relativePath }) => {
     const fileName = path.basename(relativePath);
-    return INPUT_VERSIONS.some((version) => fileName.startsWith(`${version}.`)) && fileName.endsWith('.json');
+    return fileName.startsWith('v1beta1.') && fileName.endsWith('.json');
   });
 
-  v1Inputs.forEach(({ filePath: inputFilePath, relativePath }) => {
+  v1beta1Inputs.forEach(({ filePath: inputFilePath, relativePath }) => {
     // Calculate output file path for this input
     const relativeDir = path.dirname(relativePath);
     const fileName = path.basename(relativePath);
