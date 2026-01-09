@@ -773,12 +773,21 @@ func getOtherBackendName(backend string) string {
 func runMixedConcurrentOperations(t *testing.T, sqlServer, kvServer resource.ResourceServer, namespace string, ctx context.Context) {
 	var wg sync.WaitGroup
 	errors := make(chan error, 20)
+	startBarrier := make(chan struct{})
+
+	// Use higher operation counts to ensure concurrency
+	opCounts := BackendOperationCounts{
+		Creates: 25,
+		Updates: 15,
+		Deletes: 10,
+	}
 
 	// SQL backend operations
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := runBackendOperations(ctx, sqlServer, namespace+"-sql", "sql"); err != nil {
+		<-startBarrier // Wait for signal to start
+		if err := runBackendOperationsWithCounts(ctx, sqlServer, namespace+"-sql", "sql", opCounts); err != nil {
 			errors <- fmt.Errorf("SQL backend operations failed: %w", err)
 		}
 	}()
@@ -787,10 +796,14 @@ func runMixedConcurrentOperations(t *testing.T, sqlServer, kvServer resource.Res
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := runBackendOperations(ctx, kvServer, namespace+"-kv", "kv"); err != nil {
+		<-startBarrier // Wait for signal to start
+		if err := runBackendOperationsWithCounts(ctx, kvServer, namespace+"-kv", "kv", opCounts); err != nil {
 			errors <- fmt.Errorf("KV backend operations failed: %w", err)
 		}
 	}()
+
+	// Start both goroutines simultaneously
+	close(startBarrier)
 
 	// Wait for operations to complete with timeout
 	done := make(chan bool)
@@ -815,20 +828,37 @@ func runMixedConcurrentOperations(t *testing.T, sqlServer, kvServer resource.Res
 	// Allow some time for data propagation
 	time.Sleep(50 * time.Millisecond)
 
-	// Verify consistency of resources created by SQL backend operations (2 remaining: create=3, update=2, delete=1)
-	// Note: Skip resource version checking since these are separate operations on different backends
-	verifyListConsistencyBetweenServersWithRVCheck(t, sqlServer, kvServer, namespace+"-sql", 2, false)
+	// Calculate expected remaining resources based on operation counts
+	expectedRemaining := opCounts.Creates - opCounts.Deletes // Creates - Deletes = Remaining
 
-	// Verify consistency of resources created by KV backend operations (2 remaining: create=3, update=2, delete=1)
+	// Verify consistency of resources created by SQL backend operations
 	// Note: Skip resource version checking since these are separate operations on different backends
-	verifyListConsistencyBetweenServersWithRVCheck(t, sqlServer, kvServer, namespace+"-kv", 2, false)
+	verifyListConsistencyBetweenServersWithRVCheck(t, sqlServer, kvServer, namespace+"-sql", expectedRemaining, false)
+
+	// Verify consistency of resources created by KV backend operations
+	// Note: Skip resource version checking since these are separate operations on different backends
+	verifyListConsistencyBetweenServersWithRVCheck(t, sqlServer, kvServer, namespace+"-kv", expectedRemaining, false)
 }
 
-// runBackendOperations performs create, update, delete operations on a backend
+// BackendOperationCounts defines how many operations of each type to perform
+type BackendOperationCounts struct {
+	Creates int
+	Updates int
+	Deletes int
+}
+
+// runBackendOperations performs create, update, delete operations on a backend (legacy function for backward compatibility)
 func runBackendOperations(ctx context.Context, server resource.ResourceServer, namespace, backendType string) error {
-	// Create 3 resources
-	resourceVersions := make([]int64, 3)
-	for i := 1; i <= 3; i++ {
+	// Use original small counts for backward compatibility
+	counts := BackendOperationCounts{Creates: 3, Updates: 2, Deletes: 1}
+	return runBackendOperationsWithCounts(ctx, server, namespace, backendType, counts)
+}
+
+// runBackendOperationsWithCounts performs configurable create, update, delete operations on a backend
+func runBackendOperationsWithCounts(ctx context.Context, server resource.ResourceServer, namespace, backendType string, counts BackendOperationCounts) error {
+	// Create resources
+	resourceVersions := make([]int64, counts.Creates)
+	for i := 1; i <= counts.Creates; i++ {
 		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "playlists",
@@ -863,8 +893,12 @@ func runBackendOperations(ctx context.Context, server resource.ResourceServer, n
 		resourceVersions[i-1] = created.ResourceVersion
 	}
 
-	// Update 2 resources
-	for i := 1; i <= 2; i++ {
+	// Update resources (only update as many as we have, limited by creates and updates count)
+	updateCount := counts.Updates
+	if updateCount > counts.Creates {
+		updateCount = counts.Creates // Can't update more resources than we created
+	}
+	for i := 1; i <= updateCount; i++ {
 		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "playlists",
@@ -900,23 +934,29 @@ func runBackendOperations(ctx context.Context, server resource.ResourceServer, n
 		resourceVersions[i-1] = updated.ResourceVersion
 	}
 
-	// Delete 1 resource
-	key := &resourcepb.ResourceKey{
-		Group:     "playlist.grafana.app",
-		Resource:  "playlists",
-		Namespace: namespace,
-		Name:      fmt.Sprintf("resource-%s-1", backendType),
+	// Delete resources (only delete as many as we have, limited by creates and deletes count)
+	deleteCount := counts.Deletes
+	if deleteCount > updateCount {
+		deleteCount = updateCount // Can only delete resources that were updated (have latest RV)
 	}
+	for i := 1; i <= deleteCount; i++ {
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: namespace,
+			Name:      fmt.Sprintf("resource-%s-%d", backendType, i),
+		}
 
-	deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
-		Key:             key,
-		ResourceVersion: resourceVersions[0],
-	})
-	if err != nil {
-		return fmt.Errorf("failed to delete resource: %w", err)
-	}
-	if deleted.Error != nil {
-		return fmt.Errorf("delete error: %s", deleted.Error.Message)
+		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+			Key:             key,
+			ResourceVersion: resourceVersions[i-1], // Use the resource version from updates
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete resource %d: %w", i, err)
+		}
+		if deleted.Error != nil {
+			return fmt.Errorf("delete error for resource %d: %s", i, deleted.Error.Message)
+		}
 	}
 
 	return nil
