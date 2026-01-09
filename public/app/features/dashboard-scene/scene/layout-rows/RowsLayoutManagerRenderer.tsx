@@ -38,13 +38,6 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
     [rows, orchestrator]
   );
 
-  const handleDragUpdate = useCallback((update: DragUpdate) => {
-    // Get current mouse position from the drag update
-    // Note: hello-pangea/dnd doesn't provide exact mouse position in update,
-    // so we use a pointer move listener approach instead via the orchestrator
-    // The orchestrator will handle tab detection through its own pointer tracking
-  }, []);
-
   const handleDragEnd = useCallback(
     (result: DropResult) => {
       // Stop tracking row drag in orchestrator
@@ -73,7 +66,6 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
     <DragDropContext
       onBeforeCapture={handleBeforeCapture}
       onBeforeDragStart={(start) => model.forceSelectRow(start.draggableId)}
-      onDragUpdate={handleDragUpdate}
       onDragEnd={handleDragEnd}
     >
       <Droppable droppableId={key!} direction="vertical">
