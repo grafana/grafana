@@ -174,6 +174,7 @@ describe('Selector', () => {
       await applyScopes();
 
       // Deselect all scopes
+      await hoverSelector();
       await clearSelector();
 
       // Recent scopes should still be available
@@ -196,6 +197,7 @@ describe('Selector', () => {
       await selectResultApplicationsMimir();
       await applyScopes();
 
+      await hoverSelector();
       await clearSelector();
 
       // Check recent scopes are updated
