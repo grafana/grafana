@@ -10676,18 +10676,6 @@
     "help/documentation": "문서",
     "help/keyboard-shortcuts": "키보드 단축키",
     "help/support": "지원",
-    "history-container": {
-      "drawer-tittle": "이력"
-    },
-    "history-wrapper": {
-      "collapse": "접기",
-      "expand": "펼치기",
-      "icon-selected": "선택된 항목",
-      "icon-unselected": "일반 항목",
-      "show-more": "더 보기",
-      "today": "오늘",
-      "yesterday": "어제"
-    },
     "home": {
       "title": "홈"
     },

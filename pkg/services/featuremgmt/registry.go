@@ -323,6 +323,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "reportingCsvEncodingOptions",
+			Description:  "Enables CSV encoding options in the reporting feature",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
@@ -1282,13 +1289,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "false",
-		},
-		{
-			Name:         "unifiedHistory",
-			Description:  "Displays the navigation history so the user can navigate back to previous pages",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendSearchNavOrganise,
-			FrontendOnly: true,
 		},
 		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,

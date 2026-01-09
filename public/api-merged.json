@@ -20504,6 +20504,9 @@
     "ReportOptions": {
       "type": "object",
       "properties": {
+        "csvEncoding": {
+          "type": "string"
+        },
         "layout": {
           "type": "string"
         },

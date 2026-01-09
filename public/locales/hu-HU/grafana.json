@@ -10720,18 +10720,6 @@
     "help/documentation": "Dokumentáció",
     "help/keyboard-shortcuts": "Gyorsbillentyűk",
     "help/support": "Ügyfélszolgálat",
-    "history-container": {
-      "drawer-tittle": "Előzmények"
-    },
-    "history-wrapper": {
-      "collapse": "Összecsukás",
-      "expand": "Kibontás",
-      "icon-selected": "Kijelölt bejegyzés",
-      "icon-unselected": "Normál bejegyzés",
-      "show-more": "Több megjelenítése",
-      "today": "Ma",
-      "yesterday": "Tegnap"
-    },
     "home": {
       "title": "Kezdőlap"
     },

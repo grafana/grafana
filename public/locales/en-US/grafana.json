@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Add panel",
+      "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to 2 levels",
       "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
@@ -10720,18 +10721,6 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
-    "history-container": {
-      "drawer-tittle": "History"
-    },
-    "history-wrapper": {
-      "collapse": "Collapse",
-      "expand": "Expand",
-      "icon-selected": "Selected Entry",
-      "icon-unselected": "Normal Entry",
-      "show-more": "Show more",
-      "today": "Today",
-      "yesterday": "Yesterday"
-    },
     "home": {
       "title": "Home"
     },
