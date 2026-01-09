@@ -1,7 +1,14 @@
-import { config } from '../../config';
+import { evaluateBooleanFlag } from '../../internal/openFeature';
 
 import { clearCache, initPluginMetas } from './plugins';
 import { v0alpha1Meta } from './test-fixtures/v0alpha1Response';
+
+jest.mock('../../internal/openFeature', () => ({
+  ...jest.requireActual('../../internal/openFeature'),
+  evaluateBooleanFlag: jest.fn(),
+}));
+
+const evaluateBooleanFlagMock = jest.mocked(evaluateBooleanFlag);
 
 describe('when useMTPlugins toggle is enabled and cache is not initialized', () => {
   const originalFetch = global.fetch;
@@ -9,7 +16,7 @@ describe('when useMTPlugins toggle is enabled and cache is not initialized', () 
   beforeEach(() => {
     jest.resetAllMocks();
     clearCache();
-    config.featureToggles.useMTPlugins = true;
+    evaluateBooleanFlagMock.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -50,7 +57,7 @@ describe('when useMTPlugins toggle is enabled and cache is initialized', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     clearCache();
-    config.featureToggles.useMTPlugins = true;
+    evaluateBooleanFlagMock.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -96,7 +103,7 @@ describe('when useMTPlugins toggle is disabled and cache is not initialized', ()
     jest.resetAllMocks();
     clearCache();
     global.fetch = jest.fn();
-    config.featureToggles.useMTPlugins = false;
+    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -118,7 +125,7 @@ describe('when useMTPlugins toggle is disabled and cache is initialized', () => 
     jest.resetAllMocks();
     clearCache();
     global.fetch = jest.fn();
-    config.featureToggles.useMTPlugins = false;
+    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   afterEach(() => {

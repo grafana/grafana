@@ -1,7 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { config } from '../../config';
-
 import {
   getAppPluginMeta,
   getAppPluginMetas,
@@ -30,7 +28,6 @@ describe('useAppPluginMeta', () => {
     setAppPluginMetas(apps);
     jest.resetAllMocks();
     getAppPluginMetaMock.mockImplementation(actualApps.getAppPluginMeta);
-    config.featureToggles.useMTPlugins = false;
   });
 
   it('should return correct default values', async () => {
@@ -81,7 +78,6 @@ describe('useAppPluginMetas', () => {
     setAppPluginMetas(apps);
     jest.resetAllMocks();
     getAppPluginMetasMock.mockImplementation(actualApps.getAppPluginMetas);
-    config.featureToggles.useMTPlugins = false;
   });
 
   it('should return correct default values', async () => {
@@ -122,7 +118,6 @@ describe('useAppPluginInstalled', () => {
     setAppPluginMetas(apps);
     jest.resetAllMocks();
     isAppPluginInstalledMock.mockImplementation(actualApps.isAppPluginInstalled);
-    config.featureToggles.useMTPlugins = false;
   });
 
   it('should return correct default values', async () => {
@@ -173,7 +168,6 @@ describe('useAppPluginVersion', () => {
     setAppPluginMetas(apps);
     jest.resetAllMocks();
     getAppPluginVersionMock.mockImplementation(actualApps.getAppPluginVersion);
-    config.featureToggles.useMTPlugins = false;
   });
 
   it('should return correct default values', async () => {

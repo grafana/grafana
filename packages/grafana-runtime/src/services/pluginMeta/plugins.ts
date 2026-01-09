@@ -1,4 +1,5 @@
 import { config } from '../../config';
+import { evaluateBooleanFlag } from '../../internal/openFeature';
 
 import type { PluginMetasResponse } from './types';
 
@@ -9,7 +10,7 @@ function getApiVersion(): string {
 }
 
 async function loadPluginMetas(): Promise<PluginMetasResponse> {
-  if (!config.featureToggles.useMTPlugins) {
+  if (!evaluateBooleanFlag('useMTPlugins', false)) {
     const result = { items: [] };
     return result;
   }

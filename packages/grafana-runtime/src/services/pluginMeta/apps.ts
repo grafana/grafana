@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import type { AppPluginConfig } from '@grafana/data';
 
 import { config } from '../../config';
+import { evaluateBooleanFlag } from '../../internal/openFeature';
 
 import { getAppPluginMapper } from './mappers/mappers';
 import { initPluginMetas } from './plugins';
@@ -15,7 +16,7 @@ function intialized(): boolean {
 }
 
 async function initAppPluginMetas(): Promise<void> {
-  if (!config.featureToggles.useMTPlugins) {
+  if (!evaluateBooleanFlag('useMTPlugins', false)) {
     // eslint-disable-next-line no-restricted-syntax
     apps = config.apps;
     return;

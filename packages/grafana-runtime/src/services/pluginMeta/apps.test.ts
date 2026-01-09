@@ -1,4 +1,4 @@
-import { config } from '../../config';
+import { evaluateBooleanFlag } from '../../internal/openFeature';
 
 import {
   getAppPluginMeta,
@@ -11,18 +11,23 @@ import { initPluginMetas } from './plugins';
 import { app } from './test-fixtures/config.apps';
 
 jest.mock('./plugins', () => ({ ...jest.requireActual('./plugins'), initPluginMetas: jest.fn() }));
-const initPluginMetasMock = jest.mocked(initPluginMetas);
+jest.mock('../../internal/openFeature', () => ({
+  ...jest.requireActual('../../internal/openFeature'),
+  evaluateBooleanFlag: jest.fn(),
+}));
 
-describe('when useMTPlugins toggle is enabled and apps is not initialized', () => {
+const initPluginMetasMock = jest.mocked(initPluginMetas);
+const evaluateBooleanFlagMock = jest.mocked(evaluateBooleanFlag);
+
+describe('when useMTPlugins flag is enabled and apps is not initialized', () => {
   beforeEach(() => {
     setAppPluginMetas({});
     jest.resetAllMocks();
-    config.featureToggles.useMTPlugins = true;
+    initPluginMetasMock.mockResolvedValue({ items: [] });
+    evaluateBooleanFlagMock.mockReturnValue(true);
   });
 
   it('getAppPluginMetas should call initPluginMetas and return correct result', async () => {
-    initPluginMetasMock.mockResolvedValue({ items: [] });
-
     const apps = await getAppPluginMetas();
 
     expect(apps).toEqual([]);
@@ -30,8 +35,6 @@ describe('when useMTPlugins toggle is enabled and apps is not initialized', () =
   });
 
   it('getAppPluginMeta should call initPluginMetas and return correct result', async () => {
-    initPluginMetasMock.mockResolvedValue({ items: [] });
-
     const result = await getAppPluginMeta('myorg-someplugin-app');
 
     expect(result).toEqual(null);
@@ -39,8 +42,6 @@ describe('when useMTPlugins toggle is enabled and apps is not initialized', () =
   });
 
   it('isAppPluginInstalled should call initPluginMetas and return false', async () => {
-    initPluginMetasMock.mockResolvedValue({ items: [] });
-
     const installed = await isAppPluginInstalled('myorg-someplugin-app');
 
     expect(installed).toEqual(false);
@@ -48,8 +49,6 @@ describe('when useMTPlugins toggle is enabled and apps is not initialized', () =
   });
 
   it('getAppPluginVersion should call initPluginMetas and return null', async () => {
-    initPluginMetasMock.mockResolvedValue({ items: [] });
-
     const result = await getAppPluginVersion('myorg-someplugin-app');
 
     expect(result).toEqual(null);
@@ -57,11 +56,11 @@ describe('when useMTPlugins toggle is enabled and apps is not initialized', () =
   });
 });
 
-describe('when useMTPlugins toggle is enabled and apps is initialized', () => {
+describe('when useMTPlugins flag is enabled and apps is initialized', () => {
   beforeEach(() => {
     setAppPluginMetas({ 'myorg-someplugin-app': app });
     jest.resetAllMocks();
-    config.featureToggles.useMTPlugins = true;
+    evaluateBooleanFlagMock.mockReturnValue(true);
   });
 
   it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -111,11 +110,11 @@ describe('when useMTPlugins toggle is enabled and apps is initialized', () => {
   });
 });
 
-describe('when useMTPlugins toggle is disabled and apps is not initialized', () => {
+describe('when useMTPlugins flag is disabled and apps is not initialized', () => {
   beforeEach(() => {
     setAppPluginMetas({});
     jest.resetAllMocks();
-    config.featureToggles.useMTPlugins = false;
+    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -147,11 +146,11 @@ describe('when useMTPlugins toggle is disabled and apps is not initialized', () 
   });
 });
 
-describe('when useMTPlugins toggle is disabled and apps is initialized', () => {
+describe('when useMTPlugins flag is disabled and apps is initialized', () => {
   beforeEach(() => {
     setAppPluginMetas({ 'myorg-someplugin-app': app });
     jest.resetAllMocks();
-    config.featureToggles.useMTPlugins = false;
+    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   it('getAppPluginMetas should not call initPluginMetas and return correct result', async () => {
@@ -205,7 +204,7 @@ describe('immutability', () => {
   beforeEach(() => {
     setAppPluginMetas({ 'myorg-someplugin-app': app });
     jest.resetAllMocks();
-    config.featureToggles.useMTPlugins = false;
+    evaluateBooleanFlagMock.mockReturnValue(false);
   });
 
   it('getAppPluginMetas should return a deep clone', async () => {
