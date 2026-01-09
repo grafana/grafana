@@ -731,3 +731,204 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 		assert.Contains(t, names, "repo-with-different-connection")
 	})
 }
+
+func TestIntegrationProvisioning_ConnectionDeletionBlocking(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	t.Cleanup(cancel)
+
+	createOptions := metav1.CreateOptions{}
+
+	// Create a connection for testing deletion blocking
+	connName := "test-conn-delete-blocking"
+	_, err := helper.Connections.Resource.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      connName,
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "454545",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		},
+	}, createOptions)
+	require.NoError(t, err, "failed to create test connection")
+
+	t.Run("delete connection without connected repositories succeeds", func(t *testing.T) {
+		// Create a connection that has no repositories
+		emptyConnName := "test-conn-no-repos"
+		_, err := helper.Connections.Resource.Create(ctx, &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Connection",
+				"metadata": map[string]any{
+					"name":      emptyConnName,
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"type": "github",
+					"github": map[string]any{
+						"appID":          "123457",
+						"installationID": "454546",
+					},
+				},
+				"secure": map[string]any{
+					"privateKey": map[string]any{
+						"create": "someSecret",
+					},
+				},
+			},
+		}, createOptions)
+		require.NoError(t, err, "failed to create test connection without repos")
+
+		// Delete should succeed since no repositories reference it
+		err = helper.Connections.Resource.Delete(ctx, emptyConnName, metav1.DeleteOptions{})
+		require.NoError(t, err, "deleting connection without connected repositories should succeed")
+
+		// Verify the connection is deleted
+		_, err = helper.Connections.Resource.Get(ctx, emptyConnName, metav1.GetOptions{})
+		require.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
+	})
+
+	t.Run("delete connection with connected repository fails", func(t *testing.T) {
+		// Create a repository that uses the connection
+		repoName := "repo-using-connection"
+		_, err := helper.Repositories.Resource.Create(ctx, &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      repoName,
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Test Repository",
+					"type":  "local",
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"local": map[string]any{
+						"path": helper.ProvisioningPath,
+					},
+					"connection": map[string]any{
+						"name": connName,
+					},
+				},
+			},
+		}, createOptions)
+		require.NoError(t, err, "failed to create repository using connection")
+
+		// Attempt to delete the connection - should fail
+		err = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		require.Error(t, err, "deleting connection with connected repository should fail")
+		require.True(t, k8serrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
+		assert.Contains(t, err.Error(), repoName, "error should mention the connected repository name")
+		assert.Contains(t, err.Error(), "cannot delete connection while repositories are using it", "error should explain why deletion is blocked")
+
+		// Clean up: delete the repository first
+		err = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		require.NoError(t, err, "failed to delete test repository")
+
+		// Wait for the repository to be deleted
+		require.Eventually(t, func() bool {
+			_, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+			return k8serrors.IsNotFound(err)
+		}, 10*time.Second, 100*time.Millisecond, "repository should be deleted")
+	})
+
+	t.Run("delete connection after disconnecting repository succeeds", func(t *testing.T) {
+		// Now that the repository is deleted, the connection should be deletable
+		err = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		require.NoError(t, err, "deleting connection after removing connected repositories should succeed")
+
+		// Verify the connection is deleted
+		_, err = helper.Connections.Resource.Get(ctx, connName, metav1.GetOptions{})
+		require.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
+	})
+
+	t.Run("delete connection with multiple connected repositories lists all", func(t *testing.T) {
+		// Create a new connection
+		multiConnName := "test-conn-multi-repos"
+		_, err := helper.Connections.Resource.Create(ctx, &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Connection",
+				"metadata": map[string]any{
+					"name":      multiConnName,
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"type": "github",
+					"github": map[string]any{
+						"appID":          "123458",
+						"installationID": "454547",
+					},
+				},
+				"secure": map[string]any{
+					"privateKey": map[string]any{
+						"create": "someSecret",
+					},
+				},
+			},
+		}, createOptions)
+		require.NoError(t, err, "failed to create multi-repo test connection")
+
+		// Create multiple repositories using this connection
+		repoNames := []string{"multi-repo-1", "multi-repo-2"}
+		for _, repoName := range repoNames {
+			_, err := helper.Repositories.Resource.Create(ctx, &unstructured.Unstructured{
+				Object: map[string]any{
+					"apiVersion": "provisioning.grafana.app/v0alpha1",
+					"kind":       "Repository",
+					"metadata": map[string]any{
+						"name":      repoName,
+						"namespace": "default",
+					},
+					"spec": map[string]any{
+						"title": "Test Repository " + repoName,
+						"type":  "local",
+						"sync": map[string]any{
+							"enabled": false,
+							"target":  "folder",
+						},
+						"local": map[string]any{
+							"path": helper.ProvisioningPath,
+						},
+						"connection": map[string]any{
+							"name": multiConnName,
+						},
+					},
+				},
+			}, createOptions)
+			require.NoError(t, err, "failed to create repository %s", repoName)
+		}
+
+		// Attempt to delete - should fail and list all repos
+		err = helper.Connections.Resource.Delete(ctx, multiConnName, metav1.DeleteOptions{})
+		require.Error(t, err, "deleting connection with multiple repos should fail")
+		require.True(t, k8serrors.IsForbidden(err), "error should be Forbidden")
+		for _, repoName := range repoNames {
+			assert.Contains(t, err.Error(), repoName, "error should mention repository %s", repoName)
+		}
+
+		// Clean up
+		for _, repoName := range repoNames {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		}
+		_ = helper.Connections.Resource.Delete(ctx, multiConnName, metav1.DeleteOptions{})
+	})
+}

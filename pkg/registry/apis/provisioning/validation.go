@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -29,6 +30,39 @@ func GetRepositoriesInNamespace(ctx context.Context, store RepositoryLister) ([]
 		obj, err := store.List(ctx, &internalversion.ListOptions{
 			Limit:    100,
 			Continue: continueToken,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		repositoryList, ok := obj.(*provisioning.RepositoryList)
+		if !ok {
+			return nil, fmt.Errorf("expected repository list")
+		}
+
+		allRepositories = append(allRepositories, repositoryList.Items...)
+
+		continueToken = repositoryList.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+
+	return allRepositories, nil
+}
+
+// GetRepositoriesByConnection retrieves all repositories that reference a specific connection
+func GetRepositoriesByConnection(ctx context.Context, store RepositoryLister, connectionName string) ([]provisioning.Repository, error) {
+	var allRepositories []provisioning.Repository
+	continueToken := ""
+
+	fieldSelector := fields.OneTermEqualSelector("spec.connection.name", connectionName)
+
+	for {
+		obj, err := store.List(ctx, &internalversion.ListOptions{
+			Limit:         100,
+			Continue:      continueToken,
+			FieldSelector: fieldSelector,
 		})
 		if err != nil {
 			return nil, err

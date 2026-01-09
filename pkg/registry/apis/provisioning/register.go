@@ -720,7 +720,13 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 // TODO: move logic to a more appropriate place. Probably controller/validation.go
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect || a.GetOperation() == admission.Delete {
+
+	// Handle Connection deletion - check for connected repositories
+	if a.GetOperation() == admission.Delete {
+		return b.validateDelete(ctx, a)
+	}
+
+	if obj == nil || a.GetOperation() == admission.Connect {
 		return nil // This is normal for sub-resource
 	}
 
@@ -798,6 +804,42 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 	return apierrors.NewInvalid(
 		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
 		name, list)
+}
+
+// validateDelete handles validation for delete operations
+func (b *APIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
+	// Only validate Connection deletions
+	if a.GetResource().Resource != "connections" {
+		return nil
+	}
+
+	connectionName := a.GetName()
+	namespace := a.GetNamespace()
+
+	// Set namespace in context for the repository store query
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("failed to set provisioning identity: %w", err))
+	}
+
+	repos, err := GetRepositoriesByConnection(ctx, b.store, connectionName)
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("failed to check for connected repositories: %w", err))
+	}
+
+	if len(repos) > 0 {
+		repoNames := make([]string, 0, len(repos))
+		for _, repo := range repos {
+			repoNames = append(repoNames, repo.Name)
+		}
+		return apierrors.NewForbidden(
+			provisioning.ConnectionResourceInfo.GroupResource(),
+			connectionName,
+			fmt.Errorf("cannot delete connection while repositories are using it: %s", strings.Join(repoNames, ", ")),
+		)
+	}
+
+	return nil
 }
 
 func (b *APIBuilder) VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error {
