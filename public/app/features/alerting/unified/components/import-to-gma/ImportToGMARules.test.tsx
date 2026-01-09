@@ -1,3 +1,4 @@
+import { act, fireEvent } from '@testing-library/react';
 import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
@@ -156,7 +157,10 @@ groups:
       await user.click(await ui.dsImport.mimirDsOption.find());
 
       // Click the import button
-      await user.click(ui.importButton.get());
+      // TODO investigate why we need act/fireEvent
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
+      await act(() => fireEvent.click(ui.importButton.get()));
 
       // Verify confirmation dialog appears
       expect(await ui.confirmationModal.find()).toBeInTheDocument();

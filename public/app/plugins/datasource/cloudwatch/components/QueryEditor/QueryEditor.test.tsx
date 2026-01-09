@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
@@ -347,7 +347,9 @@ describe('QueryEditor should render right editor', () => {
     it('should have an account selector when the feature is enabled', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
       props.datasource.resources.getAccounts = jest.fn().mockResolvedValue(['account123']);
-      render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
+      // TODO investigate why we need act
+      // see https://github.com/testing-library/react-testing-library/issues/1375
+      await act(async () => render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />));
       await screen.findByText('Metric Insights');
       expect(await screen.findByText('Account')).toBeInTheDocument();
     });

@@ -20,7 +20,7 @@ export interface TableCellTooltipProps {
   field: Field;
   getActions: (field: Field, rowIdx: number) => ActionModel[];
   getTextColorForBackground: (bgColor: string) => string;
-  gridRef: RefObject<DataGridHandle>;
+  gridRef: RefObject<DataGridHandle | null>;
   height: number;
   placement?: TableCellTooltipPlacement;
   renderer: TableCellRenderer;

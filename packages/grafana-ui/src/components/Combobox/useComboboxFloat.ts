@@ -1,5 +1,5 @@
 import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
-import { useMemo, useRef, useState } from 'react';
+import { CSSProperties, type RefObject, useMemo, useRef, useState } from 'react';
 
 import { BOUNDARY_ELEMENT_ID } from '../../utils/floating';
 import { measureText } from '../../utils/measureText';
@@ -21,7 +21,21 @@ const POPOVER_PADDING = 16;
 
 const SCROLL_CONTAINER_PADDING = 8;
 
-export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
+interface UseComboboxFloatReturn {
+  inputRef: RefObject<HTMLInputElement | null>;
+  floatingRef: RefObject<HTMLDivElement | null>;
+  scrollRef: RefObject<HTMLDivElement | null>;
+  floatStyles: CSSProperties & {
+    width: number;
+    maxWidth: number;
+    maxHeight: number;
+  };
+}
+
+export const useComboboxFloat = (
+  items: Array<ComboboxOption<string | number>>,
+  isOpen: boolean
+): UseComboboxFloatReturn => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);

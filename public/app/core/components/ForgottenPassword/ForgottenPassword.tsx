@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -34,7 +35,10 @@ export const ForgottenPassword = () => {
   const sendEmail = async (formModel: EmailDTO) => {
     const res = await getBackendSrv().post('/api/user/password/send-reset-email', formModel);
     if (res) {
-      setEmailSent(true);
+      // TODO why?
+      flushSync(() => {
+        setEmailSent(true);
+      });
     }
   };
 
