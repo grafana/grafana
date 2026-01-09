@@ -387,7 +387,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Namespace: "grafana",
 			Name:      "ds_config_handler_requests_duration_seconds",
 			Help:      "Duration of requests handled by datasource configuration handlers",
-		}, []string{"code_path", "handler"}),
+		}, []string{"handler"}),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)

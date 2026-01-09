@@ -3743,7 +3743,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4397,6 +4396,7 @@
       },
       "no-properties-changed": "변경된 관련 속성 없음",
       "table": {
+        "notes": "",
         "updated": "날짜",
         "updatedBy": "업데이트한 사용자",
         "version": "버전"
@@ -4855,7 +4855,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "쉼표로 구분된 값"
         },
         "datasource-options": {
           "name-filter": "이름 필터",
@@ -5779,6 +5780,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5946,6 +5948,9 @@
     },
     "custom-variable-form": {
       "custom-options": "사용자 지정 옵션",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "쉼표로 구분된 값",
       "selection-options": "선택 옵션"
     },
@@ -6531,6 +6536,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "대시보드가 저장되었습니다"
     },
@@ -6554,6 +6564,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6613,8 +6624,8 @@
       "tooltip-show-usages": "사용처 표시"
     },
     "variable-values-preview": {
-      "preview-of-values": "값 미리 보기",
-      "show-more": "더 보기"
+      "show-more": "더 보기",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10665,18 +10676,6 @@
     "help/documentation": "문서",
     "help/keyboard-shortcuts": "키보드 단축키",
     "help/support": "지원",
-    "history-container": {
-      "drawer-tittle": "이력"
-    },
-    "history-wrapper": {
-      "collapse": "접기",
-      "expand": "펼치기",
-      "icon-selected": "선택된 항목",
-      "icon-unselected": "일반 항목",
-      "show-more": "더 보기",
-      "today": "오늘",
-      "yesterday": "어제"
-    },
     "home": {
       "title": "홈"
     },

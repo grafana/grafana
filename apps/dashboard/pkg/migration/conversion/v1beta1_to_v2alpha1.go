@@ -1336,6 +1336,17 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 		customVar.Spec.AllValue = &allValue
 	}
 
+	if valuesFormat := schemaversion.GetStringValue(varMap, "valuesFormat"); valuesFormat != "" {
+		switch valuesFormat {
+		case string(dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson):
+			format := dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson
+			customVar.Spec.ValuesFormat = &format
+		case string(dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv):
+			format := dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv
+			customVar.Spec.ValuesFormat = &format
+		}
+	}
+
 	return dashv2alpha1.DashboardVariableKind{
 		CustomVariableKind: customVar,
 	}, nil
@@ -2048,6 +2059,12 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 					Uid:  &dsUID,
 				}
 			}
+		} else if dsStr, ok := ds.(string); ok && isTemplateVariable(dsStr) {
+			// Handle legacy panel datasource as string (template variable reference e.g., "$datasource")
+			// Only process template variables - other string values are not supported in V2 format
+			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
+				Uid: &dsStr,
+			}
 		}
 	}
 
@@ -2134,6 +2151,10 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 			// Resolve Grafana datasource UID when type is "datasource" and UID is empty
 			queryDatasourceUID = resolveGrafanaDatasourceUID(queryDatasourceType, queryDatasourceUID)
 		}
+	} else if dsStr, ok := targetMap["datasource"].(string); ok && isTemplateVariable(dsStr) {
+		// Handle legacy target datasource as string (template variable reference e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		queryDatasourceUID = dsStr
 	}
 
 	// Use panel datasource if target datasource is missing or empty

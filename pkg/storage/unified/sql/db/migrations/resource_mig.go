@@ -217,5 +217,8 @@ func initResourceTables(mg *migrator.Migrator) string {
 
 	migrator.ConvertUniqueKeyToPrimaryKey(mg, oldResourceVersionUniqueKey, updatedResourceVersionTable)
 
+	mg.AddMigration("Change key_path collation of resource_history in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_history ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+	mg.AddMigration("Change key_path collation of resource_events in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_events ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
 	return marker
 }
