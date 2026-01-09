@@ -7,13 +7,14 @@ import { useMeasure } from 'react-use';
 import { DataFrame, GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
+import FlameGraphCallTreeContainer from './CallTree/FlameGraphCallTreeContainer';
 import FlameGraph from './FlameGraph/FlameGraph';
 import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { CollapsedMap, FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, SelectedView, TextAlign, ViewMode } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
@@ -110,6 +111,10 @@ const FlameGraphContainer = ({
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
+  const [leftPaneView, setLeftPaneView] = useState<PaneView>(PaneView.TopTable);
+  const [rightPaneView, setRightPaneView] = useState<PaneView>(PaneView.FlameGraph);
+  const [singleView, setSingleView] = useState<PaneView>(PaneView.FlameGraph);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   // This is a label of the item because in sandwich view we group all items by label and present a merged graph
@@ -217,6 +222,10 @@ const FlameGraphContainer = ({
       onItemFocused={(data) => setFocusedItemData(data)}
       focusedItemData={focusedItemData}
       textAlign={textAlign}
+      onTextAlignChange={(align) => {
+        setTextAlign(align);
+        onTextAlignSelected?.(align);
+      }}
       sandwichItem={sandwichItem}
       onSandwich={(label: string) => {
         resetFocus();
@@ -225,6 +234,8 @@ const FlameGraphContainer = ({
       onFocusPillClick={resetFocus}
       onSandwichPillClick={resetSandwich}
       colorScheme={colorScheme}
+      onColorSchemeChange={setColorScheme}
+      isDiffMode={dataContainer.isDiffFlamegraph()}
       showFlameGraphOnly={showFlameGraphOnly}
       collapsing={!disableCollapsing}
       getExtraContextMenuButtons={getExtraContextMenuButtons}
@@ -255,26 +266,69 @@ const FlameGraphContainer = ({
     />
   );
 
+  // Use compact mode for CallTree when in split view
+  const isCallTreeInSplitView =
+    selectedView === SelectedView.Both &&
+    viewMode === ViewMode.Split &&
+    (leftPaneView === PaneView.CallTree || rightPaneView === PaneView.CallTree);
+
+  const callTree = (
+    <FlameGraphCallTreeContainer
+      data={dataContainer}
+      onSymbolClick={onSymbolClick}
+      sandwichItem={sandwichItem}
+      onSandwich={setSandwichItem}
+      onTableSort={onTableSort}
+      colorScheme={colorScheme}
+      search={search}
+      compact={isCallTreeInSplitView}
+    />
+  );
+
+  // Helper function to render a pane based on its view type
+  const renderPane = (paneView: PaneView) => {
+    switch (paneView) {
+      case PaneView.TopTable:
+        // TopTable uses AutoSizer which needs a parent with defined height
+        return <div className={styles.tableContainer}>{table}</div>;
+      case PaneView.FlameGraph:
+        return flameGraph;
+      case PaneView.CallTree:
+        // CallTree also uses AutoSizer which needs a parent with defined height
+        return <div className={styles.tableContainer}>{callTree}</div>;
+      default:
+        return flameGraph;
+    }
+  };
+
   let body;
   if (showFlameGraphOnly || selectedView === SelectedView.FlameGraph) {
     body = flameGraph;
   } else if (selectedView === SelectedView.TopTable) {
     body = <div className={styles.tableContainer}>{table}</div>;
+  } else if (selectedView === SelectedView.CallTree) {
+    body = <div className={styles.tableContainer}>{callTree}</div>;
   } else if (selectedView === SelectedView.Both) {
-    if (vertical) {
-      body = (
-        <div>
-          <div className={styles.verticalGraphContainer}>{flameGraph}</div>
-          <div className={styles.verticalTableContainer}>{table}</div>
-        </div>
-      );
+    // New view model: support split view with independent pane selections
+    if (viewMode === ViewMode.Split) {
+      if (vertical) {
+        body = (
+          <div>
+            <div className={styles.verticalPaneContainer}>{renderPane(leftPaneView)}</div>
+            <div className={styles.verticalPaneContainer}>{renderPane(rightPaneView)}</div>
+          </div>
+        );
+      } else {
+        body = (
+          <div className={styles.horizontalContainer}>
+            <div className={styles.horizontalPaneContainer}>{renderPane(leftPaneView)}</div>
+            <div className={styles.horizontalPaneContainer}>{renderPane(rightPaneView)}</div>
+          </div>
+        );
+      }
     } else {
-      body = (
-        <div className={styles.horizontalContainer}>
-          <div className={styles.horizontalTableContainer}>{table}</div>
-          <div className={styles.horizontalGraphContainer}>{flameGraph}</div>
-        </div>
-      );
+      // Single view mode
+      body = <div className={styles.singlePaneContainer}>{renderPane(singleView)}</div>;
     }
   }
 
@@ -292,25 +346,23 @@ const FlameGraphContainer = ({
               setSelectedView(view);
               onViewSelected?.(view);
             }}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            leftPaneView={leftPaneView}
+            setLeftPaneView={setLeftPaneView}
+            rightPaneView={rightPaneView}
+            setRightPaneView={setRightPaneView}
+            singleView={singleView}
+            setSingleView={setSingleView}
             containerWidth={containerWidth}
             onReset={() => {
               resetFocus();
               resetSandwich();
             }}
-            textAlign={textAlign}
-            onTextAlignChange={(align) => {
-              setTextAlign(align);
-              onTextAlignSelected?.(align);
-            }}
             showResetButton={Boolean(focusedItemData || sandwichItem)}
-            colorScheme={colorScheme}
-            onColorSchemeChange={setColorScheme}
             stickyHeader={Boolean(stickyHeader)}
             extraHeaderElements={extraHeaderElements}
             vertical={vertical}
-            isDiffMode={dataContainer.isDiffFlamegraph()}
-            setCollapsedMap={setCollapsedMap}
-            collapsedMap={collapsedMap}
             assistantContext={data && showAnalyzeWithAssistant ? getAssistantContextFromDataFrame(data) : undefined}
           />
         )}
@@ -435,20 +487,20 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
     }),
 
-    horizontalGraphContainer: css({
-      flexBasis: '50%',
-    }),
-
-    horizontalTableContainer: css({
+    horizontalPaneContainer: css({
+      label: 'horizontalPaneContainer',
       flexBasis: '50%',
       maxHeight: 800,
     }),
 
-    verticalGraphContainer: css({
+    verticalPaneContainer: css({
+      label: 'verticalPaneContainer',
       marginBottom: theme.spacing(1),
+      height: 800,
     }),
 
-    verticalTableContainer: css({
+    singlePaneContainer: css({
+      label: 'singlePaneContainer',
       height: 800,
     }),
   };

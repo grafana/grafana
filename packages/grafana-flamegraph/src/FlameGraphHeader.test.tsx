@@ -3,9 +3,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
-import { CollapsedMap } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
-import { ColorScheme, SelectedView } from './types';
+import { PaneView, SelectedView, ViewMode } from './types';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
@@ -20,8 +19,11 @@ describe('FlameGraphHeader', () => {
   function setup(props: Partial<React.ComponentProps<typeof FlameGraphHeader>> = {}) {
     const setSearch = jest.fn();
     const setSelectedView = jest.fn();
+    const setViewMode = jest.fn();
+    const setLeftPaneView = jest.fn();
+    const setRightPaneView = jest.fn();
+    const setSingleView = jest.fn();
     const onReset = jest.fn();
-    const onSchemeChange = jest.fn();
 
     const renderResult = render(
       <FlameGraphHeader
@@ -29,17 +31,18 @@ describe('FlameGraphHeader', () => {
         setSearch={setSearch}
         selectedView={SelectedView.Both}
         setSelectedView={setSelectedView}
+        viewMode={ViewMode.Split}
+        setViewMode={setViewMode}
+        leftPaneView={PaneView.TopTable}
+        setLeftPaneView={setLeftPaneView}
+        rightPaneView={PaneView.FlameGraph}
+        setRightPaneView={setRightPaneView}
+        singleView={PaneView.FlameGraph}
+        setSingleView={setSingleView}
         containerWidth={1600}
         onReset={onReset}
-        onTextAlignChange={jest.fn()}
-        textAlign={'left'}
         showResetButton={true}
-        colorScheme={ColorScheme.ValueBased}
-        onColorSchemeChange={onSchemeChange}
         stickyHeader={false}
-        isDiffMode={false}
-        setCollapsedMap={() => {}}
-        collapsedMap={new CollapsedMap()}
         {...props}
       />
     );
@@ -50,7 +53,6 @@ describe('FlameGraphHeader', () => {
         setSearch,
         setSelectedView,
         onReset,
-        onSchemeChange,
       },
     };
   }
@@ -69,28 +71,5 @@ describe('FlameGraphHeader', () => {
     expect(resetButton).toBeInTheDocument();
     await userEvent.click(resetButton);
     expect(handlers.onReset).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls on color scheme change when clicked', async () => {
-    const { handlers } = setup();
-    const changeButton = screen.getByLabelText(/Change color scheme/);
-    expect(changeButton).toBeInTheDocument();
-    await userEvent.click(changeButton);
-
-    const byPackageButton = screen.getByText(/By package name/);
-    expect(byPackageButton).toBeInTheDocument();
-    await userEvent.click(byPackageButton);
-
-    expect(handlers.onSchemeChange).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows diff color scheme switch when diff', async () => {
-    setup({ isDiffMode: true });
-    const changeButton = screen.getByLabelText(/Change color scheme/);
-    expect(changeButton).toBeInTheDocument();
-    await userEvent.click(changeButton);
-
-    expect(screen.getByText(/Default/)).toBeInTheDocument();
-    expect(screen.getByText(/Color blind/)).toBeInTheDocument();
   });
 });

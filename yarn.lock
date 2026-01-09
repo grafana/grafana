@@ -3507,6 +3507,7 @@ __metadata:
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
+    "@types/react-table": "npm:^7.7.20"
     "@types/react-virtualized-auto-sizer": "npm:1.0.8"
     "@types/tinycolor2": "npm:1.4.6"
     babel-jest: "npm:29.7.0"
@@ -3517,6 +3518,7 @@ __metadata:
     jest-canvas-mock: "npm:2.5.2"
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
+    react-table: "npm:^7.8.0"
     react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.26"
     rollup: "npm:^4.22.4"
@@ -11241,7 +11243,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-table@npm:7.7.20":
+"@types/react-table@npm:7.7.20, @types/react-table@npm:^7.7.20":
   version: 7.7.20
   resolution: "@types/react-table@npm:7.7.20"
   dependencies:
@@ -29604,7 +29606,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-table@npm:7.8.0":
+"react-table@npm:7.8.0, react-table@npm:^7.8.0":
   version: 7.8.0
   resolution: "react-table@npm:7.8.0"
   peerDependencies:
