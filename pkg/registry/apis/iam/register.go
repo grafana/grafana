@@ -104,7 +104,7 @@ func RegisterAPIService(
 		store:                       store,
 		userLegacyStore:             user.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
 		saLegacyStore:               serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
-		legacyTeamStore:             team.NewLegacyStore(store, legacyAccessClient, enableAuthnMutation, tracing),
+		legacyTeamStore:             team.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
 		teamBindingLegacyStore:      teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracing),
 		ssoLegacyStore:              sso.NewLegacyStore(ssoService, tracing),
 		coreRolesStorage:            coreRolesStorage,
@@ -347,7 +347,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		storage[teamResource.StoragePath()] = dw
 	}
 
-	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
+	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store, b.accessClient)
 	if b.teamGroupsHandler != nil {
 		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
 	}

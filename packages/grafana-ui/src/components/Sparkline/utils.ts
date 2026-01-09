@@ -120,7 +120,7 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
-  pointSize: 2,
+  pointSize: 0,
 };
 
 export const prepareSeries = (
@@ -204,6 +204,7 @@ export const prepareConfig = (
     scaleKey: 'x',
     theme,
     placement: AxisPlacement.Hidden,
+    show: false,
   });
 
   for (let i = 0; i < dataFrame.fields.length; i++) {
@@ -230,6 +231,7 @@ export const prepareConfig = (
       scaleKey,
       theme,
       placement: AxisPlacement.Hidden,
+      show: false,
     });
 
     const colorMode = getFieldColorModeForField(field);

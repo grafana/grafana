@@ -186,7 +186,7 @@ For the JSON and field usage notes, refer to the [links schema documentation](ht
 
 ### `tags`
 
-The tags associated with the dashboard:
+Tags associated with the dashboard. Each tag can be up to 50 characters long.
 
 ` [...string]`
 
