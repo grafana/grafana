@@ -1,5 +1,6 @@
 {
   "name": "Gloom",
+  "id": "gloom",
   "colors": {
     "mode": "dark",
     "border": {

@@ -5,6 +5,9 @@
     "name": {
       "type": "string"
     },
+    "id": {
+      "type": "string"
+    },
     "colors": {
       "type": "object",
       "properties": {
@@ -600,5 +603,6 @@
       "additionalProperties": false
     }
   },
+  "required": ["name", "id"],
   "additionalProperties": false
 }

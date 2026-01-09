@@ -1,5 +1,6 @@
 {
   "name": "Aubergine",
+  "id": "aubergine",
   "colors": {
     "mode": "dark",
     "border": {

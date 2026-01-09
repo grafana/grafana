@@ -20,12 +20,14 @@ import { useDispatch, useSelector } from '../../types/store';
 const themeMap: Record<string, NewThemeOptions> = {
   dark: {
     name: 'Dark',
+    id: 'dark',
     colors: {
       mode: 'dark',
     },
   },
   light: {
     name: 'Light',
+    id: 'light',
     colors: {
       mode: 'light',
     },
@@ -33,12 +35,12 @@ const themeMap: Record<string, NewThemeOptions> = {
 };
 
 // Add additional themes
-for (const [id, json] of Object.entries(experimentalThemeDefinitions)) {
+for (const [name, json] of Object.entries(experimentalThemeDefinitions)) {
   const result = NewThemeOptionsSchema.safeParse(json);
   if (!result.success) {
-    console.error(`Invalid theme definition for theme id ${id}: ${result.error.message}`);
+    console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);
   } else {
-    themeMap[id] = result.data;
+    themeMap[result.data.id] = result.data;
   }
 }
 

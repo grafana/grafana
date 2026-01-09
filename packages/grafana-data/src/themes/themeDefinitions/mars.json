@@ -1,5 +1,6 @@
 {
   "name": "Mars",
+  "id": "mars",
   "colors": {
     "mode": "dark",
     "border": {

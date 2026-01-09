@@ -1,5 +1,6 @@
 {
   "name": "Synthwave",
+  "id": "synthwave",
   "colors": {
     "mode": "dark",
     "border": {

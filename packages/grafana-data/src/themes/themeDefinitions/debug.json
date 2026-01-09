@@ -1,5 +1,6 @@
 {
   "name": "Debug",
+  "id": "debug",
   "colors": {
     "mode": "dark",
     "background": {

@@ -16,6 +16,7 @@ type Colors struct {
 
 type ThemeDefinition struct {
 	Colors Colors `json:"colors"`
+	Id     string `json:"id"`
 }
 
 func main() {
@@ -60,12 +61,12 @@ var themes = []ThemeDTO{
 			return nil // Continue processing other files
 		}
 
+		themeId := themeDef.Id
 		themeType := "dark" // default fallback
 		if themeDef.Colors.Mode != "" {
 			themeType = themeDef.Colors.Mode
 		}
 
-		themeId := strings.TrimSuffix(d.Name(), ".json")
 		output += fmt.Sprintf("\t{ID: %q, Type: %q, IsExtra: true},\n", themeId, themeType)
 
 		return nil
