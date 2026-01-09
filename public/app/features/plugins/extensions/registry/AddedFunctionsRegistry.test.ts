@@ -29,7 +29,6 @@ jest.mock('../logs/log', () => {
 });
 
 describe('addedFunctionsRegistry', () => {
-  // eslint-disable-next-line no-restricted-syntax
   const originalApps = config.apps;
   const pluginId = 'grafana-basic-app';
   const appPluginConfig = {
@@ -61,14 +60,12 @@ describe('addedFunctionsRegistry', () => {
   beforeEach(() => {
     resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-    // eslint-disable-next-line no-restricted-syntax
     config.apps = {
       [pluginId]: appPluginConfig,
     };
   });
 
   afterEach(() => {
-    // eslint-disable-next-line no-restricted-syntax
     config.apps = originalApps;
   });
 
@@ -645,7 +642,6 @@ describe('addedFunctionsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    // eslint-disable-next-line no-restricted-syntax
     config.apps[pluginId].extensions.addedFunctions = [];
 
     registry.register({
@@ -695,7 +691,6 @@ describe('addedFunctionsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    // eslint-disable-next-line no-restricted-syntax
     config.apps[pluginId].extensions.addedFunctions = [];
 
     registry.register({
@@ -722,7 +717,6 @@ describe('addedFunctionsRegistry', () => {
     };
 
     // Make sure that the meta-info is empty
-    // eslint-disable-next-line no-restricted-syntax
     config.apps[pluginId].extensions.addedFunctions = [fnConfig];
 
     registry.register({

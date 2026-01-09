@@ -28,7 +28,6 @@ export function AdvisorRedirectNotice() {
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const [showNotice, setShowNotice] = useState(false);
 
-  // eslint-disable-next-line no-restricted-syntax
   const canUseAdvisor = hasAdminRights && config.featureToggles.grafanaAdvisor && !!config.apps['grafana-advisor-app'];
 
   useEffect(() => {

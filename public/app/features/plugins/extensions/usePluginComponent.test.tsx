@@ -51,7 +51,6 @@ describe('usePluginComponent()', () => {
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
-  // eslint-disable-next-line no-restricted-syntax
   const originalApps = config.apps;
   const pluginId = 'myorg-extensions-app';
   const exposedComponentId = `${pluginId}/exposed-component/v1`;
@@ -136,7 +135,6 @@ describe('usePluginComponent()', () => {
       },
     };
 
-    // eslint-disable-next-line no-restricted-syntax
     config.apps = {
       [pluginId]: appPluginConfig,
     };
@@ -147,7 +145,6 @@ describe('usePluginComponent()', () => {
   });
 
   afterEach(() => {
-    // eslint-disable-next-line no-restricted-syntax
     config.apps = originalApps;
   });
 

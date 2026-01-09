@@ -1,5 +1,3 @@
-import { cloneDeep } from 'lodash';
-
 import type { AppPluginConfig } from '@grafana/data';
 
 import { config } from '../../config';
@@ -32,7 +30,7 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
     await initAppPluginMetas();
   }
 
-  return Object.values(cloneDeep(apps));
+  return Object.values(structuredClone(apps));
 }
 
 export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfig | null> {
@@ -41,7 +39,7 @@ export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfi
   }
 
   const app = apps[pluginId];
-  return app ? cloneDeep(app) : null;
+  return app ? structuredClone(app) : null;
 }
 
 /**
@@ -69,5 +67,5 @@ export function setAppPluginMetas(override: AppPluginMetas): void {
     throw new Error('setAppPluginMetas() function can only be called from tests.');
   }
 
-  apps = cloneDeep(override);
+  apps = structuredClone(override);
 }

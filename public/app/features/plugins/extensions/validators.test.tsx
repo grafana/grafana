@@ -223,7 +223,6 @@ describe('Plugin Extension Validators', () => {
   });
 
   describe('isAddedLinkMetaInfoMissing()', () => {
-    // eslint-disable-next-line no-restricted-syntax
     const originalApps = config.apps;
     const pluginId = 'myorg-extensions-app';
     const appPluginConfig = {
@@ -258,20 +257,17 @@ describe('Plugin Extension Validators', () => {
     };
 
     beforeEach(() => {
-      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         [pluginId]: appPluginConfig,
       };
     });
 
     afterEach(() => {
-      // eslint-disable-next-line no-restricted-syntax
       config.apps = originalApps;
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
 
       const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
@@ -282,7 +278,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the app config is not found', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       delete config.apps[pluginId];
 
       const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
@@ -294,7 +289,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the link has no meta-info in the plugin.json', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedLinks = [];
 
       const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
@@ -308,7 +302,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the "targets" do not match', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
 
       const returnValue = isAddedLinkMetaInfoMissing(
@@ -329,7 +322,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE and log a warning if the "description" does not match', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
 
       const returnValue = isAddedLinkMetaInfoMissing(
@@ -348,13 +340,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE with links with the same title but different targets', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
       const extensionConfig2 = {
         ...extensionConfig,
         targets: [PluginExtensionPoints.ExploreToolbarAction],
       };
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedLinks.push(extensionConfig2);
 
       const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig2, log);
@@ -365,7 +355,6 @@ describe('Plugin Extension Validators', () => {
   });
 
   describe('isAddedComponentMetaInfoMissing()', () => {
-    // eslint-disable-next-line no-restricted-syntax
     const originalApps = config.apps;
     const pluginId = 'myorg-extensions-app';
     const appPluginConfig = {
@@ -401,20 +390,17 @@ describe('Plugin Extension Validators', () => {
     };
 
     beforeEach(() => {
-      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         [pluginId]: appPluginConfig,
       };
     });
 
     afterEach(() => {
-      // eslint-disable-next-line no-restricted-syntax
       config.apps = originalApps;
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
 
       const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
@@ -425,7 +411,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the app config is not found', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       delete config.apps[pluginId];
 
       const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
@@ -437,7 +422,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the Component has no meta-info in the plugin.json', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedComponents = [];
 
       const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
@@ -451,7 +435,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the "targets" do not match', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
 
       const returnValue = isAddedComponentMetaInfoMissing(
@@ -471,7 +454,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE and log a warning if the "description" does not match', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
 
       const returnValue = isAddedComponentMetaInfoMissing(
@@ -490,13 +472,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE with components with the same title but different targets', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
       const extensionConfig2 = {
         ...extensionConfig,
         targets: [PluginExtensionPoints.ExploreToolbarAction],
       };
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.addedComponents.push(extensionConfig2);
 
       const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig2, log);
@@ -507,7 +487,6 @@ describe('Plugin Extension Validators', () => {
   });
 
   describe('isExposedComponentMetaInfoMissing()', () => {
-    // eslint-disable-next-line no-restricted-syntax
     const originalApps = config.apps;
     const pluginId = 'myorg-extensions-app';
     const appPluginConfig = {
@@ -543,20 +522,17 @@ describe('Plugin Extension Validators', () => {
     };
 
     beforeEach(() => {
-      // eslint-disable-next-line no-restricted-syntax
       config.apps = {
         [pluginId]: appPluginConfig,
       };
     });
 
     afterEach(() => {
-      // eslint-disable-next-line no-restricted-syntax
       config.apps = originalApps;
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
 
       const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
@@ -567,7 +543,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the app config is not found', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       delete config.apps[pluginId];
 
       const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
@@ -579,7 +554,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the exposed component has no meta-info in the plugin.json', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.exposedComponents = [];
 
       const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
@@ -593,7 +567,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE and log an error if the title does not match', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
 
       const returnValue = isExposedComponentMetaInfoMissing(
@@ -614,7 +587,6 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE and log a warning if the "description" does not match', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
 
       const returnValue = isExposedComponentMetaInfoMissing(
@@ -633,13 +605,11 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE with components with the same title but different targets', () => {
       const log = createLogMock();
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
       const exposedComponentConfig2 = {
         ...exposedComponentConfig,
         targets: [PluginExtensionPoints.ExploreToolbarAction],
       };
-      // eslint-disable-next-line no-restricted-syntax
       config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig2);
 
       const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig2, log);

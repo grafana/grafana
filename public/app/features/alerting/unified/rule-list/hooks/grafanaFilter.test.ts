@@ -431,7 +431,6 @@ describe('grafana-managed rules', () => {
 
       it('should include plugins in backend filter and skip frontend filtering', () => {
         // Set up test plugin as installed
-        // eslint-disable-next-line no-restricted-syntax
         config.apps[SupportedPlugin.Slo] = pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]);
 
         const regularRule = mockGrafanaPromAlertingRule({

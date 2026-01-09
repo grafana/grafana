@@ -67,7 +67,6 @@ describe('filterRulerRulesConfig', () => {
   };
 
   it('should filter by namespace', () => {
-    // eslint-disable-next-line no-restricted-syntax
     config.apps = { [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]) };
     const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(mockRulesConfig, 'namespace1');
 

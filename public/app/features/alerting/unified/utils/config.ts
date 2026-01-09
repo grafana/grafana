@@ -30,7 +30,6 @@ export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery?: str
 }
 
 export function getIsIrmPluginPresent() {
-  // eslint-disable-next-line no-restricted-syntax
   return SupportedPlugin.Irm in config.apps;
 }
 

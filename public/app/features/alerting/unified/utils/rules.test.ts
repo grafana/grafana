@@ -42,7 +42,6 @@ describe('getRuleOrigin', () => {
   });
 
   it('returns pluginId when origin label matches expected format and plugin is installed', () => {
-    // eslint-disable-next-line no-restricted-syntax
     config.apps = {
       installed_plugin: {
         id: 'installed_plugin',

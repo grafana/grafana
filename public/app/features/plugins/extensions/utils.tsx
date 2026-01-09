@@ -610,7 +610,6 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
 export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 
 export const getAppPluginConfigs = (pluginIds: string[] = []) =>
-  // eslint-disable-next-line no-restricted-syntax
   Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
 
 export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string) => {
@@ -621,7 +620,6 @@ export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string)
 // (These plugins are necessary to be loaded to use the extension point.)
 // (The function also returns the plugin ids that the plugins - that extend the extension point - depend on.)
 export const getExtensionPointPluginDependencies = (extensionPointId: string): string[] => {
-  // eslint-disable-next-line no-restricted-syntax
   return Object.values(config.apps)
     .filter(
       (app) =>
@@ -651,7 +649,6 @@ export const getExtensionPointPluginMeta = (extensionPointId: string): Extension
   return new Map(
     getExtensionPointPluginDependencies(extensionPointId)
       .map((pluginId) => {
-        // eslint-disable-next-line no-restricted-syntax
         const app = config.apps[pluginId];
         // if the plugin does not exist or does not expose any components or links to the extension point, return undefined
         if (
@@ -689,7 +686,6 @@ export const getExposedComponentPluginDependencies = (exposedComponentId: string
 // metadata field. (For example the plugins that expose components that the app depends on.)
 // Heads up! This is a recursive function.
 export const getAppPluginDependencies = (pluginId: string, visited: string[] = []): string[] => {
-  // eslint-disable-next-line no-restricted-syntax
   if (!config.apps[pluginId]) {
     return [];
   }
@@ -699,7 +695,6 @@ export const getAppPluginDependencies = (pluginId: string, visited: string[] = [
     return [];
   }
 
-  // eslint-disable-next-line no-restricted-syntax
   const pluginIdDependencies = config.apps[pluginId].dependencies.extensions.exposedComponents.map(
     getAppPluginIdFromExposedComponentId
   );
@@ -721,7 +716,6 @@ export const getAppPluginsToAwait = () => {
     'cloud-home-app',
   ];
 
-  // eslint-disable-next-line no-restricted-syntax
   return Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
 };
 
@@ -732,7 +726,6 @@ export const getAppPluginsToPreload = () => {
   const awaitedPluginIds = getAppPluginsToAwait().map((app) => app.id);
   const isNotAwaited = (app: AppPluginConfig) => !awaitedPluginIds.includes(app.id);
 
-  // eslint-disable-next-line no-restricted-syntax
   return Object.values(config.apps).filter((app) => {
     return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
   });
