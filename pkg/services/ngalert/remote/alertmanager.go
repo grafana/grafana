@@ -30,7 +30,8 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
-	"go.yaml.in/yaml/v3"
+	"github.com/prometheus/common/model"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -40,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -57,6 +59,7 @@ func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.Postab
 }
 
 type Crypto interface {
+	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 	DecryptExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) error
 }
@@ -289,20 +292,6 @@ func (am *Alertmanager) isDefaultConfiguration(configHash string) bool {
 	return configHash == am.defaultConfigHash
 }
 
-func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
-	return func(value string) (string, error) {
-		decoded, err := base64.StdEncoding.DecodeString(value)
-		if err != nil {
-			return "", err
-		}
-		decrypted, err := crypto.Decrypt(ctx, decoded)
-		if err != nil {
-			return "", err
-		}
-		return string(decrypted), nil
-	}
-}
-
 // buildConfiguration takes a raw Alertmanager configuration and returns a config that the remote Alertmanager can use.
 // It parses the initial configuration, adds auto-generated routes, decrypts receivers, and merges the extra configs.
 func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, createdAtEpoch int64, autogenInvalidReceiverAction notifier.InvalidReceiversAction) (remoteClient.UserGrafanaConfig, error) {
@@ -317,7 +306,7 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 	}
 
 	// Decrypt the receivers in the configuration.
-	decryptedReceivers, err := notifier.DecryptedReceivers(c.AlertmanagerConfig.Receivers, decrypter(ctx, am.crypto))
+	decryptedReceivers, err := notifier.DecryptedReceivers(c.AlertmanagerConfig.Receivers, notifier.DecryptIntegrationSettings(ctx, am.crypto))
 	if err != nil {
 		return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to decrypt receivers: %w", err)
 	}
@@ -619,7 +608,7 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	decryptedReceivers, err := notifier.DecryptedReceivers(c.Receivers, decrypter(ctx, am.crypto))
+	decryptedReceivers, err := notifier.DecryptedReceivers(c.Receivers, notifier.DecryptIntegrationSettings(ctx, am.crypto))
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
 	}
@@ -634,6 +623,51 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		Alert:     alert,
 		Receivers: apiReceivers,
 	})
+}
+
+func (am *Alertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
+	decrypted := integrationConfig.Clone()
+	err := decrypted.Decrypt(notifier.DecryptIntegrationSettings(ctx, am.crypto))
+	if err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to decrypt receivers: %w", err)
+	}
+	cfg, err := notifier.IntegrationToIntegrationConfig(decrypted)
+	if err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to convert integration to integration config: %w", err)
+	}
+
+	apiReceivers := []*alertingNotify.APIReceiver{
+		{
+			ConfigReceiver: alertingNotify.ConfigReceiver{
+				Name: receiverName,
+			},
+			ReceiverConfig: alertingModels.ReceiverConfig{
+				Integrations: []*alertingModels.IntegrationConfig{
+					&cfg,
+				},
+			},
+		},
+	}
+
+	t := time.Now()
+	result, _, err := am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
+		Alert:     &alert,
+		Receivers: apiReceivers,
+	})
+	duration := time.Since(t)
+	if err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to test integration: %w", err)
+	}
+	status := alertingModels.IntegrationStatus{
+		LastNotifyAttempt:         strfmt.DateTime(result.NotifedAt),
+		LastNotifyAttemptDuration: model.Duration(duration).String(),
+		Name:                      cfg.Type,
+		SendResolved:              false,
+	}
+	if len(result.Receivers) > 0 && len(result.Receivers[0].Configs) > 0 {
+		status.LastNotifyAttemptError = result.Receivers[0].Configs[0].Error
+	}
+	return status, nil
 }
 
 func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {

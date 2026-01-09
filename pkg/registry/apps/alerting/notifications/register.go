@@ -15,6 +15,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver/receivertesting"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/templategroup"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
@@ -53,6 +54,10 @@ func RegisterAppInstaller(
 		ng:  ng,
 	}
 
+	customCfg := notificationsApp.Config{
+		ReceiverTestingHandler: receivertesting.New(ng),
+	}
+
 	localManifest := apis.LocalManifest()
 
 	provider := simple.NewAppProvider(localManifest, nil, notificationsApp.New)
@@ -60,7 +65,7 @@ func RegisterAppInstaller(
 	appConfig := app.Config{
 		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
 		ManifestData:   *localManifest.ManifestData,
-		SpecificConfig: nil,
+		SpecificConfig: &customCfg,
 	}
 
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
@@ -85,6 +90,8 @@ func (a AlertingNotificationsAppInstaller) GetAuthorizer() authorizer.Authorizer
 				return receiver.Authorize(ctx, ac.NewReceiverAccess[*ngmodels.Receiver](authz, false), a)
 			case routingtree.ResourceInfo.GroupResource().Resource:
 				return routingtree.Authorize(ctx, authz, a)
+			case "testing":
+				return receivertesting.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})
