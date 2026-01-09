@@ -91,6 +91,7 @@ COPY pkg/storage/unified/resource pkg/storage/unified/resource
 COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
 COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
+COPY pkg/plugins pkg/plugins
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
 COPY apps/quotas apps/quotas
