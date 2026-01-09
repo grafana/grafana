@@ -884,12 +884,6 @@ type BackendOperationCounts struct {
 	Deletes int
 }
 
-// runBackendOperations performs create, update, delete operations on a backend (legacy function for backward compatibility)
-func runBackendOperations(ctx context.Context, server resource.ResourceServer, namespace, backendType string) error {
-	// Use original small counts for backward compatibility
-	counts := BackendOperationCounts{Creates: 3, Updates: 2, Deletes: 1}
-	return runBackendOperationsWithCounts(ctx, server, namespace, backendType, counts)
-}
 
 // runBackendOperationsWithCounts performs configurable create, update, delete operations on a backend
 func runBackendOperationsWithCounts(ctx context.Context, server resource.ResourceServer, namespace, backendType string, counts BackendOperationCounts) error {
