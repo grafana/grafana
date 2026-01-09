@@ -96,6 +96,7 @@ exports[`GrafanaReceiverForm handles nested secure fields correctly 1`] = `
           "topic": "topic",
         },
         "type": "mqtt",
+        "version": "v1",
       },
     ],
     "title": "mqtt contact point",

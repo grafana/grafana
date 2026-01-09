@@ -1,6 +1,8 @@
+import { GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/types';
+
 import { NotificationChannelOption, NotifierDTO, NotifierVersion } from '../types/alerting';
 
-import { canCreateNotifier, getOptionsForVersion, isLegacyVersion } from './notifier-versions';
+import { canCreateNotifier, getOptionsForVersion, hasLegacyIntegrations, isLegacyVersion } from './notifier-versions';
 
 // Helper to create a minimal NotifierDTO for testing
 function createNotifier(overrides: Partial<NotifierDTO> = {}): NotifierDTO {
@@ -276,6 +278,77 @@ describe('notifier-versions utilities', () => {
         ],
       });
       expect(getOptionsForVersion(notifier, 'v1')).toBe(defaultOptions);
+    });
+  });
+
+  describe('hasLegacyIntegrations', () => {
+    // Helper to create a minimal contact point for testing
+    function createContactPoint(overrides: Partial<GrafanaManagedContactPoint> = {}): GrafanaManagedContactPoint {
+      return {
+        name: 'Test Contact Point',
+        ...overrides,
+      };
+    }
+
+    it('should return false if contact point is undefined', () => {
+      expect(hasLegacyIntegrations(undefined)).toBe(false);
+    });
+
+    it('should return false if contact point has no integrations', () => {
+      const contactPoint = createContactPoint({ grafana_managed_receiver_configs: undefined });
+      expect(hasLegacyIntegrations(contactPoint)).toBe(false);
+    });
+
+    it('should return false if contact point has empty integrations array', () => {
+      const contactPoint = createContactPoint({ grafana_managed_receiver_configs: [] });
+      expect(hasLegacyIntegrations(contactPoint)).toBe(false);
+    });
+
+    it('should return false if all integrations have v1 version', () => {
+      const contactPoint = createContactPoint({
+        grafana_managed_receiver_configs: [
+          { type: 'slack', settings: {}, version: 'v1' },
+          { type: 'webhook', settings: {}, version: 'v1' },
+        ],
+      });
+      expect(hasLegacyIntegrations(contactPoint)).toBe(false);
+    });
+
+    it('should return false if all integrations have no version (defaults to v1)', () => {
+      const contactPoint = createContactPoint({
+        grafana_managed_receiver_configs: [
+          { type: 'slack', settings: {} },
+          { type: 'webhook', settings: {} },
+        ],
+      });
+      expect(hasLegacyIntegrations(contactPoint)).toBe(false);
+    });
+
+    it('should return true if any integration has a legacy version (v0)', () => {
+      const contactPoint = createContactPoint({
+        grafana_managed_receiver_configs: [
+          { type: 'slack', settings: {}, version: 'v0mimir1' },
+          { type: 'webhook', settings: {}, version: 'v1' },
+        ],
+      });
+      expect(hasLegacyIntegrations(contactPoint)).toBe(true);
+    });
+
+    it('should return true if all integrations have legacy versions', () => {
+      const contactPoint = createContactPoint({
+        grafana_managed_receiver_configs: [
+          { type: 'slack', settings: {}, version: 'v0mimir1' },
+          { type: 'webhook', settings: {}, version: 'v0mimir2' },
+        ],
+      });
+      expect(hasLegacyIntegrations(contactPoint)).toBe(true);
+    });
+
+    it('should return true for any non-v1 version', () => {
+      const contactPoint = createContactPoint({
+        grafana_managed_receiver_configs: [{ type: 'slack', settings: {}, version: 'v2' }],
+      });
+      expect(hasLegacyIntegrations(contactPoint)).toBe(true);
     });
   });
 });

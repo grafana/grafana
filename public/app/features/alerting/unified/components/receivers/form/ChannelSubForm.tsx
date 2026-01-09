@@ -232,29 +232,27 @@ export function ChannelSubForm<R extends ChannelValues>({
             data-testid={`${pathPrefix}type`}
             noMargin
           >
-            <Stack direction="column" gap={1}>
-              <Stack direction="row" alignItems="flex-start" gap={1}>
-                <Controller
-                  name={typeFieldPath}
-                  control={control}
-                  defaultValue={defaultValues.type}
-                  render={({ field: { ref, onChange, ...field } }) => (
-                    <Select
-                      disabled={!isEditable}
-                      inputId={contactPointTypeInputId}
-                      {...field}
-                      width={37}
-                      options={typeOptions}
-                      onChange={(value) => onChange(value?.value)}
-                    />
-                  )}
-                />
-              </Stack>
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Controller
+                name={typeFieldPath}
+                control={control}
+                defaultValue={defaultValues.type}
+                render={({ field: { ref, onChange, ...field } }) => (
+                  <Select
+                    disabled={!isEditable}
+                    inputId={contactPointTypeInputId}
+                    {...field}
+                    width={37}
+                    options={typeOptions}
+                    onChange={(value) => onChange(value?.value)}
+                  />
+                )}
+              />
               {integrationVersion && (
                 <Badge
-                  text={integrationVersion.toUpperCase()}
-                  color={isLegacy ? 'orange' : 'blue'}
-                  icon={isLegacy ? 'exclamation-triangle' : undefined}
+                  text={integrationVersion}
+                  color={isLegacy ? 'orange' : 'green'}
+                  icon={isLegacy ? 'exclamation-triangle' : 'check'}
                   tooltip={t('alerting.channel-sub-form.tooltip-version', 'Integration version: {{version}}', {
                     version: integrationVersion,
                   })}

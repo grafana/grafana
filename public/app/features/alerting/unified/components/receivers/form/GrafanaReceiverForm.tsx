@@ -18,12 +18,13 @@ import {
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { hasLegacyIntegrations } from '../../../utils/notifier-versions';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
 } from '../../../utils/receiver-form';
-import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { ImportedContactPointAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
 import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
@@ -168,7 +169,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         </Alert>
       )}
 
-      {contactPoint?.provisioned && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
+      {contactPoint?.provisioned && hasLegacyIntegrations(contactPoint) && <ImportedContactPointAlert />}
+      {contactPoint?.provisioned && !hasLegacyIntegrations(contactPoint) && (
+        <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />
+      )}
 
       <ReceiverForm<GrafanaChannelValues>
         contactPointId={contactPoint?.id}
