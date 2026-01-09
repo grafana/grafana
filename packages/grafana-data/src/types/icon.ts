@@ -52,7 +52,7 @@ export const availableIconsIndex = {
   bookmark: true,
   'book-open': true,
   'brackets-curly': true,
-  'brain': true,
+  brain: true,
   'browser-alt': true,
   bug: true,
   building: true,
