@@ -105,7 +105,6 @@ describe('Selector', () => {
     // Lowercase because we don't have any backend that returns the correct case, then it falls back to the value in the URL
     expectScopesSelectorValue('grafana');
     await openSelector();
-    //screen.debug(undefined, 100000);
     expectResultApplicationsGrafanaSelected();
 
     jest.spyOn(locationService, 'getLocation').mockRestore();
@@ -175,6 +174,7 @@ describe('Selector', () => {
       await applyScopes();
 
       // Deselect all scopes
+      await hoverSelector();
       await clearSelector();
 
       // Recent scopes should still be available
@@ -197,6 +197,7 @@ describe('Selector', () => {
       await selectResultApplicationsMimir();
       await applyScopes();
 
+      await hoverSelector();
       await clearSelector();
 
       // Check recent scopes are updated
