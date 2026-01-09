@@ -11841,6 +11841,7 @@
       "no-connections-message": "Add a connection to authenticate with external providers",
       "no-results": "No results matching your query",
       "page-subtitle": "View and manage your app connections",
+      "page-title": "Connections",
       "search-placeholder": "Search connections",
       "status-connected": "Connected",
       "status-disconnected": "Disconnected",
@@ -12216,10 +12217,6 @@
         }
       },
       "title-error-saving-file": "Error saving file"
-    },
-    "secret-textarea": {
-      "configured": "configured",
-      "reset": "Reset"
     },
     "setup-modal": {
       "done": "Done",

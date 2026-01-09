@@ -17,7 +17,10 @@ export default function ConnectionsPage() {
   return (
     <Page
       navId="provisioning"
-      subTitle={t('provisioning.connections.page-subtitle', 'View and manage your app connections')}
+      pageNav={{
+        text: t('provisioning.connections.page-title', 'Connections'),
+        subTitle: t('provisioning.connections.page-subtitle', 'View and manage your app connections'),
+      }}
       actions={
         <LinkButton variant="primary" href={`${CONNECTIONS_URL}/new`}>
           <Trans i18nKey="provisioning.connections.add-connection">Add connection</Trans>

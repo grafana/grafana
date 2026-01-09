@@ -32,6 +32,10 @@ export default function ConnectionFormPage() {
           'provisioning.connection-form.page-subtitle',
           'Configure a connection to authenticate with external providers'
         ),
+        parentItem: {
+          text: t('provisioning.connections.page-title', 'Connections'),
+          url: CONNECTIONS_URL,
+        },
       }}
     >
       <Page.Contents isLoading={!isCreate && query.isLoading}>
