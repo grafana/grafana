@@ -27,7 +27,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 
 ### Failed to connect to PostgreSQL
 
-**Error message:** "pq: connection refused" or "dial tcp: connect: connection refused"
+**Error message:** `failed to connect to ... : connect: connection refused` or `dial tcp: connect: connection refused`
 
 **Cause:** Grafana cannot establish a network connection to the PostgreSQL server.
 
@@ -56,7 +56,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 
 ### Host not found
 
-**Error message:** "pq: no such host" or "lookup hostname: no such host"
+**Error message:** `failed to connect to ... : hostname resolving error` or `lookup hostname: no such host`
 
 **Cause:** The hostname specified in the data source configuration cannot be resolved.
 
@@ -73,7 +73,7 @@ The following errors occur when there are issues with authentication credentials
 
 ### Password authentication failed
 
-**Error message:** "pq: password authentication failed for user"
+**Error message:** `failed to connect to ... : server error: FATAL: password authentication failed for user "username" (SQLSTATE 28P01)`
 
 **Cause:** The username or password is incorrect.
 
@@ -86,7 +86,7 @@ The following errors occur when there are issues with authentication credentials
 
 ### Permission denied
 
-**Error message:** "pq: permission denied for table" or "pq: permission denied for schema"
+**Error message:** `ERROR: permission denied for table table_name (SQLSTATE 42501)` or `ERROR: permission denied for schema schema_name (SQLSTATE 42501)`
 
 **Cause:** The database user does not have permission to access the requested table or schema.
 
@@ -105,7 +105,7 @@ The following errors occur when there are issues with authentication credentials
 
 ### No pg_hba.conf entry
 
-**Error message:** "pq: no pg_hba.conf entry for host"
+**Error message:** `failed to connect to ... : server error: FATAL: no pg_hba.conf entry for host "ip_address", user "username", database "database_name" (SQLSTATE 28000)`
 
 **Cause:** PostgreSQL is not configured to accept connections from the Grafana server.
 
@@ -141,7 +141,7 @@ The following errors occur when there are issues with TLS configuration.
 
 ### SSL not supported
 
-**Error message:** "pq: SSL is not enabled on the server" or "server does not support SSL"
+**Error message:** `failed to connect to ... : server refused TLS connection` or `server does not support SSL`
 
 **Cause:** The PostgreSQL server is not configured for SSL connections, but the data source requires SSL.
 
@@ -170,7 +170,7 @@ The following errors occur when there are issues with the database configuration
 
 ### Database does not exist
 
-**Error message:** "pq: database 'database_name' does not exist"
+**Error message:** `failed to connect to ... : server error: FATAL: database "database_name" does not exist (SQLSTATE 3D000)`
 
 **Cause:** The specified database name is incorrect or the database doesn't exist.
 
@@ -183,7 +183,7 @@ The following errors occur when there are issues with the database configuration
 
 ### Relation does not exist
 
-**Error message:** "pq: relation 'table_name' does not exist"
+**Error message:** `ERROR: relation "table_name" does not exist (SQLSTATE 42P01)`
 
 **Cause:** The specified table or view does not exist, or the user cannot access it.
 
@@ -201,7 +201,7 @@ The following errors occur when there are issues with SQL syntax or query execut
 
 ### Query syntax error
 
-**Error message:** "pq: syntax error at or near" or "ERROR: syntax error"
+**Error message:** `ERROR: syntax error at or near "keyword" (SQLSTATE 42601)`
 
 **Cause:** The SQL query contains invalid syntax.
 
@@ -214,7 +214,7 @@ The following errors occur when there are issues with SQL syntax or query execut
 
 ### Column does not exist
 
-**Error message:** "pq: column 'column_name' does not exist"
+**Error message:** `ERROR: column "column_name" does not exist (SQLSTATE 42703)`
 
 **Cause:** The specified column name is incorrect or doesn't exist in the table.
 
@@ -271,7 +271,7 @@ The following issues relate to slow query execution or resource constraints.
 
 ### Too many connections
 
-**Error message:** "pq: sorry, too many clients already" or "connection pool exhausted"
+**Error message:** `failed to connect to ... : server error: FATAL: too many connections for role "username" (SQLSTATE 53300)` or `connection pool exhausted`
 
 **Cause:** The maximum number of connections to PostgreSQL has been reached.
 
