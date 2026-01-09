@@ -60,13 +60,13 @@ Complete the following steps to install Grafana from the APT repository:
 1. To add a repository for stable releases, run the following command:
 
    ```bash
-   echo "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+   echo "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
 
 1. To add a repository for beta releases, run the following command:
 
    ```bash
-   echo "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com beta main" | sudo tee /etc/apt/sources.list.d/grafana.list
+   echo "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
 
 1. Run the following command to update the list of available packages:
