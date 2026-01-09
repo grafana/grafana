@@ -563,3 +563,6 @@ export function getRuleUID(rule?: RulerRuleDTO | Rule) {
 
   return ruleUid;
 }
+
+export const NO_GROUP_PREFIX = 'no_group_for_rule_';
+export const isUngroupedRuleGroup = (group: string): boolean => group.startsWith(NO_GROUP_PREFIX);
