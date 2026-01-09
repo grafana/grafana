@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -16,7 +17,6 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
-	authlib "github.com/grafana/authlib/types"
 	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
@@ -43,7 +43,7 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: pluginsv0alpha1.PluginKind(),
 			},
 			{
-				Kind: pluginsv0alpha1.PluginMetaKind(),
+				Kind: pluginsv0alpha1.MetaKind(),
 			},
 		},
 	}
@@ -69,6 +69,7 @@ type PluginAppConfig struct {
 }
 
 func ProvideAppInstaller(
+	authorizer authorizer.Authorizer,
 	metaProviderManager *meta.ProviderManager,
 ) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
@@ -87,31 +88,30 @@ func ProvideAppInstaller(
 
 	appInstaller := &PluginAppInstaller{
 		AppInstaller: defaultInstaller,
+		authorizer:   authorizer,
 		metaManager:  metaProviderManager,
 		ready:        make(chan struct{}),
 	}
 	return appInstaller, nil
 }
 
-func (p *PluginAppInstaller) WithAccessChecker(access authlib.AccessChecker) *PluginAppInstaller {
-	p.access = access
-	return p
-}
-
 type PluginAppInstaller struct {
 	appsdkapiserver.AppInstaller
 	metaManager *meta.ProviderManager
-	access      authlib.AccessChecker
+	authorizer  authorizer.Authorizer
 
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
 	ready      chan struct{}
+	readyOnce  sync.Once
 }
 
 func (p *PluginAppInstaller) InitializeApp(restConfig restclient.Config) error {
 	if p.restConfig == nil {
 		p.restConfig = &restConfig
-		close(p.ready)
+		p.readyOnce.Do(func() {
+			close(p.ready)
+		})
 	}
 	return p.AppInstaller.InitializeApp(restConfig)
 }
@@ -137,9 +137,9 @@ func (p *PluginAppInstaller) InstallAPIs(
 		return client, nil
 	}
 
-	pluginMetaGVR := pluginsv0alpha1.PluginMetaKind().GroupVersionResource()
+	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
-		pluginMetaGVR: NewPluginMetaStorage(p.metaManager, clientFactory),
+		pluginMetaGVR: NewMetaStorage(p.metaManager, clientFactory),
 	}
 	wrappedServer := &customStorageWrapper{
 		wrapped: server,
@@ -149,34 +149,5 @@ func (p *PluginAppInstaller) InstallAPIs(
 }
 
 func (p *PluginAppInstaller) GetAuthorizer() authorizer.Authorizer {
-	if p.access == nil {
-		return nil
-	}
-
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
-			info, ok := authlib.AuthInfoFrom(ctx)
-			if !ok {
-				return authorizer.DecisionDeny, "failed to get auth info", nil
-			}
-
-			res, err := p.access.Check(ctx, info, authlib.CheckRequest{
-				Verb:        a.GetVerb(),
-				Group:       a.GetAPIGroup(),
-				Resource:    a.GetResource(),
-				Name:        a.GetName(),
-				Namespace:   a.GetNamespace(),
-				Subresource: a.GetSubresource(),
-				Path:        a.GetPath(),
-			}, "")
-			if err != nil {
-				return authorizer.DecisionDeny, "failed to perform authorization", err
-			}
-
-			if !res.Allowed {
-				return authorizer.DecisionDeny, "permission denied", nil
-			}
-
-			return authorizer.DecisionAllow, "", nil
-		})
+	return p.authorizer
 }

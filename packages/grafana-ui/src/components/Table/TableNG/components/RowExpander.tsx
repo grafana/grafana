@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
@@ -16,13 +17,21 @@ export function RowExpander({ onCellExpand, isExpanded }: RowExpanderNGProps) {
     }
   }
   return (
-    <div role="button" tabIndex={0} className={styles.expanderCell} onClick={onCellExpand} onKeyDown={handleKeyDown}>
+    <div
+      role="button"
+      tabIndex={0}
+      className={styles.expanderCell}
+      onClick={onCellExpand}
+      onKeyDown={handleKeyDown}
+      data-testid={selectors.components.Panels.Visualization.TableNG.RowExpander}
+    >
       <Icon
         aria-label={
           isExpanded
             ? t('grafana-ui.row-expander-ng.aria-label-collapse', 'Collapse row')
             : t('grafana-ui.row-expander.aria-label-expand', 'Expand row')
         }
+        aria-expanded={isExpanded}
         name={isExpanded ? 'angle-down' : 'angle-right'}
         size="lg"
       />

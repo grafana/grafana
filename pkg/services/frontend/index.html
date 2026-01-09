@@ -188,6 +188,7 @@
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
+        const publicDashboardAccessToken = [[.PublicDashboardAccessToken]]
         // Grafana can only fail to load once
         // However, it can fail to load in multiple different places
         // To avoid double reporting the error, we use this boolean to check if we've already failed
@@ -249,11 +250,14 @@
             }
           }
 
-          return null;
+          return undefined;
         }
 
         function getSessionExpiration() {
-          const value = getCookie("grafana_session_expiry") || "0";
+          const value = getCookie("grafana_session_expiry");
+          if (!value) {
+            return undefined;
+          }
           const realExpiresSeconds = parseInt(value, 10);
           const expiresSeconds = Math.max(realExpiresSeconds - 10, 0); // Rotate 10s before the real expiration
           const expiration = new Date(expiresSeconds * 1000);
@@ -271,9 +275,15 @@
         async function fetchBootData() {
           const queryParams = new URLSearchParams(window.location.search);
 
+          let path = '/bootdata';
+          // call a special bootdata url with the public access token
+          // this is needed to set the access token and correct org for public dashboards on the ST backend
+          if (publicDashboardAccessToken) {
+            path += `/${publicDashboardAccessToken}`;
+          }
           // pass the search params through to the bootdata request
           // this allows for overriding the theme/language etc
-          const bootDataUrl = new URL('/bootdata', window.location.origin);
+          const bootDataUrl = new URL(path, window.location.origin);
           for (const [key, value] of queryParams.entries()) {
             bootDataUrl.searchParams.append(key, value);
           }
@@ -325,7 +335,7 @@
                 const now = new Date();
 
                 // If the session has expired, don't continue trying to fetch boot data
-                if (now >= sessionExpiration) {
+                if (sessionExpiration && now >= sessionExpiration) {
                   await rotateSession();
                 }
               } catch (error) {

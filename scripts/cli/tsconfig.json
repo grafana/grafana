@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
-    "module": "es2022",
-    "allowImportingTsExtensions": true,
-    "noEmit": true
+    "moduleResolution": "nodenext",
+    "module": "NodeNext"
   },
   "extends": "../../tsconfig.json",
   "ts-node": {

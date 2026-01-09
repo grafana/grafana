@@ -293,6 +293,7 @@ export const handyTestingSchema: Spec = {
         },
         refresh: 'onDashboardLoad',
         regex: 'regex1',
+        regexApplyTo: 'value',
         skipUrlSync: false,
         sort: 'disabled',
         allowCustomValue: true,
@@ -316,6 +317,7 @@ export const handyTestingSchema: Spec = {
         query: 'option1, option2',
         skipUrlSync: false,
         allowCustomValue: true,
+        valuesFormat: 'csv',
       },
     },
     {

@@ -36,10 +36,16 @@ type SecretsManagerSettings struct {
 	// How long to wait for the process to clean up a secure value to complete.
 	GCWorkerPerSecureValueCleanupTimeout time.Duration
 
+	// Whether to register the MT CRUD API
+	RegisterAPIServer bool
 	// Whether to create the MT secrets management database
 	RunSecretsDBMigrations bool
 	// Whether to run the data key id migration. Requires that RunSecretsDBMigrations is also true.
 	RunDataKeyMigration bool
+
+	// AWS Keeper
+	AWSKeeperAccessKeyID     string
+	AWSKeeperSecretAccessKey string
 }
 
 func (cfg *Cfg) readSecretsManagerSettings() {
@@ -60,8 +66,12 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_poll_interval").MustDuration(1 * time.Minute)
 	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(5 * time.Second)
 
+	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)
 	cfg.SecretsManagement.RunSecretsDBMigrations = secretsMgmt.Key("run_secrets_db_migrations").MustBool(true)
 	cfg.SecretsManagement.RunDataKeyMigration = secretsMgmt.Key("run_data_key_migration").MustBool(true)
+
+	cfg.SecretsManagement.AWSKeeperAccessKeyID = secretsMgmt.Key("aws_access_key_id").MustString("")
+	cfg.SecretsManagement.AWSKeeperSecretAccessKey = secretsMgmt.Key("aws_secret_access_key").MustString("")
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

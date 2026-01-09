@@ -2880,5 +2880,10 @@
     "title": "New Features in v7.4",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

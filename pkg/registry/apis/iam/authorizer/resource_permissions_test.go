@@ -4,31 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
-	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
-var (
-	user = authn.NewIDTokenAuthInfo(
-		authn.Claims[authn.AccessTokenClaims]{
-			Claims: jwt.Claims{Issuer: "grafana",
-				Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"), Audience: []string{"iam.grafana.app"}},
-			Rest: authn.AccessTokenClaims{
-				Namespace:            "*",
-				Permissions:          identity.ServiceIdentityClaims.Rest.Permissions,
-				DelegatedPermissions: identity.ServiceIdentityClaims.Rest.DelegatedPermissions,
-			},
-		}, &authn.Claims[authn.IDTokenClaims]{
-			Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeUser, "u001")},
-			Rest:   authn.IDTokenClaims{Namespace: "org-2", Identifier: "u001", Type: types.TypeUser},
-		},
-	)
+	"github.com/grafana/authlib/types"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func newResourcePermission(apiGroup, resource, name string) *iamv0.ResourcePermission {
@@ -63,6 +45,7 @@ func TestResourcePermissions_AfterGet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			parent := "fold-1"
 			checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
 				require.NotNil(t, id)
 				// Check is called with the user's identity
@@ -74,12 +57,18 @@ func TestResourcePermissions_AfterGet(t *testing.T) {
 				require.Equal(t, fold1.Spec.Resource.Resource, req.Resource)
 				require.Equal(t, fold1.Spec.Resource.Name, req.Name)
 				require.Equal(t, utils.VerbGetPermissions, req.Verb)
+				require.Equal(t, parent, folder)
 
 				return types.CheckResponse{Allowed: tt.shouldAllow}, nil
 			}
+			getParentFunc := func(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
+				// For this test, we can return a fixed parent folder ID
+				return parent, nil
+			}
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
-			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
+			fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
+			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
 			ctx := types.WithAuthInfo(context.Background(), user)
 
 			err := resPermAuthz.AfterGet(ctx, fold1)
@@ -89,6 +78,7 @@ func TestResourcePermissions_AfterGet(t *testing.T) {
 				require.Error(t, err, "expected error for denied access")
 			}
 			require.True(t, accessClient.checkCalled, "accessClient.Check should be called")
+			require.True(t, fakeParentProvider.getParentCalled, "parentProvider.GetParent should be called")
 		})
 	}
 }
@@ -121,23 +111,32 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 			require.Equal(t, "dashboards", req.Resource)
 		}
 
-		// Return a checker that allows only specific resources: fold-1 and dash-2
+		// Return a checker that allows access to fold-1 and its content
 		return func(name, folder string) bool {
-			if name == "fold-1" || name == "dash-2" {
+			if name == "fold-1" || folder == "fold-1" {
 				return true
 			}
 			return false
 		}, &types.NoopZookie{}, nil
 	}
 
+	getParentFunc := func(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
+		if name == "dash-2" {
+			return "fold-1", nil
+		}
+		return "", nil
+	}
+
 	accessClient := &fakeAccessClient{compileFunc: compileFunc}
-	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
+	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
+	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
 	ctx := types.WithAuthInfo(context.Background(), user)
 
 	obj, err := resPermAuthz.FilterList(ctx, list)
 	require.NoError(t, err)
 	require.NotNil(t, list)
 	require.True(t, accessClient.compileCalled, "accessClient.Compile should be called")
+	require.True(t, fakeParentProvider.getParentCalled, "parentProvider.GetParent should be called")
 
 	filtered, ok := obj.(*iamv0.ResourcePermissionList)
 	require.True(t, ok, "response should be of type ResourcePermissionList")
@@ -165,6 +164,7 @@ func TestResourcePermissions_beforeWrite(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			parent := "fold-1"
 			checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
 				require.NotNil(t, id)
 				// Check is called with the user's identity
@@ -176,12 +176,18 @@ func TestResourcePermissions_beforeWrite(t *testing.T) {
 				require.Equal(t, fold1.Spec.Resource.Resource, req.Resource)
 				require.Equal(t, fold1.Spec.Resource.Name, req.Name)
 				require.Equal(t, utils.VerbSetPermissions, req.Verb)
+				require.Equal(t, parent, folder)
 
 				return types.CheckResponse{Allowed: tt.shouldAllow}, nil
 			}
 
+			getParentFunc := func(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
+				return parent, nil
+			}
+
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
-			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient)
+			fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
+			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
 			ctx := types.WithAuthInfo(context.Background(), user)
 
 			err := resPermAuthz.beforeWrite(ctx, fold1)
@@ -191,26 +197,22 @@ func TestResourcePermissions_beforeWrite(t *testing.T) {
 				require.Error(t, err, "expected error for denied delete")
 			}
 			require.True(t, accessClient.checkCalled, "accessClient.Check should be called")
+			require.True(t, fakeParentProvider.getParentCalled, "parentProvider.GetParent should be called")
 		})
 	}
 }
 
-// fakeAccessClient is a mock implementation of claims.AccessClient
-type fakeAccessClient struct {
-	checkCalled   bool
-	checkFunc     func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error)
-	compileCalled bool
-	compileFunc   func(id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error)
+type fakeParentProvider struct {
+	hasParent       bool
+	getParentCalled bool
+	getParentFunc   func(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error)
 }
 
-func (m *fakeAccessClient) Check(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
-	m.checkCalled = true
-	return m.checkFunc(id, &req, folder)
+func (f *fakeParentProvider) HasParent(gr schema.GroupResource) bool {
+	return f.hasParent
 }
 
-func (m *fakeAccessClient) Compile(ctx context.Context, id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
-	m.compileCalled = true
-	return m.compileFunc(id, req)
+func (f *fakeParentProvider) GetParent(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
+	f.getParentCalled = true
+	return f.getParentFunc(ctx, gr, namespace, name)
 }
-
-var _ types.AccessClient = (*fakeAccessClient)(nil)

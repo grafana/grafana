@@ -5,8 +5,8 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
 import { EffectsEditor } from './EffectsEditor';
-import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './GaugeMigrations';
 import { RadialBarPanel } from './RadialBarPanel';
+import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './migrations';
 import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
 import { radialBarSuggestionsSupplier } from './suggestions';
 
@@ -14,32 +14,20 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
   .useFieldConfig({})
   .setPanelOptions((builder) => {
     const category = [t('gauge.category-radial-bar', 'Gauge')];
+
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
     commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
 
     builder.addRadio({
       path: 'shape',
-      name: t('radialbar.config.shape', 'Shape'),
+      name: t('radialbar.config.shape', 'Style'),
       category,
       defaultValue: defaultOptions.shape,
       settings: {
         options: [
           { value: 'circle', label: t('radialbar.config.shape-circle', 'Circle'), icon: 'circle' },
-          { value: 'gauge', label: t('radialbar.config.shape-gauge', 'Gauge'), icon: 'tachometer-fast' },
-        ],
-      },
-    });
-
-    builder.addRadio({
-      path: 'gradient',
-      name: t('radialbar.config.gradient', 'Gradient'),
-      category,
-      defaultValue: defaultOptions.gradient,
-      settings: {
-        options: [
-          { value: 'none', label: t('radialbar.config.gradient-none', 'None') },
-          { value: 'auto', label: t('radialbar.config.gradient-auto', 'Auto') },
+          { value: 'gauge', label: t('radialbar.config.shape-gauge', 'Arc'), icon: 'tachometer-empty' },
         ],
       },
     });
@@ -81,6 +69,52 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       },
     });
 
+    builder.addRadio({
+      path: 'barShape',
+      name: t('radialbar.config.bar-shape', 'Bar Style'),
+      category,
+      defaultValue: defaultOptions.barShape,
+      settings: {
+        options: [
+          { value: 'flat', label: t('radialbar.config.bar-shape-flat', 'Flat') },
+          { value: 'rounded', label: t('radialbar.config.bar-shape-rounded', 'Rounded') },
+        ],
+      },
+      showIf: (options) => options.segmentCount === 1,
+    });
+
+    builder.addRadio({
+      path: 'endpointMarker',
+      name: t('radialbar.config.endpoint-marker', 'Endpoint marker'),
+      description: t('radialbar.config.endpoint-marker-description', 'Glow is only supported in dark mode'),
+      category,
+      defaultValue: defaultOptions.endpointMarker,
+      settings: {
+        options: [
+          { value: 'point', label: t('radialbar.config.endpoint-marker-point', 'Point') },
+          { value: 'glow', label: t('radialbar.config.endpoint-marker-glow', 'Glow') },
+          { value: 'none', label: t('radialbar.config.endpoint-marker-none', 'None') },
+        ],
+      },
+      showIf: (options) => options.barShape === 'rounded' && options.segmentCount === 1,
+    });
+
+    builder.addSelect({
+      path: 'textMode',
+      name: t('radialbar.config.text-mode', 'Text mode'),
+      category,
+      settings: {
+        options: [
+          { value: 'auto', label: t('radialbar.config.text-mode-auto', 'Auto') },
+          { value: 'value_and_name', label: t('radialbar.config.text-mode-value-and-name', 'Value and Name') },
+          { value: 'value', label: t('radialbar.config.text-mode-value', 'Value') },
+          { value: 'name', label: t('radialbar.config.text-mode-name', 'Name') },
+          { value: 'none', label: t('radialbar.config.text-mode-none', 'None') },
+        ],
+      },
+      defaultValue: defaultOptions.textMode,
+    });
+
     builder.addBooleanSwitch({
       path: 'sparkline',
       name: t('radialbar.config.sparkline', 'Show sparkline'),
@@ -105,7 +139,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
     builder.addCustomEditor({
       id: 'radialbar-effects',
       path: 'effects',
-      name: 'Effects',
+      name: t('radialbar.config.effects.label', 'Effects'),
       category,
       editor: EffectsEditor,
       settings: {},

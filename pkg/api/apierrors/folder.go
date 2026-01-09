@@ -29,7 +29,8 @@ func ToFolderErrorResponse(err error) response.Response {
 		errors.Is(err, dashboards.ErrDashboardTypeMismatch) ||
 		errors.Is(err, dashboards.ErrDashboardInvalidUid) ||
 		errors.Is(err, dashboards.ErrDashboardUidTooLong) ||
-		errors.Is(err, folder.ErrFolderCannotBeParentOfItself) {
+		errors.Is(err, folder.ErrFolderCannotBeParentOfItself) ||
+		errors.Is(err, folder.ErrMaximumDepthReached) {
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
@@ -57,7 +58,11 @@ func ToFolderErrorResponse(err error) response.Response {
 	// --- Kubernetes status errors ---
 	var statusErr *k8sErrors.StatusError
 	if errors.As(err, &statusErr) {
-		return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
+		message := statusErr.ErrStatus.Message
+		if message == "" {
+			message = getDefaultMessageForStatus(int(statusErr.ErrStatus.Code))
+		}
+		return response.Error(int(statusErr.ErrStatus.Code), message, err)
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, fmt.Sprintf("Folder API error: %s", err.Error()), err)
@@ -97,6 +102,19 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 			Message: message,
 			Code:    int32(normResp.Status()),
 		},
+	}
+}
+
+func getDefaultMessageForStatus(statusCode int) string {
+	switch statusCode {
+	case http.StatusForbidden:
+		return "Access denied"
+	case http.StatusNotFound:
+		return "Folder not found"
+	case http.StatusBadRequest:
+		return "Invalid request"
+	default:
+		return "Folder API error"
 	}
 }
 

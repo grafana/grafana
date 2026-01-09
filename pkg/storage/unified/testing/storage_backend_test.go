@@ -25,7 +25,7 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		require.NoError(t, err)
 		return backend
 	}, &TestOptions{
-		NSPrefix: "kvstorage-test",
+		NSPrefix: "badgerkvstorage-test",
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
 			TestBlobSupport:       true,
@@ -33,5 +33,39 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 			// Badger does not support bulk import yet.
 			TestGetResourceLastImportTime: true,
 		},
+	})
+}
+
+func TestSQLKVStorageBackend(t *testing.T) {
+	skipTests := map[string]bool{
+		TestHappyPath:                 true,
+		TestWatchWriteEvents:          true,
+		TestList:                      true,
+		TestBlobSupport:               true,
+		TestGetResourceStats:          true,
+		TestListHistory:               true,
+		TestListHistoryErrorReporting: true,
+		TestListModifiedSince:         true,
+		TestListTrash:                 true,
+		TestCreateNewResource:         true,
+		TestGetResourceLastImportTime: true,
+		TestOptimisticLocking:         true,
+	}
+	// without RvManager
+	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+		backend, _ := NewTestSqlKvBackend(t, ctx, false)
+		return backend
+	}, &TestOptions{
+		NSPrefix:  "sqlkvstorage-test",
+		SkipTests: skipTests,
+	})
+
+	// with RvManager
+	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+		backend, _ := NewTestSqlKvBackend(t, ctx, true)
+		return backend
+	}, &TestOptions{
+		NSPrefix:  "sqlkvstorage-withrvmanager-test",
+		SkipTests: skipTests,
 	})
 }

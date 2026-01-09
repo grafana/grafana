@@ -83,6 +83,12 @@ tree:
             nodeType: leaf
             linkId: test-case-2
             linkType: scope
+          test-case-redirect:
+            title: Test case with redirect
+            nodeType: leaf
+            linkId: shoe-org
+            linkType: scope
+            redirectPath: /d/dcb9f5e9-8066-4397-889e-864b99555dbb #Reliability dashboard
       clusters:
         title: Clusters
         nodeType: container
@@ -119,6 +125,7 @@ navigationTree:
     url: /d/_5rDmaQiz
     scope: shoe-org
     subScope: shoes
+    preLoadSubScopeChildren: true
     children:
       - name: shoes-overview
         title: Overview
@@ -135,6 +142,7 @@ navigationTree:
         url: /d/edediimbjhdz4b
         scope: shoes
         subScope: frontend
+        preLoadSubScopeChildren: true
         children:
           - name: frontend-api
             title: API Metrics
@@ -204,6 +212,7 @@ navigationTree:
     url: /d/UTv--wqMk
     scope: shoe-org
     subScope: apparel
+    disableSubScopeSelection: true
     children:
       - name: apparel-product-overview
         title: Product Overview
