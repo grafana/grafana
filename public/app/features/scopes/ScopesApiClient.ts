@@ -1,6 +1,7 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
+import { getMessageFromError } from 'app/core/utils/errors';
 import { dispatch } from 'app/store/store';
 
 import { ScopeNavigation } from './dashboards/types';
@@ -16,19 +17,40 @@ export class ScopesApiClient {
       }
 
       if ('error' in result) {
-        console.error(result.error);
+        const errorMessage = getMessageFromError(result.error);
+        console.error(`Failed to fetch scope "${name}":`, errorMessage);
       }
 
       return undefined;
     } catch (err) {
-      console.error(err);
+      const errorMessage = getMessageFromError(err);
+      console.error(`Failed to fetch scope "${name}":`, errorMessage);
       return undefined;
     }
   }
 
   async fetchMultipleScopes(scopesIds: string[]): Promise<Scope[]> {
-    const scopes = await Promise.all(scopesIds.map((id) => this.fetchScope(id)));
-    return scopes.filter((scope) => scope !== undefined);
+    if (scopesIds.length === 0) {
+      return [];
+    }
+
+    try {
+      const scopes = await Promise.all(scopesIds.map((id) => this.fetchScope(id)));
+      const successfulScopes = scopes.filter((scope) => scope !== undefined);
+
+      if (successfulScopes.length < scopesIds.length) {
+        const failedCount = scopesIds.length - successfulScopes.length;
+        console.warn(
+          `Failed to fetch ${failedCount} of ${scopesIds.length} scope(s). Requested IDs: ${scopesIds.join(', ')}`
+        );
+      }
+
+      return successfulScopes;
+    } catch (err) {
+      const errorMessage = getMessageFromError(err);
+      console.error(`Failed to fetch multiple scopes [${scopesIds.join(', ')}]:`, errorMessage);
+      return [];
+    }
   }
 
   async fetchMultipleScopeNodes(names: string[]): Promise<ScopeNode[]> {
@@ -46,8 +68,15 @@ export class ScopesApiClient {
         return result.data.items ?? [];
       }
 
+      if ('error' in result) {
+        const errorMessage = getMessageFromError(result.error);
+        console.error(`Failed to fetch multiple scope nodes [${names.join(', ')}]:`, errorMessage);
+      }
+
       return [];
     } catch (err) {
+      const errorMessage = getMessageFromError(err);
+      console.error(`Failed to fetch multiple scope nodes [${names.join(', ')}]:`, errorMessage);
       return [];
     }
   }
@@ -85,8 +114,29 @@ export class ScopesApiClient {
         return result.data.items ?? [];
       }
 
+      if ('error' in result) {
+        const errorMessage = getMessageFromError(result.error);
+        const context = [
+          options.parent && `parent="${options.parent}"`,
+          options.query && `query="${options.query}"`,
+          `limit=${limit}`,
+        ]
+          .filter(Boolean)
+          .join(', ');
+        console.error(`Failed to fetch scope nodes (${context}):`, errorMessage);
+      }
+
       return [];
     } catch (err) {
+      const errorMessage = getMessageFromError(err);
+      const context = [
+        options.parent && `parent="${options.parent}"`,
+        options.query && `query="${options.query}"`,
+        `limit=${limit}`,
+      ]
+        .filter(Boolean)
+        .join(', ');
+      console.error(`Failed to fetch scope nodes (${context}):`, errorMessage);
       return [];
     }
   }
@@ -109,8 +159,15 @@ export class ScopesApiClient {
         return result.data.items ?? [];
       }
 
+      if ('error' in result) {
+        const errorMessage = getMessageFromError(result.error);
+        console.error(`Failed to fetch dashboards for scopes [${scopeNames.join(', ')}]:`, errorMessage);
+      }
+
       return [];
     } catch (err) {
+      const errorMessage = getMessageFromError(err);
+      console.error(`Failed to fetch dashboards for scopes [${scopeNames.join(', ')}]:`, errorMessage);
       return [];
     }
   };
@@ -133,8 +190,15 @@ export class ScopesApiClient {
         return result.data.items ?? [];
       }
 
+      if ('error' in result) {
+        const errorMessage = getMessageFromError(result.error);
+        console.error(`Failed to fetch scope navigations for scopes [${scopeNames.join(', ')}]:`, errorMessage);
+      }
+
       return [];
     } catch (err) {
+      const errorMessage = getMessageFromError(err);
+      console.error(`Failed to fetch scope navigations for scopes [${scopeNames.join(', ')}]:`, errorMessage);
       return [];
     }
   };
@@ -154,8 +218,15 @@ export class ScopesApiClient {
         return result.data;
       }
 
+      if ('error' in result) {
+        const errorMessage = getMessageFromError(result.error);
+        console.error(`Failed to fetch scope node "${scopeNodeId}":`, errorMessage);
+      }
+
       return undefined;
     } catch (err) {
+      const errorMessage = getMessageFromError(err);
+      console.error(`Failed to fetch scope node "${scopeNodeId}":`, errorMessage);
       return undefined;
     }
   };
