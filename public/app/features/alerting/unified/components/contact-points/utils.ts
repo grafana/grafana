@@ -15,6 +15,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { extractReceivers } from '../../utils/receivers';
 import { routeAdapter } from '../../utils/routeAdapter';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
@@ -146,9 +147,16 @@ export function enhanceContactPointsWithMetadata({
 
     const id = getContactPointIdentifier(contactPoint);
 
+    // Extract provenance from contactPoint first; else, search in its receivers
+    const contactPointProvenance =
+      'provenance' in contactPoint && contactPoint.provenance !== undefined
+        ? contactPoint.provenance
+        : receivers.find((receiver) => Boolean(receiver.provenance))?.provenance;
+
     return {
       ...contactPoint,
       id,
+      provenance: contactPointProvenance,
       policies:
         alertmanagerConfiguration && usedContactPointsByName && (usedContactPointsByName[contactPoint.name] ?? []),
       grafana_managed_receiver_configs: receivers.map((receiver, index) => {
@@ -225,3 +233,7 @@ function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedR
 
 export const showManageContactPointPermissions = (alertmanager: string, contactPoint: GrafanaManagedContactPoint) =>
   shouldUseK8sApi(alertmanager) && canAdminEntity(contactPoint);
+
+export function isProvisionedContactPoint(provenance?: string): boolean {
+  return provenance !== undefined && provenance !== null && provenance !== KnownProvenance.None;
+}
