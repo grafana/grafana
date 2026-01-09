@@ -1259,4 +1259,8 @@ export interface FeatureToggles {
   * Enables the ASAP smoothing transformation for time series data
   */
   smoothingTransformation?: boolean;
+  /**
+  * Enables the creation of keepers that manage secrets stored on AWS secrets manager
+  */
+  secretsManagementAppPlatformAwsKeeper?: boolean;
 }

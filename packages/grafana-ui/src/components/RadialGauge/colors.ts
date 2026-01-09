@@ -7,18 +7,10 @@ import { GradientStop, RadialShape } from './types';
 import { getFieldConfigMinMax, getFieldDisplayProcessor, getValuePercentageForValue } from './utils';
 
 export function buildGradientColors(
-  gradient = false,
   theme: GrafanaTheme2,
   fieldDisplay: FieldDisplay,
   baseColor = fieldDisplay.display.color ?? FALLBACK_COLOR
 ): GradientStop[] {
-  if (!gradient) {
-    return [
-      { color: baseColor, percent: 0 },
-      { color: baseColor, percent: 1 },
-    ];
-  }
-
   const colorMode = getFieldColorMode(fieldDisplay.field.color?.mode);
 
   // thresholds get special handling
