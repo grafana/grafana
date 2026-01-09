@@ -2994,27 +2994,6 @@ func convertActionStyleToV2(styleMap map[string]interface{}) *dashv2alpha1.Dashb
 	return style
 }
 
-func convert2DStringArray(arr []interface{}) [][]string {
-	if len(arr) == 0 {
-		return nil
-	}
-
-	result := make([][]string, 0, len(arr))
-	for _, item := range arr {
-		if innerArr, ok := item.([]interface{}); ok {
-			stringArr := make([]string, 0, len(innerArr))
-			for _, s := range innerArr {
-				if str, ok := s.(string); ok {
-					stringArr = append(stringArr, str)
-				}
-			}
-			result = append(result, stringArr)
-		}
-	}
-
-	return result
-}
-
 // convert2DStringArrayPreserveEmpty is like convert2DStringArray but returns
 // an empty slice (not nil) when input is empty, to ensure JSON marshals as []
 func convert2DStringArrayPreserveEmpty(arr []interface{}) [][]string {

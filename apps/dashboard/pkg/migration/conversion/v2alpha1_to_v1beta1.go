@@ -2278,7 +2278,7 @@ func convertActionVariablesToV1(variables []dashv2alpha1.DashboardActionVariable
 		result = append(result, map[string]interface{}{
 			"key":  v.Key,
 			"name": v.Name,
-			"type": string(v.Type),
+			"type": v.Type,
 		})
 	}
 	return result
