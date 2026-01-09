@@ -65,16 +65,7 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 	if runtime.GOOS == "linux" && descriptor.containerMode.enabled {
 		return containerClientConfig(executablePath, descriptor.containerMode.image, descriptor.containerMode.tag, logger, versionedPlugins, skipHostEnvVars, tracer)
 	}
-
-	logger.Debug("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
-
-	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
-	// nolint:gosec
-	cmd := exec.Command(executablePath, descriptor.executableArgs...)
-	cmd.Env = env
-
 	cfg := &goplugin.ClientConfig{
-		Cmd:              cmd,
 		HandshakeConfig:  handshake,
 		VersionedPlugins: versionedPlugins,
 		SkipHostEnv:      skipHostEnvVars,
@@ -91,8 +82,15 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 		},
 	}
 
-	if descriptor.cmdEditor != nil {
-		descriptor.cmdEditor(cfg.Cmd)
+	if descriptor.runnerFunc != nil {
+		cfg.RunnerFunc = descriptor.runnerFunc
+		logger.Debug("Using runner mode", "os", runtime.GOOS, "executablePath", executablePath)
+	} else {
+		logger.Debug("Using process mode", "os", runtime.GOOS, "executablePath", executablePath)
+		// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
+		// nolint:gosec
+		cfg.Cmd = exec.Command(executablePath, descriptor.executableArgs...)
+		cfg.Cmd.Env = env
 	}
 
 	return cfg
@@ -133,7 +131,7 @@ type PluginDescriptor struct {
 	skipHostEnvVars  bool
 	managed          bool
 	containerMode    containerModeOpts
-	cmdEditor        func(*exec.Cmd)
+	runnerFunc       func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error)
 	versionedPlugins map[int]goplugin.PluginSet
 	startRendererFn  StartRendererFunc
 }
