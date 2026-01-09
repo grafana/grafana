@@ -81,7 +81,19 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     }
 
     const overrideResult = this.getTimeOverride(timeRange.value);
-    this.setState({ value: overrideResult.timeRange, timeInfo: overrideResult.timeInfo });
+    const { timeRange: overrideTimeRange } = overrideResult;
+    this.setState({
+      value: overrideTimeRange,
+      timeInfo: overrideResult.timeInfo,
+      from:
+        typeof overrideTimeRange.raw.from === 'string'
+          ? overrideTimeRange.raw.from
+          : overrideTimeRange.raw.from.toISOString(),
+      to:
+        typeof overrideTimeRange.raw.to === 'string'
+          ? overrideTimeRange.raw.to
+          : overrideTimeRange.raw.to.toISOString(),
+    });
   }
 
   // Get a time shifted request to compare with the primary request.
@@ -153,10 +165,10 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
       // Only evaluate if the timeFrom if parent time is relative
       if (rangeUtil.isRelativeTimeRange(parentTimeRange.raw)) {
-        const timeZone = this.getTimeZone();
+        const timezone = this.getTimeZone();
         newTimeData.timeRange = {
-          from: dateMath.parse(timeFromInfo.from, undefined, timeZone)!,
-          to: dateMath.parse(timeFromInfo.to, undefined, timeZone)!,
+          from: dateMath.toDateTime(timeFromInfo.from, { timezone })!,
+          to: dateMath.toDateTime(timeFromInfo.to, { timezone })!,
           raw: { from: timeFromInfo.from, to: timeFromInfo.to },
         };
         infoBlocks.push(timeFromInfo.display);
@@ -172,18 +184,39 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
         return newTimeData;
       }
 
-      const timeShift = '-' + timeShiftInterpolated;
-      infoBlocks.push('timeshift ' + timeShift);
+      const shift = '-' + timeShiftInterpolated;
+      infoBlocks.push('timeshift ' + shift);
 
-      const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false)!;
-      const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true)!;
+      if (rangeUtil.isRelativeTimeRange(newTimeData.timeRange.raw)) {
+        const timezone = this.getTimeZone();
 
-      if (!from || !to) {
-        newTimeData.timeInfo = 'invalid timeshift';
-        return newTimeData;
+        const rawFromShifted = `${newTimeData.timeRange.raw.from}${shift}`;
+        const rawToShifted = `${newTimeData.timeRange.raw.to}${shift}`;
+
+        const from = dateMath.toDateTime(rawFromShifted, { timezone });
+        const to = dateMath.toDateTime(rawToShifted, { timezone });
+
+        if (!from || !to) {
+          newTimeData.timeInfo = 'invalid timeshift';
+          return newTimeData;
+        }
+
+        newTimeData.timeRange = {
+          from,
+          to,
+          raw: { from: rawFromShifted, to: rawToShifted },
+        };
+      } else {
+        const from = dateMath.parseDateMath(shift, newTimeData.timeRange.from, false);
+        const to = dateMath.parseDateMath(shift, newTimeData.timeRange.to, true);
+
+        if (!from || !to) {
+          newTimeData.timeInfo = 'invalid timeshift';
+          return newTimeData;
+        }
+
+        newTimeData.timeRange = { from, to, raw: { from, to } };
       }
-
-      newTimeData.timeRange = { from, to, raw: { from, to } };
     }
 
     if (compareWith) {

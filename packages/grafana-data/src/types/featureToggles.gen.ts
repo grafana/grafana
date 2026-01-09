@@ -207,6 +207,10 @@ export interface FeatureToggles {
   */
   reportingRetries?: boolean;
   /**
+  * Enables CSV encoding options in the reporting feature
+  */
+  reportingCsvEncodingOptions?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
   sseGroupByDatasource?: boolean;
@@ -778,19 +782,10 @@ export interface FeatureToggles {
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
-  * Displays the navigation history so the user can navigate back to previous pages
-  */
-  unifiedHistory?: boolean;
-  /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
   */
   lokiLabelNamesQueryApi?: boolean;
-  /**
-  * Enable the investigations backend API
-  * @default false
-  */
-  investigationsBackend?: boolean;
   /**
   * Enable folder's api server counts
   * @default false

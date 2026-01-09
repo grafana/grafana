@@ -40,7 +40,11 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import {
+  createV2RowsLayout,
+  SceneCreationOptions,
+  transformSaveModelToScene,
+} from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -106,6 +110,34 @@ interface DashboardScenePageStateManagerLike<T> {
   useState: () => DashboardScenePageState;
 }
 
+/**
+ * Creates scene creation options with appropriate layout creator
+ * based on feature flags and dashboard type.
+ */
+export function getSceneCreationOptions(
+  loadOptions?: LoadDashboardOptions,
+  meta?: { isSnapshot?: boolean }
+): SceneCreationOptions | undefined {
+  const isReport = loadOptions?.route === DashboardRoutes.Report;
+  const isTemplate = loadOptions?.route === DashboardRoutes.Template;
+  const isSnapshot = meta?.isSnapshot ?? false;
+
+  // Don't use v2 layout for reports or snapshots
+  if (isReport || isSnapshot || isTemplate) {
+    return undefined;
+  }
+
+  // Use v2 layout creator when v2 API is enabled
+  if (shouldForceV2API()) {
+    return {
+      createLayout: createV2RowsLayout,
+      targetVersion: 'v2',
+    };
+  }
+
+  return undefined;
+}
+
 abstract class DashboardScenePageStateManagerBase<T>
   extends StateManagerBase<DashboardScenePageState>
   implements DashboardScenePageStateManagerLike<T>
@@ -155,7 +187,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadHomeDashboard(): Promise<DashboardScene | null> {
     const rsp = await this.fetchHomeDashboard();
     if (rsp) {
-      return transformSaveModelToScene(rsp);
+      return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
     }
 
     return null;
@@ -441,7 +473,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     }
 
     if (rsp?.dashboard) {
-      const scene = transformSaveModelToScene(rsp, options);
+      const sceneCreationOptions = getSceneCreationOptions(options, rsp.meta);
+      const scene = transformSaveModelToScene(rsp, options, sceneCreationOptions);
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
@@ -474,7 +507,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
       }
 
-      const scene = transformSaveModelToScene(rsp);
+      // Snapshots should use default v1 layout
+      const scene = transformSaveModelToScene(rsp, undefined, getSceneCreationOptions(undefined, { isSnapshot: true }));
       return scene;
     }
 
@@ -755,7 +789,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         return;
       }
 
-      const scene = transformSaveModelToScene(rsp);
+      const sceneCreationOptions = getSceneCreationOptions(undefined, rsp.meta);
+      const scene = transformSaveModelToScene(rsp, undefined, sceneCreationOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {

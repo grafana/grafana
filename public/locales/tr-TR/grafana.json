@@ -3759,7 +3759,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4416,6 +4415,7 @@
       },
       "no-properties-changed": "İlgili hiçbir özellik değiştirilmedi",
       "table": {
+        "notes": "",
         "updated": "Tarih",
         "updatedBy": "Güncelleyen:",
         "version": "Sürüm"
@@ -4874,7 +4874,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Virgülle ayrılmış değerler"
         },
         "datasource-options": {
           "name-filter": "Ad filtresi",
@@ -5968,6 +5969,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Özel seçenekler",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Virgülle ayrılmış değerler",
       "selection-options": "Seçim ayarları"
     },
@@ -6555,6 +6559,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Pano kaydedildi"
     },
@@ -6578,6 +6587,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6637,8 +6647,9 @@
       "tooltip-show-usages": "Kullanımları göster"
     },
     "variable-values-preview": {
-      "preview-of-values": "Değerlerin ön izlemesi",
-      "show-more": "Daha fazla göster"
+      "show-more": "Daha fazla göster",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -10709,18 +10720,6 @@
     "help/documentation": "Belgeler",
     "help/keyboard-shortcuts": "Klavye kısayolları",
     "help/support": "Destek",
-    "history-container": {
-      "drawer-tittle": "Geçmiş"
-    },
-    "history-wrapper": {
-      "collapse": "Daralt",
-      "expand": "Genişlet",
-      "icon-selected": "Seçili giriş",
-      "icon-unselected": "Normal Giriş",
-      "show-more": "Daha fazla göster",
-      "today": "Bugün",
-      "yesterday": "Dün"
-    },
     "home": {
       "title": "Ana sayfa"
     },

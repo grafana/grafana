@@ -76,19 +76,7 @@ var PathRewriters = []filters.PathRewriter{
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		requestHandler, err := GetCustomRoutesHandler(
-			delegateHandler,
-			c.LoopbackClientConfig,
-			builders,
-			reg,
-			c.MergedResourceConfig,
-		)
-		if err != nil {
-			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
-		}
-
-		// Needs to run last in request chain to function as expected, hence we register it first.
-		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
 
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)

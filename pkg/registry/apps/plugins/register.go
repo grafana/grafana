@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
@@ -36,9 +37,13 @@ func ProvideAppInstaller(
 	pluginStore pluginstore.Store,
 	pluginAssetsService *pluginassets.Service,
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
+	features featuremgmt.FeatureToggles,
 ) (*AppInstaller, error) {
-	if err := registerAccessControlRoles(accessControlService); err != nil {
-		return nil, fmt.Errorf("registering access control roles: %w", err)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
+		if err := registerAccessControlRoles(accessControlService); err != nil {
+			return nil, fmt.Errorf("registering access control roles: %w", err)
+		}
 	}
 
 	localProvider := meta.NewLocalProvider(pluginStore, pluginAssetsService)

@@ -155,7 +155,7 @@ func ProvideService(
 		features:                          features,
 		rr:                                rr,
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
+		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           reg,
@@ -441,6 +441,19 @@ func (s *service) start(ctx context.Context) error {
 		serverConfig.MergedResourceConfig,
 	); err != nil {
 		return err
+	}
+
+	// Augment existing WebServices with custom routes from builders
+	// This directly adds routes to existing WebServices using the OpenAPI specs from builders
+	if server.Handler != nil && server.Handler.GoRestfulContainer != nil {
+		if err := builder.AugmentWebServicesWithCustomRoutes(
+			server.Handler.GoRestfulContainer,
+			builders,
+			s.metrics,
+			serverConfig.MergedResourceConfig,
+		); err != nil {
+			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
+		}
 	}
 
 	// stash the options for later use

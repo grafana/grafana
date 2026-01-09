@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -815,7 +816,7 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 
 	// TODO: once we know the client is always sending the RV, require ResourceVersion > 0
 	// See: https://github.com/grafana/grafana/pull/111866
-	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
+	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
 		return &resourcepb.UpdateResponse{
 			Error: &ErrOptimisticLockingFailed,
 		}, nil
@@ -883,7 +884,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		rsp.Error = latest.Error
 		return rsp, nil
 	}
-	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
+	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
 		rsp.Error = &ErrOptimisticLockingFailed
 		return rsp, nil
 	}

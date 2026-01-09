@@ -36,7 +36,6 @@ import (
 type provisioningControllerConfig struct {
 	provisioningClient  *client.Clientset
 	resyncInterval      time.Duration
-	repoFactory         repository.Factory
 	unified             resources.ResourceStore
 	clients             resources.ClientFactory
 	tokenExchangeClient *authn.TokenExchangeClient
@@ -129,16 +128,6 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	decrypter, err := setupDecrypter(cfg, tracer, tokenExchangeClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
-	}
-
-	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient, registry)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
-	}
-
 	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
 	// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
 	// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
@@ -195,7 +184,6 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 
 	return &provisioningControllerConfig{
 		provisioningClient:  provisioningClient,
-		repoFactory:         repoFactory,
 		unified:             unified,
 		clients:             clients,
 		resyncInterval:      operatorSec.Key("resync_interval").MustDuration(60 * time.Second),

@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
-	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
@@ -107,7 +106,6 @@ func ProvideBuilderRunners(
 	registrar builder.APIRegistrar,
 	restConfigProvider apiserver.RestConfigProvider,
 	features featuremgmt.FeatureToggles,
-	investigationAppProvider *investigations.InvestigationsAppProvider,
 	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
@@ -127,11 +125,6 @@ func ProvideBuilderRunners(
 	var apiGroupRunner *runner.APIGroupRunner
 	var err error
 	providers := []app.Provider{}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagInvestigationsBackend) {
-		logger.Debug("Investigations backend is enabled")
-		providers = append(providers, investigationAppProvider)
-	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 
 	if err != nil {
