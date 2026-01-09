@@ -223,7 +223,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 	// but key_path stores snowflake RV, so convert to snowflake
 	// For KV backend (namespace contains "-kv"), resourceVersion is already in snowflake format
 	isSqlBackend := strings.Contains(key.Namespace, "-sql")
-	
+
 	var keyPathRV int64
 	if isSqlBackend {
 		// Convert microsecond RV to snowflake for key_path construction
@@ -232,10 +232,10 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 		// KV backend already provides snowflake RV
 		keyPathRV = resourceVersion
 	}
-	
+
 	// Build the expected key_path using DataKey format: unified/data/group/resource/namespace/name/resourceVersion~action~folder
 	expectedKeyPath := fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s", key.Group, key.Resource, key.Namespace, key.Name, keyPathRV, action, expectedFolder)
-	
+
 	var query string
 	if db.DriverName() == "postgres" {
 		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE key_path = $1"
