@@ -1195,14 +1195,34 @@ func getDataSourceForQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef, quer
 // getPanelDatasource determines the panel-level datasource for V1.
 // Returns:
 // - Mixed datasource reference if queries use different datasources
+// - Mixed datasource reference if multiple queries use Dashboard datasource (they fetch from different panels)
+// - Dashboard datasource reference if a single query uses Dashboard datasource
 // - First query's datasource if all queries use the same datasource
 // - nil if no queries exist
 // Compares based on V2 input without runtime resolution:
 // - If query has explicit datasource.uid → use that UID and type
 // - Else → use query.Kind as type (empty UID)
 func getPanelDatasource(queries []dashv2alpha1.DashboardPanelQueryKind) map[string]interface{} {
+	const sharedDashboardQuery = "-- Dashboard --"
+
 	if len(queries) == 0 {
 		return nil
+	}
+
+	// Count how many queries use Dashboard datasource
+	// Multiple dashboard queries need mixed mode because they fetch from different panels
+	// which may have different underlying datasources
+	dashboardDsQueryCount := 0
+	for _, query := range queries {
+		if query.Spec.Datasource != nil && query.Spec.Datasource.Uid != nil && *query.Spec.Datasource.Uid == sharedDashboardQuery {
+			dashboardDsQueryCount++
+		}
+	}
+	if dashboardDsQueryCount > 1 {
+		return map[string]interface{}{
+			"type": "mixed",
+			"uid":  "-- Mixed --",
+		}
 	}
 
 	var firstUID, firstType string
@@ -1236,6 +1256,16 @@ func getPanelDatasource(queries []dashv2alpha1.DashboardPanelQueryKind) map[stri
 				"type": "mixed",
 				"uid":  "-- Mixed --",
 			}
+		}
+	}
+
+	// Handle case when a single query uses Dashboard datasource.
+	// This is needed for the frontend to properly activate and fetch data from source panels.
+	// See DashboardDatasourceBehaviour.tsx for more details.
+	if firstUID == sharedDashboardQuery {
+		return map[string]interface{}{
+			"type": "datasource",
+			"uid":  sharedDashboardQuery,
 		}
 	}
 
