@@ -26,7 +26,6 @@ func AppendHeadersToOutgoingContext(ctx context.Context, req *backend.RunStreamR
 // When we receive a new query request we should make sure that all incoming HTTP headers are being forwarding to the grpc stream request
 // this is to make sure that no headers are lost when we make the actual call to Tempo later on.
 func SetHeadersFromIncomingContext(ctx context.Context) (map[string]string, error) {
-	headers := map[string]string{}
 	// get the plugin from context
 	plugin := backend.PluginConfigFromContext(ctx)
 
