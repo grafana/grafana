@@ -704,8 +704,8 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	}
 	helper := apis.NewK8sTestHelper(t, opts)
 
-	// FIXME: keeping this line here to keep the dependency around until we have tests which use this again.
-	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient()
+	// FIXME: keeping these lines here to keep the dependency around until we have tests which use this again.
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 
 	repositories := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,

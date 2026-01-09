@@ -32,7 +32,7 @@ type ConnectionSecure struct {
 
 	// Token is the reference of the token used to act as the Connection.
 	// This value is stored securely and cannot be read back
-	Token common.InlineSecureValue `json:"webhook,omitzero,omitempty"`
+	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
 }
 
 func (v ConnectionSecure) IsZero() bool {

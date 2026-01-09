@@ -142,6 +142,7 @@ type Cfg struct {
 	ProvisioningAllowImageRendering bool
 	ProvisioningMinSyncInterval     time.Duration
 	ProvisioningRepositoryTypes     []string
+	ProvisioningConnectionTypes     []string
 	ProvisioningLokiURL             string
 	ProvisioningLokiUser            string
 	ProvisioningLokiPassword        string
@@ -2161,6 +2162,19 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			}
 
 			cfg.ProvisioningRepositoryTypes[i] = s
+		}
+	}
+
+	connectionTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "connection_types", "github"))
+	if connectionTypes != "|" && connectionTypes != "" {
+		cfg.ProvisioningConnectionTypes = strings.Split(connectionTypes, "|")
+		for i, s := range cfg.ProvisioningConnectionTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning connection type is empty in '%s' (at index %d)", connectionTypes, i)
+			}
+
+			cfg.ProvisioningConnectionTypes[i] = s
 		}
 	}
 

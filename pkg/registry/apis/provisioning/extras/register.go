@@ -2,6 +2,8 @@ package extras
 
 import (
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
@@ -42,6 +44,15 @@ func ProvideProvisioningOSSRepositoryExtras(
 	}
 }
 
+func ProvideProvisioningOSSConnectionExtras(
+	_ *setting.Cfg,
+	ghFactory ghconnection.GithubFactory,
+) []connection.Extra {
+	return []connection.Extra{
+		ghconnection.Extra(ghFactory),
+	}
+}
+
 func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []jobs.Worker {
 	return []jobs.Worker{pullRequestWorker}
 }
@@ -53,4 +64,13 @@ func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repo
 	}
 
 	return repository.ProvideFactory(enabledTypes, extras)
+}
+
+func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Extra) (connection.Factory, error) {
+	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(cfg.ProvisioningConnectionTypes))
+	for _, e := range cfg.ProvisioningConnectionTypes {
+		enabledTypes[apisprovisioning.ConnectionType(e)] = struct{}{}
+	}
+
+	return connection.ProvideFactory(enabledTypes, extras)
 }
