@@ -1,10 +1,4 @@
-import {
-  MetricAggregation,
-  ElasticsearchDataQuery,
-  Derivative,
-  ExtendedStats,
-} from 'app/plugins/datasource/elasticsearch/dataquery.gen';
-
+import { Derivative, ElasticsearchDataQuery, ExtendedStats, MetricAggregation } from '../../../../dataquery.gen';
 import { defaultMetricAgg } from '../../../../queryDef';
 import { reducerTester } from '../../../reducerTester';
 import { changeEditorTypeAndResetQuery, initQuery } from '../../state';

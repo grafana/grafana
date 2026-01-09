@@ -2,15 +2,9 @@ import { uniqueId } from 'lodash';
 import { useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { InlineField, Select, Input } from '@grafana/ui';
-import {
-  Terms,
-  ExtendedStats,
-  ExtendedStatMetaType,
-  Percentiles,
-  MetricAggregation,
-} from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+import { InlineField, Input, Select } from '@grafana/ui';
 
+import { ExtendedStats, MetricAggregation, Percentiles, Terms } from '../../../../dataquery.gen';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { describeMetric } from '../../../../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';
@@ -105,7 +99,7 @@ function createOrderByOptionsForExtendedStats(metric: ExtendedStats): Selectable
   if (!metric.meta) {
     return [];
   }
-  const metaKeys = Object.keys(metric.meta) as ExtendedStatMetaType[];
+  const metaKeys = Object.keys(metric.meta);
   return metaKeys
     .filter((key) => metric.meta?.[key])
     .map((key) => {

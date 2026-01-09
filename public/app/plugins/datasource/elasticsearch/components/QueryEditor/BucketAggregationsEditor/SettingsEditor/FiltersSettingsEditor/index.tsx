@@ -3,8 +3,8 @@ import { uniqueId } from 'lodash';
 import { useEffect, useRef } from 'react';
 
 import { InlineField, Input, QueryField } from '@grafana/ui';
-import { Filters } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
+import { Filters } from '../../../../../dataquery.gen';
 import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
 import { AddRemove } from '../../../../AddRemove';
 import { changeBucketAggregationSetting } from '../../state/actions';

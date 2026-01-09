@@ -1,3 +1,3 @@
-import { Filter } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+import { Filter } from '../../../../../dataquery.gen';
 
 export const defaultFilter = (): Filter => ({ label: '', query: '*' });
