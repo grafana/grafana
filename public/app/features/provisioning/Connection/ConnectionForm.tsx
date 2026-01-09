@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
@@ -9,7 +8,6 @@ import { Connection, ConnectionSpec } from 'app/api/clients/provisioning/v0alpha
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { SecretTextArea } from '../Shared/SecretTextArea';
-import { CONNECTIONS_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
 
@@ -34,7 +32,6 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const privateKey = data?.secure?.privateKey;
   const [privateKeyConfigured, setPrivateKeyConfigured] = useState(Boolean(privateKey));
   const [submitData, request] = useCreateOrUpdateConnection(connectionName);
-  const navigate = useNavigate();
 
   const {
     register,
@@ -64,27 +61,8 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       });
 
       reset(formData);
-      setTimeout(() => {
-        navigate(CONNECTIONS_URL);
-      }, 300);
     }
-  }, [request.isSuccess, reset, getValues, navigate, connectionName]);
-
-  useEffect(() => {
-    if (!isEdit || !data) {
-      return;
-    }
-
-    const isConfigured = Boolean(privateKey);
-    setPrivateKeyConfigured(isConfigured);
-
-    if (!isConfigured) {
-      setError('privateKey', {
-        type: 'manual',
-        message: t('provisioning.connection-form.error-required', 'This field is required'),
-      });
-    }
-  }, [data, isEdit, setError, privateKey]);
+  }, [request.isSuccess, reset, getValues, connectionName]);
 
   const onSubmit = async (form: ConnectionFormData) => {
     try {
