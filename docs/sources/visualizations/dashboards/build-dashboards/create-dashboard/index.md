@@ -155,7 +155,6 @@ To create a dashboard, follow these steps:
 1. Click **Save**
 1. Click **Back to dashboard**.
 1. (Optional) Continue building the dashboard by clicking one or more of the following options:
-
    - **+ Add panel**: Set panel options in the edit pane or click **Configure** to complete panel setup.
    - **+ Add variable**: Follow the steps to [add a variable to the dashboard](#add-variables).
    - **Group panels**: Choose from **Group into row** or **Group into tab**. For more information on groupings, refer to [Panel groupings](#panel-groupings).
@@ -178,6 +177,7 @@ The _sidebar_ is on the next to the edit pane, and it includes options that are 
 The following image shows the parts of the edit pane and the sidebar:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-edit-pane-focus-v12.png" max-width="750px" alt="Dashboard with a panel in focus" >}}
+
 <!-- screenshot here with annotations for sidebar options including which ones are only in edit mode
 
 | Option | View mode | Edit mode |
@@ -217,6 +217,7 @@ The **Content outline** provides a tree-like structure that shows you all the pa
 The outline also lets you quickly navigate the dashboard and is available in both view and edit modes (note that variables are only included in edit mode).
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-outline-v12.png" max-width="750px" alt="Dashboard with outline open showing panel in focus" >}}
+
 <!-- update this -->
 
 To navigate the dashboard using the outline, follow these steps:
@@ -263,7 +264,7 @@ There are default parameters to constrain the layout, and you can update these t
 - **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
 - **Fill screen**: Toggle the switch on to have the dashboard fill the entire screen, as shown in the following screen recording:
 
-   {{< video-embed src="layout-fillscreen.mp4" >}}
+  {{< video-embed src="layout-fillscreen.mp4" >}}
    <!-- TBA -->
 
 ### Update panel layout
@@ -361,7 +362,6 @@ To group panels, follow these steps:
 
 1. Set the [grouping configuration options](#grouping-configuration-options) in the edit pane.
 1. (Optional) Add one or both of the following:
-
    - A [nested grouping](#add-nested-groupings)
    - Other [groupings at the same level](#add-more-groupings-at-the-same-level).
 
@@ -405,13 +405,13 @@ To add more first-level groupings, follow these steps:
 You can ungroup some or all of the dashboard groupings without losing your panels.
 Ungrouping behavior depends on whether you're working with first-level or nested groupings:
 
-| Grouping | Action and outcome |
-| -------- | ------------------ |
-| Rows | **Ungroup rows** ungroups all first-level rows in the dashboard and all of their nested groupings. |
-| Tabs | **Ungroup tabs** ungroups all first-level tabs in the dashboard and all of their nested groupings. |
-| Row > row | **Ungroup rows** ungroups the nested row. |
-| Row > tabs | **Ungroup tabs** ungroups all the nested tabs in that row. Tabs in other rows are not affected. |
-| Tab > rows | **Ungroup rows** ungroups all the nested rows in that tab. Rows in other tabs are not affected. |
+| Grouping   | Action and outcome                                                                                 |
+| ---------- | -------------------------------------------------------------------------------------------------- |
+| Rows       | **Ungroup rows** ungroups all first-level rows in the dashboard and all of their nested groupings. |
+| Tabs       | **Ungroup tabs** ungroups all first-level tabs in the dashboard and all of their nested groupings. |
+| Row > row  | **Ungroup rows** ungroups the nested row.                                                          |
+| Row > tabs | **Ungroup tabs** ungroups all the nested tabs in that row. Tabs in other rows are not affected.    |
+| Tab > rows | **Ungroup rows** ungroups all the nested rows in that tab. Rows in other tabs are not affected.    |
 
 <!-- screenshot or recording here -->
 
@@ -425,7 +425,6 @@ To remove groupings, follow these steps:
 1. Click **Edit**.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
 1. Do one of the following:
-
    - Click **Ungroup rows** or **Ungroup tabs** at the bottom of the dashboard to ungroup all rows or tabs, including any nested groupings.
    - Click in a grouping and click **Ungroup rows** or **Ungroup tabs** to ungroup only the tabs or rows nested in that grouping.
 
@@ -453,7 +452,6 @@ To configure repeats, follow these steps:
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
 1. For panels in a custom layout, set the following options:
-
    1. Under **Repeat direction**, choose one of the following:
       - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can’t mix other panels on a row with a repeated panel.
       - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
@@ -553,7 +551,6 @@ To configure show/hide rules, follow these steps:
 1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
 1. Click **+ Add rule**.
 1. Select a rule type:
-
    - **Query result**: Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
    - **Template variable**: Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
    - **Time range less than**: Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
@@ -584,7 +581,7 @@ To move a panel, follow these steps:
 
 1. Click the panel title and drag the panel to another row or tab, or to a new position on the dashboard.
 
-   If the dashboard has groupings, you can only move the panel to another grouping. 
+   If the dashboard has groupings, you can only move the panel to another grouping.
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
