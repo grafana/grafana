@@ -147,126 +147,8 @@ export async function setupScopeRoutes(page: Page, scopes: TestScope[]): Promise
     }
   });
 
-  // Route for scope dashboard bindings
-  await page.route(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings*`, async (route) => {
-    const url = new URL(route.request().url());
-    const scopeParams = url.searchParams.getAll('scope');
-
-    const groups: string[] = ['Most relevant', 'Dashboards', 'Something else', ''];
-
-    // Find scopes by name
-    const findScope = (items: TestScope[], name: string): TestScope | undefined => {
-      for (const item of items) {
-        if (`scope-${item.name}` === name) {
-          return item;
-        }
-        if (item.children) {
-          const found = findScope(item.children, name);
-          if (found) {
-            return found;
-          }
-        }
-      }
-      return undefined;
-    };
-
-    const bindings: ScopeDashboardBinding[] = [];
-    for (const scopeName of scopeParams) {
-      const scope = findScope(scopes, scopeName);
-      if (scope) {
-        for (let i = 0; i < 10; i++) {
-          const selectedGroup = groups[Math.floor(Math.random() * groups.length)];
-          bindings.push({
-            kind: 'ScopeDashboardBinding',
-            apiVersion: 'scope.grafana.app/v0alpha1',
-            metadata: {
-              name: 'scope',
-              resourceVersion: '1',
-              creationTimestamp: 'stamp',
-            },
-            spec: {
-              dashboard: (scope.dashboardUid ?? 'edediimbjhdz4b') + '/' + Math.random().toString(),
-              scope: scopeName,
-            },
-            status: {
-              dashboardTitle: (scope.dashboardTitle ?? 'A tall dashboard') + (selectedGroup[0] ?? 'U') + i,
-              ...(selectedGroup !== '' && { groups: [selectedGroup] }),
-            },
-          });
-        }
-      }
-    }
-
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        apiVersion: 'scope.grafana.app/v0alpha1',
-        items: bindings,
-      }),
-    });
-  });
-
-  // Route for scope navigations
-  await page.route(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_navigations*`, async (route) => {
-    const url = new URL(route.request().url());
-    const scopeParams = url.searchParams.getAll('scope');
-
-    // Find scopes by name
-    const findScope = (items: TestScope[], name: string): TestScope | undefined => {
-      for (const item of items) {
-        if (`scope-${item.name}` === name) {
-          return item;
-        }
-        if (item.children) {
-          const found = findScope(item.children, name);
-          if (found) {
-            return found;
-          }
-        }
-      }
-      return undefined;
-    };
-
-    const navigations: Array<{
-      kind: string;
-      apiVersion: string;
-      metadata: { name: string; resourceVersion: string; creationTimestamp: string };
-      spec: { url: string; scope: string };
-      status: { title: string };
-    }> = [];
-
-    for (const scopeName of scopeParams) {
-      const scope = findScope(scopes, scopeName);
-      if (scope?.dashboardUid && scope.addLinks) {
-        navigations.push({
-          kind: 'ScopeNavigation',
-          apiVersion: 'scope.grafana.app/v0alpha1',
-          metadata: {
-            name: `${scopeName}-nav`,
-            resourceVersion: '1',
-            creationTimestamp: 'stamp',
-          },
-          spec: {
-            url: `/d/${scope.dashboardUid}`,
-            scope: scopeName,
-          },
-          status: {
-            title: scope.dashboardTitle ?? scope.title,
-          },
-        });
-      }
-    }
-
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        apiVersion: 'scope.grafana.app/v0alpha1',
-        items: navigations,
-      }),
-    });
-  });
+  // Note: Dashboard bindings and navigations routes are set up dynamically in applyScopes()
+  // with scope-specific URL patterns to avoid cache issues. They are not set up here.
 }
 
 /**
@@ -317,51 +199,276 @@ export type TestScope = {
 type ScopeDashboardBinding = Resource<ScopeDashboardBindingSpec, ScopeDashboardBindingStatus, 'ScopeDashboardBinding'>;
 
 /**
+ * Sets up a route for scope node children requests and waits for the response.
+ */
+export async function scopeNodeChildrenRequest(
+  page: Page,
+  scopes: TestScope[],
+  parentName?: string
+): Promise<Response> {
+  await page.route(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_node_children*`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        apiVersion: 'scope.grafana.app/v0alpha1',
+        kind: 'FindScopeNodeChildrenResults',
+        metadata: {},
+        items: scopes.map((scope) => ({
+          kind: 'ScopeNode',
+          apiVersion: 'scope.grafana.app/v0alpha1',
+          metadata: {
+            name: `${scope.name}`,
+            namespace: 'default',
+          },
+          spec: {
+            title: scope.title,
+            description: scope.title,
+            disableMultiSelect: scope.disableMultiSelect ?? false,
+            nodeType: scope.children ? 'container' : 'leaf',
+            ...(parentName && {
+              parentName,
+            }),
+            ...((scope.addLinks || scope.children) && {
+              linkType: 'scope',
+              linkId: `scope-${scope.name}`,
+            }),
+            ...(scope.redirectPath && {
+              redirectPath: scope.redirectPath,
+            }),
+          },
+        })),
+      }),
+    });
+  });
+
+  return page.waitForResponse((response) => response.url().includes(`/find/scope_node_children`));
+}
+
+/**
  * Opens the scopes selector dropdown and waits for the tree to load.
  */
 export async function openScopesSelector(page: Page, scopes?: TestScope[]) {
-  await page.getByTestId('scopes-selector-input').click();
-  // Wait for tree items to appear (works whether data comes from network or cache)
-  await page.waitForSelector('[data-testid^="scopes-tree-"]', { timeout: 5000 });
+  const click = async () => await page.getByTestId('scopes-selector-input').click();
+
+  if (!scopes || USE_LIVE_DATA) {
+    await click();
+    return;
+  }
+
+  const responsePromise = scopeNodeChildrenRequest(page, scopes);
+
+  await click();
+  await responsePromise;
 }
 
 /**
  * Expands a scope tree node and waits for children to load.
  */
 export async function expandScopesSelection(page: Page, parentScope: string, scopes?: TestScope[]) {
-  const expandButton = page.getByTestId(`scopes-tree-${parentScope}-expand`);
-  await expandButton.click();
-  // Wait for the node to be expanded (aria-expanded="true") or for new children to appear
-  await page.waitForFunction(
-    (selector) => {
-      const button = document.querySelector(selector);
-      return button?.getAttribute('aria-expanded') === 'true';
-    },
-    `[data-testid="scopes-tree-${parentScope}-expand"]`,
-    { timeout: 5000 }
+  const click = async () => await page.getByTestId(`scopes-tree-${parentScope}-expand`).click();
+
+  if (!scopes || USE_LIVE_DATA) {
+    await click();
+    return;
+  }
+
+  const responsePromise = scopeNodeChildrenRequest(page, scopes, parentScope);
+
+  await click();
+  await responsePromise;
+}
+
+/**
+ * Sets up a route for individual scope requests and waits for the response.
+ */
+export async function scopeSelectRequest(page: Page, selectedScope: TestScope): Promise<Response> {
+  await page.route(
+    `**/apis/scope.grafana.app/v0alpha1/namespaces/*/scopes/scope-${selectedScope.name}`,
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          kind: 'Scope',
+          apiVersion: 'scope.grafana.app/v0alpha1',
+          metadata: {
+            name: `scope-${selectedScope.name}`,
+            namespace: 'default',
+          },
+          spec: {
+            title: selectedScope.title,
+            description: '',
+            filters: selectedScope.filters,
+            category: selectedScope.category,
+            type: selectedScope.type,
+          },
+        }),
+      });
+    }
   );
+
+  return page.waitForResponse((response) => response.url().includes(`/scopes/scope-${selectedScope.name}`));
 }
 
 /**
  * Selects a scope in the tree.
  */
 export async function selectScope(page: Page, scopeName: string, selectedScope?: TestScope) {
-  const element = page.locator(
-    `[data-testid="scopes-tree-${scopeName}-checkbox"], [data-testid="scopes-tree-${scopeName}-radio"], [data-testid="scopes-tree-${scopeName}-link"]`
-  );
-  await element.scrollIntoViewIfNeeded();
-  await element.click({ force: true });
+  const click = async () => {
+    const element = page.locator(
+      `[data-testid="scopes-tree-${scopeName}-checkbox"], [data-testid="scopes-tree-${scopeName}-radio"], [data-testid="scopes-tree-${scopeName}-link"]`
+    );
+    await element.scrollIntoViewIfNeeded();
+    await element.click({ force: true });
+  };
+
+  if (!selectedScope || USE_LIVE_DATA) {
+    await click();
+    return;
+  }
+
+  const responsePromise = scopeSelectRequest(page, selectedScope);
+
+  await click();
+  await responsePromise;
 }
 
 /**
  * Applies the selected scopes and waits for the selector to close and page to settle.
+ * Sets up routes dynamically with scope-specific URL patterns to avoid cache issues.
  */
 export async function applyScopes(page: Page, scopes?: TestScope[]) {
-  await page.getByTestId('scopes-selector-apply').scrollIntoViewIfNeeded();
-  await page.getByTestId('scopes-selector-apply').click({ force: true });
+  const click = async () => {
+    await page.getByTestId('scopes-selector-apply').scrollIntoViewIfNeeded();
+    await page.getByTestId('scopes-selector-apply').click({ force: true });
+  };
+
+  if (!scopes || USE_LIVE_DATA) {
+    await click();
+    // Wait for the apply button to disappear (selector closed)
+    await page.waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 });
+    // Wait for any resulting API calls (dashboard bindings, etc.) to complete
+    await page.waitForLoadState('networkidle');
+    return;
+  }
+
+  const dashboardBindingsUrl: string =
+    '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_dashboard_bindings?' +
+    scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
+
+  const scopeNavigationsUrl: string =
+    '**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_navigations?' +
+    scopes.map((scope) => `scope=scope-${scope.name}`).join('&');
+
+  const groups: string[] = ['Most relevant', 'Dashboards', 'Something else', ''];
+
+  // Mock scope_dashboard_bindings endpoint with scope-specific URL pattern
+  await page.route(dashboardBindingsUrl, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        apiVersion: 'scope.grafana.app/v0alpha1',
+        items: scopes.flatMap((scope) => {
+          const bindings: ScopeDashboardBinding[] = [];
+
+          for (let i = 0; i < 10; i++) {
+            const selectedGroup = groups[Math.floor(Math.random() * groups.length)];
+            bindings.push({
+              kind: 'ScopeDashboardBinding',
+              apiVersion: 'scope.grafana.app/v0alpha1',
+              metadata: {
+                name: 'scope',
+                resourceVersion: '1',
+                creationTimestamp: 'stamp',
+              },
+              spec: {
+                dashboard: (scope.dashboardUid ?? 'edediimbjhdz4b') + '/' + Math.random().toString(),
+                scope: `scope-${scope.name}`,
+              },
+              status: {
+                dashboardTitle: (scope.dashboardTitle ?? 'A tall dashboard') + (selectedGroup[0] ?? 'U') + i,
+                ...(selectedGroup !== '' && { groups: [selectedGroup] }),
+              },
+            });
+          }
+
+          // make sure there is always a binding with no group
+          bindings.push({
+            kind: 'ScopeDashboardBinding',
+            apiVersion: 'scope.grafana.app/v0alpha1',
+            metadata: {
+              name: 'scope',
+              resourceVersion: '1',
+              creationTimestamp: 'stamp',
+            },
+            spec: {
+              dashboard: (scope.dashboardUid ?? 'edediimbjhdz4b') + '/' + Math.random().toString(),
+              scope: `scope-${scope.name}`,
+            },
+            status: {
+              dashboardTitle: (scope.dashboardTitle ?? 'A tall dashboard') + 'U123',
+            },
+          });
+          return bindings;
+        }),
+      }),
+    });
+  });
+
+  // Mock scope_navigations endpoint with scope-specific URL pattern
+  await page.route(scopeNavigationsUrl, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        apiVersion: 'scope.grafana.app/v0alpha1',
+        items: scopes.flatMap((scope) => {
+          const navigations: Array<{
+            kind: string;
+            apiVersion: string;
+            metadata: { name: string; resourceVersion: string; creationTimestamp: string };
+            spec: { url: string; scope: string };
+            status: { title: string };
+          }> = [];
+
+          // Create a scope navigation if dashboardUid is provided
+          if (scope.dashboardUid && scope.addLinks) {
+            navigations.push({
+              kind: 'ScopeNavigation',
+              apiVersion: 'scope.grafana.app/v0alpha1',
+              metadata: {
+                name: `scope-${scope.name}-nav`,
+                resourceVersion: '1',
+                creationTimestamp: 'stamp',
+              },
+              spec: {
+                url: `/d/${scope.dashboardUid}`,
+                scope: `scope-${scope.name}`,
+              },
+              status: {
+                title: scope.dashboardTitle ?? scope.title,
+              },
+            });
+          }
+
+          return navigations;
+        }),
+      }),
+    });
+  });
+
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/find/scope_dashboard_bindings`) || response.url().includes(`/find/scope_navigations`)
+  );
+
+  await click();
+  await responsePromise;
   // Wait for the apply button to disappear (selector closed)
   await page.waitForSelector('[data-testid="scopes-selector-apply"]', { state: 'hidden', timeout: 5000 });
-  // Wait for any resulting API calls (dashboard bindings, etc.) to complete
+  // Wait for any resulting API calls to complete
   await page.waitForLoadState('networkidle');
 }
 

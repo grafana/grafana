@@ -1,7 +1,8 @@
+import { Page } from '@playwright/test';
+
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { clearScopeApiCache, clearScopeRoutes, setScopes, setupScopeRoutes } from '../utils/scope-helpers';
-import { testScopes } from '../utils/scopes';
+import { setScopes } from '../utils/scope-helpers';
 
 import {
   clickFirstScopesDashboard,
@@ -40,11 +41,6 @@ test.describe(
       const scopesDashboardsSearchInput = getScopesDashboardsSearchInput(page);
       const adhocFilterPills = getAdHocFilterPills(page);
       const groupByValues = getGroupByValues(page);
-
-      // Set up routes before any navigation (only for mocked mode)
-      if (!USE_LIVE_DATA) {
-        await setupScopeRoutes(page, testScopes());
-      }
 
       await test.step('1.Search dashboard', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
@@ -98,13 +94,6 @@ test.describe(
         await test.step(
           '3.See filter/groupby selection persisting when navigating from dashboard to dashboard - ' + db,
           async () => {
-            // Re-setup routes with the correct dashboard binding for this step
-            if (!USE_LIVE_DATA) {
-              await clearScopeRoutes(page);
-              await clearScopeApiCache(page); // Clear RTK Query cache so new mock data is fetched
-              await setupScopeRoutes(page, testScopes({ title: 'CUJ Dashboard 3', uid: NAVIGATE_TO }));
-            }
-
             const dashboardPage = await gotoDashboardPage({ uid: db });
 
             await setScopes(page, { title: 'CUJ Dashboard 3', uid: NAVIGATE_TO });
@@ -149,13 +138,6 @@ test.describe(
       }
 
       await test.step('4.Unmodified default filters and groupBy keys are not propagated to a different dashboard', async () => {
-        // Re-setup routes with the correct dashboard binding for this step
-        if (!USE_LIVE_DATA) {
-          await clearScopeRoutes(page);
-          await clearScopeApiCache(page); // Clear RTK Query cache so new mock data is fetched
-          await setupScopeRoutes(page, testScopes({ title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' }));
-        }
-
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await setScopes(page, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
