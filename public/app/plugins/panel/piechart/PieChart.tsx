@@ -16,6 +16,7 @@ import {
   GrafanaTheme2,
   DataHoverClearEvent,
   DataHoverEvent,
+  LinkModel,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -28,7 +29,7 @@ import {
   SeriesTable,
   usePanelContext,
 } from '@grafana/ui';
-import { getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
+import { type DataLinksContextMenuApi, getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
 
 import { PieChartType, PieChartLabels } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
@@ -195,114 +196,15 @@ interface SliceProps {
   fill: string;
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
   tooltipOptions: VizTooltipOptions;
-  openMenu?: (event: React.MouseEvent<SVGElement>) => void;
+  openMenu?: DataLinksContextMenuApi['openMenu'];
   outerRadius: number;
   innerRadius: number;
 }
 
 interface PieSliceWithDataLinksProps extends Omit<SliceProps, 'openMenu'> {
-  links: () => any[];
+  links: () => LinkModel[];
 }
 
-interface PieChartDataLinksContextMenuProps {
-  links: () => any[];
-  children: (props: { openMenu?: React.MouseEventHandler<HTMLOrSVGElement> }) => React.ReactElement;
-  elementRef: React.RefObject<SVGGElement>;
-  publishDataHoverEvent: (raw: Event | React.SyntheticEvent) => void;
-  publishDataHoverClearEvent: (raw: Event | React.SyntheticEvent) => void;
-}
-
-/**
- * Wrapper around DataLinksContextMenu that adds event handlers to the anchor element
- * when it's created (for single-link case). This keeps event handler logic co-located
- * with component creation rather than in a separate useEffect in PieSlice.
- */
-function PieChartDataLinksContextMenu({
-  links,
-  children,
-  elementRef,
-  publishDataHoverEvent,
-  publishDataHoverClearEvent,
-}: PieChartDataLinksContextMenuProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-
-    const parentAnchor = container.querySelector('a');
-    if (!parentAnchor) {
-      return;
-    }
-
-    // Ensure anchor is focusable
-    if (parentAnchor.getAttribute('tabIndex') === '-1') {
-      parentAnchor.removeAttribute('tabIndex');
-    }
-
-    // Ensure SVG element is not focusable
-    if (elementRef.current) {
-      const ensureNotFocusable = () => {
-        if (elementRef.current && elementRef.current.getAttribute('tabIndex') !== '-1') {
-          elementRef.current.setAttribute('tabIndex', '-1');
-        }
-      };
-      ensureNotFocusable();
-      setTimeout(ensureNotFocusable, 0);
-    }
-
-    const handleAnchorFocus = (e: FocusEvent) => {
-      publishDataHoverEvent(e);
-    };
-
-    const handleAnchorBlur = (e: FocusEvent) => {
-      publishDataHoverClearEvent(e);
-    };
-
-    const handleAnchorKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Tab' && elementRef.current) {
-        elementRef.current.setAttribute('tabIndex', '-1');
-      }
-    };
-
-    const handleAnchorFocusIn = (e: FocusEvent) => {
-      const target = e.target;
-      if (target instanceof Element && target !== parentAnchor && parentAnchor.contains(target)) {
-        e.stopPropagation();
-        parentAnchor.focus();
-      }
-    };
-
-    const handleFocusIn = (e: FocusEvent) => {
-      const target = e.target;
-      if (target === parentAnchor || (target instanceof Node && parentAnchor.contains(target))) {
-        handleAnchorFocus(e);
-      }
-    };
-
-    parentAnchor.addEventListener('focus', handleAnchorFocus, true);
-    parentAnchor.addEventListener('focusin', handleFocusIn, true);
-    parentAnchor.addEventListener('blur', handleAnchorBlur, true);
-    parentAnchor.addEventListener('keydown', handleAnchorKeyDown, true);
-    parentAnchor.addEventListener('focusin', handleAnchorFocusIn, true);
-
-    return () => {
-      parentAnchor.removeEventListener('focus', handleAnchorFocus, true);
-      parentAnchor.removeEventListener('focusin', handleFocusIn, true);
-      parentAnchor.removeEventListener('blur', handleAnchorBlur, true);
-      parentAnchor.removeEventListener('keydown', handleAnchorKeyDown, true);
-      parentAnchor.removeEventListener('focusin', handleAnchorFocusIn, true);
-    };
-  }, [elementRef, publishDataHoverEvent, publishDataHoverClearEvent]);
-
-  return (
-    <div ref={containerRef} style={{ display: 'contents' }}>
-      <DataLinksContextMenu links={links}>{children}</DataLinksContextMenu>
-    </div>
-  );
-}
 
 /**
  * Component that wraps PieSlice with DataLinksContextMenu and handles event listeners
@@ -352,12 +254,70 @@ function PieSliceWithDataLinks({
     [eventBus, arc.data.display.title]
   );
 
+  const anchorRef = useRef<HTMLAnchorElement | null>(null);
+
+  // Use ref callback to get anchor element directly when it's created (single-link case)
+  const handleAnchorRef = useCallback(
+    (element: HTMLAnchorElement | null) => {
+      anchorRef.current = element;
+
+      if (element) {
+        // Ensure anchor is focusable
+        if (element.getAttribute('tabIndex') === '-1') {
+          element.removeAttribute('tabIndex');
+        }
+
+        // Ensure SVG element is not focusable
+        if (elementRef.current) {
+          const ensureNotFocusable = () => {
+            if (elementRef.current && elementRef.current.getAttribute('tabIndex') !== '-1') {
+              elementRef.current.setAttribute('tabIndex', '-1');
+            }
+          };
+          ensureNotFocusable();
+          setTimeout(ensureNotFocusable, 0);
+        }
+      }
+    },
+    [elementRef]
+  );
+
+  const handleAnchorFocus = useCallback(
+    (event: React.FocusEvent<HTMLAnchorElement>) => {
+      publishDataHoverEvent(event.nativeEvent);
+    },
+    [publishDataHoverEvent]
+  );
+
+  const handleAnchorBlur = useCallback(
+    (event: React.FocusEvent<HTMLAnchorElement>) => {
+      publishDataHoverClearEvent(event.nativeEvent);
+    },
+    [publishDataHoverClearEvent]
+  );
+
+  const handleAnchorKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLAnchorElement>) => {
+      if (event.key === 'Tab' && elementRef.current) {
+        elementRef.current.setAttribute('tabIndex', '-1');
+      }
+      // Handle focusin events - redirect focus to anchor if a child receives focus
+      const target = event.target;
+      if (target instanceof Element && target !== anchorRef.current && anchorRef.current?.contains(target)) {
+        event.stopPropagation();
+        anchorRef.current?.focus();
+      }
+    },
+    [elementRef]
+  );
+
   return (
-    <PieChartDataLinksContextMenu
+    <DataLinksContextMenu
       links={links}
-      elementRef={elementRef}
-      publishDataHoverEvent={publishDataHoverEvent}
-      publishDataHoverClearEvent={publishDataHoverClearEvent}
+      anchorRef={handleAnchorRef}
+      onAnchorFocus={handleAnchorFocus}
+      onAnchorBlur={handleAnchorBlur}
+      onAnchorKeyDown={handleAnchorKeyDown}
     >
       {(api) => (
         <PieSlice
@@ -367,14 +327,13 @@ function PieSliceWithDataLinks({
           pie={pie}
           fill={fill}
           openMenu={api.openMenu}
-          getMenuPosition={api.getMenuPosition}
           tooltipOptions={tooltipOptions}
           outerRadius={outerRadius}
           innerRadius={innerRadius}
           elementRef={elementRef}
         />
       )}
-    </PieChartDataLinksContextMenu>
+    </DataLinksContextMenu>
   );
 }
 
@@ -383,7 +342,6 @@ function PieSlice({
   pie,
   highlightState,
   openMenu,
-  getMenuPosition,
   fill,
   tooltip,
   tooltipOptions,
@@ -460,12 +418,13 @@ function PieSlice({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<SVGGElement>) => {
-      if (hasDataLinks && event.key === 'Enter') {
+      if (hasDataLinks && (event.key === 'Enter' || event.key === ' ')) {
         event.preventDefault();
         event.stopPropagation();
 
-        if (elementRef.current && openMenu) {
+        if (openMenu && elementRef.current) {
           // Calculate position from arc center for pie chart
+          // For keyboard events, we need to calculate the center of the arc
           const arcCenterAngle = (arc.startAngle + arc.endAngle) / 2;
           const arcRadius = (outerRadius + innerRadius) / 2;
           const centerX = Math.cos(arcCenterAngle - Math.PI / 2) * arcRadius;
@@ -480,21 +439,16 @@ function PieSlice({
               y: svgRect.top + svgRect.height / 2 + centerY + window.scrollY,
             };
 
-            // Use the updated API that supports position objects
-            if (typeof openMenu === 'function' && openMenu.length === 1) {
-              openMenu(position);
-            } else if (getMenuPosition && elementRef.current) {
-              // Fallback: use getMenuPosition if available
-              const calculatedPosition = getMenuPosition(elementRef.current);
-              if (typeof openMenu === 'function') {
-                openMenu(calculatedPosition);
-              }
-            }
+            // Use the updated API with position object
+            openMenu(position);
+          } else {
+            // Fallback: use the event's currentTarget (SVG element)
+            openMenu(event as React.SyntheticEvent<HTMLElement | SVGElement>);
           }
         }
       }
     },
-    [hasDataLinks, openMenu, getMenuPosition, arc, outerRadius, innerRadius]
+    [hasDataLinks, openMenu, arc, outerRadius, innerRadius]
   );
 
   const handleFocus = useCallback(

@@ -3,9 +3,23 @@ import * as React from 'react';
 
 import { ContextMenu } from '../ContextMenu/ContextMenu';
 
+/**
+ * This callback supports several ways to provide the x/y coordinates to open the context menu:
+ * - MouseEvent, to open the menu at the mouse position
+ * - SyntheticEvent, to open the menu at the location of the currentTarget element for non-mouse events
+ * - An object with x and y coordinates to open the menu at a specific position, for other use-cases
+ */
+export type WithContextMenuOpenMenuCallback = (
+  e:
+    | React.MouseEvent<HTMLElement | SVGElement>
+    | React.SyntheticEvent<HTMLElement | SVGElement>
+    | { x: number; y: number }
+    | undefined
+) => void;
+
 export interface WithContextMenuProps {
   /** Menu item trigger that accepts openMenu prop */
-  children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
+  children: (props: { openMenu: WithContextMenuOpenMenuCallback }) => JSX.Element;
   /** A function that returns an array of menu items */
   renderMenuItems: () => React.ReactNode;
   /** On menu open focus the first element */
@@ -15,39 +29,43 @@ export interface WithContextMenuProps {
 export const WithContextMenu = ({ children, renderMenuItems, focusOnOpen = true }: WithContextMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  
-  const handleOpenMenu = React.useCallback(
-    (e: React.MouseEvent<HTMLElement> | { x: number; y: number } | HTMLElement | SVGElement) => {
-      setIsMenuOpen(true);
-      if (e && 'pageX' in e && 'pageY' in e) {
-        // Mouse event
-        setMenuPosition({
-          x: e.pageX,
-          y: e.pageY - window.scrollY,
-        });
-      } else if (e && 'x' in e && 'y' in e && typeof e.x === 'number') {
-        // Position object
-        setMenuPosition({
-          x: e.x,
-          y: e.y,
-        });
-      } else if (e && 'getBoundingClientRect' in e) {
-        // Element - calculate position from element's bounding rect
-        const rect = (e as HTMLElement | SVGElement).getBoundingClientRect();
+
+  const handleOpenMenu: WithContextMenuOpenMenuCallback = React.useCallback((e) => {
+    if (!e) {
+      return;
+    }
+
+    setIsMenuOpen(true);
+
+    if ('pageX' in e && 'pageY' in e) {
+      // Mouse event
+      setMenuPosition({
+        x: e.pageX,
+        y: e.pageY - window.scrollY,
+      });
+    } else if ('currentTarget' in e) {
+      // SyntheticEvent - calculate position from element's bounding rect
+      const rect = e.currentTarget.getBoundingClientRect();
+      if (rect) {
         setMenuPosition({
           x: rect.left + rect.width / 2,
           y: rect.top + rect.height / 2 + window.scrollY,
         });
       }
-    },
-    []
-  );
+    } else if ('x' in e && 'y' in e && typeof e.x === 'number') {
+      // Position object
+      setMenuPosition({
+        x: e.x,
+        y: e.y,
+      });
+    } else if (process.env.NODE_ENV !== 'production') {
+      console.warn('WithContextMenu: Unsupported parameter to openMenu:', e);
+    }
+  }, []);
 
   return (
     <>
-      {children({
-        openMenu: handleOpenMenu as React.MouseEventHandler<HTMLElement>,
-      })}
+      {children({ openMenu: handleOpenMenu })}
 
       {isMenuOpen && (
         <ContextMenu
