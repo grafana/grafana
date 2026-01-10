@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/services/authz"
 )
@@ -98,6 +99,17 @@ func New(cfg app.Config) (app.App, error) {
 						// Use "unknown" for action since top-level informer errors don't have specific actions
 						metrics.RecordReconcileFailure("unknown", "informer")
 					}
+				},
+			},
+		},
+		ManagedKinds: []simple.AppManagedKind{
+			{
+				Kind: v0alpha1.UserKind(),
+				CustomRoutes: simple.AppCustomRouteHandlers{
+					{
+						Path:   "teams",
+						Method: "GET",
+					}: GetTeamsHandler,
 				},
 			},
 		},
