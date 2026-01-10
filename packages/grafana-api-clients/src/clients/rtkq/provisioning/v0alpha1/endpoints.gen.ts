@@ -1452,7 +1452,7 @@ export type ConnectionSecure = {
   /** PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back */
   privateKey?: InlineSecureValue;
   /** Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back */
-  webhook?: InlineSecureValue;
+  token?: InlineSecureValue;
 };
 export type BitbucketConnectionConfig = {
   /** App client ID */
