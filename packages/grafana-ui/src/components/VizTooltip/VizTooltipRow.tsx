@@ -212,6 +212,7 @@ export const VizTooltipRow = ({
             colorIndicator={colorIndicator}
             position={ColorIndicatorPosition.Trailing}
             lineStyle={lineStyle}
+            isHollow={isHiddenFromViz}
           />
         )}
       </div>

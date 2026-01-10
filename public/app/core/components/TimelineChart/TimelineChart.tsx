@@ -7,7 +7,7 @@ import { UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafan
 import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
 import { getXAxisConfig } from '../TimeSeries/utils';
 
-import { preparePlotConfigBuilder, TimelineMode } from './utils';
+import { getSeriesAndRest, preparePlotConfigBuilder, TimelineMode } from './utils';
 
 /**
  * @alpha
@@ -56,8 +56,10 @@ export const TimelineChart = (props: TimelineProps) => {
 
   const prepConfig = useCallback(
     (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
+      const { seriesFrame } = getSeriesAndRest(alignedFrame);
+
       return preparePlotConfigBuilder({
-        frame: alignedFrame,
+        frame: seriesFrame,
         getTimeRange,
         allFrames: frames,
         ...props,
@@ -66,7 +68,7 @@ export const TimelineChart = (props: TimelineProps) => {
         timeZones: Array.isArray(timeZone) ? timeZone : [timeZone],
 
         // When there is only one row, use the full space
-        rowHeight: alignedFrame.fields.length > 2 ? rowHeight : 1,
+        rowHeight: seriesFrame.fields.length > 2 ? rowHeight : 1,
         getValueColor: getValueColor,
 
         hoverMulti: tooltip?.mode === TooltipDisplayMode.Multi,
@@ -105,7 +107,6 @@ export const TimelineChart = (props: TimelineProps) => {
       prepConfig={prepConfig}
       propsToDiff={propsToDiff}
       renderLegend={renderLegend}
-      omitHideFromViz={true}
     />
   );
 };
