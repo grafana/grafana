@@ -84,7 +84,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 					idInt, _ := strconv.ParseInt(id, 10, 64)
 					w.WriteHeader(http.StatusOK)
 					installation := github.Installation{
-						ID:   &idInt,
+						ID: &idInt,
 					}
 					_, _ = w.Write(ghmock.MustMarshal(installation))
 				}),
