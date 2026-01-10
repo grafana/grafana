@@ -20,8 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	pluginassets2 "github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -77,10 +79,23 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		pluginsSettings = &pluginsettings.FakePluginSettings{}
 	}
 
+	pluginReg := registry.ProvideService()
+	for _, plugin := range pluginStore.Plugins(t.Context()) {
+		p := asRegistryPlugin(plugin)
+		if plugin.Parent != nil {
+			pp, ok := pluginStore.Plugin(t.Context(), plugin.Parent.ID)
+			require.True(t, ok)
+			p.Parent = asRegistryPlugin(pp)
+		}
+		err := pluginReg.Add(t.Context(), p)
+		require.NoError(t, err)
+	}
+
 	var pluginsAssets = passets
 	if pluginsAssets == nil {
 		sig := signature.ProvideService(pluginsCfg, statickey.New())
-		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, sig, pluginStore)
+		pluginAssetsService := pluginassets2.ProvideService(pluginsCfg, pluginsCDN, sig, pluginReg)
+		pluginsAssets = pluginassets.NewService(pluginAssetsService)
 	}
 
 	hs := &HTTPServer{
@@ -246,11 +261,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	}
 
 	tests := []struct {
-		desc           string
-		pluginStore    func() pluginstore.Store
-		pluginSettings func() pluginsettings.Service
-		pluginAssets   func() *pluginassets.Service
-		expected       settings
+		desc              string
+		pluginStore       func() pluginstore.Store
+		pluginSettingsSvc func() pluginsettings.Service
+		pluginAssets      func() *pluginassets.Service
+		cfg               func() *setting.Cfg
+		expected          settings
 	}{
 		{
 			desc: "disabled app with preload",
@@ -271,12 +287,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", false),
 				}
 			},
-			pluginAssets: newPluginAssets(),
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -309,12 +325,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssets(),
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -347,12 +363,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssets(),
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -383,18 +399,21 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssetsWithConfig(&config.PluginManagementCfg{
-				PluginSettings: map[string]map[string]string{
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				cfg.PluginSettings = map[string]map[string]string{
 					"test-app": {
-						pluginassets.CreatePluginVersionCfgKey: pluginassets.CreatePluginVersionScriptSupportEnabled,
+						pluginassets2.CreatePluginVersionCfgKey: pluginassets2.CreatePluginVersionScriptSupportEnabled,
 					},
-				},
-			}),
+				}
+				return cfg
+			},
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -428,12 +447,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					},
 				}
 			},
-			pluginSettings: func() pluginsettings.Service {
+			pluginSettingsSvc: func() pluginsettings.Service {
 				return &pluginsettings.FakePluginSettings{
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssets(),
+			pluginAssets: func() *pluginassets.Service { return nil },
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -450,8 +469,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings(), test.pluginAssets())
+			if test.cfg == nil {
+				test.cfg = func() *setting.Cfg {
+					return setting.NewCfg()
+				}
+			}
+			m, _ := setupTestEnvironment(t, test.cfg(), featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettingsSvc(), test.pluginAssets())
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()
@@ -708,12 +731,22 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 	}
 }
 
-func newPluginAssets() func() *pluginassets.Service {
-	return newPluginAssetsWithConfig(&config.PluginManagementCfg{})
-}
-
-func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *pluginassets.Service {
-	return func() *pluginassets.Service {
-		return pluginassets.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), signature.ProvideService(pCfg, statickey.New()), &pluginstore.FakePluginStore{})
+func asRegistryPlugin(ps pluginstore.Plugin) *plugins.Plugin {
+	return &plugins.Plugin{
+		JSONData:        ps.JSONData,
+		FS:              ps.FS,
+		Class:           ps.Class,
+		IncludedInAppID: ps.IncludedInAppID,
+		DefaultNavURL:   ps.DefaultNavURL,
+		Pinned:          ps.Pinned,
+		Signature:       ps.Signature,
+		SignatureType:   ps.SignatureType,
+		SignatureOrg:    ps.SignatureOrg,
+		Error:           ps.Error,
+		Module:          ps.Module,
+		BaseURL:         ps.BaseURL,
+		Angular:         ps.Angular,
+		ExternalService: ps.ExternalService,
+		Translations:    ps.Translations,
 	}
 }

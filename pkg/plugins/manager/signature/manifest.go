@@ -14,7 +14,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
@@ -46,15 +45,39 @@ type PluginManifest struct {
 	Files   map[string]string `json:"files"`
 
 	// V2 supported fields
-	ManifestVersion string                `json:"manifestVersion"`
+	ManifestVer     string                `json:"manifestVersion"`
 	SignatureType   plugins.SignatureType `json:"signatureType"`
 	SignedByOrg     string                `json:"signedByOrg"`
 	SignedByOrgName string                `json:"signedByOrgName"`
 	RootURLs        []string              `json:"rootUrls"`
 }
 
-func (m *PluginManifest) IsV2() bool {
-	return strings.HasPrefix(m.ManifestVersion, "2.")
+// ManifestVersion returns the manifest version string, implementing plugins.PluginManifest interface.
+func (m *PluginManifest) ManifestVersion() string {
+	return m.ManifestVer
+}
+
+// FileHashes returns the manifest file hashes map (file path -> SHA256 hash), implementing plugins.PluginManifest interface.
+func (m *PluginManifest) FileHashes() map[string]string {
+	return m.Files
+}
+
+// Identity returns plugin identification information, implementing plugins.PluginManifest interface.
+func (m *PluginManifest) PluginIdentity() plugins.PluginManifestPluginIdentity {
+	return plugins.PluginManifestPluginIdentity{
+		PluginID: m.Plugin,
+		Version:  m.Version,
+	}
+}
+
+// SignatureInfo returns signature-related metadata, implementing plugins.PluginManifest interface.
+func (m *PluginManifest) SignatureInfo() plugins.PluginManifestSignatureInfo {
+	return plugins.PluginManifestSignatureInfo{
+		Type:            m.SignatureType,
+		SignedByOrg:     m.SignedByOrg,
+		SignedByOrgName: m.SignedByOrgName,
+		RootURLs:        m.RootURLs,
+	}
 }
 
 type Signature struct {
@@ -111,7 +134,8 @@ var ErrSignatureTypeUnsigned = errors.New("plugin is unsigned")
 
 // ReadPluginManifestFromFS reads the plugin manifest from the provided plugins.FS.
 // If the manifest is not found, it will return an error wrapping ErrSignatureTypeUnsigned.
-func (s *Signature) ReadPluginManifestFromFS(ctx context.Context, pfs plugins.FS) (*PluginManifest, error) {
+// This implements plugins.PluginManifestReader interface.
+func (s *Signature) ReadPluginManifestFromFS(ctx context.Context, pfs plugins.FS) (plugins.PluginManifest, error) {
 	f, err := pfs.Open("MANIFEST.txt")
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
@@ -159,7 +183,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		}, nil
 	}
 
-	if !manifest.IsV2() {
+	if !plugins.IsManifestV2(manifest.ManifestVersion()) {
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
 		}, nil
@@ -176,32 +200,34 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		}, nil
 	}
 
+	identity := manifest.PluginIdentity()
 	// Make sure the versions all match
-	if manifest.Plugin != plugin.JSONData.ID || manifest.Version != plugin.JSONData.Info.Version {
-		s.log.Debug("Plugin signature invalid because ID or Version mismatch", "pluginId", plugin.JSONData.ID, "manifestPluginId", manifest.Plugin, "pluginVersion", plugin.JSONData.Info.Version, "manifestPluginVersion", manifest.Version)
+	if identity.PluginID != plugin.JSONData.ID || identity.Version != plugin.JSONData.Info.Version {
+		s.log.Debug("Plugin signature invalid because ID or Version mismatch", "pluginId", plugin.JSONData.ID, "manifestPluginId", identity.PluginID, "pluginVersion", plugin.JSONData.Info.Version, "manifestPluginVersion", identity.Version)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusModified,
 		}, nil
 	}
 
+	sigInfo := manifest.SignatureInfo()
 	// Validate that plugin is running within defined root URLs
-	if len(manifest.RootURLs) > 0 {
-		if match, err := urlMatch(manifest.RootURLs, s.cfg.GrafanaAppURL, manifest.SignatureType); err != nil {
-			s.log.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", manifest.RootURLs)
+	if len(sigInfo.RootURLs) > 0 {
+		if match, err := urlMatch(sigInfo.RootURLs, s.cfg.GrafanaAppURL, sigInfo.Type); err != nil {
+			s.log.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", sigInfo.RootURLs)
 			return plugins.Signature{}, err
 		} else if !match {
 			s.log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.JSONData.ID,
-				"appUrl", s.cfg.GrafanaAppURL, "rootUrls", manifest.RootURLs)
+				"appUrl", s.cfg.GrafanaAppURL, "rootUrls", sigInfo.RootURLs)
 			return plugins.Signature{
 				Status: plugins.SignatureStatusInvalid,
 			}, nil
 		}
 	}
 
-	manifestFiles := make(map[string]struct{}, len(manifest.Files))
+	manifestFiles := make(map[string]struct{}, len(manifest.FileHashes()))
 
 	// Verify the manifest contents
-	for p, hash := range manifest.Files {
+	for p, hash := range manifest.FileHashes() {
 		err = verifyHash(s.log, plugin, p, hash)
 		if err != nil {
 			s.log.Debug("Plugin signature invalid", "pluginId", plugin.JSONData.ID, "error", err)
@@ -242,8 +268,8 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	s.log.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
 	return plugins.Signature{
 		Status:     plugins.SignatureStatusValid,
-		Type:       manifest.SignatureType,
-		SigningOrg: manifest.SignedByOrgName,
+		Type:       sigInfo.Type,
+		SigningOrg: sigInfo.SignedByOrgName,
 	}, nil
 }
 
@@ -337,7 +363,7 @@ func (s *Signature) validateManifest(ctx context.Context, m PluginManifest, bloc
 	if len(m.Files) == 0 {
 		return invalidFieldErr{field: "files"}
 	}
-	if m.IsV2() {
+	if plugins.IsManifestV2(m.ManifestVer) {
 		if len(m.SignedByOrg) == 0 {
 			return invalidFieldErr{field: "signedByOrg"}
 		}
