@@ -2610,11 +2610,6 @@
       "count": 2
     }
   },
-  "public/app/features/explore/hooks/useStateSync/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/spec/helper/setup.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
