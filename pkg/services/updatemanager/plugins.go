@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/codes"
 
@@ -47,6 +49,7 @@ type PluginsService struct {
 	updateStrategy  string
 
 	features featuremgmt.FeatureToggles
+	cfg      *setting.Cfg
 }
 
 func ProvidePluginsService(cfg *setting.Cfg,
@@ -89,6 +92,7 @@ func ProvidePluginsService(cfg *setting.Cfg,
 		features:         features,
 		updateChecker:    updateChecker,
 		updateStrategy:   cfg.PluginUpdateStrategy,
+		cfg:              cfg,
 	}, nil
 }
 
@@ -136,7 +140,7 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 // checkAndUpdate checks for updates and applies them if auto-update is enabled.
 func (s *PluginsService) checkAndUpdate(ctx context.Context) {
 	s.instrumentedCheckForUpdates(ctx)
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
+	if s.checkFlagPluginsAutoUpdate(ctx) {
 		s.updateAll(ctx)
 	}
 }
@@ -218,6 +222,17 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 	return nil
 }
 
+func (s *PluginsService) checkFlagPluginsAutoUpdate(ctx context.Context) bool {
+	ns := request.GetNamespaceMapper(s.cfg)(1)
+	ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, ns)
+	flag, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
+	if err != nil {
+		s.log.Error("flag evaluation error", "flag", featuremgmt.FlagPluginsAutoUpdate, "error", err)
+	}
+
+	return flag.Value
+}
+
 func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugin, gcomVersion string) bool {
 	if !s.updateChecker.IsUpdatable(ctx, plugin) {
 		return false
@@ -227,7 +242,7 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 		return false
 	}
 
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx)) {
+	if s.checkFlagPluginsAutoUpdate(ctx) {
 		return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, s.updateStrategy == setting.PluginUpdateStrategyMinor)
 	}
 
