@@ -198,5 +198,10 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		m[backend.AppClientSecret] = externalService.ClientSecret
 	}
 
+	if pluginID == "tempo" {
+		const liveClientQueueMaxSize = "GF_LIVE_CLIENT_QUEUE_MAX_SIZE"
+		m[liveClientQueueMaxSize] = strconv.Itoa(s.cfg.LiveClientQueueMaxSize)
+	}
+
 	return m
 }
