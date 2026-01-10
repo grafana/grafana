@@ -44,12 +44,12 @@ func FormatDownsampleInterval(ms int64) string {
 	return strconv.FormatInt(days, 10) + "d"
 }
 
-func BuildMetric(query backend.DataQuery) map[string]any {
+func BuildMetric(query backend.DataQuery) (map[string]any, error) {
 	metric := make(map[string]any)
 
 	var model QueryModel
 	if err := json.Unmarshal(query.JSON, &model); err != nil {
-		return nil
+		return nil, err
 	}
 
 	// Setting metric and aggregator
@@ -126,7 +126,7 @@ func BuildMetric(query backend.DataQuery) map[string]any {
 		metric["explicitTags"] = true
 	}
 
-	return metric
+	return metric, nil
 }
 
 func CreateRequest(ctx context.Context, logger log.Logger, dsInfo *datasourceInfo, data OpenTsdbQuery) (*http.Request, error) {
