@@ -11,6 +11,7 @@ import {
   getFieldConfigMinMax,
   getFieldDisplayProcessor,
   getOptimalSegmentCount,
+  getValuePercentageForValue,
 } from './utils';
 
 export interface RadialBarSegmentedProps {
@@ -18,6 +19,8 @@ export interface RadialBarSegmentedProps {
   dimensions: RadialGaugeDimensions;
   angleRange: number;
   startAngle: number;
+  startValueAngle: number;
+  endValueAngle: number;
   glowFilter?: string;
   segmentCount: number;
   segmentSpacing: number;
@@ -36,22 +39,24 @@ export const RadialBarSegmented = memo(
     segmentCount,
     segmentSpacing,
     shape,
+    startValueAngle,
+    endValueAngle,
   }: RadialBarSegmentedProps) => {
     const theme = useTheme2();
     const segments: React.ReactNode[] = [];
     const segmentCountAdjusted = getOptimalSegmentCount(dimensions, segmentSpacing, segmentCount, angleRange);
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
-    const value = fieldDisplay.display.numeric;
     const angleBetweenSegments = getAngleBetweenSegments(segmentSpacing, segmentCount, angleRange);
     const segmentArcLengthDeg = angleRange / segmentCountAdjusted - angleBetweenSegments;
     const displayProcessor = getFieldDisplayProcessor(fieldDisplay);
 
     for (let i = 0; i < segmentCountAdjusted; i++) {
-      const angleValue = min + ((max - min) / segmentCountAdjusted) * i;
-      const segmentAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
-      const segmentColor =
-        angleValue >= value ? theme.colors.border.medium : (displayProcessor(angleValue).color ?? FALLBACK_COLOR);
-      const colorProps = angleValue < value && gradient ? { gradient } : { color: segmentColor };
+      const value = min + ((max - min) / segmentCountAdjusted) * i;
+      const segmentAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
+      const isTrack = segmentAngle < startValueAngle || segmentAngle >= startValueAngle + endValueAngle;
+      const segmentStartAngle = startAngle + (angleRange / segmentCountAdjusted) * i + 0.01;
+      const segmentColor = isTrack ? theme.colors.border.medium : (displayProcessor(value).color ?? FALLBACK_COLOR);
+      const colorProps = !isTrack && gradient ? { gradient } : { color: segmentColor };
 
       segments.push(
         <RadialArcPath
@@ -61,7 +66,7 @@ export const RadialBarSegmented = memo(
           fieldDisplay={fieldDisplay}
           glowFilter={glowFilter}
           shape={shape}
-          startAngle={segmentAngle}
+          startAngle={segmentStartAngle}
           {...colorProps}
         />
       );

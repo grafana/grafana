@@ -29,6 +29,7 @@ export interface Options extends common.SingleStatBaseOptions {
   barWidthFactor: number;
   effects: GaugePanelEffects;
   endpointMarker?: ('point' | 'glow' | 'none');
+  neutral?: number;
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');
