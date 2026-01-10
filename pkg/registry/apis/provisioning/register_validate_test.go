@@ -28,7 +28,7 @@ func TestAPIBuilderValidate(t *testing.T) {
 		repoFactory:         factory,
 		allowedTargets:      []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder},
 		allowImageRendering: false,
-		validator:           validator,
+		repoValidator:       validator,
 	}
 
 	t.Run("min sync interval is less than 10 seconds", func(t *testing.T) {

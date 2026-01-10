@@ -2,12 +2,12 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -18,7 +18,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 
 	helper := runGrafana(t)
 	ctx := context.Background()
-	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	// Create a connection for testing
 	connection := &unstructured.Unstructured{Object: map[string]any{
@@ -37,13 +37,12 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 		},
 		"secure": map[string]any{
 			"privateKey": map[string]any{
-				"create": "someSecret",
+				"create": privateKeyBase64,
 			},
 		},
 	}}
-
-	_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-	require.NoError(t, err, "failed to create connection")
+	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	require.NoError(t, err)
 
 	t.Run("admin can GET connection status", func(t *testing.T) {
 		var statusCode int
