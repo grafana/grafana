@@ -82,10 +82,15 @@ export const defaultStyleConfig = Object.freeze({
   },
   textConfig: {
     fontSize: 12,
+    fontWeight: 'normal',
+    fontStyle: 'normal',
     textAlign: TextAlignment.Center,
     textBaseline: TextBaseline.Middle,
     offsetX: 0,
     offsetY: 0,
+    outlineColor: '#000',
+    outlineWidth: 0,
+    textTransform: 'none',
   },
   rotation: {
     fixed: 0,
@@ -106,10 +111,15 @@ export interface SymbolAlign {
  */
 export interface TextStyleConfig {
   fontSize?: number;
+  fontWeight?: string;
+  fontStyle?: string;
   offsetX?: number;
   offsetY?: number;
   textAlign?: TextAlignment;
   textBaseline?: TextBaseline;
+  outlineColor?: string;
+  outlineWidth?: number;
+  textTransform?: string;
 }
 
 // Applying the config to real data gives the values
