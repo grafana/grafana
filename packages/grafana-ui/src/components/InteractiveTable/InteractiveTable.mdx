@@ -128,7 +128,15 @@ const columns: Array<Column<TableData>> = [
   // React element header
   {
     id: 'checkbox',
-    header: <Checkbox />,
+    header: (
+      <>
+        <label htmlFor="select-all" className="sr-only">
+          Select all rows
+        </label>
+        <Checkbox id="select-all" />
+      </>
+    ),
+    cell: () => <Checkbox aria-label="Select row" />,
   },
 
   // Function renderer header

@@ -264,8 +264,15 @@ describe('InteractiveTable', () => {
       const columns: Array<Column<TableData>> = [
         {
           id: 'checkbox',
-          header: <Checkbox data-testid="header-checkbox" />,
-          cell: () => <Checkbox data-testid="cell-checkbox" />,
+          header: (
+            <>
+              <label htmlFor="select-all" className="sr-only">
+                Select all rows
+              </label>
+              <Checkbox id="select-all" data-testid="header-checkbox" />
+            </>
+          ),
+          cell: () => <Checkbox data-testid="cell-checkbox" aria-label="Select row" />,
         },
       ];
       const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
@@ -273,6 +280,9 @@ describe('InteractiveTable', () => {
 
       expect(screen.getByTestId('header-checkbox')).toBeInTheDocument();
       expect(screen.getByTestId('cell-checkbox')).toBeInTheDocument();
+      expect(screen.getByLabelText('Select all rows')).toBeInTheDocument();
+      expect(screen.getByLabelText('Select row')).toBeInTheDocument();
+      expect(screen.getByText('Select all rows')).toBeInTheDocument();
     });
 
     it('should render function renderer headers', () => {
@@ -299,8 +309,15 @@ describe('InteractiveTable', () => {
       const columns: Array<Column<TableData>> = [
         {
           id: 'checkbox',
-          header: <Checkbox data-testid="header-checkbox" />,
-          cell: () => <Checkbox />,
+          header: (
+            <>
+              <label htmlFor="select-all" className="sr-only">
+                Select all rows
+              </label>
+              <Checkbox id="select-all" data-testid="header-checkbox" />
+            </>
+          ),
+          cell: () => <Checkbox aria-label="Select row" />,
         },
         {
           id: 'id',

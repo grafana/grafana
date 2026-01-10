@@ -3,13 +3,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { CellProps } from 'react-table';
 
 import { LinkButton } from '../Button/Button';
-import { Field } from '../Forms/Field';
-import { Input } from '../Input/Input';
 import { Checkbox } from '../Forms/Checkbox';
+import { Field } from '../Forms/Field';
+import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
+import { Text } from '../Text/Text';
 
 import { FetchDataArgs, InteractiveTable, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
-import { Icon } from '../Icon/Icon';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
 
@@ -305,8 +306,15 @@ export const WithCustomHeader: TableStoryObj = {
       // React element header
       {
         id: 'checkbox',
-        header: <Checkbox />,
-        cell: () => <Checkbox />,
+        header: (
+          <>
+            <label htmlFor="select-all" className="sr-only">
+              Select all rows
+            </label>
+            <Checkbox id="select-all" />
+          </>
+        ),
+        cell: () => <Checkbox aria-label="Select row" />,
       },
       // Function renderer header
       {
@@ -314,7 +322,7 @@ export const WithCustomHeader: TableStoryObj = {
         header: () => (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
             <Icon name="user" size="sm" />
-            <span>First Name</span>
+            <Text element="span">First Name</Text>
           </span>
         ),
         sortType: 'string',
