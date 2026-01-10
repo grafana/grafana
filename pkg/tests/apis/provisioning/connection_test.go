@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"testing"
 	"time"
 
@@ -57,41 +56,10 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
-	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
-		var appID int64 = 123456
-		appSlug := "appSlug"
-		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
-		connectionFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatchHandler(
-				ghmock.GetApp,
-				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.WriteHeader(http.StatusOK)
-					app := github.App{
-						ID:   &appID,
-						Slug: &appSlug,
-					}
-					_, _ = w.Write(ghmock.MustMarshal(app))
-				}),
-			),
-			ghmock.WithRequestMatchHandler(
-				ghmock.GetAppInstallationsByInstallationId,
-				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					id := r.URL.Query().Get("installation_id")
-					idInt, _ := strconv.ParseInt(id, 10, 64)
-					w.WriteHeader(http.StatusOK)
-					installation := github.Installation{
-						ID: &idInt,
-					}
-					_, _ = w.Write(ghmock.MustMarshal(installation))
-				}),
-			),
-		)
-		helper.SetGithubConnectionFactory(connectionFactory)
-
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
@@ -113,7 +81,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			},
 		}}
 		// CREATE
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		_, err := helper.CreateGithubConnection(t, ctx, connection)
 		require.NoError(t, err, "failed to create resource")
 
 		// READ
@@ -159,7 +127,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 				},
 			},
 		}}
-		res, err := helper.Connections.Resource.Update(ctx, updatedConnection, metav1.UpdateOptions{})
+		res, err := helper.UpdateGithubConnection(t, ctx, updatedConnection)
 		require.NoError(t, err, "failed to update resource")
 		spec = res.Object["spec"].(map[string]any)
 		require.Contains(t, spec, "github")
@@ -344,7 +312,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		assert.Contains(t, err.Error(), "clientSecret is forbidden in GitHub connection")
 	})
 
-	t.Run("should fail when github is unavailable", func(t *testing.T) {
+	t.Run("should fail when type is github and github API is unavailable", func(t *testing.T) {
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
 			ghmock.WithRequestMatchHandler(
@@ -387,7 +355,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		assert.Contains(t, err.Error(), "spec.token: Internal error: github is unavailable")
 	})
 
-	t.Run("should fail when returned app ID doesn't match given one", func(t *testing.T) {
+	t.Run("should fail when type is github and returned app ID doesn't match given one", func(t *testing.T) {
 		var appID int64 = 123455
 		appSlug := "appSlug"
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
@@ -439,6 +407,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
 	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	t.Run("health check gets updated after initial creation", func(t *testing.T) {
 		// Create a connection using unstructured (like other connection tests)
@@ -458,12 +427,12 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
-					"create": "test-private-key",
+					"create": privateKeyBase64,
 				},
 			},
 		}}
 
-		createdUnstructured, err := helper.Connections.Resource.Create(ctx, connUnstructured, metav1.CreateOptions{})
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
@@ -512,12 +481,12 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
-					"create": "test-private-key-2",
+					"create": privateKeyBase64,
 				},
 			},
 		}}
 
-		createdUnstructured, err := helper.Connections.Resource.Create(ctx, connUnstructured, metav1.CreateOptions{})
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
@@ -549,7 +518,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		updatedUnstructured := latestUnstructured.DeepCopy()
 		githubSpec := updatedUnstructured.Object["spec"].(map[string]any)["github"].(map[string]any)
 		githubSpec["appID"] = "99999"
-		_, err = helper.Connections.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
+		_, err = helper.UpdateGithubConnection(t, ctx, updatedUnstructured)
 		require.NoError(t, err)
 
 		// Wait for reconciliation after spec change

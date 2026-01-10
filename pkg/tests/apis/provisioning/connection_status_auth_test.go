@@ -41,7 +41,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 			},
 		},
 	}}
-	err := helper.CreateGithubConnection(t, ctx, connection)
+	_, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err)
 
 	t.Run("admin can GET connection status", func(t *testing.T) {

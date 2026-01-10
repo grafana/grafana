@@ -43,7 +43,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 			},
 		},
 	}}
-	err := helper.CreateGithubConnection(t, ctx, connection)
+	_, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err)
 
 	t.Run("endpoint returns not implemented", func(t *testing.T) {
@@ -151,7 +151,7 @@ func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T
 			},
 		},
 	}}
-	err := helper.CreateGithubConnection(t, ctx, connection)
+	_, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err)
 
 	t.Run("verify ExternalRepositoryList type exists in API", func(t *testing.T) {
