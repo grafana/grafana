@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { ComponentProps, useCallback, useId, useMemo } from 'react';
+import React, { ComponentProps, useId, useMemo } from 'react';
+import { Subject } from 'rxjs';
 
 import { t } from '@grafana/i18n';
 
@@ -14,11 +14,10 @@ import { Portal } from '../Portal/Portal';
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
-import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import { getComboboxStyles } from './getComboboxStyles';
 import { ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
-import { isNewGroup } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -154,7 +153,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const {
     options: filteredOptions,
-    groupStartIndices,
     updateOptions,
     asyncLoading,
     asyncError,
@@ -195,49 +193,34 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const styles = useStyles2(getComboboxStyles);
 
+  // Maybe need to move this to ComboboxList? Is this actually necessary? it's only expanding the returned
+  // array of indexes, and that's already expanded by the overscan setting
   // Injects the group header for the first rendered item into the range to render.
   // Accepts the range that useVirtualizer wants to render, and then returns indexes
   // to actually render.
-  const rangeExtractor = useCallback(
-    (range: Range) => {
-      const startIndex = Math.max(0, range.startIndex - range.overscan);
-      const endIndex = Math.min(filteredOptions.length - 1, range.endIndex + range.overscan);
-      const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
+  // const rangeExtractor = useCallback(
+  //   (range: Range) => {
+  //     const startIndex = Math.max(0, range.startIndex - range.overscan);
+  //     const endIndex = Math.min(filteredOptions.length - 1, range.endIndex + range.overscan);
+  //     const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
 
-      // If the first item doesn't have a group, no need to find a header for it
-      const firstDisplayedOption = filteredOptions[rangeToReturn[0]];
-      if (firstDisplayedOption?.group) {
-        const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
-        if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
-          rangeToReturn.unshift(groupStartIndex);
-        }
-      }
+  //     // If the first item doesn't have a group, no need to find a header for it
+  //     const firstDisplayedOption = filteredOptions[rangeToReturn[0]];
+  //     if (firstDisplayedOption?.group) {
+  //       const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
+  //       if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
+  //         rangeToReturn.unshift(groupStartIndex);
+  //       }
+  //     }
 
-      return rangeToReturn;
-    },
-    [filteredOptions, groupStartIndices]
-  );
+  //     return rangeToReturn;
+  //   },
+  //   [filteredOptions, groupStartIndices]
+  // );
 
-  const rowVirtualizer = useVirtualizer({
-    count: filteredOptions.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) => {
-      const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
-      const hasDescription = 'description' in filteredOptions[index];
-      const hasGroup = 'group' in filteredOptions[index];
-
-      let itemHeight = MENU_OPTION_HEIGHT;
-      if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
-      }
-      if (firstGroupItem && hasGroup) {
-        itemHeight += MENU_OPTION_HEIGHT;
-      }
-      return itemHeight;
-    },
-    overscan: VIRTUAL_OVERSCAN_ITEMS,
-    rangeExtractor,
-  });
+  const scrollToIndexObservable = useMemo(() => {
+    return new Subject<number>();
+  }, []);
 
   const {
     isOpen,
@@ -290,7 +273,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
     onHighlightedIndexChange: ({ highlightedIndex, type }) => {
       if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-        rowVirtualizer.scrollToIndex(highlightedIndex);
+        scrollToIndexObservable.next(highlightedIndex);
       }
     },
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
@@ -418,6 +401,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               scrollRef={scrollRef}
               getItemProps={getItemProps}
               error={asyncError}
+              scrollToIndexObservable={scrollToIndexObservable}
             />
           )}
         </div>

@@ -1,12 +1,13 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
 import { Combobox, ComboboxProps } from './Combobox';
 import mdx from './Combobox.mdx';
+import { MENU_ITEM_FONT_SIZE, MENU_ITEM_LINE_HEIGHT, MENU_OPTION_HEIGHT } from './getComboboxStyles';
 import { fakeSearchAPI, generateGroupingOptions, generateOptions } from './storyUtils';
 import { ComboboxOption } from './types';
 
@@ -157,6 +158,65 @@ export const ManyOptions: Story = {
     const { onChange, ...rest } = args;
     return (
       <Field label="Test input" description={options.length ? 'Input with a few options' : 'Preparing options...'}>
+        <Combobox
+          {...rest}
+          {...dynamicArgs}
+          options={options}
+          onChange={(value: ComboboxOption | null) => {
+            setArgs({ value: value?.value || null });
+            onChangeAction(value);
+          }}
+        />
+      </Field>
+    );
+  },
+};
+
+export const NodeOptions: Story = {
+  args: {
+    numberOfOptions: 350,
+    options: undefined,
+    value: undefined,
+  },
+  parameters: {
+    docs: {
+      source: {
+        // necessary to keep storybook from choking on the option generation code
+        type: 'code',
+      },
+    },
+  },
+  render: ({ numberOfOptions, ...args }: PropsAndCustomArgs) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [dynamicArgs, setArgs] = useArgs();
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const options: ComboboxOption[] = useMemo(() => {
+      return Array.from({ length: numberOfOptions }, (_, index) => {
+        const label =
+          index % 2 === 0
+            ? {
+                node: (
+                  <>
+                    {`Option ${index}`}
+                    <br />
+                    (Even)
+                  </>
+                ),
+                text: `Option ${index}`,
+                size: MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT + MENU_OPTION_HEIGHT,
+              }
+            : `Option ${index}`;
+        return {
+          label,
+          value: String(index),
+        };
+      });
+    }, [numberOfOptions]);
+
+    const { onChange, ...rest } = args;
+    return (
+      <Field label="Test input" description="Input with some custom rendered options">
         <Combobox
           {...rest}
           {...dynamicArgs}

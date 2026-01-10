@@ -6,6 +6,11 @@ export function itemToString<T extends string | number>(item?: ComboboxOption<T>
   if (item == null) {
     return '';
   }
+
+  if (typeof item.label === 'object') {
+    return item.label.text;
+  }
+
   return item.label ?? item.value.toString();
 }
 

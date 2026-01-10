@@ -30,9 +30,9 @@ export function useMeasureMulti<T extends string | number>(
     let currWidth = 0;
     for (let i = 0; i < selectedItems.length; i++) {
       // Measure text width and add size of padding, separator and close button
-      currWidth +=
-        measureText(selectedItems[i].label || '', FONT_SIZE).width +
-        (disabled ? EXTRA_PILL_DISABLED_SIZE : EXTRA_PILL_SIZE);
+      const item = selectedItems[i];
+      const text = typeof item.label === 'object' ? item.label.text : item.label || '';
+      currWidth += measureText(text, FONT_SIZE).width + (disabled ? EXTRA_PILL_DISABLED_SIZE : EXTRA_PILL_SIZE);
       if (currWidth > maxWidth) {
         // If there is no space for that item, show the current number of items,
         // but always show at least 1 item. Cap at maximum number of items.
