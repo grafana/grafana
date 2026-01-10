@@ -83,6 +83,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	correlations2 "github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -830,7 +831,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, alertingHistorianAppInstaller, quotasAppInstaller)
+	dashValidatorAppInstaller, err := dashvalidator.RegisterAppInstaller(service15, plugincontextProvider)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, alertingHistorianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
@@ -1492,7 +1497,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, alertingHistorianAppInstaller, quotasAppInstaller)
+	dashValidatorAppInstaller, err := dashvalidator.RegisterAppInstaller(service15, plugincontextProvider)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, alertingHistorianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
