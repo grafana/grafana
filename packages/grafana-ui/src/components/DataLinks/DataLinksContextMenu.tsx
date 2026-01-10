@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
-import { WithContextMenu } from '../ContextMenu/WithContextMenu';
+import { WithContextMenu, WithContextMenuOpenMenuCallback } from '../ContextMenu/WithContextMenu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
 
@@ -19,14 +19,28 @@ export interface DataLinksContextMenuProps {
    * @deprecated Will be removed in a future version
    */
   actions?: ActionModel[];
+  /** Optional ref callback for the anchor element (single-link case) */
+  anchorRef?: (element: HTMLAnchorElement | null) => void;
+  /** Optional event handlers for the anchor element (single-link case) */
+  onAnchorFocus?: (event: React.FocusEvent<HTMLAnchorElement>) => void;
+  onAnchorBlur?: (event: React.FocusEvent<HTMLAnchorElement>) => void;
+  onAnchorKeyDown?: (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
 }
 
 export interface DataLinksContextMenuApi {
-  openMenu?: React.MouseEventHandler<HTMLOrSVGElement>;
+  openMenu?: WithContextMenuOpenMenuCallback;
   targetClassName?: string;
 }
 
-export const DataLinksContextMenu = ({ children, links, style }: DataLinksContextMenuProps) => {
+export const DataLinksContextMenu = ({
+  children,
+  links,
+  style,
+  anchorRef,
+  onAnchorFocus,
+  onAnchorBlur,
+  onAnchorKeyDown,
+}: DataLinksContextMenuProps) => {
   const styles = useStyles2(getStyles);
 
   const itemsGroup: MenuItemsGroup[] = [
@@ -70,12 +84,16 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
     const linkModel = links()[0];
     return (
       <a
+        ref={anchorRef || undefined}
         href={linkModel.href}
         onClick={linkModel.onClick}
         target={linkModel.target}
         title={linkModel.title}
         style={{ ...style, overflow: 'hidden', display: 'flex' }}
         data-testid={selectors.components.DataLinksContextMenu.singleLink}
+        onFocus={onAnchorFocus}
+        onBlur={onAnchorBlur}
+        onKeyDown={onAnchorKeyDown}
       >
         {children({})}
       </a>
