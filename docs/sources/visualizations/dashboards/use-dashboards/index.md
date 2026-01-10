@@ -32,33 +32,37 @@ image_maps:
         content: |
           **Dashboard folder**
 
-          When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/).
+          Click the dashboard folder name to access the folder and perform other [folder management tasks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/).
       - x_coord: 17
         y_coord: 5
         content: |
           **Dashboard title**
           
-          You can create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
+          Create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
       - x_coord: 23
         y_coord: 5
         content: |
           **Mark as favorite**
           
-          Mark the dashboard as one of your favorites so it's included in your list of **Starred** dashboards in the main menu.
+          Mark the dashboard as one of your favorites to include it in your list of **Starred** dashboards in the main menu.
       - x_coord: 27
         y_coord: 5
         content: |
           **Public label**
           
-          When you [share a dashboard externally](ref:shared-dashboards), it's marked with the **Public** label.
+          [Externally shared dashboards](ref:shared-dashboards), it's marked with the **Public** label.
       - x_coord: 84
         y_coord: 5
         content: |
           **Grafana Assistant**
+
+          [Grafana Assistant](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/introduction/) combines large language models with Grafana-integrated tools.
       - x_coord: 89
         y_coord: 5
         content: |
           **Invite new users**
+
+          Invite new users to join your Grafana organization.
       - x_coord: 32
         y_coord: 23
         content: |
@@ -76,39 +80,38 @@ image_maps:
         content: |
           **Current dashboard time range and time picker**
           
-          Click to select [relative time range](#relative-time-range) options and set custom [absolute time ranges](#absolute-time-range).
-           - You can change the **Timezone** and **Fiscal year** settings from the time range controls by clicking the **Change time settings** button.
-           - Time settings are saved on a per-dashboard basis.
+          Select [relative time range](#relative-time-range) options or set custom [absolute time ranges](#absolute-time-range).
+          You can also change the **Timezone** and **Fiscal year** settings by clicking the **Change time settings** button.
       - x_coord: 67
         y_coord: 29
         content: |
           **Time range zoom out**
           
-          Click to zoom out the time range. Learn more about how to use [common time range controls](#common-time-range-controls).
+          Click to zoom out the time range. Learn more about [common time range controls](#common-time-range-controls).
       - x_coord: 73
         y_coord: 29
         content: |
           **Refresh dashboard**
           
-          Click to immediately trigger queries and refresh dashboard data.
+          Trigger queries and refresh dashboard data.
       - x_coord: 78
         y_coord: 29
         content: |
           **Auto refresh control**
           
-          Click to select a dashboard auto refresh time interval.
+          Select a dashboard auto refresh time interval.
       - x_coord: 85
         y_coord: 29
         content: |
           **Share dashboard**
           
-          Access several [dashboard sharing](ref:sharing) options.
+          Access [dashboard sharing](ref:sharing) options.
       - x_coord: 98
         y_coord: 22.5
         content: |
           **Edit**
           
-          Click to leave view-only mode and enter edit mode, where you can make changes directly to the dashboard and access dashboard settings, as well as several panel editing functions.
+          Enter edit mode, so you can make changes and access dashboard settings.
       - x_coord: 98
         y_coord: 31
         content: |
@@ -119,35 +122,39 @@ image_maps:
         y_coord: 39
         content: |
           **Content outline**
+
+          The outline provides a tree-like structure that lets you quickly navigate the dashboard.
       - x_coord: 98
         y_coord: 47
         content: |
           **Dashboard insights**
           
-          Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics](ref:dashboard-analytics).
-      - x_coord: 11
+          View [dashboard analytics](ref:dashboard-analytics) including information about users, activity, query counts.
+      - x_coord: 11.5
         y_coord: 30
         content: |
-          **Grouping title (row)**
+          **Row title**
 
-          A row one grouping option within a dashboard that groups panels together.
+          A row is one way you can [group panels](https://grafana.com/docs/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-groupings) in a dashboard.
       - x_coord: 20
         y_coord: 36
         content: |
-          **Grouping title (tab)**
+          **Tab title**
 
-          A tab one grouping option within a dashboard that groups panels together.
+          A tab is one way you can [group panels](https://grafana.com/docs/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-groupings) in a dashboard.
       - x_coord: 21
         y_coord: 45
         content: |
           **Panel title**
+
+          Create your own panel titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
       - x_coord: 27
         y_coord: 63
         content: |
           **Dashboard panel**
           
           The [panel](ref:panel-overview) is the primary building block of a dashboard.
-      - x_coord: 19
+      - x_coord: 19.5
         y_coord: 91
         content: |
           **Panel legend**
@@ -227,6 +234,7 @@ This topic provides an overview of dashboard features and shortcuts, and describ
 The dashboard user interface provides a number of features that you can use to customize the presentation of your data.
 
 The following image and descriptions highlight all dashboard features.
+Hover your cursor over a number to display information about the dashboard element.
 
 {{< image-map key="annotated-dashboard" >}}
 
