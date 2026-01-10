@@ -701,6 +701,8 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
+		// Allow all connection types for testing.
+		ProvisioningConnectionTypes: []string{"github", "gitlab", "bitbucket"},
 	}
 	for _, o := range options {
 		o(&opts)
@@ -980,7 +982,33 @@ func (h *provisioningTestHelper) CreateGithubConnection(
 	t *testing.T,
 	ctx context.Context,
 	connection *unstructured.Unstructured,
-) error {
+) (*unstructured.Unstructured, error) {
+	t.Helper()
+
+	err := h.setGithubClient(t, connection)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+}
+
+func (h *provisioningTestHelper) UpdateGithubConnection(
+	t *testing.T,
+	ctx context.Context,
+	connection *unstructured.Unstructured,
+) (*unstructured.Unstructured, error) {
+	t.Helper()
+
+	err := h.setGithubClient(t, connection)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+}
+
+func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstructured.Unstructured) error {
 	t.Helper()
 
 	objectSpec := connection.Object["spec"].(map[string]interface{})
@@ -1020,8 +1048,7 @@ func (h *provisioningTestHelper) CreateGithubConnection(
 	)
 	h.SetGithubConnectionFactory(connectionFactory)
 
-	_, err = h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
-	return err
+	return nil
 }
 
 func postHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
