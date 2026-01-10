@@ -66,6 +66,8 @@ func NewSimulationEngine() (*SimulationEngine, error) {
 		newFlightSimInfo,
 		newSinewaveInfo,
 		newTankSimInfo,
+		newNBodySimInfo,
+		newGrot3dSimInfo,
 	}
 
 	for _, init := range initializers {

@@ -27,7 +27,8 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const simQuery = query.sim ?? ({} as SimulationQuery);
   const simKey = simQuery.key ?? {};
   // keep track of updated config state to pass down to form
-  const [cfgValue, setCfgValue] = useState<Config>({});
+  // Initialize from saved query config if it exists
+  const [cfgValue, setCfgValue] = useState<Config>(simQuery.config ?? {});
 
   // This only changes once
   const info = useAsync(async () => {
@@ -50,6 +51,19 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   }, [info.value, simKey?.type]);
 
   let config = useAsync(async () => {
+    // If we have a saved config in the query, use that and update server
+    if (simQuery.config && Object.keys(simQuery.config).length > 0) {
+      let path = simKey.type + '/' + simKey.tick + 'hz';
+      if (simKey.uid) {
+        path += '/' + simKey.uid;
+      }
+      // Update server with saved config
+      ds.postResource<SimInfo>('sim/' + path, simQuery.config).then((res) => {
+        setCfgValue(res.config);
+      });
+      return simQuery.config;
+    }
+    // Otherwise fetch default config from server
     let path = simKey.type + '/' + simKey.tick + 'hz';
     if (simKey.uid) {
       path += '/' + simKey.uid;
@@ -57,7 +71,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     let config = (await ds.getResource('sim/' + path))?.config;
     setCfgValue(config.value);
     return config;
-  }, [simKey.type, simKey.tick, simKey.uid]);
+  }, [simKey.type, simKey.tick, simKey.uid, simQuery.config]);
 
   const onUpdateKey = (key: typeof simQuery.key) => {
     onChange({ ...query, sim: { ...simQuery, key } });
@@ -90,6 +104,9 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
+    // Save config to query JSON so it persists in dashboard
+    onChange({ ...query, sim: { ...simQuery, config } });
+    // Also update server state
     ds.postResource<SimInfo>('sim/' + path, config).then((res) => {
       setCfgValue(res.config);
     });

@@ -69,6 +69,7 @@ const isTargetAlreadySelected = (selectedTarget: HTMLElement, scene: Scene) => {
 };
 
 // Generate HTML element divs for every canvas element to configure selecto / moveable
+// Excludes elements with field-driven positions (they can't be moved in editor)
 const generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
   let targetElements: HTMLDivElement[] = [];
 
@@ -77,7 +78,10 @@ const generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] 
     const currentElement = stack.shift();
 
     if (currentElement && currentElement.div) {
-      targetElements.push(currentElement.div);
+      // Skip elements with field-driven positions - they can't be moved
+      if (!currentElement.hasFieldDrivenPosition()) {
+        targetElements.push(currentElement.div);
+      }
     }
 
     const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];

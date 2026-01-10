@@ -35,15 +35,15 @@ composableKinds: PanelCfg: {
 				} @cuetsy(kind="interface")
 
 				Placement: {
-					top?:    float64
-					left?:   float64
-					right?:  float64
-					bottom?: float64
+				top?:    ui.PositionDimensionConfig
+				left?:   ui.PositionDimensionConfig
+				right?:  ui.PositionDimensionConfig
+				bottom?: ui.PositionDimensionConfig
 
-					width?:  float64
-					height?: float64
+				width?:  ui.PositionDimensionConfig
+				height?: ui.PositionDimensionConfig
 
-					rotation?: float64
+				rotation?: ui.ScalarDimensionConfig
 				} @cuetsy(kind="interface")
 
 				BackgroundImageSize: "original" | "contain" | "cover" | "fill" | "tile" @cuetsy(kind="enum", memberNames="Original|Contain|Cover|Fill|Tile")

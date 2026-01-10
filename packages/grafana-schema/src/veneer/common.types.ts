@@ -29,6 +29,10 @@ export interface ScalarDimensionConfig extends BaseDimensionConfig<number>, Omit
 
 export interface TextDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.TextDimensionConfig, 'fixed'> {}
 
+export interface PositionDimensionConfig
+  extends BaseDimensionConfig<number>,
+    Omit<raw.PositionDimensionConfig, 'fixed'> {}
+
 export interface ColorDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.ColorDimensionConfig, 'fixed'> {}
 
 export interface ColorDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.ColorDimensionConfig, 'fixed'> {}
