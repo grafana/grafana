@@ -8050,10 +8050,12 @@
         "label-layer": "Layer"
       },
       "label-data": "Data",
+      "label-refit-on-data-change": "Re-fit on data change",
       "last-only-editor-fragment": {
         "label-padding": "Padding",
         "tooltip-padding-relative-percent-beyond-extent": "Sets padding in relative percent beyond data extent"
-      }
+      },
+      "tooltip-refit-on-data-change": "When enabled, the map will re-fit to data extent on every data update. Useful for tracking moving assets or fleets."
     },
     "frame-multi-selection-editor": {
       "placeholder-change-filter": "Change filter"
