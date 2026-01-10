@@ -154,7 +154,6 @@ func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T
 	err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err)
 
-
 	t.Run("verify ExternalRepositoryList type exists in API", func(t *testing.T) {
 		// Verify the type is registered and can be instantiated
 		list := &provisioning.ExternalRepositoryList{}
