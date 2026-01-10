@@ -31,8 +31,9 @@ A dashboard in Grafana is represented by a JSON object, which stores metadata of
 
 To view the JSON of a dashboard:
 
-1. Click **Edit** in the top-right corner of the dashboard.
-1. Click **Settings**.
+1. Click **Edit**.
+1. In the sidebar, click the **Dashboard options** icon.
+1. In the edit pane, click **Settings**.
 1. Go to the **JSON Model** tab.
 1. When you've finished viewing the JSON, click **Back to dashboard** and **Exit edit**.
 
