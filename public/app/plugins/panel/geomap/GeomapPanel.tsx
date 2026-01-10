@@ -72,6 +72,7 @@ export class GeomapPanel extends Component<Props, State> {
   mapDiv?: HTMLDivElement;
   layers: MapLayerState[] = [];
   readonly byName = new Map<string, MapLayerState>();
+  private isInitialDataLoad = true;
 
   constructor(props: Props) {
     super(props);
@@ -213,13 +214,20 @@ export class GeomapPanel extends Component<Props, State> {
       }
     }
 
-    // Because data changed, check map view and change if needed (data fit)
+    // Check if we should fit the view based on data
     const v = centerPointRegistry.getIfExists(this.props.options.view.id);
     if (v && v.id === MapCenterID.Fit) {
-      const view = this.initMapView(this.props.options.view);
+      // Check the refitOnDataChange option (default false for new behavior)
+      const shouldRefit = this.props.options.view.refitOnDataChange ?? false;
 
-      if (this.map && view) {
-        this.map.setView(view);
+      // Fit on initial load OR if refitOnDataChange is enabled
+      if (this.isInitialDataLoad || shouldRefit) {
+        const view = this.initMapView(this.props.options.view);
+
+        if (this.map && view) {
+          this.map.setView(view);
+        }
+        this.isInitialDataLoad = false;
       }
     }
 
@@ -236,6 +244,8 @@ export class GeomapPanel extends Component<Props, State> {
     if (this.map) {
       this.map.dispose();
     }
+
+    this.isInitialDataLoad = true;
 
     const { options } = this.props;
 

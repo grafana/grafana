@@ -46,6 +46,7 @@ composableKinds: PanelCfg: {
 					layer?:     string
 					shared?:    bool
 					noRepeat?:  bool | *false
+					refitOnDataChange?: bool @cuetsy(kind="boolean")
 				} @cuetsy(kind="interface")
 
 				ControlsOptions: {
