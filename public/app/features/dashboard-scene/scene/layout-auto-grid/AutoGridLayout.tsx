@@ -65,6 +65,8 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     top: number;
     left: number;
   } | null = null;
+  /** Container's initial page position, used to compensate for layout shifts during drag */
+  private _initialContainerRect: { top: number; left: number } | null = null;
   private _lastDropTargetGridItemKey: string | null = null;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
@@ -150,6 +152,12 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     const { top, left, width, height } = this._draggedGridItem.getBoundingBox();
     this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
+
+    // Capture container's initial page position to compensate for layout shifts
+    // (e.g., when a grid above expands due to placeholder insertion)
+    const containerRect = this.containerRef.current?.getBoundingClientRect();
+    this._initialContainerRect = containerRect ? { top: containerRect.top, left: containerRect.left } : null;
+
     this._updatePanelSize(width, height);
     this._updatePanelPosition(top, left);
 
@@ -168,14 +176,31 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     this._draggedGridItem = null;
     this._initialGridItemPosition = null;
+    this._initialContainerRect = null;
     this._lastDropTargetGridItemKey = null;
-    this._resetPanelPositionAndSize();
 
-    this.setState({ draggingKey: undefined });
+    // Only reset position/size and clear draggingKey if not dropping to a different layout.
+    // For cross-grid drops, the orchestrator will call endExternalDrag() after the item is moved
+    // to prevent flickering where the item would momentarily appear at wrong position
+    // (CSS vars cleared but draggingKey still set = absolute positioning with no position).
+    const orchestrator = getLayoutOrchestratorFor(this);
+    if (!orchestrator?.isDroppedElsewhere()) {
+      this._resetPanelPositionAndSize();
+      this.setState({ draggingKey: undefined });
+    }
 
     document.body.removeEventListener('pointermove', this._onDrag);
     document.body.removeEventListener('pointerup', this._onDragEnd);
     document.body.classList.remove('dashboard-draggable-transparent-selection');
+  }
+
+  /**
+   * Called by the orchestrator after a cross-layout drag ends and the item has been moved.
+   * Cleans up the drag state that was preserved during the cross-layout drop.
+   */
+  public endExternalDrag(): void {
+    this._resetPanelPositionAndSize();
+    this.setState({ draggingKey: undefined });
   }
 
   // Handle inside drag moves
@@ -185,9 +210,20 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       return;
     }
 
+    // Calculate how much the container has shifted since drag started
+    // This can happen when a grid above expands (e.g., placeholder causes row wrap)
+    let containerShiftY = 0;
+    let containerShiftX = 0;
+    if (this._initialContainerRect && this.containerRef.current) {
+      const currentRect = this.containerRef.current.getBoundingClientRect();
+      containerShiftY = currentRect.top - this._initialContainerRect.top;
+      containerShiftX = currentRect.left - this._initialContainerRect.left;
+    }
+
+    // Adjust position to compensate for container movement
     this._updatePanelPosition(
-      this._initialGridItemPosition.top + (evt.pageY - this._initialGridItemPosition.pageY),
-      this._initialGridItemPosition.left + (evt.pageX - this._initialGridItemPosition.pageX)
+      this._initialGridItemPosition.top + (evt.pageY - this._initialGridItemPosition.pageY) - containerShiftY,
+      this._initialGridItemPosition.left + (evt.pageX - this._initialGridItemPosition.pageX) - containerShiftX
     );
 
     const dropTargetGridItemKey = document
