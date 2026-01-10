@@ -7518,7 +7518,8 @@
       "loading-placeholder": "Loading..."
     },
     "queryless-apps-extensions": {
-      "aria-label-go-queryless": "Go queryless"
+      "aria-label-go-queryless": "Go queryless",
+      "drilldown": "Drilldown"
     },
     "raw-list-container": {
       "item-count": "Result series: {{numItems}}",
