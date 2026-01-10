@@ -181,3 +181,24 @@ When a violation is detected, the rule reports:
 ```
 Import '../status-history/utils' reaches outside the 'histogram' plugin directory. Plugins should only import from external dependencies or relative paths within their own directory.
 ```
+
+### `tracking-event-creation`
+
+Checks that the process to create a tracking event is followed in the right way.
+
+#### `eventFactoryLiterals`
+
+Check if the values passed to `createEventFactory` are literals.
+
+```tsx
+// Bad ❌
+const repo = 'grafana';
+const createUnifiedHistoryEvent = createEventFactory(repo, 'unified_history');
+
+// Bad ❌
+const history = 'history';
+const createUnifiedHistoryEvent = createEventFactory('grafana', `unified_${history}`);
+
+// Good ✅
+const createUnifiedHistoryEvent = createEventFactory('grafana', 'unified_history');
+```
