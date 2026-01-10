@@ -3,9 +3,17 @@ import { Unsubscribable } from 'rxjs';
 
 import { getAppEvents } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { AbsoluteTimeEvent, CopyTimeEvent, PasteTimeEvent, ShiftTimeEvent, ZoomOutEvent } from 'app/types/events';
+import {
+  AbsoluteTimeEvent,
+  CopyTimeEvent,
+  ExploreRunQueryEvent,
+  PasteTimeEvent,
+  ShiftTimeEvent,
+  ZoomOutEvent,
+} from 'app/types/events';
 import { useDispatch } from 'app/types/store';
 
+import { runQueriesForAllPanes } from '../state/query';
 import {
   copyTimeRangeToClipboard,
   makeAbsoluteTime,
@@ -20,6 +28,11 @@ export function useKeyboardShortcuts() {
 
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
+
+    // Add keyboard shortcut for running queries (Ctrl/Cmd+Enter)
+    keybindings.bind('mod+enter', () => {
+      getAppEvents().publish(new ExploreRunQueryEvent());
+    });
 
     const tearDown: Unsubscribable[] = [];
 
@@ -53,7 +66,14 @@ export function useKeyboardShortcuts() {
       })
     );
 
+    tearDown.push(
+      getAppEvents().subscribe(ExploreRunQueryEvent, () => {
+        dispatch(runQueriesForAllPanes());
+      })
+    );
+
     return () => {
+      keybindings.unbind('mod+enter');
       tearDown.forEach((u) => u.unsubscribe());
     };
   }, [dispatch, keybindings]);

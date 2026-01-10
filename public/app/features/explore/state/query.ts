@@ -973,6 +973,18 @@ export function scanStart(exploreId: string): ThunkResult<void> {
   };
 }
 
+/**
+ * Run queries for all Explore panes.
+ * Triggered by keyboard shortcut (Ctrl/Cmd+Enter).
+ */
+export function runQueriesForAllPanes(): ThunkResult<void> {
+  return (dispatch, getState) => {
+    Object.keys(getState().explore.panes).forEach((exploreId) => {
+      dispatch(runQueries({ exploreId }));
+    });
+  };
+}
+
 export function addResultsToCache(exploreId: string): ThunkResult<void> {
   return (dispatch, getState) => {
     const queryResponse = getState().explore.panes[exploreId]!.queryResponse;
