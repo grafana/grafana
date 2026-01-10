@@ -379,5 +379,6 @@ export interface AuthSettings {
   disableLogin?: boolean;
   passwordlessEnabled?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
+  disableForgotPassword?: boolean;
   disableSignoutMenu?: boolean;
 }
