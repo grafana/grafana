@@ -5,15 +5,17 @@ import (
 	"net/url"
 )
 
+type OpenFeatureProviderType string
+
 const (
-	StaticProviderType          = "static"
-	FeaturesServiceProviderType = "features-service"
-	OFREPProviderType           = "ofrep"
+	StaticProviderType          OpenFeatureProviderType = "static"
+	FeaturesServiceProviderType OpenFeatureProviderType = "features-service"
+	OFREPProviderType           OpenFeatureProviderType = "ofrep"
 )
 
 type OpenFeatureSettings struct {
 	APIEnabled   bool
-	ProviderType string
+	ProviderType OpenFeatureProviderType
 	URL          *url.URL
 	TargetingKey string
 	ContextAttrs map[string]string
@@ -24,7 +26,27 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 
 	config := cfg.Raw.Section("feature_toggles.openfeature")
 	cfg.OpenFeature.APIEnabled = config.Key("enable_api").MustBool(true)
-	cfg.OpenFeature.ProviderType = config.Key("provider").MustString(StaticProviderType)
+
+	providerType := config.Key("provider").Validate(func(in string) string {
+		if in == "" {
+			return string(StaticProviderType)
+		}
+
+		switch in {
+		case string(StaticProviderType):
+			return string(StaticProviderType)
+		case string(FeaturesServiceProviderType):
+			return string(FeaturesServiceProviderType)
+		case string(OFREPProviderType):
+			return string(OFREPProviderType)
+		default:
+			cfg.Logger.Warn("invalid provider type", "provider", in)
+			cfg.Logger.Info("using static provider for openfeature")
+			return string(StaticProviderType)
+		}
+	})
+
+	cfg.OpenFeature.ProviderType = OpenFeatureProviderType(providerType)
 	strURL := config.Key("url").MustString("")
 
 	defaultTargetingKey := "default"
