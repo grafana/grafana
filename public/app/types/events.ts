@@ -216,3 +216,10 @@ export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
 }
+
+/**
+ * Event to trigger running queries in Explore
+ */
+export class ExploreRunQueryEvent extends BusEventBase {
+  static type = 'explore-run-query';
+}
