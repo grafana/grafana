@@ -26,6 +26,7 @@ import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
   getDashboardComponentInteractionCallback,
+  isPanelProfilingEnabled,
 } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -46,6 +47,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
+import { PanelPerformanceMetrics } from '../scene/PanelPerformanceMetrics';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
@@ -355,7 +357,9 @@ export function createDashboardSceneFromDashboardModel(
   // Create profiler once and reuse to avoid duplicate metadata setting
   const dashboardProfiler = getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title);
 
+  // Check if profiling should be enabled (global toggle or config)
   const enableProfiling =
+    isPanelProfilingEnabled() ||
     config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1;
   const queryController = new behaviors.SceneQueryController(
     {
@@ -475,6 +479,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   );
 
   titleItems.push(new PanelNotices());
+  titleItems.push(new PanelPerformanceMetrics());
 
   const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
 

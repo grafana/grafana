@@ -31,6 +31,22 @@ Use the following strategies to help you troubleshoot common dashboard problems.
 - Are you querying many time series or a long time range? Both of these conditions can cause Grafana or your data source to pull in a lot of data, which may slow the dashboard down. Try reducing one or both of these.
 - There could be high load on your network infrastructure. If the slowness isn't consistent, this may be the problem.
 
+## Debug dashboard performance with metrics
+
+You can view real-time performance metrics for each panel to identify performance bottlenecks.
+
+To enable performance metrics:
+
+1. Press `d+p` on your keyboard to toggle performance metrics display.
+2. Performance metrics appear in each panel header, showing:
+   - **Q** (Query time): Time spent executing data source queries
+   - **T** (Transform time): Time spent applying data transformations (only shown if transformations exist)
+   - **R** (Render time): Time spent rendering the panel visualization
+
+Hover over the metrics icon in a panel header to see detailed timing information in a tooltip, including the total time for all operations.
+
+Use these metrics to identify which panels are slow and whether the bottleneck is in query execution, data transformation, or rendering. Press `d+p` again to hide the metrics.
+
 ## Dashboard refresh rate issues
 
 By default, Grafana queries your data source every 30 seconds. However, setting a low refresh rate on your dashboards puts unnecessary stress on the backend. In many cases, querying this frequently isn't necessary because the data source isn't sending data often enough for there to be changes every 30 seconds.
