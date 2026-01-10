@@ -129,7 +129,7 @@ export function QueryOperationRow({
                     expanderMessages={expanderMessages}
                   />
                 </div>
-                {isContentVisible && <div className={styles.content}>{children}</div>}
+                <div className={styles.content} hidden={!isContentVisible}>{children}</div>
               </div>
             </>
           );
@@ -153,7 +153,7 @@ export function QueryOperationRow({
         title={title}
         expanderMessages={expanderMessages}
       />
-      {isContentVisible && <div className={styles.content}>{children}</div>}
+      <div className={styles.content} hidden={!isContentVisible}>{children}</div>
     </div>
   );
 }
