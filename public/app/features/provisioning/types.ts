@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 
 import {
   BitbucketRepositoryConfig,
+  ConnectionSpec,
   GitHubRepositoryConfig,
   GitLabRepositoryConfig,
   GitRepositoryConfig,
@@ -50,6 +51,16 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
   };
 
 export type RepositorySettingsField = Path<RepositoryFormData>;
+
+// Connection type definition - extracted from API client
+export type ConnectionType = ConnectionSpec['type'];
+
+export type ConnectionFormData = {
+  type: ConnectionSpec['type'];
+  appID: string;
+  installationID: string;
+  privateKey?: string;
+};
 
 // Section configuration
 export interface RepositorySection {
