@@ -71,6 +71,22 @@ type SeriesResponse struct {
 	Label  string
 }
 
+type HeatmapPoint struct {
+	Timestamp int64
+	YMin      []float64
+	Counts    []int64
+}
+
+type HeatmapSeries struct {
+	Labels []*LabelPair
+	Points []*HeatmapPoint
+}
+
+type HeatmapResponse struct {
+	Series []*HeatmapSeries
+	Units  string
+}
+
 type PyroscopeClient struct {
 	connectClient querierv1connect.QuerierServiceClient
 }
@@ -171,6 +187,63 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 		Series: series,
 		Units:  getUnits(profileTypeID),
 		Label:  parts[1],
+	}, nil
+}
+
+func (c *PyroscopeClient) GetHeatmap(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64, queryType querierv1.HeatmapQueryType) (*HeatmapResponse, error) {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetHeatmap", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
+	defer span.End()
+
+	req := connect.NewRequest(&querierv1.SelectHeatmapRequest{
+		ProfileTypeID: profileTypeID,
+		LabelSelector: labelSelector,
+		Start:         start,
+		End:           end,
+		Step:          step,
+		GroupBy:       groupBy,
+		QueryType:     queryType,
+	})
+
+	resp, err := c.connectClient.SelectHeatmap(ctx, req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, backend.DownstreamErrorf("received error from client while getting heatmap: %w", err)
+	}
+
+	series := make([]*HeatmapSeries, len(resp.Msg.Series))
+	for i, s := range resp.Msg.Series {
+		labels := make([]*LabelPair, len(s.Labels))
+		for j, l := range s.Labels {
+			labels[j] = &LabelPair{
+				Name:  l.Name,
+				Value: l.Value,
+			}
+		}
+
+		points := make([]*HeatmapPoint, len(s.Slots))
+		for j, slot := range s.Slots {
+			// Convert []int32 to []int64
+			counts := make([]int64, len(slot.Counts))
+			for k, c := range slot.Counts {
+				counts[k] = int64(c)
+			}
+			points[j] = &HeatmapPoint{
+				Timestamp: slot.Timestamp,
+				YMin:      slot.YMin,
+				Counts:    counts,
+			}
+		}
+
+		series[i] = &HeatmapSeries{
+			Labels: labels,
+			Points: points,
+		}
+	}
+
+	return &HeatmapResponse{
+		Series: series,
+		Units:  getUnits(profileTypeID),
 	}, nil
 }
 

@@ -5,6 +5,7 @@ import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, RadioButtonGroup, MultiSelect, Input, InlineSwitch } from '@grafana/ui';
 
+import { HeatmapQueryType } from '../dataquery.gen';
 import { Query } from '../types';
 
 import { EditorField } from './EditorField';
@@ -59,6 +60,9 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   }
   if (query.includeExemplars) {
     collapsedInfo.push(`With exemplars`);
+  }
+  if (query.includeHeatmap) {
+    collapsedInfo.push(`Heatmap: ${query.heatmapType || 'individual'}`);
   }
 
   return (
@@ -155,6 +159,30 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
                 }}
               />
             </EditorField>
+          )}
+          {config.featureToggles.profilesHeatmap && (
+            <>
+              <EditorField label={'Heatmap'} tooltip={<>Include heatmap visualization of profile data over time.</>}>
+                <InlineSwitch
+                  value={query.includeHeatmap || false}
+                  onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                    onQueryChange({ ...query, includeHeatmap: event.currentTarget.checked });
+                  }}
+                />
+              </EditorField>
+              {query.includeHeatmap && (
+                <EditorField label={'Heatmap Type'} tooltip={<>Select the type of heatmap aggregation.</>}>
+                  <RadioButtonGroup
+                    options={[
+                      { value: 'individual', label: 'Individual', description: 'Show individual profile samples' },
+                      { value: 'span', label: 'Span', description: 'Aggregate by span duration' },
+                    ]}
+                    value={query.heatmapType || 'individual'}
+                    onChange={(value) => onQueryChange({ ...query, heatmapType: value as HeatmapQueryType })}
+                  />
+                </EditorField>
+              )}
+            </>
           )}
         </div>
       </QueryOptionGroup>

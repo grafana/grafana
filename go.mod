@@ -704,6 +704,9 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
+// TODO: REMOVE THIS BEFORE MERGE
+replace github.com/grafana/pyroscope/api => github.com/simonswine/pyroscope/api v0.0.0-20260105145211-3182b395db2f
+
 // Use our fork of dolthub/go-mysql-server which makes non-cgo the default
 // since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
 replace github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.1-grafana1

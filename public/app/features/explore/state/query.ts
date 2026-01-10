@@ -1324,6 +1324,7 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
     flameGraphFrames,
     rawPrometheusFrames,
     customFrames,
+    heatmapFrames,
   } = response;
 
   if (error) {
@@ -1353,6 +1354,7 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
     showNodeGraph: !!nodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
+    showHeatmap: !!heatmapFrames.length,
     showCustom: !!customFrames?.length,
     clearedAtIndex: state.isLive ? state.clearedAtIndex : null,
   };

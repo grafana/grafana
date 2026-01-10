@@ -45,6 +45,7 @@ import { CustomContainer } from './CustomContainer';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
+import { HeatmapContainer } from './Heatmap/HeatmapContainer';
 import LogsContainer from './Logs/LogsContainer';
 import { LogsSamplePanel } from './Logs/LogsSamplePanel';
 import { NoData } from './NoData';
@@ -409,6 +410,26 @@ export class Explore extends PureComponent<Props, ExploreState> {
     );
   }
 
+  renderHeatmapPanel(width: number) {
+    const { queryResponse, timeZone } = this.props;
+
+    return (
+      <ContentOutlineItem panelId="Heatmap" title={t('explore.explore.title-heatmap', 'Heatmap')} icon="fire">
+        <HeatmapContainer
+          data={queryResponse.heatmapFrames}
+          height={400}
+          width={width}
+          timeRange={queryResponse.timeRange}
+          timeZone={timeZone}
+          onChangeTime={this.onUpdateTimeRange}
+          splitOpenFn={this.onSplitOpen('heatmap')}
+          loadingState={queryResponse.state}
+          eventBus={this.graphEventBus}
+        />
+      </ContentOutlineItem>
+    );
+  }
+
   renderTablePanel(width: number) {
     const { exploreId, timeZone, eventBus } = this.props;
     return (
@@ -587,6 +608,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       showTrace,
       showCustom,
       showNodeGraph,
+      showHeatmap,
       showFlameGraph,
       showLogsSample,
       correlationEditorDetails,
@@ -611,6 +633,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
         queryResponse.rawPrometheusFrames,
         queryResponse.traceFrames,
         queryResponse.customFrames,
+        queryResponse.heatmapFrames,
       ].every((e) => e.length === 0);
 
     let correlationsBox = undefined;
@@ -721,6 +744,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
                                       {this.renderGraphPanel(width)}
                                     </ErrorBoundaryAlert>
                                   )}
+                                  {showHeatmap && (
+                                    <ErrorBoundaryAlert boundaryName="explore-heatmap-panel">
+                                      {this.renderHeatmapPanel(width)}
+                                    </ErrorBoundaryAlert>
+                                  )}
                                   {showRawPrometheus && (
                                     <ErrorBoundaryAlert boundaryName="explore-raw-prometheus">
                                       {this.renderRawPrometheus(width)}
@@ -808,6 +836,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryResponse,
     showNodeGraph,
     showFlameGraph,
+    showHeatmap,
     showRawPrometheus,
     supplementaryQueries,
     correlationEditorHelperData,
@@ -836,6 +865,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTrace,
     showCustom,
     showNodeGraph,
+    showHeatmap,
     showRawPrometheus,
     showFlameGraph,
     splitted: isSplit(state),
