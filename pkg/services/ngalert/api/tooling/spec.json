@@ -11,11 +11,16 @@
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Grafana Alerting API.",
-    "title": "Grafana Alerting API.",
-    "version": "1.1.0"
+    "description": "API of the Prometheus Alertmanager (https://github.com/prometheus/alertmanager)\nSchemes:\nhttp",
+    "title": "Alertmanager API",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "0.0.1"
   },
-  "basePath": "/api",
+  "host": "localhost",
+  "basePath": "/api/v2/",
   "paths": {
     "/alertmanager/grafana/api/v2/alerts": {
       "get": {
@@ -1070,6 +1075,127 @@
         }
       }
     },
+    "/alerts": {
+      "get": {
+        "description": "Get a list of alerts",
+        "tags": [
+          "alert"
+        ],
+        "operationId": "getAlerts",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show active alerts",
+            "name": "Active",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "A list of matchers to filter alerts by",
+            "name": "Filter",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show inhibited alerts",
+            "name": "Inhibited",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A regex matching receivers to filter alerts by",
+            "name": "Receiver",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show silenced alerts",
+            "name": "Silenced",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show unprocessed alerts",
+            "name": "Unprocessed",
+            "in": "query"
+          }
+        ]
+      },
+      "post": {
+        "description": "Create new Alerts",
+        "tags": [
+          "alert"
+        ],
+        "operationId": "postAlerts",
+        "parameters": [
+          {
+            "description": "The alerts to create",
+            "name": "Alerts",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/postableAlerts"
+            }
+          }
+        ]
+      }
+    },
+    "/alerts/groups": {
+      "get": {
+        "description": "Get a list of alert groups",
+        "tags": [
+          "alertgroup"
+        ],
+        "operationId": "getAlertGroups",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show active alerts",
+            "name": "Active",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "A list of matchers to filter alerts by",
+            "name": "Filter",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show inhibited alerts",
+            "name": "Inhibited",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "A regex matching receivers to filter alerts by",
+            "name": "Receiver",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "Show silenced alerts",
+            "name": "Silenced",
+            "in": "query"
+          }
+        ]
+      }
+    },
     "/convert/api/prom/rules": {
       "get": {
         "produces": [
@@ -2032,6 +2158,15 @@
         }
       }
     },
+    "/receivers": {
+      "get": {
+        "description": "Get list of all receivers (name of notification integrations)",
+        "tags": [
+          "receiver"
+        ],
+        "operationId": "getReceivers"
+      }
+    },
     "/ruler/grafana/api/v1/export/rules": {
       "get": {
         "description": "List rules in provisioning format",
@@ -2858,6 +2993,90 @@
             }
           }
         }
+      }
+    },
+    "/silence/{silenceID}": {
+      "get": {
+        "description": "Get a silence by its ID",
+        "tags": [
+          "silence"
+        ],
+        "operationId": "getSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the silence to get",
+            "name": "SilenceID",
+            "in": "path",
+            "required": true
+          }
+        ]
+      },
+      "delete": {
+        "description": "Delete a silence by its ID",
+        "tags": [
+          "silence"
+        ],
+        "operationId": "deleteSilence",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the silence to get",
+            "name": "SilenceID",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/silences": {
+      "get": {
+        "description": "Get a list of silences",
+        "tags": [
+          "silence"
+        ],
+        "operationId": "getSilences",
+        "parameters": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "A list of matchers to filter silences by",
+            "name": "Filter",
+            "in": "query"
+          }
+        ]
+      },
+      "post": {
+        "description": "Post a new silence or update an existing one",
+        "tags": [
+          "silence"
+        ],
+        "operationId": "postSilences",
+        "parameters": [
+          {
+            "description": "The silence to create",
+            "name": "Silence",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/postableSilence"
+            }
+          }
+        ]
+      }
+    },
+    "/status": {
+      "get": {
+        "description": "Get current status of an Alertmanager instance and its cluster",
+        "tags": [
+          "general"
+        ],
+        "operationId": "getStatus"
       }
     },
     "/v1/eval": {
@@ -7275,6 +7494,16 @@
     "PermissionDenied": {
       "type": "object"
     },
+    "PostSilencesOKBody": {
+      "description": "PostSilencesOKBody post silences o k body",
+      "type": "object",
+      "properties": {
+        "silenceID": {
+          "description": "silence ID",
+          "type": "string"
+        }
+      }
+    },
     "PostableApiAlertingConfig": {
       "description": "nolint:revive",
       "type": "object",
@@ -10152,6 +10381,204 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/postableAlert"
+        }
+      }
+    },
+    "deleteSilenceInternalServerError": {
+      "description": "DeleteSilenceInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "deleteSilenceNotFound": {
+      "description": "DeleteSilenceNotFound A silence with the specified ID was not found"
+    },
+    "deleteSilenceOK": {
+      "description": "DeleteSilenceOK Delete silence response"
+    },
+    "getAlertGroupsBadRequest": {
+      "description": "GetAlertGroupsBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertGroupsInternalServerError": {
+      "description": "GetAlertGroupsInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertGroupsOK": {
+      "description": "GetAlertGroupsOK Get alert groups response",
+      "schema": {
+        "$ref": "#/definitions/alertGroups"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertsBadRequest": {
+      "description": "GetAlertsBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertsInternalServerError": {
+      "description": "GetAlertsInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getAlertsOK": {
+      "description": "GetAlertsOK Get alerts response",
+      "schema": {
+        "$ref": "#/definitions/gettableAlerts"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "getReceiversOK": {
+      "description": "GetReceiversOK Get receivers response",
+      "headers": {
+        "body": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/receiver"
+          },
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilenceInternalServerError": {
+      "description": "GetSilenceInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilenceNotFound": {
+      "description": "GetSilenceNotFound A silence with the specified ID was not found"
+    },
+    "getSilenceOK": {
+      "description": "GetSilenceOK Get silence response",
+      "schema": {
+        "$ref": "#/definitions/gettableSilence"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilencesBadRequest": {
+      "description": "GetSilencesBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilencesInternalServerError": {
+      "description": "GetSilencesInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "getSilencesOK": {
+      "description": "GetSilencesOK Get silences response",
+      "schema": {
+        "$ref": "#/definitions/gettableSilences"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "getStatusOK": {
+      "description": "GetStatusOK Get status response",
+      "schema": {
+        "$ref": "#/definitions/alertmanagerStatus"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
+        }
+      }
+    },
+    "postAlertsBadRequest": {
+      "description": "PostAlertsBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "postAlertsInternalServerError": {
+      "description": "PostAlertsInternalServerError Internal server error",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "postAlertsOK": {
+      "description": "PostAlertsOK Create alerts response"
+    },
+    "postSilencesBadRequest": {
+      "description": "PostSilencesBadRequest Bad request",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "postSilencesNotFound": {
+      "description": "PostSilencesNotFound A silence with the specified ID was not found",
+      "headers": {
+        "body": {
+          "type": "string",
+          "description": "In: Body"
+        }
+      }
+    },
+    "postSilencesOK": {
+      "description": "PostSilencesOK Create / update silence response",
+      "schema": {
+        "$ref": "#/definitions/PostSilencesOKBody"
+      },
+      "headers": {
+        "body": {
+          "description": "In: Body"
         }
       }
     },
