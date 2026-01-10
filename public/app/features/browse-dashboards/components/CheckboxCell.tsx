@@ -40,7 +40,7 @@ export default function CheckboxCell({
     }
   }
 
-  if (isSharedWithMe(item.uid)) {
+  if (isSharedWithMe(item.uid) || item.uid === 'teamfolders') {
     return <CheckboxSpacer />;
   }
 
