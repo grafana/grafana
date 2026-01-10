@@ -170,7 +170,6 @@ Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/w
    				"displayName": "Grafana Org Admin",
    				"id": "SOME_UNIQUE_ID",
    				"isEnabled": true,
-   				"lang": null,
    				"origin": "Application",
    				"value": "Admin"
    			},
@@ -182,7 +181,6 @@ Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/w
    				"displayName": "Grafana Viewer",
    				"id": "SOME_UNIQUE_ID",
    				"isEnabled": true,
-   				"lang": null,
    				"origin": "Application",
    				"value": "Viewer"
    			},
@@ -194,7 +192,6 @@ Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/w
    				"displayName": "Grafana Editor",
    				"id": "SOME_UNIQUE_ID",
    				"isEnabled": true,
-   				"lang": null,
    				"origin": "Application",
    				"value": "Editor"
    			}
