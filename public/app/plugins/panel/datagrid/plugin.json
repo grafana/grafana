@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Datagrid",
   "id": "datagrid",
-  "state": "beta",
+  "state": "deprecated",
 
   "info": {
     "author": {
