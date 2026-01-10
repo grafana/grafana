@@ -60,8 +60,7 @@ func TestProvideFactory(t *testing.T) {
 		factory, err := ProvideFactory(enabled, []Extra{extra1, extra2})
 		require.Error(t, err)
 		assert.Nil(t, factory)
-		assert.Contains(t, err.Error(), "repository type")
-		assert.Contains(t, err.Error(), "is already registered")
+		assert.Contains(t, err.Error(), "connection type \"github\" is already registered")
 	})
 }
 
@@ -222,8 +221,7 @@ func TestFactory_Build(t *testing.T) {
 		result, err := factory.Build(ctx, conn)
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "repository type")
-		assert.Contains(t, err.Error(), "is not enabled")
+		assert.Contains(t, err.Error(), "connection type \"gitlab\" is not enabled")
 	})
 
 	t.Run("should return error when type is not supported", func(t *testing.T) {
@@ -248,8 +246,7 @@ func TestFactory_Build(t *testing.T) {
 		result, err := factory.Build(ctx, conn)
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "repository type")
-		assert.Contains(t, err.Error(), "is not supported")
+		assert.Contains(t, err.Error(), "connection type \"gitlab\" is not supported")
 	})
 
 	t.Run("should pass through errors from extra.Build()", func(t *testing.T) {
