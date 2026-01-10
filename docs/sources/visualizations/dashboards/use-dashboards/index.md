@@ -39,9 +39,9 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/modify-dashboard-settings/
   repeating-rows:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeat-options
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options
   variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
