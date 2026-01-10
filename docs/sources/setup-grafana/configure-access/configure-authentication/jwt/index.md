@@ -178,6 +178,20 @@ cache_ttl = 60m
 If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the `cache_ttl` is not set, the default of `60m` is used. `no-store` and `no-cache` cache control headers are ignored. To disable JWKS caching, set `cache_ttl = 0s`
 {{< /admonition >}}
 
+#### Dynamic JWKS endpoints
+
+Grafana supports dynamic JWKS endpoints using the `{{kid}}` template variable in the `jwk_set_url`. This is useful for providers like AWS Application Load Balancer (ALB) that expose keys at different URLs.
+
+```ini
+# [auth.jwt]
+jwk_set_url = https://public-keys.auth.elb.eu-west-1.amazonaws.com/{{kid}}/.well-known/jwks.json
+```
+
+When `{{kid}}` is used:
+- The `kid` from the JWT header is URL-escaped and substituted into the template.
+- Each unique URL is cached independently according to `cache_ttl`.
+- For security, Grafana ensures the final URL maintains the same hostname as the configured template.
+
 ### Verify token using a JSON Web Key Set loaded from JSON file
 
 Key set in the same format as in JWKS endpoint but located on disk.

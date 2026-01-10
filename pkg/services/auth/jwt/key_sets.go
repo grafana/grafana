@@ -44,8 +44,8 @@ type keySetHTTP struct {
 	client          *http.Client
 	bearerTokenPath string
 	cache           *remotecache.RemoteCache
-	cacheKey        string
 	cacheExpiration time.Duration
+	env             string
 }
 
 func (s *AuthService) checkKeySetConfiguration() error {
@@ -207,9 +207,9 @@ func (s *AuthService) initKeySet() error {
 				},
 				Timeout: time.Second * 30,
 			},
-			cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", urlStr),
 			cacheExpiration: s.Cfg.JWTAuth.CacheTTL,
 			cache:           s.RemoteCache,
+			env:             s.Cfg.Env,
 		}
 	}
 
@@ -241,11 +241,12 @@ func getBearerToken(bearerTokenPath string) (string, error) {
 	return fmt.Sprintf("Bearer %s", t), nil
 }
 
-func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
+func (ks *keySetHTTP) getJWKS(ctx context.Context, resolvedURL string) (keySetJWKS, error) {
 	var jwks keySetJWKS
+	cacheKey := fmt.Sprintf("auth-jwt:jwk-%s", resolvedURL)
 
 	if ks.cacheExpiration > 0 {
-		if val, err := ks.cache.Get(ctx, ks.cacheKey); err == nil {
+		if val, err := ks.cache.Get(ctx, cacheKey); err == nil {
 			err := json.Unmarshal(val, &jwks)
 			if err != nil {
 				ks.log.Warn("Failed to unmarshal key set from cache", "err", err)
@@ -255,9 +256,11 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 		}
 	}
 
-	ks.log.Debug("Getting key set from endpoint", "url", ks.url)
+	if ks.log != nil {
+		ks.log.Debug("Getting key set from endpoint", "url", resolvedURL)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ks.url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, resolvedURL, nil)
 	if err != nil {
 		return jwks, err
 	}
@@ -291,9 +294,11 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	if ks.cacheExpiration > 0 {
 		cacheExpiration := ks.getCacheExpiration(resp.Header.Get("cache-control"))
 
-		ks.log.Debug("Setting key set in cache", "url", ks.url,
-			"cacheExpiration", cacheExpiration, "cacheControl", resp.Header.Get("cache-control"))
-		err = ks.cache.Set(ctx, ks.cacheKey, jsonBuf.Bytes(), cacheExpiration)
+		if ks.log != nil {
+			ks.log.Debug("Setting key set in cache", "url", resolvedURL,
+				"cacheExpiration", cacheExpiration, "cacheControl", resp.Header.Get("cache-control"))
+		}
+		err = ks.cache.Set(ctx, cacheKey, jsonBuf.Bytes(), cacheExpiration)
 	}
 	return jwks, err
 }
@@ -323,8 +328,34 @@ func (ks *keySetHTTP) getCacheExpiration(cacheControl string) time.Duration {
 	return cacheDuration
 }
 
-func (ks keySetHTTP) Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error) {
-	jwks, err := ks.getJWKS(ctx)
+func (ks *keySetHTTP) Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error) {
+	resolvedURL := ks.url
+	if strings.Contains(ks.url, "{{kid}}") {
+		if kid == "" {
+			return nil, errors.New("kid is required for dynamic jwk_set_url")
+		}
+		resolvedURL = strings.ReplaceAll(ks.url, "{{kid}}", url.PathEscape(kid))
+
+		// Safety check: ensure the host and scheme are still valid
+		origParsed, err := url.Parse(ks.url)
+		if err != nil {
+			return nil, err
+		}
+		newParsed, err := url.Parse(resolvedURL)
+		if err != nil {
+			return nil, err
+		}
+
+		if newParsed.Scheme != "https" && ks.env != setting.Dev {
+			return nil, ErrJWTSetURLMustHaveHTTPSScheme
+		}
+
+		if newParsed.Host != origParsed.Host {
+			return nil, fmt.Errorf("dynamic jwk_set_url host mismatch: %s != %s", newParsed.Host, origParsed.Host)
+		}
+	}
+
+	jwks, err := ks.getJWKS(ctx, resolvedURL)
 	if err != nil {
 		return nil, err
 	}
