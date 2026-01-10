@@ -2,6 +2,18 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
 import {
+  useCreateExternalGroupMappingMutation,
+  useListExternalGroupMappingQuery,
+  useDeleteExternalGroupMappingMutation,
+} from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import {
+  useAddTeamGroupApiMutation,
+  useGetTeamGroupsApiQuery,
+  useRemoveTeamGroupApiQueryMutation,
+  TeamGroupDto,
+} from '@grafana/api-clients/rtkq/legacy';
+import { config } from '@grafana/runtime';
+import {
   useSearchTeamsQuery as useLegacySearchTeamsQuery,
   useCreateTeamMutation,
   useDeleteTeamByIdMutation,
@@ -151,4 +163,72 @@ export const useCreateTeam = () => {
   };
 
   return [trigger, response] as const;
+};
+
+export const useGetExternalGroupMappings = (args: { teamId: string }) => {
+  const shouldUseAppPlatform = Boolean(config.featureToggles.kubernetesExternalGroupMapping);
+
+  const legacyResult = useGetTeamGroupsApiQuery(args, { skip: shouldUseAppPlatform });
+
+  const { data: newApiData, ...newApiRest } = useListExternalGroupMappingQuery({}, { skip: !shouldUseAppPlatform });
+
+  const groups: TeamGroupDto[] = useMemo(() => {
+    // FIXME: Consider using the search API which has sorting support
+    return (newApiData?.items || [])
+      .filter((item) => item.spec.teamRef.name === args.teamId)
+      .map((item) => ({
+        groupId: item.spec.externalGroupId,
+        uid: item.metadata.name,
+      }));
+  }, [newApiData, args.teamId]);
+
+  if (shouldUseAppPlatform) {
+    return {
+      ...newApiRest,
+      data: groups,
+    };
+  }
+  return legacyResult;
+};
+
+export const useAddExternalGroupMapping = () => {
+  const legacyMutation = useAddTeamGroupApiMutation();
+
+  const [addNew, newResult] = useCreateExternalGroupMappingMutation();
+
+  const add = async (args: { teamId: string; teamGroupMapping: { groupId: string } }) => {
+    return addNew({
+      externalGroupMapping: {
+        metadata: {
+          generateName: 'external-group-mapping-',
+        },
+        spec: {
+          externalGroupId: args.teamGroupMapping.groupId,
+          teamRef: {
+            name: args.teamId,
+          },
+        },
+      },
+    });
+  };
+
+  if (!config.featureToggles.kubernetesExternalGroupMapping) {
+    return legacyMutation;
+  }
+  return [add, newResult] as const;
+};
+
+export const useRemoveExternalGroupMapping = () => {
+  const legacyMutation = useRemoveTeamGroupApiQueryMutation();
+
+  const [deleteMapping, deleteResult] = useDeleteExternalGroupMappingMutation();
+
+  const remove = async (args: { teamId: string; groupId: string; uid: string }) => {
+    return deleteMapping({ name: args.uid });
+  };
+
+  if (!config.featureToggles.kubernetesExternalGroupMapping) {
+    return legacyMutation;
+  }
+  return [remove, deleteResult] as const;
 };

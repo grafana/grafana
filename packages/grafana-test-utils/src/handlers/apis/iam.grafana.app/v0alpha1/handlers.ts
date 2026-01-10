@@ -1,5 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
+import { mockTeamsMap } from '../../../../fixtures/teams';
+
 const getDisplayMapping = () =>
   http.get<{ namespace: string }>('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/display', ({ request }) => {
     const url = new URL(request.url);
@@ -26,4 +28,76 @@ const getDisplayMapping = () =>
     });
   });
 
-export default [getDisplayMapping()];
+const listExternalGroupMappings = () =>
+  http.get<{ namespace: string }>('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/externalgroupmappings', () => {
+    const items = [];
+    for (const [teamName, data] of mockTeamsMap.entries()) {
+      for (const group of data.groups) {
+        items.push({
+          apiVersion: 'iam.grafana.app/v0alpha1',
+          kind: 'ExternalGroupMapping',
+          metadata: {
+            name: `mapping-${teamName}-${group.groupId}`,
+            creationTimestamp: new Date().toISOString(),
+          },
+          spec: {
+            externalGroupId: group.groupId,
+            teamRef: {
+              name: teamName,
+            },
+          },
+        });
+      }
+    }
+    return HttpResponse.json({ items });
+  });
+
+const createExternalGroupMapping = () =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  http.post<{ namespace: string }, any>(
+    '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/externalgroupmappings',
+    async ({ request }) => {
+      const body = await request.json();
+      const teamName = body.spec.teamRef.name;
+      const groupId = body.spec.externalGroupId;
+
+      const teamData = mockTeamsMap.get(teamName);
+      if (teamData) {
+        teamData.groups.push({ groupId });
+      }
+
+      return HttpResponse.json({
+        ...body,
+        metadata: {
+          name: `mapping-${teamName}-${groupId}`,
+          creationTimestamp: new Date().toISOString(),
+          ...body.metadata,
+        },
+      });
+    }
+  );
+
+const deleteExternalGroupMapping = () =>
+  http.delete<{ namespace: string; name: string }>(
+    '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/externalgroupmappings/:name',
+    ({ params }) => {
+      const { name } = params;
+
+      for (const [teamName, data] of mockTeamsMap.entries()) {
+        const groupIndex = data.groups.findIndex((g) => `mapping-${teamName}-${g.groupId}` === name);
+        if (groupIndex !== -1) {
+          data.groups.splice(groupIndex, 1);
+          return HttpResponse.json({ status: 'Success' });
+        }
+      }
+
+      return HttpResponse.json({ status: 'Failure', message: 'Not found' }, { status: 404 });
+    }
+  );
+
+export default [
+  getDisplayMapping(),
+  listExternalGroupMappings(),
+  createExternalGroupMapping(),
+  deleteExternalGroupMapping(),
+];
