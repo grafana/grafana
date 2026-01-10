@@ -44,7 +44,7 @@ var groupVersion = schema.GroupVersion{
 }
 
 type APIBuilder struct {
-	providerType    string
+	providerType    setting.OpenFeatureProviderType
 	url             *url.URL
 	insecure        bool
 	caFile          string
@@ -52,7 +52,7 @@ type APIBuilder struct {
 	logger          log.Logger
 }
 
-func NewAPIBuilder(providerType string, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
+func NewAPIBuilder(providerType setting.OpenFeatureProviderType, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
 	return &APIBuilder{
 		providerType:    providerType,
 		url:             url,
