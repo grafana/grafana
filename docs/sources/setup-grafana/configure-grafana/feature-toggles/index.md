@@ -66,7 +66,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                      | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
-| `tempoSearchBackendMigration`         | Run search queries through the tempo backend                                                                                                                  |                    |
 | `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 
 ## Public preview feature toggles
