@@ -21,6 +21,7 @@ export { TLSSecretsConfig } from './components/configuration/TLSSecretsConfig';
 export { useMigrateDatabaseFields } from './components/configuration/useMigrateDatabaseFields';
 export { SqlQueryEditorLazy } from './components/QueryEditorLazy';
 export type { QueryHeaderProps } from './components/QueryHeader';
+export { SQLVariableSupport } from './SQLVariableSupport';
 export { createSelectClause, haveColumns } from './utils/sql.utils';
 export { applyQueryDefaults } from './defaults';
 export { makeVariable } from './utils/testHelpers';
