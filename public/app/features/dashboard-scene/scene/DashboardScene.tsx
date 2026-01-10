@@ -2,7 +2,13 @@ import * as H from 'history';
 
 import { CoreApp, DataQueryRequest, locationUtil, NavIndex, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import {
+  config,
+  locationService,
+  RefreshEvent,
+  setDashboardMutationAPI,
+  type DashboardMutationAPI,
+} from '@grafana/runtime';
 import {
   sceneGraph,
   SceneObject,
@@ -45,6 +51,9 @@ import {
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
+import { MutationExecutor } from '../mutation-api/MutationExecutor';
+import { DASHBOARD_MCP_TOOLS } from '../mutation-api/mcpTools';
+import type { Mutation } from '../mutation-api/types';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -92,6 +101,11 @@ import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
+
+// Type for window with mutation API (for cross-bundle access with plugins)
+interface WindowWithMutationAPI extends Window {
+  __grafanaDashboardMutationAPI?: DashboardMutationAPI | null;
+}
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -219,6 +233,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     window.__grafanaSceneContext = this;
 
+    // Register Dashboard Mutation API for Grafana Assistant and other tools
+    this._registerMutationAPI();
+
     this._initializePanelSearch();
 
     if (this.state.isEditing) {
@@ -247,11 +264,58 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = prevSceneContext;
+      // Clear mutation API
+      setDashboardMutationAPI(null);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      (window as WindowWithMutationAPI).__grafanaDashboardMutationAPI = null;
       clearKeyBindings();
       this._changeTracker.terminate();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
+  }
+
+  /**
+   * Register the Dashboard Mutation API for use by Grafana Assistant and other tools.
+   * This provides a stable interface for programmatic dashboard modifications.
+   *
+   * The API is exposed on window.__grafanaDashboardMutationAPI for cross-bundle access,
+   * since plugins use a different @grafana/runtime bundle.
+   */
+  private _registerMutationAPI() {
+    const dashboard = this;
+    const executor = new MutationExecutor();
+    executor.setScene(this);
+
+    const api: DashboardMutationAPI = {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      execute: (mutation) => executor.executeMutation(mutation as Mutation),
+      canEdit: () => dashboard.canEditDashboard(),
+      getDashboardUID: () => dashboard.state.uid,
+      getDashboardTitle: () => dashboard.state.title,
+      isEditing: () => dashboard.state.isEditing ?? false,
+      enterEditMode: () => {
+        if (!dashboard.state.isEditing) {
+          dashboard.onEnterEditMode();
+        }
+      },
+      getTools: () => DASHBOARD_MCP_TOOLS,
+      getDashboardInfo: () => ({
+        available: true,
+        uid: dashboard.state.uid,
+        title: dashboard.state.title,
+        canEdit: dashboard.canEditDashboard(),
+        isEditing: dashboard.state.isEditing ?? false,
+        availableTools: DASHBOARD_MCP_TOOLS.map((t) => t.name),
+      }),
+    };
+
+    // Register via @grafana/runtime for same-bundle access
+    setDashboardMutationAPI(api);
+
+    // Also expose on window for cross-bundle access (plugins use different bundle)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    (window as WindowWithMutationAPI).__grafanaDashboardMutationAPI = api;
   }
 
   private _initializePanelSearch() {
