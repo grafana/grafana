@@ -2,13 +2,13 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -20,7 +20,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 
 	helper := runGrafana(t)
 	ctx := context.Background()
-	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	// Create a connection for testing
 	connection := &unstructured.Unstructured{Object: map[string]any{
@@ -39,13 +39,12 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 		},
 		"secure": map[string]any{
 			"privateKey": map[string]any{
-				"create": "someSecret",
+				"create": privateKeyBase64,
 			},
 		},
 	}}
-
-	_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-	require.NoError(t, err, "failed to create connection")
+	err := helper.CreateGithubConnection(t, ctx, connection)
+	require.NoError(t, err)
 
 	t.Run("endpoint returns not implemented", func(t *testing.T) {
 		var statusCode int
@@ -129,14 +128,14 @@ func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T
 
 	helper := runGrafana(t)
 	ctx := context.Background()
-	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	// Create a connection for testing
 	connection := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "provisioning.grafana.app/v0alpha1",
 		"kind":       "Connection",
 		"metadata": map[string]any{
-			"name":      "connection-repositories-type-test",
+			"name":      "connection-repositories-test",
 			"namespace": "default",
 		},
 		"spec": map[string]any{
@@ -148,13 +147,13 @@ func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T
 		},
 		"secure": map[string]any{
 			"privateKey": map[string]any{
-				"create": "someSecret",
+				"create": privateKeyBase64,
 			},
 		},
 	}}
+	err := helper.CreateGithubConnection(t, ctx, connection)
+	require.NoError(t, err)
 
-	_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-	require.NoError(t, err, "failed to create connection")
 
 	t.Run("verify ExternalRepositoryList type exists in API", func(t *testing.T) {
 		// Verify the type is registered and can be instantiated

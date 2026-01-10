@@ -74,7 +74,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 						ID:   &appID,
 						Slug: &appSlug,
 					}
-					w.Write(ghmock.MustMarshal(app))
+					_, _ = w.Write(ghmock.MustMarshal(app))
 				}),
 			),
 			ghmock.WithRequestMatchHandler(
@@ -86,7 +86,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 					installation := github.Installation{
 						ID:   &idInt,
 					}
-					w.Write(ghmock.MustMarshal(installation))
+					_, _ = w.Write(ghmock.MustMarshal(installation))
 				}),
 			),
 		)
