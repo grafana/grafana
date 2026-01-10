@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 
 import { ButtonGroup } from '../Button/ButtonGroup';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
+import { Icon } from '../Icon/Icon';
 import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
 
 // Default intervals used in the refresh picker component
@@ -80,6 +81,7 @@ export class RefreshPicker extends PureComponent<Props> {
     const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width, showAutoInterval } =
       this.props;
 
+    const refreshIcon = isLoading ? 'spinner' : 'sync';
     const currentValue = value || '';
     const variant = this.getVariant();
     const options = intervalsToOptions({ intervals, showAutoInterval });
@@ -114,7 +116,7 @@ export class RefreshPicker extends PureComponent<Props> {
           tooltip={tooltip}
           onClick={onRefresh}
           variant={variant}
-          icon={isLoading ? 'spinner' : 'sync'}
+          icon={<Icon key={refreshIcon} name={refreshIcon} size="lg" />}
           style={width ? { width } : undefined}
           data-testid={selectors.components.RefreshPicker.runButtonV2}
         >
