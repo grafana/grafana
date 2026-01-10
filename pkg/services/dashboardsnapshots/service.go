@@ -37,8 +37,13 @@ var client = &http.Client{
 }
 
 func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSharingOptions, cmd CreateDashboardSnapshotCommand, svc Service) {
+	// perform all validations in the beginning
 	if !cfg.SnapshotsEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+		return
+	}
+	if cmd.External && !cfg.ExternalEnabled {
+		c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
 		return
 	}
 
@@ -67,17 +72,17 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 	cmd.ExternalURL = ""
 	cmd.OrgID = user.GetOrgID()
 	cmd.UserID, _ = identity.UserIdentifier(user.GetID())
-	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
+	originalDashboardURL, err := CreateOriginalDashboardURL(&cmd)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)
 		return
 	}
 
 	if cmd.External {
-		if !cfg.ExternalEnabled {
-			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
-			return
-		}
+		//if !cfg.ExternalEnabled {
+		//	c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
+		//	return
+		//}
 
 		resp, err := createExternalDashboardSnapshot(cmd, cfg.ExternalSnapshotURL)
 		if err != nil {
@@ -203,7 +208,7 @@ func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externa
 	return &createSnapshotResponse, nil
 }
 
-func createOriginalDashboardURL(cmd *CreateDashboardSnapshotCommand) (string, error) {
+func CreateOriginalDashboardURL(cmd *CreateDashboardSnapshotCommand) (string, error) {
 	dashUID := cmd.Dashboard.GetNestedString("uid")
 	if ok := util.IsValidShortUID(dashUID); !ok {
 		return "", fmt.Errorf("invalid dashboard UID")
