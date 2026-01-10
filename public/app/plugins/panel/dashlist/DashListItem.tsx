@@ -1,3 +1,4 @@
+import { reportInteraction } from '@grafana/runtime';
 import { Box, Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
@@ -11,10 +12,25 @@ interface Props {
   showFolderNames: boolean;
   locationInfo?: LocationInfo;
   layoutMode: 'list' | 'card';
+  order?: number; // for rudderstack analytics to track position in card list
   onStarChange?: (id: string, isStarred: boolean) => void;
 }
-export function DashListItem({ dashboard, url, showFolderNames, locationInfo, layoutMode, onStarChange }: Props) {
+export function DashListItem({
+  dashboard,
+  url,
+  showFolderNames,
+  locationInfo,
+  layoutMode,
+  order,
+  onStarChange,
+}: Props) {
   const css = useStyles2(getStyles);
+
+  const onCardLinkClick = () => {
+    reportInteraction('grafana_recently_viewed_dashboards_click_card', {
+      cardOrder: order,
+    });
+  };
 
   return (
     <>
@@ -39,7 +55,9 @@ export function DashListItem({ dashboard, url, showFolderNames, locationInfo, la
       ) : (
         <Card className={css.dashlistCard} noMargin>
           <Stack justifyContent="space-between" alignItems="center">
-            <Link href={url}>{dashboard.name}</Link>
+            <Link href={url} onClick={onCardLinkClick}>
+              {dashboard.name}
+            </Link>
             <StarToolbarButton
               title={dashboard.name}
               group="dashboard.grafana.app"
