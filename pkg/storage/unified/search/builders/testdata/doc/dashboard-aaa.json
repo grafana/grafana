@@ -67,7 +67,7 @@
           "name": "red pie",
           "uid": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
         },
-        "title": "green pie"
+        "title": "red pie"
       },
       {
         "id": 7,
@@ -76,6 +76,14 @@
       },
       {
         "id": 8,
+        "type": "graph"
+      },
+      {
+        "id": 20,
+        "type": "graph"
+      },
+      {
+        "id": 30,
         "type": "graph"
       },
       {
@@ -101,6 +109,10 @@
               "uid": "l3d2s634-fdgf-75u4-3fg3-67j966ii7jur"
             },
             "title": "blue pie"
+          },
+          {
+            "id": 40,
+            "type": "pie"
           }
         ],
         "title": "collapsed row",
