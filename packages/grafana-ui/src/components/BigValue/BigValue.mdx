@@ -42,14 +42,7 @@ An example usage is in the [Stat panel](https://grafana.com/docs/grafana/latest/
 
 ```tsx
 import { DisplayValue } from '@grafana/data';
-import {
-  BigValue,
-  BigValueColorMode,
-  BigValueGraphMode,
-  BigValueJustifyMode,
-  BigValueTextMode,
-  useTheme,
-} from '@grafana/ui';
+import { BigValue, BigValueColorMode, BigValueJustifyMode, BigValueTextMode, useTheme } from '@grafana/ui';
 
 const bigValue: DisplayValue = {
   color: 'red',
@@ -62,7 +55,6 @@ return (
   <BigValue
     theme={useTheme()}
     justifyMode={BigValueJustifyMode.Auto}
-    graphMode={BigValueGraphMode.Area}
     colorMode={BigValueColorMode.Value}
     textMode={BigValueTextMode.Auto}
     value={bigValue}
