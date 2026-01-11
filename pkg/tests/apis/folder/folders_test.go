@@ -133,10 +133,14 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		}`, string(v1Disco))
 	})
 
-	// test on all dualwriter modes
-	for mode := 0; mode <= 4; mode++ {
-		modeDw := grafanarest.DualWriterMode(mode)
-
+	// test on all dual writer modes
+	modes := []grafanarest.DualWriterMode{
+		grafanarest.Mode0, // legacy only
+		grafanarest.Mode2, // write both, read legacy
+		grafanarest.Mode3, // write both, read unified
+		grafanarest.Mode4,
+	}
+	for _, modeDw := range modes {
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v)", modeDw), func(t *testing.T) {
 			doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableDataMigrations: true,
@@ -1257,11 +1261,13 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 			requestToAnotherOrg: true,
 		},
 	}
-
-	for mode := 0; mode <= 4; mode++ {
-		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
-			modeDw := grafanarest.DualWriterMode(mode)
-
+	for _, modeDw := range []grafanarest.DualWriterMode{
+		grafanarest.Mode0, // legacy only
+		grafanarest.Mode2, // write both, read legacy
+		grafanarest.Mode3, // write both, read unified
+		grafanarest.Mode4,
+	} {
+		t.Run(fmt.Sprintf("Mode_%d", modeDw), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableDataMigrations: true,
 				AppModeProduction:     true,
