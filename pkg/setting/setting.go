@@ -991,6 +991,10 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	defaultConfigFile := path.Join(cfg.HomePath, "conf/defaults.ini")
 	cfg.configFiles = append(cfg.configFiles, defaultConfigFile)
 
+	// M@ DEBUG do not commit
+	cfg.Logger.Info("In loadConfiguration M@-----------")
+	fmt.Printf("In loadConfiguration M@-----------\n")
+
 	// check if config file exists
 	if _, err := os.Stat(defaultConfigFile); os.IsNotExist(err) {
 		fmt.Println("Grafana-server Init Failed: Could not find config defaults, make sure homepath command line parameter is set or working directory is homepath")
@@ -1029,6 +1033,8 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 
 	// apply command line overrides
 	cfg.applyCommandLineProperties(commandLineProps, parsedFile)
+
+	loadFeatureToggles(parsedFile)
 
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)
