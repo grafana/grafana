@@ -170,7 +170,7 @@ This example prints the `$value` variable:
 When using multiple data sources, it would display something like this:
 
 ```
-[ var='A' labels={instance=instance1} value=81.234, , [ var='B' labels={instance=instance2} value=1 ] ]: CPU usage has exceeded 80% for the last 5 minutes.
+[ var='A' labels={instance=instance1} type='reduce' value=81.234 ], [ var='B' labels={instance=instance2} type='threshold' value=1 ]: CPU usage has exceeded 80% for the last 5 minutes.
 ```
 
 But with a single data source, it would display just the value of the query:
