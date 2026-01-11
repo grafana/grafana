@@ -15,6 +15,8 @@ export interface DashboardAPI<G, T> {
   saveDashboard(options: SaveDashboardCommand<T>): Promise<SaveDashboardResponseDTO>;
   /** Delete a dashboard */
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse>;
+  /** List all versions of a dashboard */
+  listDashboardHistory(uid: string): Promise<ResourceList<T>>;
   /** List all deleted dashboards */
   listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<ResourceList<T>>;
   /**  Restore a deleted dashboard by re-creating it */
