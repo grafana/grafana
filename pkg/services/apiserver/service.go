@@ -346,6 +346,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.MaxRequestBodyBytes = MaxRequestBodyBytes
 
 	var optsregister apistore.StorageOptionsRegister
+	var restOptsGetter *apistore.RESTOptionsGetter
 
 	if o.StorageOptions.StorageType == grafanaapiserveroptions.StorageTypeEtcd {
 		if err := o.RecommendedOptions.Etcd.Validate(); len(err) > 0 {
@@ -355,9 +356,9 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
-		optsregister = getter.RegisterOptions
-		serverConfig.RESTOptionsGetter = getter
+		restOptsGetter = apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+		optsregister = restOptsGetter.RegisterOptions
+		serverConfig.RESTOptionsGetter = restOptsGetter
 	}
 
 	defGetters := []common.GetOpenAPIDefinitions{
@@ -398,8 +399,11 @@ func (s *service) start(ctx context.Context) error {
 		return fmt.Errorf("failed to register post start hooks for app installers: %w", err)
 	}
 
-	// Create the server
-	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
+	// Determine the delegate for the main server
+	var delegationTarget = genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler)
+
+	// Create the main Grafana API server
+	server, err := serverConfig.Complete().New("grafana-apiserver", delegationTarget)
 	if err != nil {
 		return err
 	}
