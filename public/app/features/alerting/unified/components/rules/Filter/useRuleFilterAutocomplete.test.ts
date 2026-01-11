@@ -18,6 +18,12 @@ jest.mock('../../../api/prometheusApi', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  config: {
+    featureToggles: {
+      alertingUIUseLimitRules: false,
+    },
+    apps: {},
+  },
   getDataSourceSrv: () => ({
     getList: jest.fn().mockReturnValue([]),
   }),
@@ -71,6 +77,7 @@ describe('useNamespaceAndGroupOptions', () => {
 
       expect(mockFetchGrafanaGroups).toHaveBeenCalledWith({
         limitAlerts: 0,
+        limitRules: undefined,
         searchGroupName: 'cpu',
         groupLimit: 100,
       });
@@ -78,6 +85,27 @@ describe('useNamespaceAndGroupOptions', () => {
       expect(options).toHaveLength(2);
       expect(options[0]).toEqual({ label: 'cpu-alerts', value: 'cpu-alerts' });
       expect(options[1]).toEqual({ label: 'cpu-usage', value: 'cpu-usage' });
+    });
+
+    it('should pass limitRules: 0 when alertingUIUseLimitRules is enabled', async () => {
+      const { config } = require('@grafana/runtime');
+      config.featureToggles.alertingUIUseLimitRules = true;
+
+      mockFetchGrafanaGroups.mockReturnValue({
+        unwrap: () => Promise.resolve({ data: { groups: [] } }),
+      });
+
+      const { result } = renderHook(() => useNamespaceAndGroupOptions());
+      await result.current.groupOptions('cpu');
+
+      expect(mockFetchGrafanaGroups).toHaveBeenCalledWith({
+        limitAlerts: 0,
+        limitRules: 0,
+        searchGroupName: 'cpu',
+        groupLimit: 100,
+      });
+
+      config.featureToggles.alertingUIUseLimitRules = false;
     });
 
     it('should show message when no groups match search', async () => {
