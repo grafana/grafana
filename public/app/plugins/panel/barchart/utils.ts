@@ -4,12 +4,14 @@ import {
   DataFrame,
   Field,
   FieldConfigSource,
+  FieldMatcherID,
   FieldType,
   GrafanaTheme2,
   cacheFieldDisplayNames,
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
+  getFieldMatcher,
   getFieldSeriesColor,
   outerJoinDataFrames,
 } from '@grafana/data';
@@ -53,9 +55,11 @@ export function prepSeries(
   frames: DataFrame[],
   fieldConfig: FieldConfigSource,
   stacking: StackingMode,
+  isClusteredStacked: boolean,
   theme: GrafanaTheme2,
   xFieldName?: string,
-  colorFieldName?: string
+  colorFieldName?: string,
+  groupByField?: string
 ): BarSeries {
   // this allows PanelDataErrorView to show the default noValue message
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
@@ -71,6 +75,15 @@ export function prepSeries(
 
   let frame: DataFrame | undefined = { ...frames[0] };
 
+  if (isClusteredStacked && groupByField) {
+    const fieldValues = frame.fields.find((field) => field.state?.displayName === groupByField || field.name === groupByField)?.values;
+    const clusters = getClustersFromArray(fieldValues, groupByField);
+    const newFrames = prepareClusterData(frames, clusters, groupByField);
+    frame = { ...newFrames[0] };
+  } else {
+    frame = { ...frames[0] };
+  }
+
   // auto-sort and/or join on first time field (if any)
   // TODO: should this always join on the xField (if supplied?)
   const timeFieldIdx = frame.fields.findIndex((f) => f.type === FieldType.time);
@@ -79,10 +92,14 @@ export function prepSeries(
     frame = outerJoinDataFrames({ frames, keepDisplayNames: true }) ?? frame;
   }
 
-  const xField =
-    // TODO: use matcher
-    frame.fields.find((field) => field.state?.displayName === xFieldName || field.name === xFieldName) ??
-    frame.fields.find((field) => field.type === FieldType.string) ??
+  const groupMatcher = getFieldMatcher({ id: FieldMatcherID.byName, options: groupByField});
+  const xFieldMatcher = getFieldMatcher({ id: FieldMatcherID.byName, options: xFieldName });
+  const stringMatcher = getFieldMatcher({ id: FieldMatcherID.byType, options: FieldType.string });
+
+  let xField =
+    frame.fields.find(f => groupMatcher(f, frame, [frame])) ??
+    frame.fields.find(f => xFieldMatcher(f, frame, [frame])) ??
+    frame.fields.find(f => stringMatcher(f, frame, [frame])) ??
     frame.fields[timeFieldIdx];
 
   if (xField != null) {
@@ -112,6 +129,9 @@ export function prepSeries(
                   group: '_',
                   mode: stacking,
                 },
+                clusteredStacking: {
+                  mode: isClusteredStacked,
+                }
               },
             },
           };
@@ -159,15 +179,18 @@ export interface PrepConfigOpts {
   options: Options;
   timeZone: TimeZone;
   theme: GrafanaTheme2;
+  groupByField?: string;
 }
 
-export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
+export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme}: PrepConfigOpts) => {
   let {
     showValue,
     groupWidth,
+    clusterWidth, 
     barWidth,
     barRadius = 0,
     stacking,
+    isClusteredStacked,
     text,
     tooltip,
     xTickLabelRotation,
@@ -175,6 +198,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     xTickLabelSpacing = 0,
     legend,
     fullHighlight,
+    groupByField,
   } = options;
   // this and color is kept up to date by returned prepData()
   let frame = series[0];
@@ -266,9 +290,12 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     xOri: vizOrientation.xOri,
     xDir: vizOrientation.xDir,
     groupWidth,
+    clusterWidth,
     barWidth,
     barRadius,
     stacking,
+    isClusteredStacked,
+    groupByField,
     rawValue,
     getColor,
     fillOpacity,
@@ -285,7 +312,9 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
   };
 
-  const config = getConfig(opts, theme);
+  const groupByFieldIdx = getFieldIdx(series, groupByField)
+
+  const config = getConfig(opts, theme, groupByFieldIdx);
 
   builder.setCursor(config.cursor);
 
@@ -307,7 +336,17 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
+    // range: config.xAxisRange,
     range: config.xRange,
+    distribution: ScaleDistribution.Ordinal,
+    orientation: vizOrientation.xOri,
+    direction: vizOrientation.xDir,
+  });
+
+  builder.addScale({ // fake x scale for the x-axis
+    scaleKey: 'x-fake',
+    isTime: false,
+    range: config.xAxisRange,
     distribution: ScaleDistribution.Ordinal,
     orientation: vizOrientation.xOri,
     direction: vizOrientation.xDir,
@@ -322,7 +361,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
   const xFieldAxisShow = frame.fields[0]?.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   builder.addAxis({
-    scaleKey: 'x',
+    scaleKey: 'x-fake',
     isTime: false,
     placement: xFieldAxisPlacement,
     label: frame.fields[0]?.config.custom?.axisLabel,
@@ -356,7 +395,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 
     // make barcharts start at 0 unless explicitly overridden
     let softMin = customConfig.axisSoftMin;
-    let softMax = customConfig.axisSoftMax;
+    // let softMax = customConfig.axisSoftMax;
+    let softMax = 3;
 
     if (softMin == null && field.config.min == null) {
       softMin = 0;
@@ -483,6 +523,110 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     },
   };
 };
+
+// creates new fields and drops unnecessary ones for stacking clusters.
+export function prepareClusterData(frames: DataFrame[], clusters: number[], groupByField: string | undefined): DataFrame[] {
+  if (!frames.length || !groupByField) {
+    return frames;
+  }
+
+  const frame = frames[0];
+
+  const catField = frame.fields.find((field) => field.name === groupByField);
+  const xField = frame.fields.find((field) => field.type === FieldType.string && field !== catField);
+  const yField = frame.fields.find((field) => field.type === FieldType.number);
+  
+  if (!xField || !catField || !yField) {
+    return frames;
+  }
+
+  const xVals = xField.values;
+  const catVals = catField.values;
+  const yVals = yField.values;
+
+  const newX: any[] = [];
+  const newCat: any[] = [];
+  const newY: number[] = [];
+
+  const newFields: Field[] = [];
+
+  let rowIdx = 0;
+
+  clusters.forEach(clusterSize => {
+    const clusterLabel = String(catVals[rowIdx]);
+
+    newX.push(xVals[rowIdx]);
+    newCat.push(clusterLabel);
+    newY.push(yVals[rowIdx]);
+
+    for (let k = 1; k < clusterSize; k++) {
+      const v = yVals[rowIdx + k];
+
+      const field: Field = {
+        name: `${clusterLabel}_${xVals[rowIdx + k]}`,
+        type: FieldType.number,
+        config: yField ? yField.config : {},
+        values: Array(clusters.length).fill(undefined),
+        display: yField.display,
+      };
+
+      // place absorbed value into this cluster’s slot
+      field.values[newX.length - 1] = v ?? undefined;
+
+      newFields.push(field);
+    }
+
+    rowIdx += clusterSize;
+  });
+  
+  const newFrame: DataFrame = {
+    ...frame,
+    length: clusters.length,
+    fields: [
+      {
+        ...xField,
+        values: newX,
+      },
+      {
+        ...catField,
+        values: newCat,
+      },
+      {
+        ...yField,
+        values: newY,
+      },
+      ...newFields,
+    ],
+  };
+  
+  return [newFrame];
+}
+
+
+// returns an array of ints, where each number n represents the size of the nth cluster
+export function getClustersFromArray(fieldValues: any[] | undefined, groupByField: string | undefined): number[] {
+  if (!fieldValues) { return []; }
+  const fallbackClusters = Array(fieldValues.length).fill(1); // cluster for each group
+  if (!groupByField) { return fallbackClusters; }
+  const clusters = [];
+  let clustersIdx = -1;
+  let currentValue: any = undefined;
+  for (let i = 0; i < fieldValues.length; i++) {
+    if (fieldValues[i] !== currentValue) {
+      currentValue = fieldValues[i];
+      clusters.push(0);
+      clustersIdx++;
+    }
+    if (clustersIdx === -1) { return fallbackClusters; };
+    clusters[clustersIdx]++;
+  }
+  return clusters;
+}
+
+function getFieldIdx(data: DataFrame[], groupByFieldName: string | undefined): number {
+  if (!groupByFieldName || !data || data.length === 0 || data[0].length === 0) { return -1 };
+  return data[0].fields.findIndex((field) => field.name === groupByFieldName);
+}
 
 function shortenValue(value: string, length: number) {
   if (value.length > length) {
