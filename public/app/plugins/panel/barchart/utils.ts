@@ -319,7 +319,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
         ? AxisPlacement.Bottom
         : AxisPlacement.Left
       : AxisPlacement.Hidden;
-  const xFieldAxisShow = frame.fields[0]?.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   builder.addAxis({
     scaleKey: 'x',
@@ -335,7 +334,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     gap: 15,
     tickLabelRotation: vizOrientation.xOri === 0 ? xTickLabelRotation * -1 : 0,
     theme,
-    show: xFieldAxisShow,
   });
 
   // let seriesIndex = 0;
