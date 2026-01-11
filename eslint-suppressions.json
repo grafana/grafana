@@ -4176,11 +4176,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/canvas/editor/element/APIEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
