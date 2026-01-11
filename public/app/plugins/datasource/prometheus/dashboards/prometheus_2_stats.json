@@ -531,7 +531,7 @@
           "refId": "A"
         },
         {
-          "expr": "sum(process_open_fds{job=\"prometheus\"})",
+          "expr": "sum(process_open_fds{job=\"${job}\"})",
           "format": "time_series",
           "legendFormat": "open_fds",
           "refId": "B"
