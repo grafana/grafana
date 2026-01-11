@@ -226,8 +226,8 @@ Dashboards are reloaded when the JSON files change.
 
 #### `min_tls_version`
 
-The TLS Handshake requires a minimum TLS version. The available options are TLS1.2 and TLS1.3.
-If you do not specify a version, the system uses TLS1.2.
+The TLS handshake requires a minimum TLS version. Available options are `TLS1.2` and `TLS1.3`.
+If you don't specify a version, Grafana uses `TLS1.2`.
 
 #### `http_addr`
 
@@ -286,9 +286,9 @@ Set to `true` for Grafana to log all HTTP requests (not just errors). These are 
 
 #### `static_root_path`
 
-The path to the directory where the frontend files (HTML, JS, and CSS
-files). Defaults to `public` which is why the Grafana binary needs to be
-executed with working directory set to the installation path.
+The path to the directory containing the frontend files (HTML, JS, and CSS).
+Defaults to `public`, which is why you must run the Grafana binary with the
+working directory set to the installation path.
 
 #### `enable_gzip`
 
@@ -312,8 +312,8 @@ Optional. Password to decrypt encrypted certificates.
 #### `certs_watch_interval`
 
 Controls whether `cert_key` and `cert_file` are periodically watched for changes.
-Disabled, by default. When enabled, `cert_key` and `cert_file`
-are watched for changes. If there is change, the new certificates are loaded automatically.
+Disabled by default. When enabled, `cert_key` and `cert_file` are watched for
+changes. If there is a change, Grafana loads the new certificates automatically.
 
 {{< admonition type="warning" >}}
 After the new certificates are loaded, connections with old certificates don't work.
@@ -392,6 +392,10 @@ The database user's password (not applicable for `sqlite3`). If the password con
 
 Use either URL or the previous fields to configure the database
 Example: `type://user:password@host:port/name`
+
+#### `high_availability`
+
+Enable or disable high availability mode. When disabled, some functions run in-process instead of relying on the database. Default is `true`.
 
 #### `max_idle_conn`
 
@@ -475,6 +479,10 @@ This setting applies to `sqlite` only and controls the number of times the syste
 
 Set to `true` to add metrics and tracing for database queries. The default value is `false`.
 
+#### `delete_auto_gen_ids`
+
+Delete auto-generated primary keys during migrations. Useful if the database has auto-generated primary keys enabled. Default is `false`.
+
 #### `skip_dashboard_uid_migration_on_startup`
 
 Set to true to skip dashboard UID migrations on startup. Improves startup performance for instances with large numbers of annotations who do not plan to downgrade Grafana. The default value is `false`.
@@ -516,6 +524,14 @@ Example connection string: `addr=127.0.0.1:6379,pool_size=100,db=0,username=graf
 
 Example connection string: `127.0.0.1:11211`
 
+#### `prefix`
+
+Prefix prepended to all keys in the remote cache.
+
+#### `encryption`
+
+Enable encryption of values stored in the remote cache.
+
 <hr />
 
 ### `[dataproxy]`
@@ -529,6 +545,10 @@ This enables data proxy logging, default is `false`.
 How long the data proxy should wait before timing out. Default is 30 seconds.
 
 This setting also applies to core backend HTTP data sources where query requests use an HTTP client with timeout set.
+
+#### `dialTimeout`
+
+How long the data proxy waits to establish a TCP connection before timing out. Default is `10` seconds.
 
 #### `keep_alive_seconds`
 
@@ -823,6 +843,22 @@ Set to `true` to execute the CSRF check even if the login cookie is not in a req
 #### `enable_frontend_sandbox_for_plugins`
 
 Comma-separated list of plugins IDs to load inside the frontend sandbox.
+
+### `[security.encryption]`
+
+Configure encryption-related cache settings for data encryption keys used by Grafana.
+
+#### `data_keys_cache_ttl`
+
+Defines the time-to-live (TTL) for decrypted data encryption keys stored in memory. Default: `15m`.
+
+#### `data_keys_cache_cleanup_interval`
+
+Sets how often Grafana cleans up the encryption key cache, removing entries that reached the TTL. Default: `1m`.
+
+{{< admonition type="note" >}}
+Small TTL values can impact performance due to frequent decryption operations.
+{{< /admonition >}}
 
 ### `[snapshots]`
 
@@ -1656,6 +1692,10 @@ Custom HTTP endpoint to send events captured by the Grafana Faro agent to. Defau
 
 If `custom_endpoint` required authentication, you can set the API key here. Only relevant for Grafana JavaScript Agent provider.
 
+#### `internal_logger_level`
+
+Sets the internal logging level for the Grafana JavaScript agent. Allowed values are `0` (OFF), `1` (ERROR), `2` (WARN), `3` (INFO), and `4` (VERBOSE). Default is `0`.
+
 #### `instrumentations_console_enabled`
 
 Enables the [Console instrumentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/instrument/console-instrumentation/) for Grafana Faro, defaults to `true`.
@@ -1983,13 +2023,41 @@ This setting has precedence over each individual rule frequency.
 If a rule frequency is lower than this value, then this value is enforced.
 {{< /admonition >}}
 
-<hr>
+#### `state_periodic_save_interval`
+
+If the `alertingSaveStatePeriodic` feature flag is enabled, sets the interval used to persist alerting instances to the database. Specify a duration (for example, `5m`). Default is `5m`.
+
+#### `state_periodic_save_batch_size`
+
+If the `alertingSaveStatePeriodic` feature flag is enabled, sets the size of the batch that is saved to the database at once. Default is `1`.
+
+#### `state_periodic_save_jitter_enabled`
+
+Enables jitter for periodic state saving to distribute database load over time. When enabled, batches are spread across the save interval to prevent load spikes. Default is `false`.
+
+#### `disable_jitter`
+
+Disables smoothing of alert evaluations across their evaluation window. When set to `true`, rules evaluate in sync. Default is `false`.
+
+#### `notification_log_retention`
+
+Retention period for Alertmanager notification log entries. Specify a duration (for example, `5d`). Default is `5d`.
+
+#### `resolved_alert_retention`
+
+Duration for which a resolved alert state transition continues to be sent to the Alertmanager. Specify a duration (for example, `15m`). Default is `15m`.
 
 #### `rule_version_record_limit`
 
 Defines the limits for how many alert rule versions are stored in the database per alert rule.
 
 The default `0` value means there's no limit.
+
+#### `deleted_rule_retention`
+
+Retention period for deleted alerting rules before permanent removal. Specify a duration (for example, `30d`). Default is `30d`. Setting `0` deletes rules immediately.
+
+<hr>
 
 ### `[unified_alerting.screenshots]`
 
@@ -2030,6 +2098,86 @@ For example: `disabled_labels=grafana_folder`
 
 <hr>
 
+### `[unified_alerting.state_history]`
+
+Configure state history for Unified Alerting. Previous alert rule states can be queried in panels and viewed in the UI.
+
+#### `enabled`
+
+Enable or disable the state history functionality. Default: `true`.
+
+#### `backend`
+
+Select the backend for state history. Options: `annotations`, `loki`, `prometheus`, `multiple`. Default: `annotations`.
+
+The backends provide different storage and query characteristics:
+
+- **annotations:** Stores alert state transitions as Grafana annotations in the local database.
+- **loki:** Writes alert state history to an external Loki instance. Requires Loki connection configuration in this section.
+- **prometheus:** Emits alert state as `GRAFANA_ALERTS` metrics to a Prometheus-compatible data source. Requires Prometheus target configuration in this section.
+- **multiple:** Writes state history to more than one backend at the same time. Use `primary` to select which backend serves queries, and `secondaries` for additional write targets.
+
+Backend-specific configuration requirements:
+
+- When `backend = annotations`, no additional keys in this section are required.
+- When a Loki backend is used in any capacity (for example, `backend = loki`, or `backend = multiple` with Loki as `primary` or present in `secondaries`) you must set either `loki_remote_url` or both `loki_remote_read_url` and `loki_remote_write_url`.
+- When a Prometheus backend is used in any capacity (for example, `backend = prometheus`, or `backend = multiple` with Prometheus present in `secondaries`) you must set `prometheus_target_datasource_uid`.
+- When `backend = multiple`, set `primary` and `secondaries`.
+
+#### `primary`
+
+For `multiple` backend only. Sets the primary backend used to serve queries. Options: `annotations`, `loki`.
+
+#### `secondaries`
+
+For `multiple` backend only. Comma-separated list of additional backends to write state history to.
+
+#### `loki_remote_url`
+
+For `loki` backend. URL of the external Loki instance.
+
+#### `loki_remote_read_url`
+
+For `loki` backend. Read URL when Loki read/write endpoints are separated.
+
+#### `loki_remote_write_url`
+
+For `loki` backend. Write URL when Loki read/write endpoints are separated.
+
+#### `loki_tenant_id`
+
+For `loki` backend. Optional tenant ID to attach to requests.
+
+#### `loki_basic_auth_username`
+
+For `loki` backend. Optional username for basic authentication.
+
+#### `loki_basic_auth_password`
+
+For `loki` backend. Optional password for basic authentication.
+
+#### `loki_max_query_length`
+
+For `loki` backend. Maximum query length duration. Default: `721h`.
+
+#### `loki_max_query_size`
+
+For `loki` backend. Maximum query size in bytes. Default: `65536`.
+
+#### `prometheus_target_datasource_uid`
+
+For `prometheus` backend. Target datasource UID for writing `GRAFANA_ALERTS` metrics.
+
+#### `prometheus_metric_name`
+
+For `prometheus` backend. Metric name for `GRAFANA_ALERTS`. Default: `GRAFANA_ALERTS`.
+
+#### `prometheus_write_timeout`
+
+For `prometheus` backend. Timeout for writing `GRAFANA_ALERTS` metrics. Default: `10s`.
+
+<hr>
+
 ### `[unified_alerting.state_history.annotations]`
 
 This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
@@ -2044,6 +2192,36 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 <hr>
 
+### `[unified_alerting.notification_history]`
+
+Enable storage of Alertmanager notification logs in Loki.
+
+#### `enabled`
+
+Enable or disable the notification history functionality. Default: `false`.
+
+#### `loki_remote_url`
+
+URL of the Loki instance used to store logs.
+
+#### `loki_tenant_id`
+
+Optional tenant ID to attach to requests sent to Loki.
+
+#### `loki_basic_auth_username`
+
+Optional username for basic authentication to Loki.
+
+#### `loki_basic_auth_password`
+
+Optional password for basic authentication to Loki.
+
+### `[unified_alerting.notification_history.external_labels]`
+
+Optional extra labels to attach to outbound notification history records or log streams. Provide any number of label key-value pairs.
+
+<hr>
+
 ### `[unified_alerting.prometheus_conversion]`
 
 This section applies only to rules imported as Grafana-managed rules. For more information about the import process, refer to [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
@@ -2055,6 +2233,52 @@ Set the query offset to imported Grafana-managed rules when `query_offset` is no
 #### `default_datasource_uid`
 
 Set the default data source UID to use for query execution when importing Prometheus rules. Grafana uses this default when the `X-Grafana-Alerting-Datasource-UID` header isn't provided during import. If this option isn't set, the header becomes required. The default value is empty.
+
+<hr>
+
+### `[recording_rules]`
+
+Configure recording rules.
+
+#### `enabled`
+
+Enable recording rules. Default: `true`.
+
+#### `timeout`
+
+Request timeout for recording rule writes. Default: `10s`.
+
+#### `default_datasource_uid`
+
+Default data source UID to write to if not specified in the rule definition.
+
+### `[recording_rules.custom_headers]`
+
+Optional custom headers to include in recording rule write requests.
+
+### `[remote.alertmanager]`
+
+Configure a remote Alertmanager to replace the internal one.
+
+#### `url`
+
+Root URL of the remote Alertmanager. Grafana automatically appends `/alertmanager` for certain HTTP calls.
+
+#### `tenant`
+
+Tenant ID used in requests. Also used as basic auth username if a password is configured.
+
+#### `password`
+
+Optional password for basic authentication. If not present, the tenant ID will be set in the X-Scope-OrgID header.
+
+#### `sync_interval`
+
+Interval for syncing with the Alertmanager. Default: `5m`.
+
+#### `timeout`
+
+Timeout for the HTTP client. Default: `30s`.
 
 <hr>
 
@@ -2964,6 +3188,8 @@ Move an app plugin (referenced by its id), including all its pages, to a specifi
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
 Format: `<pageUrl> = <sectionId> <sortWeight>`
 
+<hr>
+
 ### `[public_dashboards]`
 
 This section configures the [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/) feature.
@@ -2971,3 +3197,81 @@ This section configures the [shared dashboards](https://grafana.com/docs/grafana
 #### `enabled`
 
 Set this to `false` to disable the shared dashboards feature. This prevents users from creating new shared dashboards and disables existing ones.
+
+<hr>
+
+### `[cloud_migration]`
+
+Configure the Grafana Cloud Migration Assistant.
+
+#### `enabled`
+
+Enable or disable the Cloud Migration Assistant. Default is `true`.
+
+#### `is_target`
+
+Enable the target-side migration UI. Default is `false`.
+
+#### `gcom_api_token`
+
+Token used to send requests to Grafana com. Default is empty.
+
+#### `start_snapshot_timeout`
+
+Timeout for requests to start a snapshot. Default is `5s`.
+
+#### `validate_key_timeout`
+
+Timeout for requests to validate a key. Default is `5s`.
+
+#### `get_snapshot_status_timeout`
+
+Timeout for requests to get snapshot status. Default is `5s`.
+
+#### `create_upload_url_timeout`
+
+Timeout for requests to create a presigned upload URL. Default is `5s`.
+
+#### `report_event_timeout`
+
+Timeout for requests to report an event. Default is `5s`.
+
+#### `fetch_instance_timeout`
+
+Timeout for requests to fetch an instance. Default is `5s`.
+
+#### `create_access_policy_timeout`
+
+Timeout for requests to create an access policy. Default is `5s`.
+
+#### `fetch_access_policy_timeout`
+
+Timeout for requests to fetch an access policy. Default is `5s`.
+
+#### `delete_access_policy_timeout`
+
+Timeout for requests to delete an access policy. Default is `5s`.
+
+#### `domain`
+
+Domain name used to access the cloud migration service. Default is `grafana.net`.
+
+#### `snapshot_folder`
+
+Folder used to store snapshot files. Default is empty (home dir).
+
+#### `frontend_poll_interval`
+
+Polling interval for the frontend UI while resources are migrating. Default is `2s`.
+
+#### `alert_rules_state`
+
+Controls how alert rules are migrated. Options are `paused` or `unchanged`. Default is `"paused"`.
+
+{{< adomition type="note" >}}
+For more information, refer to the [Prevent duplicated alert notifications](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/migration-guide/cloud-migration-assistant/#prevent-duplicated-alert-notifications) documentation.
+{{< /admonition >}}
+
+#### `resource_storage_type`
+
+Resource snapshot storage type. Options are `db` (database) or `fs` (file system). Default is `"db"`.
