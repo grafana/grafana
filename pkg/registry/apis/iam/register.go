@@ -634,6 +634,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
 		case *iamv0.ExternalGroupMapping:
 			return externalgroupmapping.ValidateOnCreate(typedObj)
+		case *iamv0.CoreRole:
+			return validateCoreRoleServiceIdentityTarget(ctx, typedObj)
 		case *iamv0.Role:
 			return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
 		}
@@ -660,6 +662,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 				return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldTeamBindingObj)
 			}
 			return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
+		case *iamv0.CoreRole:
+			return validateCoreRoleServiceIdentityTarget(ctx, typedObj)
 		case *iamv0.Role:
 			oldRoleObj, ok := a.GetOldObject().(*iamv0.Role)
 			if !ok {
