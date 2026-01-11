@@ -179,6 +179,9 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_MEMBER_COUNT,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PERMISSION,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_ACCESS_CONTROL,
 		},
 	}
 
