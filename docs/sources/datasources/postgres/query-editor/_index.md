@@ -119,12 +119,12 @@ You can add macros to your queries to simplify the syntax and enable dynamic ele
 
 | Macro example                                         | Description                                                                                                                                                                                                               |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `$__time(dateColumn)`                                 | Replaces the value with an expression to convert to a UNIX timestamp and renames the column to `time_sec`. Example: `UNIX_TIMESTAMP(dateColumn) AS time_sec`.                                                             |
+| `$__time(dateColumn)`                                 | Replaces the value with an expression to convert to a UNIX timestamp and renames the column to `time_sec`. It also helps to recognize the time column, as required in Time Series format. Example: `UNIX_TIMESTAMP(dateColumn) AS time_sec`.                                                             |
 | `$__timeEpoch(dateColumn)`                            | Replaces the value with an expression to convert to a UNIX Epoch timestamp and renames the column to `time_sec`. Example: `UNIX_TIMESTAMP(dateColumn) AS time_sec`.                                                       |
-| `$__timeFilter(dateColumn)`                           | Replaces the value a time range filter using the specified column name. Example: `dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)`                                                             |
+| `$__timeFilter(dateColumn)`                           | Applies a time range filter using the specified column name and fetches only the data that falls within that range. Example: `dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)`                                                             |
 | `$__timeFrom()`                                       | Replaces the value with the start of the currently active time selection. Example: `FROM_UNIXTIME(1494410783)`                                                                                                            |
 | `$__timeTo()`                                         | Replaces the value with the end of the currently active time selection. Example: `FROM_UNIXTIME(1494410983)`                                                                                                              |
-| `$__timeGroup(dateColumn,'5m')`                       | Replaces the value with an expression suitable for use in a `GROUP BY` clause. Example: `cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) AS signed)*300 AS signed)`                                                            |
+| `$__timeGroup(dateColumn,'5m')`                       | Replaces the value with an expression suitable for use in a `GROUP BY` clause and creates the bucket timestamps at a fixed interval. Example: `cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) AS signed)*300 AS signed)`                                                            |
 | `$__timeGroup(dateColumn,'5m', 0)`                    | Same as the `$__timeGroup(dateColumn,'5m')` macro, but includes a fill parameter to ensure missing points in the series are added by Grafana, using 0 as the default value. **This applies only to time series queries.** |
 | `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as the `$__timeGroup(dateColumn,'5m', 0)` but `NULL` is used as the value for missing points. _This applies only to time series queries._                                                                            |
 | `$__timeGroup(dateColumn,'5m', previous)`             | Same as the `$__timeGroup(dateColumn,'5m', previous)` macro, but uses the previous value in the series as the fill value. If no previous value exists, it uses `NULL`. _This applies only to time series queries._        |
@@ -170,11 +170,11 @@ The examples in this section refer to the data in the following table:
 +---------------------+--------------+---------------------+----------+
 | time_date_time      | value_double | CreatedAt           | hostname |
 +---------------------+--------------+---------------------+----------+
-| 2020-01-02 03:05:00 | 3.0          | 2020-01-02 03:05:00 | 10.0.1.1 |
-| 2020-01-02 03:06:00 | 4.0          | 2020-01-02 03:06:00 | 10.0.1.2 |
-| 2020-01-02 03:10:00 | 6.0          | 2020-01-02 03:10:00 | 10.0.1.1 |
-| 2020-01-02 03:11:00 | 7.0          | 2020-01-02 03:11:00 | 10.0.1.2 |
-| 2020-01-02 03:20:00 | 5.0          | 2020-01-02 03:20:00 | 10.0.1.2 |
+| 2025-01-02 03:05:00 | 3.0          | 2025-01-02 03:05:00 | 10.0.1.1 |
+| 2025-01-02 03:06:00 | 4.0          | 2025-01-02 03:06:00 | 10.0.1.2 |
+| 2025-01-02 03:10:00 | 6.0          | 2025-01-02 03:10:00 | 10.0.1.1 |
+| 2025-01-02 03:11:00 | 7.0          | 2025-01-02 03:11:00 | 10.0.1.2 |
+| 2025-01-02 03:20:00 | 5.0          | 2025-01-02 03:20:00 | 10.0.1.2 |
 +---------------------+--------------+---------------------+----------+
 ```
 
