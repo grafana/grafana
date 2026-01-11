@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Añadir panel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Agrupar en fila",
@@ -5695,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "No se ha podido encontrar un ID de Grafana.com válido",
       "invalid-json": "JSON no válido",
+      "tag-too-long": "",
       "tags-expected-array": "etiquetas: matriz prevista",
       "tags-expected-strings": "etiquetas: matriz de cadenas prevista"
     },
@@ -9253,7 +9255,8 @@
     "tags-input": {
       "add": "Añadir",
       "placeholder-new-tag": "Nueva etiqueta (pulsa la tecla Intro para añadirla)",
-      "remove": "Eliminar etiqueta: {{name}}"
+      "remove": "Eliminar etiqueta: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Sincronizar tiempos",

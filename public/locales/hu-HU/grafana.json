@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Panel hozzáadása",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Csoportosítás sorba",
@@ -5695,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Nem található érvényes Grafana.com-azonosító",
       "invalid-json": "Érvénytelen JSON",
+      "tag-too-long": "",
       "tags-expected-array": "címke tömböt várt",
       "tags-expected-strings": "címke karakterláncok tömbjét várta"
     },
@@ -9253,7 +9255,8 @@
     "tags-input": {
       "add": "Hozzáadás",
       "placeholder-new-tag": "Új címke (nyomja le az Enter billentyűt a hozzáadáshoz)",
-      "remove": "Címke eltávolítása: {{name}}"
+      "remove": "Címke eltávolítása: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Időpontok szinkronizálása",
