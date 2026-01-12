@@ -193,7 +193,8 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
           item={
             {
               settings: {
-                simpleFixedValues: true,
+                simpleFixedValues: false,
+                displayRotation: true,
                 layerInfo,
               },
             } as StandardEditorsRegistryItem

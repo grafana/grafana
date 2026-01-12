@@ -3,7 +3,13 @@ import { useId, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
-import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem, FrameMatcher } from '@grafana/data';
+import {
+  FieldConfigPropertyItem,
+  StandardEditorProps,
+  StandardEditorsRegistryItem,
+  FrameMatcher,
+  SelectableValue,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   ScaleDimensionConfig,
@@ -11,16 +17,26 @@ import {
   ColorDimensionConfig,
   TextDimensionConfig,
   ScalarDimensionConfig,
+  TextDimensionMode,
 } from '@grafana/schema';
-import { ColorPicker, Field, Stack, InlineField, InlineFieldRow, InlineLabel, RadioButtonGroup } from '@grafana/ui';
+import {
+  ColorPicker,
+  Field,
+  Stack,
+  InlineField,
+  InlineFieldRow,
+  InlineLabel,
+  RadioButtonGroup,
+  Select,
+  Input,
+} from '@grafana/ui';
 import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
 import { SliderValueEditor } from 'app/core/components/OptionsUI/slider';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { ResourceDimensionEditor } from 'app/features/dimensions/editors/ResourceDimensionEditor';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
-import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
+import { ResourceFolderName, MediaType } from 'app/features/dimensions/types';
 
 import {
   HorizontalAlign,
@@ -41,6 +57,8 @@ export interface StyleEditorOptions {
   hideSymbol?: boolean;
   frameMatcher?: FrameMatcher;
 }
+
+const DEFAULT_OUTLINE_COLOR = '#000';
 
 type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
 
@@ -76,12 +94,32 @@ export const StyleEditor = (props: Props) => {
     onChange({ ...value, rotation: rotationValue });
   };
 
-  const onTextChange = (textValue: TextDimensionConfig | undefined) => {
+  const onTextConfigChange = (textValue: TextDimensionConfig | undefined) => {
     onChange({ ...value, text: textValue });
   };
 
   const onTextFontSizeChange = (fontSize: number | undefined) => {
     onChange({ ...value, textConfig: { ...value.textConfig, fontSize } });
+  };
+
+  const onFontWeightChange = (val: string) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, fontWeight: val } });
+  };
+
+  const onFontStyleChange = (val: string) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, fontStyle: val } });
+  };
+
+  const onOutlineWidthChange = (val: number | undefined) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, outlineWidth: val } });
+  };
+
+  const onOutlineColorChange = (val: string) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, outlineColor: val } });
+  };
+
+  const onTextTransformChange = (val: string) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, textTransform: val } });
   };
 
   const onTextOffsetXChange = (offsetX: number | undefined) => {
@@ -123,10 +161,53 @@ export const StyleEditor = (props: Props) => {
   const color1Id = useId();
   const fillOpacityId = useId();
   const rotationAngle1Id = useId();
-  const textId = useId();
   const fontSizeId = useId();
   const xOffsetId = useId();
   const yOffsetId = useId();
+  const textSelectId = useId();
+  const outlineWidthId = useId();
+  const outlineColorPickerId = useId();
+
+  const textOptions = useMemo(() => {
+    const rawOptions = propertyOptions?.propertes ?? [];
+    return rawOptions
+      .filter((opt) => opt.value !== undefined && opt.value !== null)
+      .map((opt) => ({
+        label: opt.label ?? String(opt.value),
+        value: String(opt.value),
+        description: opt.description,
+      }));
+  }, [propertyOptions]);
+
+  const currentTextValue = useMemo(() => {
+    if (value?.text?.mode === TextDimensionMode.Field) {
+      return value.text.field;
+    }
+    return value?.text?.fixed;
+  }, [value?.text]);
+
+  const onTextSelectChange = (selection: SelectableValue<string>) => {
+    if (!selection || !selection.value) {
+      onTextConfigChange({ mode: TextDimensionMode.Fixed, fixed: '' });
+      return;
+    }
+
+    const val = selection.value;
+    const isField = textOptions.some((opt) => opt.value === val);
+
+    if (isField) {
+      onTextConfigChange({
+        mode: TextDimensionMode.Field,
+        field: val,
+        fixed: '',
+      });
+    } else {
+      onTextConfigChange({
+        mode: TextDimensionMode.Fixed,
+        fixed: val,
+      });
+    }
+  };
 
   // Simple fixed value display
   if (settings?.simpleFixedValues) {
@@ -226,7 +307,7 @@ export const StyleEditor = (props: Props) => {
           item={
             {
               settings: {
-                min: 1,
+                min: 0,
                 max: 100,
               },
             } as StandardEditorsRegistryItem
@@ -345,12 +426,17 @@ export const StyleEditor = (props: Props) => {
         </Field>
       )}
       <Field label={t('geomap.style-editor.label-text-label', 'Text label')}>
-        <TextDimensionEditor
-          id={textId}
-          value={value?.text ?? defaultTextConfig}
-          context={context}
-          onChange={onTextChange}
-          item={{} as StandardEditorsRegistryItem}
+        <Select
+          inputId={textSelectId}
+          options={textOptions}
+          value={currentTextValue}
+          onChange={onTextSelectChange}
+          allowCustomValue={true}
+          isClearable={true}
+          placeholder={t(
+            'geomap.style-editor.placeholder-select-text-property',
+            'Select a property'
+          )}
         />
       </Field>
 
@@ -385,6 +471,68 @@ export const StyleEditor = (props: Props) => {
               />
             </Field>
           </Stack>
+          <InlineFieldRow>
+            <Field label={t('geomap.style-editor.label-font-weight', 'Font weight')}>
+              <RadioButtonGroup
+                value={value?.textConfig?.fontWeight ?? 'normal'}
+                onChange={onFontWeightChange}
+                options={[
+                  { value: 'normal', label: t('geomap.style-editor.font-weight-normal', 'Normal') },
+                  { value: 'bold', label: t('geomap.style-editor.font-weight-bold', 'Bold') },
+                ]}
+              />
+            </Field>
+            <Field label={t('geomap.style-editor.label-font-style', 'Font style')}>
+              <RadioButtonGroup
+                value={value?.textConfig?.fontStyle ?? 'normal'}
+                onChange={onFontStyleChange}
+                options={[
+                  { value: 'normal', label: t('geomap.style-editor.font-style-normal', 'Normal') },
+                  { value: 'italic', label: t('geomap.style-editor.font-style-italic', 'Italic') },
+                ]}
+              />
+            </Field>
+            <Field label={t('geomap.style-editor.label-text-transform', 'Text case')}>
+              <RadioButtonGroup
+                value={value?.textConfig?.textTransform ?? 'none'}
+                onChange={onTextTransformChange}
+                options={[
+                  { value: 'none', label: 'Aa' },
+                  { value: 'uppercase', label: 'AA' },
+                  { value: 'lowercase', label: 'aa' },
+                ]}
+              />
+            </Field>
+          </InlineFieldRow>
+          <Field label={t('geomap.style-editor.label-outline-width', 'Text outline width')}>
+            <SliderValueEditor
+              id={outlineWidthId}
+              value={value?.textConfig?.outlineWidth ?? 0}
+              context={context}
+              onChange={onOutlineWidthChange}
+              item={{ settings: { min: 0, max: 10, step: 1 } } as FieldConfigPropertyItem}
+            />
+          </Field>
+          {(value?.textConfig?.outlineWidth ?? 0) > 0 && (
+            <Field label={t('geomap.style-editor.label-outline-color', 'Text outline color')}>
+              <Stack>
+                <InlineLabel width={4}>
+                  <ColorPicker
+                    id={outlineColorPickerId}
+                    color={value?.textConfig?.outlineColor ?? DEFAULT_OUTLINE_COLOR}
+                    onChange={onOutlineColorChange}
+                    enableNamedColors={false}
+                  />
+                </InlineLabel>
+                <Input
+                  value={value?.textConfig?.outlineColor ?? DEFAULT_OUTLINE_COLOR}
+                  onChange={(e) => onOutlineColorChange(e.currentTarget.value)}
+                  placeholder={DEFAULT_OUTLINE_COLOR}
+                  spellCheck={false}
+                />
+              </Stack>
+            </Field>
+          )}
           <Field label={t('geomap.style-editor.label-align', 'Align')}>
             <RadioButtonGroup
               value={value?.textConfig?.textAlign ?? defaultStyleConfig.textConfig.textAlign}

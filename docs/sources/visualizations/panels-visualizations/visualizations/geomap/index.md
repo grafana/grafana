@@ -316,28 +316,26 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 | Option | Description |
 | ------ | ----------- |
 | GeoJSON URL | Provides a choice of GeoJSON files that are included with Grafana. You can also enter a URL manually, which supports variables. |
-| Default Style | Controls which styles to apply when no rules above match.<ul><li>**Color** - configures the color of the default style</li><li>**Opacity** - configures the default opacity</li></ul> |
-| Style Rules | Apply styles based on feature properties <ul><li>**Rule** - allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.</li><li>**Color** - configures the color of the style for the current rule</li><li>**Opacity** - configures the transparency level for the current rule</li> |
+| Default style | Defines how features are rendered when no style rules match. |
+| Style rules | Apply styles conditionally based on feature properties. Each rule uses the same style editor as Default style. |
 | Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
-Styles can be set within the "properties" object of the GeoJSON with support for the following geometries:
+##### Style editor
 
-**Polygon, MultiPolygon**
+The style editor provides full control over how features are rendered:
 
-- **"fill"** - The color of the interior of the polygon(s)
-- **"fill-opacity"** - The opacity of the interior of the polygon(s)
-- **"stroke-width"** - The width of the line component of the polygon(s)
+- Fill and stroke styling: Applicable to polygon and line geometries
+- Symbol styling: Icon selection, size, color, rotation, vertical/horizontal alignment
+- Text labels: Select a feature property to display as text directly on the map
+- Text styling: Font size, weight, style, case, alignment, and optional text outline
 
-**Point, MultiPoint**
+##### Conditional visibility
 
-- **"marker-color"** - The color of the point(s)
-- **"marker-size"** - The size of the point(s)
+Some options only appear when relevant:
 
-**LineString, MultiLineString**
-
-- **"stroke"** - The color of the line(s)
-- **"stroke-width"** - The width of the line(s)
+- Text styling options appear only when a text label is selected
+- Outline color is shown only if outline width is greater than zero
 
 #### Night / Day layer
 
