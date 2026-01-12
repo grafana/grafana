@@ -16,14 +16,15 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 var (
-	_      grafanarest.Storage = (*dualWriter)(nil)
-	tracer                     = otel.Tracer("github.com/grafana/grafana/pkg/storage/legacysql/dualwrite")
+	_ grafanarest.Storage = (*dualWriter)(nil)
+
+	tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/legacysql/dualwrite")
 )
 
 const (
@@ -385,6 +386,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	// but legacy failed, the user would get a failure, but see the update did apply to the source
 	// of truth, and be less likely to retry to save (and get the stores in sync again)
 
+	ctx = addToContext(ctx)
 	legacyInfo := objInfo
 	legacyForceCreate := forceAllowCreate
 	unifiedInfo := objInfo
@@ -516,9 +518,10 @@ func (d *dualWriter) ConvertToTable(ctx context.Context, object runtime.Object, 
 }
 
 type wrappedUpdateInfo struct {
-	objInfo           rest.UpdatedObjectInfo
-	legacyLabels      map[string]string
-	legacyAnnotations map[string]string
+	objInfo             rest.UpdatedObjectInfo
+	legacyLabels        map[string]string
+	legacyAnnotations   map[string]string
+	updatedSecureValues common.InlineSecureValues
 }
 
 // Preconditions implements rest.UpdatedObjectInfo.
@@ -561,6 +564,13 @@ func (w *wrappedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime.Ob
 
 	meta.SetResourceVersion("")
 	meta.SetUID("")
+
+	if w.updatedSecureValues != nil {
+		if err = meta.SetSecureValues(w.updatedSecureValues); err != nil {
+			return nil, fmt.Errorf("unable to set secure values on duplicate object %w", err)
+		}
+	}
+
 	return obj, err
 }
 
