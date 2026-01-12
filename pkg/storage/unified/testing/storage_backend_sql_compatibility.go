@@ -81,6 +81,12 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 
 			kvbackend, db := newKvBackend(t.Context())
 			sqlbackend, _ := newSqlBackend(t.Context())
+
+			// Skip on SQLite due to concurrency limitations
+			if db.DriverName() == "sqlite3" {
+				t.Skip("Skipping concurrent operations stress test on SQLite")
+			}
+
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
 	}
@@ -686,11 +692,6 @@ func runTestCrossBackendConsistency(t *testing.T, sqlBackend, kvBackend resource
 
 // runTestConcurrentOperationsStress tests heavy concurrent operations between SQL and KV backends
 func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	// Skip on SQLite due to concurrency limitations
-	if db.DriverName() == "sqlite3" {
-		t.Skip("Skipping concurrent operations stress test on SQLite")
-	}
-
 	ctx := testutil.NewDefaultTestContext(t)
 
 	// Create storage servers from both backends
