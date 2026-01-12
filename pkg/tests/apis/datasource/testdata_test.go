@@ -32,6 +32,7 @@ func TestMain(m *testing.M) {
 
 func TestIntegrationTestDatasource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	expectedAPIVersion := "testdata.datasource.grafana.app/v0alpha1"
 
 	for _, mode := range []grafanarest.DualWriterMode{
 		grafanarest.Mode0, // Legacy only
@@ -83,6 +84,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				}, metav1.CreateOptions{})
 				require.NoError(t, err)
 				require.Equal(t, "test", out.GetName())
+				require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 
 				obj, err := utils.MetaAccessor(out)
 				require.NoError(t, err)
@@ -125,6 +127,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				}, metav1.UpdateOptions{})
 				require.NoError(t, err)
 				require.Equal(t, "test", out.GetName())
+				require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 
 				obj, err := utils.MetaAccessor(out)
 				require.NoError(t, err)
@@ -139,6 +142,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			t.Run("list", func(t *testing.T) {
 				list, err := client.List(ctx, metav1.ListOptions{})
 				require.NoError(t, err)
+				require.Equal(t, expectedAPIVersion, list.GetAPIVersion())
 				require.Len(t, list.Items, 1, "expected a single datasource")
 				require.Equal(t, "test", list.Items[0].GetName(), "with the test uid")
 
@@ -204,6 +208,15 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				// for more info see pkg/registry/apis/datasource/sub_resource.go
 				require.Equal(t, int32(501), raw.Status.Code)
 				// require.Equal(t, `Hello world from test datasource!`, string(raw.Body))
+			})
+
+			t.Run("delete", func(t *testing.T) {
+				err := client.Delete(ctx, "test", metav1.DeleteOptions{})
+				require.NoError(t, err)
+
+				list, err := client.List(ctx, metav1.ListOptions{})
+				require.NoError(t, err)
+				require.Empty(t, list.Items)
 			})
 		})
 	}
