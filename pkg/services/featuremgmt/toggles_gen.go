@@ -742,10 +742,6 @@ const (
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
 
-	// FlagTempoSearchBackendMigration
-	// Run search queries through the tempo backend
-	FlagTempoSearchBackendMigration = "tempoSearchBackendMigration"
-
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"

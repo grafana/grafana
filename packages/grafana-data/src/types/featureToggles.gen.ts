@@ -1137,11 +1137,6 @@ export interface FeatureToggles {
   */
   pluginContainers?: boolean;
   /**
-  * Run search queries through the tempo backend
-  * @default false
-  */
-  tempoSearchBackendMigration?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
