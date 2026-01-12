@@ -162,17 +162,6 @@ export class DatasourceAPIVersions {
       if (group.name.includes('datasource.grafana.app')) {
         const id = group.name.split('.')[0];
         apiVersions[id] = group.preferredVersion.version;
-        // workaround for plugins that don't append '-datasource' for the group name
-        // e.g. org-plugin-datasource uses org-plugin.datasource.grafana.app
-        if (!id.endsWith('-datasource')) {
-          if (!id.includes('-')) {
-            // workaroud for Grafana plugins that don't include the org either
-            // e.g. testdata uses testdata.datasource.grafana.app
-            apiVersions[`grafana-${id}-datasource`] = group.preferredVersion.version;
-          } else {
-            apiVersions[`${id}-datasource`] = group.preferredVersion.version;
-          }
-        }
       }
     });
     this.apiVersions = apiVersions;
