@@ -6,7 +6,7 @@ labels:
 title: 'Alerting Provisioning HTTP API '
 ---
 
-The Alerting Provisioning HTTP API can be used to create, modify, and delete resources relevant to Grafana-managed alerts. This API is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+The Alerting Provisioning HTTP API can be used to create, modify, and delete resources relevant to Grafana-managed alerts and recording rules. This API is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
 For more information on the differences between Grafana-managed and data source-managed alerts, refer to [Introduction to alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/).
 
@@ -22,6 +22,8 @@ The `export` endpoints allow you to export alerting resources in a JSON format s
 {{< /admonition >}}
 
 ### Alert rules
+
+The following endpoints can be used to manage both alert rules and recording rules. To create a recording rule, include a `record` block in your request instead of a `condition` field.
 
 | Method | URI                                                              | Name                                                                    | Summary                                                 |
 | ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- |
@@ -212,6 +214,103 @@ Content-Type: application/json
   "isPaused": false,
   "notification_settings": null,
   "record": null
+}
+```
+
+**Example request for new recording rule:**
+
+Recording rules allow you to pre-compute frequently used or computationally expensive expressions and save the results as new time series data. To create a recording rule instead of an alert rule, include a `record` block in your request.
+
+The `record` block contains the following fields:
+
+- `metric`: The name of the new metric to create
+- `from`: The `refId` of the query whose value will be used for the recording
+- `target_datasource_uid`: The UID of the data source where the metric will be written
+
+```http
+POST /api/v1/provisioning/alert-rules
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "folderUID": "IpGEy0u7k",
+  "ruleGroup": "Testing",
+  "title": "test-grafana-recording-rule-2",
+  "condition": "",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "grafanacloud-prom",
+      "model": {
+        "expr": "up{job=\"integrations/macos-node\",instance=\"Bojans-MacBook-Pro.local\"}",
+        "instant": true,
+        "intervalMs": 1000,
+        "legendFormat": "__auto",
+        "maxDataPoints": 43200,
+        "range": false,
+        "refId": "A"
+      }
+    },
+    {
+      "refId": "B",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "B"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "__expr__"
+        },
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce"
+      }
+    }
+  ],
+  "noDataState": "",
+  "execErrState": "",
+  "for": "0s",
+  "keep_firing_for": "0s",
+  "isPaused": false,
+  "notification_settings": null,
+  "record": {
+    "metric": "grafana_recording_rule_test_2",
+    "from": "B",
+    "target_datasource_uid": "grafanacloud-prom"
+  }
 }
 ```
 
