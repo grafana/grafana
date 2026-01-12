@@ -1,5 +1,7 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -13,6 +15,7 @@ import {
   TabContent,
   TabsBar,
   Text,
+  useStyles2,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
@@ -204,6 +207,7 @@ const useTabQueryParam = (defaultTab: ActiveTab) => {
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const useV2Nav = shouldUseAlertingNavigationV2();
+  const styles = useStyles2(getStyles);
 
   // All hooks must be called unconditionally before any early returns
   const [, canViewContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
@@ -262,7 +266,7 @@ export const ContactPointsPageContents = () => {
             />
           )}
         </TabsBar>
-        <TabContent>
+        <TabContent className={styles.tabContent}>
           <Stack direction="column">
             {showingContactPoints && <ContactPointsTab />}
             {showNotificationTemplates && <NotificationTemplatesTab />}
@@ -298,6 +302,12 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  tabContent: css({
+    marginTop: theme.spacing(2),
+  }),
+});
 
 function ContactPointsPage() {
   const { navId, pageNav } = useNotificationConfigNav();
