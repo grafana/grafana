@@ -115,7 +115,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
       });
 
       reset(formData);
-      navigate(PROVISIONING_URL);
+      setTimeout(() => navigate(PROVISIONING_URL), 300);
     }
   }, [request.isSuccess, reset, getValues, repositoryName, navigate]);
 

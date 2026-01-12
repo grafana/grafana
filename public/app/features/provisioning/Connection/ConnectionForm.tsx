@@ -57,7 +57,8 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       });
 
       reset(formData);
-      navigate(CONNECTIONS_URL);
+      // use timeout to ensure the form resets before navigating
+      setTimeout(() => navigate(CONNECTIONS_URL), 300);
     }
   }, [request.isSuccess, reset, getValues, connectionName, navigate]);
 
