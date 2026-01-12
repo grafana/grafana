@@ -2,7 +2,7 @@ import 'core-js/stable/structured-clone';
 import { FormProvider, useForm } from 'react-hook-form';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen } from 'test/test-utils';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { byRole, byTestId } from 'testing-library-selector';
 
 import { grafanaAlertNotifiers } from 'app/features/alerting/unified/mockGrafanaNotifiers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
