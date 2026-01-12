@@ -67,14 +67,6 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apiserver is not allowed to import grafana core
-        apps-investigation:
-          list-mode: lax
-          files:
-            - ./apps/investigations/*
-            - ./apps/investigations/**/*
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: apps/investigations is not allowed to import grafana core
         apps-playlist:
           list-mode: lax
           files:

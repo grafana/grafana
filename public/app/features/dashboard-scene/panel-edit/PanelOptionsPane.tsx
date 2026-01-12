@@ -71,6 +71,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.SELECT_PANEL_PLUGIN,
       plugin_id: pluginId,
+      from_suggestions: options.fromSuggestions ?? false,
     });
 
     // clear custom options
@@ -236,6 +237,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
           onClose={model.onToggleVizPicker}
           data={data}
           showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
+          isNewPanel={isNewPanel}
         />
       )}
     </>

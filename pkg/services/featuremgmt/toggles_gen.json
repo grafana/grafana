@@ -1793,7 +1793,8 @@
       "metadata": {
         "name": "investigationsBackend",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-12-18T08:31:03Z"
+        "creationTimestamp": "2024-12-18T08:31:03Z",
+        "deletionTimestamp": "2025-12-16T16:06:24Z"
       },
       "spec": {
         "description": "Enable the investigations backend API",
@@ -1950,11 +1951,27 @@
     {
       "metadata": {
         "name": "kubernetesAuthzApis",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-06-18T07:43:01Z"
+        "resourceVersion": "1767954559317",
+        "creationTimestamp": "2025-06-18T07:43:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-09 10:29:19.317164 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Registers AuthZ /apis endpoint",
+        "description": "Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead",
+        "stage": "deprecated",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzCoreRolesApi",
+        "resourceVersion": "1767954459090",
+        "creationTimestamp": "2026-01-09T10:27:39Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ Core Roles /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
@@ -1969,6 +1986,32 @@
       },
       "spec": {
         "description": "Registers AuthZ resource permission /apis endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzRoleBindingsApi",
+        "resourceVersion": "1767954459090",
+        "creationTimestamp": "2026-01-09T10:27:39Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ Role Bindings /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzRolesApi",
+        "resourceVersion": "1767954459090",
+        "creationTimestamp": "2026-01-09T10:27:39Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ Roles /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
@@ -2044,7 +2087,8 @@
       "metadata": {
         "name": "kubernetesFeatureToggles",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-01-18T05:32:44Z"
+        "creationTimestamp": "2024-01-18T05:32:44Z",
+        "deletionTimestamp": "2026-01-07T12:02:51Z"
       },
       "spec": {
         "description": "Use the kubernetes API for feature toggle management in the frontend",
@@ -2868,6 +2912,18 @@
     },
     {
       "metadata": {
+        "name": "profilesExemplars",
+        "resourceVersion": "1767777507980",
+        "creationTimestamp": "2026-01-07T09:18:27Z"
+      },
+      "spec": {
+        "description": "Enables profiles exemplars support in profiles drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling"
+      }
+    },
+    {
+      "metadata": {
         "name": "prometheusAzureOverrideAudience",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2022-05-30T15:43:32Z",
@@ -3121,6 +3177,18 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "reportingCsvEncodingOptions",
+        "resourceVersion": "1766080709938",
+        "creationTimestamp": "2025-12-18T17:58:29Z"
+      },
+      "spec": {
+        "description": "Enables CSV encoding options in the reporting feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad"
       }
     },
     {
@@ -3558,8 +3626,12 @@
     {
       "metadata": {
         "name": "unifiedHistory",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-12-13T10:41:18Z"
+        "resourceVersion": "1762958248290",
+        "creationTimestamp": "2024-12-13T10:41:18Z",
+        "deletionTimestamp": "2025-11-13T16:25:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-11-12 14:37:28.29086 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Displays the navigation history so the user can navigate back to previous pages",

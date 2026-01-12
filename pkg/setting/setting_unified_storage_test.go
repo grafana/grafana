@@ -43,10 +43,16 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 				}
 				assert.Equal(t, exists, true, migratedResource)
 
+				expectedThreshold := 0
+				if AutoMigratedUnifiedResources[migratedResource] {
+					expectedThreshold = DefaultAutoMigrationThreshold
+				}
+
 				assert.Equal(t, UnifiedStorageConfig{
 					DualWriterMode:                      5,
 					DualWriterMigrationDataSyncDisabled: true,
 					EnableMigration:                     isEnabled,
+					AutoMigrationThreshold:              expectedThreshold,
 				}, resourceCfg, migratedResource)
 			}
 		}
@@ -71,6 +77,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			DualWriterPeriodicDataSyncJobEnabled: true,
 			DataSyncerRecordsLimit:               1001,
 			DataSyncerInterval:                   time.Minute * 10,
+			AutoMigrationThreshold:               0,
 		})
 
 		validateMigratedResources(false)

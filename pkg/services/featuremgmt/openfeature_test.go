@@ -35,9 +35,9 @@ func TestCreateProvider(t *testing.T) {
 			expectedProvider: setting.StaticProviderType,
 		},
 		{
-			name: "goff provider",
+			name: "features-service provider",
 			cfg: setting.OpenFeatureSettings{
-				ProviderType: setting.GOFFProviderType,
+				ProviderType: setting.FeaturesServiceProviderType,
 				URL:          u,
 				TargetingKey: "grafana",
 			},
@@ -45,12 +45,12 @@ func TestCreateProvider(t *testing.T) {
 				Namespace: "*",
 				Audiences: []string{"features.grafana.app"},
 			},
-			expectedProvider: setting.GOFFProviderType,
+			expectedProvider: setting.FeaturesServiceProviderType,
 		},
 		{
-			name: "goff provider with failing token exchange",
+			name: "features-service provider with failing token exchange",
 			cfg: setting.OpenFeatureSettings{
-				ProviderType: setting.GOFFProviderType,
+				ProviderType: setting.FeaturesServiceProviderType,
 				URL:          u,
 				TargetingKey: "grafana",
 			},
@@ -58,7 +58,7 @@ func TestCreateProvider(t *testing.T) {
 				Namespace: "*",
 				Audiences: []string{"features.grafana.app"},
 			},
-			expectedProvider: setting.GOFFProviderType,
+			expectedProvider: setting.FeaturesServiceProviderType,
 			failSigning:      true,
 		},
 		{
@@ -107,7 +107,7 @@ func TestCreateProvider(t *testing.T) {
 
 			tokenExchangeMiddleware := middleware.TestingTokenExchangeMiddleware(tokenExchangeClient)
 			httpClient, err := createHTTPClient(tokenExchangeMiddleware)
-			require.NoError(t, err, "failed to create goff http client")
+			require.NoError(t, err, "failed to create features-service http client")
 			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, httpClient)
 			require.NoError(t, err)
 
@@ -115,7 +115,7 @@ func TestCreateProvider(t *testing.T) {
 			require.NoError(t, err, "failed to set provider")
 
 			switch tc.expectedProvider {
-			case setting.GOFFProviderType:
+			case setting.FeaturesServiceProviderType:
 				_, ok := provider.(*gofeatureflag.Provider)
 				assert.True(t, ok, "expected provider to be of type goff.Provider")
 
@@ -141,10 +141,10 @@ func testGoFFProvider(t *testing.T, failSigning bool) {
 	_, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
 
 	// Error related to the token exchange should be returned if signing fails
-	// otherwise, it should return a connection refused error since the goff URL is not set
+	// otherwise, it should return a connection refused error since the features-service URL is not set
 	if failSigning {
 		assert.ErrorContains(t, err, "failed to exchange token: error signing token", "should return an error when signing fails")
 	} else {
-		assert.ErrorContains(t, err, "connect: connection refused", "should return an error when goff url is not set")
+		assert.ErrorContains(t, err, "connect: connection refused", "should return an error when features-service url is not set")
 	}
 }

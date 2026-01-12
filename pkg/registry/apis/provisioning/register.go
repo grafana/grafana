@@ -480,6 +480,16 @@ func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
+	// Repositories is read-only
+	case "repositories":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
 	default:
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
@@ -549,6 +559,22 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	// Register custom field label conversion for Repository to enable field selectors like spec.connection.name
+	err = scheme.AddFieldLabelConversionFunc(
+		provisioning.SchemeGroupVersion.WithKind("Repository"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.connection.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for Repository: %s", label)
+			}
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	metav1.AddToGroupVersion(scheme, provisioning.SchemeGroupVersion)
 	// Only 1 version (for now?)
 	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
@@ -559,10 +585,19 @@ func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.RepositoryResourceInfo, opts.OptsGetter)
+	// Create repository storage with custom field selectors (e.g., spec.connection.name)
+	repositoryStorage, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+		opts.Scheme,
+		provisioning.RepositoryResourceInfo,
+		opts.OptsGetter,
+		grafanaregistry.SelectableFieldsOptions{
+			GetAttrs: RepositoryGetAttrs,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
+
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.store = repositoryStorage
 
@@ -603,6 +638,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
+	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector()
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
@@ -806,8 +842,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
+			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
+			go connInformer.Informer().Run(postStartHookCtx.Done())
 
 			// Create the repository resources factory
 			repositoryListerWrapper := func(ctx context.Context) ([]provisioning.Repository, error) {
@@ -927,6 +965,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+
+			// Create and run connection controller
+			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
+			connController, err := controller.NewConnectionController(
+				b.GetClient(),
+				connInformer,
+				connStatusPatcher,
+			)
+			if err != nil {
+				return err
+			}
+			go connController.Run(postStartHookCtx.Context, repoControllerWorkers)
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
@@ -1245,6 +1295,23 @@ spec:
 
 		delete(oas.Paths.Paths, repoprefix+"/jobs/{path}")
 		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
+	}
+
+	// Document connection repositories endpoint
+	connectionprefix := root + "namespaces/{namespace}/connections/{name}"
+	sub = oas.Paths.Paths[connectionprefix+"/repositories"]
+	if sub != nil {
+		sub.Get.Description = "List repositories available from the external git provider through this connection"
+		sub.Get.Summary = "List external repositories"
+		sub.Get.Parameters = []*spec3.Parameter{}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs[defsBase+"ExternalRepositoryList"].Schema
+		mt["*/*"].Schema = &s
 	}
 
 	// Run all extra post-processors.
