@@ -2836,12 +2836,12 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 Keys of features to enable, separated by space.
 
-#### `FEATURE_TOGGLE_NAME = <value>` 
+#### `FEATURE_TOGGLE_NAME = <value>`
 
 The feature toggles section supports feature flags of a number of types, including boolean, string, integer, float, and structured values, following the OpenFeature specification.
 
 - **Boolean**: <br/>
-Some feature toggles for stable features are on by default. Use this setting to disable or change an on-by-default feature toggle
+  Some feature toggles for stable features are on by default. Use this setting to disable or change an on-by-default feature toggle
   ```ini
   exploreMixedDatasource = false
   ```
@@ -2857,7 +2857,7 @@ Some feature toggles for stable features are on by default. Use this setting to 
   ```ini
   requestTimeout = 2.5
   ```
-- **Structured values**:  JSON-objects
+- **Structured values**: JSON-objects
   ```json
   featureConfig = {"retries": 3, "mode": "safe"}
   ```
