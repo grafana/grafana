@@ -170,8 +170,6 @@ describe('InspectJsonTab', () => {
 
     expect(tab.state.onClose).toHaveBeenCalled();
   });
-<<<<<<< HEAD
-=======
 
   it('Can update gridPos and forces layout re-render', async () => {
     const { tab, panel, scene } = await buildTestScene();
@@ -217,17 +215,6 @@ describe('InspectJsonTab', () => {
     // Verify forceRender was called on the layout to apply position changes
     expect(forceRenderSpy).toHaveBeenCalled();
   });
-
-  it('Can show panel json for V2 dashboard specification', async () => {
-    const { tab } = await buildTestSceneWithV2Spec();
-
-    const obj = JSON.parse(tab.state.jsonText);
-    expect(obj.kind).toEqual('Panel');
-    expect(obj.spec.id).toEqual(12);
-    expect(obj.spec.data.kind).toEqual('QueryGroup');
-    expect(tab.isEditable()).toBe(true);
-  });
->>>>>>> 0a0f92e85ea (InspectJsonTab: Force render the layout after change to reflect new gridPos (#115688))
 });
 
 function buildTestPanel() {
