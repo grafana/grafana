@@ -40,8 +40,8 @@ func (r *TeamBindingAuthorizer) AfterGet(ctx context.Context, obj runtime.Object
 	}
 
 	// Accesscontrol should check on the TeamResourceInfo group resource if the user can use VerbGetPermissions
-	// on the team (TeamRef.Name) OR if the subject's name (TeamBindingSpec.Subject.Name) is equal to the current Identity's UID/ID.
-	if concreteObj.Spec.Subject.Name == authInfo.GetUID() {
+	// on the team (TeamRef.Name) (handled below) OR if the subject's name (TeamBindingSpec.Subject.Name) is equal to the current Identity's UID/Identifier.
+	if concreteObj.Spec.Subject.Name == authInfo.GetIdentifier() {
 		return nil
 	}
 
@@ -50,7 +50,7 @@ func (r *TeamBindingAuthorizer) AfterGet(ctx context.Context, obj runtime.Object
 		Namespace: authInfo.GetNamespace(),
 		Group:     iamv0.TeamResourceInfo.GroupResource().Group,
 		Resource:  iamv0.TeamResourceInfo.GroupResource().Resource,
-		Verb:      utils.VerbGetPermissions, // TODO: check this
+		Verb:      utils.VerbGetPermissions,
 		Name:      teamName,
 	}
 	res, err := r.accessClient.Check(ctx, authInfo, checkReq, "")
@@ -99,7 +99,7 @@ func (r *TeamBindingAuthorizer) beforeWrite(ctx context.Context, obj runtime.Obj
 		Namespace: authInfo.GetNamespace(),
 		Group:     iamv0.GROUP,
 		Resource:  iamv0.TeamResourceInfo.GetName(),
-		Verb:      utils.VerbSetPermissions, // TODO: Check this
+		Verb:      utils.VerbSetPermissions,
 		Name:      teamName,
 	}
 
@@ -136,7 +136,7 @@ func (r *TeamBindingAuthorizer) FilterList(ctx context.Context, list runtime.Obj
 		Namespace: authInfo.GetNamespace(),
 		Group:     iamv0.TeamResourceInfo.GroupResource().Group,
 		Resource:  iamv0.TeamResourceInfo.GroupResource().Resource,
-		Verb:      utils.VerbGet,
+		Verb:      utils.VerbGetPermissions,
 	}
 	canView, _, err := r.accessClient.Compile(ctx, authInfo, listReq)
 	if err != nil {
@@ -144,9 +144,9 @@ func (r *TeamBindingAuthorizer) FilterList(ctx context.Context, list runtime.Obj
 	}
 
 	for _, item := range l.Items {
-		// Accesscontrol should check on the TeamResourceInfo group resource if the user can use VerbGet
-		// on the team (TeamRef.Name) OR if the subject's name (TeamBindingSpec.Subject.Name) is equal to the current Identity's UID/ID.
-		if item.Spec.Subject.Name == authInfo.GetUID() || canView(item.Spec.TeamRef.Name, "") {
+		// Accesscontrol should check on the TeamResourceInfo group resource if the user can use VerbGetPermissions
+		// on the team (TeamRef.Name) OR if the subject's name (TeamBindingSpec.Subject.Name) is equal to the current Identity's UID/Identifier.
+		if item.Spec.Subject.Name == authInfo.GetIdentifier() || canView(item.Spec.TeamRef.Name, "") {
 			filteredItems = append(filteredItems, item)
 		}
 	}

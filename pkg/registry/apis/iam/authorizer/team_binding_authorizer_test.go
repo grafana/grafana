@@ -35,19 +35,19 @@ func TestTeamBinding_AfterGet(t *testing.T) {
 	}{
 		{
 			name:        "allow access via permission",
-			teamBinding: newTeamBinding("team-1", "binding-1", "user:other"),
+			teamBinding: newTeamBinding("team-1", "binding-1", "other"),
 			shouldAllow: true,
 			checkCalled: true,
 		},
 		{
 			name:        "deny access",
-			teamBinding: newTeamBinding("team-1", "binding-1", "user:other"),
+			teamBinding: newTeamBinding("team-1", "binding-1", "other"),
 			shouldAllow: false,
 			checkCalled: true, // called but returns allowed=false
 		},
 		{
 			name:        "allow access via subject match",
-			teamBinding: newTeamBinding("team-1", "binding-1", "user:u001"),
+			teamBinding: newTeamBinding("team-1", "binding-1", "u001"),
 			shouldAllow: true,
 			checkCalled: false, // short-circuits
 		},
@@ -56,7 +56,7 @@ func TestTeamBinding_AfterGet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			checkFunc := func(id types.AuthInfo, req *types.CheckRequest, folder string) (types.CheckResponse, error) {
 				require.NotNil(t, id)
-				require.Equal(t, "user:u001", id.GetUID())
+				require.Equal(t, "u001", id.GetIdentifier())
 
 				require.Equal(t, "org-2", req.Namespace)
 				require.Equal(t, iamv0.GROUP, req.Group)
@@ -64,10 +64,6 @@ func TestTeamBinding_AfterGet(t *testing.T) {
 				require.Equal(t, "team-1", req.Name)
 				require.Equal(t, utils.VerbGetPermissions, req.Verb)
 
-				// Only allow if expected in test case and it's not the subject match case (which short circuits)
-				// But here we configure the mock response.
-				// If checkCalled is expected, we return result based on shouldAllow.
-				// However, for "deny access", checkCalled is true, shouldAllow is false.
 				return types.CheckResponse{Allowed: tt.shouldAllow}, nil
 			}
 
@@ -89,20 +85,20 @@ func TestTeamBinding_AfterGet(t *testing.T) {
 func TestTeamBinding_FilterList(t *testing.T) {
 	list := &iamv0.TeamBindingList{
 		Items: []iamv0.TeamBinding{
-			*newTeamBinding("team-1", "binding-1", "user:other"), // Access via permission
-			*newTeamBinding("team-2", "binding-2", "user:other"), // No access
-			*newTeamBinding("team-3", "binding-3", "user:u001"),  // Access via subject match
+			*newTeamBinding("team-1", "binding-1", "other"), // Access via permission
+			*newTeamBinding("team-2", "binding-2", "other"), // No access
+			*newTeamBinding("team-3", "binding-3", "u001"),  // Access via subject match
 		},
 	}
 
 	compileFunc := func(id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
 		require.NotNil(t, id)
-		require.Equal(t, "user:u001", id.GetUID())
+		require.Equal(t, "u001", id.GetIdentifier())
 
 		require.Equal(t, "org-2", req.Namespace)
 		require.Equal(t, iamv0.GROUP, req.Group)
 		require.Equal(t, iamv0.TeamResourceInfo.GroupResource().Resource, req.Resource)
-		require.Equal(t, utils.VerbGet, req.Verb) // TODO: VerbGet or VerbGetPermissions?
+		require.Equal(t, utils.VerbGetPermissions, req.Verb)
 
 		return func(name, folder string) bool {
 			return name == "team-1"
@@ -128,7 +124,7 @@ func TestTeamBinding_FilterList(t *testing.T) {
 }
 
 func TestTeamBinding_BeforeCreate(t *testing.T) {
-	binding := newTeamBinding("team-1", "binding-1", "user:other")
+	binding := newTeamBinding("team-1", "binding-1", "other")
 
 	tests := []struct {
 		name        string
@@ -171,7 +167,7 @@ func TestTeamBinding_BeforeCreate(t *testing.T) {
 }
 
 func TestTeamBinding_BeforeUpdate(t *testing.T) {
-	binding := newTeamBinding("team-1", "binding-1", "user:other")
+	binding := newTeamBinding("team-1", "binding-1", "other")
 
 	tests := []struct {
 		name        string
@@ -214,7 +210,7 @@ func TestTeamBinding_BeforeUpdate(t *testing.T) {
 }
 
 func TestTeamBinding_BeforeDelete(t *testing.T) {
-	binding := newTeamBinding("team-1", "binding-1", "user:other")
+	binding := newTeamBinding("team-1", "binding-1", "other")
 
 	tests := []struct {
 		name        string
