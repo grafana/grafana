@@ -74,23 +74,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-<<<<<<< HEAD
-=======
-  configure-grafana-azure-auth:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
-  configure-grafana-azure:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
-  configure-grafana-azure-auth-scopes:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
   mssql-query-editor:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
@@ -111,7 +94,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
->>>>>>> 880bc23c851 (Docs:  Added a troubleshooting guide for MSSQL, plus some updates (#116088))
 ---
 
 # Configure the Microsoft SQL Server data source
@@ -240,7 +222,7 @@ After configuring your MSSQL data source options, click **Save & test** at the b
 
 ### Min time interval
 
-The **Min time interval** setting defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`][add-template-variables-interval_ms] variables.
+The **Min time interval** setting defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables.
 
 This value _must_ be formatted as a number followed by a valid time identifier:
 
