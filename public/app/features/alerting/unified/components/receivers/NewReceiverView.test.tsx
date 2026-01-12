@@ -79,6 +79,9 @@ describe('new receiver', () => {
     // click test
     await user.click(ui.testContactPoint.get());
 
+    // close the modal
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
     // we shouldn't be testing implementation details but when the request is successful
     // it can't seem to assert on the success toast
     await user.click(ui.saveContactButton.get());
