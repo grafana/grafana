@@ -1369,7 +1369,8 @@
       "metadata": {
         "name": "exploreLogsAggregatedMetrics",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-08-29T13:55:59Z"
+        "creationTimestamp": "2024-08-29T13:55:59Z",
+        "deletionTimestamp": "2026-01-12T22:13:12Z"
       },
       "spec": {
         "description": "Used in Logs Drilldown to query by aggregated metrics",

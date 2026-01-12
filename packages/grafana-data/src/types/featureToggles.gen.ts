@@ -618,10 +618,6 @@ export interface FeatureToggles {
   */
   exploreLogsShardSplitting?: boolean;
   /**
-  * Used in Logs Drilldown to query by aggregated metrics
-  */
-  exploreLogsAggregatedMetrics?: boolean;
-  /**
   * Used in Logs Drilldown to limit the time range
   */
   exploreLogsLimitedTimeRange?: boolean;
