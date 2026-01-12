@@ -45,6 +45,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderUID });
+  const isRecentlyViewedEnabled = !folderUID && evaluateBooleanFlag('recentlyViewedDashboards', false);
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -78,13 +79,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const hasEmittedExposureEvent = useRef(false);
 
   useEffect(() => {
-    // Only emit on root page (where recently viewed would be shown)
-    if (folderUID || hasEmittedExposureEvent.current) {
-      return;
-    }
-
-    const isRecentlyViewedEnabled = evaluateBooleanFlag('recentlyViewedDashboards', false);
-    if (!isRecentlyViewedEnabled) {
+    if (!isRecentlyViewedEnabled || hasEmittedExposureEvent.current) {
       return;
     }
 
@@ -95,7 +90,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
       has_recently_viewed_component: isExperimentTreatment,
     });
-  }, [folderUID]);
+  }, [isRecentlyViewedEnabled]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useUpdateFolder();
@@ -203,8 +198,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
-        {/* only show recently viewed dashboards when in root */}
-        {!folderUID && <RecentlyViewedDashboards />}
+        {/* only show recently viewed dashboards when in root and flag is enabled */}
+        {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}
