@@ -2032,7 +2032,7 @@ For example: `disabled_labels=grafana_folder`
 
 ### `[unified_alerting.state_history]`
 
-This section configures where Grafana Alerting writes alert state history. See “Configure alert state history” for end-to-end setup and examples.
+This section configures where Grafana Alerting writes alert state history. Refer to [Configure alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/) for end-to-end setup and examples.
 
 #### `enabled `
 Enables recording alert state history. Default is `false`.
