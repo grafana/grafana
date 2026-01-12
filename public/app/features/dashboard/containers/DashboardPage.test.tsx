@@ -8,10 +8,10 @@ import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setDataSourceSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { notifyApp } from 'app/core/actions';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { RouteDescriptor } from 'app/core/navigation/types';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 

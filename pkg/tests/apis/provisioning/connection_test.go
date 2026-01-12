@@ -559,3 +559,175 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.True(t, final.Status.Health.Healthy, "connection should remain healthy")
 	})
 }
+
+func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+
+	// Create a connection first
+	connection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      "test-conn-for-field-selector",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"type": "github",
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "789012",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": "test-private-key",
+			},
+		},
+	}}
+
+	_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+	require.NoError(t, err, "failed to create connection")
+
+	t.Cleanup(func() {
+		// Clean up repositories first
+		_ = helper.Repositories.Resource.Delete(ctx, "repo-with-connection", metav1.DeleteOptions{})
+		_ = helper.Repositories.Resource.Delete(ctx, "repo-without-connection", metav1.DeleteOptions{})
+		_ = helper.Repositories.Resource.Delete(ctx, "repo-with-different-connection", metav1.DeleteOptions{})
+		// Then clean up the connection
+		_ = helper.Connections.Resource.Delete(ctx, "test-conn-for-field-selector", metav1.DeleteOptions{})
+	})
+
+	// Create a repository WITH the connection
+	repoWithConnection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]any{
+			"name":      "repo-with-connection",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"title": "Repo With Connection",
+			"type":  "local",
+			"sync": map[string]any{
+				"enabled": false,
+				"target":  "folder",
+			},
+			"local": map[string]any{
+				"path": helper.ProvisioningPath,
+			},
+			"connection": map[string]any{
+				"name": "test-conn-for-field-selector",
+			},
+		},
+	}}
+
+	_, err = helper.Repositories.Resource.Create(ctx, repoWithConnection, createOptions)
+	require.NoError(t, err, "failed to create repository with connection")
+
+	// Create a repository WITHOUT the connection
+	repoWithoutConnection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]any{
+			"name":      "repo-without-connection",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"title": "Repo Without Connection",
+			"type":  "local",
+			"sync": map[string]any{
+				"enabled": false,
+				"target":  "folder",
+			},
+			"local": map[string]any{
+				"path": helper.ProvisioningPath,
+			},
+		},
+	}}
+
+	_, err = helper.Repositories.Resource.Create(ctx, repoWithoutConnection, createOptions)
+	require.NoError(t, err, "failed to create repository without connection")
+
+	// Create a repository with a DIFFERENT connection name (non-existent)
+	repoWithDifferentConnection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]any{
+			"name":      "repo-with-different-connection",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"title": "Repo With Different Connection",
+			"type":  "local",
+			"sync": map[string]any{
+				"enabled": false,
+				"target":  "folder",
+			},
+			"local": map[string]any{
+				"path": helper.ProvisioningPath,
+			},
+			"connection": map[string]any{
+				"name": "some-other-connection",
+			},
+		},
+	}}
+
+	_, err = helper.Repositories.Resource.Create(ctx, repoWithDifferentConnection, createOptions)
+	require.NoError(t, err, "failed to create repository with different connection")
+
+	t.Run("filter repositories by spec.connection.name", func(t *testing.T) {
+		// List repositories with field selector for the specific connection
+		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.connection.name=test-conn-for-field-selector",
+		})
+		require.NoError(t, err, "failed to list repositories with field selector")
+
+		// Should only return the repository with the matching connection
+		assert.Len(t, list.Items, 1, "should return exactly one repository")
+		assert.Equal(t, "repo-with-connection", list.Items[0].GetName(), "should return the correct repository")
+	})
+
+	t.Run("filter repositories by non-existent connection returns empty", func(t *testing.T) {
+		// List repositories with field selector for a non-existent connection
+		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.connection.name=non-existent-connection",
+		})
+		require.NoError(t, err, "failed to list repositories with field selector")
+
+		// Should return empty list
+		assert.Len(t, list.Items, 0, "should return no repositories for non-existent connection")
+	})
+
+	t.Run("filter repositories by empty connection name", func(t *testing.T) {
+		// List repositories with field selector for empty connection (repos without connection)
+		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.connection.name=",
+		})
+		require.NoError(t, err, "failed to list repositories with empty connection field selector")
+
+		// Should return the repository without a connection
+		assert.Len(t, list.Items, 1, "should return exactly one repository without connection")
+		assert.Equal(t, "repo-without-connection", list.Items[0].GetName(), "should return the repository without connection")
+	})
+
+	t.Run("list all repositories without field selector", func(t *testing.T) {
+		// List all repositories without field selector
+		list, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "failed to list all repositories")
+
+		// Should return all three repositories
+		assert.Len(t, list.Items, 3, "should return all three repositories")
+
+		names := make([]string, len(list.Items))
+		for i, item := range list.Items {
+			names[i] = item.GetName()
+		}
+		assert.Contains(t, names, "repo-with-connection")
+		assert.Contains(t, names, "repo-without-connection")
+		assert.Contains(t, names, "repo-with-different-connection")
+	})
+}
