@@ -74,7 +74,7 @@ interface DashboardRequest {
 
 export async function trackDashboardReloadRequests(page: Page): Promise<{
   getRequests: () => DashboardRequest[];
-  waitForExpectedRequests: (timeout?: number) => Promise<void>;
+  waitForExpectedRequests: () => Promise<void>;
 }> {
   const dashboardRequests: DashboardRequest[] = [];
   let resolveWhenComplete: () => void;
