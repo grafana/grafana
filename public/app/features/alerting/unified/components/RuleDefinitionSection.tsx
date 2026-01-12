@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Input, Stack, useStyles2 } from '@grafana/ui';
+import { Field, Input, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -30,21 +30,21 @@ export function RuleDefinitionSection({ type }: { type: RuleFormType }) {
   const namePlaceholder = isRecording ? 'recording rule' : 'alert rule';
 
   return (
-    <div className={styles.section}>
+    <section className={styles.section} aria-labelledby="rule-definition-section-heading">
       <div className={styles.sectionHeaderRow}>
-        <div className={styles.sectionHeader}>
+        <Text element="h3" variant="h4" id="rule-definition-section-heading">
           {`1. `}
           <Trans i18nKey="alerting.simplified.rule-definition">Rule Definition</Trans>
-        </div>
+        </Text>
       </div>
       <div>
         <Stack direction="column" gap={2}>
           <Field
             noMargin
             label={
-              <span className={styles.nameLabel}>
+              <Text variant="bodySmall" weight="medium">
                 <Trans i18nKey="alerting.alert-rule-name-and-metric.label-name">Name</Trans>
-              </span>
+              </Text>
             }
             error={errors?.name?.message}
             invalid={!!errors.name?.message}
@@ -99,7 +99,7 @@ export function RuleDefinitionSection({ type }: { type: RuleFormType }) {
           )}
         </Stack>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -111,15 +111,6 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
-    }),
-    sectionHeader: css({
-      fontWeight: theme.typography.fontWeightRegular,
-      fontSize: theme.typography.h4.fontSize,
-      lineHeight: theme.typography.h4.lineHeight,
-    }),
-    nameLabel: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: 500,
     }),
   };
 }

@@ -20,6 +20,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { textUtil } from 'app/core/utils/text';
 
 import { RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
@@ -28,6 +29,51 @@ import { NeedHelpInfoForNotificationPolicy } from './rule-editor/NotificationsSt
 
 // Centralized form path for selected contact point
 const CONTACT_POINT_PATH = 'contactPoints.grafana.selectedContactPoint' as const;
+
+/**
+ * Validates a URL string and returns an error message if invalid.
+ * Uses the URL constructor for parsing and rejects dangerous protocols.
+ * Returns undefined if the URL is valid or empty.
+ */
+function validateRunbookUrl(value: string): string | undefined {
+  const trimmedValue = value.trim();
+
+  // Empty values are allowed (field is optional)
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(trimmedValue);
+    // Reject dangerous URL schemes per F4 frontend security rule
+    if (url.protocol === 'javascript:' || url.protocol === 'data:' || url.protocol === 'vbscript:') {
+      return t(
+        'alerting.simplified.notification.runbook-url.invalid-protocol',
+        'Invalid URL protocol. Please use http or https.'
+      );
+    }
+    return undefined;
+  } catch {
+    return t(
+      'alerting.simplified.notification.runbook-url.invalid-format',
+      'Invalid URL format. Please enter a valid URL.'
+    );
+  }
+}
+
+/**
+ * Sanitizes a URL value before storing it in the form.
+ * Uses textUtil.sanitizeUrl to ensure safe URL handling.
+ */
+function sanitizeRunbookUrl(value: string): string {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
+    return '';
+  }
+
+  // Use textUtil.sanitizeUrl for consistent URL sanitization across the codebase
+  return textUtil.sanitizeUrl(trimmedValue);
+}
 
 export function RuleNotificationSection() {
   const styles = useStyles2(getStyles);
@@ -78,15 +124,18 @@ export function RuleNotificationSection() {
   const descriptionValue = getAnnotationValue(Annotation.description);
   const runbookUrlValue = getAnnotationValue(Annotation.runbookURL);
 
+  // Validate runbook URL for form-level validation feedback
+  const runbookUrlError = useMemo(() => validateRunbookUrl(runbookUrlValue), [runbookUrlValue]);
+
   const recipientLabelId = 'recipient-label';
 
   return (
-    <div className={styles.section}>
+    <section className={styles.section} aria-labelledby="notification-section-heading">
       <div className={styles.sectionHeaderRow}>
-        <div className={styles.sectionHeader}>
+        <Text element="h3" variant="h4" id="notification-section-heading">
           {`3. `}
           <Trans i18nKey="alerting.simplified.notification.title">Notification</Trans>
-        </div>
+        </Text>
       </div>
 
       <div>
@@ -229,7 +278,12 @@ export function RuleNotificationSection() {
             />
           </Field>
 
-          <Field label={t('alerting.simplified.notification.runbook-url.label', 'Runbook URL (optional)')} noMargin>
+          <Field
+            label={t('alerting.simplified.notification.runbook-url.label', 'Runbook URL (optional)')}
+            noMargin
+            invalid={!!runbookUrlError}
+            error={runbookUrlError}
+          >
             <Input
               id="runbook-url-input"
               type="url"
@@ -240,26 +294,15 @@ export function RuleNotificationSection() {
               }}
               onBlur={(e) => {
                 const value = e.currentTarget.value.trim();
-                // Validate URL on blur
-                if (value && value !== '') {
-                  try {
-                    const url = new URL(value);
-                    // Reject dangerous URL schemes
-                    if (url.protocol === 'javascript:' || url.protocol === 'data:' || url.protocol === 'vbscript:') {
-                      notifyApp.error(
-                        t(
-                          'alerting.simplified.notification.runbook-url.invalid-protocol',
-                          'Invalid URL protocol. Please use http or https.'
-                        )
-                      );
+                // Sanitize and update the URL on blur if it's valid
+                if (value) {
+                  const error = validateRunbookUrl(value);
+                  if (!error) {
+                    // Sanitize the URL before storing
+                    const sanitizedUrl = sanitizeRunbookUrl(value);
+                    if (sanitizedUrl !== value) {
+                      updateAnnotationValue(Annotation.runbookURL, sanitizedUrl);
                     }
-                  } catch {
-                    notifyApp.warning(
-                      t(
-                        'alerting.simplified.notification.runbook-url.invalid-format',
-                        'Invalid URL format. Please enter a valid URL.'
-                      )
-                    );
                   }
                 }
               }}
@@ -268,11 +311,13 @@ export function RuleNotificationSection() {
                 'Enter the webpage where you keep your runbook for the alert…'
               )}
               aria-label={t('alerting.simplified.notification.runbook-url.aria-label', 'Runbook URL')}
+              aria-invalid={!!runbookUrlError}
+              aria-describedby={runbookUrlError ? 'runbook-url-error' : undefined}
             />
           </Field>
         </Stack>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -284,11 +329,6 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
-    }),
-    sectionHeader: css({
-      fontWeight: theme.typography.fontWeightRegular,
-      fontSize: theme.typography.h4.fontSize,
-      lineHeight: theme.typography.h4.lineHeight,
     }),
     contentTopSpacer: css({ marginTop: theme.spacing(0.5) }),
     manualRoutingInline: css({
