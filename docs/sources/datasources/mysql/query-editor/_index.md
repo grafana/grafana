@@ -61,6 +61,11 @@ refs:
   configure-standard-options:
     - pattern: /docs/grafana/
     - destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/
+  mysql-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/
 ---
 
 # MySQL query editor
@@ -305,105 +310,17 @@ Table panel result:
 
 The query returns multiple columns representing minimum and maximum values within the defined range.
 
-## Templating
+## Template variables
 
-Instead of hardcoding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard. These drop-downs make it easy to change the data being displayed in your dashboard.
+Instead of hard-coding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard, making it easy to change the data displayed in your dashboard.
 
-Refer to [Templates](ref:variables) for an introduction to creating template variables as well as the different types.
-
-### Query variable
-
-If you add a `Query` template variable you can write a MySQL query to retrieve items such as measurement names, key names, or key values, which will be displayed in the drop-down menu.
-
-For example, you can use a variable to retrieve all the values from the `hostname` column in a table by creating the following query in the templating variable _Query_ setting.
-
-```sql
-SELECT hostname FROM my_host
-```
-
-A query can return multiple columns, and Grafana will automatically generate a list based on the query results. For example, the following query returns a list with values from `hostname` and `hostname2`.
-
-```sql
-SELECT my_host.hostname, my_other_host.hostname2 FROM my_host JOIN my_other_host ON my_host.city = my_other_host.city
-```
-
-To use time range dependent macros like `$__timeFilter(column)` in your query,you must set the template variable's refresh mode to _On Time Range Change_.
-
-```sql
-SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
-```
-
-Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column must contain unique values (if not, only the first value is used). This allows the drop-down options to display a text-friendly name as the text while using an ID as the value. For example, a query could use `hostname` as the text and `id` as the value:
-
-```sql
-SELECT hostname AS __text, id AS __value FROM my_host
-```
-
-You can also create nested variables. For example, if you have a variable named `region`, you can configure the `hosts` variable to display only the hosts within the currently selected region as shown in the following example. If `region` is a multi-value variable, use the `IN` operator instead of `=` to match multiple values.
-
-```sql
-SELECT hostname FROM my_host  WHERE region IN($region)
-```
-
-#### Use `__searchFilter` to filter results in a query variable
-
-Using `__searchFilter` in the query field allows the query results to be filtered based on the user’s input in the drop-down selection box. If you do not enter anything, the default value for `__searchFilter` is %
-
-Note that you must enclose the `__searchFilter` expression in quotes as Grafana does not add them automatically.
-
-The following example demonstrates how to use `__searchFilter` in the query field to enable real-time searching for `hostname` as the user type in the drop-down selection box.
-
-```sql
-SELECT hostname FROM my_host  WHERE hostname LIKE '$__searchFilter'
-```
-
-### Using variables in queries
-
-Template variable values are only quoted when the template variable is a `multi-value`.
-
-If the variable is a multi-value variable, use the `IN` comparison operator instead of `=` to match against multiple values.
-
-You can use two different syntaxes:
-
-`$<varname>` Example with a template variable named `hostname`:
-
-```sql
-SELECT
-  UNIX_TIMESTAMP(atimestamp) as time,
-  aint as value,
-  avarchar as metric
-FROM my_table
-WHERE $__timeFilter(atimestamp) and hostname in($hostname)
-ORDER BY atimestamp ASC
-```
-
-`[[varname]]` Example with a template variable named `hostname`:
-
-```sql
-SELECT
-  UNIX_TIMESTAMP(atimestamp) as time,
-  aint as value,
-  avarchar as metric
-FROM my_table
-WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
-ORDER BY atimestamp ASC
-```
-
-#### Disabling quoting for multi-value variables
-
-Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. To disable quoting, use the csv formatting option for variables:
-
-Grafana automatically formats multi-value variables as a quoted, comma-separated string. For example, if `server01` and `server02` are selected, they are formatted as `'server01'`, `'server02'`. To remove the quotes, enable the CSV formatting option for the variables.
-
-`${servers:csv}`
-
-Read more about variable formatting options in the [Variables](ref:variable-syntax-advanced-variable-format-options) documentation.
+For detailed information on using template variables with MySQL, refer to [MySQL template variables](ref:mysql-template-variables).
 
 ## Annotations
 
 [Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. You add annotation queries via the **Dashboard settings > Annotations view**.
 
-**Example query using a`time` column with epoch values:**
+**Example query using a `time` column with epoch values:**
 
 ```sql
 SELECT
@@ -416,7 +333,7 @@ WHERE
   $__unixEpochFilter(epoch_time)
 ```
 
-You may use one or more tags to show them as annotations in a common-separate string.
+You may use one or more tags to show them as annotations in a common-separated string.
 
 **Example query using a `time` column with epoch values for a single tag:**
 
@@ -473,3 +390,4 @@ For more information regarding alerting refer to the following:
 
 - [Alert rules](ref:alert-rules)
 - [Template annotations and labels](ref:template-annotations-and-labels)
+
