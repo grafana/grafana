@@ -92,6 +92,18 @@ export {
 } from './components/Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './components/Monaco/utils';
 
+// CodeMirror
+export { CodeMirrorEditor } from './components/CodeMirror/CodeMirrorEditor';
+export { createGenericTheme } from './components/CodeMirror/styles';
+export { createGenericHighlighter } from './components/CodeMirror/highlight';
+export type {
+  CodeMirrorEditorProps,
+  ThemeFactory,
+  HighlighterFactory,
+  AutocompletionFactory,
+  SyntaxHighlightConfig,
+} from './components/CodeMirror/types';
+
 // TODO: namespace
 export { Modal, type Props as ModalProps } from './components/Modal/Modal';
 export { ModalHeader } from './components/Modal/ModalHeader';

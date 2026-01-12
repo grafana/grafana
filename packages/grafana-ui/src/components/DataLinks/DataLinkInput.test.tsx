@@ -7,6 +7,26 @@ import { DataLinkBuiltInVars, VariableOrigin, VariableSuggestion } from '@grafan
 
 import { DataLinkInput } from './DataLinkInput';
 
+// Mock getClientRects for CodeMirror in JSDOM
+beforeAll(() => {
+  Range.prototype.getClientRects = jest.fn(() => ({
+    item: () => null,
+    length: 0,
+    [Symbol.iterator]: jest.fn(),
+  }));
+  Range.prototype.getBoundingClientRect = jest.fn(() => ({
+    x: 0,
+    y: 0,
+    bottom: 0,
+    height: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    width: 0,
+    toJSON: () => {},
+  }));
+});
+
 const mockSuggestions: VariableSuggestion[] = [
   {
     value: DataLinkBuiltInVars.seriesName,
@@ -49,7 +69,7 @@ describe('DataLinkInput', () => {
 
     await waitFor(() => {
       const editor = screen.getByRole('textbox');
-      expect(editor).toHaveAttribute('aria-label', placeholder);
+      expect(editor).toHaveAttribute('aria-placeholder', placeholder);
     });
   });
 
@@ -87,7 +107,7 @@ describe('DataLinkInput', () => {
     await user.keyboard('$');
 
     await waitFor(() => {
-      expect(screen.getByRole('menu')).toBeInTheDocument();
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
     });
   });
 
@@ -106,7 +126,7 @@ describe('DataLinkInput', () => {
     await user.keyboard('=');
 
     await waitFor(() => {
-      expect(screen.getByRole('menu')).toBeInTheDocument();
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
     });
   });
 
@@ -125,13 +145,13 @@ describe('DataLinkInput', () => {
     await user.keyboard('$');
 
     await waitFor(() => {
-      expect(screen.getByRole('menu')).toBeInTheDocument();
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
     });
 
     await user.keyboard('{Escape}');
 
     await waitFor(() => {
-      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     });
   });
 
@@ -150,7 +170,7 @@ describe('DataLinkInput', () => {
     await user.keyboard('$');
 
     await waitFor(() => {
-      expect(screen.getByRole('menu')).toBeInTheDocument();
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
     });
 
     // Navigate with arrow keys
@@ -158,7 +178,7 @@ describe('DataLinkInput', () => {
     await user.keyboard('{ArrowUp}');
 
     // Menu should still be visible
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
   });
 
   it('inserts variable on Enter key', async () => {
@@ -176,13 +196,13 @@ describe('DataLinkInput', () => {
     await user.keyboard('$');
 
     await waitFor(() => {
-      expect(screen.getByRole('menu')).toBeInTheDocument();
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
     });
 
     await user.keyboard('{Enter}');
 
     await waitFor(() => {
-      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     });
 
     // Should have called onChange with the inserted variable
@@ -223,7 +243,7 @@ describe('DataLinkInput', () => {
 
     await waitFor(() => {
       const editor = screen.getByRole('textbox');
-      expect(editor).toHaveAttribute('aria-label', 'http://your-grafana.com/d/000000010/annotations');
+      expect(editor).toHaveAttribute('aria-placeholder', 'http://your-grafana.com/d/000000010/annotations');
     });
   });
 });
