@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { Trans, t } from '@grafana/i18n';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -8,8 +10,9 @@ import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 function InsightsPage() {
   const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
-  const insightsScene = getInsightsScenes();
   const { navId, pageNav } = useInsightsNav();
+  // Memoize the scene so it's only created once and properly initialized
+  const insightsScene = useMemo(() => getInsightsScenes(), []);
 
   if (!insightsEnabled) {
     return (

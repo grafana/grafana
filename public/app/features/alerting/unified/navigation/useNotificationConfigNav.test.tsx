@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
 
 import { useNotificationConfigNav } from './useNotificationConfigNav';
 
@@ -69,8 +70,9 @@ describe('useNotificationConfigNav', () => {
 
   it('should return V2 navigation when feature flag is on', () => {
     config.featureToggles.alertingNavigationV2 = true;
+    const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/notifications'],
@@ -85,13 +87,14 @@ describe('useNotificationConfigNav', () => {
     expect(result.current.pageNav?.children).toBeDefined();
   });
 
-  it('should detect time intervals tab from query params', () => {
+  it('should detect time intervals tab from V2 path', () => {
     config.featureToggles.alertingNavigationV2 = true;
+    const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
+      store,
       renderWithRouter: true,
       historyOptions: {
-        initialEntries: ['/alerting/routes?tab=time_intervals'],
+        initialEntries: ['/alerting/time-intervals'],
       },
     });
 
@@ -111,10 +114,11 @@ describe('useNotificationConfigNav', () => {
       'notification-config-contact-points': mockNavIndex['notification-config-contact-points'],
       // Missing other tabs - user doesn't have permission
     };
+    const store = configureStore({
+      navIndex: limitedNavIndex,
+    });
     const wrapper = getWrapper({
-      preloadedState: {
-        navIndex: limitedNavIndex,
-      },
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/notifications'],

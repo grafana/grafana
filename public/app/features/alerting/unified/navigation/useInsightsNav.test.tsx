@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
 
 import { useInsightsNav } from './useInsightsNav';
 
@@ -54,8 +55,9 @@ describe('useInsightsNav', () => {
 
   it('should return V2 navigation when feature flag is on', () => {
     config.featureToggles.alertingNavigationV2 = true;
+    const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/insights'],
@@ -72,8 +74,9 @@ describe('useInsightsNav', () => {
 
   it('should set active tab based on current path', () => {
     config.featureToggles.alertingNavigationV2 = true;
+    const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/history'],
@@ -94,10 +97,11 @@ describe('useInsightsNav', () => {
       'insights-system': mockNavIndex['insights-system'],
       // Missing 'insights-history' - user doesn't have permission
     };
+    const store = configureStore({
+      navIndex: limitedNavIndex,
+    });
     const wrapper = getWrapper({
-      preloadedState: {
-        navIndex: limitedNavIndex,
-      },
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/insights'],

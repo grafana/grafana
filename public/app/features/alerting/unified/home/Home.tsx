@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
@@ -17,7 +17,8 @@ function Home() {
   const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
 
   const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
-  const insightsScene = getInsightsScenes();
+  // Memoize the scene so it's only created once and properly initialized
+  const insightsScene = useMemo(() => getInsightsScenes(), []);
 
   return (
     <AlertingPageWrapper subTitle="Learn about problems in your systems moments after they occur" navId="alerting">

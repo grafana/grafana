@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
 
 import { useAlertActivityNav } from './useAlertActivityNav';
 
@@ -74,8 +75,9 @@ describe('useAlertActivityNav', () => {
 
   it('should return V2 navigation when feature flag is on for Alerts tab', () => {
     config.featureToggles.alertingNavigationV2 = true;
+    const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/alerts'],
@@ -94,8 +96,9 @@ describe('useAlertActivityNav', () => {
 
   it('should return V2 navigation when feature flag is on for Active notifications tab', () => {
     config.featureToggles.alertingNavigationV2 = true;
+    const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/groups'],
@@ -114,8 +117,9 @@ describe('useAlertActivityNav', () => {
 
   it('should set active tab based on current path', () => {
     config.featureToggles.alertingNavigationV2 = true;
+    const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/groups'],
@@ -140,10 +144,11 @@ describe('useAlertActivityNav', () => {
       'alert-activity-alerts': mockNavIndex['alert-activity-alerts'],
       // Missing 'alert-activity-groups' - user doesn't have permission
     };
+    const store = configureStore({
+      navIndex: limitedNavIndex,
+    });
     const wrapper = getWrapper({
-      preloadedState: {
-        navIndex: limitedNavIndex,
-      },
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/alerts'],
@@ -160,13 +165,14 @@ describe('useAlertActivityNav', () => {
 
   it('should fallback to legacy when alert-activity nav is missing', () => {
     config.featureToggles.alertingNavigationV2 = true;
-    const wrapper = getWrapper({
-      preloadedState: {
-        navIndex: {
-          groups: mockNavIndex.groups,
-          'alert-alerts': mockNavIndex['alert-alerts'],
-        },
+    const store = configureStore({
+      navIndex: {
+        groups: mockNavIndex.groups,
+        'alert-alerts': mockNavIndex['alert-alerts'],
       },
+    });
+    const wrapper = getWrapper({
+      store,
       renderWithRouter: true,
       historyOptions: {
         initialEntries: ['/alerting/groups'],
