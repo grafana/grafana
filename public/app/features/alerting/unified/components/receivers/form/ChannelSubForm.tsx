@@ -253,11 +253,11 @@ export function ChannelSubForm<R extends ChannelValues>({
                   />
                 )}
               />
-              {integrationVersion && (
+              {isLegacy && integrationVersion && (
                 <Badge
                   text={integrationVersion}
-                  color={isLegacy ? 'orange' : 'green'}
-                  icon={isLegacy ? 'exclamation-triangle' : 'check'}
+                  color="orange"
+                  icon="exclamation-triangle"
                   tooltip={t('alerting.channel-sub-form.tooltip-version', 'Integration version: {{version}}', {
                     version: integrationVersion,
                   })}
