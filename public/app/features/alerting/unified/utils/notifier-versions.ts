@@ -57,16 +57,21 @@ export function isLegacyVersion(notifier: NotifierDTO, version?: string): boolea
  * @returns The options for the specified version, or default options if version not found
  */
 export function getOptionsForVersion(notifier: NotifierDTO, version?: string): NotificationChannelOption[] {
-  // If no version specified or no versions array, use default options
-  if (!version || !notifier.versions || notifier.versions.length === 0) {
+  // If no versions array, use default options
+  if (!notifier.versions || notifier.versions.length === 0) {
     return notifier.options;
   }
 
-  // Find the matching version
-  const versionData = notifier.versions.find((v) => v.version === version);
+  // If version is specified, find the matching version
+  if (version) {
+    const versionData = notifier.versions.find((v) => v.version === version);
+    // Return version-specific options if found, otherwise fall back to default
+    return versionData?.options ?? notifier.options;
+  }
 
-  // Return version-specific options if found, otherwise fall back to default
-  return versionData?.options ?? notifier.options;
+  // If no version specified, find the default creatable version (canCreate !== false)
+  const defaultVersion = notifier.versions.find((v) => v.canCreate !== false);
+  return defaultVersion?.options ?? notifier.options;
 }
 
 /**

@@ -327,7 +327,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 name: notifier.dto.name,
               })}
             >
-              {notifier.dto.info !== '' && (
+              {notifier.dto.info && (
                 <Alert title="" severity="info">
                   {notifier.dto.info}
                 </Alert>
