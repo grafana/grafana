@@ -171,6 +171,7 @@ jobs:
             exit 1
         fi
   lint-frontend-packed-packages:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
