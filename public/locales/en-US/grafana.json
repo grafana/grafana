@@ -6385,10 +6385,12 @@
       "label": {
         "classic": "Classic",
         "json": "JSON",
+        "options": "Export options",
         "v1-resource": "V1 Resource",
         "v2-resource": "V2 Resource",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "Share dashboard with another instance"
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
@@ -7842,7 +7844,6 @@
       "export-externally-label": "Export the dashboard to use in another instance",
       "export-format": "Format",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Remove deployment details",
       "info-text": "Copy or download a file containing the definition of your dashboard",
       "title": "Export dashboard"
     },
