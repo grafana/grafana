@@ -90,6 +90,7 @@ export function StoredNotifications() {
               onClick={() => handleCheckboxToggle(notif.id)}
               severity={notif.severity}
               title={notif.title}
+              text={notif.text}
               timestamp={notif.timestamp}
               traceId={notif.traceId}
             >
