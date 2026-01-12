@@ -32,6 +32,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
+  troubleshoot-mysql:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/
   alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
@@ -56,6 +61,7 @@ The following documents will help you get started with the MySQL data source in 
 
 - [Configure the MySQL data source](ref:configure-mysql-data-source)
 - [MySQL query editor](ref:mysql-query-editor)
+- [Troubleshoot MySQL data source issues](ref:troubleshoot-mysql)
 
 Once you have configured the data source you can:
 
