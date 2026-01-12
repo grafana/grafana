@@ -123,6 +123,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: 'transparent',
         cursor: 'pointer',
       },
+      padding: 0,
     }),
     content: css({
       paddingTop: theme.spacing(0),
