@@ -137,7 +137,7 @@ export function ResourceExport({
         </Stack>
       )}
 
-      {true && (
+      {showV2LibPanelAlert && (
         <Alert
           title={t(
             'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
