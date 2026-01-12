@@ -127,7 +127,7 @@ Before configuring the Microsoft SQL Server data source, ensure you have the fol
 
 - **Authentication credentials:** Depending on your authentication method, you need one of:
   - SQL Server login credentials (username and password)
-  - Windows/Kerberos credentials and configuration
+  - Windows/Kerberos credentials and configuration (not supported in Grafana Cloud)
   - Azure Entra ID app registration or managed identity
 
 - **Security certificates:** If using encrypted connections, gather any necessary TLS/SSL certificates.
