@@ -563,8 +563,8 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}
 		}
 	}
-	for _, folderPermissions := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(folderPermissions, dashboards.ScopeFoldersPrefix); found {
+	for _, folderPermission := range folderPermissions {
+		if folderUid, found := strings.CutPrefix(folderPermission, dashboards.ScopeFoldersPrefix); found {
 			if !slices.Contains(dashboardUids, folderUid) && folderUid != foldermodel.SharedWithMeFolderUID && folderUid != foldermodel.GeneralFolderUID {
 				dashboardUids = append(dashboardUids, folderUid)
 			}
