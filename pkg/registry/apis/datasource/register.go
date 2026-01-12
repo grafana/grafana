@@ -89,6 +89,10 @@ func RegisterAPIService(
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 		}
 
+		if pluginJSON.ID != "grafana-testdata-datasource" {
+			continue // FOR TESTING! codec currently picks the first registered apiVersion :cry:
+		}
+
 		builder, err = NewDataSourceAPIBuilder(
 			pluginJSON,
 			client,

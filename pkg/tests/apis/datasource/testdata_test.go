@@ -34,7 +34,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	for _, mode := range []grafanarest.DualWriterMode{
-		// grafanarest.Mode0, // Legacy only
+		grafanarest.Mode0, // Legacy only
 		// grafanarest.Mode2, // write both, read legacy
 		// grafanarest.Mode3, // write both, read unified
 		grafanarest.Mode5, // Unified only
@@ -60,90 +60,92 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				Resource: "datasources",
 			}).Namespace("default")
 
-			// 1. CREATE
-			out, err := client.Create(ctx, &unstructured.Unstructured{
-				Object: map[string]any{
-					"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
-					"kind":       "DataSource",
-					"metadata": map[string]any{
-						"name": "test",
-					},
-					"spec": map[string]any{
-						"title": "test",
-					},
-					"secure": map[string]any{
-						"aaa": map[string]any{
-							"create": "AAA",
+			t.Run("create", func(t *testing.T) {
+				out, err := client.Create(ctx, &unstructured.Unstructured{
+					Object: map[string]any{
+						"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+						"kind":       "DataSource",
+						"metadata": map[string]any{
+							"name": "test",
 						},
-						"bbb": map[string]any{
-							"create": "BBB",
+						"spec": map[string]any{
+							"title": "test",
 						},
-					},
-				},
-			}, metav1.CreateOptions{})
-			require.NoError(t, err)
-			require.Equal(t, "test", out.GetName())
-
-			obj, err := utils.MetaAccessor(out)
-			require.NoError(t, err)
-
-			secure, err := obj.GetSecureValues()
-			require.NoError(t, err)
-
-			keys := slices.Collect(maps.Keys(secure))
-			require.ElementsMatch(t, []string{"aaa", "bbb"}, keys)
-
-			// 2. UPDATE
-			out, err = client.Update(ctx, &unstructured.Unstructured{
-				Object: map[string]any{
-					"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
-					"metadata": map[string]any{
-						"name": "test",
-					},
-					"spec": map[string]any{
-						"title":     "test",
-						"database":  "testdb",
-						"url":       "http://fake.url",
-						"access":    datasources.DS_ACCESS_PROXY,
-						"user":      "example",
-						"isDefault": true,
-						"readOnly":  true,
-						"jsonData": map[string]any{
-							"hello": "world",
+						"secure": map[string]any{
+							"aaa": map[string]any{
+								"create": "AAA",
+							},
+							"bbb": map[string]any{
+								"create": "BBB",
+							},
 						},
 					},
-					"secure": map[string]any{
-						"aaa": map[string]any{
-							"remove": true, // remove the first secure value
+				}, metav1.CreateOptions{})
+				require.NoError(t, err)
+				require.Equal(t, "test", out.GetName())
+
+				obj, err := utils.MetaAccessor(out)
+				require.NoError(t, err)
+
+				secure, err := obj.GetSecureValues()
+				require.NoError(t, err)
+
+				keys := slices.Collect(maps.Keys(secure))
+				require.ElementsMatch(t, []string{"aaa", "bbb"}, keys)
+			})
+
+			t.Run("update", func(t *testing.T) {
+				out, err := client.Update(ctx, &unstructured.Unstructured{
+					Object: map[string]any{
+						"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+						"metadata": map[string]any{
+							"name": "test",
 						},
-						"ccc": map[string]any{
-							"create": "CCC", // add a third value
+						"spec": map[string]any{
+							"title":     "test",
+							"database":  "testdb",
+							"url":       "http://fake.url",
+							"access":    datasources.DS_ACCESS_PROXY,
+							"user":      "example",
+							"isDefault": true,
+							"readOnly":  true,
+							"jsonData": map[string]any{
+								"hello": "world",
+							},
+						},
+						"secure": map[string]any{
+							// "aaa": map[string]any{
+							// 	"remove": true, // remove does not really remove in legacy!
+							// },
+							"ccc": map[string]any{
+								"create": "CCC", // add a third value
+							},
 						},
 					},
-				},
-			}, metav1.UpdateOptions{})
-			require.NoError(t, err)
-			require.Equal(t, "test", out.GetName())
+				}, metav1.UpdateOptions{})
+				require.NoError(t, err)
+				require.Equal(t, "test", out.GetName())
 
-			obj, err = utils.MetaAccessor(out)
-			require.NoError(t, err)
+				obj, err := utils.MetaAccessor(out)
+				require.NoError(t, err)
 
-			secure, err = obj.GetSecureValues()
-			require.NoError(t, err)
+				secure, err := obj.GetSecureValues()
+				require.NoError(t, err)
 
-			keys = slices.Collect(maps.Keys(secure))
-			require.ElementsMatch(t, []string{"bbb", "ccc"}, keys)
+				keys := slices.Collect(maps.Keys(secure))
+				require.ElementsMatch(t, []string{"aaa", "bbb", "ccc"}, keys)
+			})
 
-			// 3. LIST
-			list, err := client.List(ctx, metav1.ListOptions{})
-			require.NoError(t, err)
-			require.Len(t, list.Items, 1, "expected a single datasource")
-			require.Equal(t, "test", list.Items[0].GetName(), "with the test uid")
+			t.Run("list", func(t *testing.T) {
+				list, err := client.List(ctx, metav1.ListOptions{})
+				require.NoError(t, err)
+				require.Len(t, list.Items, 1, "expected a single datasource")
+				require.Equal(t, "test", list.Items[0].GetName(), "with the test uid")
 
-			spec, _, _ := unstructured.NestedMap(list.Items[0].Object, "spec")
-			jj, _ := json.MarshalIndent(spec, "", "  ")
-			// fmt.Printf("%s\n", string(jj))
-			require.JSONEq(t, `{
+				spec, _, _ := unstructured.NestedMap(list.Items[0].Object, "spec")
+				jj, _ := json.MarshalIndent(spec, "", "  ")
+				// fmt.Printf("%s\n", string(jj))
+				require.JSONEq(t, `{
 					"access": "proxy",
 					"database": "testdb",
 					"isDefault": true,
@@ -155,9 +157,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 					"url": "http://fake.url",
 					"user": "example"
 				}`, string(jj))
+			})
 
-			// 4. Call functions that use the stored configs
-			t.Run("subresources", func(t *testing.T) {
+			t.Run("execute", func(t *testing.T) {
 				client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
 					Group:    "testdata.datasource.grafana.app",
 					Version:  "v0alpha1",
