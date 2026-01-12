@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	gocache "github.com/patrickmn/go-cache"
 )
@@ -868,10 +869,18 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 	if key.Action == DataActionDeleted {
 		generation = 0
 	}
+
+	// In compatibility mode, the previous RV, when available, is saved as a microsecond
+	// timestamp, as is done in the SQL backend.
+	previousRV := event.PreviousRV
+	if event.PreviousRV > 0 && isSnowflake(event.PreviousRV) {
+		previousRV = rvmanager.RVFromSnowflake(event.PreviousRV)
+	}
+
 	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistory, sqlKVLegacyUpdateHistoryRequest{
 		SQLTemplate: sqltemplate.New(kv.dialect),
 		GUID:        key.GUID,
-		PreviousRV:  event.PreviousRV,
+		PreviousRV:  previousRV,
 		Generation:  generation,
 	})
 
@@ -900,7 +909,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 			Name:        key.Name,
 			Action:      action,
 			Folder:      key.Folder,
-			PreviousRV:  event.PreviousRV,
+			PreviousRV:  previousRV,
 		})
 
 		if err != nil {
@@ -916,7 +925,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 			Name:        key.Name,
 			Action:      action,
 			Folder:      key.Folder,
-			PreviousRV:  event.PreviousRV,
+			PreviousRV:  previousRV,
 		})
 
 		if err != nil {
@@ -937,4 +946,16 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 	}
 
 	return nil
+}
+
+// isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
+// We try to interpret the number as a microsecond timestamp first. If it represents a time in the past,
+// it is considered a microsecond timestamp. Snowflake IDs are much larger integers and would lead
+// to dates in the future if interpreted as a microsecond timestamp.
+func isSnowflake(rv int64) bool {
+	ts := time.UnixMicro(rv)
+	oneHourFromNow := time.Now().Add(time.Hour)
+	isMsRV := ts.Before(oneHourFromNow)
+
+	return !isMsRV
 }
