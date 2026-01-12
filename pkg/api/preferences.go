@@ -134,6 +134,10 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
 
+	if dtoCmd.Timezone != nil && !pref.IsValidTimezone(*dtoCmd.Timezone) {
+		return response.Error(http.StatusBadRequest, "Invalid timezone. Must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string", nil)
+	}
+
 	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
 	// nolint:staticcheck
 	dashboardID := dtoCmd.HomeDashboardID
