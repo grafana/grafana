@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
+import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Alert, Button, LinkButton } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { useSelector } from 'app/types/store';
@@ -57,30 +59,49 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
     );
   }
 
-  const { onContinueInAlertingFromDrawer } = createPanelAlertRuleNavigation(
+  const { onContinueInAlertingFromDrawer, onButtonClick: onContinueInAlertingButton } = createPanelAlertRuleNavigation(
     () => panelToRuleFormValues(panel, dashboard),
     location
   );
 
+  const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
+
+  if (shouldUseDrawer) {
+    return (
+      <>
+        <Button
+          icon="bell"
+          className={className}
+          data-testid="create-alert-rule-button-drawer"
+          onClick={() => {
+            logInfo(LogMessages.alertRuleFromPanel);
+            setIsOpen(true);
+          }}
+        >
+          <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+        </Button>
+        <AlertRuleDrawerForm
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onContinueInAlerting={onContinueInAlertingFromDrawer}
+          prefill={formValues ?? undefined}
+        />
+      </>
+    );
+  }
+
   return (
-    <>
-      <Button
-        icon="bell"
-        className={className}
-        data-testid="create-alert-rule-button-drawer"
-        onClick={() => {
-          logInfo(LogMessages.alertRuleFromPanel);
-          setIsOpen(true);
-        }}
-      >
-        <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
-      </Button>
-      <AlertRuleDrawerForm
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        onContinueInAlerting={onContinueInAlertingFromDrawer}
-        prefill={formValues ?? undefined}
-      />
-    </>
+    <LinkButton
+      icon="bell"
+      onClick={onContinueInAlertingButton}
+      href={urlUtil.renderUrl('alerting/new', {
+        defaults: JSON.stringify(formValues),
+        returnTo: location.pathname + location.search,
+      })}
+      className={className}
+      data-testid="create-alert-rule-button"
+    >
+      <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+    </LinkButton>
   );
 };
