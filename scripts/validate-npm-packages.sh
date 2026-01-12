@@ -11,8 +11,7 @@ failed_checks=()
 for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
 
-  # shellcheck disable=SC2086
-  if ! NODE_OPTIONS="-C @grafana-app/source" yarn attw "$file" --ignore-rules "false-cjs" --profile node16; then
+  if ! NODE_OPTIONS="-C @grafana-app/source" yarn attw "$file" --ignore-rules "false-cjs" --profile "node16"; then
     echo "attw check failed for $file"
     echo ""
     failed_checks+=("$file - yarn attw")
