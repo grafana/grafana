@@ -266,3 +266,4 @@ public/mockServiceWorker.js
 
 # Ignore grafana/hippocampus local cache folder
 .hippo
+devenv/blocks/auth/signer/keys/ec_private_key.pem
