@@ -90,7 +90,7 @@ Use mute timings for predictable, recurring time periods when you don't want to 
 
 **When to use silences**
 
-Use silences for one-time or ad-hoc suppression of notifications:
+Use silences for one-time or as-needed suppression of notifications:
 
 - Active incident response (suppress notifications while investigating)
 - Immediate suppression of a specific alert or group of alerts
