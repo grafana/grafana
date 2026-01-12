@@ -74,6 +74,7 @@ For more details on contact points, including how to test them and enable notifi
     >
     > If left blank, Grafana searches for credentials using the default credentials chain, including environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`), the shared credential file, and EC2 instance roles.
   - **Profile**: (Optional) Named AWS profile used to authenticate.
+  - **Role ARN**: (Optional) The ARN of an AWS IAM role to assume for authentication, serving as an alternative to using AWS API keys.
 - **SNS topic ARN**: (Optional) If you don't specify this value, you must specify a value for the `Phone number` or `Target ARN`. If you are using a FIFO SNS topic you should set a message group interval longer than 5 minutes to prevent messages with the same group key being deduplicated by the SNS default deduplication window.
 - **Phone number**: (Optional) Phone number if message is delivered via SMS in E.164 format. If you don't specify this value, you must specify a value for the `SNS topic ARN` or `Target ARN`.
 - **Target ARN**: (Optional) The mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the `SNS topic ARN` or `Phone number`.
