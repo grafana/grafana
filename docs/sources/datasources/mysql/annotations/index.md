@@ -12,7 +12,7 @@ labels:
     - oss
 menuTitle: Annotations
 title: MySQL annotations
-weight: 400
+weight: 340
 refs:
   annotate-visualizations:
     - pattern: /docs/grafana/
