@@ -126,9 +126,9 @@ Before configuring the Microsoft SQL Server data source, ensure you have the fol
 - **Network access:** Grafana must be able to reach your SQL Server. The default port is `1433`.
 
 - **Authentication credentials:** Depending on your authentication method, you need one of:
-  - SQL Server login credentials (username and password)
-  - Windows/Kerberos credentials and configuration (not supported in Grafana Cloud)
-  - Azure Entra ID app registration or managed identity
+  - SQL Server login credentials (username and password).
+  - Windows/Kerberos credentials and configuration (not supported in Grafana Cloud).
+  - Azure Entra ID app registration or managed identity.
 
 - **Security certificates:** If using encrypted connections, gather any necessary TLS/SSL certificates.
 
