@@ -527,10 +527,6 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
-  * Sets the logs table as default visualisation in logs explore
-  */
-  logsExploreTableDefaultVisualization?: boolean;
-  /**
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
@@ -656,10 +652,6 @@ export interface FeatureToggles {
   * Enables the new role picker drawer design
   */
   rolePickerDrawer?: boolean;
-  /**
-  * Enable unified storage search
-  */
-  unifiedStorageSearch?: boolean;
   /**
   * Enable sprinkles on unified storage search
   */
