@@ -136,7 +136,7 @@ export class LogListModel implements LogRowModel {
     if (this._body === undefined) {
       try {
         const parsed = parse(this.raw, undefined, {
-          onDuplicateKey: ({ newValue }) => newValue
+          onDuplicateKey: ({ newValue }) => newValue,
         });
         if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
           this._json = true;
