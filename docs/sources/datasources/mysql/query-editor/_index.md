@@ -337,4 +337,3 @@ For detailed information on creating annotations with MySQL, refer to [MySQL ann
 You can use time series queries to create Grafana-managed alert rules. Table formatted queries are not supported in alert rule conditions.
 
 For detailed information on creating alerts with MySQL, refer to [MySQL alerting](ref:mysql-alerting).
-
