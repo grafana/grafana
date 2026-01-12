@@ -57,9 +57,9 @@ export function ResourceExport({
   return (
     <Stack gap={1} direction="column">
       <QueryOperationRow
-        id="Export options"
+        id="Advanced options"
         index={0}
-        title={t('dashboard-scene.resource-export.label.options', 'Export options')}
+        title={t('dashboard-scene.resource-export.label.advanced-options', 'Advanced options')}
         isOpen={false}
       >
         <Box marginTop={2}>

@@ -6385,7 +6385,7 @@
       "label": {
         "classic": "Classic",
         "json": "JSON",
-        "options": "Export options",
+        "advanced-options": "Advanced options",
         "v1-resource": "V1 Resource",
         "v2-resource": "V2 Resource",
         "yaml": "YAML"
