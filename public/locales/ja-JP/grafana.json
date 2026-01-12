@@ -4595,6 +4595,7 @@
     },
     "canvas-actions": {
       "add-panel": "パネルを追加",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "行にグループ化",
@@ -5675,6 +5676,7 @@
     "validation": {
       "invalid-dashboard-id": "有効なGrafana.com IDが見つかりませんでした",
       "invalid-json": "無効なJSON",
+      "tag-too-long": "",
       "tags-expected-array": "タグは配列を期待しています",
       "tags-expected-strings": "タグは文字列の配列を期待しています"
     },
@@ -9217,7 +9219,8 @@
     "tags-input": {
       "add": "追加",
       "placeholder-new-tag": "新しいタグ (Enterキーで追加)",
-      "remove": "タグ、{{name}}を削除"
+      "remove": "タグ、{{name}}を削除",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "時間を同期",
@@ -10676,18 +10679,6 @@
     "help/documentation": "ドキュメント",
     "help/keyboard-shortcuts": "キーボードショートカット",
     "help/support": "サポート",
-    "history-container": {
-      "drawer-tittle": "履歴"
-    },
-    "history-wrapper": {
-      "collapse": "折りたたみ表示",
-      "expand": "展開",
-      "icon-selected": "選択したエントリー",
-      "icon-unselected": "通常のエントリー",
-      "show-more": "さらに表示",
-      "today": "今日",
-      "yesterday": "昨日"
-    },
     "home": {
       "title": "ホーム"
     },

@@ -864,11 +864,15 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		return nil
 	}
 
+	generation := event.Object.GetGeneration()
+	if key.Action == DataActionDeleted {
+		generation = 0
+	}
 	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistory, sqlKVLegacyUpdateHistoryRequest{
 		SQLTemplate: sqltemplate.New(kv.dialect),
 		GUID:        key.GUID,
 		PreviousRV:  event.PreviousRV,
-		Generation:  event.Object.GetGeneration(),
+		Generation:  generation,
 	})
 
 	if err != nil {
@@ -910,6 +914,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 			Resource:    key.Resource,
 			Namespace:   key.Namespace,
 			Name:        key.Name,
+			Action:      action,
 			Folder:      key.Folder,
 			PreviousRV:  event.PreviousRV,
 		})
@@ -920,6 +925,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 	case DataActionDeleted:
 		_, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
 			SQLTemplate: sqltemplate.New(kv.dialect),
+			Group:       key.Group,
 			Resource:    key.Resource,
 			Namespace:   key.Namespace,
 			Name:        key.Name,
