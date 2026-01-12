@@ -8,7 +8,6 @@ import DuplicateMessageTemplate from './components/contact-points/DuplicateMessa
 import EditMessageTemplate from './components/contact-points/EditMessageTemplate';
 import NewMessageTemplate from './components/contact-points/NewMessageTemplate';
 import { NotificationTemplates } from './components/contact-points/NotificationTemplates';
-import { shouldUseAlertingNavigationV2 } from './featureToggles';
 import { AlertmanagerAction, useAlertmanagerAbility } from './hooks/useAbilities';
 import { useNotificationConfigNav } from './navigation/useNotificationConfigNav';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
@@ -45,12 +44,9 @@ const TemplatesList = () => {
 };
 
 function NotificationTemplatesRoutes() {
-  const useV2Nav = shouldUseAlertingNavigationV2();
-
   return (
     <Routes>
-      {/* In V2 mode, show templates list on base route */}
-      {useV2Nav && <Route path="" element={<TemplatesList />} />}
+      <Route path="" element={<TemplatesList />} />
       <Route path="new" element={<NewMessageTemplate />} />
       <Route path=":name/edit" element={<EditMessageTemplate />} />
       <Route path=":name/duplicate" element={<DuplicateMessageTemplate />} />
@@ -59,20 +55,13 @@ function NotificationTemplatesRoutes() {
 }
 
 function NotificationTemplatesPage() {
-  const useV2Nav = shouldUseAlertingNavigationV2();
   const { navId, pageNav } = useNotificationConfigNav();
 
-  // In V2 mode, wrap with page wrapper for proper navigation
-  if (useV2Nav) {
-    return (
-      <AlertmanagerPageWrapper navId={navId || 'receivers'} pageNav={pageNav} accessType="notification">
-        <NotificationTemplatesRoutes />
-      </AlertmanagerPageWrapper>
-    );
-  }
-
-  // In legacy mode, just render routes (templates are accessed via ContactPoints page tabs)
-  return <NotificationTemplatesRoutes />;
+  return (
+    <AlertmanagerPageWrapper navId={navId || 'receivers'} pageNav={pageNav} accessType="notification">
+      <NotificationTemplatesRoutes />
+    </AlertmanagerPageWrapper>
+  );
 }
 
 export default withPageErrorBoundary(NotificationTemplatesPage);

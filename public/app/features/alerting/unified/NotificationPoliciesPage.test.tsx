@@ -140,37 +140,33 @@ const getRootRoute = async () => {
 };
 
 describe('NotificationPolicies', () => {
-  describe('V2 Navigation Mode', () => {
-    testWithFeatureToggles({ enable: ['alertingNavigationV2'] });
+  beforeEach(() => {
+    setupDataSources(dataSources.am);
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+      ...PERMISSIONS_NOTIFICATION_POLICIES,
+    ]);
+  });
 
-    beforeEach(() => {
-      setupDataSources(dataSources.am);
-      grantUserPermissions([
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsWrite,
-        ...PERMISSIONS_NOTIFICATION_POLICIES,
-      ]);
-    });
+  it('shows only notification policies without internal tabs', async () => {
+    renderNotificationPolicies();
 
-    it('shows only notification policies without internal tabs', async () => {
-      renderNotificationPolicies();
+    // Should show notification policies directly
+    expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
 
-      // Should show notification policies directly
-      expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
+    // Should not have tabs
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
 
-      // Should not have tabs
-      expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-    });
+  it('does not show time intervals tab', async () => {
+    renderNotificationPolicies();
 
-    it('does not show time intervals tab in V2 mode', async () => {
-      renderNotificationPolicies();
+    // Should show notification policies
+    expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
 
-      // Should show notification policies
-      expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
-
-      // Should not show time intervals tab
-      expect(screen.queryByText(/time intervals/i)).not.toBeInTheDocument();
-    });
+    // Should not show time intervals tab
+    expect(screen.queryByText(/time intervals/i)).not.toBeInTheDocument();
   });
 
   // combobox hack :/

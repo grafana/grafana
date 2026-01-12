@@ -4,32 +4,9 @@ import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useSelector } from 'app/types/store';
 
-import { shouldUseAlertingNavigationV2 } from '../featureToggles';
-
 export function useNotificationConfigNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
-  const useV2Nav = shouldUseAlertingNavigationV2();
-
-  // If V2 navigation is not enabled, return legacy navId based on current path
-  if (!useV2Nav) {
-    if (location.pathname.includes('/alerting/notifications/templates')) {
-      return {
-        navId: 'receivers',
-        pageNav: undefined,
-      };
-    }
-    if (location.pathname === '/alerting/routes') {
-      return {
-        navId: 'am-routes',
-        pageNav: undefined,
-      };
-    }
-    return {
-      navId: 'receivers',
-      pageNav: undefined,
-    };
-  }
 
   const notificationConfigNav = navIndex['notification-config'];
   if (!notificationConfigNav) {
@@ -53,10 +30,7 @@ export function useNotificationConfigNav() {
   }
 
   // Check if we're on the time intervals page
-  // In V2 mode, check for dedicated route; in legacy mode, check for query param
-  const isTimeIntervalsTab = useV2Nav
-    ? location.pathname === '/alerting/time-intervals'
-    : location.pathname === '/alerting/routes' && location.search.includes('tab=time_intervals');
+  const isTimeIntervalsTab = location.pathname === '/alerting/time-intervals';
 
   // All available tabs
   const allTabs = [
@@ -87,7 +61,7 @@ export function useNotificationConfigNav() {
     {
       id: 'notification-config-time-intervals',
       text: t('alerting.navigation.time-intervals', 'Time intervals'),
-      url: useV2Nav ? '/alerting/time-intervals' : '/alerting/routes?tab=time_intervals',
+      url: '/alerting/time-intervals',
       active: isTimeIntervalsTab,
       icon: 'clock-nine',
       parentItem: notificationConfigNav,

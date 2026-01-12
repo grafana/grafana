@@ -4,48 +4,12 @@ import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useSelector } from 'app/types/store';
 
-import { shouldUseAlertingNavigationV2 } from '../featureToggles';
-
 export function useAlertActivityNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
-  const useV2Nav = shouldUseAlertingNavigationV2();
-
-  // If V2 navigation is not enabled, return legacy navId
-  if (!useV2Nav) {
-    if (location.pathname === '/alerting/groups') {
-      return {
-        navId: 'groups',
-        pageNav: undefined,
-      };
-    }
-    if (location.pathname === '/alerting/alerts') {
-      return {
-        navId: 'alert-alerts',
-        pageNav: undefined,
-      };
-    }
-    return {
-      navId: undefined,
-      pageNav: undefined,
-    };
-  }
 
   const alertActivityNav = navIndex['alert-activity'];
   if (!alertActivityNav) {
-    // Fallback to legacy
-    if (location.pathname === '/alerting/groups') {
-      return {
-        navId: 'groups',
-        pageNav: undefined,
-      };
-    }
-    if (location.pathname === '/alerting/alerts') {
-      return {
-        navId: 'alert-alerts',
-        pageNav: undefined,
-      };
-    }
     return {
       navId: undefined,
       pageNav: undefined,

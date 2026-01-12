@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { useNotificationConfigNav } from './useNotificationConfigNav';
@@ -31,17 +30,7 @@ describe('useNotificationConfigNav', () => {
     'notification-config-time-intervals': {
       id: 'notification-config-time-intervals',
       text: 'Time intervals',
-      url: '/alerting/routes?tab=time_intervals',
-    },
-    receivers: {
-      id: 'receivers',
-      text: 'Contact points',
-      url: '/alerting/notifications',
-    },
-    'am-routes': {
-      id: 'am-routes',
-      text: 'Notification policies',
-      url: '/alerting/routes',
+      url: '/alerting/time-intervals',
     },
   };
 
@@ -49,27 +38,7 @@ describe('useNotificationConfigNav', () => {
     navIndex: mockNavIndex,
   };
 
-  beforeEach(() => {
-    config.featureToggles.alertingNavigationV2 = false;
-  });
-
-  it('should return legacy navId when feature flag is off', () => {
-    const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
-      renderWithRouter: true,
-      historyOptions: {
-        initialEntries: ['/alerting/notifications'],
-      },
-    });
-
-    const { result } = renderHook(() => useNotificationConfigNav(), { wrapper });
-
-    expect(result.current.navId).toBe('receivers');
-    expect(result.current.pageNav).toBeUndefined();
-  });
-
-  it('should return V2 navigation when feature flag is on', () => {
-    config.featureToggles.alertingNavigationV2 = true;
+  it('should return navigation with pageNav', () => {
     const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
       store,
@@ -87,8 +56,7 @@ describe('useNotificationConfigNav', () => {
     expect(result.current.pageNav?.children).toBeDefined();
   });
 
-  it('should detect time intervals tab from V2 path', () => {
-    config.featureToggles.alertingNavigationV2 = true;
+  it('should detect time intervals tab from path', () => {
     const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
       store,
@@ -108,7 +76,6 @@ describe('useNotificationConfigNav', () => {
   });
 
   it('should filter tabs based on permissions', () => {
-    config.featureToggles.alertingNavigationV2 = true;
     const limitedNavIndex = {
       'notification-config': mockNavIndex['notification-config'],
       'notification-config-contact-points': mockNavIndex['notification-config-contact-points'],

@@ -4,26 +4,14 @@ import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useSelector } from 'app/types/store';
 
-import { shouldUseAlertingNavigationV2 } from '../featureToggles';
-
 export function useAlertRulesNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
-  const useV2Nav = shouldUseAlertingNavigationV2();
-
-  // If V2 navigation is not enabled, return legacy navId
-  if (!useV2Nav) {
-    return {
-      navId: 'alert-list',
-      pageNav: undefined,
-    };
-  }
 
   const alertRulesNav = navIndex['alert-rules'];
   if (!alertRulesNav) {
-    // Fallback to legacy if V2 nav doesn't exist
     return {
-      navId: 'alert-list',
+      navId: undefined,
       pageNav: undefined,
     };
   }

@@ -4,37 +4,12 @@ import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useSelector } from 'app/types/store';
 
-import { shouldUseAlertingNavigationV2 } from '../featureToggles';
-
 export function useInsightsNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
-  const useV2Nav = shouldUseAlertingNavigationV2();
-
-  // If V2 navigation is not enabled, return legacy navId
-  if (!useV2Nav) {
-    if (location.pathname === '/alerting/history') {
-      return {
-        navId: 'alerts-history',
-        pageNav: undefined,
-      };
-    }
-    // For insights page, it doesn't exist in legacy, so return undefined
-    return {
-      navId: undefined,
-      pageNav: undefined,
-    };
-  }
 
   const insightsNav = navIndex.insights;
   if (!insightsNav) {
-    // Fallback to legacy
-    if (location.pathname === '/alerting/history') {
-      return {
-        navId: 'alerts-history',
-        pageNav: undefined,
-      };
-    }
     return {
       navId: undefined,
       pageNav: undefined,

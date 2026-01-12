@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { useAlertRulesNav } from './useAlertRulesNav';
@@ -24,38 +23,13 @@ describe('useAlertRulesNav', () => {
       text: 'Recently deleted',
       url: '/alerting/recently-deleted',
     },
-    'alert-list': {
-      id: 'alert-list',
-      text: 'Alert rules',
-      url: '/alerting/list',
-    },
   };
 
   const defaultPreloadedState = {
     navIndex: mockNavIndex,
   };
 
-  beforeEach(() => {
-    config.featureToggles.alertingNavigationV2 = false;
-  });
-
-  it('should return legacy navId when feature flag is off', () => {
-    const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
-      renderWithRouter: true,
-      historyOptions: {
-        initialEntries: ['/alerting/list'],
-      },
-    });
-
-    const { result } = renderHook(() => useAlertRulesNav(), { wrapper });
-
-    expect(result.current.navId).toBe('alert-list');
-    expect(result.current.pageNav).toBeUndefined();
-  });
-
-  it('should return V2 navigation when feature flag is on', () => {
-    config.featureToggles.alertingNavigationV2 = true;
+  it('should return navigation with pageNav', () => {
     const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
       store,
@@ -76,7 +50,6 @@ describe('useAlertRulesNav', () => {
   });
 
   it('should filter tabs based on permissions', () => {
-    config.featureToggles.alertingNavigationV2 = true;
     const limitedNavIndex = {
       'alert-rules': mockNavIndex['alert-rules'],
       'alert-rules-list': mockNavIndex['alert-rules-list'],
@@ -102,7 +75,6 @@ describe('useAlertRulesNav', () => {
   });
 
   it('should set active tab based on current path', () => {
-    config.featureToggles.alertingNavigationV2 = true;
     const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
       store,

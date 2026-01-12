@@ -352,7 +352,8 @@
       "metadata": {
         "name": "alertingNavigationV2",
         "resourceVersion": "1767827323622",
-        "creationTimestamp": "2026-01-07T23:08:43Z"
+        "creationTimestamp": "2026-01-07T23:08:43Z",
+        "deletionTimestamp": "2026-01-12T18:34:54Z"
       },
       "spec": {
         "description": "Enable new grouped navigation structure for Alerting",

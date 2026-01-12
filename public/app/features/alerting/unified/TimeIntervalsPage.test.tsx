@@ -1,4 +1,4 @@
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -20,62 +20,46 @@ const alertManager = mockDataSource({
 });
 
 describe('TimeIntervalsPage', () => {
-  describe('V2 Navigation Mode', () => {
-    testWithFeatureToggles({ enable: ['alertingNavigationV2'] });
+  beforeEach(() => {
+    setupDataSources(alertManager);
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, defaultConfig);
+    setTimeIntervalsListEmpty(); // Mock empty time intervals list so component renders
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingTimeIntervalsRead,
+    ]);
+  });
 
-    beforeEach(() => {
-      setupDataSources(alertManager);
-      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, defaultConfig);
-      setTimeIntervalsListEmpty(); // Mock empty time intervals list so component renders
-      grantUserPermissions([
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingTimeIntervalsRead,
-      ]);
+  it('renders time intervals table', async () => {
+    const mockNavIndex = {
+      'notification-config': {
+        id: 'notification-config',
+        text: 'Notification configuration',
+        url: '/alerting/notifications',
+      },
+      'notification-config-time-intervals': {
+        id: 'notification-config-time-intervals',
+        text: 'Time intervals',
+        url: '/alerting/time-intervals',
+      },
+    };
+    const store = configureStore({
+      navIndex: mockNavIndex,
     });
 
-    it('renders time intervals table', async () => {
-      const mockNavIndex = {
-        'notification-config': {
-          id: 'notification-config',
-          text: 'Notification configuration',
-          url: '/alerting/notifications',
-        },
-        'notification-config-time-intervals': {
-          id: 'notification-config-time-intervals',
-          text: 'Time intervals',
-          url: '/alerting/time-intervals',
-        },
-      };
-      const store = configureStore({
-        navIndex: mockNavIndex,
-      });
-
-      render(<TimeIntervalsPage />, {
-        store,
-        historyOptions: {
-          initialEntries: ['/alerting/time-intervals'],
-        },
-      });
-
-      // Should show time intervals content
-      // When empty, it shows "You haven't created any time intervals yet"
-      // When loading, it shows "Loading time intervals..."
-      // When error, it shows "Error loading time intervals"
-      // All contain "time intervals" - use getAllByText since there are multiple matches (tab, description, empty state)
-      const timeIntervalsTexts = await screen.findAllByText(/time intervals/i, {}, { timeout: 5000 });
-      expect(timeIntervalsTexts.length).toBeGreaterThan(0);
+    render(<TimeIntervalsPage />, {
+      store,
+      historyOptions: {
+        initialEntries: ['/alerting/time-intervals'],
+      },
     });
 
-    it('returns null in legacy mode', () => {
-      // This test verifies that the component returns null when V2 is disabled
-      // The feature toggle is controlled by testWithFeatureToggles, so we test it separately
-      const { container } = render(<TimeIntervalsPage />, {
-        historyOptions: {
-          initialEntries: ['/alerting/time-intervals'],
-        },
-      });
-      // In V2 mode (enabled by testWithFeatureToggles), it should render content
-      expect(container).not.toBeEmptyDOMElement();
-    });
+    // Should show time intervals content
+    // When empty, it shows "You haven't created any time intervals yet"
+    // When loading, it shows "Loading time intervals..."
+    // When error, it shows "Error loading time intervals"
+    // All contain "time intervals" - use getAllByText since there are multiple matches (tab, description, empty state)
+    const timeIntervalsTexts = await screen.findAllByText(/time intervals/i, {}, { timeout: 5000 });
+    expect(timeIntervalsTexts.length).toBeGreaterThan(0);
   });
 });

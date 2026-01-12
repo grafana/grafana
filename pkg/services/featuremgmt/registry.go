@@ -908,14 +908,6 @@ var (
 			FrontendOnly: false, // changes navtree from backend
 		},
 		{
-			Name:         "alertingNavigationV2",
-			Description:  "Enable new grouped navigation structure for Alerting",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			FrontendOnly: false,   // changes navtree from backend
-			Expression:   "false", // Off by default
-		},
-		{
 			Name:        "pluginProxyPreserveTrailingSlash",
 			Description: "Preserve plugin proxy trailing slash.",
 			Stage:       FeatureStageGeneralAvailability,

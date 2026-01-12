@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { useAlertActivityNav } from './useAlertActivityNav';
@@ -23,58 +22,13 @@ describe('useAlertActivityNav', () => {
       text: 'Active notifications',
       url: '/alerting/groups',
     },
-    groups: {
-      id: 'groups',
-      text: 'Alert groups',
-      url: '/alerting/groups',
-    },
-    'alert-alerts': {
-      id: 'alert-alerts',
-      text: 'Alerts',
-      url: '/alerting/alerts',
-    },
   };
 
   const defaultPreloadedState = {
     navIndex: mockNavIndex,
   };
 
-  beforeEach(() => {
-    config.featureToggles.alertingNavigationV2 = false;
-  });
-
-  it('should return legacy navId when feature flag is off for /alerting/groups', () => {
-    const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
-      renderWithRouter: true,
-      historyOptions: {
-        initialEntries: ['/alerting/groups'],
-      },
-    });
-
-    const { result } = renderHook(() => useAlertActivityNav(), { wrapper });
-
-    expect(result.current.navId).toBe('groups');
-    expect(result.current.pageNav).toBeUndefined();
-  });
-
-  it('should return legacy navId when feature flag is off for /alerting/alerts', () => {
-    const wrapper = getWrapper({
-      preloadedState: defaultPreloadedState,
-      renderWithRouter: true,
-      historyOptions: {
-        initialEntries: ['/alerting/alerts'],
-      },
-    });
-
-    const { result } = renderHook(() => useAlertActivityNav(), { wrapper });
-
-    expect(result.current.navId).toBe('alert-alerts');
-    expect(result.current.pageNav).toBeUndefined();
-  });
-
-  it('should return V2 navigation when feature flag is on for Alerts tab', () => {
-    config.featureToggles.alertingNavigationV2 = true;
+  it('should return navigation with pageNav for Alerts tab', () => {
     const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
       store,
@@ -94,8 +48,7 @@ describe('useAlertActivityNav', () => {
     expect(result.current.pageNav?.text).toBe('Alert activity');
   });
 
-  it('should return V2 navigation when feature flag is on for Active notifications tab', () => {
-    config.featureToggles.alertingNavigationV2 = true;
+  it('should return navigation with pageNav for Active notifications tab', () => {
     const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
       store,
@@ -116,7 +69,6 @@ describe('useAlertActivityNav', () => {
   });
 
   it('should set active tab based on current path', () => {
-    config.featureToggles.alertingNavigationV2 = true;
     const store = configureStore(defaultPreloadedState);
     const wrapper = getWrapper({
       store,
@@ -138,7 +90,6 @@ describe('useAlertActivityNav', () => {
   });
 
   it('should filter tabs based on permissions', () => {
-    config.featureToggles.alertingNavigationV2 = true;
     const limitedNavIndex = {
       'alert-activity': mockNavIndex['alert-activity'],
       'alert-activity-alerts': mockNavIndex['alert-activity-alerts'],
@@ -163,13 +114,9 @@ describe('useAlertActivityNav', () => {
     expect(result.current.pageNav?.children?.[0].id).toBe('alert-activity-alerts');
   });
 
-  it('should fallback to legacy when alert-activity nav is missing', () => {
-    config.featureToggles.alertingNavigationV2 = true;
+  it('should return undefined when alert-activity nav is missing', () => {
     const store = configureStore({
-      navIndex: {
-        groups: mockNavIndex.groups,
-        'alert-alerts': mockNavIndex['alert-alerts'],
-      },
+      navIndex: {},
     });
     const wrapper = getWrapper({
       store,
@@ -181,7 +128,7 @@ describe('useAlertActivityNav', () => {
 
     const { result } = renderHook(() => useAlertActivityNav(), { wrapper });
 
-    expect(result.current.navId).toBe('groups');
+    expect(result.current.navId).toBeUndefined();
     expect(result.current.pageNav).toBeUndefined();
   });
 });

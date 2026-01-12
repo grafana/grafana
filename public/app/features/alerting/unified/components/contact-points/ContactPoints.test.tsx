@@ -178,28 +178,24 @@ describe('contact points', () => {
       });
     });
 
-    describe('V2 Navigation Mode', () => {
-      testWithFeatureToggles({ enable: ['alertingNavigationV2'] });
+    test('shows only contact points without internal tabs', async () => {
+      renderWithProvider(<ContactPointsPageContents />);
 
-      test('shows only contact points without internal tabs', async () => {
-        renderWithProvider(<ContactPointsPageContents />);
+      // Should show contact points directly
+      expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
 
-        // Should show contact points directly
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+      // Should not have tabs
+      expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    });
 
-        // Should not have tabs
-        expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-      });
+    test('does not show templates tab', async () => {
+      renderWithProvider(<ContactPointsPageContents />);
 
-      test('does not show templates tab in V2 mode', async () => {
-        renderWithProvider(<ContactPointsPageContents />);
+      // Should show contact points
+      expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
 
-        // Should show contact points
-        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
-
-        // Should not show templates tab
-        expect(screen.queryByText(/notification templates/i)).not.toBeInTheDocument();
-      });
+      // Should not show templates tab
+      expect(screen.queryByText(/notification templates/i)).not.toBeInTheDocument();
     });
 
     describe('templates tab', () => {
