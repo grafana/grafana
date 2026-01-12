@@ -203,7 +203,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 
 	log := logging.FromContext(ctx).With("method", "Create")
 
-	accIn, err := meta.Accessor(in)
+	accIn, err := utils.MetaAccessor(in)
 	if err != nil {
 		return nil, err
 	}
@@ -216,19 +216,19 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return nil, fmt.Errorf("name or generatename have to be set")
 	}
 
+	secure, err := accIn.GetSecureValues()
+	if err != nil {
+		return nil, fmt.Errorf("unable to read secure values %w", err)
+	}
+
 	readFromUnifiedWriteToBothStorages := d.readUnified && d.legacy != nil && d.unified != nil
 
 	permissions := ""
 	if readFromUnifiedWriteToBothStorages {
-		objIn, err := utils.MetaAccessor(in)
-		if err != nil {
-			return nil, err
-		}
-
 		// keep permissions, we will set it back after the object is created
-		permissions = objIn.GetAnnotation(utils.AnnoKeyGrantPermissions)
+		permissions = accIn.GetAnnotation(utils.AnnoKeyGrantPermissions)
 		if permissions != "" {
-			objIn.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation for now
+			accIn.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation for now
 		}
 	}
 
@@ -241,35 +241,34 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	}
 
 	createdCopy := createdFromLegacy.DeepCopyObject()
-	accCreated, err := meta.Accessor(createdCopy)
+	accCreated, err := utils.MetaAccessor(createdCopy)
 	if err != nil {
 		return nil, err
 	}
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
+	if err = accCreated.SetSecureValues(secure); err != nil {
+		return nil, fmt.Errorf("unable to set secure values on duplicate object %w", err)
+	}
 
 	if readFromUnifiedWriteToBothStorages {
-		objCopy, err := utils.MetaAccessor(createdCopy)
-		if err != nil {
-			return nil, err
-		}
 		// restore the permissions annotation, as we removed it before creating in legacy
 		if permissions != "" {
-			objCopy.SetAnnotation(utils.AnnoKeyGrantPermissions, permissions)
+			accCreated.SetAnnotation(utils.AnnoKeyGrantPermissions, permissions)
 		}
 
 		// Propagate annotations and labels to the object saved in
 		// unified storage, making sure the `deprecatedID` is saved
 		// as well as provisioning metadata, when present.
 		for name, val := range accIn.GetAnnotations() {
-			objCopy.SetAnnotation(name, val)
+			accCreated.SetAnnotation(name, val)
 		}
 
 		legacyAcc, err := meta.Accessor(createdFromLegacy)
 		if err != nil {
 			return nil, err
 		}
-		objCopy.SetLabels(legacyAcc.GetLabels())
+		accCreated.SetLabels(legacyAcc.GetLabels())
 	}
 
 	// If unified storage is the primary storage, let's just create it in the foreground and return it.
