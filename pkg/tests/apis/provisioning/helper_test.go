@@ -701,8 +701,8 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
-		// Allow all connection types for testing.
-		ProvisioningConnectionTypes: []string{"github", "gitlab", "bitbucket"},
+		// Allow all repos/connection types for testing.
+		ProvisioningRepositoryTypes: []string{"git", "local", "github", "gitlab", "bitbucket"},
 	}
 	for _, o := range options {
 		o(&opts)

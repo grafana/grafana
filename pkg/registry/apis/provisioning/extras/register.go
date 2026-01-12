@@ -67,8 +67,8 @@ func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repo
 }
 
 func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Extra) (connection.Factory, error) {
-	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(cfg.ProvisioningConnectionTypes))
-	for _, e := range cfg.ProvisioningConnectionTypes {
+	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(cfg.ProvisioningRepositoryTypes))
+	for _, e := range cfg.ProvisioningRepositoryTypes {
 		enabledTypes[apisprovisioning.ConnectionType(e)] = struct{}{}
 	}
 
