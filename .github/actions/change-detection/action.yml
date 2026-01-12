@@ -100,7 +100,7 @@ runs:
             - '.yarn/**'
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
-          frontend-packages:
+          frontend_packages:
             - '.github/actions/checkout/**'
             - '.github/actions/change-detection/**'
             - 'packages/**'
