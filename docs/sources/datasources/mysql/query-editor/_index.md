@@ -9,7 +9,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: MySQL query editor
+menuTitle: Query editor
 title: MySQL query editor
 weight: 30
 refs:
