@@ -28,7 +28,6 @@ export function DrilldownExtensionPoint(props: Props): ReactElement | null {
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
     context: context,
-    limitPerPlugin: 3,
   });
   const querylessLinks = useMemo(() => links.filter((link) => QUERYLESS_APPS.includes(link.pluginId)), [links]);
 

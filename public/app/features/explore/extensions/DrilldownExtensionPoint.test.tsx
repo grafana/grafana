@@ -135,7 +135,6 @@ describe('DrilldownExtensionPoint', () => {
         timeRange: { from: 'now-1h', to: 'now' },
         timeZone: 'browser',
       },
-      limitPerPlugin: 3,
     });
   });
 
