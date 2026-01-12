@@ -52,6 +52,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
+  mysql-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
   transformations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
@@ -72,13 +77,11 @@ The following documents will help you get started with the MySQL data source in 
 - [Configure the MySQL data source](ref:configure-mysql-data-source)
 - [MySQL query editor](ref:mysql-query-editor)
 - [MySQL template variables](ref:mysql-template-variables)
+- [MySQL annotations](ref:mysql-annotations)
 - [MySQL alerting](ref:mysql-alerting)
 - [Troubleshoot MySQL data source issues](ref:troubleshoot-mysql)
 
-Once you have configured the data source you can also:
-
-- Add [annotations](ref:annotate-visualizations)
-- Add [transformations](ref:transformations)
+Once you have configured the data source you can also add [transformations](ref:transformations) to your queries.
 
 View a MySQL overview on Grafana Play:
 

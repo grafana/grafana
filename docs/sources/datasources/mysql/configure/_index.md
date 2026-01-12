@@ -56,6 +56,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
+  mysql-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
   mysql-troubleshoot:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/
@@ -296,6 +301,6 @@ After configuring your MySQL data source, you can:
 
 - [Write queries](ref:mysql-query-editor) using the query editor to explore and visualize your data.
 - [Use template variables](ref:mysql-template-variables) to create dynamic, reusable dashboards.
-- [Add annotations](ref:annotate-visualizations) to overlay MySQL events on your graphs.
+- [Add annotations](ref:mysql-annotations) to overlay MySQL events on your graphs.
 - [Set up alerting](ref:mysql-alerting) to create alert rules based on your MySQL data.
 - [Troubleshoot issues](ref:mysql-troubleshoot) if you encounter problems with your data source.
