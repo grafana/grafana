@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
@@ -1484,7 +1485,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	require.NoError(t, err)
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginAssetsProvider),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginAssetsProvider, pluginscdn.ProvideService(cfg)),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &pluginfakes.FakeAuthService{}, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), pluginfakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)
@@ -1514,7 +1515,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 	}
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider()),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider(), pluginscdn.ProvideService(cfg)),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), pluginfakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)

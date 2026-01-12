@@ -79,8 +79,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 
 	var pluginsAssets = passets
 	if pluginsAssets == nil {
-		sig := signature.ProvideService(pluginsCfg, statickey.New())
-		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, sig, pluginStore)
+		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, pluginStore)
 	}
 
 	hs := &HTTPServer{
@@ -714,6 +713,6 @@ func newPluginAssets() func() *pluginassets.Service {
 
 func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *pluginassets.Service {
 	return func() *pluginassets.Service {
-		return pluginassets.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), signature.ProvideService(pCfg, statickey.New()), &pluginstore.FakePluginStore{})
+		return pluginassets.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), &pluginstore.FakePluginStore{})
 	}
 }

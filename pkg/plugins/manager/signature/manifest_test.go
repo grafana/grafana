@@ -164,7 +164,7 @@ func TestCalculate(t *testing.T) {
 		for _, tc := range tcs {
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
 			s := provideTestServiceWithConfig(&config.PluginManagementCfg{GrafanaAppURL: tc.appURL})
-			sig, err := s.Calculate(context.Background(), &pluginfakes.FakePluginSource{
+			sig, _, err := s.Calculate(context.Background(), &pluginfakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.ClassExternal
 				},
@@ -260,7 +260,7 @@ func TestCalculate(t *testing.T) {
 				require.NoError(t, err)
 				pfs, err = newPathSeparatorOverrideFS(string(tc.platform.separator), pfs)
 				require.NoError(t, err)
-				sig, err := s.Calculate(context.Background(), &pluginfakes.FakePluginSource{
+				sig, _, err := s.Calculate(context.Background(), &pluginfakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
 						return plugins.ClassExternal
 					},
@@ -396,7 +396,7 @@ func TestFSPathSeparatorFiles(t *testing.T) {
 	}
 }
 
-func fileList(manifest *PluginManifest) []string {
+func fileList(manifest *plugins.PluginManifest) []string {
 	keys := make([]string, 0, len(manifest.Files))
 	for k := range manifest.Files {
 		keys = append(keys, k)
@@ -682,52 +682,52 @@ func Test_urlMatch_private(t *testing.T) {
 func Test_validateManifest(t *testing.T) {
 	tcs := []struct {
 		name        string
-		manifest    *PluginManifest
+		manifest    *plugins.PluginManifest
 		expectedErr string
 	}{
 		{
 			name:        "Empty plugin field",
-			manifest:    createV2Manifest(t, func(m *PluginManifest) { m.Plugin = "" }),
+			manifest:    createV2Manifest(t, func(m *plugins.PluginManifest) { m.Plugin = "" }),
 			expectedErr: "valid manifest field plugin is required",
 		},
 		{
 			name:        "Empty keyId field",
-			manifest:    createV2Manifest(t, func(m *PluginManifest) { m.KeyID = "" }),
+			manifest:    createV2Manifest(t, func(m *plugins.PluginManifest) { m.KeyID = "" }),
 			expectedErr: "valid manifest field keyId is required",
 		},
 		{
 			name:        "Empty signedByOrg field",
-			manifest:    createV2Manifest(t, func(m *PluginManifest) { m.SignedByOrg = "" }),
+			manifest:    createV2Manifest(t, func(m *plugins.PluginManifest) { m.SignedByOrg = "" }),
 			expectedErr: "valid manifest field signedByOrg is required",
 		},
 		{
 			name:        "Empty signedByOrgName field",
-			manifest:    createV2Manifest(t, func(m *PluginManifest) { m.SignedByOrgName = "" }),
+			manifest:    createV2Manifest(t, func(m *plugins.PluginManifest) { m.SignedByOrgName = "" }),
 			expectedErr: "valid manifest field SignedByOrgName is required",
 		},
 		{
 			name:        "Empty signatureType field",
-			manifest:    createV2Manifest(t, func(m *PluginManifest) { m.SignatureType = "" }),
+			manifest:    createV2Manifest(t, func(m *plugins.PluginManifest) { m.SignatureType = "" }),
 			expectedErr: "valid manifest field signatureType is required",
 		},
 		{
 			name:        "Invalid signatureType field",
-			manifest:    createV2Manifest(t, func(m *PluginManifest) { m.SignatureType = "invalidSignatureType" }),
+			manifest:    createV2Manifest(t, func(m *plugins.PluginManifest) { m.SignatureType = "invalidSignatureType" }),
 			expectedErr: "valid manifest field signatureType is required",
 		},
 		{
 			name:        "Empty files field",
-			manifest:    createV2Manifest(t, func(m *PluginManifest) { m.Files = map[string]string{} }),
+			manifest:    createV2Manifest(t, func(m *plugins.PluginManifest) { m.Files = map[string]string{} }),
 			expectedErr: "valid manifest field files is required",
 		},
 		{
 			name:        "Empty time field",
-			manifest:    createV2Manifest(t, func(m *PluginManifest) { m.Time = 0 }),
+			manifest:    createV2Manifest(t, func(m *plugins.PluginManifest) { m.Time = 0 }),
 			expectedErr: "valid manifest field time is required",
 		},
 		{
 			name:        "Empty version field",
-			manifest:    createV2Manifest(t, func(m *PluginManifest) { m.Version = "" }),
+			manifest:    createV2Manifest(t, func(m *plugins.PluginManifest) { m.Version = "" }),
 			expectedErr: "valid manifest field version is required",
 		},
 	}
@@ -740,10 +740,10 @@ func Test_validateManifest(t *testing.T) {
 	}
 }
 
-func createV2Manifest(t *testing.T, cbs ...func(*PluginManifest)) *PluginManifest {
+func createV2Manifest(t *testing.T, cbs ...func(*plugins.PluginManifest)) *plugins.PluginManifest {
 	t.Helper()
 
-	m := &PluginManifest{
+	m := &plugins.PluginManifest{
 		Plugin:  "grafana-test-app",
 		Version: "2.5.3",
 		KeyID:   "7e4d0c6a708866e7",

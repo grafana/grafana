@@ -43,7 +43,7 @@ func (p *LocalProvider) GetMeta(ctx context.Context, pluginID, version string) (
 	}
 
 	loadingStrategy := p.pluginAssets.LoadingStrategy(ctx, plugin)
-	moduleHash := p.pluginAssets.ModuleHash(ctx, plugin)
+	moduleHash := plugin.ModuleHash
 
 	spec := pluginStorePluginToMeta(plugin, loadingStrategy, moduleHash)
 	return &Result{
