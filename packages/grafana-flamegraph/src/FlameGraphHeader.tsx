@@ -130,15 +130,9 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
+        {extraHeaderElements && <div className={styles.extraElements}>{extraHeaderElements}</div>}
         {selectedView === SelectedView.Both ? (
           <>
-            <RadioButtonGroup<ViewMode>
-              size="sm"
-              options={viewModeOptions}
-              value={viewMode}
-              onChange={setViewMode}
-              className={styles.buttonSpacing}
-            />
             {viewMode === ViewMode.Single && (
               <RadioButtonGroup<PaneView>
                 size="sm"
@@ -148,6 +142,12 @@ const FlameGraphHeader = ({
                 className={styles.buttonSpacing}
               />
             )}
+            <RadioButtonGroup<ViewMode>
+              size="sm"
+              options={viewModeOptions}
+              value={viewMode}
+              onChange={setViewMode}
+            />
           </>
         ) : (
           <RadioButtonGroup<SelectedView>
@@ -157,7 +157,6 @@ const FlameGraphHeader = ({
             onChange={setSelectedView}
           />
         )}
-        {extraHeaderElements && <div className={styles.extraElements}>{extraHeaderElements}</div>}
       </div>
     </div>
   );
