@@ -220,5 +220,11 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("Change key_path collation of resource_history in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_history ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 	mg.AddMigration("Change key_path collation of resource_events in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_events ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
+	mg.AddMigration("Add index to resource_history for garbage collection", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"group", "resource", "action", "resource_version", "name"},
+		Type: migrator.IndexType,
+		Name: "IDX_resource_history_resource_action_version_name",
+	}))
+
 	return marker
 }

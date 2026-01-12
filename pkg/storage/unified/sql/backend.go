@@ -242,6 +242,23 @@ func (b *backend) initPruner(ctx context.Context) error {
 	return nil
 }
 
+func (b *backend) initGarbageCollection(ctx context.Context) error {
+	// TODO
+
+	/*
+		# Garbage collect every minute?
+
+		gr = getGroupResources()
+		for each gr in grs:
+		  rows = garbageCollect(gr)
+		  log rows deleted
+		  sleep 1s
+
+	*/
+
+	return nil
+}
+
 func (b *backend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
 	// ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
 
