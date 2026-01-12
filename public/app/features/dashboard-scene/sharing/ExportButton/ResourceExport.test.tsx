@@ -57,19 +57,6 @@ const expandOptions = async () => {
 };
 
 describe('ResourceExport', () => {
-  describe('rendering', () => {
-    it('should render export options section', () => {
-      render(<ResourceExport {...createDefaultProps()} />);
-      expect(screen.getByRole('button')).toBeInTheDocument();
-    });
-
-    it('should render options content when expanded', async () => {
-      render(<ResourceExport {...createDefaultProps()} />);
-      await expandOptions();
-      expect(screen.getByTestId(selector.optionsRow)).toBeInTheDocument();
-    });
-  });
-
   describe('export mode options for v1 dashboard', () => {
     it('should show all three export mode options for v1 dashboard', async () => {
       render(<ResourceExport {...createDefaultProps()} />);
@@ -263,23 +250,6 @@ describe('ResourceExport', () => {
       );
 
       expect(screen.queryByTestId(selector.libraryPanelsAlert)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('QueryOperationRow behavior', () => {
-    it('should start collapsed (isOpen=false)', () => {
-      render(<ResourceExport {...createDefaultProps()} />);
-
-      // The options content should not be visible when collapsed
-      expect(screen.queryByTestId(selector.optionsRow)).not.toBeInTheDocument();
-    });
-
-    it('should expand when clicked', async () => {
-      render(<ResourceExport {...createDefaultProps()} />);
-      await expandOptions();
-
-      // The options content should be visible when expanded
-      expect(screen.getByTestId(selector.optionsRow)).toBeInTheDocument();
     });
   });
 });

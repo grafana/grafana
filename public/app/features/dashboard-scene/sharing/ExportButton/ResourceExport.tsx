@@ -49,10 +49,10 @@ export function ResourceExport({
 
   const switchExportLabel =
     exportMode === ExportMode.V2Resource
-      ? t('dashboard-scene.resource-export.share-dashboard-externally', 'Share dashboard with another instance')
-      : t('dashboard-scene.resource-export.share-externally-label', `Export for sharing externally`);
-  const switchExportModeLabel = t('dashboard-scene.resource-export.label.model', 'Model');
-  const switchExportFormatLabel = t('dashboard-scene.resource-export.label.format', 'Format');
+      ? t('export.json.export-remove-ds-refs', 'Share dashboard with another instance')
+      : t('share-modal.export.share-externally-label', `Export for sharing externally`);
+  const switchExportModeLabel = t('export.json.export-mode', 'Model');
+  const switchExportFormatLabel = t('export.json.export-format', 'Format');
 
   return (
     <Stack gap={1} direction="column">
@@ -62,7 +62,7 @@ export function ResourceExport({
         title={t('dashboard-scene.resource-export.label.options', 'Export options')}
         isOpen={false}
       >
-        <Box marginTop={2} data-testid={selector.optionsRow}>
+        <Box marginTop={2}>
           <Stack gap={1} direction="column">
             {initialSaveModelVersion === 'v1' && (
               <Stack gap={1} alignItems="center">
