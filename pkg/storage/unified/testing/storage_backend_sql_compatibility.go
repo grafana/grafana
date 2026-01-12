@@ -726,14 +726,11 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	// For KV backend, maxRV is in snowflake format but record.ResourceVersion is in microsecond format
 	// Use IsRvEqual for proper comparison between different RV formats
 	isKvBackend := strings.Contains(namespace, "-kv")
+	recordResourceVersion := record.ResourceVersion
 	if isKvBackend {
-		// For KV backend: resource_version table is managed internally and stores microsecond RV
-		// Our maxRV is in snowflake format from KV backend operations
-		// We can't meaningfully compare these different formats, so just do basic sanity checks
-		require.Greater(t, record.ResourceVersion, int64(0), "resource_version should be positive")
-		require.Less(t, record.ResourceVersion, int64(9223372036854775807), "resource_version should be reasonable")
-	} else {
-		require.GreaterOrEqual(t, record.ResourceVersion, maxRV, "resource_version should be at least the latest RV we tracked")
-		require.LessOrEqual(t, record.ResourceVersion, maxRV+100, "resource_version shouldn't be much higher than expected")
+		recordResourceVersion = rvmanager.SnowflakeFromRv(record.ResourceVersion)
 	}
+
+	require.Less(t, recordResourceVersion, int64(9223372036854775807), "resource_version should be reasonable")
+	require.Greater(t, recordResourceVersion, maxRV, "resource_version should be at least the latest RV we tracked")
 }
