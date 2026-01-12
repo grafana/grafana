@@ -1496,6 +1496,12 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotSharingOptions(ref common.Refere
 							Format: "",
 						},
 					},
+					"publicMode": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"snapshotEnabled"},
 			},
