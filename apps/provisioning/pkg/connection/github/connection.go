@@ -21,8 +21,8 @@ type GithubFactory interface {
 }
 
 type Connection struct {
-	obj      *provisioning.Connection
-	ghClient Client
+	obj       *provisioning.Connection
+	ghFactory GithubFactory
 }
 
 func NewConnection(
@@ -31,9 +31,8 @@ func NewConnection(
 	factory GithubFactory,
 ) Connection {
 	return Connection{
-		obj: obj,
-		// We initialize a client with no token, as that will be created at mutation time.
-		ghClient: factory.New(ctx, ""),
+		obj:       obj,
+		ghFactory: factory,
 	}
 }
 
@@ -152,7 +151,9 @@ func (c *Connection) Validate(ctx context.Context) error {
 
 // validateAppAndInstallation validates the appID and installationID against the given github token.
 func (c *Connection) validateAppAndInstallation(ctx context.Context) *field.Error {
-	app, err := c.ghClient.GetApp(ctx, string(c.obj.Secure.Token.Create))
+	ghClient := c.ghFactory.New(ctx, c.obj.Secure.Token.Create)
+
+	app, err := ghClient.GetApp(ctx)
 	if err != nil {
 		if errors.Is(err, ErrServiceUnavailable) {
 			return field.InternalError(field.NewPath("spec", "token"), ErrServiceUnavailable)
@@ -164,7 +165,7 @@ func (c *Connection) validateAppAndInstallation(ctx context.Context) *field.Erro
 		return field.Invalid(field.NewPath("spec", "appID"), c.obj.Spec.GitHub.AppID, "appID mismatch")
 	}
 
-	_, err = c.ghClient.GetAppInstallation(ctx, string(c.obj.Secure.Token.Create), c.obj.Spec.GitHub.InstallationID)
+	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
 		if errors.Is(err, ErrServiceUnavailable) {
 			return field.InternalError(field.NewPath("spec", "token"), ErrServiceUnavailable)

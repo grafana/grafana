@@ -41,8 +41,6 @@ func TestExtra_Build(t *testing.T) {
 		}
 
 		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
-		mockFactory.EXPECT().New(ctx, common.RawSecureValue("")).Return(mockClient)
 
 		e := github.Extra(mockFactory)
 
@@ -73,8 +71,6 @@ func TestExtra_Build(t *testing.T) {
 		}
 
 		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
-		mockFactory.EXPECT().New(ctx, common.RawSecureValue("")).Return(mockClient)
 
 		e := github.Extra(mockFactory)
 
@@ -97,9 +93,6 @@ func TestExtra_Build(t *testing.T) {
 		}
 
 		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
-		mockFactory.EXPECT().New(ctx, common.RawSecureValue("")).Return(mockClient)
-
 		e := github.Extra(mockFactory)
 		result, err := e.Build(ctx, conn)
 		require.NoError(t, err)
@@ -125,10 +118,6 @@ func TestExtra_Build(t *testing.T) {
 		}
 
 		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
-		// Verify that empty string is passed to New, not the token from connection
-		mockFactory.EXPECT().New(ctx, common.RawSecureValue("")).Return(mockClient)
-
 		e := github.Extra(mockFactory)
 		result, err := e.Build(ctx, conn)
 		require.NoError(t, err)

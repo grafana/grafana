@@ -21,9 +21,9 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
-// GetApp provides a mock function with given fields: ctx, token
-func (_m *MockClient) GetApp(ctx context.Context, token string) (App, error) {
-	ret := _m.Called(ctx, token)
+// GetApp provides a mock function with given fields: ctx
+func (_m *MockClient) GetApp(ctx context.Context) (App, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetApp")
@@ -31,17 +31,17 @@ func (_m *MockClient) GetApp(ctx context.Context, token string) (App, error) {
 
 	var r0 App
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (App, error)); ok {
-		return rf(ctx, token)
+	if rf, ok := ret.Get(0).(func(context.Context) (App, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) App); ok {
-		r0 = rf(ctx, token)
+	if rf, ok := ret.Get(0).(func(context.Context) App); ok {
+		r0 = rf(ctx)
 	} else {
 		r0 = ret.Get(0).(App)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, token)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,14 +56,13 @@ type MockClient_GetApp_Call struct {
 
 // GetApp is a helper method to define mock.On call
 //   - ctx context.Context
-//   - token string
-func (_e *MockClient_Expecter) GetApp(ctx interface{}, token interface{}) *MockClient_GetApp_Call {
-	return &MockClient_GetApp_Call{Call: _e.mock.On("GetApp", ctx, token)}
+func (_e *MockClient_Expecter) GetApp(ctx interface{}) *MockClient_GetApp_Call {
+	return &MockClient_GetApp_Call{Call: _e.mock.On("GetApp", ctx)}
 }
 
-func (_c *MockClient_GetApp_Call) Run(run func(ctx context.Context, token string)) *MockClient_GetApp_Call {
+func (_c *MockClient_GetApp_Call) Run(run func(ctx context.Context)) *MockClient_GetApp_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -73,14 +72,14 @@ func (_c *MockClient_GetApp_Call) Return(_a0 App, _a1 error) *MockClient_GetApp_
 	return _c
 }
 
-func (_c *MockClient_GetApp_Call) RunAndReturn(run func(context.Context, string) (App, error)) *MockClient_GetApp_Call {
+func (_c *MockClient_GetApp_Call) RunAndReturn(run func(context.Context) (App, error)) *MockClient_GetApp_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetAppInstallation provides a mock function with given fields: ctx, appToken, installationID
-func (_m *MockClient) GetAppInstallation(ctx context.Context, appToken string, installationID string) (AppInstallation, error) {
-	ret := _m.Called(ctx, appToken, installationID)
+// GetAppInstallation provides a mock function with given fields: ctx, installationID
+func (_m *MockClient) GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error) {
+	ret := _m.Called(ctx, installationID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAppInstallation")
@@ -88,17 +87,17 @@ func (_m *MockClient) GetAppInstallation(ctx context.Context, appToken string, i
 
 	var r0 AppInstallation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (AppInstallation, error)); ok {
-		return rf(ctx, appToken, installationID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (AppInstallation, error)); ok {
+		return rf(ctx, installationID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) AppInstallation); ok {
-		r0 = rf(ctx, appToken, installationID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) AppInstallation); ok {
+		r0 = rf(ctx, installationID)
 	} else {
 		r0 = ret.Get(0).(AppInstallation)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, appToken, installationID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, installationID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -113,15 +112,14 @@ type MockClient_GetAppInstallation_Call struct {
 
 // GetAppInstallation is a helper method to define mock.On call
 //   - ctx context.Context
-//   - appToken string
 //   - installationID string
-func (_e *MockClient_Expecter) GetAppInstallation(ctx interface{}, appToken interface{}, installationID interface{}) *MockClient_GetAppInstallation_Call {
-	return &MockClient_GetAppInstallation_Call{Call: _e.mock.On("GetAppInstallation", ctx, appToken, installationID)}
+func (_e *MockClient_Expecter) GetAppInstallation(ctx interface{}, installationID interface{}) *MockClient_GetAppInstallation_Call {
+	return &MockClient_GetAppInstallation_Call{Call: _e.mock.On("GetAppInstallation", ctx, installationID)}
 }
 
-func (_c *MockClient_GetAppInstallation_Call) Run(run func(ctx context.Context, appToken string, installationID string)) *MockClient_GetAppInstallation_Call {
+func (_c *MockClient_GetAppInstallation_Call) Run(run func(ctx context.Context, installationID string)) *MockClient_GetAppInstallation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -131,7 +129,7 @@ func (_c *MockClient_GetAppInstallation_Call) Return(_a0 AppInstallation, _a1 er
 	return _c
 }
 
-func (_c *MockClient_GetAppInstallation_Call) RunAndReturn(run func(context.Context, string, string) (AppInstallation, error)) *MockClient_GetAppInstallation_Call {
+func (_c *MockClient_GetAppInstallation_Call) RunAndReturn(run func(context.Context, string) (AppInstallation, error)) *MockClient_GetAppInstallation_Call {
 	_c.Call.Return(run)
 	return _c
 }

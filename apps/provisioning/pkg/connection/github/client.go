@@ -20,8 +20,8 @@ var (
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
 type Client interface {
 	// Apps and installations
-	GetApp(ctx context.Context, token string) (App, error)
-	GetAppInstallation(ctx context.Context, appToken string, installationID string) (AppInstallation, error)
+	GetApp(ctx context.Context) (App, error)
+	GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error)
 }
 
 // App represents a Github App.
@@ -51,8 +51,8 @@ func NewClient(client *github.Client) Client {
 }
 
 // GetApp gets the app by using the given token.
-func (r *githubClient) GetApp(ctx context.Context, token string) (App, error) {
-	app, _, err := r.gh.WithAuthToken(token).Apps.Get(ctx, "")
+func (r *githubClient) GetApp(ctx context.Context) (App, error) {
+	app, _, err := r.gh.Apps.Get(ctx, "")
 	if err != nil {
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
@@ -70,13 +70,13 @@ func (r *githubClient) GetApp(ctx context.Context, token string) (App, error) {
 }
 
 // GetAppInstallation gets the installation of the app related to the given token.
-func (r *githubClient) GetAppInstallation(ctx context.Context, appToken string, installationID string) (AppInstallation, error) {
+func (r *githubClient) GetAppInstallation(ctx context.Context,installationID string) (AppInstallation, error) {
 	id, err := strconv.Atoi(installationID)
 	if err != nil {
 		return AppInstallation{}, fmt.Errorf("invalid installation ID: %s", installationID)
 	}
 
-	installation, _, err := r.gh.WithAuthToken(appToken).Apps.GetInstallation(ctx, int64(id))
+	installation, _, err := r.gh.Apps.GetInstallation(ctx, int64(id))
 	if err != nil {
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {

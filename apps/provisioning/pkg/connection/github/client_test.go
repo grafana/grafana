@@ -127,7 +127,7 @@ func TestGithubClient_GetApp(t *testing.T) {
 			client := conngh.NewClient(ghClient)
 
 			// Call the method being tested
-			app, err := client.GetApp(context.Background(), tt.token)
+			app, err := client.GetApp(context.Background())
 
 			// Check the error
 			if tt.wantErr != nil {
@@ -278,7 +278,7 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			client := conngh.NewClient(ghClient)
 
 			// Call the method being tested
-			installation, err := client.GetAppInstallation(context.Background(), tt.appToken, tt.installationID)
+			installation, err := client.GetAppInstallation(context.Background(), tt.installationID)
 
 			// Check the error
 			if tt.wantErr {

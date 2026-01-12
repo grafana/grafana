@@ -61,9 +61,6 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		client := NewMockClient(t)
-		mockFactory.EXPECT().New(context.Background(), common.RawSecureValue("")).Return(client)
-
 		conn := NewConnection(context.Background(), c, mockFactory)
 
 		require.NoError(t, conn.Mutate(context.Background()))
@@ -90,8 +87,6 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		client := NewMockClient(t)
-		mockFactory.EXPECT().New(context.Background(), common.RawSecureValue("")).Return(client)
 		conn := NewConnection(context.Background(), c, mockFactory)
 
 		require.NoError(t, conn.Mutate(context.Background()))
@@ -111,8 +106,6 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		client := NewMockClient(t)
-		mockFactory.EXPECT().New(context.Background(), common.RawSecureValue("")).Return(client)
 		conn := NewConnection(context.Background(), c, mockFactory)
 
 		require.NoError(t, conn.Mutate(context.Background()))
@@ -136,8 +129,6 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		client := NewMockClient(t)
-		mockFactory.EXPECT().New(context.Background(), common.RawSecureValue("")).Return(client)
 		conn := NewConnection(context.Background(), c, mockFactory)
 
 		err := conn.Mutate(context.Background())
@@ -164,8 +155,6 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		client := NewMockClient(t)
-		mockFactory.EXPECT().New(context.Background(), common.RawSecureValue("")).Return(client)
 		conn := NewConnection(context.Background(), c, mockFactory)
 
 		err := conn.Mutate(context.Background())
@@ -192,11 +181,6 @@ func TestConnection_Validate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			setupMock: func(mockFactory *MockGithubFactory) {
-				mockClient := NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
-			},
 			errMsgContains: []string{"spec.type"},
 		},
 		{
@@ -208,11 +192,6 @@ func TestConnection_Validate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			setupMock: func(mockFactory *MockGithubFactory) {
-				mockClient := NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
-			},
 			errMsgContains: []string{"spec.github"},
 		},
 		{
@@ -226,11 +205,6 @@ func TestConnection_Validate(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
-			},
-			setupMock: func(mockFactory *MockGithubFactory) {
-				mockClient := NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
 			},
 			wantErr:        true,
 			errMsgContains: []string{"secure.privateKey"},
@@ -252,11 +226,6 @@ func TestConnection_Validate(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(mockFactory *MockGithubFactory) {
-				mockClient := NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
-			},
 			wantErr:        true,
 			errMsgContains: []string{"secure.token"},
 		},
@@ -276,11 +245,6 @@ func TestConnection_Validate(t *testing.T) {
 						Create: common.NewSecretValue("test-client-secret"),
 					},
 				},
-			},
-			setupMock: func(mockFactory *MockGithubFactory) {
-				mockClient := NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
 			},
 			wantErr:        true,
 			errMsgContains: []string{"secure.clientSecret"},
@@ -304,11 +268,6 @@ func TestConnection_Validate(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(mockFactory *MockGithubFactory) {
-				mockClient := NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
-			},
 			wantErr:        true,
 			errMsgContains: []string{"spec.github.appID"},
 		},
@@ -330,11 +289,6 @@ func TestConnection_Validate(t *testing.T) {
 						Name: "test-token",
 					},
 				},
-			},
-			setupMock: func(mockFactory *MockGithubFactory) {
-				mockClient := NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
 			},
 			wantErr:        true,
 			errMsgContains: []string{"spec.github.installationID"},
@@ -363,9 +317,9 @@ func TestConnection_Validate(t *testing.T) {
 			setupMock: func(mockFactory *MockGithubFactory) {
 				mockClient := NewMockClient(t)
 
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything, "test-token").Return(App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "test-token", "456").Return(AppInstallation{ID: 456}, nil)
+				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(AppInstallation{ID: 456}, nil)
 			},
 		},
 		{
@@ -393,8 +347,8 @@ func TestConnection_Validate(t *testing.T) {
 			setupMock: func(mockFactory *MockGithubFactory) {
 				mockClient := NewMockClient(t)
 
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything, "test-token").Return(App{}, assert.AnError)
+				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(App{}, assert.AnError)
 			},
 		},
 		{
@@ -422,8 +376,8 @@ func TestConnection_Validate(t *testing.T) {
 			setupMock: func(mockFactory *MockGithubFactory) {
 				mockClient := NewMockClient(t)
 
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything, "test-token").Return(App{ID: 444, Slug: "test-app"}, nil)
+				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(App{ID: 444, Slug: "test-app"}, nil)
 			},
 		},
 		{
@@ -451,9 +405,9 @@ func TestConnection_Validate(t *testing.T) {
 			setupMock: func(mockFactory *MockGithubFactory) {
 				mockClient := NewMockClient(t)
 
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("")).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything, "test-token").Return(App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "test-token", "456").Return(AppInstallation{}, assert.AnError)
+				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(AppInstallation{}, assert.AnError)
 			},
 		},
 	}
