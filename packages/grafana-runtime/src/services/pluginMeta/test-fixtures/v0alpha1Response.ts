@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
-import type { Meta } from '../../../../../../apps/plugins/plugin/src/generated/meta/v0alpha1/meta_object_gen';
 import type { PluginMetasResponse } from '../types';
+import type { Meta } from '../types/meta_object_gen';
 
 export const v0alpha1Meta: Meta = cloneDeep({
   kind: 'Meta',

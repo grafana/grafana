@@ -7,8 +7,8 @@ import {
   type PluginType,
 } from '@grafana/data';
 
-import type { Spec as v0alpha1Spec } from '../../../../../../apps/plugins/plugin/src/generated/meta/v0alpha1/types.spec.gen';
 import type { AppPluginMetas, AppPluginMetasMapper, PluginMetasResponse } from '../types';
+import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
 
 function angularyMapper(spec: v0alpha1Spec): AngularMeta {
   const detected = spec.angular?.detected ?? false;

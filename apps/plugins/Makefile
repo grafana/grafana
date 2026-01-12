@@ -9,8 +9,8 @@ internal-generate: install-app-sdk update-app-sdk
 		--defencoding=none
 
 .PHONY: generate
-generate: internal-generate # makes all files declaration files so they don't mess with the exported types in @grafana/runtime
-	rm -f ./plugin/src/generated/meta/v0alpha1/*.d.ts
-	rm -f ./plugin/src/generated/plugin/v0alpha1/*.d.ts
-	for f in ./plugin/src/generated/meta/v0alpha1/*.ts; do mv "$$f" "$${f%.ts}.d.ts"; done
-	for f in ./plugin/src/generated/plugin/v0alpha1/*.ts; do mv "$$f" "$${f%.ts}.d.ts"; done
+generate: internal-generate # copy files to packages/grafana-runtime/src/services/pluginMeta/types
+	rm -f ./packages/grafana-runtime/src/services/pluginMeta/types/*.ts 
+	cp plugin/src/generated/meta/v0alpha1/meta_object_gen.ts ../../packages/grafana-runtime/src/services/pluginMeta/types/meta_object_gen.ts
+	cp plugin/src/generated/meta/v0alpha1/types.spec.gen.ts ../../packages/grafana-runtime/src/services/pluginMeta/types/types.spec.gen.ts
+	cp plugin/src/generated/meta/v0alpha1/types.status.gen.ts ../../packages/grafana-runtime/src/services/pluginMeta/types/types.status.gen.ts
