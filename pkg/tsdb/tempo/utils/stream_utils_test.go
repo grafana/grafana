@@ -37,8 +37,8 @@ func TestSetHeadersFromIncomingContext_MergesTeamAndClientHeaders(t *testing.T) 
 		"teamHttpHeaders": {
 			"headers": {
 				"101": [
-					{"header": "X-Team", "value": "team-value"},
-					{"header": "X-Shared", "value": "team-wins"}
+					{"header": "X-Prom-Label-Policy", "value": "1:team-value"},
+					{"header": "X-Prom-Label-Policy", "value": "2:team-wins"}
 				]
 			}
 		},
@@ -61,9 +61,9 @@ func TestSetHeadersFromIncomingContext_MergesTeamAndClientHeaders(t *testing.T) 
 	require.NoError(t, err)
 
 	expected := map[string]string{
-		"X-Client": "client-value",
-		"X-Team":   "team-value",
-		"X-Shared": "team-wins",
+		"X-Client":            "client-value",
+		"X-Prom-Label-Policy": "1:team-value,2:team-wins",
+		"X-Shared":            "client-overridden",
 	}
 	assert.Equal(t, expected, headers)
 }
@@ -78,6 +78,48 @@ func TestGetTeamHTTPHeaders_NoTeamHeaders(t *testing.T) {
 	headers, err := getTeamHTTPHeaders(pluginCtx)
 	require.NoError(t, err)
 	assert.Empty(t, headers)
+}
+
+func TestGetTeamHTTPHeaders_LabelPolicyValue(t *testing.T) {
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			JSONData: []byte(`{
+				"teamHttpHeaders": {
+					"headers": {
+						"101": [
+							{"header": "X-Prom-Label-Policy", "value": "1:team-value"},
+							{"header": "X-Prom-Label-Policy", "value": "2:team-wins"}
+						]
+					}
+				}
+			}`),
+		},
+	}
+
+	headers, err := getTeamHTTPHeaders(pluginCtx)
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		"X-Prom-Label-Policy": "1:team-value,2:team-wins",
+	}, headers)
+}
+
+func TestGetLabelPolicyKeyValue_AppendsValues(t *testing.T) {
+	headerWithRules := map[string]interface{}{
+		"101": []interface{}{
+			map[string]interface{}{
+				"header": "X-Prom-Label-Policy",
+				"value":  "1:alpha",
+			},
+			map[string]interface{}{
+				"header": "X-Prom-Label-Policy",
+				"value":  "2:beta",
+			},
+		},
+	}
+
+	key, value := getLabelPolicyKeyValue(headerWithRules)
+	assert.Equal(t, "X-Prom-Label-Policy", key)
+	assert.Equal(t, "1:alpha,2:beta", value)
 }
 
 func TestGetClientOptionsHeaders_ParsesHeaders(t *testing.T) {
