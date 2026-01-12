@@ -7,12 +7,13 @@ import {
   useCreateContactPoint,
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import {
-  isProvisionedContactPoint,
-  showManageContactPointPermissions,
-} from 'app/features/alerting/unified/components/contact-points/utils';
+import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { canEditEntity, canModifyProtectedEntity } from 'app/features/alerting/unified/utils/k8s/utils';
+import {
+  canEditEntity,
+  canModifyProtectedEntity,
+  isProvisionedResource,
+} from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
@@ -128,7 +129,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
   const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
   const hasScopedEditProtectedPermissions = contactPoint ? canModifyProtectedEntity(contactPoint) : true;
-  const isProvisioned = isProvisionedContactPoint(contactPoint?.provenance);
+  const isProvisioned = isProvisionedResource(contactPoint?.provenance);
   const isEditable = !readOnly && hasScopedEditPermissions && !isProvisioned;
   const isTestable = !readOnly;
   const canEditProtectedFields = editMode ? hasScopedEditProtectedPermissions : true;

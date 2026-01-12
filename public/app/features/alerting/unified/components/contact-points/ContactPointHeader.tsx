@@ -13,6 +13,7 @@ import {
   canDeleteEntity,
   canEditEntity,
   getAnnotation,
+  isProvisionedResource,
   shouldUseK8sApi,
 } from 'app/features/alerting/unified/utils/k8s/utils';
 
@@ -23,7 +24,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { UnusedContactPointBadge } from './components/UnusedBadge';
-import { ContactPointWithMetadata, isProvisionedContactPoint, showManageContactPointPermissions } from './utils';
+import { ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
 
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
@@ -38,7 +39,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 
   const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
 
-  const isProvisioned = isProvisionedContactPoint(provenance);
+  const isProvisioned = isProvisionedResource(provenance);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);

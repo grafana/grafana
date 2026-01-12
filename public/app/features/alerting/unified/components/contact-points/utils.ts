@@ -15,8 +15,6 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
-import { KnownProvenance } from '../../types/knownProvenance';
-import { PROVENANCE_NONE } from '../../utils/k8s/constants';
 import { extractReceivers } from '../../utils/receivers';
 import { routeAdapter } from '../../utils/routeAdapter';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
@@ -234,12 +232,3 @@ function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedR
 
 export const showManageContactPointPermissions = (alertmanager: string, contactPoint: GrafanaManagedContactPoint) =>
   shouldUseK8sApi(alertmanager) && canAdminEntity(contactPoint);
-
-export function isProvisionedContactPoint(provenance?: string): boolean {
-  return (
-    provenance !== undefined &&
-    provenance !== null &&
-    provenance !== PROVENANCE_NONE &&
-    provenance !== KnownProvenance.None
-  );
-}

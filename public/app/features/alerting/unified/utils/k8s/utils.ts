@@ -2,6 +2,8 @@ import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 
+import { KnownProvenance } from '../../types/knownProvenance';
+
 /**
  * Should we call the kubernetes-style API for managing alertmanager entities?
  *
@@ -59,3 +61,12 @@ export const stringifyFieldSelector = (fieldSelectors: FieldSelector[]): string 
     .map(([key, value, operator = '=']) => `${key}${operator}${encodeFieldSelector(value)}`)
     .join(',');
 };
+
+export function isProvisionedResource(provenance?: string): boolean {
+  return (
+    provenance !== undefined &&
+    provenance !== null &&
+    provenance !== PROVENANCE_NONE &&
+    provenance !== KnownProvenance.None
+  );
+}
