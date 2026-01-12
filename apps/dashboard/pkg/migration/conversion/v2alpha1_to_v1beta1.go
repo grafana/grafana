@@ -467,6 +467,11 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 		rowPanel["title"] = *tab.Spec.Title
 	}
 
+	if tab.Spec.Repeat != nil && tab.Spec.Repeat.Value != "" {
+		// We only use value here as V1 doesn't support mode
+		rowPanel["repeat"] = tab.Spec.Repeat.Value
+	}
+
 	rowPanel["gridPos"] = map[string]interface{}{
 		"x": 0,
 		"y": currentY,

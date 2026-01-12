@@ -586,6 +586,7 @@
         },
         "id": -1,
         "panels": [],
+        "repeat": "custom_var_tab",
         "title": "Repeated Tab by \"$custom_var_tab\"",
         "type": "row"
       },
