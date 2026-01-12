@@ -755,7 +755,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return merge(
       ...targets.map((target) =>
         doTempoSearchStreaming(
-          { ...target, query: this.applyVariables(target, options.scopedVars).query },
+          { ...target, query: query },
           this, // the datasource
           options,
           this.instanceSettings
@@ -801,7 +801,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return merge(
       ...targets.map((target) =>
         doTempoMetricsStreaming(
-          { ...target, query: this.applyVariables(target, options.scopedVars).query },
+          { ...target, query: query },
           this, // the datasource
           options
         )
