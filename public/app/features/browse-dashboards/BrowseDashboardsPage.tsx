@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
+import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
@@ -72,6 +73,29 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       reportInteraction('grafana_empty_state_shown', { source: 'browse_dashboards' });
     }
   }, [isSearching, searchState.result, stateManager]);
+
+  // Emit exposure event for A/A test once when page loads
+  const hasEmittedExposureEvent = useRef(false);
+
+  useEffect(() => {
+    // Only emit on root page (where recently viewed would be shown)
+    if (folderUID || hasEmittedExposureEvent.current) {
+      return;
+    }
+
+    const isRecentlyViewedEnabled = evaluateBooleanFlag('recentlyViewedDashboards', false);
+    if (!isRecentlyViewedEnabled) {
+      return;
+    }
+
+    hasEmittedExposureEvent.current = true;
+    const isExperimentTreatment = evaluateBooleanFlag('experimentRecentlyViewedDashboards', false);
+
+    reportInteraction('dashboards_browse_list_viewed', {
+      experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
+      has_recently_viewed_component: isExperimentTreatment,
+    });
+  }, [folderUID]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useUpdateFolder();
