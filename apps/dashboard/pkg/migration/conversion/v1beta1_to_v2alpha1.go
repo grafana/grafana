@@ -229,6 +229,36 @@ func getBoolField(m map[string]interface{}, key string, defaultValue bool) bool 
 	return defaultValue
 }
 
+// stripBOM removes Byte Order Mark (BOM) characters from a string.
+// BOMs (U+FEFF) can be introduced through copy/paste from certain editors
+// and cause CUE validation errors ("illegal byte order mark").
+func stripBOM(s string) string {
+	return strings.ReplaceAll(s, "\ufeff", "")
+}
+
+// stripBOMFromInterface recursively strips BOM characters from all strings
+// in an interface{} value (map, slice, or string).
+func stripBOMFromInterface(v interface{}) interface{} {
+	switch val := v.(type) {
+	case string:
+		return stripBOM(val)
+	case map[string]interface{}:
+		result := make(map[string]interface{}, len(val))
+		for k, v := range val {
+			result[k] = stripBOMFromInterface(v)
+		}
+		return result
+	case []interface{}:
+		result := make([]interface{}, len(val))
+		for i, item := range val {
+			result[i] = stripBOMFromInterface(item)
+		}
+		return result
+	default:
+		return v
+	}
+}
+
 func getUnionField[T ~string](m map[string]interface{}, key string) *T {
 	if val, ok := m[key]; ok {
 		if str, ok := val.(string); ok && str != "" {
@@ -393,7 +423,8 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 				// Optional field - only set if present
 				if url, exists := linkMap["url"]; exists {
 					if urlStr, ok := url.(string); ok {
-						dashLink.Url = &urlStr
+						cleanUrl := stripBOM(urlStr)
+						dashLink.Url = &cleanUrl
 					}
 				}
 
@@ -1305,6 +1336,17 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 		customVar.Spec.AllValue = &allValue
 	}
 
+	if valuesFormat := schemaversion.GetStringValue(varMap, "valuesFormat"); valuesFormat != "" {
+		switch valuesFormat {
+		case string(dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson):
+			format := dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson
+			customVar.Spec.ValuesFormat = &format
+		case string(dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv):
+			format := dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv
+			customVar.Spec.ValuesFormat = &format
+		}
+	}
+
 	return dashv2alpha1.DashboardVariableKind{
 		CustomVariableKind: customVar,
 	}, nil
@@ -1734,7 +1776,9 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
 			Current:     buildVariableCurrent(varMap["current"]),
-			Multi:       getBoolField(varMap, "multi", false),
+			// We set it to true by default because GroupByVariable
+			// constructor defaults to multi: true
+			Multi: getBoolField(varMap, "multi", true),
 		},
 	}
 
@@ -2015,6 +2059,12 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 					Uid:  &dsUID,
 				}
 			}
+		} else if dsStr, ok := ds.(string); ok && isTemplateVariable(dsStr) {
+			// Handle legacy panel datasource as string (template variable reference e.g., "$datasource")
+			// Only process template variables - other string values are not supported in V2 format
+			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
+				Uid: &dsStr,
+			}
 		}
 	}
 
@@ -2101,6 +2151,10 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 			// Resolve Grafana datasource UID when type is "datasource" and UID is empty
 			queryDatasourceUID = resolveGrafanaDatasourceUID(queryDatasourceType, queryDatasourceUID)
 		}
+	} else if dsStr, ok := targetMap["datasource"].(string); ok && isTemplateVariable(dsStr) {
+		// Handle legacy target datasource as string (template variable reference e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		queryDatasourceUID = dsStr
 	}
 
 	// Use panel datasource if target datasource is missing or empty
@@ -2237,7 +2291,7 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 		if linkMap, ok := link.(map[string]interface{}); ok {
 			dataLink := dashv2alpha1.DashboardDataLink{
 				Title: schemaversion.GetStringValue(linkMap, "title"),
-				Url:   schemaversion.GetStringValue(linkMap, "url"),
+				Url:   stripBOM(schemaversion.GetStringValue(linkMap, "url")),
 			}
 			if _, exists := linkMap["targetBlank"]; exists {
 				targetBlank := getBoolField(linkMap, "targetBlank", false)
@@ -2327,6 +2381,12 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 			"autoMigrateFrom": autoMigrateFrom,
 			"originalOptions": originalOptions,
 		}
+	}
+
+	// Strip BOMs from options (may contain dataLinks with URLs that have BOMs)
+	cleanedOptions := stripBOMFromInterface(options)
+	if cleanedMap, ok := cleanedOptions.(map[string]interface{}); ok {
+		options = cleanedMap
 	}
 
 	// Build field config by mapping each field individually
@@ -2472,9 +2532,14 @@ func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.Da
 		hasDefaults = true
 	}
 
-	// Extract array field
+	// Extract array field - strip BOMs from link URLs
 	if linksArray, ok := extractArrayField(defaults, "links"); ok {
-		fieldConfigDefaults.Links = linksArray
+		cleanedLinks := stripBOMFromInterface(linksArray)
+		if cleanedArray, ok := cleanedLinks.([]interface{}); ok {
+			fieldConfigDefaults.Links = cleanedArray
+		} else {
+			fieldConfigDefaults.Links = linksArray
+		}
 		hasDefaults = true
 	}
 
@@ -2760,9 +2825,11 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 				fieldOverride.Properties = make([]dashv2alpha1.DashboardDynamicConfigValue, 0, len(propertiesArray))
 				for _, property := range propertiesArray {
 					if propertyMap, ok := property.(map[string]interface{}); ok {
+						// Strip BOMs from property values (may contain links with URLs)
+						cleanedValue := stripBOMFromInterface(propertyMap["value"])
 						fieldOverride.Properties = append(fieldOverride.Properties, dashv2alpha1.DashboardDynamicConfigValue{
 							Id:    schemaversion.GetStringValue(propertyMap, "id"),
-							Value: propertyMap["value"],
+							Value: cleanedValue,
 						})
 					}
 				}

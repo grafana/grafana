@@ -12,6 +12,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	gocache "github.com/patrickmn/go-cache"
 )
 
@@ -49,6 +52,9 @@ type DataKey struct {
 	ResourceVersion int64
 	Action          DataAction
 	Folder          string
+
+	// needed to maintain backwards compatibility with unified/sql
+	GUID string
 }
 
 // GroupResource represents a unique group/resource combination
@@ -59,6 +65,12 @@ type GroupResource struct {
 
 func (k DataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
+}
+
+// Temporary while we need to support unified/sql/backend compatibility
+// Remove once we stop using RvManager in storage_backend.go
+func (k DataKey) StringWithGUID() string {
+	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder, k.GUID)
 }
 
 func (k DataKey) Equals(other DataKey) bool {
@@ -297,10 +309,6 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 		return DataKey{}, fmt.Errorf("invalid get request key: %w", err)
 	}
 
-	if rv == 0 {
-		rv = math.MaxInt64
-	}
-
 	listKey := ListRequestKey(key)
 
 	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv})
@@ -516,7 +524,13 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 		return fmt.Errorf("invalid data key: %w", err)
 	}
 
-	writer, err := d.kv.Save(ctx, dataSection, key.String())
+	var writer io.WriteCloser
+	var err error
+	if key.GUID != "" {
+		writer, err = d.kv.Save(ctx, dataSection, key.StringWithGUID())
+	} else {
+		writer, err = d.kv.Save(ctx, dataSection, key.String())
+	}
 	if err != nil {
 		return err
 	}
@@ -580,6 +594,33 @@ func ParseKey(key string) (DataKey, error) {
 		ResourceVersion: rv,
 		Action:          DataAction(rvActionFolderParts[1]),
 		Folder:          rvActionFolderParts[2],
+	}, nil
+}
+
+// Temporary while we need to support unified/sql/backend compatibility.
+// Remove once we stop using RvManager in storage_backend.go
+func ParseKeyWithGUID(key string) (DataKey, error) {
+	parts := strings.Split(key, "/")
+	if len(parts) != 5 {
+		return DataKey{}, fmt.Errorf("invalid key: %s", key)
+	}
+	rvActionFolderGUIDParts := strings.Split(parts[4], "~")
+	if len(rvActionFolderGUIDParts) != 4 {
+		return DataKey{}, fmt.Errorf("invalid key: %s", key)
+	}
+	rv, err := strconv.ParseInt(rvActionFolderGUIDParts[0], 10, 64)
+	if err != nil {
+		return DataKey{}, fmt.Errorf("invalid resource version '%s' in key %s: %w", rvActionFolderGUIDParts[0], key, err)
+	}
+	return DataKey{
+		Group:           parts[0],
+		Resource:        parts[1],
+		Namespace:       parts[2],
+		Name:            parts[3],
+		ResourceVersion: rv,
+		Action:          DataAction(rvActionFolderGUIDParts[1]),
+		Folder:          rvActionFolderGUIDParts[2],
+		GUID:            rvActionFolderGUIDParts[3],
 	}, nil
 }
 
@@ -772,4 +813,128 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 	d.cache.Set(groupResourcesCacheKey, results, gocache.DefaultExpiration)
 
 	return results, nil
+}
+
+// TODO: remove when backwards compatibility is no longer needed.
+var (
+	sqlKVUpdateLegacyResourceHistory = mustTemplate("sqlkv_update_legacy_resource_history.sql")
+	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
+	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
+)
+
+// TODO: remove when backwards compatibility is no longer needed.
+type sqlKVLegacySaveRequest struct {
+	sqltemplate.SQLTemplate
+	GUID       string
+	Group      string
+	Resource   string
+	Namespace  string
+	Name       string
+	Action     int64
+	Folder     string
+	PreviousRV int64
+}
+
+func (req sqlKVLegacySaveRequest) Validate() error {
+	return nil
+}
+
+// TODO: remove when backwards compatibility is no longer needed.
+type sqlKVLegacyUpdateHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	GUID       string
+	PreviousRV int64
+	Generation int64
+}
+
+func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
+	return nil
+}
+
+// applyBackwardsCompatibleChanges updates the `resource` and `resource_history` tables
+// to make sure the sqlkv implementation is backwards-compatible with the existing sql backend.
+// Specifically, it will update the `resource_history` table to include the previous resource version
+// and generation, which come from the `WriteEvent`, and also make the corresponding change on the
+// `resource` table, no longer used in the storage backend.
+//
+// TODO: remove when backwards compatibility is no longer needed.
+func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.Tx, event WriteEvent, key DataKey) error {
+	kv, isSQLKV := d.kv.(*sqlKV)
+	if !isSQLKV {
+		return nil
+	}
+
+	generation := event.Object.GetGeneration()
+	if key.Action == DataActionDeleted {
+		generation = 0
+	}
+	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistory, sqlKVLegacyUpdateHistoryRequest{
+		SQLTemplate: sqltemplate.New(kv.dialect),
+		GUID:        key.GUID,
+		PreviousRV:  event.PreviousRV,
+		Generation:  generation,
+	})
+
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
+	}
+
+	var action int64
+	switch key.Action {
+	case DataActionCreated:
+		action = 1
+	case DataActionUpdated:
+		action = 2
+	case DataActionDeleted:
+		action = 3
+	}
+
+	switch key.Action {
+	case DataActionCreated:
+		_, err := dbutil.Exec(ctx, tx, sqlKVInsertLegacyResource, sqlKVLegacySaveRequest{
+			SQLTemplate: sqltemplate.New(kv.dialect),
+			GUID:        key.GUID,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+			Action:      action,
+			Folder:      key.Folder,
+			PreviousRV:  event.PreviousRV,
+		})
+
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
+		}
+	case DataActionUpdated:
+		_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
+			SQLTemplate: sqltemplate.New(kv.dialect),
+			GUID:        key.GUID,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+			Action:      action,
+			Folder:      key.Folder,
+			PreviousRV:  event.PreviousRV,
+		})
+
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
+		}
+	case DataActionDeleted:
+		_, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
+			SQLTemplate: sqltemplate.New(kv.dialect),
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+		})
+
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
+		}
+	}
+
+	return nil
 }

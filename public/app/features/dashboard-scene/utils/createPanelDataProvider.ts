@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { DataQuery, DataSourceRef } from '@grafana/schema/dist/esm/index';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
@@ -18,7 +19,8 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
   let dataProvider: SceneDataProvider | undefined = undefined;
 
   dataProvider = new SceneQueryRunner({
-    datasource: panel.datasource ?? undefined,
+    // If panel.datasource is not defined, we use the first datasource from the targets (queries)
+    datasource: panel.datasource ?? findFirstDatasource(panel.targets),
     queries: panel.targets,
     maxDataPoints: panel.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
@@ -36,4 +38,18 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
     $data: dataProvider,
     transformations: panel.transformations || [],
   });
+}
+
+function findFirstDatasource(targets: DataQuery[]): DataSourceRef | undefined {
+  const datasource = targets.find((t) => Boolean(t.datasource))?.datasource;
+  if (!datasource) {
+    return undefined;
+  }
+
+  const dsRef: DataSourceRef = {
+    ...(datasource?.type && { type: datasource?.type }),
+    ...(datasource?.uid && { uid: datasource?.uid }),
+  };
+
+  return dsRef;
 }

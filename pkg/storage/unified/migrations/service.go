@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/migrations")
@@ -54,6 +53,7 @@ func (p *UnifiedStorageMigrationServiceImpl) Run(ctx context.Context) error {
 		logger.Info("Data migrations are disabled, skipping")
 		return nil
 	}
+
 	logger.Info("Running migrations for unified storage")
 	metrics.MUnifiedStorageMigrationStatus.Set(3)
 	return RegisterMigrations(ctx, p.migrator, p.cfg, p.sqlStore, p.client)
@@ -79,7 +79,7 @@ func RegisterMigrations(
 		return err
 	}
 
-	if err := registerMigrations(cfg, mg, migrator, client); err != nil {
+	if err := registerMigrations(ctx, cfg, mg, migrator, client, sqlStore); err != nil {
 		return err
 	}
 
@@ -92,65 +92,13 @@ func RegisterMigrations(
 		db.SetMaxOpenConns(3)
 		defer db.SetMaxOpenConns(maxOpenConns)
 	}
-	if err := mg.RunMigrations(ctx,
+	err := mg.RunMigrations(ctx,
 		sec.Key("migration_locking").MustBool(true),
-		sec.Key("locking_attempt_timeout_sec").MustInt()); err != nil {
+		sec.Key("locking_attempt_timeout_sec").MustInt())
+	if err != nil {
 		return fmt.Errorf("unified storage data migration failed: %w", err)
 	}
 
 	logger.Info("Unified storage migrations completed successfully")
 	return nil
-}
-
-func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
-	foldersDef := getResourceDefinition("folder.grafana.app", "folders")
-	dashboardsDef := getResourceDefinition("dashboard.grafana.app", "dashboards")
-	driverName := mg.Dialect.DriverName()
-
-	folderCountValidator := NewCountValidator(
-		client,
-		foldersDef.GroupResource,
-		"dashboard",
-		"org_id = ? and is_folder = true",
-		driverName,
-	)
-
-	dashboardCountValidator := NewCountValidator(
-		client,
-		dashboardsDef.GroupResource,
-		"dashboard",
-		"org_id = ? and is_folder = false",
-		driverName,
-	)
-
-	folderTreeValidator := NewFolderTreeValidator(client, foldersDef.GroupResource, driverName)
-
-	dashboardsAndFolders := NewResourceMigration(
-		migrator,
-		[]schema.GroupResource{foldersDef.GroupResource, dashboardsDef.GroupResource},
-		"folders-dashboards",
-		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
-	)
-	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
-}
-
-func registerPlaylistMigration(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient) {
-	playlistsDef := getResourceDefinition("playlist.grafana.app", "playlists")
-	driverName := mg.Dialect.DriverName()
-
-	playlistCountValidator := NewCountValidator(
-		client,
-		playlistsDef.GroupResource,
-		"playlist",
-		"org_id = ?",
-		driverName,
-	)
-
-	playlistsMigration := NewResourceMigration(
-		migrator,
-		[]schema.GroupResource{playlistsDef.GroupResource},
-		"playlists",
-		[]Validator{playlistCountValidator},
-	)
-	mg.AddMigration("playlists migration", playlistsMigration)
 }

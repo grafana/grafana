@@ -5,6 +5,7 @@ import (
 	"time"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
@@ -253,12 +254,14 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			if include.Role != "" {
 				var role pluginsv0alpha1.MetaIncludeRole
 				switch include.Role {
-				case "Admin":
+				case identity.RoleAdmin:
 					role = pluginsv0alpha1.MetaIncludeRoleAdmin
-				case "Editor":
+				case identity.RoleEditor:
 					role = pluginsv0alpha1.MetaIncludeRoleEditor
-				case "Viewer":
+				case identity.RoleViewer:
 					role = pluginsv0alpha1.MetaIncludeRoleViewer
+				case identity.RoleNone:
+					role = pluginsv0alpha1.MetaIncludeRoleNone
 				}
 				v0Include.Role = &role
 			}
@@ -364,7 +367,8 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 
 	// Map Extensions
 	if len(jsonData.Extensions.AddedLinks) > 0 || len(jsonData.Extensions.AddedComponents) > 0 ||
-		len(jsonData.Extensions.ExposedComponents) > 0 || len(jsonData.Extensions.ExtensionPoints) > 0 {
+		len(jsonData.Extensions.ExposedComponents) > 0 || len(jsonData.Extensions.ExtensionPoints) > 0 ||
+		len(jsonData.Extensions.AddedFunctions) > 0 {
 		extensions := &pluginsv0alpha1.MetaExtensions{}
 
 		if len(jsonData.Extensions.AddedLinks) > 0 {
@@ -392,6 +396,20 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 					v0Comp.Description = &comp.Description
 				}
 				extensions.AddedComponents = append(extensions.AddedComponents, v0Comp)
+			}
+		}
+
+		if len(jsonData.Extensions.AddedFunctions) > 0 {
+			extensions.AddedFunctions = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedFunctions, 0, len(jsonData.Extensions.AddedFunctions))
+			for _, comp := range jsonData.Extensions.AddedFunctions {
+				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsAddedFunctions{
+					Targets: comp.Targets,
+					Title:   comp.Title,
+				}
+				if comp.Description != "" {
+					v0Comp.Description = &comp.Description
+				}
+				extensions.AddedFunctions = append(extensions.AddedFunctions, v0Comp)
 			}
 		}
 

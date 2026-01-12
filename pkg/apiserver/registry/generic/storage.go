@@ -3,14 +3,30 @@ package generic
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// SelectableFieldsOptions allows customizing field selector behavior for a resource.
+type SelectableFieldsOptions struct {
+	// GetAttrs returns labels and fields for the object.
+	// If nil, the default GetAttrs is used which only exposes metadata.name.
+	GetAttrs func(obj runtime.Object) (labels.Set, fields.Set, error)
+}
+
 func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter) (*registry.Store, error) {
+	return NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, SelectableFieldsOptions{})
+}
+
+// NewRegistryStoreWithSelectableFields creates a registry store with custom selectable fields support.
+// Use this when you need to filter resources by custom fields like spec.connection.name.
+func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter, fieldOpts SelectableFieldsOptions) (*registry.Store, error) {
 	gv := resourceInfo.GroupVersion()
 	gv.Version = runtime.APIVersionInternal
 	strategy := NewStrategy(scheme, gv)
@@ -28,12 +44,25 @@ func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, o
 		keyFunc = NamespaceKeyFunc(gr)
 	}
 
+
+	// Use custom GetAttrs if provided, otherwise use default
+	var attrFunc storage.AttrFunc
+	var predicateFunc func(label labels.Selector, field fields.Selector) storage.SelectionPredicate
+	if fieldOpts.GetAttrs != nil {
+		attrFunc = fieldOpts.GetAttrs
+		// Pass nil predicateFunc to use default behavior with custom attrFunc
+		predicateFunc = nil
+	} else {
+		attrFunc = GetAttrs
+		predicateFunc = Matcher
+	}
+
 	store := &registry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
 		KeyRootFunc:               keyRootFunc,
 		KeyFunc:                   keyFunc,
-		PredicateFunc:             Matcher,
+		PredicateFunc:             predicateFunc,
 		DefaultQualifiedResource:  gr,
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor:            resourceInfo.TableConverter(),
@@ -41,7 +70,7 @@ func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, o
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,
 	}
-	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
+	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: attrFunc}
 	if err := store.CompleteWithOptions(options); err != nil {
 		return nil, err
 	}

@@ -30,9 +30,20 @@ KeeperSpec: {
 }
 
 #AWSConfig: {
-	accessKeyID:     #CredentialValue
-	secretAccessKey: #CredentialValue
+  region:          string
+  accessKey?:      #AWSAccessKey
+  assumeRole?:     #AWSAssumeRole
 	kmsKeyID?:       string
+}
+
+#AWSAccessKey: {
+  accessKeyID:     #CredentialValue
+	secretAccessKey: #CredentialValue
+}
+
+#AWSAssumeRole: {
+  assumeRoleArn: string
+  externalID:    string
 }
 
 #AzureConfig: {
