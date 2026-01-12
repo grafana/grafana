@@ -11,6 +11,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
+import { containsTabsLayout } from './findAllGridTypes';
 import { layoutRegistry } from './layoutRegistry';
 
 export interface Props {
@@ -22,19 +23,26 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
   const [newLayout, setNewLayout] = useState<LayoutRegistryItem | undefined>();
 
-  const disableTabs = useMemo(() => {
+  const disableTabsReason = useMemo(() => {
     if (config.featureToggles.unlimitedLayoutsNesting) {
-      return false;
+      return undefined;
     }
+
+    // Check parent hierarchy
     let parent = layoutManager.parent;
     while (parent) {
       if (parent instanceof TabsLayoutManager) {
-        return true;
+        return 'parent';
       }
       parent = parent.parent;
     }
 
-    return false;
+    // Check child hierarchy
+    if (containsTabsLayout(layoutManager)) {
+      return 'child';
+    }
+
+    return undefined;
   }, [layoutManager]);
 
   const onChangeLayout = useCallback((newLayout: LayoutRegistryItem) => setNewLayout(newLayout), []);
@@ -59,8 +67,15 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
 
   const radioOptions = options.map((opt) => {
     let description = opt.description;
-    if (disableTabs && opt.id === TabsLayoutManager.descriptor.id) {
-      description = t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
+    if (disableTabsReason && opt.id === TabsLayoutManager.descriptor.id) {
+      if (disableTabsReason === 'parent') {
+        description = t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs');
+      } else {
+        description = t(
+          'dashboard.canvas-actions.disabled-child-contains-tabs',
+          'Cannot change to tabs because a row already contains tabs'
+        );
+      }
       disabledOptions.push(opt);
     }
 

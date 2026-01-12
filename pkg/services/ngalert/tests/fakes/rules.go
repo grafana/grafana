@@ -228,6 +228,9 @@ func (f *RuleStore) ListAlertRulesByGroup(_ context.Context, q *models.ListAlert
 		return nil, "", err
 	}
 
+	// Filter by PluginOriginFilter if specified
+	ruleList = applyPluginOriginFilter(ruleList, q.PluginOriginFilter)
+
 	// < group limit logic >
 
 	// sort rules to ensure order is consistent, pagination depends on this
@@ -304,6 +307,10 @@ func (f *RuleStore) ListAlertRulesPaginated(_ context.Context, q *models.ListAle
 	if err != nil {
 		return nil, "", err
 	}
+
+	// Filter by PluginOriginFilter if specified
+	rules = applyPluginOriginFilter(rules, q.PluginOriginFilter)
+
 	return rules, "", nil
 }
 
@@ -647,4 +654,29 @@ func (f *RuleStore) ListDeletedRules(_ context.Context, orgID int64) ([]*models.
 		return nil, err
 	}
 	return f.Deleted[orgID], nil
+}
+
+// applyPluginOriginFilter filters rules based on the presence of the __grafana_origin label.
+func applyPluginOriginFilter(rules []*models.AlertRule, filter models.PluginOriginFilter) []*models.AlertRule {
+	if filter == models.PluginOriginFilterNone {
+		return rules
+	}
+
+	filteredList := make([]*models.AlertRule, 0, len(rules))
+	for _, r := range rules {
+		_, hasOriginLabel := r.Labels[models.PluginGrafanaOriginLabel]
+		switch filter {
+		case models.PluginOriginFilterHide:
+			if !hasOriginLabel {
+				filteredList = append(filteredList, r)
+			}
+		case models.PluginOriginFilterOnly:
+			if hasOriginLabel {
+				filteredList = append(filteredList, r)
+			}
+		default:
+			filteredList = append(filteredList, r)
+		}
+	}
+	return filteredList
 }

@@ -493,6 +493,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				r.GrafanaManagedAlert.NoDataState = apimodels.OK
 				r.GrafanaManagedAlert.ExecErrState = apimodels.AlertingErrState
 				r.GrafanaManagedAlert.NotificationSettings = &apimodels.AlertRuleNotificationSettings{}
+				r.GrafanaManagedAlert.MissingSeriesEvalsToResolve = util.Pointer[int64](1)
 				r.For = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
 				r.KeepFiringFor = func() *model.Duration { five := model.Duration(time.Second * 5); return &five }()
 				return &r
@@ -502,6 +503,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Empty(t, alert.NoDataState)
 				require.Empty(t, alert.ExecErrState)
 				require.Nil(t, alert.NotificationSettings)
+				require.Nil(t, alert.MissingSeriesEvalsToResolve)
 				require.Zero(t, alert.For)
 				require.Zero(t, alert.KeepFiringFor)
 			},

@@ -194,12 +194,12 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
-		model := newModel()
+		model := testutils.NewModelGsm(nil)
 
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
-				sv := anySecureValueGen.Draw(t, "sv")
-				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), sv.DeepCopy())
+				sv := testutils.AnySecureValueGen.Draw(t, "sv")
+				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), sv.DeepCopy())
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
@@ -209,10 +209,23 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 				require.Equal(t, modelCreatedSv.Name, createdSv.Name)
 				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
 			},
+			"read": func(t *rapid.T) {
+				ns := testutils.NamespaceGen.Draw(t, "ns")
+				name := testutils.SecureValueNameGen.Draw(t, "name")
+				modelSv, modelErr := model.Read(ns, name)
+				sv, err := sut.SecureValueMetadataStorage.Read(t.Context(), xkube.Namespace(ns), name, contracts.ReadOpts{})
+				if err != nil || modelErr != nil {
+					require.ErrorIs(t, err, modelErr)
+					return
+				}
+				require.Equal(t, modelSv.Namespace, sv.Namespace)
+				require.Equal(t, modelSv.Name, sv.Name)
+				require.Equal(t, modelSv.Status.Version, sv.Status.Version)
+			},
 			"delete": func(t *rapid.T) {
-				ns := namespaceGen.Draw(t, "ns")
-				name := secureValueNameGen.Draw(t, "name")
-				modelSv, modelErr := model.delete(ns, name)
+				ns := testutils.NamespaceGen.Draw(t, "ns")
+				name := testutils.SecureValueNameGen.Draw(t, "name")
+				modelSv, modelErr := model.Delete(ns, name)
 				sv, err := sut.DeleteSv(t.Context(), ns, name)
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
@@ -227,7 +240,7 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 				minAge := 300 * time.Second
 				leaseTTL := 30 * time.Second
 				maxBatchSize := rapid.Uint16Range(1, 10).Draw(t, "maxBatchSize")
-				modelSvs, modelErr := model.leaseInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
+				modelSvs, modelErr := model.LeaseInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
 				svs, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), maxBatchSize)
 				require.ErrorIs(t, err, modelErr)
 				require.Equal(t, len(modelSvs), len(svs))

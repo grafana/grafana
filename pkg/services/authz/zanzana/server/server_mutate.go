@@ -8,6 +8,7 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/codes"
+	"google.golang.org/grpc/status"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -35,6 +36,9 @@ func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
 		s.logger.Error("failed to perform mutate request", "error", err, "namespace", req.GetNamespace())
 		return nil, errors.New("failed to perform mutate request")
 	}
@@ -43,7 +47,7 @@ func (s *Server) Mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 }
 
 func (s *Server) mutate(ctx context.Context, req *authzextv1.MutateRequest) (*authzextv1.MutateResponse, error) {
-	if err := authorize(ctx, req.GetNamespace(), s.cfg); err != nil {
+	if err := authorizeWrite(ctx, req.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 

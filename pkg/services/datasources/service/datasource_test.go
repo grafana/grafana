@@ -832,8 +832,9 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 		quotaService := quotatest.New(false, nil)
 		permissionSvc := acmock.NewMockedPermissionsService()
 		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		cmd := &datasources.DeleteDataSourceCommand{
@@ -857,7 +858,9 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		cfg := &setting.Cfg{}
 		enableRBACManagedPermissions(t, cfg)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		// First add the datasource
@@ -1124,7 +1127,9 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		rt1, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -1161,7 +1166,9 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1212,7 +1219,9 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1260,7 +1269,9 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1316,7 +1327,9 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1351,7 +1364,9 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1420,7 +1435,9 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1499,7 +1516,9 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1522,7 +1541,9 @@ func TestIntegrationService_getProxySettings(t *testing.T) {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+	features := featuremgmt.WithFeatures()
+	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 	require.NoError(t, err)
 
 	t.Run("Should default to disabled", func(t *testing.T) {
@@ -1620,7 +1641,9 @@ func TestIntegrationService_getTimeout(t *testing.T) {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+	features := featuremgmt.WithFeatures()
+	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 	require.NoError(t, err)
 
 	for _, tc := range testCases {
@@ -1645,7 +1668,9 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		jsonData := map[string]string{
@@ -1673,7 +1698,9 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+		features := featuremgmt.WithFeatures()
+		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 		require.NoError(t, err)
 
 		jsonData := map[string]string{
@@ -1699,7 +1726,9 @@ func TestIntegrationDataSource_CustomHeaders(t *testing.T) {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
+	features := featuremgmt.WithFeatures()
+	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
 	require.NoError(t, err)
 
 	dsService.cfg = setting.NewCfg()
@@ -1788,7 +1817,9 @@ func initDSService(t *testing.T) *Service {
 	quotaService := quotatest.New(false, nil)
 	mockPermission := acmock.NewMockedPermissionsService()
 	mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{
+	features := featuremgmt.WithFeatures()
+	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{{
 			JSONData: plugins.JSONData{
 				ID:   "test",
@@ -1808,7 +1839,7 @@ func initDSService(t *testing.T) *Service {
 				ObjectBytes: req.ObjectBytes,
 			}, nil
 		},
-	}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+	}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
 	require.NoError(t, err)
 
 	return dsService

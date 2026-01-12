@@ -25,7 +25,7 @@ func testMutateOrgRoles(t *testing.T, srv *Server) {
 	setupMutateOrgRoles(t, srv)
 
 	t.Run("should update user org role and delete old role", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -63,7 +63,7 @@ func testMutateOrgRoles(t *testing.T, srv *Server) {
 	})
 
 	t.Run("should add user org role and delete old role", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{

@@ -376,6 +376,10 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
 					&folders.Folder{},
 					nil).Once()
+				// also retrieves old parent for depth difference calculation
+				m.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
+					&folders.Folder{},
+					nil).Once()
 			},
 		},
 		{

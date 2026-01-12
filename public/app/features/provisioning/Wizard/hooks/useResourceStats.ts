@@ -121,22 +121,10 @@ export function useResourceStats(repoName?: string, syncTarget?: RepositoryView[
     };
   }, [resourceStatsQuery.data]);
 
-  // Calculate base requiresMigration: true if there are resources to migrate
-  const baseRequiresMigration = resourceCount > 0;
-
-  // Calculate final requiresMigration based on sync target and user selection
-  // For instance sync: always use baseRequiresMigration (checkbox is disabled and always true)
+  // Calculate requiresMigration based on sync target and user selection
+  // For instance sync: migrate if there are resources (checkbox is disabled and always true)
   // For folder sync: only migrate if user explicitly opts in via checkbox
-  const requiresMigration = useMemo(() => {
-    if (syncTarget === 'instance') {
-      return baseRequiresMigration;
-    }
-    if (syncTarget === 'folder') {
-      return migrateResources ?? false;
-    }
-    return baseRequiresMigration;
-  }, [syncTarget, baseRequiresMigration, migrateResources]);
-
+  const requiresMigration = syncTarget === 'instance' ? resourceCount > 0 : (migrateResources ?? false);
   const shouldSkipSync = (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
 
   // Format display strings

@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -110,7 +108,7 @@ func (f LocalFS) walkFunc(basePath string, acc map[string]struct{}) filepath.Wal
 // If a nil error is returned, the caller should take care of calling Close() the returned fs.File.
 // If the file does not exist, ErrFileNotExist is returned.
 func (f LocalFS) Open(name string) (fs.File, error) {
-	cleanPath, err := util.CleanRelativePath(name)
+	cleanPath, err := CleanRelativePath(name)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +153,7 @@ func (f LocalFS) Files() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		clenRelPath, err := util.CleanRelativePath(relPath)
+		clenRelPath, err := CleanRelativePath(relPath)
 		if err != nil {
 			continue
 		}

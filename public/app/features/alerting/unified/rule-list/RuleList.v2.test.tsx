@@ -1,5 +1,5 @@
 import { HttpResponse } from 'msw';
-import { render, testWithFeatureToggles } from 'test/test-utils';
+import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
@@ -7,12 +7,14 @@ import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
-import { grantUserPermissions, grantUserRole } from '../mocks';
+import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
 import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { RulesFilter } from '../search/rulesSearchParser';
+import { setupDataSources } from '../testSetup/datasources';
 
-import RuleList, { RuleListActions } from './RuleList.v2';
+import RuleListPage, { RuleListActions } from './RuleList.v2';
+import { loadDefaultSavedSearch } from './filter/useSavedSearches';
 
 // This tests only checks if proper components are rendered, so we mock them
 // Both FilterView and GroupedView are tested in their own tests
@@ -23,6 +25,30 @@ jest.mock('./FilterView', () => ({
 jest.mock('./GroupedView', () => ({
   GroupedView: () => <div data-testid="grouped-view">Grouped View</div>,
 }));
+
+jest.mock('./filter/useSavedSearches', () => ({
+  ...jest.requireActual('./filter/useSavedSearches'),
+  loadDefaultSavedSearch: jest.fn(),
+  useSavedSearches: jest.fn(() => ({
+    savedSearches: [],
+    isLoading: false,
+    saveSearch: jest.fn(),
+    renameSearch: jest.fn(),
+    deleteSearch: jest.fn(),
+    setDefaultSearch: jest.fn(),
+  })),
+}));
+
+const loadDefaultSavedSearchMock = loadDefaultSavedSearch as jest.MockedFunction<typeof loadDefaultSavedSearch>;
+
+beforeEach(() => {
+  loadDefaultSavedSearchMock.mockResolvedValue(null);
+  // Clear session storage to ensure clean state for each test
+  // This prevents the "visited" flag from affecting subsequent tests
+  sessionStorage.clear();
+  // Set the visited flag for non-default-search tests to prevent the hook from trying to load
+  sessionStorage.setItem('grafana.alerting.ruleList.visited', 'true');
+});
 
 const ui = {
   filterView: byTestId('filter-view'),
@@ -45,16 +71,16 @@ setupMswServer();
 alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
-describe('RuleList v2', () => {
+describe('RuleListPage v2', () => {
   it('should show grouped view by default', () => {
-    render(<RuleList />);
+    render(<RuleListPage />);
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when invalid view parameter is provided', () => {
-    render(<RuleList />, {
+    render(<RuleListPage />, {
       historyOptions: {
         initialEntries: ['/?view=invalid'],
       },
@@ -65,35 +91,35 @@ describe('RuleList v2', () => {
   });
 
   it('should show list view when "view=list" URL parameter is present', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when only group filter is applied', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage'] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when only namespace filter is applied', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?search=namespace:global'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=namespace:global'] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when both group and namespace filters are applied', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global'] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show list view when group and namespace filters are combined with other filter types', () => {
-    render(<RuleList />, {
+    render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global state:firing'] },
     });
 
@@ -102,14 +128,14 @@ describe('RuleList v2', () => {
   });
 
   it('should show grouped view when view parameter is empty', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?view='] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view='] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
   it('should show grouped view when search parameter is empty', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?search='] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search='] } });
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
@@ -125,28 +151,28 @@ describe('RuleList v2', () => {
     { filterType: 'ruleHealth', searchQuery: 'health:error' },
     { filterType: 'contactPoint', searchQuery: 'contactPoint:slack' },
   ])('should show list view when %s filter is applied', ({ filterType, searchQuery }) => {
-    render(<RuleList />, { historyOptions: { initialEntries: [`/?search=${encodeURIComponent(searchQuery)}`] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: [`/?search=${encodeURIComponent(searchQuery)}`] } });
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
   it('should show list view when "view=list" URL parameter is present with group filter', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage'] } });
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
   it('should show list view when "view=list" URL parameter is present with namespace filter', () => {
-    render(<RuleList />, { historyOptions: { initialEntries: ['/?view=list&search=namespace:global'] } });
+    render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list&search=namespace:global'] } });
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
   it('should show list view when "view=list" URL parameter is present with both group and namespace filters', () => {
-    render(<RuleList />, {
+    render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage namespace:global'] },
     });
 
@@ -340,12 +366,57 @@ describe('RuleListActions', () => {
       expect(ui.exportDrawer.query()).toBeInTheDocument();
     });
   });
+
+  describe('Data source options visibility', () => {
+    it('should not show "New Data source recording rule" option when no data sources have manageAlerts enabled', async () => {
+      // Set up only data sources with manageAlerts explicitly set to false
+      // This replaces the default data sources that have manageAlerts defaulting to true
+      setupDataSources(
+        mockDataSource({
+          name: 'Prometheus-disabled',
+          uid: 'prometheus-disabled',
+          type: 'prometheus',
+          jsonData: { manageAlerts: false },
+        })
+      );
+
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
+    });
+
+    it('should show "New Data source recording rule" option when data sources have manageAlerts enabled', async () => {
+      // Set up data source with manageAlerts enabled
+      setupDataSources(
+        mockDataSource({
+          name: 'Prometheus-enabled',
+          uid: 'prometheus-enabled',
+          type: 'prometheus',
+          jsonData: { manageAlerts: true },
+        })
+      );
+
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
+    });
+  });
 });
 
-describe('RuleList v2 - View switching', () => {
+describe('RuleListPage v2 - View switching', () => {
   it('should preserve both group and namespace filters when switching from list view to grouped view', async () => {
     // Start with list view and both group and namespace filters
-    const { user } = render(<RuleList />, {
+    const { user } = render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage namespace:global'] },
     });
     expect(ui.filterView.get()).toBeInTheDocument();
@@ -365,7 +436,7 @@ describe('RuleList v2 - View switching', () => {
 
   it('should clear all filters when switching from list view to grouped view with group, namespace and other filters', async () => {
     // Start with list view with all types of filters
-    const { user } = render(<RuleList />, {
+    const { user } = render(<RuleListPage />, {
       historyOptions: {
         initialEntries: ['/?view=list&search=group:cpu-usage namespace:global state:firing rule:"test"'],
       },
@@ -383,5 +454,88 @@ describe('RuleList v2 - View switching', () => {
     // Verify all filters are cleared
     expect(ui.searchInput.get()).toHaveValue('');
     expect(ui.modeSelector.list.query()).not.toBeChecked();
+  });
+});
+describe('RuleListPage v2 - Default search auto-apply', () => {
+  // These tests verify that the default search is applied at the page level,
+  // BEFORE child components mount, preventing double API requests.
+
+  testWithFeatureToggles({ enable: ['alertingListViewV2', 'alertingSavedSearches'] });
+
+  beforeEach(() => {
+    // Clear the visited flag so the hook detects this as a first visit
+    sessionStorage.removeItem('grafana.alerting.ruleList.visited');
+    // Clear mock call history between tests
+    loadDefaultSavedSearchMock.mockClear();
+  });
+
+  it('should apply default search before rendering child components', async () => {
+    const mockDefaultSearch = {
+      id: '1',
+      name: 'My Default',
+      query: 'state:firing',
+      isDefault: true,
+      createdAt: Date.now(),
+    };
+
+    // Mock loadDefaultSavedSearch to return a default search
+    loadDefaultSavedSearchMock.mockResolvedValue(mockDefaultSearch);
+
+    render(<RuleListPage />);
+
+    // Wait for loadDefaultSavedSearch to be called
+    await waitFor(() => {
+      expect(loadDefaultSavedSearchMock).toHaveBeenCalled();
+    });
+
+    // Wait for the filter view to render with the applied search
+    await waitFor(() => {
+      expect(ui.filterView.get()).toBeInTheDocument();
+    });
+
+    // Verify the search input shows the applied search query
+    expect(ui.searchInput.get()).toHaveValue('state:firing');
+  });
+
+  it('should not apply default search when URL already has search parameter', async () => {
+    const mockDefaultSearch = {
+      id: '1',
+      name: 'My Default',
+      query: 'state:firing',
+      isDefault: true,
+      createdAt: Date.now(),
+    };
+
+    // loadDefaultSavedSearch should not be called when URL has search param
+    loadDefaultSavedSearchMock.mockResolvedValue(mockDefaultSearch);
+
+    render(<RuleListPage />, {
+      historyOptions: { initialEntries: ['/?search=label:team=backend'] },
+    });
+
+    // Wait for the component to render
+    await waitFor(() => {
+      expect(ui.searchInput.get()).toBeInTheDocument();
+    });
+
+    // Should show the URL's search, not the default
+    expect(ui.searchInput.get()).toHaveValue('label:team=backend');
+
+    // Verify loadDefaultSavedSearch was not called because filters are already active
+    // The hook should not execute at all when hasActiveFilters is true
+    expect(loadDefaultSavedSearchMock).not.toHaveBeenCalled();
+  });
+
+  it('should render normally when no default search exists', async () => {
+    loadDefaultSavedSearchMock.mockResolvedValue(null);
+
+    render(<RuleListPage />);
+
+    // Wait for the component to render after checking for default search
+    await waitFor(() => {
+      expect(ui.groupedView.get()).toBeInTheDocument();
+    });
+
+    expect(ui.searchInput.get()).toHaveValue('');
   });
 });

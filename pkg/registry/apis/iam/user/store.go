@@ -183,7 +183,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 	res, err := common.List(
 		ctx, userResource, s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.User], error) {
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.User], error) {
 			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
 				Pagination: p,
 			})
@@ -192,12 +192,13 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			users := make([]iamv0alpha1.User, 0, len(found.Items))
+			users := make([]*iamv0alpha1.User, 0, len(found.Items))
 			for _, u := range found.Items {
-				users = append(users, toUserItem(&u, ns.Value))
+				user := toUserItem(&u, ns.Value)
+				users = append(users, &user)
 			}
 
-			return &common.ListResponse[iamv0alpha1.User]{
+			return &common.ListResponse[*iamv0alpha1.User]{
 				Items:    users,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -209,7 +210,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
-	obj := &iamv0alpha1.UserList{Items: res.Items}
+	items := make([]iamv0alpha1.User, len(res.Items))
+	for i, u := range res.Items {
+		items[i] = *u
+	}
+
+	obj := &iamv0alpha1.UserList{Items: items}
 	obj.Continue = common.OptionalFormatInt(res.Continue)
 	obj.ResourceVersion = common.OptionalFormatInt(res.RV)
 	return obj, nil

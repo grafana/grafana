@@ -391,7 +391,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	b.Logf("Total tuples to write: %d", len(allTuples))
 
 	// Get store info
-	ctx := newContextWithNamespace()
+	ctx := newContextWithZanzanaUpdatePermission()
 	storeInf, err := srv.getStoreInfo(ctx, benchNamespace)
 	require.NoError(b, err)
 

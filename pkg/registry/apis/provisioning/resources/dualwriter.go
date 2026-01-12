@@ -12,6 +12,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -32,7 +33,7 @@ type DualReadWriter struct {
 	repo    repository.ReaderWriter
 	parser  Parser
 	folders *FolderManager
-	access  authlib.AccessChecker
+	access  auth.AccessChecker
 }
 
 type DualWriteOptions struct {
@@ -48,7 +49,7 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker) *DualReadWriter {
 	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
 }
 
@@ -492,11 +493,6 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 }
 
 func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		return apierrors.NewUnauthorized(err.Error())
-	}
-
 	var name string
 	if parsed.Existing != nil {
 		name = parsed.Existing.GetName()
@@ -504,27 +500,15 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		name = parsed.Obj.GetName()
 	}
 
-	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
-		Group:     parsed.GVR.Group,
-		Resource:  parsed.GVR.Resource,
-		Namespace: id.GetNamespace(),
-		Name:      name,
-		Verb:      verb,
+	return r.access.Check(ctx, authlib.CheckRequest{
+		Group:    parsed.GVR.Group,
+		Resource: parsed.GVR.Resource,
+		Name:     name,
+		Verb:     verb,
 	}, parsed.Meta.GetFolder())
-	if err != nil || !rsp.Allowed {
-		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-			fmt.Errorf("no access to perform %s on the resource", verb))
-	}
-
-	return nil
 }
 
 func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string) error {
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		return apierrors.NewUnauthorized(err.Error())
-	}
-
 	// Determine parent folder from path
 	parentFolder := ""
 	if path != "" {
@@ -537,19 +521,12 @@ func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string)
 	}
 
 	// For folder create operations, use empty name to check parent folder permissions
-	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
-		Group:     FolderResource.Group,
-		Resource:  FolderResource.Resource,
-		Namespace: id.GetNamespace(),
-		Name:      "", // Empty name for create operations
-		Verb:      utils.VerbCreate,
+	return r.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     "", // Empty name for create operations
+		Verb:     utils.VerbCreate,
 	}, parentFolder)
-	if err != nil || !rsp.Allowed {
-		return apierrors.NewForbidden(FolderResource.GroupResource(), path,
-			fmt.Errorf("no access to create folder in parent folder '%s'", parentFolder))
-	}
-
-	return nil
 }
 
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {

@@ -266,6 +266,9 @@ export const versionedPages = {
     Controls: {
       '11.1.0': 'data-testid dashboard controls',
     },
+    ControlsButton: {
+      '12.3.0': 'data-testid dashboard controls button',
+    },
     SubMenu: {
       submenu: {
         [MIN_GRAFANA_VERSION]: 'Dashboard submenu',

@@ -43,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -298,13 +297,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	var c apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	encryptedReceivers, err := notifier.EncryptedReceivers(c.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
-		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
-		if err != nil {
-			return "", err
-		}
-		return base64.StdEncoding.EncodeToString(encrypted), nil
-	})
+	encryptedReceivers, err := notifier.EncryptedReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	c.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 
@@ -462,13 +455,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	// Create a config with correctly encrypted and encoded secrets.
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
-		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
-		if err != nil {
-			return "", err
-		}
-		return base64.StdEncoding.EncodeToString(encrypted), nil
-	})
+	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 	testGrafanaConfigWithEncryptedSecret, err := json.Marshal(inputCfg)
@@ -663,13 +650,7 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
-		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
-		if err != nil {
-			return "", err
-		}
-		return base64.StdEncoding.EncodeToString(encrypted), nil
-	})
+	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 
@@ -1037,13 +1018,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	{
 		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 		require.NoError(t, err)
-		encryptedReceivers, err := notifier.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
-			encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
-			if err != nil {
-				return "", err
-			}
-			return base64.StdEncoding.EncodeToString(encrypted), nil
-		})
+		encryptedReceivers, err := notifier.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 		postableCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 		require.NoError(t, err)
 

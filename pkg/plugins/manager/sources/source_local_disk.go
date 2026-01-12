@@ -10,14 +10,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/util"
 )
 
-var walk = util.Walk
+var walk = plugins.Walk
 
 var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
@@ -79,13 +77,12 @@ func (s *LocalSource) Discover(_ context.Context) ([]*plugins.FoundBundle, error
 
 	pluginJSONPaths := make([]string, 0, len(s.paths))
 	for _, path := range s.paths {
-		exists, err := fs.Exists(path)
-		if err != nil {
+		if _, err := os.Stat(path); err != nil {
+			if os.IsNotExist(err) {
+				s.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
+				continue
+			}
 			s.log.Warn("Skipping finding plugins as an error occurred", "path", path, "error", err)
-			continue
-		}
-		if !exists {
-			s.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
 			continue
 		}
 
@@ -217,7 +214,7 @@ func (s *LocalSource) getAbsPluginJSONPaths(path string) ([]string, error) {
 			}
 
 			if fi.Name() == "node_modules" {
-				return util.ErrWalkSkipDir
+				return plugins.ErrWalkSkipDir
 			}
 
 			if fi.IsDir() {

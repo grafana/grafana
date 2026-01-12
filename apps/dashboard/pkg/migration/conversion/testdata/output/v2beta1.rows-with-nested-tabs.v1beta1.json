@@ -67,6 +67,10 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "defin43am9o1sd"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -219,6 +223,10 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "defin43am9o1sd"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -309,6 +317,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "defin43am9o1sd"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {

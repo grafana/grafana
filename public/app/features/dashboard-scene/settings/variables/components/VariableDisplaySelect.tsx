@@ -38,6 +38,10 @@ export function VariableDisplaySelect({ onChange, display, type, minWidth = 52 }
       {
         value: VariableHide.hideVariable,
         label: t('dashboard-scene.variable-display-select.options.hidden.label', 'Hidden'),
+        description: t(
+          'dashboard-scene.variable-display-select.options.hidden.description',
+          'Only visible in edit mode'
+        ),
       },
     ],
     []

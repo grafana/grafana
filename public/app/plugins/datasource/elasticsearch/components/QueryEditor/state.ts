@@ -58,6 +58,10 @@ export const aliasPatternReducer = (prevAliasPattern: ElasticsearchDataQuery['al
     return action.payload;
   }
 
+  if (changeEditorTypeAndResetQuery.match(action)) {
+    return '';
+  }
+
   if (initQuery.match(action)) {
     return prevAliasPattern || '';
   }

@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Introduce el contenido de la anotación personalizada..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Reglas eliminadas correctamente de la carpeta"
@@ -2203,11 +2208,15 @@
       "min-interval": "Tamaño min. Intervalo = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Las consultas y expresiones seleccionadas no se pueden convertir a predeterminadas. Si desactivas las opciones avanzadas, tu consulta y condición se restablecerán a la configuración predeterminada."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Vista previa",
-      "previewCondition": "Vista previa de la condición de la regla de alerta"
+      "previewCondition": "Vista previa de la condición de la regla de alerta",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filtrar por puntos de contacto",
@@ -2666,6 +2675,35 @@
       "text-federated": "Federado",
       "text-provisioned": "Provisionado"
     },
+    "saved-searches": {
+      "actions-aria-label": "",
+      "apply-aria-label": "",
+      "apply-tooltip": "",
+      "button-label": "",
+      "cancel": "",
+      "default-indicator": "",
+      "delete": "",
+      "delete-button": "",
+      "dropdown-aria-label": "",
+      "empty-state": "",
+      "error-load-description": "",
+      "error-load-title": "",
+      "error-name-duplicate": "",
+      "error-name-required": "",
+      "error-rename-description": "",
+      "error-rename-title": "",
+      "error-save-description": "",
+      "error-save-title": "",
+      "list-aria-label": "",
+      "name-placeholder": "",
+      "remove-default": "",
+      "rename": "",
+      "rename-button": "",
+      "save-button": "",
+      "save-current-search": "",
+      "save-disabled-tooltip": "",
+      "set-default": ""
+    },
     "search": {
       "property": {
         "data-source": "Fuente de datos",
@@ -3097,9 +3135,12 @@
       "table": "Tabla"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Define la condición que debe cumplirse antes de que se active una regla de alerta",
       "description-configure-firing-alert-instances-routed-contact": "Configurar cómo se enrutan las instancias de alerta de activación a los puntos de contacto",
       "description-configure-receives-notifications": "Configurar quién recibe las notificaciones y cómo se envían",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Reglas de alerta",
       "title-contact-points": "Puntos de contacto",
       "title-notification-policies": "Políticas de notificación"
@@ -3717,7 +3758,9 @@
       "text": "No se han encontrado resultados para tu consulta"
     },
     "recently-viewed": {
-      "empty": "",
+      "clear": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -4372,6 +4415,7 @@
       },
       "no-properties-changed": "No se ha cambiado ninguna propiedad relevante",
       "table": {
+        "notes": "",
         "updated": "Fecha",
         "updatedBy": "Actualizada por",
         "version": "Versión"
@@ -4570,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Añadir panel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Agrupar en fila",
@@ -4830,7 +4875,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Valores separados por coma"
         },
         "datasource-options": {
           "name-filter": "Nombrar filtro",
@@ -5650,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "No se ha podido encontrar un ID de Grafana.com válido",
       "invalid-json": "JSON no válido",
+      "tag-too-long": "",
       "tags-expected-array": "etiquetas: matriz prevista",
       "tags-expected-strings": "etiquetas: matriz de cadenas prevista"
     },
@@ -5755,6 +5802,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5923,8 +5971,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Opciones personalizadas",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Valores separados por comas",
       "selection-options": "Opciones de selección"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Regresar a la lista",
@@ -6180,7 +6234,7 @@
         "title-someone-else-has-updated-this-dashboard": "Otra persona ha actualizado este dashboard",
         "would-still-dashboard": "¿Seguro que quieres guardar este dashboard?"
       },
-      "save-and-overwrite": "«Guardar y sobrescribir»"
+      "save-and-overwrite": ""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6507,6 +6561,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard guardado"
     },
@@ -6530,6 +6589,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6589,8 +6649,9 @@
       "tooltip-show-usages": "Mostrar usos"
     },
     "variable-values-preview": {
-      "preview-of-values": "Vista previa de los valores",
-      "show-more": "Mostrar más"
+      "show-more": "Mostrar más",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -7165,6 +7226,9 @@
       "time-range-label": "Bloquear el intervalo de tiempo"
     }
   },
+  "embedded-panel": {
+    "powered-by": ""
+  },
   "empty-list-cta": {
     "pro-tip": "Consejo profesional: {{proTip}}"
   },
@@ -7641,39 +7705,6 @@
       },
       "share-span": "Compartir"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Seleccionar operador de intervalo máximo",
-      "aria-label-select-min-span-operator": "Seleccionar operador de intervalo mínimo",
-      "aria-label-select-service-name": "Seleccionar nombre de servicio",
-      "aria-label-select-service-name-operator": "Seleccionar operador de nombre de servicio",
-      "aria-label-select-span-name": "Seleccionar nombre de intervalo",
-      "aria-label-select-span-name-operator": "Seleccionar operador de nombre de intervalo",
-      "ariaLabel-select-max-span-duration": "Seleccionar duración máxima del intervalo",
-      "ariaLabel-select-min-span-duration": "Seleccionar duración mínima del intervalo",
-      "label-collapse": "Filtros de intervalo",
-      "label-duration": "Duración",
-      "label-service-name": "Nombre de servicio",
-      "label-span-name": "Nombre del intervalo",
-      "label-tags": "Etiquetas",
-      "placeholder-all-service-names": "Todos los nombres de servicios",
-      "placeholder-all-span-names": "Todos los nombres de intervalo",
-      "tooltip-collapse": "Filtre sus intervalos a continuación. Puede seguir aplicando filtros hasta que haya reducido los intervalos resultantes a los que más le interesen.",
-      "tooltip-duration": "Filtra por duración. Las unidades aceptadas son {{units}}",
-      "tooltip-tags": "Filtra por etiquetas, etiquetas de proceso o campos de logs en tus intervalos."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Añadir etiqueta",
-      "aria-label-input-tag-value": "Introducir valor de la etiqueta",
-      "aria-label-remove-tag": "Quitar etiqueta",
-      "aria-label-select-tag-key": "Seleccionar clave de etiqueta",
-      "aria-label-select-tag-operator": "Seleccionar operador de etiqueta",
-      "aria-label-select-tag-value": "Seleccionar valor de etiqueta",
-      "placeholder-select-tag": "Seleccionar etiqueta",
-      "placeholder-select-value": "Seleccionar valor",
-      "placeholder-tag-value": "Valor de etiqueta",
-      "tooltip-add-tag": "Añadir etiqueta",
-      "tooltip-remove-tag": "Quitar etiqueta"
-    },
     "span-flame-graph": {
       "flame-graph": "Gráfico de llama"
     },
@@ -7872,23 +7903,18 @@
       "label-upsample": "Aumentar tamaño",
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": ""
-    },
     "sql-expr": {
       "button-run-query": "Ejecutar consulta",
-      "modal-title": "Editor de SQL",
       "tooltip-experimental": "La integración de LLM de expresiones SQL es experimental. Avisa de cualquier problema al equipo de Grafana."
     },
     "sql-schema": {
-      "close-schema-inspector": "",
       "error-title": "",
-      "inspect-button": "",
       "loading": "",
       "no-data-title": "",
       "no-fields-desc": "",
       "no-fields-title": "",
-      "query-error-title": ""
+      "query-error-title": "",
+      "schema-inspector": ""
     },
     "threshold": {
       "label-input": "Entrada"
@@ -7963,11 +7989,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
-      "no-thresholds": "",
-      "style": {
-        "circular": "",
-        "simple": ""
-      }
+      "no-thresholds": ""
     },
     "threshold": ""
   },
@@ -9233,7 +9255,8 @@
     "tags-input": {
       "add": "Añadir",
       "placeholder-new-tag": "Nueva etiqueta (pulsa la tecla Intro para añadirla)",
-      "remove": "Eliminar etiqueta: {{name}}"
+      "remove": "Eliminar etiqueta: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Sincronizar tiempos",
@@ -9393,6 +9416,7 @@
     "name-unit": "Unidad",
     "name-value-name": "Nombre del valor",
     "name-y-axis-scale": "Escala del eje Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Auto",
     "placeholder-axis-width": "Auto",
     "placeholder-decimals": "Auto",
@@ -9422,6 +9446,18 @@
       "label-all": "Todo",
       "label-hidden": "Oculto",
       "label-single": "Único"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "",
+      "linear-threshold-label": "",
+      "linear-threshold-placeholder": "",
+      "log-base-label": "",
+      "scale-options": {
+        "label-auto": "",
+        "label-linear": "",
+        "label-log": "",
+        "label-symlog": ""
+      }
     }
   },
   "help-modal": {
@@ -10687,18 +10723,6 @@
     "help/documentation": "Documentación",
     "help/keyboard-shortcuts": "Atajos de teclado",
     "help/support": "Asistencia",
-    "history-container": {
-      "drawer-tittle": "Historial"
-    },
-    "history-wrapper": {
-      "collapse": "Contraer",
-      "expand": "Expandir",
-      "icon-selected": "Entrada seleccionada",
-      "icon-unselected": "Entrada normal",
-      "show-more": "Mostrar más",
-      "today": "Hoy",
-      "yesterday": "Ayer"
-    },
     "home": {
       "title": "Inicio"
     },
@@ -11203,9 +11227,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-some-suggestions": {
+        "message": ""
+      },
       "error-loading-suggestions": {
         "message": "",
-        "title": ""
+        "plugin-failed": "",
+        "title": "",
+        "try-again-button": ""
       },
       "unknown-viz-type": "",
       "use-this-suggestion": ""
@@ -11972,7 +12001,10 @@
       "resource-not-found": "",
       "unsupported-repository-type": ""
     },
-    "inline-secure-values-warning": "",
+    "instance-sync-deprecation": {
+      "message": "",
+      "title": ""
+    },
     "job-status": {
       "label-view-details": "Ver detalles",
       "loading-finished-job": "Cargando trabajo finalizado...",
@@ -12078,6 +12110,9 @@
       "webhook-last-event": "Último evento:",
       "webhook-url": "Ver webhook"
     },
+    "repository-status": {
+      "error": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Volver a los repositorios",
       "cleaning-up-resources": "Limpiando los recursos del repositorio",
@@ -12182,6 +12217,9 @@
       "tooltip-unhealthy-repository": "No se puede extraer un repositorio que no está en buen estado"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "",
+      "migrate-resources-description": "",
+      "options": "",
       "repository-error": "",
       "repository-error-message": "",
       "repository-unhealthy": ""
@@ -12201,10 +12239,15 @@
     },
     "warning-title-default": "Advertencia",
     "wizard": {
+      "alert-intro": "",
       "alert-point-1": "",
-      "alert-point-2": "",
       "alert-point-3": "La duración de este proceso depende del número de recursos involucrados.",
       "alert-point-4": "",
+      "alert-point-folder-cleanup": "",
+      "alert-point-folder-structure": "",
+      "alert-point-instance-alerts": "",
+      "alert-point-permissions": "",
+      "alert-point-unsupported": "",
       "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
@@ -12223,6 +12266,7 @@
       "step-finish": "Elegir ajustes adicionales",
       "step-synchronize": "Sincronizar con un almacenamiento externo",
       "sync-description": "Sincroniza los recursos con un almacenamiento externo. Después de este paso único, todas las actualizaciones futuras se guardarán automáticamente en el repositorio y se aprovisionarán de nuevo en la instancia.",
+      "sync-option-migrate-resources": "",
       "title-bootstrap": "Elegir qué sincronizar",
       "title-connect": "Conectar a un almacenamiento externo",
       "title-finish": "Elegir ajustes adicionales",
@@ -12460,22 +12504,33 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
       "bar-width": "",
       "effects": {
         "bar-glow": "",
         "center-glow": "",
         "gradient": "",
-        "label": "",
-        "rounded-bars": "",
-        "spotlight": "",
-        "spotlight-tooltip": ""
+        "label": ""
       },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14345,6 +14400,17 @@
       },
       "name": {
         "series-to-rows": "Series a filas"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

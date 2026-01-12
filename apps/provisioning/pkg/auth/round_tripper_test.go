@@ -71,16 +71,29 @@ func TestRoundTripper_AudiencesAndNamespace(t *testing.T) {
 	tests := []struct {
 		name          string
 		audience      string
+		extraAudience string
 		wantAudiences []string
 	}{
 		{
-			name:          "adds group when custom audience",
+			name:          "uses only provided audience by default",
 			audience:      "example-audience",
+			wantAudiences: []string{"example-audience"},
+		},
+		{
+			name:          "uses only group audience by default",
+			audience:      v0alpha1.GROUP,
+			wantAudiences: []string{v0alpha1.GROUP},
+		},
+		{
+			name:          "extra audience adds provisioning group",
+			audience:      "example-audience",
+			extraAudience: v0alpha1.GROUP,
 			wantAudiences: []string{"example-audience", v0alpha1.GROUP},
 		},
 		{
-			name:          "no duplicate when group audience",
+			name:          "extra audience no duplicate when same as primary",
 			audience:      v0alpha1.GROUP,
+			extraAudience: v0alpha1.GROUP,
 			wantAudiences: []string{v0alpha1.GROUP},
 		},
 	}
@@ -88,11 +101,15 @@ func TestRoundTripper_AudiencesAndNamespace(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fx := &fakeExchanger{resp: &authn.TokenExchangeResponse{Token: "abc123"}}
+			var opts []RoundTripperOption
+			if tt.extraAudience != "" {
+				opts = append(opts, ExtraAudience(tt.extraAudience))
+			}
 			tr := NewRoundTripper(fx, roundTripperFunc(func(_ *http.Request) (*http.Response, error) {
 				rr := httptest.NewRecorder()
 				rr.WriteHeader(http.StatusOK)
 				return rr.Result(), nil
-			}), tt.audience)
+			}), tt.audience, opts...)
 
 			req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example", nil)
 			resp, err := tr.RoundTrip(req)

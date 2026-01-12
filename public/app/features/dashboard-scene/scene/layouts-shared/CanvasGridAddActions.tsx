@@ -59,7 +59,11 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
   }, [layoutManager]);
 
   return (
-    <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
+    <div
+      className={cx(styles.addAction, 'dashboard-canvas-add-button')}
+      onPointerUp={(evt) => evt.stopPropagation()}
+      onPointerDown={(evt) => evt.stopPropagation()}
+    >
       <Button
         variant="primary"
         fill="text"
@@ -189,7 +193,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(5),
     bottom: 0,
     left: 0,
-    right: 0,
     opacity: 0,
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),

@@ -32,7 +32,9 @@ func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.S
 }
 
 // ValidateRepository solely does configuration checks on the repository object. It does not run a health check or compare against existing repositories.
-func (v *RepositoryValidator) ValidateRepository(repo Repository) field.ErrorList {
+// isCreate indicates whether this is a CREATE operation (true) or UPDATE operation (false).
+// When isCreate is false, allowedTargets validation is skipped to allow existing repositories to continue working.
+func (v *RepositoryValidator) ValidateRepository(repo Repository, isCreate bool) field.ErrorList {
 	list := repo.Validate()
 	cfg := repo.Config()
 
@@ -44,7 +46,7 @@ func (v *RepositoryValidator) ValidateRepository(repo Repository) field.ErrorLis
 		if cfg.Spec.Sync.Target == "" {
 			list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
 				"The target type is required when sync is enabled"))
-		} else if !slices.Contains(v.allowedTargets, cfg.Spec.Sync.Target) {
+		} else if isCreate && !slices.Contains(v.allowedTargets, cfg.Spec.Sync.Target) {
 			list = append(list,
 				field.Invalid(
 					field.NewPath("spec", "target"),

@@ -152,6 +152,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/suggest", s.HandleSuggestQuery)
+	mux.HandleFunc("/api/aggregators", s.HandleAggregatorsQuery)
+	mux.HandleFunc("/api/config/filters", s.HandleFiltersQuery)
+	mux.HandleFunc("/api/search/lookup", s.HandleLookupQuery)
 
 	handler := httpadapter.New(mux)
 	return handler.CallResource(ctx, req, sender)

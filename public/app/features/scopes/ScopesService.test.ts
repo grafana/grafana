@@ -1,5 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
 
+import { ScopeSpecFilter } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
 
 import { ScopesService } from './ScopesService';
@@ -16,8 +17,20 @@ describe('ScopesService', () => {
   let locationService: jest.Mocked<LocationService>;
   let selectorStateSubscription:
     | ((
-        state: { appliedScopes: Array<{ scopeId: string; scopeNodeId?: string; parentNodeId?: string }> },
-        prevState: { appliedScopes: Array<{ scopeId: string; scopeNodeId?: string; parentNodeId?: string }> }
+        state: {
+          appliedScopes: Array<{ scopeId: string; scopeNodeId?: string; parentNodeId?: string }>;
+          scopes?: Record<
+            string,
+            { metadata: { name: string }; spec: { title: string; defaultPath?: string[]; filters: ScopeSpecFilter[] } }
+          >;
+        },
+        prevState: {
+          appliedScopes: Array<{ scopeId: string; scopeNodeId?: string; parentNodeId?: string }>;
+          scopes?: Record<
+            string,
+            { metadata: { name: string }; spec: { title: string; defaultPath?: string[]; filters: ScopeSpecFilter[] } }
+          >;
+        }
       ) => void)
     | undefined;
   let dashboardsStateSubscription:
@@ -274,9 +287,11 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
+          scopes: {},
         },
         {
           appliedScopes: [],
+          scopes: {},
         }
       );
 
@@ -298,9 +313,11 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1', parentNodeId: 'parent1' }],
+          scopes: {},
         },
         {
           appliedScopes: [],
+          scopes: {},
         }
       );
 
@@ -320,9 +337,11 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node2' }],
+          scopes: {},
         },
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
+          scopes: {},
         }
       );
 
@@ -344,9 +363,11 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1' }],
+          scopes: {},
         },
         {
           appliedScopes: [],
+          scopes: {},
         }
       );
 
@@ -370,13 +391,169 @@ describe('ScopesService', () => {
       selectorStateSubscription(
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
+          scopes: {},
         },
         {
           appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'node1' }],
+          scopes: {},
         }
       );
 
       expect(locationService.partial).not.toHaveBeenCalled();
+    });
+
+    describe('defaultPath support', () => {
+      it('should extract scope_node from defaultPath when available', () => {
+        if (!selectorStateSubscription) {
+          throw new Error('selectorStateSubscription not set');
+        }
+
+        selectorStateSubscription(
+          {
+            appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'old-node' }],
+            scopes: {
+              scope1: {
+                metadata: { name: 'scope1' },
+                spec: {
+                  title: 'Scope 1',
+                  defaultPath: ['', 'parent-node', 'correct-node'],
+                  filters: [],
+                },
+              },
+            },
+          },
+          {
+            appliedScopes: [],
+            scopes: {},
+          }
+        );
+
+        // Should use 'correct-node' from defaultPath, not 'old-node' from appliedScopes
+        expect(locationService.partial).toHaveBeenCalledWith(
+          {
+            scopes: ['scope1'],
+            scope_node: 'correct-node',
+            scope_parent: null,
+          },
+          true
+        );
+      });
+
+      it('should fallback to scopeNodeId when defaultPath is not available', () => {
+        if (!selectorStateSubscription) {
+          throw new Error('selectorStateSubscription not set');
+        }
+
+        selectorStateSubscription(
+          {
+            appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'fallback-node' }],
+            scopes: {
+              scope1: {
+                metadata: { name: 'scope1' },
+                spec: {
+                  title: 'Scope 1',
+                  filters: [],
+                },
+              },
+            },
+          },
+          {
+            appliedScopes: [],
+            scopes: {},
+          }
+        );
+
+        // Should fallback to scopeNodeId from appliedScopes
+        expect(locationService.partial).toHaveBeenCalledWith(
+          {
+            scopes: ['scope1'],
+            scope_node: 'fallback-node',
+            scope_parent: null,
+          },
+          true
+        );
+      });
+
+      it('should handle empty defaultPath gracefully', () => {
+        if (!selectorStateSubscription) {
+          throw new Error('selectorStateSubscription not set');
+        }
+
+        selectorStateSubscription(
+          {
+            appliedScopes: [{ scopeId: 'scope1', scopeNodeId: 'fallback-node' }],
+            scopes: {
+              scope1: {
+                metadata: { name: 'scope1' },
+                spec: {
+                  title: 'Scope 1',
+                  defaultPath: [],
+                  filters: [],
+                },
+              },
+            },
+          },
+          {
+            appliedScopes: [],
+            scopes: {},
+          }
+        );
+
+        // Should fallback to scopeNodeId when defaultPath is empty
+        expect(locationService.partial).toHaveBeenCalledWith(
+          {
+            scopes: ['scope1'],
+            scope_node: 'fallback-node',
+            scope_parent: null,
+          },
+          true
+        );
+      });
+
+      it('should detect changes in defaultPath-derived scopeNodeId', () => {
+        if (!selectorStateSubscription) {
+          throw new Error('selectorStateSubscription not set');
+        }
+
+        selectorStateSubscription(
+          {
+            appliedScopes: [{ scopeId: 'scope1' }],
+            scopes: {
+              scope1: {
+                metadata: { name: 'scope1' },
+                spec: {
+                  title: 'Scope 1',
+                  defaultPath: ['', 'parent', 'new-node'],
+                  filters: [],
+                },
+              },
+            },
+          },
+          {
+            appliedScopes: [{ scopeId: 'scope1' }],
+            scopes: {
+              scope1: {
+                metadata: { name: 'scope1' },
+                spec: {
+                  title: 'Scope 1',
+                  defaultPath: ['', 'parent', 'old-node'],
+                  filters: [],
+                },
+              },
+            },
+          }
+        );
+
+        // Should detect the change in defaultPath-derived scopeNodeId
+        expect(locationService.partial).toHaveBeenCalledWith(
+          {
+            scopes: ['scope1'],
+            scope_node: 'new-node',
+            scope_parent: null,
+          },
+          true
+        );
+      });
     });
 
     it('should write navigation_scope to URL when navigationScope changes', () => {
@@ -618,6 +795,30 @@ describe('ScopesService', () => {
       expect(locationService.partial).toHaveBeenCalledWith(
         expect.objectContaining({
           scope_parent: null,
+        }),
+        true
+      );
+    });
+
+    it('should use defaultPath for scope_node when enabling scopes', () => {
+      selectorService.state.appliedScopes = [{ scopeId: 'scope1', scopeNodeId: 'old-node' }];
+      selectorService.state.scopes = {
+        scope1: {
+          metadata: { name: 'scope1' },
+          spec: {
+            title: 'Scope 1',
+            defaultPath: ['', 'parent', 'correct-node-from-defaultPath'],
+            filters: [],
+          },
+        },
+      };
+
+      service.setEnabled(true);
+
+      // Should use defaultPath instead of scopeNodeId from appliedScopes
+      expect(locationService.partial).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scope_node: 'correct-node-from-defaultPath',
         }),
         true
       );

@@ -57,7 +57,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
 
   async componentDidMount() {
     this.setState({ ready: true });
-    $('.preloader').remove();
+    this.removePreloader();
 
     // clear any old icon caches
     const cacheKeys = (await window.caches?.keys()) ?? [];
@@ -65,6 +65,15 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       if (key.startsWith('grafana-icon-cache') && key !== this.iconCacheID) {
         window.caches.delete(key);
       }
+    }
+  }
+
+  removePreloader() {
+    const preloader = document.querySelector('.preloader');
+    if (preloader) {
+      preloader.remove();
+    } else {
+      console.warn('Preloader element not found');
     }
   }
 

@@ -193,6 +193,8 @@ type MetaExtensions struct {
 	AddedComponents []MetaV0alpha1ExtensionsAddedComponents `json:"addedComponents,omitempty"`
 	// +listType=atomic
 	AddedLinks []MetaV0alpha1ExtensionsAddedLinks `json:"addedLinks,omitempty"`
+	// +listType=atomic
+	AddedFunctions []MetaV0alpha1ExtensionsAddedFunctions `json:"addedFunctions,omitempty"`
 	// +listType=set
 	// +listMapKey=id
 	ExposedComponents []MetaV0alpha1ExtensionsExposedComponents `json:"exposedComponents,omitempty"`
@@ -397,6 +399,21 @@ func NewMetaV0alpha1ExtensionsAddedLinks() *MetaV0alpha1ExtensionsAddedLinks {
 }
 
 // +k8s:openapi-gen=true
+type MetaV0alpha1ExtensionsAddedFunctions struct {
+	// +listType=set
+	Targets     []string `json:"targets"`
+	Title       string   `json:"title"`
+	Description *string  `json:"description,omitempty"`
+}
+
+// NewMetaV0alpha1ExtensionsAddedFunctions creates a new MetaV0alpha1ExtensionsAddedFunctions object.
+func NewMetaV0alpha1ExtensionsAddedFunctions() *MetaV0alpha1ExtensionsAddedFunctions {
+	return &MetaV0alpha1ExtensionsAddedFunctions{
+		Targets: []string{},
+	}
+}
+
+// +k8s:openapi-gen=true
 type MetaV0alpha1ExtensionsExposedComponents struct {
 	Id          string  `json:"id"`
 	Title       *string `json:"title,omitempty"`
@@ -504,6 +521,7 @@ const (
 	MetaIncludeRoleAdmin  MetaIncludeRole = "Admin"
 	MetaIncludeRoleEditor MetaIncludeRole = "Editor"
 	MetaIncludeRoleViewer MetaIncludeRole = "Viewer"
+	MetaIncludeRoleNone   MetaIncludeRole = "None"
 )
 
 // +k8s:openapi-gen=true

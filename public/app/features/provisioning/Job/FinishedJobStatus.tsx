@@ -86,6 +86,11 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
     };
   }, [finishedQuery, job, onStatusChange, retryFailed]);
 
+  // If retry failed, return null - parent handles the error via onStatusChange
+  if (retryFailed) {
+    return null;
+  }
+
   if (!job || finishedQuery.isLoading || finishedQuery.isFetching) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>

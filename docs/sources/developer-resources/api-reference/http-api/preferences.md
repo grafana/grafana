@@ -25,7 +25,7 @@ Keys:
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
 - **homeDashboardId** - Deprecated. Use `homeDashboardUID` instead.
 - **homeDashboardUID**: The `:uid` of a dashboard
-- **timezone** - One of: `utc`, `browser`, or an empty string for the default
+- **timezone** - Any valid IANA timezone string (e.g., `America/New_York`, `Europe/London`), `utc`, `browser`, or an empty string for the default.
 
 Omitting a key will cause the current value to be replaced with the
 system default value.

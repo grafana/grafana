@@ -21,8 +21,10 @@ type DecryptSecureValue struct {
 }
 
 var (
-	ErrSecureValueNotFound      = errors.New("secure value not found")
-	ErrSecureValueAlreadyExists = errors.New("secure value already exists")
+	ErrSecureValueNotFound            = errors.New("secure value not found")
+	ErrSecureValueAlreadyExists       = errors.New("secure value already exists")
+	ErrReferenceWithSystemKeeper      = errors.New("tried to create secure value using reference with system keeper, references can only be used with 3rd party keepers")
+	ErrSecureValueMissingSecretAndRef = errors.New("secure value spec doesn't have neither a secret or reference")
 )
 
 type ReadOpts struct {

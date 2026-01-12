@@ -43,10 +43,10 @@ export function BrowseView({ folderUID, width, height, permissions, isReadOnlyRe
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
-  const isProvisionedInstance = useIsProvisionedInstance();
   const provisioningEnabled = config.featureToggles.provisioning;
   const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled || hasNoRole ? skipToken : undefined);
+  const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);
 
   const [, stateManager] = useSearchStateManager();

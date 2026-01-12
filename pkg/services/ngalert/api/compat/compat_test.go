@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestToModel(t *testing.T) {
@@ -113,6 +114,102 @@ func TestToModel(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, time.Duration(0), tm.Rules[0].KeepFiringFor)
 	})
+}
+
+func TestAlertRuleExportFromAlertRule(t *testing.T) {
+	alertingRule := models.RuleGen.With(
+		models.RuleGen.WithNotEmptyLabels(2, "lbl-"),
+		models.RuleGen.WithAnnotations(map[string]string{"ann-key": "ann-value"}),
+		models.RuleGen.WithFor(2*time.Minute),
+		models.RuleGen.WithKeepFiringFor(5*time.Minute),
+		models.RuleGen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+	).Generate()
+	recordingRule := models.RuleGen.With(
+		models.RuleGen.WithAllRecordingRules(),
+		models.RuleGen.WithNotEmptyLabels(2, "lbl-"),
+		models.RuleGen.WithAnnotations(map[string]string{"ann-key": "ann-value"}),
+	).Generate()
+
+	// Build expected exported recording rule
+	recordingRuleData, err := AlertQueryExportFromAlertQuery(recordingRule.Data[0])
+	require.NoError(t, err)
+	expectedRecordingRuleExport := definitions.AlertRuleExport{
+		UID:         recordingRule.UID,
+		Title:       recordingRule.Title,
+		Data:        []definitions.AlertQueryExport{recordingRuleData},
+		Annotations: &recordingRule.Annotations,
+		Labels:      &recordingRule.Labels,
+		Record: &definitions.AlertRuleRecordExport{
+			Metric:              recordingRule.Record.Metric,
+			From:                recordingRule.Record.From,
+			TargetDatasourceUID: util.Pointer(recordingRule.Record.TargetDatasourceUID),
+		},
+	}
+
+	// Build expected exported alerting rule
+	alertingRuleData, err := AlertQueryExportFromAlertQuery(alertingRule.Data[0])
+	require.NoError(t, err)
+	noDataState := definitions.NoDataState(alertingRule.NoDataState)
+	execErrState := definitions.ExecutionErrorState(alertingRule.ExecErrState)
+	expectedAlertingRuleExport := definitions.AlertRuleExport{
+		UID:                         alertingRule.UID,
+		Title:                       alertingRule.Title,
+		Condition:                   &alertingRule.Condition,
+		Data:                        []definitions.AlertQueryExport{alertingRuleData},
+		DashboardUID:                alertingRule.DashboardUID,
+		PanelID:                     alertingRule.PanelID,
+		NoDataState:                 &noDataState,
+		ExecErrState:                &execErrState,
+		For:                         prommodel.Duration(alertingRule.For),
+		KeepFiringFor:               prommodel.Duration(alertingRule.KeepFiringFor),
+		ForString:                   util.Pointer(prommodel.Duration(alertingRule.For).String()),
+		KeepFiringForString:         util.Pointer(prommodel.Duration(alertingRule.KeepFiringFor).String()),
+		Annotations:                 &alertingRule.Annotations,
+		Labels:                      &alertingRule.Labels,
+		NotificationSettings:        AlertRuleNotificationSettingsExportFromNotificationSettings(alertingRule.NotificationSettings),
+		MissingSeriesEvalsToResolve: alertingRule.MissingSeriesEvalsToResolve,
+	}
+
+	testCases := []struct {
+		name     string
+		rule     models.AlertRule
+		expected definitions.AlertRuleExport
+	}{
+		{
+			name:     "export recording rule",
+			rule:     recordingRule,
+			expected: expectedRecordingRuleExport,
+		},
+		{
+			name:     "export alerting rule",
+			rule:     alertingRule,
+			expected: expectedAlertingRuleExport,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			exported, err := AlertRuleExportFromAlertRule(tc.rule)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, exported)
+		})
+	}
+}
+
+func TestAlertQueryExportFromAlertQuery(t *testing.T) {
+	query := models.RuleGen.GenerateQuery()
+
+	exported, err := AlertQueryExportFromAlertQuery(query)
+	require.NoError(t, err)
+
+	require.Equal(t, query.RefID, exported.RefID)
+	require.Equal(t, query.DatasourceUID, exported.DatasourceUID)
+	require.Equal(t, int64(time.Duration(query.RelativeTimeRange.From).Seconds()), exported.RelativeTimeRange.FromSeconds)
+	require.Equal(t, int64(time.Duration(query.RelativeTimeRange.To).Seconds()), exported.RelativeTimeRange.ToSeconds)
+	require.NotNil(t, exported.QueryType)
+	require.Equal(t, query.QueryType, *exported.QueryType)
+	require.NotNil(t, exported.Model)
+	require.NotEmpty(t, exported.ModelString)
 }
 
 func TestAlertRuleMetadataFromModelMetadata(t *testing.T) {

@@ -198,11 +198,21 @@ func CreateDataFrame(val OpenTsdbCommon, length int, refID string) *data.Frame {
 	sort.Strings(tagKeys)
 	tagKeys = append(tagKeys, val.AggregateTags...)
 
+	custom := map[string]any{
+		"tagKeys": tagKeys,
+	}
+	if len(val.Annotations) > 0 {
+		custom["annotations"] = val.Annotations
+	}
+	if len(val.GlobalAnnotations) > 0 {
+		custom["globalAnnotations"] = val.GlobalAnnotations
+	}
+
 	frame := data.NewFrameOfFieldTypes(val.Metric, length, data.FieldTypeTime, data.FieldTypeFloat64)
 	frame.Meta = &data.FrameMeta{
 		Type:        data.FrameTypeTimeSeriesMulti,
 		TypeVersion: data.FrameTypeVersion{0, 1},
-		Custom:      map[string]any{"tagKeys": tagKeys},
+		Custom:      custom,
 	}
 	frame.RefID = refID
 	timeField := frame.Fields[0]

@@ -189,42 +189,11 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		data = append(data, query)
 	}
 
-	cPtr := &rule.Condition
-	if rule.Condition == "" {
-		cPtr = nil
-	}
-
-	noDataState := definitions.NoDataState(rule.NoDataState)
-	ndsPtr := &noDataState
-	if noDataState == "" {
-		ndsPtr = nil
-	}
-	execErrorState := definitions.ExecutionErrorState(rule.ExecErrState)
-	eesPtr := &execErrorState
-	if execErrorState == "" {
-		eesPtr = nil
-	}
-
 	result := definitions.AlertRuleExport{
-		UID:                  rule.UID,
-		Title:                rule.Title,
-		For:                  model.Duration(rule.For),
-		KeepFiringFor:        model.Duration(rule.KeepFiringFor),
-		Condition:            cPtr,
-		Data:                 data,
-		DashboardUID:         rule.DashboardUID,
-		PanelID:              rule.PanelID,
-		NoDataState:          ndsPtr,
-		ExecErrState:         eesPtr,
-		IsPaused:             rule.IsPaused,
-		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
-		Record:               AlertRuleRecordExportFromRecord(rule.Record),
-	}
-	if rule.For.Seconds() > 0 {
-		result.ForString = util.Pointer(model.Duration(rule.For).String())
-	}
-	if rule.KeepFiringFor.Seconds() > 0 {
-		result.KeepFiringForString = util.Pointer(model.Duration(rule.KeepFiringFor).String())
+		UID:      rule.UID,
+		Title:    rule.Title,
+		Data:     data,
+		IsPaused: rule.IsPaused,
 	}
 	if rule.Annotations != nil {
 		result.Annotations = &rule.Annotations
@@ -232,11 +201,52 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	if rule.Labels != nil {
 		result.Labels = &rule.Labels
 	}
-	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
-		result.MissingSeriesEvalsToResolve = rule.MissingSeriesEvalsToResolve
+
+	if rule.Type() == models.RuleTypeRecording {
+		populateRecordingRuleExportFields(rule, &result)
+	} else {
+		populateAlertingRuleExportFields(rule, &result)
 	}
 
 	return result, nil
+}
+
+func populateRecordingRuleExportFields(rule models.AlertRule, result *definitions.AlertRuleExport) {
+	result.Record = AlertRuleRecordExportFromRecord(rule.Record)
+}
+
+func populateAlertingRuleExportFields(rule models.AlertRule, result *definitions.AlertRuleExport) {
+	result.DashboardUID = rule.DashboardUID
+	result.PanelID = rule.PanelID
+	result.NotificationSettings = AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings)
+
+	if rule.Condition != "" {
+		result.Condition = &rule.Condition
+	}
+
+	if rule.NoDataState != "" {
+		noDataState := definitions.NoDataState(rule.NoDataState)
+		result.NoDataState = &noDataState
+	}
+
+	if rule.ExecErrState != "" {
+		execErrorState := definitions.ExecutionErrorState(rule.ExecErrState)
+		result.ExecErrState = &execErrorState
+	}
+
+	result.For = model.Duration(rule.For)
+	if rule.For > 0 {
+		result.ForString = util.Pointer(model.Duration(rule.For).String())
+	}
+
+	result.KeepFiringFor = model.Duration(rule.KeepFiringFor)
+	if rule.KeepFiringFor > 0 {
+		result.KeepFiringForString = util.Pointer(model.Duration(rule.KeepFiringFor).String())
+	}
+
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
+		result.MissingSeriesEvalsToResolve = rule.MissingSeriesEvalsToResolve
+	}
 }
 
 func encodeQueryModel(m map[string]any) (string, error) {

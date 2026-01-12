@@ -303,7 +303,8 @@ func TestValidateRepository(t *testing.T) {
 	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errors := validator.ValidateRepository(tt.repository)
+			// Tests validate new configurations, so always pass isCreate=true
+			errors := validator.ValidateRepository(tt.repository, true)
 			require.Len(t, errors, tt.expectedErrs)
 			if tt.validateError != nil {
 				tt.validateError(t, errors)

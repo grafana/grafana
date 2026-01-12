@@ -8,5 +8,5 @@ export interface UserView {
     avatarUrl?: string;
   };
   /** Datetime string when the user was last active */
-  lastActiveAt: DateTimeInput;
+  lastActiveAt?: DateTimeInput;
 }

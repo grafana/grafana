@@ -93,6 +93,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -225,6 +226,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -1300,6 +1302,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -1405,6 +1408,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2476,6 +2480,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2645,6 +2650,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -2935,6 +2941,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -3139,6 +3146,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -4405,6 +4413,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -5334,6 +5343,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6630,6 +6640,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6928,6 +6939,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "token",
@@ -6946,6 +6958,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -6994,6 +7007,24 @@
             "description": "Body of the slack message",
             "placeholder": "{{ template \"slack.default.text\" . }}",
             "propertyName": "text",
+            "selectOptions": null,
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": null
+          },
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "Footer",
+            "description": "Templated footer of the slack message",
+            "placeholder": "{{ template \"slack.default.footer\" . }}",
+            "propertyName": "footer",
             "selectOptions": null,
             "showWhen": {
               "field": "",
@@ -9237,6 +9268,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -11515,6 +11547,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "",
@@ -12308,6 +12341,7 @@
               "is": ""
             },
             "required": false,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -13001,6 +13035,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": false,
             "dependsOn": "",
@@ -13443,6 +13478,7 @@
                       "is": ""
                     },
                     "required": true,
+                    "protected": true,
                     "validationRule": "",
                     "secure": false,
                     "dependsOn": "",
@@ -13641,6 +13677,7 @@
                           "is": ""
                         },
                         "required": false,
+                        "protected": true,
                         "validationRule": "",
                         "secure": false,
                         "dependsOn": "",
@@ -15072,6 +15109,7 @@
               "is": ""
             },
             "required": true,
+            "protected": true,
             "validationRule": "",
             "secure": true,
             "dependsOn": "secret",

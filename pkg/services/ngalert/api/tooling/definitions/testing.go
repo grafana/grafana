@@ -221,15 +221,21 @@ type BacktestConfig struct {
 	To       time.Time      `json:"to"`
 	Interval model.Duration `json:"interval,omitempty"`
 
-	Condition string         `json:"condition"`
-	Data      []AlertQuery   `json:"data"`
-	For       model.Duration `json:"for,omitempty"`
+	Condition     string          `json:"condition"`
+	Data          []AlertQuery    `json:"data"`
+	For           *model.Duration `json:"for,omitempty"`
+	KeepFiringFor *model.Duration `json:"keep_firing_for,omitempty"`
 
-	Title       string            `json:"title"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Annotations map[string]string `json:"annotations,omitempty"`
+	Title  string            `json:"title"`
+	Labels map[string]string `json:"labels,omitempty"`
 
-	NoDataState NoDataState `json:"no_data_state"`
+	NoDataState                 NoDataState         `json:"no_data_state"`
+	ExecErrState                ExecutionErrorState `json:"exec_err_state"`
+	MissingSeriesEvalsToResolve *int64              `json:"missing_series_evals_to_resolve,omitempty"`
+
+	UID          string `json:"uid,omitempty"`
+	RuleGroup    string `json:"rule_group,omitempty"`
+	NamespaceUID string `json:"namespace_uid,omitempty"`
 }
 
 // swagger:model

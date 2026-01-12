@@ -10,9 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -31,6 +33,20 @@ type ResourceMigration struct {
 	migrationID string
 	validators  []Validator // Optional: custom validation logic for this migration
 	log         log.Logger
+	cfg         *setting.Cfg
+	autoMigrate bool // If true, auto-migrate resource if count is below threshold
+	hadErrors   bool // Tracks if errors occurred during migration (used with ignoreErrors)
+}
+
+// ResourceMigrationOption is a functional option for configuring ResourceMigration.
+type ResourceMigrationOption func(*ResourceMigration)
+
+// WithAutoMigrate configures the migration to auto-migrate resource if count is below threshold.
+func WithAutoMigrate(cfg *setting.Cfg) ResourceMigrationOption {
+	return func(m *ResourceMigration) {
+		m.cfg = cfg
+		m.autoMigrate = true
+	}
 }
 
 // NewResourceMigration creates a new migration for the specified resources.
@@ -39,14 +55,24 @@ func NewResourceMigration(
 	resources []schema.GroupResource,
 	migrationID string,
 	validators []Validator,
+	opts ...ResourceMigrationOption,
 ) *ResourceMigration {
-	return &ResourceMigration{
+	m := &ResourceMigration{
 		migrator:    migrator,
 		resources:   resources,
 		migrationID: migrationID,
 		validators:  validators,
 		log:         log.New("storage.unified.resource_migration." + migrationID),
 	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+func (m *ResourceMigration) SkipMigrationLog() bool {
+	// Skip populating the log table if auto-migrate is enabled and errors occurred
+	return m.autoMigrate && m.hadErrors
 }
 
 var _ migrator.CodeMigration = (*ResourceMigration)(nil)
@@ -57,7 +83,23 @@ func (m *ResourceMigration) SQL(_ migrator.Dialect) string {
 }
 
 // Exec implements migrator.CodeMigration interface. Executes the migration across all organizations.
-func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) (err error) {
+	// Track any errors that occur during migration
+	defer func() {
+		if err != nil {
+			if m.autoMigrate {
+				m.log.Warn(
+					`[WARN] Resource migration failed and is currently skipped. 
+This migration will be enforced in the next major Grafana release, where failures will block startup or resource loading.
+
+This warning is intended to help you detect and report issues early. 
+Please investigate the failure and report it to the Grafana team so it can be addressed before the next major release.`,
+					"error", err)
+			}
+			m.hadErrors = true
+		}
+	}()
+
 	ctx := context.Background()
 
 	orgs, err := m.getAllOrgs(sess)
@@ -75,7 +117,8 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 
 	if mg.Dialect.DriverName() == migrator.SQLite {
 		// reuse transaction in SQLite to avoid "database is locked" errors
-		tx, err := sess.Tx()
+		var tx *core.Tx
+		tx, err = sess.Tx()
 		if err != nil {
 			m.log.Error("Failed to get transaction from session", "error", err)
 			return fmt.Errorf("failed to get transaction: %w", err)
@@ -85,12 +128,22 @@ func (m *ResourceMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 	}
 
 	for _, org := range orgs {
-		if err := m.migrateOrg(ctx, sess, org); err != nil {
+		if err = m.migrateOrg(ctx, sess, org); err != nil {
 			return err
 		}
 	}
 
+	// Auto-enable mode 5 for resources after successful migration
+	// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
+	if m.autoMigrate {
+		for _, gr := range m.resources {
+			m.log.Info("Auto-enabling mode 5 for resource", "resource", gr.Resource+"."+gr.Group)
+			m.cfg.EnableMode5(gr.Resource + "." + gr.Group)
+		}
+	}
+
 	m.log.Info("Migration completed successfully for all organizations", "org_count", len(orgs))
+
 	return nil
 }
 

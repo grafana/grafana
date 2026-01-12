@@ -31,6 +31,9 @@ export const getPluginsStateMock = (plugins: CatalogPlugin[] = []): ReducerState
     'plugins/fetchDetails': {
       status: RequestStatus.Fulfilled,
     },
+    'plugins/fetchPluginInsights': {
+      status: RequestStatus.Fulfilled,
+    },
   },
   // Backward compatibility
   plugins: [],
@@ -73,6 +76,11 @@ export const mockPluginApis = ({
       // Mock versions
       if (versions && path === `${GCOM_API_ROOT}/plugins/${remote.slug}/versions`) {
         return Promise.resolve({ items: versions });
+      }
+
+      // Mock plugin insights - return empty insights to avoid API call errors
+      if (path.includes('/insights')) {
+        return Promise.resolve({ id: 1, name: '', version: '', insights: [] });
       }
 
       // Mock local plugin settings (installed) if necessary

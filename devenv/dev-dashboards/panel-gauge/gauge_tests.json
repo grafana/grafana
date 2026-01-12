@@ -600,6 +600,20 @@
           "stringInput": "null,null"
         }
       ],
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "fields": {},
+            "conversions": [
+              {
+                "targetField": "A-series",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ],
       "title": "Only nulls and no user set min & max",
       "type": "gauge"
     },

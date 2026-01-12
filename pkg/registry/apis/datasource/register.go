@@ -21,6 +21,7 @@ import (
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -69,10 +70,10 @@ func RegisterAPIService(
 
 	dataSourceCRUDMetric := metricutil.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
-		Name:      "ds_config_handler_requests_duration_seconds",
-		Help:      "Duration of requests handled by datasource configuration handlers",
-	}, []string{"code_path", "handler"})
-	regErr := reg.Register(dataSourceCRUDMetric)
+		Name:      "ds_config_handler_apis_requests_duration_seconds",
+		Help:      "Duration of requests handled by new k8s style APIs datasource configuration handlers",
+	}, []string{"handler"})
+	regErr := metrics.ProvideRegisterer().Register(dataSourceCRUDMetric)
 	if regErr != nil && !errors.As(regErr, &prometheus.AlreadyRegisteredError{}) {
 		return nil, regErr
 	}

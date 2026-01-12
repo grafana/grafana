@@ -6,7 +6,7 @@ import { dispatch as storeDispatch } from 'app/store/store';
 import { AppNotificationSeverity, AppNotification } from 'app/types/appNotifications';
 import { useDispatch } from 'app/types/store';
 
-import { notifyApp } from '../actions';
+import { notifyApp } from '../reducers/appNotification';
 
 const defaultSuccessNotification = {
   title: '',

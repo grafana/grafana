@@ -115,6 +115,7 @@ func ProvideUnifiedStorageGrpcService(
 		cfg:                cfg,
 		features:           features,
 		stopCh:             make(chan struct{}),
+		stoppedCh:          make(chan error, 1),
 		authenticator:      authn,
 		tracing:            tracer,
 		db:                 db,

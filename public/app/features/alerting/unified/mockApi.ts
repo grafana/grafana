@@ -9,6 +9,7 @@ import {
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
+import { resetUserStorage } from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 import { DashboardDTO } from 'app/types/dashboard';
 import { FolderDTO } from 'app/types/folders';
 import {
@@ -241,6 +242,10 @@ export function mockDashboardApi(server: SetupServer) {
   };
 }
 
+export function setupBackendSrv() {
+  setBackendSrv(backendSrv);
+}
+
 /**
  * Sets up MSW server with additional handlers for Alerting tests
  */
@@ -248,7 +253,7 @@ export function setupMswServer() {
   setupMockServer(allHandlers);
 
   beforeAll(() => {
-    setBackendSrv(backendSrv);
+    setupBackendSrv();
   });
 
   afterEach(() => {
@@ -256,6 +261,7 @@ export function setupMswServer() {
     setupAlertmanagerConfigMapDefaultState();
     setupAlertmanagerStatusMapDefaultState();
     resetRoutingTreeMap();
+    resetUserStorage();
   });
 
   return server;

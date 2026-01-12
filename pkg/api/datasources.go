@@ -204,7 +204,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Response {
 	start := time.Now()
 	defer func() {
-		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "GetDataSourceByUID"), time.Since(start).Seconds())
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("GetDataSourceByUID"), time.Since(start).Seconds())
 	}()
 
 	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.GetOrgID())
@@ -240,7 +240,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Re
 func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response.Response {
 	start := time.Now()
 	defer func() {
-		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "DeleteDataSourceByUID"), time.Since(start).Seconds())
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("DeleteDataSourceByUID"), time.Since(start).Seconds())
 	}()
 
 	uid := web.Params(c.Req)[":uid"]
@@ -375,7 +375,7 @@ func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
 func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Response {
 	start := time.Now()
 	defer func() {
-		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "AddDataSource"), time.Since(start).Seconds())
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("AddDataSource"), time.Since(start).Seconds())
 	}()
 
 	cmd := datasources.AddDataSourceCommand{}
@@ -497,7 +497,7 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response.Response {
 	start := time.Now()
 	defer func() {
-		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "UpdateDataSourceByUID"), time.Since(start).Seconds())
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("UpdateDataSourceByUID"), time.Since(start).Seconds())
 	}()
 	cmd := datasources.UpdateDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {

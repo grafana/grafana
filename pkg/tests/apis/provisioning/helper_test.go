@@ -695,6 +695,9 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 			},
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,
+		// Allow both folder and instance sync targets for tests
+		// (instance is needed for export jobs, folder for most operations)
+		ProvisioningAllowedTargets: []string{"folder", "instance"},
 	}
 	for _, o := range options {
 		o(&opts)

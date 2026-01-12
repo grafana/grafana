@@ -222,8 +222,10 @@ lineage: schemas: [{
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string
-      // Determine whether regex applies to variable value or display text
-      regexApplyTo?: #VariableRegexApplyTo
+			// Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+			valuesFormat?: "csv" | "json" | *"csv"
+			// Determine whether regex applies to variable value or display text
+			regexApplyTo?: #VariableRegexApplyTo
 			// Additional static options for query variable
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable

@@ -9,11 +9,14 @@ import { generatedAPI as folderAPIv1beta1 } from './folder/v1beta1';
 import { generatedAPI as historianAlertingAPIv0alpha1 } from './historian.alerting/v0alpha1';
 import { generatedAPI as iamAPIv0alpha1 } from './iam/v0alpha1';
 import { generatedAPI as logsdrilldownAPIv1alpha1 } from './logsdrilldown/v1alpha1';
+import { generatedAPI as logsdrilldownAPIv1beta1 } from './logsdrilldown/v1beta1';
 import { generatedAPI as migrateToCloudAPI } from './migrate-to-cloud';
+import { generatedAPI as notificationsAlertingAPIv0alpha1 } from './notifications.alerting/v0alpha1';
 import { generatedAPI as playlistAPIv0alpha1 } from './playlist/v0alpha1';
 import { generatedAPI as preferencesUserAPI } from './preferences/user';
 import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
+import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
 import { generatedAPI as legacyUserAPI } from './user';
 // PLOP_INJECT_IMPORT
@@ -33,7 +36,10 @@ export const allMiddleware = [
   shortURLAPIv1beta1.middleware,
   correlationsAPIv0alpha1.middleware,
   legacyUserAPI.middleware,
+  notificationsAlertingAPIv0alpha1.middleware,
+  rulesAlertingAPIv0alpha1.middleware,
   historianAlertingAPIv0alpha1.middleware,
+  logsdrilldownAPIv1beta1.middleware,
   logsdrilldownAPIv1alpha1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
@@ -53,8 +59,11 @@ export const allReducers = {
   [shortURLAPIv1beta1.reducerPath]: shortURLAPIv1beta1.reducer,
   [correlationsAPIv0alpha1.reducerPath]: correlationsAPIv0alpha1.reducer,
   [legacyUserAPI.reducerPath]: legacyUserAPI.reducer,
+  [notificationsAlertingAPIv0alpha1.reducerPath]: notificationsAlertingAPIv0alpha1.reducer,
+  [rulesAlertingAPIv0alpha1.reducerPath]: rulesAlertingAPIv0alpha1.reducer,
   [historianAlertingAPIv0alpha1.reducerPath]: historianAlertingAPIv0alpha1.reducer,
   [logsdrilldownAPIv1alpha1.reducerPath]: logsdrilldownAPIv1alpha1.reducer,
+  [logsdrilldownAPIv1beta1.reducerPath]: logsdrilldownAPIv1beta1.reducer,
   // PLOP_INJECT_REDUCER
 };
 

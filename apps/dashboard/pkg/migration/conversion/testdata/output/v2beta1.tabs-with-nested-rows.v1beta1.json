@@ -54,6 +54,10 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "defin43am9o1sd"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -167,6 +171,10 @@
         "id": -1,
         "panels": [
           {
+            "datasource": {
+              "type": "grafana-testdata-datasource",
+              "uid": "defin43am9o1sd"
+            },
             "fieldConfig": {
               "defaults": {
                 "color": {
@@ -271,6 +279,10 @@
         "id": -1,
         "panels": [
           {
+            "datasource": {
+              "type": "grafana-testdata-datasource",
+              "uid": "defin43am9o1sd"
+            },
             "fieldConfig": {
               "defaults": {
                 "color": {
@@ -361,6 +373,10 @@
             "type": "timeseries"
           },
           {
+            "datasource": {
+              "type": "grafana-testdata-datasource",
+              "uid": "defin43am9o1sd"
+            },
             "fieldConfig": {
               "defaults": {
                 "color": {

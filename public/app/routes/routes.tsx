@@ -30,7 +30,7 @@ const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
-  return [
+  const routes: Array<RouteDescriptor | undefined | false> = [
     // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
     // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
     ...getAppPluginRoutes(),
@@ -77,6 +77,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/:type/:slug',
+      allowAnonymous: (params) => params.type === 'snapshot',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
@@ -223,7 +224,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/extensions',
-      navId: 'extensions',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite]),
       component:
@@ -560,7 +560,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/*',
       component: PageNotFound,
     },
-  ].filter(isTruthy);
+  ];
+
+  return routes.filter(isTruthy);
 }
 
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {

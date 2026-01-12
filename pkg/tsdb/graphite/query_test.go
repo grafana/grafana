@@ -182,7 +182,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -196,8 +196,8 @@ func TestConvertResponses(t *testing.T) {
 		body := `
 		[
 			{
-				"target": "target",
-				"tags": { "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
+				"target": "aliasedTarget(target)",
+				"tags": { "name": "target", "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
 		]`
@@ -211,18 +211,19 @@ func TestConvertResponses(t *testing.T) {
 				"barTag": "barValue",
 				"int":    "100",
 				"float":  "3.14",
-			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
+				"name":   "target",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "aliasedTarget(target)"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
 			expectedFramesJSON, _ := json.Marshal(expectedFrames)
 			dataFramesJSON, _ := json.Marshal(dataFrames)
-			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
+			t.Errorf("Data frames should have been equal but were not, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
 		}
 	})
 
@@ -239,7 +240,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -280,7 +281,42 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+
+		require.NoError(t, err)
+		if !reflect.DeepEqual(expectedFrames, dataFrames) {
+			expectedFramesJSON, _ := json.Marshal(expectedFrames)
+			dataFramesJSON, _ := json.Marshal(dataFrames)
+			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
+		}
+	})
+
+	t.Run("Uses target as series name for alerts", func(*testing.T) {
+		body := `
+		[
+			{
+				"target": "aliasedTarget(target)",
+				"tags": { "name": "target", "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
+				"datapoints": [[50, 1], [null, 2], [100, 3]]
+			}
+		]`
+		a := 50.0
+		b := 100.0
+		refId := "A"
+		expectedFrame := data.NewFrame("A",
+			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
+			data.NewField("value", data.Labels{
+				"fooTag": "fooValue",
+				"barTag": "barValue",
+				"int":    "100",
+				"float":  "3.14",
+				"name":   "aliasedTarget(target)",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "aliasedTarget(target)"}),
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+		expectedFrames := data.Frames{expectedFrame}
+
+		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
+		dataFrames, err := service.toDataFrames(httpResponse, refId, true)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {

@@ -78,6 +78,9 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 			ctx = types.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "*",
+					Permissions: []string{
+						zanzana.TokenPermissionUpdate,
+					},
 				},
 			}))
 			return ctx, nil
@@ -87,7 +90,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 		authzv1.RegisterAuthzServiceServer(channel, srv)
 		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
 
-		client, err := zClient.New(channel)
+		client, err := zClient.New(channel, reg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
@@ -166,7 +169,7 @@ func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) 
 		return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 	}
 
-	client, err := zClient.New(conn)
+	client, err := zClient.New(conn, reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 	}

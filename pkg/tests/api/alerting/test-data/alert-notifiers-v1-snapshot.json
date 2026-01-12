@@ -2699,6 +2699,24 @@
         "secure": false,
         "dependsOn": "",
         "subformOptions": null
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Footer",
+        "description": "Templated footer of the slack message",
+        "placeholder": "{{ template \"slack.default.footer\" . }}",
+        "propertyName": "footer",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false,
+        "dependsOn": "",
+        "subformOptions": null
       }
     ]
   },

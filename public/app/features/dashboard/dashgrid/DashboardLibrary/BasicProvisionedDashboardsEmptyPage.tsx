@@ -78,6 +78,7 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
       creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
 
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;

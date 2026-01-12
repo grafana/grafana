@@ -61,7 +61,6 @@ describe('Tempo data source', () => {
 
   describe('runs correctly', () => {
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
-    const request = jest.spyOn(TempoDatasource.prototype, '_request');
     const templateSrv: TemplateSrv = { replace: (s: string) => s } as unknown as TemplateSrv;
 
     const range = {
@@ -97,7 +96,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(0);
     });
 
     it('for traceqlSearch queries when live is enabled', async () => {
@@ -105,7 +103,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(0);
     });
 
     it('for traceql queries when live is not enabled', async () => {
@@ -113,7 +110,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(1);
     });
 
     it('for traceqlSearch queries when live is not enabled', async () => {
@@ -121,7 +117,6 @@ describe('Tempo data source', () => {
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
-      expect(request).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -759,6 +754,19 @@ describe('Tempo service graph view', () => {
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
       'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
       'test\\\\path',
+    ]);
+  });
+
+  it('should escape span with multi line content correctly', () => {
+    const spanContent = [
+      `
+      SELECT * from "my_table"
+      WHERE "data_enabled" = 1
+      ORDER BY "name" ASC`,
+    ];
+    let escaped = getEscapedRegexValues(getEscapedValues(spanContent));
+    expect(escaped).toEqual([
+      '\\n      SELECT \\\\* from \\"my_table\\"\\n      WHERE \\"data_enabled\\" = 1\\n      ORDER BY \\"name\\" ASC',
     ]);
   });
 

@@ -1,17 +1,43 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { RefObject, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
+import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
+import { useDashboardState } from '../../utils/utils';
+import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
+import { getIsLazy } from '../layouts-shared/utils';
 
 import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
+
+interface PanelWrapperProps {
+  panel: VizPanel;
+  isLazy: boolean;
+  containerRef?: RefObject<HTMLDivElement>;
+}
+
+function PanelWrapper({ panel, isLazy, containerRef }: PanelWrapperProps) {
+  if (isLazy) {
+    return (
+      <LazyLoader key={panel.state.key!} ref={containerRef} className={panelWrapper}>
+        <panel.Component model={panel} />
+      </LazyLoader>
+    );
+  }
+  return (
+    <div className={panelWrapper} ref={containerRef}>
+      <panel.Component model={panel} />
+    </div>
+  );
+}
 
 export function DashboardGridItemRenderer({ model }: SceneComponentProps<DashboardGridItem>) {
   const { repeatedPanels = [], itemHeight, variableName, body } = model.useState();
   const soloPanelContext = useSoloPanelContext();
+  const { preload } = useDashboardState(model);
+  const isLazy = useMemo(() => getIsLazy(preload), [preload]);
   const layoutStyle = useLayoutStyle(
     model.getRepeatDirection(),
     model.getChildCount(),
@@ -20,26 +46,22 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
   );
 
   if (soloPanelContext) {
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
+    // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
+    // as it renders multiple panels in a grid. Skip lazy loading for viewPanel URL param
+    // (SoloPanelContextWithPathIdFilter) since single panels should render immediately.
+    const useLazyForSoloPanel = isLazy && soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
   }
 
   if (!variableName) {
-    return (
-      <div className={panelWrapper} ref={model.containerRef}>
-        <body.Component model={body} key={body.state.key} />
-      </div>
-    );
+    return <PanelWrapper panel={body} isLazy={isLazy} containerRef={model.containerRef} />;
   }
 
   return (
     <div className={layoutStyle} ref={model.containerRef}>
-      <div className={panelWrapper} key={body.state.key}>
-        <body.Component model={body} key={body.state.key} />
-      </div>
+      <PanelWrapper panel={body} isLazy={isLazy} />
       {repeatedPanels.map((panel) => (
-        <div className={panelWrapper} key={panel.state.key}>
-          <panel.Component model={panel} key={panel.state.key} />
-        </div>
+        <PanelWrapper key={panel.state.key!} panel={panel} isLazy={isLazy} />
       ))}
     </div>
   );

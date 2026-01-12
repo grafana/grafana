@@ -34,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type folderService interface {
@@ -230,54 +229,27 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return ErrResp(http.StatusNotFound, nil, "Backgtesting API is not enabled")
 	}
 
-	if cmd.From.After(cmd.To) {
-		return ErrResp(400, nil, "From cannot be greater than To")
-	}
-
-	noDataState, err := ngmodels.NoDataStateFromString(string(cmd.NoDataState))
-
+	rule, err := apivalidation.ValidateBacktestConfig(c.GetOrgID(), cmd, apivalidation.RuleLimitsFromConfig(srv.cfg, srv.featureManager))
 	if err != nil {
-		return ErrResp(400, err, "")
-	}
-	forInterval := time.Duration(cmd.For)
-	if forInterval < 0 {
-		return ErrResp(400, nil, "Bad For interval")
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	intervalSeconds, err := apivalidation.ValidateInterval(time.Duration(cmd.Interval), srv.cfg.BaseInterval)
-	if err != nil {
-		return ErrResp(400, err, "")
-	}
-
-	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, &ngmodels.AlertRule{Data: queries}); err != nil {
+	if err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, rule); err != nil {
 		return errorToResponse(err)
 	}
 
-	rule := &ngmodels.AlertRule{
-		// ID:             0,
-		// Updated:        time.Time{},
-		// Version:        0,
-		// NamespaceUID:   "",
-		// DashboardUID:   nil,
-		// PanelID:        nil,
-		// RuleGroup:      "",
-		// RuleGroupIndex: 0,
-		// ExecErrState:   "",
-		Title: cmd.Title,
-		// prefix backtesting- is to distinguish between executions of regular rule and backtesting in logs (like expression engine, evaluator, state manager etc)
-		UID:             "backtesting-" + util.GenerateShortUID(),
-		OrgID:           c.GetOrgID(),
-		Condition:       cmd.Condition,
-		Data:            queries,
-		IntervalSeconds: intervalSeconds,
-		NoDataState:     noDataState,
-		For:             forInterval,
-		Annotations:     cmd.Annotations,
-		Labels:          cmd.Labels,
+	// Fetch folder path for alert labels, fallback to "Backtesting" if not available
+	var folderTitle string
+	if cmd.NamespaceUID != "" {
+		f, err := srv.folderService.GetNamespaceByUID(c.Req.Context(), cmd.NamespaceUID, c.OrgID, c.SignedInUser)
+		if err != nil {
+			srv.log.FromContext(c.Req.Context()).Warn("Failed to fetch folder path for alert labels", "error", err)
+		} else {
+			folderTitle = f.Fullpath
+		}
 	}
 
-	result, err := srv.backtesting.Test(c.Req.Context(), c.SignedInUser, rule, cmd.From, cmd.To)
+	result, err := srv.backtesting.Test(c.Req.Context(), c.SignedInUser, rule, cmd.From, cmd.To, folderTitle)
 	if err != nil {
 		if errors.Is(err, backtesting.ErrInvalidInputData) {
 			return ErrResp(400, err, "Failed to evaluate")
@@ -285,9 +257,5 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return ErrResp(500, err, "Failed to evaluate")
 	}
 
-	body, err := data.FrameToJSON(result, data.IncludeAll)
-	if err != nil {
-		return ErrResp(500, err, "Failed to convert frame to JSON")
-	}
-	return response.JSON(http.StatusOK, body)
+	return response.JSONStreaming(http.StatusOK, result)
 }

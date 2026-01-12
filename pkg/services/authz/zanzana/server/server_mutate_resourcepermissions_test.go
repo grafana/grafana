@@ -28,7 +28,7 @@ func testMutateResourcePermissions(t *testing.T, srv *Server) {
 	setupMutateResourcePermissions(t, srv)
 
 	t.Run("should create new resource permission", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -76,7 +76,7 @@ func testMutateResourcePermissions(t *testing.T, srv *Server) {
 		require.NoError(t, err)
 		require.Len(t, res.Tuples, 2)
 
-		_, err = srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err = srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{

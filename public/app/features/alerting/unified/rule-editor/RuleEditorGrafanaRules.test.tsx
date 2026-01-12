@@ -194,4 +194,53 @@ describe('RuleEditor grafana managed rules', () => {
       ]),
     });
   });
+
+  it('should not show rule type switch when no data sources have manageAlerts enabled', async () => {
+    // Setup data source with manageAlerts explicitly disabled
+    setupDataSources(
+      mockDataSource(
+        {
+          type: 'prometheus',
+          name: 'Prom-disabled',
+          uid: 'prometheus-disabled',
+          isDefault: true,
+          jsonData: { manageAlerts: false },
+        },
+        { alerting: true, module: 'core:plugin/prometheus' }
+      )
+    );
+
+    renderRuleEditor();
+
+    // Wait for the form to load
+    await screen.findByRole('textbox', { name: 'name' });
+
+    // The rule type switch should NOT be visible
+    expect(screen.queryByText('Rule type')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rule-type-radio-group')).not.toBeInTheDocument();
+  });
+
+  it('should show rule type switch when data sources have manageAlerts enabled', async () => {
+    // Setup data source with manageAlerts enabled
+    setupDataSources(
+      mockDataSource(
+        {
+          type: 'prometheus',
+          name: 'Prom-enabled',
+          uid: 'prometheus-enabled',
+          isDefault: true,
+          jsonData: { manageAlerts: true },
+        },
+        { alerting: true, module: 'core:plugin/prometheus' }
+      )
+    );
+
+    renderRuleEditor();
+
+    // Wait for the form to load
+    await screen.findByRole('textbox', { name: 'name' });
+
+    // The rule type section should be visible
+    expect(await screen.findByText('Rule type')).toBeInTheDocument();
+  });
 });

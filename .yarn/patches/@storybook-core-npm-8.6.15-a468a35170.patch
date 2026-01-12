@@ -1,0 +1,13 @@
+diff --git a/dist/builder-manager/index.js b/dist/builder-manager/index.js
+index ac8ac6a5f6a3b7852c4064e93dc9acd3201289e6..34a0a5a5c38dd7fe525c9ebd382a10a451d4d4f3 100644
+--- a/dist/builder-manager/index.js
++++ b/dist/builder-manager/index.js
+@@ -1974,7 +1974,7 @@ var pa = /^\/($|\?)/, G, C, xt = /* @__PURE__ */ o(async (e) => {
+     bundle: !0,
+     minify: !0,
+     sourcemap: !1,
+-    conditions: ["browser", "module", "default"],
++    conditions: ["@grafana-app/source", "browser", "module", "default"],
+     jsxFactory: "React.createElement",
+     jsxFragment: "React.Fragment",
+     jsx: "transform",

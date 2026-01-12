@@ -1,6 +1,6 @@
-import { Field, FieldSparkline, FieldType } from '@grafana/data';
+import { createTheme, Field, FieldSparkline, FieldType, toDataFrame } from '@grafana/data';
 
-import { getYRange, preparePlotFrame } from './utils';
+import { getYRange, prepareConfig, preparePlotFrame } from './utils';
 
 describe('Prepare Sparkline plot frame', () => {
   it('should return sorted array if x-axis numeric', () => {
@@ -199,5 +199,136 @@ describe('Get y range', () => {
     const actual = getYRange(getAlignedFrame(field));
     expect(actual).toEqual(expected);
     expect(actual[0]).toBeLessThan(actual[1]!);
+  });
+});
+
+describe('prepareConfig', () => {
+  it('should not throw an error if there are multiple values', () => {
+    const sparkline: FieldSparkline = {
+      x: {
+        name: 'x',
+        values: [1679839200000, 1680444000000, 1681048800000, 1681653600000, 1682258400000],
+        type: FieldType.time,
+        config: {},
+      },
+      y: {
+        name: 'y',
+        values: [1, 2, 3, 4, 5],
+        type: FieldType.number,
+        config: {},
+      },
+    };
+
+    const dataFrame = toDataFrame({
+      fields: [sparkline.x, sparkline.y],
+    });
+
+    const config = prepareConfig(sparkline, dataFrame, createTheme());
+    expect(config.series.length).toBe(1);
+  });
+
+  it('should not throw an error if there is a single value', () => {
+    const sparkline: FieldSparkline = {
+      x: {
+        name: 'x',
+        values: [1679839200000],
+        type: FieldType.time,
+        config: {},
+      },
+      y: {
+        name: 'y',
+        values: [1],
+        type: FieldType.number,
+        config: {},
+      },
+    };
+
+    const dataFrame = toDataFrame({
+      fields: [sparkline.x, sparkline.y],
+    });
+
+    const config = prepareConfig(sparkline, dataFrame, createTheme());
+    expect(config.series.length).toBe(1);
+  });
+
+  it('should not throw an error if there are no values', () => {
+    const sparkline: FieldSparkline = {
+      x: {
+        name: 'x',
+        values: [],
+        type: FieldType.time,
+        config: {},
+      },
+      y: {
+        name: 'y',
+        values: [],
+        type: FieldType.number,
+        config: {},
+      },
+    };
+
+    const dataFrame = toDataFrame({
+      fields: [sparkline.x, sparkline.y],
+    });
+
+    const config = prepareConfig(sparkline, dataFrame, createTheme());
+    expect(config.series.length).toBe(1);
+  });
+
+  it('should set up highlight series if showHighlights is true and highlightIdx exists', () => {
+    const sparkline: FieldSparkline = {
+      x: {
+        name: 'x',
+        values: [1679839200000, 1680444000000, 1681048800000, 1681653600000, 1682258400000],
+        type: FieldType.time,
+        config: {},
+      },
+      y: {
+        name: 'y',
+        values: [1, 2, 3, 4, 5],
+        type: FieldType.number,
+        config: {},
+      },
+      highlightIndex: 2,
+    };
+
+    const dataFrame = toDataFrame({
+      fields: [sparkline.x, sparkline.y],
+    });
+
+    const config = prepareConfig(sparkline, dataFrame, createTheme(), true);
+    expect(config.series.length).toBe(1);
+    expect(config.series[0].getConfig().points).toEqual(
+      expect.objectContaining({
+        show: true,
+        filter: [2],
+      })
+    );
+  });
+
+  it('should not set up highlight series if showHighlights is false even if highlightIdx exists', () => {
+    const sparkline: FieldSparkline = {
+      x: {
+        name: 'x',
+        values: [1679839200000, 1680444000000, 1681048800000, 1681653600000, 1682258400000],
+        type: FieldType.time,
+        config: {},
+      },
+      y: {
+        name: 'y',
+        values: [1, 2, 3, 4, 5],
+        type: FieldType.number,
+        config: {},
+      },
+      highlightIndex: 2,
+    };
+
+    const dataFrame = toDataFrame({
+      fields: [sparkline.x, sparkline.y],
+    });
+
+    const config = prepareConfig(sparkline, dataFrame, createTheme(), false);
+    expect(config.series.length).toBe(1);
+    expect(config.series[0].getConfig().points?.show).not.toBe(true);
   });
 });

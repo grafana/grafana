@@ -188,6 +188,67 @@ func (_c *MockProvisioningStore_GetProvenances_Call) RunAndReturn(run func(conte
 	return _c
 }
 
+// GetProvenancesByUIDs provides a mock function with given fields: ctx, org, resourceType, uids
+func (_m *MockProvisioningStore) GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]models.Provenance, error) {
+	ret := _m.Called(ctx, org, resourceType, uids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProvenancesByUIDs")
+	}
+
+	var r0 map[string]models.Provenance
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, []string) (map[string]models.Provenance, error)); ok {
+		return rf(ctx, org, resourceType, uids)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, []string) map[string]models.Provenance); ok {
+		r0 = rf(ctx, org, resourceType, uids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]models.Provenance)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string, []string) error); ok {
+		r1 = rf(ctx, org, resourceType, uids)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockProvisioningStore_GetProvenancesByUIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProvenancesByUIDs'
+type MockProvisioningStore_GetProvenancesByUIDs_Call struct {
+	*mock.Call
+}
+
+// GetProvenancesByUIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - org int64
+//   - resourceType string
+//   - uids []string
+func (_e *MockProvisioningStore_Expecter) GetProvenancesByUIDs(ctx interface{}, org interface{}, resourceType interface{}, uids interface{}) *MockProvisioningStore_GetProvenancesByUIDs_Call {
+	return &MockProvisioningStore_GetProvenancesByUIDs_Call{Call: _e.mock.On("GetProvenancesByUIDs", ctx, org, resourceType, uids)}
+}
+
+func (_c *MockProvisioningStore_GetProvenancesByUIDs_Call) Run(run func(ctx context.Context, org int64, resourceType string, uids []string)) *MockProvisioningStore_GetProvenancesByUIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int64), args[2].(string), args[3].([]string))
+	})
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetProvenancesByUIDs_Call) Return(_a0 map[string]models.Provenance, _a1 error) *MockProvisioningStore_GetProvenancesByUIDs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetProvenancesByUIDs_Call) RunAndReturn(run func(context.Context, int64, string, []string) (map[string]models.Provenance, error)) *MockProvisioningStore_GetProvenancesByUIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetProvenance provides a mock function with given fields: ctx, o, org, p
 func (_m *MockProvisioningStore) SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error {
 	ret := _m.Called(ctx, o, org, p)

@@ -20,7 +20,7 @@ type ShadowClient struct {
 	logger        log.Logger
 	accessClient  authlib.AccessClient
 	zanzanaClient authlib.AccessClient
-	metrics       *metrics
+	metrics       *shadowClientMetrics
 }
 
 // WithShadowClient returns a new access client that runs zanzana checks in the background.

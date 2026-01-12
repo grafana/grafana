@@ -80,6 +80,10 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "gdev-testdata"
+        },
         "description": "This should resolve to the grafana-testdata-datasource datasource",
         "fieldConfig": {
           "defaults": {
@@ -170,6 +174,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "elasticsearch"
+        },
         "description": "This should resolve to the first elasticsearch datasource",
         "fieldConfig": {
           "defaults": {

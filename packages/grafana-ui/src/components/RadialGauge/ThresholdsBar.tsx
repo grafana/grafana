@@ -1,20 +1,22 @@
 import { FieldDisplay, Threshold } from '@grafana/data';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialColorDefs } from './RadialColorDefs';
-import { GaugeDimensions } from './utils';
+import { GradientStop, RadialGaugeDimensions, RadialShape } from './types';
+import { getFieldConfigMinMax } from './utils';
 
-export interface Props {
-  dimensions: GaugeDimensions;
+interface ThresholdsBarProps {
+  dimensions: RadialGaugeDimensions;
   angleRange: number;
   startAngle: number;
   endAngle: number;
+  shape: RadialShape;
   fieldDisplay: FieldDisplay;
   roundedBars?: boolean;
   glowFilter?: string;
-  colorDefs: RadialColorDefs;
   thresholds: Threshold[];
+  gradient?: GradientStop[];
 }
+
 export function ThresholdsBar({
   dimensions,
   fieldDisplay,
@@ -22,18 +24,17 @@ export function ThresholdsBar({
   angleRange,
   roundedBars,
   glowFilter,
-  colorDefs,
   thresholds,
-}: Props) {
-  const fieldConfig = fieldDisplay.field;
-  const min = fieldConfig.min ?? 0;
-  const max = fieldConfig.max ?? 100;
-
+  shape,
+  gradient,
+}: ThresholdsBarProps) {
   const thresholdDimensions = {
     ...dimensions,
     barWidth: dimensions.thresholdsBarWidth,
     radius: dimensions.thresholdsBarRadius,
   };
+
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
 
   let currentStart = startAngle;
   let paths: React.ReactNode[] = [];
@@ -48,27 +49,26 @@ export function ThresholdsBar({
       valueDeg = 0;
     }
 
-    let lengthDeg = valueDeg - currentStart + startAngle;
+    const lengthDeg = valueDeg - currentStart + startAngle;
+    const colorProps = gradient ? { gradient } : { color: threshold.color };
 
     paths.push(
       <RadialArcPath
         key={i}
-        startAngle={currentStart}
         arcLengthDeg={lengthDeg}
+        barEndcaps={shape === 'circle' && roundedBars}
         dimensions={thresholdDimensions}
-        roundedBars={roundedBars}
+        fieldDisplay={fieldDisplay}
         glowFilter={glowFilter}
-        color={colorDefs.getColor(threshold.color, true)}
+        roundedBars={roundedBars}
+        shape={shape}
+        startAngle={currentStart}
+        {...colorProps}
       />
     );
 
     currentStart += lengthDeg;
   }
 
-  return (
-    <>
-      <g>{paths}</g>
-      <defs>{colorDefs.getDefs()}</defs>
-    </>
-  );
+  return <g>{paths}</g>;
 }

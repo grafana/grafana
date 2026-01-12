@@ -609,7 +609,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 
 	// Check if keeper is the systemwide one.
 	if name == contracts.SystemKeeperName {
-		return &secretv1beta1.SystemKeeperConfig{}, nil
+		return secretv1beta1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{}), nil
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
@@ -618,7 +618,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 		return nil, err
 	}
 
-	keeperConfig := toProvider(secretv1beta1.KeeperType(kp.Type), kp.Payload)
+	keeperConfig := parseKeeperConfigJson(kp.Name, secretv1beta1.KeeperType(kp.Type), kp.Payload)
 
 	// TODO: this would be a good place to check if credentials are secure values and load them.
 	return keeperConfig, nil
@@ -634,13 +634,6 @@ func (s *keeperMetadataStorage) SetAsActive(ctx context.Context, namespace xkube
 	query, err := sqltemplate.Execute(sqlKeeperSetAsActive, req)
 	if err != nil {
 		return fmt.Errorf("template %q: %w", sqlKeeperSetAsActive.Name(), err)
-	}
-
-	// Check keeper exists. No need to worry about time of check to time of use
-	// since trying to activate a just deleted keeper will result in all
-	// keepers being inactive and defaulting to the system keeper.
-	if _, err := s.read(ctx, namespace.String(), name, contracts.ReadOpts{}); err != nil {
-		return fmt.Errorf("reading keeper before setting as active: %w", err)
 	}
 
 	_, err = s.db.ExecContext(ctx, query, req.GetArgs()...)
@@ -726,7 +719,7 @@ func (s *keeperMetadataStorage) GetActiveKeeperConfig(ctx context.Context, names
 	if err != nil {
 		// When there are not active keepers, default to the system keeper
 		if errors.Is(err, contracts.ErrKeeperNotFound) {
-			return contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{}, nil
+			return contracts.SystemKeeperName, secretv1beta1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{}), nil
 		}
 		return "", nil, fmt.Errorf("fetching active keeper from db: %w", err)
 	}

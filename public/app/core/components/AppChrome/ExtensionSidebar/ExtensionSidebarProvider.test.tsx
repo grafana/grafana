@@ -26,7 +26,7 @@ const mockDifferentComponent = {
 } as ExtensionInfo;
 
 const mockPluginMeta = {
-  pluginId: 'grafana-investigations-app',
+  pluginId: 'grafana-assistant-app',
   addedComponents: [mockComponent, mockDifferentComponent],
   addedLinks: [],
 };
@@ -187,7 +187,7 @@ describe('ExtensionSidebarProvider', () => {
 
   it('should only include permitted plugins in available components', () => {
     const permittedPluginMeta = {
-      pluginId: 'grafana-investigations-app',
+      pluginId: 'grafana-assistant-app',
       addedComponents: [mockComponent],
       addedLinks: [],
     };
@@ -256,7 +256,7 @@ describe('ExtensionSidebarProvider', () => {
       // Call it directly with the test event
       subscriberFn(
         new OpenExtensionSidebarEvent({
-          pluginId: 'grafana-investigations-app',
+          pluginId: 'grafana-assistant-app',
           componentTitle: 'Test Component',
           props: { testProp: 'test value' },
         })
@@ -266,7 +266,7 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('is-open')).toHaveTextContent('true');
     expect(screen.getByTestId('props')).toHaveTextContent('{"testProp":"test value"}');
     const expectedComponentId = JSON.stringify({
-      pluginId: 'grafana-investigations-app',
+      pluginId: 'grafana-assistant-app',
       componentTitle: 'Test Component',
     });
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent(expectedComponentId);
@@ -381,7 +381,7 @@ describe('ExtensionSidebarProvider', () => {
 
       subscriberFn(
         new ToggleExtensionSidebarEvent({
-          pluginId: 'grafana-investigations-app',
+          pluginId: 'grafana-assistant-app',
           componentTitle: 'Test Component',
           props: { testProp: 'test value' },
         })
@@ -392,7 +392,7 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('is-open')).toHaveTextContent('true');
     expect(screen.getByTestId('props')).toHaveTextContent('{"testProp":"test value"}');
     const expectedComponentId = JSON.stringify({
-      pluginId: 'grafana-investigations-app',
+      pluginId: 'grafana-assistant-app',
       componentTitle: 'Test Component',
     });
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent(expectedComponentId);

@@ -116,6 +116,18 @@
       "import": "./dist/esm/clients/rtkq/shorturl/v1beta1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/shorturl/v1beta1/index.cjs"
     },
+    "./rtkq/notifications.alerting/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/notifications.alerting/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/notifications.alerting/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/notifications.alerting/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/notifications.alerting/v0alpha1/index.cjs"
+    },
+    "./rtkq/rules.alerting/v0alpha1": {
+      "@grafana-app/source": "./src/clients/rtkq/rules.alerting/v0alpha1/index.ts",
+      "types": "./dist/types/clients/rtkq/rules.alerting/v0alpha1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/rules.alerting/v0alpha1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/rules.alerting/v0alpha1/index.cjs"
+    },
     "./rtkq/historian.alerting/v0alpha1": {
       "@grafana-app/source": "./src/clients/rtkq/historian.alerting/v0alpha1/index.ts",
       "types": "./dist/types/clients/rtkq/historian.alerting/v0alpha1/index.d.ts",
@@ -127,6 +139,12 @@
       "types": "./dist/types/clients/rtkq/logsdrilldown/v1alpha1/index.d.ts",
       "import": "./dist/esm/clients/rtkq/logsdrilldown/v1alpha1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/logsdrilldown/v1alpha1/index.cjs"
+    },
+    "./rtkq/logsdrilldown/v1beta1": {
+      "@grafana-app/source": "./src/clients/rtkq/logsdrilldown/v1beta1/index.ts",
+      "types": "./dist/types/clients/rtkq/logsdrilldown/v1beta1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/logsdrilldown/v1beta1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/logsdrilldown/v1beta1/index.cjs"
     }
   },
   "publishConfig": {
@@ -158,7 +176,7 @@
   },
   "peerDependencies": {
     "@grafana/runtime": ">=11.6 <= 12.x",
-    "@reduxjs/toolkit": "^2.8.0",
+    "@reduxjs/toolkit": "^2.10.0",
     "rxjs": "7.8.2"
   }
 }

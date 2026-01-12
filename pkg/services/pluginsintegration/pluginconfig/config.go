@@ -48,7 +48,7 @@ type PluginInstanceCfg struct {
 
 	Tracing config.Tracing
 
-	PluginSettings setting.PluginSettings
+	PluginSettings config.PluginSettings
 
 	AWSAllowedAuthProviders   []string
 	AWSAssumeRoleEnabled      bool
@@ -127,8 +127,8 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 	}, nil
 }
 
-func extractPluginSettings(settingProvider setting.Provider) setting.PluginSettings {
-	ps := setting.PluginSettings{}
+func extractPluginSettings(settingProvider setting.Provider) config.PluginSettings {
+	ps := config.PluginSettings{}
 	for sectionName, sectionCopy := range settingProvider.Current() {
 		if !strings.HasPrefix(sectionName, "plugin.") {
 			continue

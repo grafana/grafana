@@ -44,7 +44,11 @@ func New(c clock.Clock, interval time.Duration, metric *Metrics, logger log.Logg
 }
 
 func getStartTick(clk clock.Clock, interval time.Duration) time.Time {
-	nano := clk.Now().UnixNano()
+	return GetStartTick(clk.Now(), interval)
+}
+
+func GetStartTick(t time.Time, interval time.Duration) time.Time {
+	nano := t.UnixNano()
 	return time.Unix(0, nano-(nano%interval.Nanoseconds()))
 }
 

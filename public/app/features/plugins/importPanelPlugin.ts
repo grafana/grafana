@@ -62,3 +62,9 @@ export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
 function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
   return pluginImporter.importPanel(meta);
 }
+
+export function clearPanelPluginCache(): void {
+  for (const key of Object.keys(promiseCache)) {
+    delete promiseCache[key];
+  }
+}

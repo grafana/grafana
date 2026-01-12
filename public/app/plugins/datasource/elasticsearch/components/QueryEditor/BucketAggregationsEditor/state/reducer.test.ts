@@ -7,7 +7,7 @@ import {
 import { defaultBucketAgg } from '../../../../queryDef';
 import { reducerTester } from '../../../reducerTester';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
-import { initQuery } from '../../state';
+import { changeEditorTypeAndResetQuery, initQuery } from '../../state';
 import { bucketAggregationConfig } from '../utils';
 
 import {
@@ -178,6 +178,29 @@ describe('Bucket Aggregations Reducer', () => {
         .givenReducer(createReducer('@timestamp'), [bucketAgg])
         .whenActionIsDispatched(initQuery())
         .thenStateShouldEqual([bucketAgg]);
+    });
+  });
+
+  describe('When switching editor type', () => {
+    it('Should reset bucket aggregations to default when switching editor types', () => {
+      const defaultTimeField = '@timestamp';
+      const initialState: BucketAggregation[] = [
+        {
+          id: '1',
+          type: 'date_histogram',
+          field: '@timestamp',
+        },
+        {
+          id: '2',
+          type: 'terms',
+          field: 'status',
+        },
+      ];
+
+      reducerTester<ElasticsearchDataQuery['bucketAggs']>()
+        .givenReducer(createReducer(defaultTimeField), initialState)
+        .whenActionIsDispatched(changeEditorTypeAndResetQuery('code'))
+        .thenStateShouldEqual([{ ...defaultBucketAgg('2'), field: defaultTimeField }]);
     });
   });
 });

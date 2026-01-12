@@ -251,7 +251,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
 	provenance := getProvenance(c)
-	err = srv.alertRuleService.DeleteRuleGroup(c.Req.Context(), c.SignedInUser, folder.UID, group, provenance)
+	filterOpts := &provisioning.FilterOptions{
+		NamespaceUIDs:               []string{folder.UID},
+		RuleGroups:                  []string{group},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+	}
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -370,6 +375,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	}
 
 	datasourceUID := strings.TrimSpace(c.Req.Header.Get(datasourceUIDHeader))
+	if datasourceUID == "" {
+		datasourceUID = srv.cfg.PrometheusConversion.DefaultDatasourceUID
+	}
 	if datasourceUID == "" {
 		return response.Err(errDatasourceUIDHeaderMissing)
 	}

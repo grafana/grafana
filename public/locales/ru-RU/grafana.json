@@ -729,6 +729,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Ввести содержимое пользовательской аннотации..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Правила удалены из папки"
@@ -2219,11 +2224,15 @@
       "min-interval": "Мин. интервал = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Выбранные запросы и выражения не могут быть преобразованы в используемые по умолчанию. Если вы отключите расширенные параметры, ваш запрос и условие будут сброшены до настроек по умолчанию."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Предварительный просмотр",
-      "previewCondition": "Предварительный просмотр условия правила оповещения"
+      "previewCondition": "Предварительный просмотр условия правила оповещения",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Фильтр по точкам контакта",
@@ -2688,6 +2697,35 @@
       "text-federated": "Федеративная",
       "text-provisioned": "Подготовлено"
     },
+    "saved-searches": {
+      "actions-aria-label": "",
+      "apply-aria-label": "",
+      "apply-tooltip": "",
+      "button-label": "",
+      "cancel": "",
+      "default-indicator": "",
+      "delete": "",
+      "delete-button": "",
+      "dropdown-aria-label": "",
+      "empty-state": "",
+      "error-load-description": "",
+      "error-load-title": "",
+      "error-name-duplicate": "",
+      "error-name-required": "",
+      "error-rename-description": "",
+      "error-rename-title": "",
+      "error-save-description": "",
+      "error-save-title": "",
+      "list-aria-label": "",
+      "name-placeholder": "",
+      "remove-default": "",
+      "rename": "",
+      "rename-button": "",
+      "save-button": "",
+      "save-current-search": "",
+      "save-disabled-tooltip": "",
+      "set-default": ""
+    },
     "search": {
       "property": {
         "data-source": "Источник данных",
@@ -3119,9 +3157,12 @@
       "table": "Таблица"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Задайте условие, которое должно быть выполнено до того, как автивируется правило оповещения.",
       "description-configure-firing-alert-instances-routed-contact": "Установите способ направления активных экземпляров оповещений в точки контакта.",
       "description-configure-receives-notifications": "Установите получателей уведомлений и способы их отправки.",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Правила оповещения",
       "title-contact-points": "Точки контакта",
       "title-notification-policies": "Политики уведомления"
@@ -3749,7 +3790,9 @@
       "text": "По вашему запросу ничего не найдено"
     },
     "recently-viewed": {
-      "empty": "",
+      "clear": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -4410,6 +4453,7 @@
       },
       "no-properties-changed": "Нет изменений соответствующих свойств",
       "table": {
+        "notes": "",
         "updated": "Дата",
         "updatedBy": "Обновлено",
         "version": "Версия"
@@ -4608,6 +4652,7 @@
     },
     "canvas-actions": {
       "add-panel": "Добавить панель",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Группировать в строку",
@@ -4868,7 +4913,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Значения, разделенные запятыми"
         },
         "datasource-options": {
           "name-filter": "Фильтр по названию",
@@ -5690,6 +5736,7 @@
     "validation": {
       "invalid-dashboard-id": "Не удалось найти действительный идентификатор Grafana.com",
       "invalid-json": "Неверный JSON-файл",
+      "tag-too-long": "",
       "tags-expected-array": "ожидаемый массив тегов",
       "tags-expected-strings": "ожидаемый массив строк тегов"
     },
@@ -5795,6 +5842,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5965,8 +6013,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Пользовательские параметры",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Значения, разделенные запятыми",
       "selection-options": "Параметры выбора"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Назад к списку",
@@ -6222,7 +6276,7 @@
         "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
         "would-still-dashboard": "Все равно сохранить дашборд?"
       },
-      "save-and-overwrite": "'Сохранить и перезаписать'"
+      "save-and-overwrite": ""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6553,6 +6607,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Дашборд сохранен"
     },
@@ -6576,6 +6635,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6635,8 +6695,11 @@
       "tooltip-show-usages": "Показать варианты использования"
     },
     "variable-values-preview": {
-      "preview-of-values": "Просмотр значений",
-      "show-more": "Показать еще"
+      "show-more": "Показать еще",
+      "preview-of-values_one": "",
+      "preview-of-values_few": "",
+      "preview-of-values_many": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -7211,6 +7274,9 @@
       "time-range-label": "Заблокировать временной диапазон"
     }
   },
+  "embedded-panel": {
+    "powered-by": ""
+  },
   "empty-list-cta": {
     "pro-tip": "Совет: {{proTip}}"
   },
@@ -7691,39 +7757,6 @@
       },
       "share-span": "Поделиться"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Выбрать оператора макс. диапазона",
-      "aria-label-select-min-span-operator": "Выбрать оператор мин. диапазона",
-      "aria-label-select-service-name": "Выбрать название службы",
-      "aria-label-select-service-name-operator": "Выбрать оператор названия службы",
-      "aria-label-select-span-name": "Выбрать название диапазона",
-      "aria-label-select-span-name-operator": "Выбрать оператора названия диапазона",
-      "ariaLabel-select-max-span-duration": "Выбрать макс. продолжительность интервала",
-      "ariaLabel-select-min-span-duration": "Выбрать мин. продолжительность интервала",
-      "label-collapse": "Фильтры диапазонов",
-      "label-duration": "Длительность",
-      "label-service-name": "Название службы",
-      "label-span-name": "Название диапазона",
-      "label-tags": "Теги",
-      "placeholder-all-service-names": "Все названия служб",
-      "placeholder-all-span-names": "Все названия диапазонов",
-      "tooltip-collapse": "Выполните фильтрацию своих диапазонов ниже. Вы можете продолжать применять фильтры, пока не сузите полученные диапазоны до нескольких наиболее важных для вас вариантов.",
-      "tooltip-duration": "Фильтр по длительности. Допустимые единицы измерения: {{units}}",
-      "tooltip-tags": "Фильтр по тегам, тегам процессов или полям журнала в ваших диапазонах."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Добавить тег",
-      "aria-label-input-tag-value": "Ввести значение тега",
-      "aria-label-remove-tag": "Удалить тег",
-      "aria-label-select-tag-key": "Выбрать ключ тега",
-      "aria-label-select-tag-operator": "Выбрать оператор тега",
-      "aria-label-select-tag-value": "Выбрать значение тега",
-      "placeholder-select-tag": "Выбрать тег",
-      "placeholder-select-value": "Выбрать значение",
-      "placeholder-tag-value": "Значение тега",
-      "tooltip-add-tag": "Добавить тег",
-      "tooltip-remove-tag": "Удалить тег"
-    },
     "span-flame-graph": {
       "flame-graph": "Flame-график"
     },
@@ -7922,23 +7955,18 @@
       "label-upsample": "Увеличить частоту выборки",
       "tooltip-s-m-h": "10 с, 1 мин, 30 мин, 1 ч"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": ""
-    },
     "sql-expr": {
       "button-run-query": "Выполнить запрос",
-      "modal-title": "Редактор SQL",
       "tooltip-experimental": "Интеграция LLM с SQL-выражениями является экспериментальной. При обнаружении проблем свяжитесь с командой Grafana."
     },
     "sql-schema": {
-      "close-schema-inspector": "",
       "error-title": "",
-      "inspect-button": "",
       "loading": "",
       "no-data-title": "",
       "no-fields-desc": "",
       "no-fields-title": "",
-      "query-error-title": ""
+      "query-error-title": "",
+      "schema-inspector": ""
     },
     "threshold": {
       "label-input": "Ввод"
@@ -8013,11 +8041,7 @@
     "suggestions": {
       "arc": "",
       "circular": "",
-      "no-thresholds": "",
-      "style": {
-        "circular": "",
-        "simple": ""
-      }
+      "no-thresholds": ""
     },
     "threshold": ""
   },
@@ -9303,7 +9327,8 @@
     "tags-input": {
       "add": "Добавить",
       "placeholder-new-tag": "Новый тег (введите ключ для добавления)",
-      "remove": "Удалить тег: {{name}} "
+      "remove": "Удалить тег: {{name}} ",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Синхронизировать время",
@@ -9463,6 +9488,7 @@
     "name-unit": "Единица",
     "name-value-name": "Имя значения",
     "name-y-axis-scale": "Шкала оси Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Авто",
     "placeholder-axis-width": "Авто",
     "placeholder-decimals": "Авто",
@@ -9492,6 +9518,18 @@
       "label-all": "Все",
       "label-hidden": "Скрыты",
       "label-single": "Один"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "",
+      "linear-threshold-label": "",
+      "linear-threshold-placeholder": "",
+      "log-base-label": "",
+      "scale-options": {
+        "label-auto": "",
+        "label-linear": "",
+        "label-log": "",
+        "label-symlog": ""
+      }
     }
   },
   "help-modal": {
@@ -10773,18 +10811,6 @@
     "help/documentation": "Документация",
     "help/keyboard-shortcuts": "Сочетания клавиш",
     "help/support": "Поддержка",
-    "history-container": {
-      "drawer-tittle": "История"
-    },
-    "history-wrapper": {
-      "collapse": "Свернуть",
-      "expand": "Развернуть",
-      "icon-selected": "Выделенная запись",
-      "icon-unselected": "Обычная запись",
-      "show-more": "Показать еще",
-      "today": "Сегодня",
-      "yesterday": "Вчера"
-    },
     "home": {
       "title": "Главная"
     },
@@ -11295,9 +11321,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-some-suggestions": {
+        "message": ""
+      },
       "error-loading-suggestions": {
         "message": "",
-        "title": ""
+        "plugin-failed": "",
+        "title": "",
+        "try-again-button": ""
       },
       "unknown-viz-type": "",
       "use-this-suggestion": ""
@@ -12074,7 +12105,10 @@
       "resource-not-found": "",
       "unsupported-repository-type": ""
     },
-    "inline-secure-values-warning": "",
+    "instance-sync-deprecation": {
+      "message": "",
+      "title": ""
+    },
     "job-status": {
       "label-view-details": "Подробнее",
       "loading-finished-job": "Загрузка завершенного задания...",
@@ -12180,6 +12214,9 @@
       "webhook-last-event": "Последнее событие:",
       "webhook-url": "Просмотр веб-перехватчика"
     },
+    "repository-status": {
+      "error": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Назад к репозиториям",
       "cleaning-up-resources": "Очистка ресурсов репозитория",
@@ -12284,6 +12321,9 @@
       "tooltip-unhealthy-repository": "Невозможно внести изменения в неисправный репозиторий"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "",
+      "migrate-resources-description": "",
+      "options": "",
       "repository-error": "",
       "repository-error-message": "",
       "repository-unhealthy": ""
@@ -12303,10 +12343,15 @@
     },
     "warning-title-default": "Предупреждение",
     "wizard": {
+      "alert-intro": "",
       "alert-point-1": "",
-      "alert-point-2": "",
       "alert-point-3": "Длительность процесса зависит от количества задействованных ресурсов.",
       "alert-point-4": "",
+      "alert-point-folder-cleanup": "",
+      "alert-point-folder-structure": "",
+      "alert-point-instance-alerts": "",
+      "alert-point-permissions": "",
+      "alert-point-unsupported": "",
       "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
@@ -12325,6 +12370,7 @@
       "step-finish": "Выберите дополнительные параметры",
       "step-synchronize": "Синхронизировать с внешним хранилищем",
       "sync-description": "Синхронизируйте ресурсы с внешним хранилищем. После этого разового шага все будущие обновления будут автоматически сохраняться в репозитории и загружаться обратно в экземпляр.",
+      "sync-option-migrate-resources": "",
       "title-bootstrap": "Выберите, что синхронизировать",
       "title-connect": "Подключение к внешнему хранилищу",
       "title-finish": "Выбор дополнительных параметров",
@@ -12564,22 +12610,33 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
       "bar-width": "",
       "effects": {
         "bar-glow": "",
         "center-glow": "",
         "gradient": "",
-        "label": "",
-        "rounded-bars": "",
-        "spotlight": "",
-        "spotlight-tooltip": ""
+        "label": ""
       },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14457,6 +14514,17 @@
       },
       "name": {
         "series-to-rows": "Ряды в строки"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

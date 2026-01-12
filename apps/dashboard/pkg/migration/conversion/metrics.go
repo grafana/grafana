@@ -85,20 +85,20 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		// Only track schema versions for v0/v1 dashboards (v2+ info is redundant with API version)
 		switch source := a.(type) {
 		case *dashv0.Dashboard:
-			dashboardUID = string(source.UID)
+			dashboardUID = source.Name
 			if source.Spec.Object != nil {
 				sourceSchemaVersion = schemaversion.GetSchemaVersion(source.Spec.Object)
 			}
 		case *dashv1.Dashboard:
-			dashboardUID = string(source.UID)
+			dashboardUID = source.Name
 			if source.Spec.Object != nil {
 				sourceSchemaVersion = schemaversion.GetSchemaVersion(source.Spec.Object)
 			}
 		case *dashv2alpha1.Dashboard:
-			dashboardUID = string(source.UID)
+			dashboardUID = source.Name
 			// Don't track schema version for v2+ (redundant with API version)
 		case *dashv2beta1.Dashboard:
-			dashboardUID = string(source.UID)
+			dashboardUID = source.Name
 			// Don't track schema version for v2+ (redundant with API version)
 		}
 

@@ -330,6 +330,7 @@ var wireBasicSet = wire.NewSet(
 	dashsnapstore.ProvideStore,
 	wire.Bind(new(dashboardsnapshots.Service), new(*dashsnapsvc.ServiceImpl)),
 	dashsnapsvc.ProvideService,
+	datasourceservice.ProvideDataSourceRetriever,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	datasourceservice.ProvideLegacyDataSourceLookup,

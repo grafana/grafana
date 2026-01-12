@@ -5,7 +5,7 @@ import {
   VisualizationSuggestion,
   VisualizationSuggestionScore,
 } from '@grafana/data';
-import { ReduceDataOptions } from '@grafana/schema';
+import { LegendDisplayMode, ReduceDataOptions, VizLegendOptions } from '@grafana/schema';
 
 /**
  * @internal
@@ -62,3 +62,15 @@ export function defaultNumericVizOptions(
 export function hasData(data?: PanelData): boolean {
   return Boolean(data && data.series && data.series.length > 0 && data.series.some((frame) => frame.length > 0));
 }
+
+/**
+ * @internal
+ * Hidden legend config for previewing suggestion cards.
+ * This should only be used in previewModifier.
+ */
+export const SUGGESTIONS_LEGEND_OPTIONS: VizLegendOptions = {
+  calcs: [],
+  displayMode: LegendDisplayMode.Hidden,
+  placement: 'right',
+  showLegend: false,
+};

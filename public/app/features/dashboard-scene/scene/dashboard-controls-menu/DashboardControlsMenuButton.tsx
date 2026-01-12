@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -33,6 +34,7 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
       <ToolbarButton
         aria-label={t('dashboard.controls.menu.aria-label', DASHBOARD_CONTROLS_MENU_ARIA_LABEL)}
         title={t('dashboard.controls.menu.title', DASHBOARD_CONTROLS_MENU_TITLE)}
+        data-testid={selectors.pages.Dashboard.ControlsButton}
         icon="sliders-v-alt"
         iconSize="md"
         variant="canvas"

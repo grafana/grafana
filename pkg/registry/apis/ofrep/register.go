@@ -276,7 +276,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if b.providerType == setting.GOFFProviderType {
+	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
 		return
 	}
@@ -304,7 +304,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	isAuthedReq := b.isAuthenticatedRequest(r)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
-	if b.providerType == setting.GOFFProviderType {
+	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
 		return
 	}

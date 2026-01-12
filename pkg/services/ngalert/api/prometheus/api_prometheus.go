@@ -54,6 +54,7 @@ type StatusReader interface {
 
 type ProvenanceStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]ngmodels.Provenance, error)
+	GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]ngmodels.Provenance, error)
 }
 
 type PrometheusSrv struct {
@@ -328,14 +329,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	span.AddEvent("User permissions checked")
 	span.SetAttributes(attribute.Int("allowedNamespaces", len(allowedNamespaces)))
 
-	provenanceRecords, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
-	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = fmt.Sprintf("failed to get provenances visible to the user: %s", err.Error())
-		ruleResponse.ErrorType = apiv1.ErrServer
-		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
-	}
-
 	ruleResponse = PrepareRuleGroupStatusesV2(
 		srv.log,
 		srv.store,
@@ -347,7 +340,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		},
 		RuleStatusMutatorGenerator(srv.status),
 		RuleAlertStateMutatorGenerator(srv.manager),
-		provenanceRecords,
+		srv.provenanceStore,
 	)
 
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
@@ -454,21 +447,23 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 type paginationContext struct {
 	opts              RuleGroupStatusesOptions
 	provenanceRecords map[string]ngmodels.Provenance
+	provenanceStore   ProvenanceStore
 	ruleStatusMutator RuleStatusMutator
 	alertStateMutator RuleAlertStateMutator
 
 	// Query parameters
-	namespaceUIDs   []string
-	ruleUIDs        []string
-	dashboardUID    string
-	panelID         int64
-	ruleGroups      []string
-	receiverName    string
-	dataSourceUIDs  []string
-	title           string
-	searchRuleGroup string
-	ruleType        ngmodels.RuleTypeFilter
-	ruleNamesSet    map[string]struct{}
+	namespaceUIDs      []string
+	ruleUIDs           []string
+	dashboardUID       string
+	panelID            int64
+	ruleGroups         []string
+	receiverName       string
+	dataSourceUIDs     []string
+	title              string
+	searchRuleGroup    string
+	ruleType           ngmodels.RuleTypeFilter
+	pluginOriginFilter ngmodels.PluginOriginFilter
+	ruleNamesSet       map[string]struct{}
 
 	// Filters
 	stateFilterSet     map[eval.State]struct{}
@@ -514,11 +509,12 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			SearchRuleGroup: ctx.searchRuleGroup,
 			LabelMatchers:   storeMatchers,
 		},
-		RuleType:      ctx.ruleType,
-		Limit:         remainingGroups,
-		RuleLimit:     remainingRules,
-		ContinueToken: token,
-		Compact:       ctx.compact,
+		RuleType:           ctx.ruleType,
+		PluginOriginFilter: ctx.pluginOriginFilter,
+		Limit:              remainingGroups,
+		RuleLimit:          remainingRules,
+		ContinueToken:      token,
+		Compact:            ctx.compact,
 	}
 
 	ruleList, newToken, err := store.ListAlertRulesByGroup(ctx.opts.Ctx, &byGroupQuery)
@@ -531,6 +527,37 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 		attribute.Bool("store_continue_token_set", newToken != ""),
 	)
 	span.AddEvent("Alert rules retrieved from store")
+
+	// Load provenance for this page's rules
+	if ctx.provenanceStore != nil {
+		maxGroups := getInt64WithDefault(ctx.opts.Query, "group_limit", -1)
+		maxRules := getInt64WithDefault(ctx.opts.Query, "rule_limit", -1)
+
+		if maxGroups > 0 || maxRules > 0 {
+			// Paginated, fetch and merge provenances for this page
+			uids := make([]string, 0, len(ruleList))
+			for _, rule := range ruleList {
+				uids = append(uids, rule.UID)
+			}
+			pageProvenances, err := ctx.provenanceStore.GetProvenancesByUIDs(ctx.opts.Ctx, ctx.opts.OrgID, (&ngmodels.AlertRule{}).ResourceType(), uids)
+			if err != nil {
+				return pageResult{}, fmt.Errorf("failed to load provenance: %w", err)
+			}
+			if ctx.provenanceRecords == nil {
+				ctx.provenanceRecords = pageProvenances
+			} else {
+				maps.Copy(ctx.provenanceRecords, pageProvenances)
+			}
+		} else if ctx.provenanceRecords == nil {
+			// Not paginated, fetch all once
+			var err error
+			ctx.provenanceRecords, err = ctx.provenanceStore.GetProvenances(ctx.opts.Ctx, ctx.opts.OrgID, (&ngmodels.AlertRule{}).ResourceType())
+			if err != nil {
+				return pageResult{}, fmt.Errorf("failed to load provenance: %w", err)
+			}
+		}
+	}
+	span.AddEvent("Provenances retrieved from store")
 
 	groupedRules := getGroupedRules(log, ruleList, ctx.ruleNamesSet, ctx.opts.AllowedNamespaces)
 
@@ -643,7 +670,8 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 	return allGroups, rulesTotals, continueToken, nil
 }
 
-func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+// nolint:gocyclo
+func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
 	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
 	defer span.End()
 	opts.Ctx = ctx
@@ -800,6 +828,15 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		ruleType = ngmodels.RuleTypeFilterAll
 	}
 
+	pluginOriginFilter := ngmodels.PluginOriginFilterNone
+	switch opts.Query.Get("plugins") {
+	case "hide":
+		pluginOriginFilter = ngmodels.PluginOriginFilterHide
+	case "only":
+		pluginOriginFilter = ngmodels.PluginOriginFilterOnly
+	}
+	span.SetAttributes(attribute.String("plugins_filter", string(pluginOriginFilter)))
+
 	// Pagination limits
 	//
 	// group_limit: Maximum number of rule groups to return
@@ -835,7 +872,8 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	span.SetAttributes(attribute.Bool("compact", compact))
 	pagCtx := &paginationContext{
 		opts:               opts,
-		provenanceRecords:  provenanceRecords,
+		provenanceRecords:  nil,
+		provenanceStore:    provenanceStore,
 		ruleStatusMutator:  ruleStatusMutator,
 		alertStateMutator:  alertStateMutator,
 		namespaceUIDs:      namespaceUIDs,
@@ -848,6 +886,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		dataSourceUIDs:     dataSourceUIDs,
 		searchRuleGroup:    searchRuleGroup,
 		ruleType:           ruleType,
+		pluginOriginFilter: pluginOriginFilter,
 		ruleNamesSet:       ruleNamesSet,
 		stateFilterSet:     stateFilterSet,
 		healthFilterSet:    healthFilterSet,

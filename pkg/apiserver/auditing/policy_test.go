@@ -55,12 +55,28 @@ func TestDefaultGrafanaPolicyRuleEvaluator(t *testing.T) {
 		require.Equal(t, auditinternal.LevelNone, config.Level)
 	})
 
-	t.Run("return audit level metadata for other resource requests", func(t *testing.T) {
+	t.Run("return audit level request+response for create requests", func(t *testing.T) {
 		t.Parallel()
 
 		attrs := authorizer.AttributesRecord{
 			ResourceRequest: true,
 			Verb:            utils.VerbCreate,
+			User: &user.DefaultInfo{
+				Name:   "test-user",
+				Groups: []string{"test-group"},
+			},
+		}
+
+		config := evaluator.EvaluatePolicyRule(attrs)
+		require.Equal(t, auditinternal.LevelRequestResponse, config.Level)
+	})
+
+	t.Run("return audit level metadata for other resource requests", func(t *testing.T) {
+		t.Parallel()
+
+		attrs := authorizer.AttributesRecord{
+			ResourceRequest: true,
+			Verb:            utils.VerbGet,
 			User: &user.DefaultInfo{
 				Name:   "test-user",
 				Groups: []string{"test-group"},

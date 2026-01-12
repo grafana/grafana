@@ -20,9 +20,10 @@ const (
 
 // Typed errors
 var (
-	ErrUserTokenNotFound       = errors.New("user token not found")
-	ErrInvalidSessionToken     = usertoken.ErrInvalidSessionToken
-	ErrExternalSessionNotFound = errors.New("external session not found")
+	ErrUserTokenNotFound            = errors.New("user token not found")
+	ErrInvalidSessionToken          = usertoken.ErrInvalidSessionToken
+	ErrExternalSessionNotFound      = errors.New("external session not found")
+	ErrExternalSessionTokenNotFound = errors.New("session token was nil")
 )
 
 type (

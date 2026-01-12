@@ -25,7 +25,7 @@ func testMutateTeamBindings(t *testing.T, srv *Server) {
 	setupMutateTeamBindings(t, srv)
 
 	t.Run("should update user team binding and delete old team binding", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{

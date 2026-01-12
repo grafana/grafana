@@ -340,14 +340,16 @@ describe('LibraryPanelsSearch', () => {
         await user.click(screen.getAllByRole('button', { name: 'Delete' })[1]);
 
         await waitFor(() =>
-          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-            searchString: '',
-            folderFilterUIDs: ['wfTJJL5Wz'],
-            page: 1,
-            typeFilter: [],
-            sortDirection: undefined,
-            perPage: 40,
-          })
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+              searchString: '',
+              folderFilterUIDs: ['wfTJJL5Wz'],
+              page: 1,
+              typeFilter: [],
+              sortDirection: undefined,
+              perPage: 40,
+            })
+          )
         );
       });
     });

@@ -25,9 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
