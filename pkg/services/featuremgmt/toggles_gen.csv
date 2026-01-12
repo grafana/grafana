@@ -217,10 +217,13 @@ pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,fal
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
-kubernetesAuthzApis,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthzApis,deprecated,@grafana/identity-access-team,false,false,false
 kubernetesAuthZHandlerRedirect,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 kubernetesExternalGroupMapping,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-search-navigate-organise,false,false,false
@@ -253,7 +256,6 @@ graphiteBackendMode,privatePreview,@grafana/partner-datasources,false,false,fals
 azureResourcePickerUpdates,GA,@grafana/partner-datasources,false,false,true
 prometheusTypeMigration,experimental,@grafana/partner-datasources,false,true,false
 pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,false
-tempoSearchBackendMigration,GA,@grafana/oss-big-tent,false,true,false
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
