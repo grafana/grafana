@@ -192,7 +192,7 @@ func TestCalculate(t *testing.T) {
 
 		runningWindows = true
 		s := provideDefaultTestService()
-		sig, err := s.Calculate(context.Background(), &pluginfakes.FakePluginSource{
+		sig, _, err := s.Calculate(context.Background(), &pluginfakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},

@@ -71,13 +71,6 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 	return plugins.LoadingStrategyFetch
 }
 
-// ModuleHash returns the module hash from the plugin's cached ModuleHash field.
-// This method is kept for backward compatibility with the PluginAssetsCalculator interface.
-// The actual module hash is now calculated during plugin loading and cached in the plugin struct.
-func (s *Service) ModuleHash(_ context.Context, p pluginstore.Plugin) string {
-	return p.ModuleHash
-}
-
 func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
 	if cpv, ok := ps[CreatePluginVersionCfgKey]; ok {
 		createPluginVer, err := semver.NewVersion(cpv)
