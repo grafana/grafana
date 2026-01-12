@@ -24,9 +24,9 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
   configure-mysql-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configuration/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configuration/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure/
   mysql-query-editor:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
