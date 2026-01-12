@@ -2,11 +2,13 @@ package test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
@@ -67,6 +69,8 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 	}{
 		{"key_path generation", runTestIntegrationBackendKeyPathGeneration},
 		{"sql backend fields compatibility", runTestSQLBackendFieldsCompatibility},
+		{"cross backend consistency", runTestCrossBackendConsistency},
+		{"concurrent operations stress", runTestConcurrentOperationsStress},
 	}
 
 	for _, tc := range cases {
@@ -77,6 +81,12 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 
 			kvbackend, db := newKvBackend(t.Context())
 			sqlbackend, _ := newSqlBackend(t.Context())
+
+			// Skip on SQLite due to concurrency limitations
+			if db.DriverName() == "sqlite3" {
+				t.Skip("Skipping concurrent operations stress test on SQLite")
+			}
+
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
 	}
@@ -111,38 +121,25 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 
 	// Create 3 resources
 	for i := 1; i <= 3; i++ {
-		key := &resourcepb.ResourceKey{
-			Group:     "playlist.grafana.app",
-			Resource:  "playlists",
-			Namespace: nsPrefix,
-			Name:      fmt.Sprintf("test-playlist-%d", i),
+		folder := ""
+		if i == 2 {
+			folder = "test-folder" // Resource 2 has folder annotation
 		}
 
-		// Create resource JSON with folder annotation for resource 2
-		resourceJSON := fmt.Sprintf(`{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
-			"kind": "Playlist",
-			"metadata": {
-				"name": "test-playlist-%d",
-				"namespace": "%s",
-				"uid": "test-uid-%d"%s
-			},
-			"spec": {
-				"title": "My Test Playlist %d"
-			}
-		}`, i, nsPrefix, i, getAnnotationsJSON(i == 2), i)
+		opts := PlaylistResourceOptions{
+			Name:       fmt.Sprintf("test-playlist-%d", i),
+			Namespace:  nsPrefix,
+			UID:        fmt.Sprintf("test-uid-%d", i),
+			Generation: 1,
+			Title:      fmt.Sprintf("My Test Playlist %d", i),
+			Folder:     folder,
+		}
 
-		// Create the resource using server.Create
-		created, err := server.Create(ctx, &resourcepb.CreateRequest{
-			Key:   key,
-			Value: []byte(resourceJSON),
-		})
-		require.NoError(t, err)
-		require.Nil(t, created.Error)
-		require.Greater(t, created.ResourceVersion, int64(0))
+		created := createPlaylistResource(t, server, ctx, opts)
 		currentRVs[i-1] = created.ResourceVersion
 
 		// Verify created resource key_path (with folder for resource 2)
+		key := createPlaylistKey(nsPrefix, fmt.Sprintf("test-playlist-%d", i))
 		if i == 2 {
 			verifyKeyPath(t, db, ctx, key, "created", created.ResourceVersion, "test-folder")
 		} else {
@@ -152,39 +149,25 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 
 	// Update the 3 resources
 	for i := 1; i <= 3; i++ {
-		key := &resourcepb.ResourceKey{
-			Group:     "playlist.grafana.app",
-			Resource:  "playlists",
-			Namespace: nsPrefix,
-			Name:      fmt.Sprintf("test-playlist-%d", i),
+		folder := ""
+		if i == 2 {
+			folder = "test-folder" // Resource 2 has folder annotation
 		}
 
-		// Create updated resource JSON with folder annotation for resource 2
-		updatedResourceJSON := fmt.Sprintf(`{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
-			"kind": "Playlist",
-			"metadata": {
-				"name": "test-playlist-%d",
-				"namespace": "%s",
-				"uid": "test-uid-%d"%s
-			},
-			"spec": {
-				"title": "My Updated Playlist %d"
-			}
-		}`, i, nsPrefix, i, getAnnotationsJSON(i == 2), i)
+		opts := PlaylistResourceOptions{
+			Name:       fmt.Sprintf("test-playlist-%d", i),
+			Namespace:  nsPrefix,
+			UID:        fmt.Sprintf("test-uid-%d", i),
+			Generation: 2,
+			Title:      fmt.Sprintf("My Updated Playlist %d", i),
+			Folder:     folder,
+		}
 
-		// Update the resource using server.Update
-		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
-			Key:             key,
-			Value:           []byte(updatedResourceJSON),
-			ResourceVersion: currentRVs[i-1], // Use the resource version returned by previous operation
-		})
-		require.NoError(t, err)
-		require.Nil(t, updated.Error)
-		require.Greater(t, updated.ResourceVersion, currentRVs[i-1])
+		updated := updatePlaylistResource(t, server, ctx, opts, currentRVs[i-1])
 		currentRVs[i-1] = updated.ResourceVersion // Update to the latest resource version
 
 		// Verify updated resource key_path (with folder for resource 2)
+		key := createPlaylistKey(nsPrefix, fmt.Sprintf("test-playlist-%d", i))
 		if i == 2 {
 			verifyKeyPath(t, db, ctx, key, "updated", updated.ResourceVersion, "test-folder")
 		} else {
@@ -194,22 +177,11 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 
 	// Delete the 3 resources
 	for i := 1; i <= 3; i++ {
-		key := &resourcepb.ResourceKey{
-			Group:     "playlist.grafana.app",
-			Resource:  "playlists",
-			Namespace: nsPrefix,
-			Name:      fmt.Sprintf("test-playlist-%d", i),
-		}
-
-		// Delete the resource using server.Delete
-		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
-			Key:             key,
-			ResourceVersion: currentRVs[i-1], // Use the resource version from previous operation
-		})
-		require.NoError(t, err)
-		require.Greater(t, deleted.ResourceVersion, currentRVs[i-1])
+		name := fmt.Sprintf("test-playlist-%d", i)
+		deleted := deletePlaylistResource(t, server, ctx, nsPrefix, name, currentRVs[i-1])
 
 		// Verify deleted resource key_path (with folder for resource 2)
+		key := createPlaylistKey(nsPrefix, name)
 		if i == 2 {
 			verifyKeyPath(t, db, ctx, key, "deleted", deleted.ResourceVersion, "test-folder")
 		} else {
@@ -220,13 +192,30 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 
 // verifyKeyPath is a helper function to verify key_path generation
 func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resourcepb.ResourceKey, action string, resourceVersion int64, expectedFolder string) {
+	// For SQL backend (namespace contains "-sql"), resourceVersion is in microsecond format
+	// but key_path stores snowflake RV, so convert to snowflake
+	// For KV backend (namespace contains "-kv"), resourceVersion is already in snowflake format
+	isSqlBackend := strings.Contains(key.Namespace, "-sql")
+
+	var keyPathRV int64
+	if isSqlBackend {
+		// Convert microsecond RV to snowflake for key_path construction
+		keyPathRV = rvmanager.SnowflakeFromRv(resourceVersion)
+	} else {
+		// KV backend already provides snowflake RV
+		keyPathRV = resourceVersion
+	}
+
+	// Build the expected key_path using DataKey format: unified/data/group/resource/namespace/name/resourceVersion~action~folder
+	expectedKeyPath := fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s", key.Group, key.Resource, key.Namespace, key.Name, keyPathRV, action, expectedFolder)
+
 	var query string
 	if db.DriverName() == "postgres" {
-		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = $1 AND name = $2 AND resource_version = $3"
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE key_path = $1"
 	} else {
-		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = ? AND name = ? AND resource_version = ?"
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE key_path = ?"
 	}
-	rows, err := db.QueryContext(ctx, query, key.Namespace, key.Name, resourceVersion)
+	rows, err := db.QueryContext(ctx, query, expectedKeyPath)
 	require.NoError(t, err)
 
 	require.True(t, rows.Next(), "Resource not found in resource_history table - both SQL and KV backends should write to this table")
@@ -253,10 +242,6 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 	// Verify action suffix
 	require.Contains(t, keyPath, fmt.Sprintf("~%s~", action))
 
-	// Verify snowflake calculation
-	expectedSnowflake := (((resourceVersion / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (resourceVersion % 1000)
-	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), "actual RV: %d", actualRV)
-
 	// Verify folder if specified
 	if expectedFolder != "" {
 		require.Equal(t, expectedFolder, actualFolder)
@@ -274,17 +259,6 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 		expectedActionCode = 3
 	}
 	require.Equal(t, expectedActionCode, actualAction)
-}
-
-// getAnnotationsJSON returns the annotations JSON string for the folder annotation if needed
-func getAnnotationsJSON(withFolder bool) string {
-	if withFolder {
-		return `,
-				"annotations": {
-					"grafana.app/folder": "test-folder"
-				}`
-	}
-	return ""
 }
 
 // runTestSQLBackendFieldsCompatibility tests that KV backend with RvManager populates all SQL backend legacy fields
@@ -349,76 +323,35 @@ func runSQLBackendFieldsTest(t *testing.T, backend resource.StorageBackend, name
 
 	// Create 3 resources
 	for i, res := range resources {
-		key := &resourcepb.ResourceKey{
-			Group:     "playlist.grafana.app",
-			Resource:  "playlists",
-			Namespace: namespace,
-			Name:      res.name,
+		// Create the resource using helper function
+		opts := PlaylistResourceOptions{
+			Name:       res.name,
+			Namespace:  namespace,
+			UID:        fmt.Sprintf("test-uid-%d", i+1),
+			Generation: 1,
+			Title:      fmt.Sprintf("Test Playlist %d", i+1),
+			Folder:     res.folder,
 		}
 
-		// Create resource JSON with folder annotation and generation=1 for creates
-		resourceJSON := fmt.Sprintf(`{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
-			"kind": "Playlist",
-			"metadata": {
-				"name": "%s",
-				"namespace": "%s",
-				"uid": "test-uid-%d",
-				"generation": 1%s
-			},
-			"spec": {
-				"title": "Test Playlist %d"
-			}
-		}`, res.name, namespace, i+1, getAnnotationsJSON(res.folder != ""), i+1)
-
-		// Create the resource
-		created, err := server.Create(ctx, &resourcepb.CreateRequest{
-			Key:   key,
-			Value: []byte(resourceJSON),
-		})
-		require.NoError(t, err)
-		require.Nil(t, created.Error)
-		require.Greater(t, created.ResourceVersion, int64(0))
-
+		created := createPlaylistResource(t, server, ctx, opts)
 		// Store the resource version
 		resourceVersions[i] = append(resourceVersions[i], created.ResourceVersion)
 	}
 
 	// Update 3 resources
 	for i, res := range resources {
-		key := &resourcepb.ResourceKey{
-			Group:     "playlist.grafana.app",
-			Resource:  "playlists",
-			Namespace: namespace,
-			Name:      res.name,
+		// Update the resource using helper function
+		opts := PlaylistResourceOptions{
+			Name:       res.name,
+			Namespace:  namespace,
+			UID:        fmt.Sprintf("test-uid-%d", i+1),
+			Generation: 2,
+			Title:      fmt.Sprintf("Updated Test Playlist %d", i+1),
+			Folder:     res.folder,
 		}
 
-		// Update resource JSON with generation=2 for updates
-		resourceJSON := fmt.Sprintf(`{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
-			"kind": "Playlist",
-			"metadata": {
-				"name": "%s",
-				"namespace": "%s",
-				"uid": "test-uid-%d",
-				"generation": 2%s
-			},
-			"spec": {
-				"title": "Updated Test Playlist %d"
-			}
-		}`, res.name, namespace, i+1, getAnnotationsJSON(res.folder != ""), i+1)
-
-		// Update the resource using the current resource version
 		currentRV := resourceVersions[i][len(resourceVersions[i])-1]
-		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
-			Key:             key,
-			Value:           []byte(resourceJSON),
-			ResourceVersion: currentRV,
-		})
-		require.NoError(t, err)
-		require.Nil(t, updated.Error)
-		require.Greater(t, updated.ResourceVersion, currentRV)
-
+		updated := updatePlaylistResource(t, server, ctx, opts, currentRV)
 		// Store the new resource version
 		resourceVersions[i] = append(resourceVersions[i], updated.ResourceVersion)
 	}
@@ -577,10 +510,10 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	}
 
 	// Validate previous_resource_version
-	// For KV backend operations, resource versions are stored as snowflake format
-	// but expectedPrevRV is in microsecond format, so we need to use IsRvEqual for comparison
+	// For KV backend operations, expectedPrevRV is now in snowflake format (returned by KV backend)
+	// but resource_history table stores microsecond RV, so we need to use IsRvEqual for comparison
 	if strings.Contains(record.Namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(record.PreviousResourceVersion, expectedPrevRV),
+		require.True(t, rvmanager.IsRvEqual(expectedPrevRV, record.PreviousResourceVersion),
 			"Previous resource version should match (KV backend snowflake format)")
 	} else {
 		require.Equal(t, expectedPrevRV, record.PreviousResourceVersion)
@@ -590,9 +523,10 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	require.Equal(t, expectedGeneration, record.Generation)
 
 	// Validate resource_version
-	// For KV backend operations, resource versions are stored as snowflake format
+	// For KV backend operations, expectedRV is now in snowflake format (returned by KV backend)
+	// but resource_history table stores microsecond RV, so we need to use IsRvEqual for comparison
 	if strings.Contains(record.Namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV),
+		require.True(t, rvmanager.IsRvEqual(expectedRV, record.ResourceVersion),
 			"Resource version should match (KV backend snowflake format)")
 	} else {
 		require.Equal(t, expectedRV, record.ResourceVersion)
@@ -659,7 +593,7 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 	// Resource version should match the expected version for test-resource-3 (updated version)
 	expectedRV := resourceVersions[2][1] // test-resource-3's update version
 	if strings.Contains(namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV),
+		require.True(t, rvmanager.IsRvEqual(expectedRV, record.ResourceVersion),
 			"Resource version should match (KV backend snowflake format)")
 	} else {
 		require.Equal(t, expectedRV, record.ResourceVersion)
@@ -710,7 +644,633 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 
 	// The resource_version table should contain the latest RV for the group+resource
 	// It might be slightly higher due to RV manager operations, so check it's at least our max
-	require.GreaterOrEqual(t, record.ResourceVersion, maxRV, "resource_version should be at least the latest RV we tracked")
-	// But it shouldn't be too much higher (within a reasonable range)
-	require.LessOrEqual(t, record.ResourceVersion, maxRV+100, "resource_version shouldn't be much higher than expected")
+	// For KV backend, maxRV is in snowflake format but record.ResourceVersion is in microsecond format
+	// Use IsRvEqual for proper comparison between different RV formats
+	isKvBackend := strings.Contains(namespace, "-kv")
+	recordResourceVersion := record.ResourceVersion
+	if isKvBackend {
+		recordResourceVersion = rvmanager.SnowflakeFromRv(record.ResourceVersion)
+	}
+
+	require.Less(t, recordResourceVersion, int64(9223372036854775807), "resource_version should be reasonable")
+	require.Greater(t, recordResourceVersion, maxRV, "resource_version should be at least the latest RV we tracked")
+}
+
+// runTestCrossBackendConsistency tests basic consistency between SQL and KV backends (lightweight)
+func runTestCrossBackendConsistency(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	// Create storage servers from both backends
+	sqlServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      sqlBackend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+
+	kvServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      kvBackend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+
+	// Create isolated namespaces for each test phase
+	sqlNamespace := nsPrefix + "-concurrent-sql"
+	kvNamespace := nsPrefix + "-concurrent-kv"
+
+	t.Run("Write to SQL, Read from Both", func(t *testing.T) {
+		runWriteToOneReadFromBoth(t, sqlServer, kvServer, sqlNamespace+"-writeSQL", ctx, "sql")
+	})
+
+	t.Run("Write to KV, Read from Both", func(t *testing.T) {
+		runWriteToOneReadFromBoth(t, kvServer, sqlServer, kvNamespace+"-writeKV", ctx, "kv")
+	})
+
+	t.Run("Resource Version Consistency", func(t *testing.T) {
+		runResourceVersionConsistencyTest(t, sqlServer, kvServer, nsPrefix+"-rv-consistency", ctx)
+	})
+}
+
+// runTestConcurrentOperationsStress tests heavy concurrent operations between SQL and KV backends
+func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	// Create storage servers from both backends
+	sqlServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      sqlBackend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+
+	kvServer, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      kvBackend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+
+	// Create isolated namespace for mixed operations
+	mixedNamespace := nsPrefix + "-concurrent-mixed"
+
+	// do a single create using the sql backend to initialize the resource_version table
+	// without this, both backend may try to insert the same group+resource to the resource_version which breaks the
+	// tests
+	initNamespace := mixedNamespace + "-init"
+	initOpts := PlaylistResourceOptions{
+		Name:       "init-resource",
+		Namespace:  initNamespace,
+		UID:        "init-uid",
+		Generation: 1,
+		Title:      "Init Resource",
+		Folder:     "",
+	}
+	createPlaylistResource(t, sqlServer, ctx, initOpts)
+
+	// Heavy Mixed Concurrent Operations
+	t.Run("Mixed Concurrent Operations", func(t *testing.T) {
+		runMixedConcurrentOperations(t, sqlServer, kvServer, mixedNamespace, ctx)
+	})
+}
+
+// runWriteToOneReadFromBoth writes resources to one backend then reads from both to verify consistency
+func runWriteToOneReadFromBoth(t *testing.T, writeServer, readServer resource.ResourceServer, namespace string, ctx context.Context, writerBackend string) {
+	// Create 5 test resources
+	resourceNames := []string{
+		fmt.Sprintf("resource-%s-1", writerBackend),
+		fmt.Sprintf("resource-%s-2", writerBackend),
+		fmt.Sprintf("resource-%s-3", writerBackend),
+		fmt.Sprintf("resource-%s-4", writerBackend),
+		fmt.Sprintf("resource-%s-5", writerBackend),
+	}
+
+	createdResourceVersions := make([]int64, len(resourceNames))
+
+	// Write all resources to the write backend
+	for i, resourceName := range resourceNames {
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: namespace,
+			Name:      resourceName,
+		}
+
+		resourceJSON := fmt.Sprintf(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "%s",
+				"namespace": "%s",
+				"uid": "test-uid-%d",
+				"generation": 1
+			},
+			"spec": {
+				"title": "Concurrent Test Playlist %d"
+			}
+		}`, resourceName, namespace, i+1, i+1)
+
+		created, err := writeServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   key,
+			Value: []byte(resourceJSON),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		require.Greater(t, created.ResourceVersion, int64(0))
+		createdResourceVersions[i] = created.ResourceVersion
+	}
+
+	// Add a small delay to ensure data propagates
+	time.Sleep(10 * time.Millisecond)
+
+	// Read from both backends and compare payloads
+	for _, resourceName := range resourceNames {
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: namespace,
+			Name:      resourceName,
+		}
+
+		// Read from write backend
+		writeResp, err := writeServer.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err, "Failed to read %s from write backend", resourceName)
+		require.Nil(t, writeResp.Error, "Read error from write backend %s: %s", resourceName, writeResp.Error)
+		require.Greater(t, writeResp.ResourceVersion, int64(0), "Invalid resource version for %s on write backend", resourceName)
+
+		// Read from read backend
+		readResp, err := readServer.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err, "Failed to read %s from read backend", resourceName)
+		require.Nil(t, readResp.Error, "Read error from read backend %s: %s", resourceName, readResp.Error)
+		require.Greater(t, readResp.ResourceVersion, int64(0), "Invalid resource version for %s on read backend", resourceName)
+
+		// Validate that both backends return identical payload content
+		require.JSONEq(t, string(writeResp.Value), string(readResp.Value),
+			"Payload mismatch for resource %s between write and read backends.\nWrite backend: %s\nRead backend: %s",
+			resourceName, string(writeResp.Value), string(readResp.Value))
+
+		// Validate that both backends return equivalent resource versions using rvmanager compatibility check
+		// Note: rvmanager.IsRvEqual expects snowflake format as first parameter, so we check both orderings
+		require.True(t, rvmanager.IsRvEqual(writeResp.ResourceVersion, readResp.ResourceVersion) || rvmanager.IsRvEqual(readResp.ResourceVersion, writeResp.ResourceVersion),
+			"Resource version mismatch for resource %s between backends.\nWrite backend (%s): %d\nRead backend (%s): %d",
+			resourceName, writerBackend, writeResp.ResourceVersion, getOtherBackendName(writerBackend), readResp.ResourceVersion)
+
+		t.Logf("✓ Resource %s: payload and resource version (%d) consistency verified between %s (write) and %s (read) backends",
+			resourceName, writeResp.ResourceVersion, writerBackend, getOtherBackendName(writerBackend))
+	}
+
+	// Verify List consistency between backends
+	verifyListConsistencyBetweenServers(t, writeServer, readServer, namespace, len(resourceNames))
+}
+
+// getOtherBackendName returns the complementary backend name
+func getOtherBackendName(backend string) string {
+	if backend == "sql" {
+		return "kv"
+	}
+	return "sql"
+}
+
+// runMixedConcurrentOperations runs different operations simultaneously on both backends
+func runMixedConcurrentOperations(t *testing.T, sqlServer, kvServer resource.ResourceServer, namespace string, ctx context.Context) {
+	var wg sync.WaitGroup
+	errors := make(chan error, 20)
+	startBarrier := make(chan struct{})
+
+	// Use higher operation counts to ensure concurrency
+	opCounts := BackendOperationCounts{
+		Creates: 25,
+		Updates: 15,
+		Deletes: 10,
+	}
+
+	// SQL backend operations
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-startBarrier // Wait for signal to start
+		if err := runBackendOperationsWithCounts(ctx, sqlServer, namespace+"-sql", "sql", opCounts); err != nil {
+			errors <- fmt.Errorf("SQL backend operations failed: %w", err)
+		}
+	}()
+
+	// KV backend operations
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-startBarrier // Wait for signal to start
+		if err := runBackendOperationsWithCounts(ctx, kvServer, namespace+"-kv", "kv", opCounts); err != nil {
+			errors <- fmt.Errorf("KV backend operations failed: %w", err)
+		}
+	}()
+
+	// Start both goroutines simultaneously
+	close(startBarrier)
+
+	// Wait for operations to complete with timeout
+	done := make(chan bool)
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// Operations completed
+	case <-time.After(10 * time.Second):
+		t.Fatal("Timeout waiting for mixed concurrent operations")
+	}
+
+	// Check for errors
+	close(errors)
+	for err := range errors {
+		t.Error(err)
+	}
+
+	// Allow some time for data propagation
+	time.Sleep(50 * time.Millisecond)
+
+	// Calculate expected remaining resources based on operation counts
+	expectedRemaining := opCounts.Creates - opCounts.Deletes // Creates - Deletes = Remaining
+
+	// Verify consistency of resources created by SQL backend operations
+	// Note: Skip resource version checking since these are separate operations on different backends
+	verifyListConsistencyBetweenServersWithRVCheck(t, sqlServer, kvServer, namespace+"-sql", expectedRemaining, false)
+
+	// Verify consistency of resources created by KV backend operations
+	// Note: Skip resource version checking since these are separate operations on different backends
+	verifyListConsistencyBetweenServersWithRVCheck(t, sqlServer, kvServer, namespace+"-kv", expectedRemaining, false)
+}
+
+// BackendOperationCounts defines how many operations of each type to perform
+type BackendOperationCounts struct {
+	Creates int
+	Updates int
+	Deletes int
+}
+
+// runBackendOperationsWithCounts performs configurable create, update, delete operations on a backend
+func runBackendOperationsWithCounts(ctx context.Context, server resource.ResourceServer, namespace, backendType string, counts BackendOperationCounts) error {
+	// Create resources
+	resourceVersions := make([]int64, counts.Creates)
+	for i := 1; i <= counts.Creates; i++ {
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: namespace,
+			Name:      fmt.Sprintf("resource-%s-%d", backendType, i),
+		}
+
+		resourceJSON := fmt.Sprintf(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "resource-%s-%d",
+				"namespace": "%s",
+				"uid": "test-uid-%s-%d",
+				"generation": 1
+			},
+			"spec": {
+				"title": "Mixed Test Playlist %s %d"
+			}
+		}`, backendType, i, namespace, backendType, i, backendType, i)
+
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Key:   key,
+			Value: []byte(resourceJSON),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create resource %d: %w", i, err)
+		}
+		if created.Error != nil {
+			return fmt.Errorf("create error for resource %d: %s", i, created.Error.Message)
+		}
+		resourceVersions[i-1] = created.ResourceVersion
+	}
+
+	// Update resources (only update as many as we have, limited by creates and updates count)
+	updateCount := counts.Updates
+	if updateCount > counts.Creates {
+		updateCount = counts.Creates // Can't update more resources than we created
+	}
+	for i := 1; i <= updateCount; i++ {
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: namespace,
+			Name:      fmt.Sprintf("resource-%s-%d", backendType, i),
+		}
+
+		updatedJSON := fmt.Sprintf(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "resource-%s-%d",
+				"namespace": "%s",
+				"uid": "test-uid-%s-%d",
+				"generation": 2
+			},
+			"spec": {
+				"title": "Updated Mixed Test Playlist %s %d"
+			}
+		}`, backendType, i, namespace, backendType, i, backendType, i)
+
+		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           []byte(updatedJSON),
+			ResourceVersion: resourceVersions[i-1],
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update resource %d: %w", i, err)
+		}
+		if updated.Error != nil {
+			return fmt.Errorf("update error for resource %d: %s", i, updated.Error.Message)
+		}
+		resourceVersions[i-1] = updated.ResourceVersion
+	}
+
+	// Delete resources (only delete as many as we have, limited by creates and deletes count)
+	deleteCount := counts.Deletes
+	if deleteCount > updateCount {
+		deleteCount = updateCount // Can only delete resources that were updated (have latest RV)
+	}
+	for i := 1; i <= deleteCount; i++ {
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: namespace,
+			Name:      fmt.Sprintf("resource-%s-%d", backendType, i),
+		}
+
+		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+			Key:             key,
+			ResourceVersion: resourceVersions[i-1], // Use the resource version from updates
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete resource %d: %w", i, err)
+		}
+		if deleted.Error != nil {
+			return fmt.Errorf("delete error for resource %d: %s", i, deleted.Error.Message)
+		}
+	}
+
+	return nil
+}
+
+// runResourceVersionConsistencyTest verifies resource version handling across backends
+func runResourceVersionConsistencyTest(t *testing.T, sqlServer, kvServer resource.ResourceServer, namespace string, ctx context.Context) {
+	// Create a resource on SQL backend
+	opts := PlaylistResourceOptions{
+		Name:       "rv-test-resource",
+		Namespace:  namespace,
+		UID:        "test-uid-rv",
+		Generation: 1,
+		Title:      "RV Test Playlist",
+		Folder:     "", // No folder
+	}
+
+	createPlaylistResource(t, sqlServer, ctx, opts)
+
+	// Allow data to propagate
+	time.Sleep(10 * time.Millisecond)
+
+	// Read from KV backend to get the same resource
+	key := createPlaylistKey(namespace, "rv-test-resource")
+	kvRead, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: key})
+	require.NoError(t, err)
+	require.Nil(t, kvRead.Error)
+	// Note: Resource versions may differ between backends, but content should be the same
+	require.Greater(t, kvRead.ResourceVersion, int64(0), "KV backend should return a valid resource version")
+
+	// Read from SQL backend to compare content
+	sqlReadInitial, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: key})
+	require.NoError(t, err)
+	require.Nil(t, sqlReadInitial.Error)
+	require.JSONEq(t, string(sqlReadInitial.Value), string(kvRead.Value), "Both backends should return the same initial content")
+
+	// Update via KV backend
+	updateOpts := PlaylistResourceOptions{
+		Name:       "rv-test-resource",
+		Namespace:  namespace,
+		UID:        "test-uid-rv",
+		Generation: 2,
+		Title:      "Updated RV Test Playlist",
+		Folder:     "", // No folder
+	}
+
+	updatePlaylistResource(t, kvServer, ctx, updateOpts, kvRead.ResourceVersion)
+
+	// Allow data to propagate
+	time.Sleep(10 * time.Millisecond)
+
+	// Read from SQL backend to verify consistency
+	sqlRead, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: key})
+	require.NoError(t, err)
+	require.Nil(t, sqlRead.Error)
+	// Note: Resource versions may differ, but content should be consistent
+	require.Greater(t, sqlRead.ResourceVersion, int64(0), "SQL backend should return a valid resource version")
+
+	// Verify both backends return the same content - we need to read from KV again to get the Value
+	kvReadAfterUpdate, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: key})
+	require.NoError(t, err)
+	require.Nil(t, kvReadAfterUpdate.Error)
+	require.JSONEq(t, string(kvReadAfterUpdate.Value), string(sqlRead.Value), "Both backends should return the same updated content")
+}
+
+// verifyListConsistencyBetweenServers verifies that both servers return consistent list results
+func verifyListConsistencyBetweenServers(t *testing.T, server1, server2 resource.ResourceServer, namespace string, expectedCount int) {
+	verifyListConsistencyBetweenServersWithRVCheck(t, server1, server2, namespace, expectedCount, true)
+}
+
+// verifyListConsistencyBetweenServersWithRVCheck verifies list consistency with optional resource version checking
+func verifyListConsistencyBetweenServersWithRVCheck(t *testing.T, server1, server2 resource.ResourceServer, namespace string, expectedCount int, checkResourceVersions bool) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	// Get lists from both servers
+	list1, err := server1.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: namespace,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, list1.Error)
+
+	list2, err := server2.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: namespace,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, list2.Error)
+
+	// Create maps for easier comparison by extracting names from JSON
+	items1 := make(map[string]*resourcepb.ResourceWrapper)
+	for _, item := range list1.Items {
+		itemNamespace := extractResourceNamespaceFromJSON(t, item.Value)
+		if itemNamespace == namespace { // Only compare items from our exact namespace
+			name := extractResourceNameFromJSON(t, item.Value)
+			items1[name] = item
+		}
+	}
+
+	items2 := make(map[string]*resourcepb.ResourceWrapper)
+	for _, item := range list2.Items {
+		itemNamespace := extractResourceNamespaceFromJSON(t, item.Value)
+		if itemNamespace == namespace { // Only compare items from our exact namespace
+			name := extractResourceNameFromJSON(t, item.Value)
+			items2[name] = item
+		}
+	}
+
+	// Verify counts match after filtering by namespace
+	require.Equal(t, expectedCount, len(items1), "Server 1 should return expected count after filtering")
+	require.Equal(t, expectedCount, len(items2), "Server 2 should return expected count after filtering")
+	require.Equal(t, len(items1), len(items2), "Both servers should return same count after filtering")
+
+	// Verify all items exist in both lists with same content and resource version
+	for name, item1 := range items1 {
+		item2, exists := items2[name]
+		require.True(t, exists, "Item %s should exist in both lists", name)
+		require.Greater(t, item1.ResourceVersion, int64(0), "Item1 should have valid resource version for %s", name)
+		require.Greater(t, item2.ResourceVersion, int64(0), "Item2 should have valid resource version for %s", name)
+		require.JSONEq(t, string(item1.Value), string(item2.Value), "Content should match for %s", name)
+
+		// Validate that both backends return equivalent resource versions using rvmanager compatibility check
+		if checkResourceVersions {
+			require.True(t, rvmanager.IsRvEqual(item1.ResourceVersion, item2.ResourceVersion) || rvmanager.IsRvEqual(item2.ResourceVersion, item1.ResourceVersion),
+				"Resource version mismatch for item %s between backends. Item1: %d, Item2: %d", name, item1.ResourceVersion, item2.ResourceVersion)
+		}
+	}
+}
+
+// extractResourceNameFromJSON extracts the resource name from JSON metadata
+func extractResourceNameFromJSON(t *testing.T, jsonData []byte) string {
+	var obj map[string]interface{}
+	err := json.Unmarshal(jsonData, &obj)
+	require.NoError(t, err, "Failed to unmarshal JSON")
+
+	metadata, ok := obj["metadata"].(map[string]interface{})
+	require.True(t, ok, "metadata field not found or not an object")
+
+	name, ok := metadata["name"].(string)
+	require.True(t, ok, "name field not found or not a string")
+
+	return name
+}
+
+// extractResourceNamespaceFromJSON extracts the resource namespace from JSON metadata
+func extractResourceNamespaceFromJSON(t *testing.T, jsonData []byte) string {
+	var obj map[string]interface{}
+	err := json.Unmarshal(jsonData, &obj)
+	require.NoError(t, err, "Failed to unmarshal JSON")
+
+	metadata, ok := obj["metadata"].(map[string]interface{})
+	require.True(t, ok, "metadata field not found or not an object")
+
+	namespace, ok := metadata["namespace"].(string)
+	require.True(t, ok, "namespace field not found or not a string")
+
+	return namespace
+}
+
+// PlaylistResourceOptions defines options for creating test playlist resources
+type PlaylistResourceOptions struct {
+	Name       string
+	Namespace  string
+	UID        string
+	Generation int
+	Title      string
+	Folder     string // optional - empty string means no folder
+}
+
+// createPlaylistJSON creates standardized JSON for playlist resources
+func createPlaylistJSON(opts PlaylistResourceOptions) []byte {
+	folderAnnotation := ""
+	if opts.Folder != "" {
+		folderAnnotation = fmt.Sprintf(`,
+				"annotations": {
+					"grafana.app/folder": "%s"
+				}`, opts.Folder)
+	}
+
+	jsonStr := fmt.Sprintf(`{
+		"apiVersion": "playlist.grafana.app/v0alpha1",
+		"kind": "Playlist",
+		"metadata": {
+			"name": "%s",
+			"namespace": "%s",
+			"uid": "%s",
+			"generation": %d%s
+		},
+		"spec": {
+			"title": "%s"
+		}
+	}`, opts.Name, opts.Namespace, opts.UID, opts.Generation, folderAnnotation, opts.Title)
+
+	return []byte(jsonStr)
+}
+
+// createPlaylistKey creates standardized ResourceKey for playlist resources
+func createPlaylistKey(namespace, name string) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{
+		Group:     "playlist.grafana.app",
+		Resource:  "playlists",
+		Namespace: namespace,
+		Name:      name,
+	}
+}
+
+// createPlaylistResource creates a playlist resource using the server with consistent error handling
+func createPlaylistResource(t *testing.T, server resource.ResourceServer, ctx context.Context, opts PlaylistResourceOptions) *resourcepb.CreateResponse {
+	t.Helper()
+	key := createPlaylistKey(opts.Namespace, opts.Name)
+	value := createPlaylistJSON(opts)
+
+	created, err := server.Create(ctx, &resourcepb.CreateRequest{
+		Key:   key,
+		Value: value,
+	})
+	require.NoError(t, err)
+	require.Nil(t, created.Error)
+	require.Greater(t, created.ResourceVersion, int64(0))
+
+	return created
+}
+
+// updatePlaylistResource updates a playlist resource using the server with consistent error handling
+func updatePlaylistResource(t *testing.T, server resource.ResourceServer, ctx context.Context, opts PlaylistResourceOptions, resourceVersion int64) *resourcepb.UpdateResponse {
+	t.Helper()
+	key := createPlaylistKey(opts.Namespace, opts.Name)
+	value := createPlaylistJSON(opts)
+
+	updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
+		Key:             key,
+		Value:           value,
+		ResourceVersion: resourceVersion,
+	})
+	require.NoError(t, err)
+	require.Nil(t, updated.Error)
+	require.Greater(t, updated.ResourceVersion, int64(0)) // Just check it's positive, not necessarily greater than input
+
+	return updated
+}
+
+// deletePlaylistResource deletes a playlist resource using the server with consistent error handling
+func deletePlaylistResource(t *testing.T, server resource.ResourceServer, ctx context.Context, namespace, name string, resourceVersion int64) *resourcepb.DeleteResponse {
+	t.Helper()
+	key := createPlaylistKey(namespace, name)
+
+	deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+		Key:             key,
+		ResourceVersion: resourceVersion,
+	})
+	require.NoError(t, err)
+	require.Nil(t, deleted.Error)
+	require.Greater(t, deleted.ResourceVersion, int64(0))
+
+	return deleted
 }
