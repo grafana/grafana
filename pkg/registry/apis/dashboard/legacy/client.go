@@ -38,10 +38,10 @@ func (d *directResourceClient) GetBlob(ctx context.Context, in *resourcepb.GetBl
 	return d.server.GetBlob(ctx, in)
 }
 
-//// GetStats implements ResourceClient.
-//func (d *directResourceClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-//	return d.server.GetStats(ctx, in)
-//}
+// GetStats implements ResourceClient (SearchClient).
+func (d *directResourceClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return nil, fmt.Errorf("GetStats not supported with direct resource client")
+}
 
 // IsHealthy implements ResourceClient.
 func (d *directResourceClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
@@ -53,13 +53,15 @@ func (d *directResourceClient) List(ctx context.Context, in *resourcepb.ListRequ
 	return d.server.List(ctx, in)
 }
 
-//func (d *directResourceClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
-//	return d.server.ListManagedObjects(ctx, in)
-//}
-//
-//func (d *directResourceClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
-//	return d.server.CountManagedObjects(ctx, in)
-//}
+// ListManagedObjects implements ResourceClient (SearchClient).
+func (d *directResourceClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	return nil, fmt.Errorf("ListManagedObjects not supported with direct resource client")
+}
+
+// CountManagedObjects implements ResourceClient (SearchClient).
+func (d *directResourceClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
+	return nil, fmt.Errorf("CountManagedObjects not supported with direct resource client")
+}
 
 // PutBlob implements ResourceClient.
 func (d *directResourceClient) PutBlob(ctx context.Context, in *resourcepb.PutBlobRequest, opts ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
@@ -71,10 +73,10 @@ func (d *directResourceClient) Read(ctx context.Context, in *resourcepb.ReadRequ
 	return d.server.Read(ctx, in)
 }
 
-// Search implements ResourceClient.
-//func (d *directResourceClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-//	return d.server.Search(ctx, in)
-//}
+// Search implements ResourceClient (SearchClient).
+func (d *directResourceClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	return nil, fmt.Errorf("Search not supported with direct resource client")
+}
 
 // Update implements ResourceClient.
 func (d *directResourceClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, opts ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {

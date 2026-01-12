@@ -43,6 +43,8 @@ type ResourceClient interface {
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
 	resourcepb.QuotasClient
+	// SearchClient methods are included for convenience - the client typically needs both
+	SearchClient
 }
 
 // Internal implementation
@@ -95,9 +97,10 @@ func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc
 	return newResourceClient(cc, cci)
 }
 
-func NewLocalResourceClient(server ResourceServer) ResourceClient {
+func NewLocalResourceClient(server ResourceServer, searchServer SearchServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
+	indexChannel := &inprocgrpc.Channel{}
 	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
 	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
@@ -118,13 +121,31 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		)
 	}
 
+	// Register search services on the index channel if searchServer is provided
+	if searchServer != nil {
+		for _, desc := range []*grpc.ServiceDesc{
+			&resourcepb.ResourceIndex_ServiceDesc,
+			&resourcepb.ManagedObjectIndex_ServiceDesc,
+		} {
+			indexChannel.RegisterService(
+				grpchan.InterceptServer(
+					desc,
+					grpcAuth.UnaryServerInterceptor(grpcAuthInt),
+					grpcAuth.StreamServerInterceptor(grpcAuthInt),
+				),
+				searchServer,
+			)
+		}
+	}
+
 	clientInt := authnlib.NewGrpcClientInterceptor(
 		ProvideInProcExchanger(),
 		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	return newResourceClient(cc, cc)
+	cci := grpchan.InterceptClientConn(indexChannel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return newResourceClient(cc, cci)
 }
 
 type RemoteResourceClientConfig struct {
