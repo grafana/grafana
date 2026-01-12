@@ -5,10 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-github/v70/github"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/pkg/extensions"
@@ -26,32 +28,43 @@ import (
 
 //nolint:gosec // Test RSA private key (generated for testing purposes only)
 const testPrivateKeyPEM = `-----BEGIN RSA PRIVATE KEY-----
-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
+MIIEoQIBAAKCAQBn1MuM5hIfH6d3TNStI1ofWv/gcjQ4joi9cFijEwVLuPYkF1nD
+KkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6m5T/sHfVSiEWAEUblh3cA34HVCmD
+cqyyVty5HLGJJlSs2C7W2x7yUc9ImzyDBsyjpKOXuojJ9wN9a17D2cYU5WkXjoDC
+4BHid61jn9WBTtPZXSgOdirwahNzxZQSIP7DA9T8yiZwIWPp5YesgsAPyQLCFPgM
+s77xz/CEUnEYQ35zI/k/mQrwKdQ/ZP8xLwQohUID0BIxE7G5quL069RuuCZWZkoF
+oPiZbp7HSryz1+19jD3rFT7eHGUYvAyCnXmXAgMBAAECggEADSs4Bc7ITZo+Kytb
+bfol3AQ2n8jcRrANN7mgBE7NRSVYUouDnvUlbnCC2t3QXPwLdxQa11GkygLSQ2bg
+GeVDgq1o4GUJTcvxFlFCcpU/hEANI/DQsxNAQ/4wUGoLOlHaO3HPvwBblHA70gGe
+Ux/xpG+lMAFAiB0EHEwZ4M0mClBEOQv3NzaFTWuBHtIMS8eid7M1q5qz9+rCgZSL
+KBBHo0OvUbajG4CWl8SM6LUYapASGg+U17E+4xA3npwpIdsk+CbtX+vvX324n4kn
+0EkrJqCjv8M1KiCKAP+UxwP00ywxOg4PN+x+dHI/I7xBvEKe/x6BltVSdGA+PlUK
+02wagQKBgQDF7gdQLFIagPH7X7dBP6qEGxj/Ck9Qdz3S1gotPkVeq+1/UtQijYZ1
+j44up/0yB2B9P4kW091n+iWcyfoU5UwBua9dHvCZP3QH05LR1ZscUHxLGjDPBASt
+l2xSq0hqqNWBspb1M0eCY0Yxi65iDkj3xsI2iN35BEb1FlWdR5KGvwKBgQCGS0ce
+wASWbZIPU2UoKGOQkIJU6QmLy0KZbfYkpyfE8IxGttYVEQ8puNvDDNZWHNf+LP85
+c8iV6SfnWiLmu1XkG2YmJFBCCAWgJ8Mq2XQD8E+a/xcaW3NqlcC5+I2czX367j3r
+69wZSxRbzR+DCfOiIkrekJImwN183ZYy2cBbKQKBgFj86IrSMmO6H5Ft+j06u5ZD
+fJyF7Rz3T3NwSgkHWzbyQ4ggHEIgsRg/36P4YSzSBj6phyAdRwkNfUWdxXMJmH+a
+FU7frzqnPaqbJAJ1cBRt10QI1XLtkpDdaJVObvONTtjOC3LYiEkGCzQRYeiyFXpZ
+AU51gJ8JnkFotjtNR4KPAoGAehVREDlLcl0lnN0ZZspgyPk2Im6/iOA9KTH3xBZZ
+ZwWu4FIyiHA7spgk4Ep5R0ttZ9oMI3SIcw/EgONGOy8uw/HMiPwWIhEc3B2JpRiO
+CU6bb7JalFFyuQBudiHoyxVcY5PVovWF31CLr3DoJr4TR9+Y5H/U/XnzYCIo+w1N
+exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
++4CDhWPW4spq8MYPCRiMrvRSctKt/7FhVGL2vE/0VY3TcLk14qLC+2+0lnPVgnYn
+u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 -----END RSA PRIVATE KEY-----`
+
+//nolint:gosec // Test RSA public key (generated for testing purposes only)
+const testPublicKeyPem = `-----BEGIN PUBLIC KEY-----
+MIIBITANBgkqhkiG9w0BAQEFAAOCAQ4AMIIBCQKCAQBn1MuM5hIfH6d3TNStI1of
+Wv/gcjQ4joi9cFijEwVLuPYkF1nDKkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6
+m5T/sHfVSiEWAEUblh3cA34HVCmDcqyyVty5HLGJJlSs2C7W2x7yUc9ImzyDBsyj
+pKOXuojJ9wN9a17D2cYU5WkXjoDC4BHid61jn9WBTtPZXSgOdirwahNzxZQSIP7D
+A9T8yiZwIWPp5YesgsAPyQLCFPgMs77xz/CEUnEYQ35zI/k/mQrwKdQ/ZP8xLwQo
+hUID0BIxE7G5quL069RuuCZWZkoFoPiZbp7HSryz1+19jD3rFT7eHGUYvAyCnXmX
+AgMBAAE=
+-----END PUBLIC KEY-----`
 
 func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -59,6 +72,9 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	decryptService := helper.GetEnv().DecryptService
+	require.NotNil(t, decryptService, "decrypt service not wired properly")
 
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -99,7 +115,22 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		assert.Equal(t, "454545", githubInfo["installationID"], "installationID should be equal")
 		require.Contains(t, output.Object, "secure", "object should contain secure")
 		assert.Contains(t, output.Object["secure"], "privateKey", "secure should contain PrivateKey")
+
+		// Verifying token
 		assert.Contains(t, output.Object["secure"], "token", "token should be created")
+		secretName, found, err := unstructured.NestedString(output.Object, "secure", "token", "name")
+		require.NoError(t, err, "error getting secret name")
+		require.True(t, found, "secret name should exist: %v", output.Object)
+		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", output.GetNamespace(), secretName)
+		require.NoError(t, err, "decryption error")
+		require.Len(t, decrypted, 1)
+
+		val := decrypted[secretName].Value()
+		require.NotNil(t, val)
+		k := val.DangerouslyExposeAndConsumeValue()
+		valid, err := verifyToken(t, "123456", testPublicKeyPem, k)
+		require.NoError(t, err, "error verifying token: %s", k)
+		require.True(t, valid, "token should be valid: %s", k)
 
 		// LIST
 		list, err := helper.Connections.Resource.List(ctx, metav1.ListOptions{})
@@ -909,4 +940,28 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 		assert.Contains(t, names, "repo-without-connection")
 		assert.Contains(t, names, "repo-with-different-connection")
 	})
+}
+
+func verifyToken(t *testing.T, appID, publicKey, token string) (bool, error) {
+	t.Helper()
+
+	// Parse the private key
+	key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(publicKey))
+	if err != nil {
+		return false, err
+	}
+
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
+		return key, nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
+	if err != nil {
+		return false, err
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok || !parsedToken.Valid {
+		return false, fmt.Errorf("invalid token")
+	}
+
+	return claims.VerifyIssuer(appID, true), nil
 }

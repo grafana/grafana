@@ -61,7 +61,7 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		conn := NewConnection(context.Background(), c, mockFactory)
+		conn := NewConnection(c, mockFactory)
 
 		require.NoError(t, conn.Mutate(context.Background()))
 		assert.Equal(t, "https://github.com/settings/installations/456", c.Spec.URL)
@@ -87,7 +87,7 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		conn := NewConnection(context.Background(), c, mockFactory)
+		conn := NewConnection(c, mockFactory)
 
 		require.NoError(t, conn.Mutate(context.Background()))
 		assert.Equal(t, "https://github.com/settings/installations/456", c.Spec.URL)
@@ -106,7 +106,7 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		conn := NewConnection(context.Background(), c, mockFactory)
+		conn := NewConnection(c, mockFactory)
 
 		require.NoError(t, conn.Mutate(context.Background()))
 	})
@@ -129,7 +129,7 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		conn := NewConnection(context.Background(), c, mockFactory)
+		conn := NewConnection(c, mockFactory)
 
 		err := conn.Mutate(context.Background())
 		require.Error(t, err)
@@ -155,7 +155,7 @@ func TestConnection_Mutate(t *testing.T) {
 		}
 
 		mockFactory := NewMockGithubFactory(t)
-		conn := NewConnection(context.Background(), c, mockFactory)
+		conn := NewConnection(c, mockFactory)
 
 		err := conn.Mutate(context.Background())
 		require.Error(t, err)
@@ -180,7 +180,7 @@ func TestConnection_Validate(t *testing.T) {
 					Type: "invalid",
 				},
 			},
-			wantErr: true,
+			wantErr:        true,
 			errMsgContains: []string{"spec.type"},
 		},
 		{
@@ -191,7 +191,7 @@ func TestConnection_Validate(t *testing.T) {
 					Type: provisioning.GithubConnectionType,
 				},
 			},
-			wantErr: true,
+			wantErr:        true,
 			errMsgContains: []string{"spec.github"},
 		},
 		{
@@ -401,7 +401,7 @@ func TestConnection_Validate(t *testing.T) {
 				},
 			},
 			wantErr:        true,
-			errMsgContains: []string{"spec.token", "[REDACTED]"},
+			errMsgContains: []string{"spec.installationID", "456"},
 			setupMock: func(mockFactory *MockGithubFactory) {
 				mockClient := NewMockClient(t)
 
@@ -419,7 +419,7 @@ func TestConnection_Validate(t *testing.T) {
 				tt.setupMock(mockFactory)
 			}
 
-			conn := NewConnection(context.Background(), tt.connection, mockFactory)
+			conn := NewConnection(tt.connection, mockFactory)
 			err := conn.Validate(context.Background())
 			if tt.wantErr {
 				assert.Error(t, err)

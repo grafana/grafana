@@ -26,7 +26,6 @@ type Connection struct {
 }
 
 func NewConnection(
-	ctx context.Context,
 	obj *provisioning.Connection,
 	factory GithubFactory,
 ) Connection {
@@ -170,7 +169,7 @@ func (c *Connection) validateAppAndInstallation(ctx context.Context) *field.Erro
 		if errors.Is(err, ErrServiceUnavailable) {
 			return field.InternalError(field.NewPath("spec", "token"), ErrServiceUnavailable)
 		}
-		return field.Invalid(field.NewPath("spec", "token"), "[REDACTED]", "invalid token")
+		return field.Invalid(field.NewPath("spec", "installationID"), c.obj.Spec.GitHub.InstallationID, "invalid installation ID")
 	}
 
 	return nil

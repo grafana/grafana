@@ -17,19 +17,16 @@ func (e *extra) Type() provisioning.ConnectionType {
 	return provisioning.GithubConnectionType
 }
 
-func (e *extra) Build(ctx context.Context, r *provisioning.Connection) (connection.Connection, error) {
+func (e *extra) Build(ctx context.Context, connection *provisioning.Connection) (connection.Connection, error) {
 	logger := logging.FromContext(ctx)
-	if r == nil || r.Spec.GitHub == nil {
+	if connection == nil || connection.Spec.GitHub == nil {
 		logger.Error("connection is nil or github info is nil")
 
 		return nil, fmt.Errorf("invalid github connection")
 	}
 
-	logger = logger.With("appID", r.Spec.GitHub.AppID, "installationID", r.Spec.GitHub.InstallationID)
-	logger.Info("Instantiating Github connection")
-
-	ghConnection := NewConnection(ctx, r, e.factory)
-	return &ghConnection, nil
+	c := NewConnection(connection, e.factory)
+	return &c, nil
 }
 
 func Extra(factory GithubFactory) connection.Extra {
