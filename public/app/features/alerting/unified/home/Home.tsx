@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -14,7 +15,9 @@ import { PluginIntegrations } from './PluginIntegrations';
 import SyntheticMonitoringCard from './SyntheticMonitoringCard';
 
 function Home() {
-  const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
+  // When V2 navigation is enabled, don't show Insights tab on Home page
+  // (Insights is available via the sidebar Insights menu instead)
+  const insightsEnabled = (insightsIsAvailable() || isLocalDevEnv()) && !config.featureToggles.alertingNavigationV2;
 
   const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
   // Memoize the scene so it's only created once and properly initialized
