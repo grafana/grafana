@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/util"
+	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -60,7 +60,7 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
 	sr.End = uint32(backendQuery.TimeRange.To.Unix())
 
-	ctx = util.AppendHeadersToOutgoingContext(ctx, req)
+	ctx = stream_utils.AppendHeadersToOutgoingContext(ctx, req)
 
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {

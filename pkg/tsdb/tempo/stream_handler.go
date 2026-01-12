@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/util"
+	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
 )
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -43,7 +43,7 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	tempoDatasource, dsInfoErr := s.getDSInfo(ctx, request.PluginContext)
 
 	// get incoming and team http headers and append to stream request.
-	headers, err := util.SetHeadersFromIncomingContext(ctx)
+	headers, err := stream_utils.SetHeadersFromIncomingContext(ctx)
 	if err != nil {
 		return err
 	}

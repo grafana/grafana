@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/util"
+	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
@@ -64,7 +64,7 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 	qrr.Start = uint64(backendQuery.TimeRange.From.UnixNano())
 	qrr.End = uint64(backendQuery.TimeRange.To.UnixNano())
 
-	ctx = util.AppendHeadersToOutgoingContext(ctx, req)
+	ctx = stream_utils.AppendHeadersToOutgoingContext(ctx, req)
 
 	if isInstantQuery(tempoQuery.MetricsQueryType) {
 		instantQuery := &tempopb.QueryInstantRequest{

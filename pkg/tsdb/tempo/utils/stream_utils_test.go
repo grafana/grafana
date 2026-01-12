@@ -1,4 +1,4 @@
-package util
+package stream_utils
 
 import (
 	"context"
