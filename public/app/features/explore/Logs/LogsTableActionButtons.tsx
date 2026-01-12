@@ -12,7 +12,7 @@ import {
 import { t } from '@grafana/i18n';
 import { ClipboardButton, CustomCellRendererProps, IconButton, Modal, useTheme2 } from '@grafana/ui';
 import { getLogsPermalinkRange } from 'app/core/utils/shortLinks';
-import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSync';
+import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSync/external.utils';
 import { LogsFrame, DATAPLANE_ID_NAME } from 'app/features/logs/logsFrame';
 import { getState } from 'app/store/store';
 
