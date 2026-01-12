@@ -101,7 +101,7 @@ const ContactPointsTab = () => {
   }
 
   return (
-    <>
+    <Stack direction="column" gap={1}>
       {/* TODO we can add some additional info here with a ToggleTip */}
       <Stack direction="row" alignItems="end" justifyContent="space-between">
         <ContactPointsFilter />
@@ -150,7 +150,7 @@ const ContactPointsTab = () => {
         <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />
       )}
       {ExportDrawer}
-    </>
+    </Stack>
   );
 };
 
@@ -160,7 +160,7 @@ const NotificationTemplatesTab = () => {
   );
 
   return (
-    <>
+    <Stack direction="column" gap={1}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Text variant="body" color="secondary">
           <Trans i18nKey="alerting.notification-templates-tab.create-notification-templates-customize-notifications">
@@ -181,7 +181,7 @@ const NotificationTemplatesTab = () => {
         )}
       </Stack>
       <NotificationTemplates />
-    </>
+    </Stack>
   );
 };
 
