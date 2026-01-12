@@ -150,7 +150,6 @@ alertingQueryAndExpressionsStepMode,GA,@grafana/alerting-squad,false,false,true
 improvedExternalSessionHandling,GA,@grafana/identity-access-team,false,false,false
 useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
-unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchSprinkles,experimental,@grafana/search-and-storage,false,false,false
 managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
