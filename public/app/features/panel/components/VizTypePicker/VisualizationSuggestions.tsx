@@ -22,6 +22,7 @@ import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
+import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
 import { VizTypeChangeDetails } from './types';
 
 export interface Props {
@@ -30,6 +31,7 @@ export interface Props {
   data?: PanelData;
   panel?: PanelModel;
   searchQuery?: string;
+  isNewPanel?: boolean;
 }
 
 const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
@@ -62,7 +64,7 @@ const useSuggestions = (data: PanelData | undefined, searchQuery: string | undef
   return { value: filteredValue, loading, error, retry };
 };
 
-export function VisualizationSuggestions({ onChange, editPreview, data, panel, searchQuery }: Props) {
+export function VisualizationSuggestions({ onChange, editPreview, data, panel, searchQuery, isNewPanel }: Props) {
   const styles = useStyles2(getStyles);
 
   const { value: result, loading, error, retry } = useSuggestions(data, searchQuery);
@@ -74,6 +76,18 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
+
+  const panelState = useMemo((): PanelState => {
+    if (isUnconfiguredPanel) {
+      return PANEL_STATES.UNCONFIGURED_PANEL;
+    }
+
+    if (isNewPanel) {
+      return PANEL_STATES.NEW_PANEL;
+    }
+
+    return PANEL_STATES.EXISTING_PANEL;
+  }, [isUnconfiguredPanel, isNewPanel]);
 
   const suggestionsByVizType = useMemo(() => {
     const meta = getAllPanelPluginMeta();
@@ -96,22 +110,36 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
   }, [suggestions]);
 
   const applySuggestion = useCallback(
-    (suggestion: PanelPluginVisualizationSuggestion, isPreview?: boolean) => {
+    (suggestion: PanelPluginVisualizationSuggestion, isPreview: boolean, isAutoSelected = false) => {
+      if (isPreview) {
+        VizSuggestionsInteractions.suggestionPreviewed({
+          pluginId: suggestion.pluginId,
+          suggestionName: suggestion.name,
+          panelState,
+          isAutoSelected,
+        });
+
+        setSuggestionHash(suggestion.hash);
+      } else {
+        VizSuggestionsInteractions.suggestionAccepted({
+          pluginId: suggestion.pluginId,
+          suggestionName: suggestion.name,
+          panelState,
+        });
+      }
+
       onChange(
         {
           pluginId: suggestion.pluginId,
           options: suggestion.options,
           fieldConfig: suggestion.fieldConfig,
           withModKey: isPreview,
+          fromSuggestions: true,
         },
         isPreview ? editPreview : undefined
       );
-
-      if (isPreview) {
-        setSuggestionHash(suggestion.hash);
-      }
     },
-    [onChange, editPreview]
+    [onChange, editPreview, panelState]
   );
 
   useEffect(() => {
@@ -124,7 +152,7 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
     // the previously selected suggestion is no longer present in the list.
     const newFirstCardHash = suggestions?.[0]?.hash ?? null;
     if (firstCardHash !== newFirstCardHash || suggestions.every((s) => s.hash !== suggestionHash)) {
-      applySuggestion(suggestions[0], true);
+      applySuggestion(suggestions[0], true, true);
       setFirstCardHash(newFirstCardHash);
       return;
     }
@@ -243,7 +271,7 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
                   suggestion={suggestion}
                   width={width}
                   tabIndex={index}
-                  onClick={() => applySuggestion(suggestion)}
+                  onClick={() => applySuggestion(suggestion, false)}
                 />
               </div>
             ))}
