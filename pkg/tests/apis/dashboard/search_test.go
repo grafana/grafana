@@ -129,6 +129,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 
 		// Normalize scores and query cost for snapshot comparison
 		sr.QueryCost = 0 // this depends on the hardware
+		sr.MaxScore = roundTo(sr.MaxScore, 3)
 		for i := range sr.Hits {
 			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
 		}
