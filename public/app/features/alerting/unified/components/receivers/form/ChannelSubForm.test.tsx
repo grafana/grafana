@@ -377,7 +377,7 @@ describe('ChannelSubForm', () => {
       expect(screen.getByText('v0mimir1')).toBeInTheDocument();
     });
 
-    it('should display version badge for v1 integration', () => {
+    it('should NOT display version badge for v1 integration', () => {
       const webhookV1: TestChannelValues = {
         __id: 'id-0',
         type: 'webhook',
@@ -388,8 +388,8 @@ describe('ChannelSubForm', () => {
 
       renderVersionedForm(webhookV1, webhookV1);
 
-      // Should show version badge with v1 text
-      expect(screen.getByText('v1')).toBeInTheDocument();
+      // Should NOT show version badge for non-legacy v1 integrations
+      expect(screen.queryByText('v1')).not.toBeInTheDocument();
     });
 
     it('should filter out notifiers with canCreate: false from dropdown', () => {

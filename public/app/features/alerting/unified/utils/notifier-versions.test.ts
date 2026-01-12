@@ -220,13 +220,22 @@ describe('notifier-versions utilities', () => {
       },
     ];
 
-    it('should return default options if no version is specified', () => {
+    it('should return options from default creatable version if no version is specified', () => {
       const notifier = createNotifier({
         options: defaultOptions,
-        versions: [createVersion({ version: 'v1', options: v1Options })],
+        versions: [createVersion({ version: 'v1', options: v1Options, canCreate: true })],
       });
-      expect(getOptionsForVersion(notifier, undefined)).toBe(defaultOptions);
-      expect(getOptionsForVersion(notifier, '')).toBe(defaultOptions);
+      // When no version specified, should use options from the default creatable version
+      expect(getOptionsForVersion(notifier, undefined)).toBe(v1Options);
+    });
+
+    it('should return default options if no version is specified and empty string is passed', () => {
+      const notifier = createNotifier({
+        options: defaultOptions,
+        versions: [createVersion({ version: 'v1', options: v1Options, canCreate: true })],
+      });
+      // Empty string is still a falsy version, so should use default creatable version
+      expect(getOptionsForVersion(notifier, '')).toBe(v1Options);
     });
 
     it('should return default options if notifier has no versions array', () => {
