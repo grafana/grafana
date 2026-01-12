@@ -1382,7 +1382,8 @@
       "metadata": {
         "name": "exploreLogsLimitedTimeRange",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-08-29T13:55:59Z"
+        "creationTimestamp": "2024-08-29T13:55:59Z",
+        "deletionTimestamp": "2026-01-12T22:18:14Z"
       },
       "spec": {
         "description": "Used in Logs Drilldown to limit the time range",
