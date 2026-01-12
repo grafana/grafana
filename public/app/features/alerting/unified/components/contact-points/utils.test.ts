@@ -1,6 +1,7 @@
 import { GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/types';
 
 import { KnownProvenance } from '../../types/knownProvenance';
+import { PROVENANCE_NONE } from '../../utils/k8s/constants';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from './constants';
@@ -254,12 +255,12 @@ describe('isProvisionedContactPoint', () => {
     expect(isProvisionedContactPoint(KnownProvenance.ConvertedPrometheus)).toBe(true);
   });
 
-  it('should return true when provenance is Empty', () => {
-    expect(isProvisionedContactPoint(KnownProvenance.Empty)).toBe(true);
+  it('should return true when provenance is an empty string', () => {
+    expect(isProvisionedContactPoint(KnownProvenance.None)).toBe(false);
   });
 
-  it('should return false when provenance is None', () => {
-    expect(isProvisionedContactPoint(KnownProvenance.None)).toBe(false);
+  it('should return false when provenance is none', () => {
+    expect(isProvisionedContactPoint(PROVENANCE_NONE)).toBe(false);
   });
 
   it('should return false when provenance is undefined', () => {

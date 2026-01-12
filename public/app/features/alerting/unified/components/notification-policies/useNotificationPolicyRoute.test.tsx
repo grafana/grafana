@@ -131,23 +131,23 @@ describe('isRouteProvisioned', () => {
     expect(isRouteProvisioned(route)).toBeFalsy();
   });
 
-  it('returns true when route has KnownProvenance.Empty in metadata (provisioned but opted out of read-only)', () => {
+  it('returns false when route has KnownProvenance.None in metadata', () => {
     const route: Route = {
       receiver: 'test-receiver',
       [ROUTES_META_SYMBOL]: {
-        provenance: KnownProvenance.Empty,
+        provenance: KnownProvenance.None,
       },
     };
 
-    expect(isRouteProvisioned(route)).toBeTruthy();
+    expect(isRouteProvisioned(route)).toBeFalsy();
   });
 
-  it('returns true when route has KnownProvenance.Empty at top level (provisioned but opted out of read-only)', () => {
+  it('returns false when route has KnownProvenance.None at top level', () => {
     const route: Route = {
       receiver: 'test-receiver',
-      provenance: KnownProvenance.Empty,
+      provenance: KnownProvenance.None,
     };
-    expect(isRouteProvisioned(route)).toBeTruthy();
+    expect(isRouteProvisioned(route)).toBeFalsy();
   });
 
   it('returns true when route has file provenance in metadata', () => {

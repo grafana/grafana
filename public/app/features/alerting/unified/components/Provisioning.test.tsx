@@ -67,14 +67,14 @@ describe('ProvisioningBadge', () => {
 
   describe('when the provenance is None', () => {
     it('should render the badge with the correct text', () => {
-      render(<ProvisioningBadge provenance={KnownProvenance.Empty} />);
+      render(<ProvisioningBadge provenance={KnownProvenance.None} />);
 
       expect(screen.getByText('Provisioned')).toBeInTheDocument();
       expect(screen.queryByText('Imported from Prometheus/Mimir')).not.toBeInTheDocument();
     });
 
     it('should render correct tooltip text', async () => {
-      const { user } = render(<ProvisioningBadge tooltip provenance={KnownProvenance.Empty} />);
+      const { user } = render(<ProvisioningBadge tooltip provenance={KnownProvenance.None} />);
 
       const badge = screen.getByText('Provisioned');
       await user.hover(badge);

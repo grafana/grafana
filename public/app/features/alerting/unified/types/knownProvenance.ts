@@ -1,6 +1,5 @@
 export enum KnownProvenance {
-  None = 'none',
-  Empty = '',
+  None = '',
   API = 'api',
   File = 'file',
   ConvertedPrometheus = 'converted_prometheus',
