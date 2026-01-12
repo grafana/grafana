@@ -55,7 +55,7 @@ export function ResourceExport({
   const switchExportFormatLabel = t('export.json.export-format', 'Format');
 
   return (
-    <Stack gap={1} direction="column">
+    <>
       <QueryOperationRow
         id="Advanced options"
         index={0}
@@ -137,14 +137,14 @@ export function ResourceExport({
         </Stack>
       )}
 
-      {showV2LibPanelAlert && (
+      {true && (
         <Alert
           title={t(
             'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
             'Library panels will be converted to regular panels'
           )}
           severity="warning"
-          bottomSpacing={0}
+          topSpacing={2}
           data-testid={selector.libraryPanelsAlert}
         >
           <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
@@ -153,6 +153,6 @@ export function ResourceExport({
           </Trans>
         </Alert>
       )}
-    </Stack>
+    </>
   );
 }
