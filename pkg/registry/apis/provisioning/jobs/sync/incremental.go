@@ -116,6 +116,8 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 					progress.Record(ensureFolderCtx, jobs.JobResourceResult{
 						Path:   change.Path,
 						Action: repository.FileActionIgnored,
+						Group:  resources.FolderKind.Group,
+						Kind:   resources.FolderKind.Kind,
 						Error:  err,
 					})
 					continue

@@ -290,8 +290,6 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 }
 
 func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
-	logger := logging.FromContext(ctx)
-
 	for _, folder := range folders {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -301,23 +299,9 @@ func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, cli
 			return err
 		}
 
-		folderCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-
-		applyChange(folderCtx, folder, clients, repositoryResources, progress, tracer)
-
-		if folderCtx.Err() == context.DeadlineExceeded {
-			logger.Error("operation timed out after 15 seconds", "path", folder.Path, "action", folder.Action)
-
-			recordCtx, recordCancel := context.WithTimeout(context.Background(), 15*time.Second)
-			progress.Record(recordCtx, jobs.JobResourceResult{
-				Path:   folder.Path,
-				Action: folder.Action,
-				Error:  fmt.Errorf("operation timed out after 15 seconds"),
-			})
-			recordCancel()
-		}
-
-		cancel()
+		wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
+			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer)
+		})
 	}
 
 	return nil
@@ -355,7 +339,9 @@ loop:
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			applyChangeWithTimeout(ctx, change, clients, repositoryResources, progress, tracer, logger)
+			wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
+				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer)
+			})
 		}(change)
 	}
 
@@ -368,21 +354,10 @@ loop:
 	return ctx.Err()
 }
 
-func applyChangeWithTimeout(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, logger logging.Logger) {
-	changeCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+// wrapWithTimeout wraps a function call with a timeout context
+func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context)) {
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	applyChange(changeCtx, change, clients, repositoryResources, progress, tracer)
-
-	if changeCtx.Err() == context.DeadlineExceeded {
-		logger.Error("operation timed out after 15 seconds", "path", change.Path, "action", change.Action)
-
-		recordCtx, recordCancel := context.WithTimeout(context.Background(), 15*time.Second)
-		progress.Record(recordCtx, jobs.JobResourceResult{
-			Path:   change.Path,
-			Action: change.Action,
-			Error:  fmt.Errorf("operation timed out after 15 seconds"),
-		})
-		recordCancel()
-	}
+	fn(timeoutCtx)
 }

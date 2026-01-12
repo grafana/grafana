@@ -721,18 +721,12 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					}).
 					Return("", schema.GroupVersionKind{}, context.DeadlineExceeded)
 
+				// applyChange records the error from WriteResourceFromFile
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action == repository.FileActionCreated &&
 						result.Path == "dashboards/slow.json" &&
 						result.Error != nil &&
 						result.Error.Error() == "writing resource from file dashboards/slow.json: context deadline exceeded"
-				})).Return().Once()
-
-				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionCreated &&
-						result.Path == "dashboards/slow.json" &&
-						result.Error != nil &&
-						result.Error.Error() == "operation timed out after 15 seconds"
 				})).Return().Once()
 			},
 		},
