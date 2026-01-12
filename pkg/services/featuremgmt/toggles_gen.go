@@ -455,10 +455,6 @@ const (
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
 
-	// FlagUnifiedStorageSearch
-	// Enable unified storage search
-	FlagUnifiedStorageSearch = "unifiedStorageSearch"
-
 	// FlagUnifiedStorageSearchSprinkles
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
@@ -631,7 +627,7 @@ const (
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
 
 	// FlagKubernetesAuthzApis
-	// Registers AuthZ /apis endpoint
+	// Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
 	// FlagKubernetesAuthZHandlerRedirect
@@ -645,6 +641,18 @@ const (
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
+
+	// FlagKubernetesAuthzCoreRolesApi
+	// Registers AuthZ Core Roles /apis endpoint
+	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
+
+	// FlagKubernetesAuthzRolesApi
+	// Registers AuthZ Roles /apis endpoint
+	FlagKubernetesAuthzRolesApi = "kubernetesAuthzRolesApi"
+
+	// FlagKubernetesAuthzRoleBindingsApi
+	// Registers AuthZ Role Bindings /apis endpoint
+	FlagKubernetesAuthzRoleBindingsApi = "kubernetesAuthzRoleBindingsApi"
 
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
@@ -729,10 +737,6 @@ const (
 	// FlagPluginContainers
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
-
-	// FlagTempoSearchBackendMigration
-	// Run search queries through the tempo backend
-	FlagTempoSearchBackendMigration = "tempoSearchBackendMigration"
 
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources

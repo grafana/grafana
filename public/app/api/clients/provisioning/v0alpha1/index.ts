@@ -12,8 +12,8 @@ import { isFetchError } from '@grafana/runtime';
 import { clearFolders } from 'app/features/browse-dashboards/state/slice';
 import { getState } from 'app/store/store';
 
-import { notifyApp } from '../../../../core/actions';
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
+import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { handleError } from '../../../utils';

@@ -213,6 +213,10 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					return nil
 				})
 
+				progress.On("HasDirPathFailedCreation", mock.MatchedBy(func(path string) bool {
+					return path == "dashboards/one.json" || path == "dashboards/two.json" || path == "dashboards/three.json"
+				})).Return(false).Maybe()
+
 				repoResources.On("WriteResourceFromFile", mock.Anything, mock.MatchedBy(func(path string) bool {
 					return path == "dashboards/one.json" || path == "dashboards/two.json" || path == "dashboards/three.json"
 				}), "").Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil).Maybe()
@@ -235,6 +239,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
@@ -259,6 +264,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
@@ -285,6 +291,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
@@ -309,6 +316,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
@@ -335,6 +343,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "one/two/three/").Return("some-folder", nil)
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
@@ -357,6 +366,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
 				repoResources.On(
 					"EnsureFolderPathExist",
@@ -581,6 +591,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
 
 				scheme := runtime.NewScheme()
 				require.NoError(t, metav1.AddMetaToScheme(scheme))
@@ -640,6 +651,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
 
 				scheme := runtime.NewScheme()
 				require.NoError(t, metav1.AddMetaToScheme(scheme))
@@ -695,6 +707,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/slow.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/slow.json", "").
 					Run(func(args mock.Arguments) {
@@ -708,18 +721,12 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					}).
 					Return("", schema.GroupVersionKind{}, context.DeadlineExceeded)
 
+				// applyChange records the error from WriteResourceFromFile
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action == repository.FileActionCreated &&
 						result.Path == "dashboards/slow.json" &&
 						result.Error != nil &&
 						result.Error.Error() == "writing resource from file dashboards/slow.json: context deadline exceeded"
-				})).Return().Once()
-
-				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionCreated &&
-						result.Path == "dashboards/slow.json" &&
-						result.Error != nil &&
-						result.Error.Error() == "operation timed out after 15 seconds"
 				})).Return().Once()
 			},
 		},
