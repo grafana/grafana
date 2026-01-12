@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -56,6 +57,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const repositoryName = data?.metadata?.name;
   const settings = useGetFrontendSettingsQuery();
   const [submitData, request] = useCreateOrUpdateRepository(repositoryName);
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -113,8 +115,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
       });
 
       reset(formData);
+      navigate(PROVISIONING_URL);
     }
-  }, [request.isSuccess, reset, getValues, repositoryName]);
+  }, [request.isSuccess, reset, getValues, repositoryName, navigate]);
 
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);

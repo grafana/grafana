@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
@@ -7,6 +8,7 @@ import { Button, Combobox, Field, Input, SecretTextArea, Stack } from '@grafana/
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { CONNECTIONS_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
@@ -25,6 +27,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const privateKey = data?.secure?.privateKey;
   const [privateKeyConfigured, setPrivateKeyConfigured] = useState(Boolean(privateKey));
   const [submitData, request] = useCreateOrUpdateConnection(connectionName);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -54,8 +57,9 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       });
 
       reset(formData);
+      navigate(CONNECTIONS_URL);
     }
-  }, [request.isSuccess, reset, getValues, connectionName]);
+  }, [request.isSuccess, reset, getValues, connectionName, navigate]);
 
   const onSubmit = async (form: ConnectionFormData) => {
     try {
