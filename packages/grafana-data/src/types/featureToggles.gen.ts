@@ -527,10 +527,6 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
-  * Sets the logs table as default visualisation in logs explore
-  */
-  logsExploreTableDefaultVisualization?: boolean;
-  /**
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
