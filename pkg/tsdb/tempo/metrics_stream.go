@@ -7,13 +7,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
-	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
-	"google.golang.org/grpc/metadata"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
+	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"

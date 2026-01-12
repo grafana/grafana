@@ -50,8 +50,8 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	request.Headers = headers
 
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
-		if err != nil {
-			return backend.DownstreamErrorf("failed to get datasource information: %w", err)
+		if dsInfoErr != nil {
+			return backend.DownstreamErrorf("failed to get datasource information: %w", dsInfoErr)
 		}
 		if err = s.runSearchStream(ctx, request, sender, tempoDatasource); err != nil {
 			return sendError(err, sender)
@@ -60,8 +60,8 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 		}
 	}
 	if strings.HasPrefix(request.Path, MetricsPathPrefix) {
-		if err != nil {
-			return backend.DownstreamErrorf("failed to get datasource information: %w", err)
+		if dsInfoErr != nil {
+			return backend.DownstreamErrorf("failed to get datasource information: %w", dsInfoErr)
 		}
 		if err = s.runMetricsStream(ctx, request, sender, tempoDatasource); err != nil {
 			return sendError(err, sender)
