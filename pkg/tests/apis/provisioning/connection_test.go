@@ -776,6 +776,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 	helper := runGrafana(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	// Create a connection first
 	connection := &unstructured.Unstructured{Object: map[string]any{
@@ -794,12 +795,12 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 		},
 		"secure": map[string]any{
 			"privateKey": map[string]any{
-				"create": "test-private-key",
+				"create": privateKeyBase64,
 			},
 		},
 	}}
 
-	_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+	_, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
 	t.Cleanup(func() {

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v70/github"
+	"github.com/grafana/grafana/pkg/extensions"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -701,9 +702,12 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		// Allow both folder and instance sync targets for tests
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
-		// Allow all repos/connection types for testing.
-		ProvisioningRepositoryTypes: []string{"git", "local", "github", "gitlab", "bitbucket"},
 	}
+
+	if extensions.IsEnterprise {
+		opts.ProvisioningRepositoryTypes = []string{"local", "github", "gitlab", "bitbucket"}
+	}
+
 	for _, o := range options {
 		o(&opts)
 	}
