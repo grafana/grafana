@@ -288,8 +288,9 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	// Use round_robin to balances requests more evenly over the available Storage server.
-	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
+	// Use round_robin to balance requests more evenly over the available Storage server.
+	// Enable health checking so round_robin excludes unhealthy backends (e.g., terminated pods).
+	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin","healthCheckConfig":{"serviceName":""}}`))
 
 	// Disable looking up service config from TXT DNS records.
 	// This reduces the number of requests made to the DNS servers.

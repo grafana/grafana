@@ -79,7 +79,7 @@ func (c *RingClient) RemoteAddress() string {
 
 const RingKey = "search-server-ring"
 const RingName = "search_server_ring"
-const RingHeartbeatTimeout = time.Minute
+const RingHeartbeatTimeout = 30 * time.Second
 const RingNumTokens = 128
 
 type distributorServer struct {
@@ -99,23 +99,19 @@ var (
 func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.Search")
 	defer span.End()
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "Search")
-	if err != nil {
-		return nil, err
-	}
 
-	return client.Search(ctx, r)
+	return distributeRequest(ctx, ds, r.Options.Key.Namespace, "Search", func(ctx context.Context, client ResourceClient) (*resourcepb.ResourceSearchResponse, error) {
+		return client.Search(ctx, r)
+	})
 }
 
 func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.GetStats")
 	defer span.End()
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "GetStats")
-	if err != nil {
-		return nil, err
-	}
 
-	return client.GetStats(ctx, r)
+	return distributeRequest(ctx, ds, r.Namespace, "GetStats", func(ctx context.Context, client ResourceClient) (*resourcepb.ResourceStatsResponse, error) {
+		return client.GetStats(ctx, r)
+	})
 }
 
 func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
@@ -215,58 +211,80 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.CountManagedObjects")
 	defer span.End()
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "CountManagedObjects")
-	if err != nil {
-		return nil, err
-	}
 
-	return client.CountManagedObjects(ctx, r)
+	return distributeRequest(ctx, ds, r.Namespace, "CountManagedObjects", func(ctx context.Context, client ResourceClient) (*resourcepb.CountManagedObjectsResponse, error) {
+		return client.CountManagedObjects(ctx, r)
+	})
 }
 
 func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.ListManagedObjects")
 	defer span.End()
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "ListManagedObjects")
-	if err != nil {
-		return nil, err
-	}
 
-	return client.ListManagedObjects(ctx, r)
+	return distributeRequest(ctx, ds, r.Namespace, "ListManagedObjects", func(ctx context.Context, client ResourceClient) (*resourcepb.ListManagedObjectsResponse, error) {
+		return client.ListManagedObjects(ctx, r)
+	})
 }
 
-func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, namespace string, methodName string) (context.Context, ResourceClient, error) {
+// distributeRequest handles request distribution with failover across instances in the replication set.
+// It tries each instance in shuffled order until one succeeds, handling both pool-level and RPC-level errors.
+func distributeRequest[T any](ctx context.Context, ds *distributorServer, namespace string, methodName string, rpcCall func(context.Context, ResourceClient) (T, error)) (T, error) {
+	var zero T
+
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
 	if err != nil {
 		ds.log.Debug("error hashing namespace", "err", err, "namespace", namespace)
-		return ctx, nil, err
+		return zero, err
 	}
 
 	rs, err := ds.ring.GetWithOptions(ringHasher.Sum32(), searchRingRead, ring.WithReplicationFactor(ds.ring.ReplicationFactor()))
 	if err != nil {
 		ds.log.Debug("error getting replication set from ring", "err", err, "namespace", namespace)
-		return ctx, nil, err
+		return zero, err
 	}
 
-	// Randomly select an instance for primitive load balancing
-	inst := rs.Instances[rand.Intn(len(rs.Instances))]
-	client, err := ds.clientPool.GetClientForInstance(inst)
-	if err != nil {
-		ds.log.Debug("error getting instance client from pool", "err", err, "namespace", namespace, "searchApiInstanceId", inst.Id)
-		return ctx, nil, err
+	// Shuffle instances for load balancing while enabling failover
+	instances := make([]ring.InstanceDesc, len(rs.Instances))
+	copy(instances, rs.Instances)
+	rand.Shuffle(len(instances), func(i, j int) {
+		instances[i], instances[j] = instances[j], instances[i]
+	})
+
+	// Try each instance in the shuffled order until one succeeds
+	var lastErr error
+	for i, inst := range instances {
+		client, err := ds.clientPool.GetClientForInstance(inst)
+		if err != nil {
+			ds.log.Debug("error getting instance client from pool, trying next instance", "err", err, "namespace", namespace, "searchApiInstanceId", inst.Id, "remainingInstances", len(instances)-i-1)
+			lastErr = err
+			continue
+		}
+
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			md = make(metadata.MD)
+		}
+
+		err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", inst.Id))
+		if err != nil {
+			ds.log.Debug("error setting grpc header", "err", err)
+		}
+
+		rpcCtx := userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace)
+
+		result, err := rpcCall(rpcCtx, client.(*RingClient).Client)
+		if err != nil {
+			ds.log.Debug("RPC call failed, trying next instance", "err", err, "namespace", namespace, "searchApiInstanceId", inst.Id, "method", methodName, "remainingInstances", len(instances)-i-1)
+			lastErr = err
+			continue
+		}
+
+		return result, nil
 	}
 
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		md = make(metadata.MD)
-	}
-
-	err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", inst.Id))
-	if err != nil {
-		ds.log.Debug("error setting grpc header", "err", err)
-	}
-
-	return userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace), client.(*RingClient).Client, nil
+	// All instances in the replication set failed
+	return zero, fmt.Errorf("all %d instances in replication set unavailable for namespace %s: %w", len(instances), namespace, lastErr)
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
