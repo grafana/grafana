@@ -14,6 +14,7 @@ import (
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/authz"
 )
 
@@ -31,6 +32,7 @@ type AppConfig struct {
 	InformerConfig    InformerConfig
 	Namespace         string
 	MetricsRegisterer prometheus.Registerer
+	LegacyStore       legacy.LegacyIdentityStore
 }
 
 func Provider(appCfg app.SpecificConfig) app.Provider {
@@ -109,7 +111,7 @@ func New(cfg app.Config) (app.App, error) {
 					{
 						Path:   "teams",
 						Method: "GET",
-					}: GetTeamsHandler,
+					}: GetTeamsHandler(appSpecificConfig.LegacyStore),
 				},
 			},
 		},

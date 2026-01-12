@@ -3,25 +3,45 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 // GetTeamsHandler handles requests for the GET /teams subresource route on User
-func GetTeamsHandler(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-	// Dummy implementation - returns empty list
-	response := v0alpha1.GetTeams{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: fmt.Sprintf("%s/%s", v0alpha1.APIGroup, v0alpha1.APIVersion),
-			Kind:       "GetTeams",
-		},
-		GetTeamsBody: v0alpha1.GetTeamsBody{
-			Items: []v0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam{},
-		},
+func GetTeamsHandler(store legacy.LegacyIdentityStore) func(ctx context.Context, writer app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
+	return func(ctx context.Context, writer app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
+		userUID := req.ResourceIdentifier.Name
+
+		ns, err := request.NamespaceInfoFrom(ctx, true)
+		if err != nil {
+			return err
+		}
+
+		result, err := store.ListUserTeams(ctx, ns, legacy.ListUserTeamsQuery{
+			UserUID:    userUID,
+			Pagination: common.PaginationFromListQuery(req.URL.Query()),
+		})
+		if err != nil {
+			return err
+		}
+
+		items := make([]v0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam, len(result.Items))
+		for i, team := range result.Items {
+			items[i] = v0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam{
+				Title:      team.Name,
+				TeamRef:    v0alpha1.TeamRef{Name: team.UID},
+				Permission: v0alpha1.TeamPermission(team.Permission.String()),
+			}
+		}
+
+		return json.NewEncoder(writer).Encode(v0alpha1.GetTeams{
+			GetTeamsBody: v0alpha1.GetTeamsBody{
+				Items: items,
+			},
+		})
 	}
-	return json.NewEncoder(writer).Encode(response)
 }
