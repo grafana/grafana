@@ -24,6 +24,24 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+// mockElasticsearchHandler returns a handler that mocks Elasticsearch endpoints.
+// It responds to GET / with cluster info (required for datasource initialization)
+// and returns 401 Unauthorized for all other requests.
+func mockElasticsearchHandler(onRequest func(r *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"version":{"build_flavor":"default","number":"8.0.0"}}`))
+		default:
+			if onRequest != nil {
+				onRequest(r)
+			}
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+	}
+}
+
 func TestIntegrationElasticsearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -35,9 +53,8 @@ func TestIntegrationElasticsearch(t *testing.T) {
 	ctx := context.Background()
 
 	var outgoingRequest *http.Request
-	outgoingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	outgoingServer := httptest.NewServer(mockElasticsearchHandler(func(r *http.Request) {
 		outgoingRequest = r
-		w.WriteHeader(http.StatusUnauthorized)
 	}))
 	t.Cleanup(outgoingServer.Close)
 

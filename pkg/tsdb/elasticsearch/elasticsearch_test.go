@@ -26,7 +26,7 @@ func mockElasticsearchServer() *httptest.Server {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		// Return a mock Elasticsearch cluster info response
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"version": map[string]interface{}{
 				"build_flavor": "serverless",
 				"number":       "8.0.0",
