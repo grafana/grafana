@@ -1166,7 +1166,7 @@ func runTestIntegrationBackendCreateNewResource(t *testing.T, backend resource.S
 	}))
 
 	server := newServer(t, backend)
-	ns := nsPrefix + "-create-resource"
+	ns := nsPrefix + "-create-rsrce" // create-resource
 	ctx = request.WithNamespace(ctx, ns)
 
 	request := &resourcepb.CreateRequest{
@@ -1607,7 +1607,7 @@ func (s *sliceBulkRequestIterator) RollbackRequested() bool {
 
 func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-optimistic-locking"
+	ns := nsPrefix + "-optimis-lock" // optimistic-locking. need to cut down on characters to not exceed namespace character limit (40)
 
 	t.Run("concurrent updates with same RV - only one succeeds", func(t *testing.T) {
 		// Create initial resource with rv0 (no previous RV)

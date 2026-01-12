@@ -41,17 +41,9 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	skipTests := map[string]bool{
-		TestWatchWriteEvents:          true,
-		TestList:                      true,
 		TestBlobSupport:               true,
-		TestGetResourceStats:          true,
-		TestListHistory:               true,
-		TestListHistoryErrorReporting: true,
 		TestListModifiedSince:         true,
-		TestListTrash:                 true,
-		TestCreateNewResource:         true,
 		TestGetResourceLastImportTime: true,
-		TestOptimisticLocking:         true,
 	}
 
 	t.Run("Without RvManager", func(t *testing.T) {
@@ -59,7 +51,7 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 			backend, _ := NewTestSqlKvBackend(t, ctx, false)
 			return backend
 		}, &TestOptions{
-			NSPrefix:  "sqlkvstorage-test",
+			NSPrefix:  "sqlkvstoragetest",
 			SkipTests: skipTests,
 		})
 	})
@@ -69,7 +61,7 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 			backend, _ := NewTestSqlKvBackend(t, ctx, true)
 			return backend
 		}, &TestOptions{
-			NSPrefix:  "sqlkvstorage-withrvmanager-test",
+			NSPrefix:  "sqlkvstoragetest-rvmanager",
 			SkipTests: skipTests,
 		})
 	})
