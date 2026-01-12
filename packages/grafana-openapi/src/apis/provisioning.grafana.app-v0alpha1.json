@@ -830,6 +830,66 @@
         }
       ]
     },
+    "/connections/{name}/repositories": {
+      "get": {
+        "tags": ["Connection"],
+        "summary": "List external repositories",
+        "description": "List repositories available from the external git provider through this connection",
+        "operationId": "getConnectionRepositories",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "description": "ExternalRepositoryList lists repositories from an external git provider",
+                  "type": "object",
+                  "required": ["items"],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "default": {}
+                      },
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "default": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ExternalRepositoryList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ExternalRepositoryList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/connections/{name}/status": {
       "get": {
         "tags": ["Connection"],
@@ -4308,6 +4368,68 @@
             "type": "string"
           }
         }
+      },
+      "ExternalRepository": {
+        "type": "object",
+        "required": ["name", "url"],
+        "properties": {
+          "name": {
+            "description": "Name of the repository",
+            "type": "string",
+            "default": ""
+          },
+          "owner": {
+            "description": "Owner is the user, organization, or workspace that owns the repository For GitHub: organization or user For GitLab: namespace (user or group) For Bitbucket: workspace For pure Git: empty",
+            "type": "string"
+          },
+          "url": {
+            "description": "URL of the repository",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "ExternalRepositoryList": {
+        "description": "ExternalRepositoryList lists repositories from an external git provider",
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ExternalRepository"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ExternalRepositoryList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "FileItem": {
         "type": "object",
