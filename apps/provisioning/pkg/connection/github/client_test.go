@@ -32,7 +32,7 @@ func TestGithubClient_GetApp(t *testing.T) {
 							ID:   github.Ptr(int64(12345)),
 							Slug: github.Ptr("my-test-app"),
 							Owner: &github.User{
-								Name: github.Ptr("grafana"),
+								Login: github.Ptr("grafana"),
 							},
 						}
 						w.WriteHeader(http.StatusOK)

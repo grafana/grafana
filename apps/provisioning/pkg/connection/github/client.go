@@ -65,7 +65,7 @@ func (r *githubClient) GetApp(ctx context.Context, token string) (App, error) {
 	return App{
 		ID:    app.GetID(),
 		Slug:  app.GetSlug(),
-		Owner: app.GetOwner().GetName(),
+		Owner: app.GetOwner().GetLogin(),
 	}, nil
 }
 
