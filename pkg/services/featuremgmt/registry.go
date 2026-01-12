@@ -1081,13 +1081,6 @@ var (
 			Owner:       identityAccessTeam,
 		},
 		{
-			Name:         "unifiedStorageSearchSprinkles",
-			Description:  "Enable sprinkles on unified storage search",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-		},
-		{
 			Name:         "managedDualWriter",
 			Description:  "Pick the dual write mode from database configs",
 			Stage:        FeatureStageExperimental,

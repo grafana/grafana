@@ -455,10 +455,6 @@ const (
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
 
-	// FlagUnifiedStorageSearchSprinkles
-	// Enable sprinkles on unified storage search
-	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
-
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"
