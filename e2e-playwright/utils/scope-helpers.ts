@@ -6,7 +6,7 @@ import { Resource } from '../../public/app/features/apiserver/types';
 
 import { testScopes } from './scopes';
 
-const USE_LIVE_DATA = Boolean(process.env.API_CALLS_CONFIG_PATH);
+const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
 
 /**
  * Sets up all scope-related API routes before navigation.
