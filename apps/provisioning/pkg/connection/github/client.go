@@ -70,7 +70,7 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 }
 
 // GetAppInstallation gets the installation of the app related to the given token.
-func (r *githubClient) GetAppInstallation(ctx context.Context,installationID string) (AppInstallation, error) {
+func (r *githubClient) GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error) {
 	id, err := strconv.Atoi(installationID)
 	if err != nil {
 		return AppInstallation{}, fmt.Errorf("invalid installation ID: %s", installationID)
