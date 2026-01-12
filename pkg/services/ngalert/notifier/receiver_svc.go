@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -133,30 +132,33 @@ func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (ma
 	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
 }
 
-// GetReceiver returns a receiver by name.
+// GetReceiver returns a receiver by its UID.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
-func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error) {
+func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
+	if user == nil {
+		return nil, errors.New("user is required")
+	}
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.get", trace.WithAttributes(
-		attribute.Int64("query_org_id", q.OrgID),
-		attribute.String("query_name", q.Name),
-		attribute.Bool("query_decrypt", q.Decrypt),
+		attribute.Int64("query_org_id", user.GetOrgID()),
+		attribute.String("query_uid", uid),
+		attribute.Bool("query_decrypt", decrypt),
 	))
 	defer span.End()
 
-	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
+	revision, err := rs.cfgStore.Get(ctx, user.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
-	prov, err := rs.loadProvenances(ctx, q.OrgID)
+	prov, err := rs.loadProvenances(ctx, user.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
-	rcv, err := revision.GetReceiver(legacy_storage.NameToUid(q.Name), prov)
+	rcv, err := revision.GetReceiver(uid, prov)
 	if err != nil {
 		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
-			imported := rs.getImportedReceivers(ctx, span, []string{legacy_storage.NameToUid(q.Name)}, revision)
+			imported := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
 			if len(imported) > 0 {
 				rcv = imported[0]
 			}
@@ -171,14 +173,14 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	))
 
 	auth := rs.authz.AuthorizeReadDecrypted
-	if !q.Decrypt {
+	if !decrypt {
 		auth = rs.authz.AuthorizeRead
 	}
 	if err := auth(ctx, user, rcv); err != nil {
 		return nil, err
 	}
 
-	if q.Decrypt {
+	if decrypt {
 		err := rcv.Decrypt(rs.decryptor(ctx))
 		if err != nil {
 			rs.log.FromContext(ctx).Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
@@ -684,28 +686,12 @@ func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, i
 
 // decryptor returns a models.DecryptFn that decrypts a secure setting. If decryption fails, the fallback value is used.
 func (rs *ReceiverService) decryptor(ctx context.Context) models.DecryptFn {
-	return func(value string) (string, error) {
-		decoded, err := base64.StdEncoding.DecodeString(value)
-		if err != nil {
-			return "", err
-		}
-		decrypted, err := rs.encryptionService.Decrypt(ctx, decoded)
-		if err != nil {
-			return "", err
-		}
-		return string(decrypted), nil
-	}
+	return DecryptIntegrationSettings(ctx, rs.encryptionService)
 }
 
 // encryptor creates an encrypt function that delegates to secrets.Service and returns the base64 encoded result.
 func (rs *ReceiverService) encryptor(ctx context.Context) models.EncryptFn {
-	return func(payload string) (string, error) {
-		s, err := rs.encryptionService.Encrypt(ctx, []byte(payload), secrets.WithoutScope())
-		if err != nil {
-			return "", err
-		}
-		return base64.StdEncoding.EncodeToString(s), nil
-	}
+	return EncryptIntegrationSettings(ctx, rs.encryptionService)
 }
 
 // checkOptimisticConcurrency checks if the existing receiver's version matches the desired version.

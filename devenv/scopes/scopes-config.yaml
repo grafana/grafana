@@ -48,6 +48,23 @@ scopes:
         operator: equals
         value: kids
 
+  # This scope appears in multiple places in the tree.
+  # The defaultPath determines which path is shown when this scope is selected
+  # (e.g., from a URL or programmatically), even if another path also links to it.
+  shared-service:
+    title: Shared Service
+    # Path from the root node down to the direct scopeNode.
+    # Node names are hierarchical (parent-child), so use the full names.
+    # This points to: gdev-scopes > production > shared-service-prod
+    defaultPath:
+      - gdev-scopes
+      - gdev-scopes-production
+      - gdev-scopes-production-shared-service-prod
+    filters:
+      - key: service
+        operator: equals
+        value: shared
+
 tree:
   gdev-scopes:
     title: gdev-scopes
@@ -68,6 +85,13 @@ tree:
             nodeType: leaf
             linkId: app2
             linkType: scope
+          # This node links to 'shared-service' scope.
+          # The scope's defaultPath points here (production > gdev-scopes).
+          shared-service-prod:
+            title: Shared Service
+            nodeType: leaf
+            linkId: shared-service
+            linkType: scope
       test-cases:
         title: Test cases
         nodeType: container
@@ -82,6 +106,15 @@ tree:
             title: Test case 2
             nodeType: leaf
             linkId: test-case-2
+            linkType: scope
+          # This node also links to the same 'shared-service' scope.
+          # However, the scope's defaultPath points to the production path,
+          # so selecting this scope will expand the tree to production > shared-service-prod.
+          shared-service-test:
+            title: Shared Service (also in Production)
+            subTitle: defaultPath points to Production
+            nodeType: leaf
+            linkId: shared-service
             linkType: scope
           test-case-redirect:
             title: Test case with redirect
