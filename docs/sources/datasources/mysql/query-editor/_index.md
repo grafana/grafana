@@ -71,6 +71,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
+  mysql-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/
 ---
 
 # MySQL query editor
@@ -323,69 +328,9 @@ For detailed information on using template variables with MySQL, refer to [MySQL
 
 ## Annotations
 
-[Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. You add annotation queries via the **Dashboard settings > Annotations view**.
+Annotations allow you to overlay event information on your graphs, helping you correlate events with metrics. You can write SQL queries that return event data to display as annotations on your dashboards.
 
-**Example query using a `time` column with epoch values:**
-
-```sql
-SELECT
-  epoch_time as time,
-  metric1 as text,
-  CONCAT(tag1, ',', tag2) as tags
-FROM
-  public.test_data
-WHERE
-  $__unixEpochFilter(epoch_time)
-```
-
-You may use one or more tags to show them as annotations in a common-separated string.
-
-**Example query using a `time` column with epoch values for a single tag:**
-
-```sql
-SELECT
-  epoch_time as time,
-  metric1 as text,
-  tag1 as tag
-FROM
-  my_data
-WHERE
-  $__unixEpochFilter(epoch_time)
-```
-
-**Example region query using `time` and `timeend` columns with epoch values:**
-
-```sql
-SELECT
-  epoch_time as time,
-  epoch_timeend as timeend,
-  metric1 as text,
-  CONCAT(tag1, ',', tag2) as tags
-FROM
-  public.test_data
-WHERE
-  $__unixEpochFilter(epoch_time)
-```
-
-**Example query using a `time` column with a native SQL date/time data type:**
-
-```sql
-SELECT
-  native_date_time as time,
-  metric1 as text,
-  CONCAT(tag1, ',', tag2) as tags
-FROM
-  public.test_data
-WHERE
-  $__timeFilter(native_date_time)
-```
-
-| Name      | Description                                                                                                           |
-| --------- | --------------------------------------------------------------------------------------------------------------------- |
-| `time`    | The name of the date/time field, which can be a column with a native SQL date/time data type or epoch value.          |
-| `timeend` | Optional name of the end date/time field, which can be a column with a native SQL date/time data type or epoch value. |
-| `text`    | Event description field.                                                                                              |
-| `tags`    | Optional field name to use for event tags as a comma separated string.                                                |
+For detailed information on creating annotations with MySQL, refer to [MySQL annotations](ref:mysql-annotations).
 
 ## Alerting
 
