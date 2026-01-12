@@ -149,9 +149,6 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   if (visualisationType === 'logs') {
     return 'logs';
   }
-  if (config.featureToggles.logsExploreTableDefaultVisualization) {
-    return 'table';
-  }
   return 'logs';
 };
 
@@ -447,7 +444,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       reportInteraction('grafana_explore_logs_visualisation_changed', {
         newVisualizationType: visualisation,
         datasourceType: props.datasourceType ?? 'unknown',
-        defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
       });
     },
     [panelState?.logs, props.datasourceType, updatePanelState]

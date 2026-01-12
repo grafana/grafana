@@ -880,13 +880,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "logsExploreTableDefaultVisualization",
-			Description:  "Sets the logs table as default visualisation in logs explore",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityLogsSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
 			Stage:        FeatureStagePrivatePreview,
@@ -1095,13 +1088,6 @@ var (
 			Owner:       identityAccessTeam,
 		},
 		{
-			Name:         "unifiedStorageSearch",
-			Description:  "Enable unified storage search",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-		},
-		{
 			Name:         "unifiedStorageSearchSprinkles",
 			Description:  "Enable sprinkles on unified storage search",
 			Stage:        FeatureStageExperimental,
@@ -1168,14 +1154,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
-		},
-		{
-			Name:         "exploreMetricsRelatedLogs",
-			Description:  "Display Related Logs in Grafana Metrics Drilldown",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
-			FrontendOnly: true,
-			HideFromDocs: false,
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",

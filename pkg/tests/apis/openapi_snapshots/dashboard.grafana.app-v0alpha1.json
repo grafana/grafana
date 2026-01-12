@@ -1831,6 +1831,22 @@
             }
           },
           {
+            "name": "panelType",
+            "in": "query",
+            "description": "find dashboards using panels of a given plugin type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataSourceType",
+            "in": "query",
+            "description": "find dashboards using datasources of a given plugin type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "permission",
             "in": "query",
             "description": "permission needed for the resource (view, edit, admin)",

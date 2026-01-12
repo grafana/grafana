@@ -531,10 +531,6 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
-  * Sets the logs table as default visualisation in logs explore
-  */
-  logsExploreTableDefaultVisualization?: boolean;
-  /**
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
@@ -661,10 +657,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Enable unified storage search
-  */
-  unifiedStorageSearch?: boolean;
-  /**
   * Enable sprinkles on unified storage search
   */
   unifiedStorageSearchSprinkles?: boolean;
@@ -706,10 +698,6 @@ export interface FeatureToggles {
   * Enable passwordless login via magic link authentication
   */
   passwordlessMagicLinkAuthentication?: boolean;
-  /**
-  * Display Related Logs in Grafana Metrics Drilldown
-  */
-  exploreMetricsRelatedLogs?: boolean;
   /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   */

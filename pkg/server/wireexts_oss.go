@@ -72,6 +72,7 @@ import (
 
 var provisioningExtras = wire.NewSet(
 	extras.ProvideProvisioningOSSRepositoryExtras,
+	extras.ProvideProvisioningOSSConnectionExtras,
 )
 
 var configProviderExtras = wire.NewSet(

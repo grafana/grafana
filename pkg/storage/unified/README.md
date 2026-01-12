@@ -236,7 +236,6 @@ kubernetesDashboards = true
 kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageHistoryPruner = true
-unifiedStorageSearch = true
 unifiedStorageSearchPermissionFiltering = false
 unifiedStorageSearchSprinkles = false
 

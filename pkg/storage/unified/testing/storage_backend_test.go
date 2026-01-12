@@ -38,7 +38,6 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 
 func TestSQLKVStorageBackend(t *testing.T) {
 	skipTests := map[string]bool{
-		TestHappyPath:                 true,
 		TestWatchWriteEvents:          true,
 		TestList:                      true,
 		TestBlobSupport:               true,
@@ -51,21 +50,24 @@ func TestSQLKVStorageBackend(t *testing.T) {
 		TestGetResourceLastImportTime: true,
 		TestOptimisticLocking:         true,
 	}
-	// without RvManager
-	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-		backend, _ := NewTestSqlKvBackend(t, ctx, false)
-		return backend
-	}, &TestOptions{
-		NSPrefix:  "sqlkvstorage-test",
-		SkipTests: skipTests,
+
+	t.Run("Without RvManager", func(t *testing.T) {
+		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			backend, _ := NewTestSqlKvBackend(t, ctx, false)
+			return backend
+		}, &TestOptions{
+			NSPrefix:  "sqlkvstorage-test",
+			SkipTests: skipTests,
+		})
 	})
 
-	// with RvManager
-	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-		backend, _ := NewTestSqlKvBackend(t, ctx, true)
-		return backend
-	}, &TestOptions{
-		NSPrefix:  "sqlkvstorage-withrvmanager-test",
-		SkipTests: skipTests,
+	t.Run("With RvManager", func(t *testing.T) {
+		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			backend, _ := NewTestSqlKvBackend(t, ctx, true)
+			return backend
+		}, &TestOptions{
+			NSPrefix:  "sqlkvstorage-withrvmanager-test",
+			SkipTests: skipTests,
+		})
 	})
 }
