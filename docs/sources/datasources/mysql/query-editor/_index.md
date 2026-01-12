@@ -66,6 +66,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/template-variables/
+  mysql-alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/
 ---
 
 # MySQL query editor
@@ -384,10 +389,7 @@ WHERE
 
 ## Alerting
 
-Use time series queries to create alerts. Table formatted queries aren't yet supported in alert rule conditions.
+You can use time series queries to create Grafana-managed alert rules. Table formatted queries are not supported in alert rule conditions.
 
-For more information regarding alerting refer to the following:
-
-- [Alert rules](ref:alert-rules)
-- [Template annotations and labels](ref:template-annotations-and-labels)
+For detailed information on creating alerts with MySQL, refer to [MySQL alerting](ref:mysql-alerting).
 
