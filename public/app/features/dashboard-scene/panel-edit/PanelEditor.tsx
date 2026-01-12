@@ -259,6 +259,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         config.featureToggles.newVizSuggestions && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID
       );
 
+      if (isUnconfigured) {
+        this._setupEditPreview();
+      }
+
       // Setup options pane
       const optionsPane = new PanelOptionsPane({
         panelRef: this.state.panelRef,
@@ -276,21 +280,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
       this._subs.add(
         optionsPane.subscribeToState((newState, oldState) => {
-          if (newState.isVizPickerOpen !== oldState.isVizPickerOpen) {
-            const panel = this.state.panelRef.resolve();
-            let editPreview: VizPanel | undefined;
-            if (newState.isVizPickerOpen) {
-              // we just "pick" timeseries, viz type will likely be overridden by Suggestions.
-              const editPreviewBuilder = PanelBuilders.timeseries()
-                .setTitle(panel.state.title)
-                .setDescription(panel.state.description);
-              if (panel.state.$data) {
-                editPreviewBuilder.setData(new DataProviderSharer({ source: panel.state.$data.getRef() }));
-              }
-              editPreview = editPreviewBuilder.build();
-            }
-            this.setState({ editPreview });
-            optionsPane.setState({ editPreviewRef: editPreview?.getRef() });
+          if (newState.isVizPickerOpen !== oldState.isVizPickerOpen && newState.isVizPickerOpen) {
+            this._setupEditPreview();
           }
         })
       );
@@ -299,6 +290,22 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       // Just update data pane
       this._updateDataPane(plugin);
     }
+  }
+
+  private _setupEditPreview() {
+    const panel = this.state.panelRef.resolve();
+    let editPreview: VizPanel | undefined;
+
+    // we just "pick" timeseries, viz type will likely be overridden by Suggestions.
+    const editPreviewBuilder = PanelBuilders.timeseries()
+      .setTitle(panel.state.title)
+      .setDescription(panel.state.description);
+    if (panel.state.$data) {
+      editPreviewBuilder.setData(new DataProviderSharer({ source: panel.state.$data.getRef() }));
+    }
+    editPreview = editPreviewBuilder.build();
+    this.setState({ editPreview });
+    this.state.optionsPane?.setState({ editPreviewRef: editPreview?.getRef() });
   }
 
   private _updateDataPane(plugin: PanelPlugin) {
