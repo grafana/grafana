@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../configuration/
 description: This document provides instructions for configuring the MySQL data source and explains available configuration options.
 keywords:
   - grafana
@@ -10,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure the MySQL data source
+menuTitle: Configure
 title: Configure the MySQL data source
 weight: 10
 refs:
@@ -34,6 +36,26 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  mysql-query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/query-editor/
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  mysql-troubleshoot:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/
 ---
 
 # Configure the MySQL data source
@@ -42,24 +64,35 @@ This document provides instructions for configuring the MySQL data source and ex
 
 ## Before you begin
 
-You must have the `Organization administrator` role in order to configure the MySQL data source.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+Before configuring the MySQL data source, ensure you have the following:
+
+- **Grafana permissions:** You must have the `Organization administrator` role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
+
+- **A running MySQL instance:** MySQL 5.7 or newer, MariaDB 10.2 or newer, or a compatible MySQL-based database such as Percona Server.
+
+- **Network access:** Grafana must be able to reach your MySQL server. The default port is `3306`.
+
+- **Authentication credentials:** A MySQL user with at least `SELECT` permissions on the databases and tables you want to query.
+
+- **Security certificates:** If using encrypted connections, gather any necessary TLS/SSL certificates.
 
 {{< admonition type="note" >}}
-Grafana ships with the MySQL data source by default, so no additional installation is required.
+Grafana ships with a built-in MySQL data source plugin. No additional installation is required.
 {{< /admonition >}}
 
-{{< admonition type="caution" >}}
-When adding a data source, ensure the database user you specify has only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, which could get executed.
-
-To minimize this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
+{{< admonition type="tip" >}}
+**Grafana Cloud users:** If your MySQL server is in a private network, you can configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to establish connectivity.
 {{< /admonition >}}
 
-Example:
+### Database user permissions
+
+When adding a data source, ensure the database user you specify has only `SELECT` permissions on the relevant database and tables. Grafana doesn't validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, which could get executed.
+
+To minimize this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions:
 
 ```sql
- CREATE USER 'grafanaReader' IDENTIFIED BY 'password';
- GRANT SELECT ON mydatabase.mytable TO 'grafanaReader';
+CREATE USER 'grafanaReader' IDENTIFIED BY 'password';
+GRANT SELECT ON mydatabase.mytable TO 'grafanaReader';
 ```
 
 Use wildcards (`*`) in place of a database or table if you want to grant access to more databases and tables.
@@ -213,3 +246,45 @@ datasources:
       tlsClientCert: ${GRAFANA_TLS_CLIENT_CERT}
       tlsCACert: ${GRAFANA_TLS_CA_CERT}
 ```
+
+## Configure with Terraform
+
+You can configure the MySQL data source using [Terraform](https://www.terraform.io/) with the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+
+For more information about provisioning resources with Terraform, refer to the [Grafana as code using Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/) documentation.
+
+### Terraform example
+
+The following example creates a basic MySQL data source:
+
+```hcl
+resource "grafana_data_source" "mysql" {
+  name = "MySQL"
+  type = "mysql"
+  url  = "localhost:3306"
+  user = "grafana"
+
+  json_data_encoded = jsonencode({
+    database         = "grafana"
+    maxOpenConns     = 100
+    maxIdleConns     = 100
+    maxIdleConnsAuto = true
+    connMaxLifetime  = 14400
+  })
+
+  secure_json_data_encoded = jsonencode({
+    password = "password"
+  })
+}
+```
+
+For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
+
+## Next steps
+
+After configuring your MySQL data source, you can:
+
+- [Write queries](ref:mysql-query-editor) using the query editor to explore and visualize your data
+- [Add annotations](ref:annotate-visualizations) to overlay MySQL events on your graphs
+- [Set up alerting](ref:alerting) to create alert rules based on your MySQL data
+- [Troubleshoot issues](ref:mysql-troubleshoot) if you encounter problems with your data source
