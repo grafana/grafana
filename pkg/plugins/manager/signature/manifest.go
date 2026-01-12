@@ -36,7 +36,6 @@ var (
 	fromSlash = filepath.FromSlash
 )
 
-
 type Signature struct {
 	kr  plugins.KeyRetriever
 	cfg *config.PluginManagementCfg
@@ -226,7 +225,6 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		SigningOrg: manifest.SignedByOrgName,
 	}, manifest, nil
 }
-
 
 func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) error {
 	path = fromSlash(path)
