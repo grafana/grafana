@@ -49,8 +49,8 @@ export function ResourceExport({
 
   const switchExportLabel =
     exportMode === ExportMode.V2Resource
-      ? t('export.json.export-remove-ds-refs', 'Share dashboard with another instance')
-      : t('share-modal.export.share-externally-label', `Export for sharing externally`);
+      ? t('dashboard-scene.resource-export.share-externally', 'Share dashboard with another instance')
+      : t('share-modal.export.share-externally-label', 'Export for sharing externally');
   const switchExportModeLabel = t('export.json.export-mode', 'Model');
   const switchExportFormatLabel = t('export.json.export-format', 'Format');
 
