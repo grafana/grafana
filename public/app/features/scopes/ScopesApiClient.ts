@@ -7,22 +7,51 @@ import { dispatch } from 'app/store/store';
 import { ScopeNavigation } from './dashboards/types';
 
 export class ScopesApiClient {
+  /**
+   * Checks if the data is a Kubernetes Status error response.
+   * @param data The data to check
+   * @returns true if the data is a Status error, false otherwise
+   */
+  private isStatusError(data: unknown): data is { kind: 'Status'; status: 'Failure'; message?: string; code?: number } {
+    return (
+      data !== null &&
+      typeof data === 'object' &&
+      'kind' in data &&
+      data.kind === 'Status' &&
+      'status' in data &&
+      data.status === 'Failure'
+    );
+  }
+
+  /**
+   * Extracts and validates data from an RTK Query result, checking for error responses.
+   * @param result The RTK Query result
+   * @param context Context for error logging (e.g., resource name)
+   * @returns The data if valid, undefined if it's an error response
+   */
+  private extractDataOrHandleError<T>(result: { data?: T; error?: unknown }, context: string): T | undefined {
+    if ('data' in result && result.data) {
+      // Check if the data is actually an error response (Kubernetes Status object)
+      if (this.isStatusError(result.data)) {
+        const errorMessage = getMessageFromError(result.data);
+        console.error(`Failed to fetch ${context}:`, errorMessage);
+        return undefined;
+      }
+      return result.data;
+    }
+
+    if ('error' in result) {
+      const errorMessage = getMessageFromError(result.error);
+      console.error(`Failed to fetch ${context}:`, errorMessage);
+    }
+
+    return undefined;
+  }
   async fetchScope(name: string): Promise<Scope | undefined> {
     const subscription = dispatch(scopeAPIv0alpha1.endpoints.getScope.initiate({ name }, { subscribe: false }));
     try {
       const result = await subscription;
-
-      if ('data' in result && result.data) {
-        // The generated API returns a Scope type compatible with @grafana/data Scope
-        return result.data;
-      }
-
-      if ('error' in result) {
-        const errorMessage = getMessageFromError(result.error);
-        console.error('Failed to fetch scope:', name, errorMessage);
-      }
-
-      return undefined;
+      return this.extractDataOrHandleError(result, `scope: ${name}`);
     } catch (err) {
       const errorMessage = getMessageFromError(err);
       console.error('Failed to fetch scope:', name, errorMessage);
@@ -247,18 +276,7 @@ export class ScopesApiClient {
     );
     try {
       const result = await subscription;
-
-      if ('data' in result && result.data) {
-        // The generated API returns a ScopeNode type compatible with @grafana/data ScopeNode
-        return result.data;
-      }
-
-      if ('error' in result) {
-        const errorMessage = getMessageFromError(result.error);
-        console.error('Failed to fetch scope node:', scopeNodeId, errorMessage);
-      }
-
-      return undefined;
+      return this.extractDataOrHandleError(result, `scope node: ${scopeNodeId}`);
     } catch (err) {
       const errorMessage = getMessageFromError(err);
       console.error('Failed to fetch scope node:', scopeNodeId, errorMessage);
