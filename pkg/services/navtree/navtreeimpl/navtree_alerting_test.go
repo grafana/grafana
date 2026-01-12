@@ -18,9 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestBuildAlertNavLinks_FeatureToggle(t *testing.T) {
+// Test fixtures
+func setupTestContext() *contextmodel.ReqContext {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
-	reqCtx := &contextmodel.ReqContext{
+	return &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{
 			UserID:  1,
 			OrgID:   1,
@@ -28,341 +29,197 @@ func TestBuildAlertNavLinks_FeatureToggle(t *testing.T) {
 		},
 		Context: &web.Context{Req: httpReq},
 	}
+}
 
-	permissions := []ac.Permission{
+func setupTestService(permissions []ac.Permission, featureFlags ...string) ServiceImpl {
+	// Convert string slice to []any for WithFeatures
+	flags := make([]any, len(featureFlags))
+	for i, flag := range featureFlags {
+		flags[i] = flag
+	}
+	return ServiceImpl{
+		log:           log.New("navtree"),
+		cfg:           setting.NewCfg(),
+		accessControl: accesscontrolmock.New().WithPermissions(permissions),
+		features:      featuremgmt.WithFeatures(flags...),
+	}
+}
+
+func fullPermissions() []ac.Permission {
+	return []ac.Permission{
 		{Action: ac.ActionAlertingRuleRead, Scope: "*"},
 		{Action: ac.ActionAlertingNotificationsRead, Scope: "*"},
 		{Action: ac.ActionAlertingRoutesRead, Scope: "*"},
 		{Action: ac.ActionAlertingInstanceRead, Scope: "*"},
 	}
+}
+
+// Helper to find a nav link by ID
+func findNavLink(navLink *navtree.NavLink, id string) *navtree.NavLink {
+	if navLink == nil {
+		return nil
+	}
+	if navLink.Id == id {
+		return navLink
+	}
+	for _, child := range navLink.Children {
+		if found := findNavLink(child, id); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+// Helper to check if a nav link has a child with given ID
+func hasChildWithId(parent *navtree.NavLink, childId string) bool {
+	if parent == nil {
+		return false
+	}
+	for _, child := range parent.Children {
+		if child.Id == childId {
+			return true
+		}
+	}
+	return false
+}
+
+func TestBuildAlertNavLinks_FeatureToggle(t *testing.T) {
+	reqCtx := setupTestContext()
+	permissions := fullPermissions()
 
 	t.Run("Should use legacy navigation when flag is off", func(t *testing.T) {
-		service := ServiceImpl{
-			log:           log.New("navtree"),
-			cfg:           setting.NewCfg(),
-			accessControl: accesscontrolmock.New().WithPermissions(permissions),
-			features:      featuremgmt.WithFeatures(), // Flag off by default
-		}
+		service := setupTestService(permissions) // No feature flags
 
 		navLink := service.buildAlertNavLinks(reqCtx)
 		require.NotNil(t, navLink)
 		require.Equal(t, "Alerting", navLink.Text)
 		require.Equal(t, navtree.NavIDAlerting, navLink.Id)
 
-		// Check that children are flat (legacy structure)
-		children := navLink.Children
-		require.NotEmpty(t, children)
+		// Legacy structure: flat children without nested items
+		require.NotEmpty(t, navLink.Children)
+		alertList := findNavLink(navLink, "alert-list")
+		receivers := findNavLink(navLink, "receivers")
 
-		// In legacy, items are direct children, not grouped
-		hasAlertRules := false
-		hasContactPoints := false
-		for _, child := range children {
-			if child.Id == "alert-list" {
-				hasAlertRules = true
-				require.Empty(t, child.Children, "Legacy navigation should not have nested children")
-			}
-			if child.Id == "receivers" {
-				hasContactPoints = true
-				require.Empty(t, child.Children, "Legacy navigation should not have nested children")
-			}
-		}
-		require.True(t, hasAlertRules, "Should have alert rules in legacy navigation")
-		require.True(t, hasContactPoints, "Should have contact points in legacy navigation")
+		require.NotNil(t, alertList, "Should have alert-list in legacy navigation")
+		require.NotNil(t, receivers, "Should have receivers in legacy navigation")
+		require.Empty(t, alertList.Children, "Legacy items should not have nested children")
+		require.Empty(t, receivers.Children, "Legacy items should not have nested children")
 	})
 
 	t.Run("Should use V2 navigation when flag is on", func(t *testing.T) {
-		service := ServiceImpl{
-			log:           log.New("navtree"),
-			cfg:           setting.NewCfg(),
-			accessControl: accesscontrolmock.New().WithPermissions(permissions),
-			features:      featuremgmt.WithFeatures("alertingNavigationV2"),
-		}
+		service := setupTestService(permissions, "alertingNavigationV2")
 
 		navLink := service.buildAlertNavLinks(reqCtx)
 		require.NotNil(t, navLink)
 		require.Equal(t, "Alerting", navLink.Text)
 		require.Equal(t, navtree.NavIDAlerting, navLink.Id)
 
-		// Check that children are grouped (V2 structure)
-		children := navLink.Children
-		require.NotEmpty(t, children)
+		// V2 structure: grouped parents with nested children
+		require.NotEmpty(t, navLink.Children)
 
-		// In V2, we should have parent items with children
-		hasAlertRulesParent := false
-		hasNotificationConfigParent := false
-		hasInsightsParent := false
-		hasSettingsParent := false
-
-		for _, child := range children {
-			if child.Id == "alert-rules" {
-				hasAlertRulesParent = true
-				require.NotEmpty(t, child.Children, "V2 navigation should have nested children for alert-rules")
-				// Check for expected tabs
-				hasAlertRulesTab := false
-				for _, tab := range child.Children {
-					if tab.Id == "alert-rules-list" {
-						hasAlertRulesTab = true
-					}
-				}
-				require.True(t, hasAlertRulesTab, "Should have alert-rules-list tab")
-			}
-			if child.Id == "notification-config" {
-				hasNotificationConfigParent = true
-				require.NotEmpty(t, child.Children, "V2 navigation should have nested children for notification-config")
-			}
-			if child.Id == "insights" {
-				hasInsightsParent = true
-				require.NotEmpty(t, child.Children, "V2 navigation should have nested children for insights")
-			}
-			if child.Id == "alerting-settings" {
-				hasSettingsParent = true
-				require.NotEmpty(t, child.Children, "V2 navigation should have nested children for settings")
-			}
+		// Verify all expected parent items exist with children
+		expectedParents := []string{"alert-rules", "notification-config", "insights", "alerting-settings"}
+		for _, parentId := range expectedParents {
+			parent := findNavLink(navLink, parentId)
+			require.NotNil(t, parent, "Should have %s parent in V2 navigation", parentId)
+			require.NotEmpty(t, parent.Children, "V2 parent %s should have children", parentId)
 		}
 
-		require.True(t, hasAlertRulesParent, "Should have alert-rules parent in V2 navigation")
-		require.True(t, hasNotificationConfigParent, "Should have notification-config parent in V2 navigation")
-		require.True(t, hasInsightsParent, "Should have insights parent in V2 navigation")
-		require.True(t, hasSettingsParent, "Should have settings parent in V2 navigation")
+		// Verify alert-rules has expected tab
+		alertRules := findNavLink(navLink, "alert-rules")
+		require.True(t, hasChildWithId(alertRules, "alert-rules-list"), "Should have alert-rules-list tab")
 	})
 }
 
 func TestBuildAlertNavLinks_Legacy(t *testing.T) {
-	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
-	reqCtx := &contextmodel.ReqContext{
-		SignedInUser: &user.SignedInUser{
-			UserID:  1,
-			OrgID:   1,
-			OrgRole: org.RoleAdmin,
-		},
-		Context: &web.Context{Req: httpReq},
-	}
-
-	permissions := []ac.Permission{
-		{Action: ac.ActionAlertingRuleRead, Scope: "*"},
-		{Action: ac.ActionAlertingNotificationsRead, Scope: "*"},
-		{Action: ac.ActionAlertingRoutesRead, Scope: "*"},
-		{Action: ac.ActionAlertingInstanceRead, Scope: "*"},
-	}
-
-	service := ServiceImpl{
-		log:           log.New("navtree"),
-		cfg:           setting.NewCfg(),
-		accessControl: accesscontrolmock.New().WithPermissions(permissions),
-		features:      featuremgmt.WithFeatures(),
-	}
+	reqCtx := setupTestContext()
 
 	t.Run("Should include all expected items in legacy navigation", func(t *testing.T) {
+		service := setupTestService(fullPermissions())
 		navLink := service.buildAlertNavLinksLegacy(reqCtx)
 		require.NotNil(t, navLink)
 
-		children := navLink.Children
 		expectedIds := []string{"alert-list", "receivers", "am-routes", "alerting-admin"}
-
-		foundIds := make(map[string]bool)
-		for _, child := range children {
-			foundIds[child.Id] = true
-		}
-
 		for _, expectedId := range expectedIds {
-			require.True(t, foundIds[expectedId], "Should have %s in legacy navigation", expectedId)
+			require.NotNil(t, findNavLink(navLink, expectedId), "Should have %s in legacy navigation", expectedId)
 		}
 	})
 
 	t.Run("Should respect permissions in legacy navigation", func(t *testing.T) {
-		// User with limited permissions
 		limitedPermissions := []ac.Permission{
 			{Action: ac.ActionAlertingRuleRead, Scope: "*"},
 		}
-
-		limitedService := ServiceImpl{
-			log:           log.New("navtree"),
-			cfg:           setting.NewCfg(),
-			accessControl: accesscontrolmock.New().WithPermissions(limitedPermissions),
-			features:      featuremgmt.WithFeatures(),
-		}
+		limitedService := setupTestService(limitedPermissions)
 
 		navLink := limitedService.buildAlertNavLinksLegacy(reqCtx)
 		require.NotNil(t, navLink)
 
-		children := navLink.Children
-		hasAlertRules := false
-		hasContactPoints := false
-
-		for _, child := range children {
-			if child.Id == "alert-list" {
-				hasAlertRules = true
-			}
-			if child.Id == "receivers" {
-				hasContactPoints = true
-			}
-		}
-
-		require.True(t, hasAlertRules, "Should have alert rules with read permission")
-		require.False(t, hasContactPoints, "Should not have contact points without notification permissions")
+		require.NotNil(t, findNavLink(navLink, "alert-list"), "Should have alert rules with read permission")
+		require.Nil(t, findNavLink(navLink, "receivers"), "Should not have contact points without notification permissions")
 	})
 }
 
 func TestBuildAlertNavLinks_V2(t *testing.T) {
-	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
-	reqCtx := &contextmodel.ReqContext{
-		SignedInUser: &user.SignedInUser{
-			UserID:  1,
-			OrgID:   1,
-			OrgRole: org.RoleAdmin,
-		},
-		Context: &web.Context{Req: httpReq},
-	}
-
-	permissions := []ac.Permission{
-		{Action: ac.ActionAlertingRuleRead, Scope: "*"},
-		{Action: ac.ActionAlertingNotificationsRead, Scope: "*"},
-		{Action: ac.ActionAlertingRoutesRead, Scope: "*"},
-		{Action: ac.ActionAlertingInstanceRead, Scope: "*"},
-	}
-
-	service := ServiceImpl{
-		log:           log.New("navtree"),
-		cfg:           setting.NewCfg(),
-		accessControl: accesscontrolmock.New().WithPermissions(permissions),
-		features:      featuremgmt.WithFeatures("alertingNavigationV2", "alertingTriage", "alertingCentralAlertHistory", "alertRuleRestore", "alertingRuleRecoverDeleted"),
-	}
+	reqCtx := setupTestContext()
+	allFeatureFlags := []string{"alertingNavigationV2", "alertingTriage", "alertingCentralAlertHistory", "alertRuleRestore", "alertingRuleRecoverDeleted"}
+	service := setupTestService(fullPermissions(), allFeatureFlags...)
 
 	t.Run("Should have correct parent structure in V2 navigation", func(t *testing.T) {
 		navLink := service.buildAlertNavLinksV2(reqCtx)
 		require.NotNil(t, navLink)
+		require.NotEmpty(t, navLink.Children)
 
-		children := navLink.Children
-		require.NotEmpty(t, children)
-
-		// Verify parent items exist
+		// Verify all parent items exist with children
 		parentIds := []string{"alert-rules", "notification-config", "insights", "alerting-settings"}
-		foundParents := make(map[string]bool)
-
-		for _, child := range children {
-			if child.Id == "alert-activity" {
-				// Alert activity is a direct child, not a parent
-				continue
-			}
-			for _, parentId := range parentIds {
-				if child.Id == parentId {
-					foundParents[parentId] = true
-					require.NotEmpty(t, child.Children, "Parent %s should have children", parentId)
-				}
-			}
-		}
-
 		for _, parentId := range parentIds {
-			require.True(t, foundParents[parentId], "Should have parent %s in V2 navigation", parentId)
+			parent := findNavLink(navLink, parentId)
+			require.NotNil(t, parent, "Should have parent %s in V2 navigation", parentId)
+			require.NotEmpty(t, parent.Children, "Parent %s should have children", parentId)
 		}
 	})
 
-	t.Run("Should have correct tabs under Alert rules parent", func(t *testing.T) {
+	t.Run("Should have correct tabs under each parent", func(t *testing.T) {
 		navLink := service.buildAlertNavLinksV2(reqCtx)
 		require.NotNil(t, navLink)
 
-		var alertRulesParent *navtree.NavLink
-		for _, child := range navLink.Children {
-			if child.Id == "alert-rules" {
-				alertRulesParent = child
-				break
+		// Table-driven test for tab verification
+		tests := []struct {
+			parentId     string
+			expectedTabs []string
+		}{
+			{"alert-rules", []string{"alert-rules-list", "alert-rules-recently-deleted"}},
+			{"notification-config", []string{"notification-config-contact-points", "notification-config-policies", "notification-config-templates", "notification-config-time-intervals"}},
+			{"insights", []string{"insights-system", "insights-history"}},
+		}
+
+		for _, tt := range tests {
+			parent := findNavLink(navLink, tt.parentId)
+			require.NotNil(t, parent, "Should have %s parent", tt.parentId)
+
+			for _, expectedTab := range tt.expectedTabs {
+				require.True(t, hasChildWithId(parent, expectedTab), "Parent %s should have tab %s", tt.parentId, expectedTab)
 			}
 		}
-
-		require.NotNil(t, alertRulesParent, "Should have alert-rules parent")
-		require.NotEmpty(t, alertRulesParent.Children, "Alert rules should have tabs")
-
-		tabIds := make(map[string]bool)
-		for _, tab := range alertRulesParent.Children {
-			tabIds[tab.Id] = true
-		}
-
-		require.True(t, tabIds["alert-rules-list"], "Should have alert-rules-list tab")
-		require.True(t, tabIds["alert-rules-recently-deleted"], "Should have alert-rules-recently-deleted tab")
-	})
-
-	t.Run("Should have correct tabs under Notification configuration parent", func(t *testing.T) {
-		navLink := service.buildAlertNavLinksV2(reqCtx)
-		require.NotNil(t, navLink)
-
-		var notificationConfigParent *navtree.NavLink
-		for _, child := range navLink.Children {
-			if child.Id == "notification-config" {
-				notificationConfigParent = child
-				break
-			}
-		}
-
-		require.NotNil(t, notificationConfigParent, "Should have notification-config parent")
-		require.NotEmpty(t, notificationConfigParent.Children, "Notification config should have tabs")
-
-		tabIds := make(map[string]bool)
-		for _, tab := range notificationConfigParent.Children {
-			tabIds[tab.Id] = true
-		}
-
-		require.True(t, tabIds["notification-config-contact-points"], "Should have contact-points tab")
-		require.True(t, tabIds["notification-config-policies"], "Should have policies tab")
-		require.True(t, tabIds["notification-config-templates"], "Should have templates tab")
-		require.True(t, tabIds["notification-config-time-intervals"], "Should have time-intervals tab")
-	})
-
-	t.Run("Should have correct tabs under Insights parent", func(t *testing.T) {
-		navLink := service.buildAlertNavLinksV2(reqCtx)
-		require.NotNil(t, navLink)
-
-		var insightsParent *navtree.NavLink
-		for _, child := range navLink.Children {
-			if child.Id == "insights" {
-				insightsParent = child
-				break
-			}
-		}
-
-		require.NotNil(t, insightsParent, "Should have insights parent")
-		require.NotEmpty(t, insightsParent.Children, "Insights should have tabs")
-
-		tabIds := make(map[string]bool)
-		for _, tab := range insightsParent.Children {
-			tabIds[tab.Id] = true
-		}
-
-		require.True(t, tabIds["insights-system"], "Should have insights-system tab")
-		require.True(t, tabIds["insights-history"], "Should have insights-history tab")
 	})
 
 	t.Run("Should respect permissions in V2 navigation", func(t *testing.T) {
-		// User with limited permissions
 		limitedPermissions := []ac.Permission{
 			{Action: ac.ActionAlertingRuleRead, Scope: "*"},
 		}
-
-		limitedService := ServiceImpl{
-			log:           log.New("navtree"),
-			cfg:           setting.NewCfg(),
-			accessControl: accesscontrolmock.New().WithPermissions(limitedPermissions),
-			features:      featuremgmt.WithFeatures("alertingNavigationV2"),
-		}
+		limitedService := setupTestService(limitedPermissions, "alertingNavigationV2")
 
 		navLink := limitedService.buildAlertNavLinksV2(reqCtx)
 		require.NotNil(t, navLink)
 
-		// Should not have notification-config parent without permissions
-		hasNotificationConfig := false
-		for _, child := range navLink.Children {
-			if child.Id == "notification-config" {
-				hasNotificationConfig = true
-			}
-		}
-
-		require.False(t, hasNotificationConfig, "Should not have notification-config without permissions")
+		// Should not have notification-config without notification permissions
+		require.Nil(t, findNavLink(navLink, "notification-config"), "Should not have notification-config without permissions")
 	})
 
 	t.Run("Should exclude future items from V2 navigation", func(t *testing.T) {
 		navLink := service.buildAlertNavLinksV2(reqCtx)
 		require.NotNil(t, navLink)
 
-		// Check that future items are not present
+		// Verify future items are not present
 		futureIds := []string{
 			"alert-rules-recording-rules",
 			"alert-rules-evaluation-chains",
@@ -370,24 +227,8 @@ func TestBuildAlertNavLinks_V2(t *testing.T) {
 			"insights-notification-history",
 		}
 
-		allIds := make(map[string]bool)
-		collectIds(navLink, allIds)
-
 		for _, futureId := range futureIds {
-			require.False(t, allIds[futureId], "Should not have future item %s", futureId)
+			require.Nil(t, findNavLink(navLink, futureId), "Should not have future item %s", futureId)
 		}
 	})
-}
-
-// Helper function to collect all IDs from navigation tree
-func collectIds(navLink *navtree.NavLink, ids map[string]bool) {
-	if navLink == nil {
-		return
-	}
-	if navLink.Id != "" {
-		ids[navLink.Id] = true
-	}
-	for _, child := range navLink.Children {
-		collectIds(child, ids)
-	}
 }
