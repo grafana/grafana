@@ -219,6 +219,7 @@ type MetaSpec struct {
 	Translations map[string]string          `json:"translations,omitempty"`
 	// +listType=atomic
 	Children []string `json:"children,omitempty"`
+	AliasIds []string `json:"aliasIds,omitempty"`
 }
 
 // NewMetaSpec creates a new MetaSpec object.
