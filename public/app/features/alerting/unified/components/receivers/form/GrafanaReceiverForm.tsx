@@ -40,7 +40,8 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   secureFields: {},
   disableResolveMessage: false,
   type: 'email',
-  version: 'v1', // New integrations default to v1 (Grafana version)
+  // version is intentionally not set here - it will be determined by the notifier's currentVersion
+  // when the integration is created/type is changed. The backend will use its default if not provided.
 });
 
 interface Props {

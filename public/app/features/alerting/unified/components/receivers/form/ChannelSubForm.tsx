@@ -63,6 +63,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const channelFieldPath = `items.${integrationIndex}` as const;
   const typeFieldPath = `${channelFieldPath}.type` as const;
+  const versionFieldPath = `${channelFieldPath}.version` as const;
   const settingsFieldPath = `${channelFieldPath}.settings` as const;
   const secureFieldsPath = `${channelFieldPath}.secureFields` as const;
 
@@ -105,6 +106,9 @@ export function ChannelSubForm<R extends ChannelValues>({
 
         setValue(settingsFieldPath, defaultNotifierSettings);
         setValue(secureFieldsPath, {});
+
+        // Reset version when changing type - backend will use its default
+        setValue(versionFieldPath, undefined);
       }
 
       // Restore initial value of an existing oncall integration
@@ -124,6 +128,7 @@ export function ChannelSubForm<R extends ChannelValues>({
     setValue,
     settingsFieldPath,
     typeFieldPath,
+    versionFieldPath,
     secureFieldsPath,
     getValues,
     watch,
