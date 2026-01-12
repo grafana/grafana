@@ -420,6 +420,14 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		}
 	}
 
+	// Propagate secure values from the update request to the unified storage update.
+	if secure := getUpdatedSecureValues(ctx); secure != nil {
+		wrapped, ok := unifiedInfo.(*wrappedUpdateInfo)
+		if ok {
+			wrapped.updatedSecureValues = secure
+		}
+	}
+
 	if d.readUnified {
 		return d.unified.Update(ctx, name, unifiedInfo, createValidation, updateValidation, unifiedForceCreate, options)
 	} else if d.errorIsOK {
