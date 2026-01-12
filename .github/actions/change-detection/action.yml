@@ -102,6 +102,7 @@ runs:
             - '${{ inputs.self }}'
           frontend-packages:
             - 'packages/**'
+            - './scripts/validate-npm-packages.sh'
             - '${{ inputs.self }}'
           e2e:
             - 'e2e/**'
