@@ -165,7 +165,7 @@ func TestBuildAlertNavLinks_V2(t *testing.T) {
 	service := setupTestService(fullPermissions(), allFeatureFlags...)
 
 	t.Run("Should have correct parent structure in V2 navigation", func(t *testing.T) {
-		navLink := service.buildAlertNavLinksV2(reqCtx)
+		navLink := service.buildAlertNavLinks(reqCtx)
 		require.NotNil(t, navLink)
 		require.NotEmpty(t, navLink.Children)
 
@@ -179,7 +179,7 @@ func TestBuildAlertNavLinks_V2(t *testing.T) {
 	})
 
 	t.Run("Should have correct tabs under each parent", func(t *testing.T) {
-		navLink := service.buildAlertNavLinksV2(reqCtx)
+		navLink := service.buildAlertNavLinks(reqCtx)
 		require.NotNil(t, navLink)
 
 		// Table-driven test for tab verification
@@ -208,7 +208,7 @@ func TestBuildAlertNavLinks_V2(t *testing.T) {
 		}
 		limitedService := setupTestService(limitedPermissions, "alertingNavigationV2")
 
-		navLink := limitedService.buildAlertNavLinksV2(reqCtx)
+		navLink := limitedService.buildAlertNavLinks(reqCtx)
 		require.NotNil(t, navLink)
 
 		// Should not have notification-config without notification permissions
@@ -216,7 +216,7 @@ func TestBuildAlertNavLinks_V2(t *testing.T) {
 	})
 
 	t.Run("Should exclude future items from V2 navigation", func(t *testing.T) {
-		navLink := service.buildAlertNavLinksV2(reqCtx)
+		navLink := service.buildAlertNavLinks(reqCtx)
 		require.NotNil(t, navLink)
 
 		// Verify future items are not present
