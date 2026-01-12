@@ -52,12 +52,12 @@ To add a MySQL annotation to your dashboard:
 
 Your annotation query must return a `time` column and can optionally include `timeend`, `text`, and `tags` columns.
 
-| Column    | Required | Description                                                                                              |
-| --------- | -------- | -------------------------------------------------------------------------------------------------------- |
-| `time`    | Yes      | The timestamp for the annotation. Can be a SQL datetime or UNIX epoch value.                            |
-| `timeend` | No       | The end timestamp for range annotations. Creates a shaded region instead of a vertical line.            |
-| `text`    | No       | The annotation description displayed when you hover over the annotation.                                 |
-| `tags`    | No       | Tags for the annotation as a comma-separated string. Helps categorize and filter annotations.           |
+| Column    | Required | Description                                                                                   |
+| --------- | -------- | --------------------------------------------------------------------------------------------- |
+| `time`    | Yes      | The timestamp for the annotation. Can be a SQL datetime or UNIX epoch value.                  |
+| `timeend` | No       | The end timestamp for range annotations. Creates a shaded region instead of a vertical line.  |
+| `text`    | No       | The annotation description displayed when you hover over the annotation.                      |
+| `tags`    | No       | Tags for the annotation as a comma-separated string. Helps categorize and filter annotations. |
 
 ## Example queries
 
@@ -147,10 +147,10 @@ WHERE $__timeFilter(start_time)
 
 Use these macros in your annotation queries to filter by the dashboard time range:
 
-| Macro                          | Description                                                                      |
-| ------------------------------ | -------------------------------------------------------------------------------- |
-| `$__timeFilter(column)`        | Filters by time range using a native SQL datetime column.                        |
-| `$__unixEpochFilter(column)`   | Filters by time range using a column with UNIX epoch timestamps.                 |
+| Macro                        | Description                                                      |
+| ---------------------------- | ---------------------------------------------------------------- |
+| `$__timeFilter(column)`      | Filters by time range using a native SQL datetime column.        |
+| `$__unixEpochFilter(column)` | Filters by time range using a column with UNIX epoch timestamps. |
 
 ## Best practices
 

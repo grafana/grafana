@@ -152,7 +152,7 @@ To use these dashboards:
 For more MySQL dashboards, browse the [Grafana dashboard catalog](https://grafana.com/grafana/dashboards/?search=mysql).
 
 {{< admonition type="note" >}}
-The MySQL integration monitors your MySQL *server* using Prometheus metrics. The MySQL *data source* documented here queries data stored *in* MySQL tables. These are complementary features for different use cases.
+The MySQL integration monitors your MySQL _server_ using Prometheus metrics. The MySQL _data source_ documented here queries data stored _in_ MySQL tables. These are complementary features for different use cases.
 {{< /admonition >}}
 
 ## Related data sources
