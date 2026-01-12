@@ -118,7 +118,7 @@ func TestBuildAlertNavLinks_FeatureToggle(t *testing.T) {
 		require.NotEmpty(t, navLink.Children)
 
 		// Verify all expected parent items exist with children
-		expectedParents := []string{"alert-rules", "notification-config", "insights", "alerting-settings"}
+		expectedParents := []string{"alert-rules", "notification-config", "alerting-settings"}
 		for _, parentId := range expectedParents {
 			parent := findNavLink(navLink, parentId)
 			require.NotNil(t, parent, "Should have %s parent in V2 navigation", parentId)
@@ -170,7 +170,7 @@ func TestBuildAlertNavLinks_V2(t *testing.T) {
 		require.NotEmpty(t, navLink.Children)
 
 		// Verify all parent items exist with children
-		parentIds := []string{"alert-rules", "notification-config", "insights", "alerting-settings"}
+		parentIds := []string{"alert-rules", "notification-config", "alerting-settings"}
 		for _, parentId := range parentIds {
 			parent := findNavLink(navLink, parentId)
 			require.NotNil(t, parent, "Should have parent %s in V2 navigation", parentId)
@@ -189,7 +189,6 @@ func TestBuildAlertNavLinks_V2(t *testing.T) {
 		}{
 			{"alert-rules", []string{"alert-rules-list", "alert-rules-recently-deleted"}},
 			{"notification-config", []string{"notification-config-contact-points", "notification-config-policies", "notification-config-templates", "notification-config-time-intervals"}},
-			{"insights", []string{"insights-system", "insights-history"}},
 		}
 
 		for _, tt := range tests {

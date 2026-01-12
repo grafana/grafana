@@ -224,13 +224,6 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/insights',
-      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "InsightsPage" */ 'app/features/alerting/unified/insights/InsightsPage')
-      ),
-    },
-    {
       path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
       component: shouldAllowRecoveringDeletedRules()
