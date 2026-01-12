@@ -1025,13 +1025,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "exploreLogsAggregatedMetrics",
-			Description:  "Used in Logs Drilldown to query by aggregated metrics",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "exploreLogsLimitedTimeRange",
 			Description:  "Used in Logs Drilldown to limit the time range",
 			Stage:        FeatureStageExperimental,
