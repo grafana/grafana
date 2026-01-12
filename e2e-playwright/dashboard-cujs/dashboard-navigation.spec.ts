@@ -1,8 +1,7 @@
-import { Page } from '@playwright/test';
-
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { setScopes } from '../utils/scope-helpers';
+import { setScopes, setupScopeRoutes } from '../utils/scope-helpers';
+import { testScopes } from '../utils/scopes';
 
 import {
   clickFirstScopesDashboard,
@@ -41,6 +40,11 @@ test.describe(
       const scopesDashboardsSearchInput = getScopesDashboardsSearchInput(page);
       const adhocFilterPills = getAdHocFilterPills(page);
       const groupByValues = getGroupByValues(page);
+
+      // Set up routes before any navigation (only for mocked mode)
+      if (!USE_LIVE_DATA) {
+        await setupScopeRoutes(page, testScopes());
+      }
 
       await test.step('1.Search dashboard', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });

@@ -71,7 +71,9 @@ export function getScopesDashboards(page: Page) {
  */
 export async function clickFirstScopesDashboard(page: Page) {
   const dashboards = getScopesDashboards(page);
-  await dashboards.first().waitFor({ state: 'visible', timeout: 10000 });
+  // Wait for at least one dashboard to be visible
+  await expect(dashboards.first()).toBeVisible({ timeout: 10000 });
+  // Click - Playwright will automatically wait for the element to be actionable
   await dashboards.first().click();
 }
 
