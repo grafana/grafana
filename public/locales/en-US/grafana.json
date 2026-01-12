@@ -2832,6 +2832,9 @@
     },
     "simple-condition-editor": {
       "aria-label-reducer": "Select reducer function",
+      "aria-label-threshold": "Threshold value",
+      "aria-label-threshold-from": "Threshold from value",
+      "aria-label-threshold-to": "Threshold to value",
       "label-of-query": "OF QUERY",
       "label-when": "WHEN",
       "label-when-query": "WHEN QUERY"

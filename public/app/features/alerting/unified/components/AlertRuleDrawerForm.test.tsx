@@ -240,11 +240,25 @@ describe('AlertRuleDrawerForm', () => {
       };
       mockExecute.mockResolvedValue(mockResponse);
 
-      renderDrawer({ onClose });
+      // Prefill with required fields (folder and group are required for form submission)
+      const prefill: Partial<RuleFormValues> = {
+        name: 'Test Alert Rule',
+        folder: { title: 'Test Folder', uid: 'test-folder-uid' },
+        group: 'test-group',
+        evaluateEvery: '1m',
+        type: RuleFormType.grafana,
+        queries: [
+          {
+            refId: 'A',
+            datasourceUid: 'test-ds',
+            queryType: '',
+            model: { refId: 'A' },
+          },
+        ],
+        condition: 'A',
+      };
 
-      // Fill in required field
-      const nameInput = screen.getByLabelText(/Name/i);
-      await user.type(nameInput, 'Test Alert Rule');
+      renderDrawer({ onClose, prefill });
 
       // Click Create
       await user.click(screen.getByRole('button', { name: /Create/i }));
@@ -264,7 +278,7 @@ describe('AlertRuleDrawerForm', () => {
       const user = userEvent.setup();
       renderDrawer();
 
-      // Try to submit without filling required fields (name is required)
+      // Try to submit without filling required fields (name, folder, group are required)
       await user.click(screen.getByRole('button', { name: /Create/i }));
 
       await waitFor(() => {
