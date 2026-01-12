@@ -80,18 +80,18 @@ const buildLabelPath = (label: string) => {
   return label.includes('.') || label.trim().includes(' ') ? `["${label}"]` : `.${label}`;
 };
 
-const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
-  if (!('valuesFormat' in variable) || variable.valuesFormat !== 'json') {
-    return [];
-  }
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+};
 
-  function collectFieldPaths(option: Record<string, string>, currentPath: string) {
+const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
+  function collectFieldPaths(option: Record<string, unknown>, currentPath: string): string[] {
     let paths: string[] = [];
     for (const field in option) {
       if (option.hasOwnProperty(field)) {
         const newPath = `${currentPath}.${field}`;
         const value = option[field];
-        if (typeof value === 'object' && value !== null) {
+        if (isRecord(value)) {
           paths = [...paths, ...collectFieldPaths(value, newPath)];
         }
         paths.push(newPath);
@@ -100,11 +100,23 @@ const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
     return paths;
   }
 
-  try {
-    return collectFieldPaths(JSON.parse(variable.query)[0], variable.name);
-  } catch {
-    return [];
+  if ('valuesFormat' in variable && variable.valuesFormat === 'json') {
+    try {
+      return collectFieldPaths(JSON.parse(variable.query)[0], variable.name);
+    } catch {
+      return [];
+    }
   }
+
+  if ('options' in variable && Array.isArray(variable.options) && variable.options.length > 0) {
+    for (const opt of variable.options) {
+      if ('properties' in opt && isRecord(opt.properties) && Object.keys(opt.properties).length > 0) {
+        return collectFieldPaths(opt.properties, variable.name);
+      }
+    }
+  }
+
+  return [];
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [

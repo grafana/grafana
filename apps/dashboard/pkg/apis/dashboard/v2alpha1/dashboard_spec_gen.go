@@ -1411,6 +1411,8 @@ type DashboardVariableOption struct {
 	Text DashboardStringOrArrayOfString `json:"text"`
 	// Value of the option
 	Value DashboardStringOrArrayOfString `json:"value"`
+	// Additional properties for multi-props variables
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 // NewDashboardVariableOption creates a new DashboardVariableOption object.
