@@ -26,4 +26,8 @@ export interface Column<TableData extends object> {
    * If the provided function returns `false` the column will be hidden.
    */
   visible?: (data: TableData[]) => boolean;
+  /**
+   * Determines starting sort direction when the column header is clicked.
+   */
+  sortDescFirst?: boolean;
 }
