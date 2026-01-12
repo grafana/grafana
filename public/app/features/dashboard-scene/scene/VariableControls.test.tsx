@@ -30,7 +30,7 @@ describe('VariableControls', () => {
 
     expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
   });
-  
+
   it('should not render regular hidden variables', () => {
     const hiddenVariable = new TextBoxVariable({
       name: 'HiddenVar',
