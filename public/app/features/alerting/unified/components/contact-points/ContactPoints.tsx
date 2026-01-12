@@ -1,31 +1,12 @@
-import { css } from '@emotion/css';
-import { useMemo } from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Button,
-  EmptyState,
-  LinkButton,
-  LoadingPlaceholder,
-  Pagination,
-  Stack,
-  Tab,
-  TabContent,
-  TabsBar,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, EmptyState, LinkButton, LoadingPlaceholder, Pagination, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { shouldUseAlertingNavigationV2 } from '../../featureToggles';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
-import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useNotificationConfigNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { isExtraConfig } from '../../utils/alertmanager/extraConfigs';
@@ -35,18 +16,12 @@ import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
 import { ContactPoint } from './ContactPoint';
-import { NotificationTemplates } from './NotificationTemplates';
 import { ContactPointsFilter } from './components/ContactPointsFilter';
 import { GlobalConfigAlert } from './components/GlobalConfigAlert';
 import { useContactPointsWithStatus } from './useContactPoints';
 import { useContactPointsSearch } from './useContactPointsSearch';
 import { ALL_CONTACT_POINTS, useExportContactPoint } from './useExportContactPoint';
 import { ContactPointWithMetadata } from './utils';
-
-export enum ActiveTab {
-  ContactPoints = 'contact_points',
-  NotificationTemplates = 'templates',
-}
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -157,122 +132,15 @@ const ContactPointsTab = () => {
   );
 };
 
-const NotificationTemplatesTab = () => {
-  const [createTemplateSupported, createTemplateAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.CreateNotificationTemplate
-  );
-
-  return (
-    <Stack direction="column" gap={1}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Text variant="body" color="secondary">
-          <Trans i18nKey="alerting.notification-templates-tab.create-notification-templates-customize-notifications">
-            Create notification templates to customize your notifications.
-          </Trans>
-        </Text>
-        {createTemplateSupported && (
-          <LinkButton
-            icon="plus"
-            variant="primary"
-            href="/alerting/notifications/templates/new"
-            disabled={!createTemplateAllowed}
-          >
-            <Trans i18nKey="alerting.notification-templates-tab.add-notification-template-group">
-              Add notification template group
-            </Trans>
-          </LinkButton>
-        )}
-      </Stack>
-      <NotificationTemplates />
-    </Stack>
-  );
-};
-
-const useTabQueryParam = (defaultTab: ActiveTab) => {
-  const [queryParams, setQueryParams] = useURLSearchParams();
-  const param = useMemo(() => {
-    const queryParam = queryParams.get('tab');
-
-    if (!queryParam || !Object.values(ActiveTab).map(String).includes(queryParam)) {
-      return defaultTab;
-    }
-
-    return queryParam || defaultTab;
-  }, [defaultTab, queryParams]);
-
-  const setParam = (tab: ActiveTab) => setQueryParams({ tab });
-  return [param, setParam] as const;
-};
-
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const useV2Nav = shouldUseAlertingNavigationV2();
-  const styles = useStyles2(getStyles);
 
-  // All hooks must be called unconditionally before any early returns
-  const [, canViewContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
-  const [, canCreateContactPoints] = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
-  const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
-
-  const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
-
-  // Depending on permissions, user may not have access to all tabs,
-  // but we can default to picking the first one that they definitely _do_ have access to
-  const defaultTab = [
-    showContactPointsTab && ActiveTab.ContactPoints,
-    showTemplatesTab && ActiveTab.NotificationTemplates,
-  ].filter((tab) => !!tab)[0];
-
-  const [activeTab, setActiveTab] = useTabQueryParam(defaultTab);
-
-  const { contactPoints } = useContactPointsWithStatus({
-    alertmanager: selectedAlertmanager!,
-  });
-
-  // In V2 navigation mode, show only contact points (no internal tabs)
+  // Show only contact points (no internal tabs)
   // Templates are accessible via the sidebar navigation
-  if (useV2Nav) {
-    return (
-      <>
-        <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
-        <ContactPointsTab />
-      </>
-    );
-  }
-
-  // Legacy mode: Show internal tabs (backward compatible)
-
-  const showingContactPoints = activeTab === ActiveTab.ContactPoints;
-  const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
-
   return (
     <>
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
-      <Stack direction="column">
-        <TabsBar>
-          {showContactPointsTab && (
-            <Tab
-              label={t('alerting.contact-points-page-contents.label-contact-points', 'Contact Points')}
-              active={showingContactPoints}
-              counter={contactPoints.length}
-              onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
-            />
-          )}
-          {showTemplatesTab && (
-            <Tab
-              label={t('alerting.contact-points-page-contents.label-notification-templates', 'Notification Templates')}
-              active={showNotificationTemplates}
-              onChangeTab={() => setActiveTab(ActiveTab.NotificationTemplates)}
-            />
-          )}
-        </TabsBar>
-        <TabContent className={styles.tabContent}>
-          <Stack direction="column">
-            {showingContactPoints && <ContactPointsTab />}
-            {showNotificationTemplates && <NotificationTemplatesTab />}
-          </Stack>
-        </TabContent>
-      </Stack>
+      <ContactPointsTab />
     </>
   );
 };
@@ -302,12 +170,6 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
     </>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  tabContent: css({
-    marginTop: theme.spacing(2),
-  }),
-});
 
 function ContactPointsPage() {
   const { navId, pageNav } = useNotificationConfigNav();
