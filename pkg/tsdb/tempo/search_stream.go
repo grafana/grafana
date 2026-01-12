@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -33,6 +35,7 @@ type StreamSender interface {
 func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *DatasourceInfo) error {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runSearchStream")
 	defer span.End()
+
 	response := &backend.DataResponse{}
 
 	var backendQuery *backend.DataQuery

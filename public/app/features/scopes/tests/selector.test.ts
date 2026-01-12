@@ -132,11 +132,12 @@ describe('Selector', () => {
       expectRecentScope('Grafana Applications');
       expectRecentScope('Grafana, Mimir Applications');
       await selectRecentScope('Grafana Applications');
+      await jest.runOnlyPendingTimersAsync();
 
       expectScopesSelectorValue('Grafana');
 
       await openSelector();
-      // Close to root node so we can see the recent scopes
+      // Collapse tree to root level to see recent scopes section
       await expandResultApplications();
 
       await expandRecentScopes();
@@ -155,8 +156,8 @@ describe('Selector', () => {
       await applyScopes();
 
       await openSelector();
-      // Close to root node so we can try to see the recent scopes
-      await expandResultApplications();
+      // Tree expands to show selected scope, so recent scopes are not visible
+      // (recent scopes only show at root level with tree collapsed)
       expectRecentScopeNotPresentInDocument();
     });
 

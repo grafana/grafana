@@ -6002,6 +6002,10 @@
         "avatarUrl": {
           "type": "string"
         },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
         "email": {
           "type": "string"
         },
@@ -8902,6 +8906,10 @@
         },
         "avatarUrl": {
           "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
         },
         "email": {
           "type": "string"
