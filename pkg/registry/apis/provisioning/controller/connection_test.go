@@ -3,15 +3,18 @@ package controller
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
@@ -527,7 +530,7 @@ func TestConnectionController_handleDelete(t *testing.T) {
 			expectFinalizerRemoved: false,
 		},
 		{
-			name: "error removing finalizer, should return error",
+			name: "error removing finalizer, should undelete connection",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "test-conn",
@@ -542,11 +545,24 @@ func TestConnectionController_handleDelete(t *testing.T) {
 				}, nil)
 			},
 			connectionSetup: func(m *mockConnectionInterface) {
-				m.On("Patch", ctx, "test-conn", types.JSONPatchType, mock.Anything, metav1.PatchOptions{
+				// First patch fails (remove finalizer)
+				m.On("Patch", ctx, "test-conn", types.JSONPatchType, mock.MatchedBy(func(data []byte) bool {
+					return string(data) == `[
+			{ "op": "remove", "path": "/metadata/finalizers" }
+		]`
+				}), metav1.PatchOptions{
 					FieldManager: "provisioning-connection-controller",
-				}, mock.Anything).Return(nil, errors.New("patch error"))
+				}, mock.Anything).Return(nil, errors.New("patch error")).Once()
+				// Second patch succeeds (undelete - remove DeletionTimestamp)
+				m.On("Patch", ctx, "test-conn", types.JSONPatchType, mock.MatchedBy(func(data []byte) bool {
+					return string(data) == `[
+			{ "op": "remove", "path": "/metadata/deletionTimestamp" }
+		]`
+				}), metav1.PatchOptions{
+					FieldManager: "provisioning-connection-controller",
+				}, mock.Anything).Return(&provisioning.Connection{}, nil).Once()
 			},
-			expectedError:          "remove finalizer: patch error",
+			expectedError:          "remove finalizer: patch error (connection has been undeleted, deletion can be retried)",
 			expectFinalizerRemoved: false,
 		},
 		{
@@ -612,12 +628,70 @@ func TestConnectionController_handleDelete(t *testing.T) {
 				connInterface.AssertCalled(t, "Patch", ctx, "test-conn", types.JSONPatchType, mock.Anything, metav1.PatchOptions{
 					FieldManager: "provisioning-connection-controller",
 				}, mock.Anything)
-			} else {
-				connInterface.AssertNotCalled(t, "Patch", ctx, "test-conn", types.JSONPatchType, mock.Anything, metav1.PatchOptions{}, mock.Anything)
+			} else if tt.expectedError != "" && strings.Contains(tt.expectedError, "undeleted") {
+				// For undelete case, we expect both patches to be called (remove finalizer fails, then undelete succeeds)
+				connInterface.AssertNumberOfCalls(t, "Patch", 2)
 			}
+			// For other error cases (repositories exist), no successful patch should occur
 
 			repoLister.AssertExpectations(t)
 			connInterface.AssertExpectations(t)
+		})
+	}
+}
+
+func TestIsTransientError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected bool
+	}{
+		{
+			name:     "nil error",
+			err:      nil,
+			expected: false,
+		},
+		{
+			name:     "service unavailable",
+			err:      apierrors.NewServiceUnavailable("service unavailable"),
+			expected: true,
+		},
+		{
+			name:     "server timeout",
+			err:      apierrors.NewServerTimeout(schema.GroupResource{}, "operation", 0),
+			expected: true,
+		},
+		{
+			name:     "too many requests",
+			err:      apierrors.NewTooManyRequests("too many requests", 0),
+			expected: true,
+		},
+		{
+			name:     "internal error",
+			err:      apierrors.NewInternalError(errors.New("internal error")),
+			expected: true,
+		},
+		{
+			name:     "not found error",
+			err:      apierrors.NewNotFound(schema.GroupResource{}, "resource"),
+			expected: false,
+		},
+		{
+			name:     "forbidden error",
+			err:      apierrors.NewForbidden(schema.GroupResource{}, "resource", errors.New("forbidden")),
+			expected: false,
+		},
+		{
+			name:     "generic error",
+			err:      errors.New("generic error"),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isTransientError(tt.err)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }

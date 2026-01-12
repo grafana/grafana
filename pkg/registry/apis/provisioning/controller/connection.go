@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -156,13 +157,14 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	if !apierrors.IsServiceUnavailable(err) {
-		logger.Info("ConnectionController will not retry")
+	// Check if error is transient and should be retried
+	if !isTransientError(err) {
+		logger.Info("ConnectionController will not retry (non-transient error)")
 		cc.queue.Forget(item)
 		return true
 	}
 
-	logger.Info("ConnectionController will retry as service is unavailable")
+	logger.Info("ConnectionController will retry (transient error)")
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
 	cc.queue.AddRateLimited(item)
 
@@ -313,10 +315,75 @@ func (cc *ConnectionController) handleDelete(ctx context.Context, conn *provisio
 			FieldManager: "provisioning-connection-controller",
 		})
 	if err != nil {
-		return fmt.Errorf("remove finalizer: %w", err)
+		// If we can't remove the finalizer, undelete the connection so it can be retried later
+		// This prevents the connection from being stuck in deletion state
+		logger.Error("failed to remove finalizer, undeleting connection", "error", err)
+		undeleteErr := cc.undeleteConnection(ctx, conn, err)
+		if undeleteErr != nil {
+			return fmt.Errorf("remove finalizer: %w; failed to undelete: %w", err, undeleteErr)
+		}
+		return fmt.Errorf("remove finalizer: %w (connection has been undeleted, deletion can be retried)", err)
 	}
 
 	return nil
+}
+
+// undeleteConnection removes the DeletionTimestamp to "undelete" the connection
+// This is used when finalizer removal fails, allowing the deletion to be retried later
+func (cc *ConnectionController) undeleteConnection(ctx context.Context, conn *provisioning.Connection, originalErr error) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("undeleting connection due to finalizer removal failure", "error", originalErr.Error())
+
+	// Remove DeletionTimestamp by patching it to null
+	_, err := cc.client.Connections(conn.GetNamespace()).
+		Patch(ctx, conn.Name, types.JSONPatchType, []byte(`[
+			{ "op": "remove", "path": "/metadata/deletionTimestamp" }
+		]`), metav1.PatchOptions{
+			FieldManager: "provisioning-connection-controller",
+		})
+	if err != nil {
+		logger.Error("failed to undelete connection", "error", err)
+		return fmt.Errorf("undelete connection: %w", err)
+	}
+
+	logger.Info("connection undeleted successfully, deletion can be retried")
+	return nil
+}
+
+// isTransientError determines if an error is transient and should be retried
+func isTransientError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// Check for Kubernetes API transient errors
+	if apierrors.IsServiceUnavailable(err) {
+		return true
+	}
+	if apierrors.IsServerTimeout(err) {
+		return true
+	}
+	if apierrors.IsTooManyRequests(err) {
+		return true
+	}
+	if apierrors.IsInternalError(err) {
+		return true
+	}
+	if apierrors.IsTimeout(err) {
+		return true
+	}
+
+	// Check for network errors
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		if netErr.Timeout() {
+			return true
+		}
+	}
+
+	// Check for connection errors
+	var opErr *net.OpError
+	return errors.As(err, &opErr)
 }
 
 // shouldCheckHealth determines if a connection health check should be performed.
