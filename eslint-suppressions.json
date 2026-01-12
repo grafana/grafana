@@ -1021,11 +1021,6 @@
       "count": 2
     }
   },
-  "public/app/core/actions/index.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 4
-    }
-  },
   "public/app/core/components/AccessControl/PermissionList.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -4153,11 +4148,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/parca/webpack.config.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/prometheus/configuration/AzureAuthSettings.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -4226,7 +4216,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/plugins/datasource/tempo/resultTransformer.ts": {
