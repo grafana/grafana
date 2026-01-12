@@ -39,7 +39,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
     ? restVariables.filter((v) => v.state.hide !== VariableHide.inControlsMenu)
     : variables.filter(
         (v) =>
-          v.state.name !== '__scopes' && // always hide scopes variable
+          !v.UNSAFE_renderAsHidden && // used for scopes variables, should always be hidden
           // if we're editing in dynamic dashboards, still shows hidden variable but greyed out
           ((isEditingNewLayouts && v.state.hide === VariableHide.hideVariable) ||
             v.state.hide !== VariableHide.inControlsMenu)
