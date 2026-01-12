@@ -111,6 +111,7 @@ const config: ConfigFile = {
     ...createAPIConfig('notifications.alerting', 'v0alpha1'),
     ...createAPIConfig('rules.alerting', 'v0alpha1'),
     ...createAPIConfig('historian.alerting', 'v0alpha1'),
+    ...createAPIConfig('logsdrilldown', 'v1beta1'),
     ...createAPIConfig('logsdrilldown', 'v1alpha1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
