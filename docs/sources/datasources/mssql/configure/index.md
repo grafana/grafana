@@ -74,6 +74,41 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+  configure-grafana-azure-auth:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/
+  configure-grafana-azure:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure
+  configure-grafana-azure-auth-scopes:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana
+  mssql-query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
+  mssql-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  mssql-troubleshoot:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
 ---
 
 # Configure the Microsoft SQL Server data source
@@ -82,13 +117,28 @@ This document provides instructions for configuring the Microsoft SQL Server dat
 
 ## Before you begin
 
-- Grafana comes with a built-in MSSQL data source plugin, eliminating the need to install a plugin.
+Before configuring the Microsoft SQL Server data source, ensure you have the following:
 
-- You must have the `Organization administrator` role to configure the MSSQL data source. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
+- **Grafana permissions:** You must have the `Organization administrator` role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
-- Familiarize yourself with your MSSQL security configuration and gather any necessary security certificates and client keys.
+- **A running SQL Server instance:** Microsoft SQL Server 2005 or newer, Azure SQL Database, or Azure SQL Managed Instance.
 
-- Verify that data from MSSQL is being written to your Grafana instance.
+- **Network access:** Grafana must be able to reach your SQL Server. The default port is `1433`.
+
+- **Authentication credentials:** Depending on your authentication method, you need one of:
+  - SQL Server login credentials (username and password).
+  - Windows/Kerberos credentials and configuration (not supported in Grafana Cloud).
+  - Azure Entra ID app registration or managed identity.
+
+- **Security certificates:** If using encrypted connections, gather any necessary TLS/SSL certificates.
+
+{{< admonition type="note" >}}
+Grafana ships with a built-in Microsoft SQL Server data source plugin. No additional installation is required.
+{{< /admonition >}}
+
+{{< admonition type="tip" >}}
+**Grafana Cloud users:** If your SQL Server is in a private network, you can configure [Private data source connect](ref:private-data-source-connect) to establish connectivity.
+{{< /admonition >}}
 
 ## Add the MSSQL data source
 
@@ -249,3 +299,48 @@ datasources:
     secureJsonData:
       password: 'Password!'
 ```
+
+### Configure with Terraform
+
+You can configure the Microsoft SQL Server data source using [Terraform](https://www.terraform.io/) with the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+
+For more information about provisioning resources with Terraform, refer to the [Grafana as code using Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/) documentation.
+
+#### Terraform example
+
+The following example creates a basic Microsoft SQL Server data source:
+
+```hcl
+resource "grafana_data_source" "mssql" {
+  name = "MSSQL"
+  type = "mssql"
+  url  = "localhost:1433"
+  user = "grafana"
+
+  json_data_encoded = jsonencode({
+    database           = "grafana"
+    maxOpenConns       = 100
+    maxIdleConns       = 100
+    maxIdleConnsAuto   = true
+    connMaxLifetime    = 14400
+    connectionTimeout  = 0
+    encrypt            = "false"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    password = "Password!"
+  })
+}
+```
+
+For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
+
+## Next steps
+
+After configuring your Microsoft SQL Server data source, you can:
+
+- [Write queries](ref:mssql-query-editor) using the query editor to explore and visualize your data
+- [Create template variables](ref:mssql-template-variables) to build dynamic, reusable dashboards
+- [Add annotations](ref:annotate-visualizations) to overlay SQL Server events on your graphs
+- [Set up alerting](ref:alerting) to create alert rules based on your SQL Server data
+- [Troubleshoot issues](ref:mssql-troubleshoot) if you encounter problems with your data source
