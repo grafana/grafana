@@ -908,6 +908,27 @@ export const versionedPages = {
       cancelButton: {
         '11.3.0': 'data-testid export as json cancel button',
       },
+      optionsRow: {
+        '11.3.0': 'data-testid export options row',
+      },
+      exportModeClassic: {
+        '11.3.0': 'data-testid export mode classic',
+      },
+      exportModeV1Resource: {
+        '11.3.0': 'data-testid export mode v1 resource',
+      },
+      exportModeV2Resource: {
+        '11.3.0': 'data-testid export mode v2 resource',
+      },
+      formatJson: {
+        '11.3.0': 'data-testid export format json',
+      },
+      formatYaml: {
+        '11.3.0': 'data-testid export format yaml',
+      },
+      libraryPanelsAlert: {
+        '11.3.0': 'data-testid export library panels alert',
+      },
     },
   },
   PublicDashboard: {
