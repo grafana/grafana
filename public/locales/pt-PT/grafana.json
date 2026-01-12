@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Adicionar painel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Agrupar em linha",
@@ -5695,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Não foi possível encontrar uma ID válida de Grafana.com",
       "invalid-json": "JSON inválido",
+      "tag-too-long": "",
       "tags-expected-array": "matriz de etiquetas esperada",
       "tags-expected-strings": "matriz de strings de etiquetas esperada"
     },
@@ -9253,7 +9255,8 @@
     "tags-input": {
       "add": "Adicionar",
       "placeholder-new-tag": "Nova etiqueta (introduzir chave para adicionar)",
-      "remove": "Remover etiqueta: {{name}}"
+      "remove": "Remover etiqueta: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Horas sincronizadas",
@@ -10720,18 +10723,6 @@
     "help/documentation": "Documentação",
     "help/keyboard-shortcuts": "Atalhos de teclado",
     "help/support": "Apoio",
-    "history-container": {
-      "drawer-tittle": "Histórico"
-    },
-    "history-wrapper": {
-      "collapse": "Recolher",
-      "expand": "Expandir",
-      "icon-selected": "Entrada selecionada",
-      "icon-unselected": "Entrada normal",
-      "show-more": "Mostrar mais",
-      "today": "Hoje",
-      "yesterday": "Ontem"
-    },
     "home": {
       "title": "Início"
     },

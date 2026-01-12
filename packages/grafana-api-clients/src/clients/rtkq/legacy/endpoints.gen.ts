@@ -1021,6 +1021,7 @@ const injectedRtkApi = api
             typeFilter: queryArg.typeFilter,
             excludeUid: queryArg.excludeUid,
             folderFilter: queryArg.folderFilter,
+            folderFilterUIDs: queryArg.folderFilterUiDs,
             perPage: queryArg.perPage,
             page: queryArg.page,
           },
@@ -2915,8 +2916,11 @@ export type GetLibraryElementsApiArg = {
   typeFilter?: string;
   /** Element UID to exclude from search results. */
   excludeUid?: string;
-  /** A comma separated list of folder ID(s) to filter the elements by. */
+  /** A comma separated list of folder ID(s) to filter the elements by.
+    Deprecated: Use FolderFilterUIDs instead. */
   folderFilter?: string;
+  /** A comma separated list of folder UID(s) to filter the elements by. */
+  folderFilterUiDs?: string;
   /** The number of results per page. */
   perPage?: number;
   /** The page for a set of records, given that only perPage records are returned at a time. Numbering starts at 1. */
@@ -5312,7 +5316,8 @@ export type PatchPrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export type UpdatePrefsCmd = {
@@ -5325,7 +5330,8 @@ export type UpdatePrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export type OrgUserDto = {
@@ -5334,6 +5340,7 @@ export type OrgUserDto = {
   };
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   isDisabled?: boolean;
   isExternallySynced?: boolean;
@@ -6112,6 +6119,7 @@ export type ChangeUserPasswordCommand = {
 export type UserSearchHitDto = {
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   id?: number;
   isAdmin?: boolean;

@@ -4595,6 +4595,7 @@
     },
     "canvas-actions": {
       "add-panel": "패널 추가",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "행으로 그룹화",
@@ -5675,6 +5676,7 @@
     "validation": {
       "invalid-dashboard-id": "유효한 Grafana.com ID를 찾지 못했습니다.",
       "invalid-json": "유효하지 않은 JSON",
+      "tag-too-long": "",
       "tags-expected-array": "태그로 배열을 입력해야 합니다.",
       "tags-expected-strings": "태그로 문자열 배열을 입력해야 합니다."
     },
@@ -9217,7 +9219,8 @@
     "tags-input": {
       "add": "추가",
       "placeholder-new-tag": "새 태그(엔터 키를 눌러 추가하세요)",
-      "remove": "태그 제거: {{name}}"
+      "remove": "태그 제거: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "동기화 시간",
@@ -10676,18 +10679,6 @@
     "help/documentation": "문서",
     "help/keyboard-shortcuts": "키보드 단축키",
     "help/support": "지원",
-    "history-container": {
-      "drawer-tittle": "이력"
-    },
-    "history-wrapper": {
-      "collapse": "접기",
-      "expand": "펼치기",
-      "icon-selected": "선택된 항목",
-      "icon-unselected": "일반 항목",
-      "show-more": "더 보기",
-      "today": "오늘",
-      "yesterday": "어제"
-    },
     "home": {
       "title": "홈"
     },

@@ -1291,13 +1291,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "unifiedHistory",
-			Description:  "Displays the navigation history so the user can navigate back to previous pages",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendSearchNavOrganise,
-			FrontendOnly: true,
-		},
-		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
 			// since users on v2.9 need it to disable the feature, as it doesn't work for them.
 			Name:        "lokiLabelNamesQueryApi",
@@ -1592,8 +1585,8 @@ var (
 		},
 		{
 			Name:         "kubernetesAuthzApis",
-			Description:  "Registers AuthZ /apis endpoint",
-			Stage:        FeatureStageExperimental,
+			Description:  "Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead",
+			Stage:        FeatureStageDeprecated,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 		},
@@ -1614,6 +1607,27 @@ var (
 		{
 			Name:         "kubernetesAuthzZanzanaSync",
 			Description:  "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "kubernetesAuthzCoreRolesApi",
+			Description:  "Registers AuthZ Core Roles /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "kubernetesAuthzRolesApi",
+			Description:  "Registers AuthZ Roles /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "kubernetesAuthzRoleBindingsApi",
+			Description:  "Registers AuthZ Role Bindings /apis endpoint",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1863,14 +1877,6 @@ var (
 			Description:     "Enables running plugins in containers",
 			Stage:           FeatureStagePrivatePreview,
 			Owner:           grafanaPluginsPlatformSquad,
-			Expression:      "false",
-			RequiresRestart: true,
-		},
-		{
-			Name:            "tempoSearchBackendMigration",
-			Description:     "Run search queries through the tempo backend",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaOSSBigTent,
 			Expression:      "false",
 			RequiresRestart: true,
 		},

@@ -127,6 +127,10 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	// function call happens after this.
 	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return "", fmt.Errorf("operation canceled while reading secure value metadata storage: %v (%w)", err, context.Canceled)
+		}
+
 		return "", fmt.Errorf("failed to read secure value metadata storage: %v (%w)", err, contracts.ErrDecryptNotFound)
 	}
 
@@ -137,6 +141,10 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 
 	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return "", fmt.Errorf("operation canceled while reading keeper config metadata storage: %v (%w)", err, context.Canceled)
+		}
+
 		return "", fmt.Errorf("failed to read keeper config metadata storage: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 
@@ -148,13 +156,22 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	if sv.Spec.Ref != nil {
 		exposedValue, err := keeper.RetrieveReference(ctx, keeperConfig, *sv.Spec.Ref)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return "", fmt.Errorf("operation canceled while exposing secret using reference: %v (%w)", err, context.Canceled)
+			}
+
 			return "", fmt.Errorf("failed to expose secret using reference: %v (%w)", err, contracts.ErrDecryptFailed)
 		}
+
 		return exposedValue, nil
 	}
 
 	exposedValue, err := keeper.Expose(ctx, keeperConfig, namespace, name, sv.Status.Version)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return "", fmt.Errorf("operation canceled while exposing secret: %v (%w)", err, context.Canceled)
+		}
+
 		return "", fmt.Errorf("failed to expose secret: %v (%w)", err, contracts.ErrDecryptFailed)
 	}
 
