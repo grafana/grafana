@@ -30,11 +30,16 @@ type App struct {
 	ID int64
 	// Slug represents the GH app slug.
 	Slug string
+	// Owner represents the GH account/org owning the app
+	Owner string
 }
 
 // AppInstallation represents a Github App Installation.
 type AppInstallation struct {
+	// ID represents the GH installation ID.
 	ID int64
+	// Whether the installation is enabled or not.
+	Enabled bool
 }
 
 type githubClient struct {
@@ -58,8 +63,9 @@ func (r *githubClient) GetApp(ctx context.Context, token string) (App, error) {
 
 	// TODO(ferruvich): do we need any other info?
 	return App{
-		ID:   app.GetID(),
-		Slug: app.GetSlug(),
+		ID:    app.GetID(),
+		Slug:  app.GetSlug(),
+		Owner: app.GetOwner().GetName(),
 	}, nil
 }
 
@@ -81,6 +87,7 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, appToken string, 
 
 	// TODO(ferruvich): do we need any other info?
 	return AppInstallation{
-		ID: installation.GetID(),
+		ID:      installation.GetID(),
+		Enabled: installation.GetSuspendedAt().IsZero(),
 	}, nil
 }

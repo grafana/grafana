@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v70/github"
 	conngh "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -30,6 +31,9 @@ func TestGithubClient_GetApp(t *testing.T) {
 						app := &github.App{
 							ID:   github.Ptr(int64(12345)),
 							Slug: github.Ptr("my-test-app"),
+							Owner: &github.User{
+								Name: github.Ptr("grafana"),
+							},
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(app))
@@ -38,8 +42,9 @@ func TestGithubClient_GetApp(t *testing.T) {
 			),
 			token: "test-token",
 			wantApp: conngh.App{
-				ID:   12345,
-				Slug: "my-test-app",
+				ID:    12345,
+				Slug:  "my-test-app",
+				Owner: "grafana",
 			},
 			wantErr: nil,
 		},
@@ -147,13 +152,14 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 		errContains      string
 	}{
 		{
-			name: "get app installation successfully",
+			name: "get disabled app installation successfully",
 			mockHandler: mockhub.NewMockedHTTPClient(
 				mockhub.WithRequestMatchHandler(
 					mockhub.GetAppInstallationsByInstallationId,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						installation := &github.Installation{
-							ID: github.Ptr(int64(67890)),
+							ID:          github.Ptr(int64(67890)),
+							SuspendedAt: github.Ptr(github.Timestamp{Time: time.Now()}),
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(installation))
@@ -163,7 +169,31 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			appToken:       "test-app-token",
 			installationID: "67890",
 			wantInstallation: conngh.AppInstallation{
-				ID: 67890,
+				ID:      67890,
+				Enabled: false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "get enabled app installation successfully",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetAppInstallationsByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						installation := &github.Installation{
+							ID:          github.Ptr(int64(67890)),
+							SuspendedAt: nil,
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(installation))
+					}),
+				),
+			),
+			appToken:       "test-app-token",
+			installationID: "67890",
+			wantInstallation: conngh.AppInstallation{
+				ID:      67890,
+				Enabled: true,
 			},
 			wantErr: false,
 		},
