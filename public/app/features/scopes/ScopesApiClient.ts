@@ -34,7 +34,7 @@ export class ScopesApiClient {
       // Check if the data is actually an error response (Kubernetes Status object)
       if (this.isStatusError(result.data)) {
         const errorMessage = getMessageFromError(result.data);
-        console.error(`Failed to fetch ${context}:`, errorMessage);
+        console.error(`Failed to fetch %s:`, context, errorMessage);
         return undefined;
       }
       return result.data;
@@ -42,7 +42,7 @@ export class ScopesApiClient {
 
     if ('error' in result) {
       const errorMessage = getMessageFromError(result.error);
-      console.error(`Failed to fetch ${context}:`, errorMessage);
+      console.error(`Failed to fetch %s:`, context, errorMessage);
     }
 
     return undefined;
