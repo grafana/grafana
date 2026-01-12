@@ -656,7 +656,7 @@ require (
 
 require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 
-require github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7
+require github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7 // @grafana/grafana-operator-experience-squad
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
