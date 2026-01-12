@@ -247,8 +247,10 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	}
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
-	if err = accCreated.SetSecureValues(secure); err != nil {
-		return nil, fmt.Errorf("unable to set secure values on duplicate object %w", err)
+	if secure != nil {
+		if err = accCreated.SetSecureValues(secure); err != nil {
+			return nil, fmt.Errorf("unable to set secure values on duplicate object %w", err)
+		}
 	}
 
 	if readFromUnifiedWriteToBothStorages {
