@@ -2246,7 +2246,8 @@
       "metadata": {
         "name": "logsExploreTableDefaultVisualization",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-05-02T15:28:15Z"
+        "creationTimestamp": "2024-05-02T15:28:15Z",
+        "deletionTimestamp": "2026-01-12T14:11:46Z"
       },
       "spec": {
         "description": "Sets the logs table as default visualisation in logs explore",
