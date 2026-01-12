@@ -37,13 +37,16 @@ export function RecentlyViewedDashboards() {
     retry();
   };
 
-  if (recentDashboards.length === 0) {
   const handleSectionToggle = () => {
     reportInteraction('grafana_recently_viewed_dashboards_toggle_section', {
       expanded: !isOpen,
     });
     setIsOpen(!isOpen);
   };
+
+  if (recentDashboards.length === 0) {
+    return null;
+  }
 
   return (
     <CollapsableSection
