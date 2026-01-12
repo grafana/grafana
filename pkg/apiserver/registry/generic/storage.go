@@ -33,18 +33,15 @@ func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo u
 	}
 
 	// Use custom GetAttrs if provided, otherwise use default
-	attrFunc := GetAttrs
-	predicateFunc := Matcher
+	var attrFunc storage.AttrFunc
+	var predicateFunc func(label labels.Selector, field fields.Selector) storage.SelectionPredicate
 	if fieldOpts.GetAttrs != nil {
 		attrFunc = fieldOpts.GetAttrs
-		// Create a matcher that uses the custom GetAttrs
-		predicateFunc = func(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
-			return storage.SelectionPredicate{
-				Label:    label,
-				Field:    field,
-				GetAttrs: attrFunc,
-			}
-		}
+		// Pass nil predicateFunc to use default behavior with custom attrFunc
+		predicateFunc = nil
+	} else {
+		attrFunc = GetAttrs
+		predicateFunc = Matcher
 	}
 
 	store := &registry.Store{
