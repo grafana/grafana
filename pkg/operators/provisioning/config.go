@@ -175,8 +175,8 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 			Host:    url,
 			WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
 				tokenExchangeClient,
-				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
 				clientauth.NewStaticAudienceProvider(audiences...),
+				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
 			),
 			Transport: &http.Transport{
 				MaxConnsPerHost:     100,
