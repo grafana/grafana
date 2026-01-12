@@ -19,13 +19,13 @@ export class ScopesApiClient {
 
       if ('error' in result) {
         const errorMessage = getMessageFromError(result.error);
-        console.error(`Failed to fetch scope "${name}":`, errorMessage);
+        console.error('Failed to fetch scope:', name, errorMessage);
       }
 
       return undefined;
     } catch (err) {
       const errorMessage = getMessageFromError(err);
-      console.error(`Failed to fetch scope "${name}":`, errorMessage);
+      console.error('Failed to fetch scope:', name, errorMessage);
       return undefined;
     } finally {
       // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
@@ -46,14 +46,19 @@ export class ScopesApiClient {
       if (successfulScopes.length < scopesIds.length) {
         const failedCount = scopesIds.length - successfulScopes.length;
         console.warn(
-          `Failed to fetch ${failedCount} of ${scopesIds.length} scope(s). Requested IDs: ${scopesIds.join(', ')}`
+          'Failed to fetch',
+          failedCount,
+          'of',
+          scopesIds.length,
+          'scope(s). Requested IDs:',
+          scopesIds.join(', ')
         );
       }
 
       return successfulScopes;
     } catch (err) {
       const errorMessage = getMessageFromError(err);
-      console.error(`Failed to fetch multiple scopes [${scopesIds.join(', ')}]:`, errorMessage);
+      console.error('Failed to fetch multiple scopes:', scopesIds, errorMessage);
       return [];
     }
   }
@@ -76,13 +81,13 @@ export class ScopesApiClient {
 
       if ('error' in result) {
         const errorMessage = getMessageFromError(result.error);
-        console.error(`Failed to fetch multiple scope nodes [${names.join(', ')}]:`, errorMessage);
+        console.error('Failed to fetch multiple scope nodes:', names, errorMessage);
       }
 
       return [];
     } catch (err) {
       const errorMessage = getMessageFromError(err);
-      console.error(`Failed to fetch multiple scope nodes [${names.join(', ')}]:`, errorMessage);
+      console.error('Failed to fetch multiple scope nodes:', names, errorMessage);
       return [];
     } finally {
       // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
@@ -127,27 +132,31 @@ export class ScopesApiClient {
 
       if ('error' in result) {
         const errorMessage = getMessageFromError(result.error);
-        const context = [
-          options.parent && `parent="${options.parent}"`,
-          options.query && `query="${options.query}"`,
-          `limit=${limit}`,
-        ]
-          .filter(Boolean)
-          .join(', ');
-        console.error(`Failed to fetch scope nodes (${context}):`, errorMessage);
+        const contextParts: string[] = [];
+        if (options.parent) {
+          contextParts.push('parent="' + options.parent + '"');
+        }
+        if (options.query) {
+          contextParts.push('query="' + options.query + '"');
+        }
+        contextParts.push('limit=' + limit);
+        const context = contextParts.join(', ');
+        console.error('Failed to fetch scope nodes:', context, errorMessage);
       }
 
       return [];
     } catch (err) {
       const errorMessage = getMessageFromError(err);
-      const context = [
-        options.parent && `parent="${options.parent}"`,
-        options.query && `query="${options.query}"`,
-        `limit=${limit}`,
-      ]
-        .filter(Boolean)
-        .join(', ');
-      console.error(`Failed to fetch scope nodes (${context}):`, errorMessage);
+      const contextParts: string[] = [];
+      if (options.parent) {
+        contextParts.push('parent="' + options.parent + '"');
+      }
+      if (options.query) {
+        contextParts.push('query="' + options.query + '"');
+      }
+      contextParts.push('limit=' + limit);
+      const context = contextParts.join(', ');
+      console.error('Failed to fetch scope nodes:', context, errorMessage);
       return [];
     } finally {
       // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
@@ -177,13 +186,13 @@ export class ScopesApiClient {
 
       if ('error' in result) {
         const errorMessage = getMessageFromError(result.error);
-        console.error(`Failed to fetch dashboards for scopes [${scopeNames.join(', ')}]:`, errorMessage);
+        console.error('Failed to fetch dashboards for scopes:', scopeNames, errorMessage);
       }
 
       return [];
     } catch (err) {
       const errorMessage = getMessageFromError(err);
-      console.error(`Failed to fetch dashboards for scopes [${scopeNames.join(', ')}]:`, errorMessage);
+      console.error('Failed to fetch dashboards for scopes:', scopeNames, errorMessage);
       return [];
     } finally {
       // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
@@ -213,13 +222,13 @@ export class ScopesApiClient {
 
       if ('error' in result) {
         const errorMessage = getMessageFromError(result.error);
-        console.error(`Failed to fetch scope navigations for scopes [${scopeNames.join(', ')}]:`, errorMessage);
+        console.error('Failed to fetch scope navigations for scopes:', scopeNames, errorMessage);
       }
 
       return [];
     } catch (err) {
       const errorMessage = getMessageFromError(err);
-      console.error(`Failed to fetch scope navigations for scopes [${scopeNames.join(', ')}]:`, errorMessage);
+      console.error('Failed to fetch scope navigations for scopes:', scopeNames, errorMessage);
       return [];
     } finally {
       // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
@@ -246,13 +255,13 @@ export class ScopesApiClient {
 
       if ('error' in result) {
         const errorMessage = getMessageFromError(result.error);
-        console.error(`Failed to fetch scope node "${scopeNodeId}":`, errorMessage);
+        console.error('Failed to fetch scope node:', scopeNodeId, errorMessage);
       }
 
       return undefined;
     } catch (err) {
       const errorMessage = getMessageFromError(err);
-      console.error(`Failed to fetch scope node "${scopeNodeId}":`, errorMessage);
+      console.error('Failed to fetch scope node:', scopeNodeId, errorMessage);
       return undefined;
     } finally {
       // Unsubscribe for extra safety, even though with subscribe: false and awaiting,
