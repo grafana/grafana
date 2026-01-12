@@ -51,6 +51,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
+  "keepFiringFor": "2m",
   "orgId": 1,
   "uid": "",
   "condition": "B",
@@ -200,6 +201,7 @@ Content-Type: application/json
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
+  "keepFiringFor": "2m",
   "annotations": {
     "summary": "test_api_1"
   },
@@ -1559,6 +1561,7 @@ Status: Accepted
 | `data`         | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
 | `execErrState` | string                                    | string                |          |         |             |         |
 | `for`          | [Duration](#duration)                     | Duration              |          |         |             |         |
+| `keepFiringFor` | [Duration](#duration)                    | Duration              |          |         | How long the alert continues to fire after the condition is no longer met. Prevents alert flapping. | `2m`    |
 | `isPaused`     | boolean                                   | `bool`                |          |         |             |         |
 | `labels`       | map of string                             | `map[string]string`   |          |         |             |         |
 | `noDataState`  | string                                    | string                |          |         |             |         |
@@ -1792,6 +1795,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 | execErrState  | string                       | string                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `folderUID`   | string                       | string                    |    ✓     |         |                                                                                                                           | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `for`         | [Duration](#duration)        | [Duration](#duration)     |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `keepFiringFor` | [Duration](#duration)      | [Duration](#duration)     |          |         | How long the alert continues to fire after the condition is no longer met. Prevents alert flapping.                       | `2m`                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `id`          | int64 (formatted integer)    | int64                     |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `isPaused`    | boolean                      | `bool`                    |          |         |                                                                                                                           | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `labels`      | map of string                | `map[string]string`       |          |         |                                                                                                                           | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
