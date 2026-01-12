@@ -101,6 +101,8 @@ runs:
             - 'apps/dashboard/pkg/migration/**'
             - '${{ inputs.self }}'
           frontend-packages:
+            - '.github/actions/checkout/**'
+            - '.github/actions/change-detection/**'
             - 'packages/**'
             - './scripts/validate-npm-packages.sh'
             - '${{ inputs.self }}'
