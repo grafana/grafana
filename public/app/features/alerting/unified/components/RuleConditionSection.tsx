@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, ReducerID, SelectableValue, getNextRefId } from '@grafana/data';
@@ -30,7 +30,11 @@ const ExpressionDatasourceUID = '__expr__';
 
 type LocalSimpleCondition = { whenField?: string; evaluator: { params: number[]; type: EvalFunction } };
 
-// Helper function to create expression queries from simple condition
+/**
+ * Creates expression queries (reduce + threshold) from a simple condition.
+ * These expression queries reference the last data query and build a pipeline:
+ * data query -> reduce expression -> threshold expression
+ */
 function createExpressionQueries(
   simpleCondition: LocalSimpleCondition,
   dataQueries: AlertQuery[]
@@ -80,6 +84,9 @@ function createExpressionQueries(
     expression: reduceRefId,
   };
 
+  // Expression queries don't need relativeTimeRange - they inherit time range context
+  // from the data queries they reference. This is consistent with how expressions work
+  // in the alerting query runner.
   return {
     reduce: {
       refId: reduceRefId,
@@ -97,9 +104,29 @@ function createExpressionQueries(
   };
 }
 
+/**
+ * Compares two AlertQuery arrays for expression-relevant equality.
+ * Only compares the model content of expression queries to determine
+ * if an update is actually needed.
+ */
+function areExpressionQueriesEqual(current: AlertQuery[], next: AlertQuery[]): boolean {
+  const currentExpressions = current.filter((q) => q.datasourceUid === ExpressionDatasourceUID);
+  const nextExpressions = next.filter((q) => q.datasourceUid === ExpressionDatasourceUID);
+
+  if (currentExpressions.length !== nextExpressions.length) {
+    return false;
+  }
+
+  try {
+    return JSON.stringify(currentExpressions) === JSON.stringify(nextExpressions);
+  } catch {
+    return false;
+  }
+}
+
 export function RuleConditionSection() {
   const base = useStyles2(getStyles);
-  const { watch, setValue } = useFormContext<RuleFormValues>();
+  const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
   const evaluateFor = watch('evaluateFor') || '0s';
   const queries = watch('queries');
   watch('folder');
@@ -109,18 +136,39 @@ export function RuleConditionSection() {
     evaluator: { params: [0], type: EvalFunction.IsAbove },
   });
 
+  // Track if we're currently updating to prevent infinite loops
+  const isUpdatingRef = useRef(false);
+
   // Update expression queries whenever simpleCondition changes
+  // We use a ref flag to prevent the infinite loop that would occur because:
+  // simpleCondition changes -> effect runs -> setValue updates queries -> queries change -> effect would run again
   useEffect(() => {
-    const dataQueries = queries.filter((q) => q.datasourceUid !== ExpressionDatasourceUID);
+    // Skip if we're already in an update cycle
+    if (isUpdatingRef.current) {
+      return;
+    }
+
+    const currentQueries = getValues('queries');
+    const dataQueries = currentQueries.filter((q) => q.datasourceUid !== ExpressionDatasourceUID);
+
     if (dataQueries.length === 0) {
       return;
     }
 
     const { reduce, threshold, condition } = createExpressionQueries(simpleCondition, dataQueries);
+    const newQueries = [...dataQueries, reduce, threshold];
 
-    setValue('queries', [...dataQueries, reduce, threshold], { shouldDirty: false, shouldValidate: false });
-    setValue('condition', condition, { shouldDirty: false, shouldValidate: false });
-  }, [simpleCondition, queries, setValue]);
+    // Only update if the expression queries actually changed
+    if (!areExpressionQueriesEqual(currentQueries, newQueries)) {
+      isUpdatingRef.current = true;
+      setValue('queries', newQueries, { shouldDirty: false, shouldValidate: false });
+      setValue('condition', condition, { shouldDirty: false, shouldValidate: false });
+      // Reset the flag after the update cycle completes
+      requestAnimationFrame(() => {
+        isUpdatingRef.current = false;
+      });
+    }
+  }, [simpleCondition, getValues, setValue]);
 
   const reducerOptions: Array<ComboboxOption<string>> = reducerTypes
     .filter((o) => typeof o.value === 'string')
@@ -150,12 +198,12 @@ export function RuleConditionSection() {
   };
 
   return (
-    <div className={base.section}>
+    <section className={base.section} aria-labelledby="condition-section-heading">
       <div className={base.sectionHeaderRow}>
-        <div className={base.sectionHeader}>
+        <Text element="h3" variant="h4" id="condition-section-heading">
           {`2. `}
           <Trans i18nKey="alerting.simplified.condition.title">Condition</Trans>
-        </div>
+        </Text>
       </div>
 
       <div>
@@ -189,6 +237,10 @@ export function RuleConditionSection() {
                       key={simpleCondition.evaluator.params[0]}
                       defaultValue={simpleCondition.evaluator.params[0] ?? ''}
                       onBlur={(event) => onEvaluateValueChange(event, 0)}
+                      aria-label={t(
+                        'alerting.simple-condition-editor.aria-label-threshold-from',
+                        'Threshold from value'
+                      )}
                     />
                     <ToLabel />
                     <Input
@@ -197,6 +249,7 @@ export function RuleConditionSection() {
                       key={simpleCondition.evaluator.params[1]}
                       defaultValue={simpleCondition.evaluator.params[1] ?? ''}
                       onBlur={(event) => onEvaluateValueChange(event, 1)}
+                      aria-label={t('alerting.simple-condition-editor.aria-label-threshold-to', 'Threshold to value')}
                     />
                   </>
                 ) : (
@@ -206,6 +259,7 @@ export function RuleConditionSection() {
                     key={simpleCondition.evaluator.params[0]}
                     defaultValue={simpleCondition.evaluator.params[0] ?? ''}
                     onBlur={(event) => onEvaluateValueChange(event, 0)}
+                    aria-label={t('alerting.simple-condition-editor.aria-label-threshold', 'Threshold value')}
                   />
                 )}
               </Stack>
@@ -216,7 +270,7 @@ export function RuleConditionSection() {
 
           {evaluateFor === '0s' && (
             <Stack direction="row" gap={0.5} alignItems="center">
-              <Icon name="exclamation-triangle" />
+              <Icon name="exclamation-triangle" aria-hidden="true" />
               <Text variant="bodySmall" color="secondary">
                 <Trans i18nKey="alerting.simplified.evaluation.immediate-warning">
                   Immediate firing might lead to unnecessary alerts being sent for temporary issues
@@ -226,7 +280,7 @@ export function RuleConditionSection() {
           )}
         </Stack>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -239,12 +293,5 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
     }),
-    sectionHeader: css({
-      fontWeight: theme.typography.fontWeightRegular,
-      fontSize: theme.typography.h4.fontSize,
-      lineHeight: theme.typography.h4.lineHeight,
-    }),
-    paragraphRow: css({ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: theme.spacing(1) }),
-    inlineField: css({ display: 'inline-flex' }),
   };
 }
