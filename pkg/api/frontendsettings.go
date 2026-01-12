@@ -12,9 +12,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // GetBootdataAPI returns the same data we currently have rendered into index.html
@@ -150,8 +153,14 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if panel.ID == "datagrid" && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagEnableDatagridEditing) {
+		ns := request.GetNamespaceMapper(hs.Cfg)(1)
+		ctx := identity.WithServiceIdentityForSingleNamespaceContext(c.Req.Context(), ns)
+		evalCtx := openfeature.TransactionContext(ctx)
+		editingEnabled, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagEnableDatagridEditing, false, evalCtx)
+		if err != nil {
+			hs.log.Error("flag evaluation error", "flag", featuremgmt.FlagEnableDatagridEditing, "error", err)
+		}
+		if panel.ID == "datagrid" && !editingEnabled.Value {
 			continue
 		}
 
