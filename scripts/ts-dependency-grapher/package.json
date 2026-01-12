@@ -1,0 +1,21 @@
+{
+  "name": "ts-dependency-grapher",
+  "version": "1.0.0",
+  "description": "",
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "glob": "^13.0.0",
+    "minimist": "^1.2.8",
+    "ts-morph": "^27.0.2"
+  },
+  "devDependencies": {
+    "@types/minimist": "^1.2.5"
+  }
+}

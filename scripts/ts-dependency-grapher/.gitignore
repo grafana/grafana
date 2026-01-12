@@ -1,0 +1,32 @@
+node_modules
+npm-debug.log
+yarn-error.log
+coverage/
+.aws-config.json
+awsconfig
+/.awcache
+/dist
+/public/build
+/emails/dist
+/reports
+/e2e/tmp
+/scripts/grafana-server/tmp
+vendor/
+/docs/menu.yaml
+/requests
+tsconfig.tsbuildinfo
+__debug_bin*
+*.cov
+/out
+
+# yarn
+.yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Ignore OSX indexing
+.DS_Store
+
