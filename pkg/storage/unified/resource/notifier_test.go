@@ -456,10 +456,10 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 		},
 	}
 
+	errCh := make(chan error)
 	go func() {
 		for _, event := range testEvents {
-			err := eventStore.Save(ctx, event)
-			require.NoError(t, err)
+			errCh <- eventStore.Save(ctx, event)
 		}
 	}()
 
@@ -469,6 +469,8 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 		select {
 		case event := <-events:
 			receivedEvents = append(receivedEvents, event)
+		case err := <-errCh:
+			require.NoError(t, err)
 		case <-time.After(1 * time.Second):
 			t.Fatalf("Timed out waiting for event %d", i+1)
 		}
