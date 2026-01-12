@@ -130,8 +130,7 @@ func (v *unifiedStorageConfigValue) Set(val string) error {
 		}
 
 		(*v.config)[key] = setting.UnifiedStorageConfig{
-			DualWriterMode:                      apiserverrest.DualWriterMode(mode),
-			DualWriterMigrationDataSyncDisabled: true,
+			DualWriterMode: apiserverrest.DualWriterMode(mode),
 		}
 	}
 

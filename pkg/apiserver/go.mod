@@ -7,7 +7,6 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4
 	github.com/grafana/grafana-app-sdk/logging v0.48.7
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
-	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/propagators/jaeger v1.38.0
 	go.opentelemetry.io/otel v1.39.0
@@ -69,6 +68,7 @@ require (
 	github.com/onsi/gomega v1.36.2 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.4 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
