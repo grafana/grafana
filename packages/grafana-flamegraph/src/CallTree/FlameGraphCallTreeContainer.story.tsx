@@ -40,6 +40,9 @@ export const Basic: StoryObj<typeof meta> = {
         onSandwich={(item) => {
           console.log('Sandwich:', item);
         }}
+        onSearch={(symbol) => {
+          console.log('Search:', symbol);
+        }}
       />
     );
   },

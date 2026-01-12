@@ -25,10 +25,11 @@ type Props = {
   colorScheme: ColorScheme | ColorSchemeDiff;
   search: string;
   compact?: boolean;
+  onSearch?: (symbol: string) => void;
 };
 
 const FlameGraphCallTreeContainer = memo(
-  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme, search, compact = false }: Props) => {
+  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme, search, compact = false, onSearch }: Props) => {
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
@@ -354,13 +355,15 @@ const FlameGraphCallTreeContainer = memo(
                 row={row}
                 onFocus={handleSetFocusMode}
                 onShowCallers={handleSetCallersMode}
+                onSearch={onSearch}
                 focusedNodeId={focusedNodeId}
                 callersNodeLabel={callersNodeLabel}
                 styles={styles}
+                searchNodes={searchNodes}
               />
             ),
-            width: 50,
-            minWidth: 50,
+            width: onSearch ? 75 : 50,
+            minWidth: onSearch ? 75 : 50,
             disableSortBy: true,
           },
           {
@@ -435,13 +438,15 @@ const FlameGraphCallTreeContainer = memo(
                 row={row}
                 onFocus={handleSetFocusMode}
                 onShowCallers={handleSetCallersMode}
+                onSearch={onSearch}
                 focusedNodeId={focusedNodeId}
                 callersNodeLabel={callersNodeLabel}
                 styles={styles}
+                searchNodes={searchNodes}
               />
             ),
-            width: 50,
-            minWidth: 50,
+            width: onSearch ? 75 : 50,
+            minWidth: onSearch ? 75 : 50,
             disableSortBy: true,
           },
           {
@@ -755,16 +760,20 @@ function ActionsCell({
   row,
   onFocus,
   onShowCallers,
+  onSearch,
   focusedNodeId,
   callersNodeLabel,
   styles,
+  searchNodes,
 }: {
   row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>;
   onFocus: (nodeIdOrLabel: string, isLabel?: boolean) => void;
   onShowCallers: (label: string) => void;
+  onSearch?: (symbol: string) => void;
   focusedNodeId: string | undefined;
   callersNodeLabel: string | undefined;
   styles: any;
+  searchNodes?: string[];
 }) {
   const hasChildren = row.original.hasChildren;
   const isTheFocusedNode = row.original.id === focusedNodeId ||
@@ -773,6 +782,7 @@ function ActionsCell({
   const inCallersMode = callersNodeLabel !== undefined;
   const inFocusMode = focusedNodeId !== undefined;
   const isRootNode = row.original.depth === 0 && !row.original.parentId;
+  const isSearchMatch = searchNodes?.includes(row.original.id) ?? false;
 
   // Show focus button if:
   // - Node has children AND
@@ -830,6 +840,22 @@ function ActionsCell({
           <div className={styles.actionButtonPlaceholder} />
         )}
       </div>
+      {onSearch && !isSearchMatch && (
+        <div className={styles.actionButtonSlot}>
+          <Button
+            icon="search"
+            fill="text"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSearch(row.original.label);
+            }}
+            tooltip="Search for this function"
+            aria-label="Search"
+            className={styles.actionButton}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -1239,7 +1265,7 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'flex-end',
       gap: theme.spacing(0.5),
       height: '20px',
-      minWidth: '60px', // Fixed width to ensure consistent alignment
+      minWidth: '60px', // Fixed width to ensure consistent alignment (72px when search button is present)
     }),
     actionButtonSlot: css({
       display: 'flex',

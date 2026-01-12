@@ -207,6 +207,30 @@ const FlameGraphContainer = ({
     [setSearch, resetFocus, onTableSymbolClick, search]
   );
 
+  // Separate callback for CallTree that doesn't trigger search
+  const onCallTreeSymbolClick = useCallback(
+    (symbol: string) => {
+      onTableSymbolClick?.(symbol);
+    },
+    [onTableSymbolClick]
+  );
+
+  // Search callback for CallTree search button
+  const onCallTreeSearch = useCallback(
+    (symbol: string) => {
+      const anchored = `^${escapeStringForRegex(symbol)}$`;
+
+      if (search === anchored) {
+        setSearch('');
+      } else {
+        onTableSymbolClick?.(symbol);
+        setSearch(anchored);
+        resetFocus();
+      }
+    },
+    [setSearch, resetFocus, onTableSymbolClick, search]
+  );
+
   if (!dataContainer) {
     return null;
   }
@@ -275,13 +299,14 @@ const FlameGraphContainer = ({
   const callTree = (
     <FlameGraphCallTreeContainer
       data={dataContainer}
-      onSymbolClick={onSymbolClick}
+      onSymbolClick={onCallTreeSymbolClick}
       sandwichItem={sandwichItem}
       onSandwich={setSandwichItem}
       onTableSort={onTableSort}
       colorScheme={colorScheme}
       search={search}
       compact={isCallTreeInSplitView}
+      onSearch={onCallTreeSearch}
     />
   );
 
