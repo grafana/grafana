@@ -128,7 +128,6 @@ export function RuleConditionSection() {
   const base = useStyles2(getStyles);
   const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
   const evaluateFor = watch('evaluateFor') || '0s';
-  const queries = watch('queries');
   watch('folder');
 
   const [simpleCondition, setSimpleCondition] = useState<LocalSimpleCondition>({
