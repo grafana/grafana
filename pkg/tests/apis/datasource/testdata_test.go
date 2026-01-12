@@ -37,7 +37,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		grafanarest.Mode0, // Legacy only
 		// grafanarest.Mode2, // write both, read legacy
 		// grafanarest.Mode3, // write both, read unified
-		// grafanarest.Mode5, // Unified only
+		grafanarest.Mode5, // Unified only
 	} {
 		t.Run(fmt.Sprintf("testdata (mode:%d)", mode), func(t *testing.T) {
 			ctx := context.Background()

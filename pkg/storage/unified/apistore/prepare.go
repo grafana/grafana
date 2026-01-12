@@ -3,8 +3,10 @@ package apistore
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -138,8 +140,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, err
 	}
 
-	err = s.codec.Encode(newObject, &v.raw)
-	if err == nil {
+	if err = s.encode(newObject, &v.raw); err == nil {
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
 	return v, err
@@ -233,8 +234,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	}
 
-	err = s.codec.Encode(updateObject, &v.raw)
-	if err == nil {
+	if s.encode(updateObject, &v.raw); err == nil {
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
 	return v, err
@@ -268,7 +268,38 @@ func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMet
 		}
 
 		// Now encode the smaller version
-		return s.codec.Encode(orig, buf)
+		return s.encode(orig, buf)
 	}
 	return nil
+}
+
+func (s *Storage) encode(obj runtime.Object, w io.Writer) error {
+	// The standard encoder is fine when only one type maps to a group
+	if s.opts.Scheme == nil {
+		return s.codec.Encode(obj, w)
+	}
+
+	// Ensure group+version+kind are configured
+	info := obj.GetObjectKind()
+	gvk := info.GroupVersionKind()
+	if gvk.Group == "" || gvk.Kind == "" || gvk.Version == "" {
+		gvks, _, err := s.opts.Scheme.ObjectKinds(obj)
+		if err != nil {
+			return fmt.Errorf("unable to encode object %w", err)
+		}
+		for _, v := range gvks {
+			if v.Group != s.gr.Group {
+				continue // skip values not in this group
+			}
+			gvk.Group = v.Group
+			gvk.Kind = v.Kind
+			if gvk.Version == "" {
+				gvk.Version = v.Version
+			}
+			info.SetGroupVersionKind(gvk)
+			break
+		}
+	}
+
+	return json.NewEncoder(w).Encode(obj)
 }

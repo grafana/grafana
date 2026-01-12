@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -87,10 +88,6 @@ func RegisterAPIService(
 		client, ok := pluginClient.(PluginClient)
 		if !ok {
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
-		}
-
-		if pluginJSON.ID != "grafana-testdata-datasource" {
-			continue // FOR TESTING! codec currently picks the first registered apiVersion :cry:
 		}
 
 		builder, err = NewDataSourceAPIBuilder(
@@ -223,6 +220,12 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport: false,
+
+		Scheme: opts.Scheme, // allows for generic Type applied to multiple groups
+	})
+
 	storage := map[string]rest.Storage{}
 
 	// Register the raw datasource connection
