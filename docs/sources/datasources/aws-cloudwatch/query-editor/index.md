@@ -288,7 +288,7 @@ FROM `log_group`
 WHERE `@message` LIKE '%Exception%'
 ```
 
-or, when querying multiple log groups you **must** use the `logGroups(logGroupIdentifier: [...])` syntax:
+When querying multiple log groups you **must** use the `logGroups(logGroupIdentifier: [...])` syntax:
 
 ```sql
 SELECT window.start, COUNT(*) AS exceptionCount
