@@ -57,6 +57,8 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
+	// TODO: Implement fine-grained authorization for external group mapping search on the search level
+	resourceAuthorizer["searchExternalGroupMappings"] = allowAuthorizer
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }
