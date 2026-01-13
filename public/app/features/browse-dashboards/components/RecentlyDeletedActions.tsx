@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
@@ -25,7 +27,11 @@ export function RecentlyDeletedActions() {
   const [isBulkRestoreLoading, setIsBulkRestoreLoading] = useState(false);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
 
-  const showRestoreNotifications = (successful: string[], failed: Array<{ uid: string; error: string }>) => {
+  const showRestoreNotifications = (
+    successful: string[],
+    failed: Array<{ uid: string; error: string }>,
+    restoreTarget: string
+  ) => {
     const successCount = successful.length;
     const failedCount = failed.length;
 
@@ -33,15 +39,11 @@ export function RecentlyDeletedActions() {
       return;
     }
 
-    let alertType = AppEvents.alertSuccess.name;
-    let message = t('browse-dashboards.restore.success', 'Dashboards restored successfully');
-
     if (failedCount > 0) {
       const firstError = failed[0]?.error;
 
       if (successCount > 0) {
-        // Partial success
-        alertType = AppEvents.alertWarning.name;
+        // Partial success - no link
         const successMessage = t(
           'browse-dashboards.restore.success-count',
           '{{count}} dashboard restored successfully',
@@ -50,26 +52,55 @@ export function RecentlyDeletedActions() {
         const failedMessage = t('browse-dashboards.restore.failed-count', '{{count}} dashboard failed', {
           count: failedCount,
         });
-        message = `${successMessage}. ${failedMessage}.`;
+        let message = `${successMessage}. ${failedMessage}.`;
         if (firstError) {
           message += `. ${firstError}`;
         }
+        dispatch(notifyApp(createWarningNotification('', message)));
       } else {
         // All failed
-        alertType = AppEvents.alertError.name;
-        message = t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard.', {
+        let message = t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard.', {
           count: failedCount,
         });
         if (firstError) {
           message += `. ${firstError}`;
         }
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [message],
+        });
+      }
+    } else {
+      // All successful - show button
+      if (successCount === 1) {
+        // Single dashboard - button to the dashboard
+        const dashboardUid = successful[0];
+        const title = t('browse-dashboards.restore.success', 'Dashboard restored successfully');
+        const component = (
+          <>
+            {title}.{' '}
+            <Button size="sm" variant="primary" fill="text" onClick={() => locationService.push(`/d/${dashboardUid}`)}>
+              {t('browse-dashboards.restore.view-dashboard', 'View dashboard')}
+            </Button>
+          </>
+        );
+        dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
+      } else {
+        // Multiple dashboards - button to folder
+        const title = t('browse-dashboards.restore.success', 'Dashboards restored successfully');
+        const folderUrl =
+          !restoreTarget || restoreTarget === GENERAL_FOLDER_UID ? '/dashboards' : `/dashboards/f/${restoreTarget}`;
+        const component = (
+          <>
+            {title}.{' '}
+            <Button size="sm" variant="primary" fill="text" onClick={() => locationService.push(folderUrl)}>
+              {t('browse-dashboards.restore.view-folder', 'View folder')}
+            </Button>
+          </>
+        );
+        dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
       }
     }
-
-    appEvents.publish({
-      type: alertType,
-      payload: [message],
-    });
   };
 
   const selectedDashboards = useMemo(() => {
@@ -157,7 +188,8 @@ export function RecentlyDeletedActions() {
           failed.push({ uid: dashboardUid, error: errorMessage });
         }
       } else if ('data' in result.value && result.value.data?.name) {
-        successful.push(result.value.data.name);
+        // Track the UID of successfully restored dashboards
+        successful.push(dashboardUid);
       }
     });
 
@@ -178,7 +210,7 @@ export function RecentlyDeletedActions() {
     deletedDashboardsCache.clear();
     await stateManager.doSearch();
 
-    showRestoreNotifications(successful, failed);
+    showRestoreNotifications(successful, failed, restoreTarget);
     setIsBulkRestoreLoading(false);
     setIsRestoreModalOpen(false);
   };

@@ -1,4 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
+import React, { createElement } from 'react';
 
 import { handleRequestError } from '@grafana/api-clients';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
@@ -8,8 +9,11 @@ import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Button } from '@grafana/ui';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
 import { appEvents } from 'app/core/app_events';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
@@ -353,6 +357,7 @@ export const browseDashboardsAPI = createApi({
       invalidatesTags: ['getFolder'],
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
+        let deletedCount = 0;
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of dashboardUIDs) {
@@ -370,21 +375,42 @@ export const browseDashboardsAPI = createApi({
             }
           }
 
-          await getDashboardAPI().deleteDashboard(dashboardUID, true);
+          await getDashboardAPI().deleteDashboard(dashboardUID, false);
 
           pageStateManager.clearDashboardCache();
           pageStateManager.removeSceneCache(dashboardUID);
           deletedDashboardsCache.clear();
+          deletedCount++;
+        }
 
-          // handling success alerts for these feature toggles
-          // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
-          if (config.featureToggles.kubernetesDashboards) {
+        // Show success notification after all deletions
+        if (deletedCount > 0) {
+          if (config.featureToggles.restoreDashboards) {
+            // Show notification with button to Recently Deleted
+            const title = t('browse-dashboards.delete.success', 'Dashboard deleted');
+            const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View Recently Deleted');
+            const button = createElement<React.ComponentProps<typeof Button>>(
+              Button,
+              {
+                size: 'sm',
+                variant: 'primary',
+                fill: 'text',
+                onClick: () => locationService.push('/dashboard/recently-deleted'),
+                'aria-label': buttonText,
+              },
+              buttonText
+            );
+            const component = createElement('span', null, title, '. ', button);
+            dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
+          } else if (config.featureToggles.kubernetesDashboards) {
+            // Legacy notification for kubernetes dashboards
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
               payload: ['Dashboard deleted'],
             });
           }
         }
+
         return { data: undefined };
       },
       onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
