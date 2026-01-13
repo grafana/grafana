@@ -17,6 +17,7 @@ import { tableSuggestionsSupplier } from '../table/suggestions';
 import { LogsTable } from './LogsTable';
 import { Options } from './panelcfg.gen';
 
+// @todo can we pull stuff from table module instead of manually adding?
 export const plugin = new PanelPlugin<Options, TableFieldConfig>(LogsTable)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .useFieldConfig({

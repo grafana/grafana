@@ -25,7 +25,13 @@ import {
   parseLogsFrame,
 } from '../../../features/logs/logsFrame';
 import { isSetDisplayedFields } from '../logs/types';
-import { TablePanel } from '../table/TablePanel';
+import {
+  AdHocFilterItem,
+  FILTER_FOR_OPERATOR,
+  FILTER_OUT_OPERATOR,
+  TableFilterActionCallback,
+  TablePanel,
+} from '../table/TablePanel';
 import type { Options as TableOptions } from '../table/panelcfg.gen';
 
 import type { Options as LogsTableOptions } from './panelcfg.gen';
@@ -93,6 +99,7 @@ export const LogsTable = ({
     ? options.setDisplayedFields
     : setDisplayedFields;
 
+  // Callbacks
   const onTableOptionsChange = useCallback(
     (options: TableOptions) => {
       console.log('onTableOptionsChange', options);
@@ -123,6 +130,33 @@ export const LogsTable = ({
     },
     [onFieldConfigChange]
   );
+
+  const handleOnCellFilterAdded: TableFilterActionCallback = (filter: AdHocFilterItem) => {
+    const { value, key, operator } = filter;
+    if (operator === FILTER_FOR_OPERATOR) {
+      onClickFilterLabel(key, value);
+    }
+
+    if (operator === FILTER_OUT_OPERATOR) {
+      onClickFilterOutLabel(key, value);
+    }
+  };
+
+  /**
+   * @todo
+   * Used by Logs details.
+   */
+  const onClickFilterLabel = (key: string, value: string | number, frame?: DataFrame) => {
+    console.log('onClickFilterLabel', key, value, frame);
+  };
+
+  /**
+   * @todo
+   * Used by Logs details.
+   */
+  const onClickFilterOutLabel = (key: string, value: string | number, frame?: DataFrame) => {
+    console.log('onClickFilterOutLabel', key, value, frame);
+  };
 
   /**
    * Extract fields transform
@@ -233,6 +267,7 @@ export const LogsTable = ({
           onFieldConfigChange={handleTableOnFieldConfigChange}
           replaceVariables={replaceVariables}
           onChangeTimeRange={onChangeTimeRange}
+          onCellFilterAdded={handleOnCellFilterAdded}
         />
       </div>
     </div>

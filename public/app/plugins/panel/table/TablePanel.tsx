@@ -24,7 +24,16 @@ import { getActions } from '../../../features/actions/utils';
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
 
-interface Props extends PanelProps<Options> {}
+/** @todo get yelled at by dataviz */
+export const FILTER_FOR_OPERATOR = '=';
+export const FILTER_OUT_OPERATOR = '!=';
+export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
+export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
+
+interface Props extends PanelProps<Options> {
+  onCellFilterAdded?: TableFilterActionCallback;
+}
 
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables, transparent } = props;
@@ -77,7 +86,7 @@ export function TablePanel(props: Props) {
       initialSortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
-      onCellFilterAdded={panelContext.onAddAdHocFilter}
+      onCellFilterAdded={props.onCellFilterAdded ?? panelContext.onAddAdHocFilter}
       frozenColumns={options.frozenColumns?.left}
       enablePagination={options.enablePagination}
       cellHeight={options.cellHeight}
