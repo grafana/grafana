@@ -36,19 +36,19 @@ image_maps:
         y_coord: 5
         content: |
           **Dashboard title**
-          
+
           Create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
       - x_coord: 23
         y_coord: 5
         content: |
           **Mark as favorite**
-          
+
           Mark the dashboard as one of your favorites to include it in your list of **Starred** dashboards in the main menu.
       - x_coord: 27
         y_coord: 5
         content: |
           **Public label**
-          
+
           [Externally shared dashboards](ref:shared-dashboards), it's marked with the **Public** label.
       - x_coord: 84
         y_coord: 5
@@ -78,44 +78,44 @@ image_maps:
         y_coord: 29
         content: |
           **Current dashboard time range and time picker**
-          
+
           Select [relative time range](#relative-time-range) options or set custom [absolute time ranges](#absolute-time-range).
           You can also change the **Timezone** and **Fiscal year** settings by clicking the **Change time settings** button.
       - x_coord: 67
         y_coord: 29
         content: |
           **Time range zoom out**
-          
+
           Click to zoom out the time range. Learn more about [common time range controls](#common-time-range-controls).
       - x_coord: 73
         y_coord: 29
         content: |
           **Refresh dashboard**
-          
+
           Trigger queries and refresh dashboard data.
       - x_coord: 78
         y_coord: 29
         content: |
           **Auto refresh control**
-          
+
           Select a dashboard auto refresh time interval.
       - x_coord: 85
         y_coord: 29
         content: |
           **Share dashboard**
-          
+
           Access [dashboard sharing](ref:sharing) options.
       - x_coord: 98
         y_coord: 22.5
         content: |
           **Edit**
-          
+
           Enter edit mode, so you can make changes and access dashboard settings.
       - x_coord: 98
         y_coord: 31
         content: |
           **Export**
-          
+
           Access [dashboard exporting](ref:export-dashboards) options.
       - x_coord: 98
         y_coord: 39
@@ -127,7 +127,7 @@ image_maps:
         y_coord: 47
         content: |
           **Dashboard insights**
-          
+
           View [dashboard analytics](ref:dashboard-analytics) including information about users, activity, query counts.
       - x_coord: 11.5
         y_coord: 30
@@ -151,13 +151,13 @@ image_maps:
         y_coord: 63
         content: |
           **Dashboard panel**
-          
+
           The [panel](ref:panel-overview) is the primary building block of a dashboard.
       - x_coord: 19.5
         y_coord: 91
         content: |
           **Panel legend**
-          
+
           Change series colors as well as y-axis and series visibility directly from the legend.
 refs:
   dashboard-analytics:
