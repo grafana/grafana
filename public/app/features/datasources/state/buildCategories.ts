@@ -420,7 +420,7 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       imgUrl: solarWindsSvg,
     }),
     getPhantomPlugin({
-      id: 'grafana-db2-datasource',
+      id: 'grafana-db2-jdbc-datasource',
       description: t(
         'datasources.get-enterprise-phantom-plugins.description.db2-datasource',
         'IBM Db2 data source'
