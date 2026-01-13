@@ -7,10 +7,9 @@ import {
   getFieldDisplayValues,
   PanelProps,
 } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
-import { config } from 'app/core/config';
 
 import { Options } from './panelcfg.gen';
 

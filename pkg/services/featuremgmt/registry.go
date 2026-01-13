@@ -1032,13 +1032,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "exploreLogsLimitedTimeRange",
-			Description:  "Used in Logs Drilldown to limit the time range",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "appPlatformGrpcClientAuth",
 			Description:  "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
 			Stage:        FeatureStageExperimental,
@@ -1079,13 +1072,6 @@ var (
 			Description: "Enables the new role picker drawer design",
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
-		},
-		{
-			Name:         "unifiedStorageSearchSprinkles",
-			Description:  "Enable sprinkles on unified storage search",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "managedDualWriter",
@@ -1147,14 +1133,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
-		},
-		{
-			Name:         "exploreMetricsRelatedLogs",
-			Description:  "Display Related Logs in Grafana Metrics Drilldown",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
-			FrontendOnly: true,
-			HideFromDocs: false,
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",
@@ -1645,6 +1623,15 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendSearchNavOrganise,
 			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "experimentRecentlyViewedDashboards",
+			Description:  "A/A test for recently viewed dashboards feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendSearchNavOrganise,
+			FrontendOnly: true,
+			HideFromDocs: true,
 			Expression:   "false",
 		},
 		{
