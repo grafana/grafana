@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Paneel toevoegen",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Groeperen in rij",
@@ -5695,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Kon geen geldige Grafana.com-ID vinden",
       "invalid-json": "Ongeldige JSON",
+      "tag-too-long": "",
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array van strings"
     },
@@ -9253,7 +9255,8 @@
     "tags-input": {
       "add": "Toevoegen",
       "placeholder-new-tag": "Nieuw label (enter-toets om toe te voegen)",
-      "remove": "Label verwijderen: {{name}}"
+      "remove": "Label verwijderen: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Tijden synchroniseren",
@@ -10720,18 +10723,6 @@
     "help/documentation": "Documentatie",
     "help/keyboard-shortcuts": "Sneltoetsen",
     "help/support": "Ondersteuning",
-    "history-container": {
-      "drawer-tittle": "Geschiedenis"
-    },
-    "history-wrapper": {
-      "collapse": "Samenvouwen",
-      "expand": "Uitvouwen",
-      "icon-selected": "Geselecteerde invoer",
-      "icon-unselected": "Gewone invoer",
-      "show-more": "Meer weergeven",
-      "today": "Vandaag",
-      "yesterday": "Gisteren"
-    },
     "home": {
       "title": "Startpagina"
     },

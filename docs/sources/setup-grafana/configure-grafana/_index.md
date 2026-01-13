@@ -2836,9 +2836,11 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 Keys of features to enable, separated by space.
 
-#### `FEATURE_TOGGLE_NAME = false`
+#### `FEATURE_NAME = <value>`
 
-Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
+Use a key-value pair to set feature flag values explicitly, overriding any default values. A few different types are supported, following the OpenFeature specification. See the defaults.ini file for more details.
+
+For example, to disable an on-by-default feature toggle named `exploreMixedDatasource`, specify `exploreMixedDatasource = false`.
 
 <hr>
 
