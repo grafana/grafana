@@ -622,10 +622,6 @@ export interface FeatureToggles {
   */
   exploreLogsAggregatedMetrics?: boolean;
   /**
-  * Used in Logs Drilldown to limit the time range
-  */
-  exploreLogsLimitedTimeRange?: boolean;
-  /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
   appPlatformGrpcClientAuth?: boolean;
@@ -652,10 +648,6 @@ export interface FeatureToggles {
   * Enables the new role picker drawer design
   */
   rolePickerDrawer?: boolean;
-  /**
-  * Enable sprinkles on unified storage search
-  */
-  unifiedStorageSearchSprinkles?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
