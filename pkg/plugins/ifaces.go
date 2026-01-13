@@ -140,7 +140,9 @@ type Licensing interface {
 }
 
 type SignatureCalculator interface {
-	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
+	// Calculate calculates the signature and returns both the signature and the manifest.
+	// The manifest may be nil if the plugin is unsigned or if an error occurred.
+	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, *PluginManifest, error)
 }
 
 type KeyStore interface {
