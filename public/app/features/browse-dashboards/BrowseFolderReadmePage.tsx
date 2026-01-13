@@ -8,7 +8,7 @@ import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { ManagerKind } from '../apiserver/types';
 import { FolderActionsButton } from '../browse-dashboards/components/FolderActionsButton';
 import { buildNavModel, getReadmeTabID } from '../folders/state/navModel';
-import { FolderReadmeContent } from '../provisioning/components/Folders/FolderReadmeContent';
+import { FolderReadmeContent } from '../provisioning/components/Folders/FolderReadme';
 import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
