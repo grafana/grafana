@@ -464,27 +464,19 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 	}()
 
 	// Receive events
-	receivedEvents := make([]Event, 0, len(testEvents))
-	for i := 0; i < len(testEvents); i++ {
+	receivedEvents := make([]string, 0, len(testEvents))
+	for len(receivedEvents) != len(testEvents) {
 		select {
 		case event := <-events:
-			receivedEvents = append(receivedEvents, event)
+			receivedEvents = append(receivedEvents, event.Name)
 		case err := <-errCh:
 			require.NoError(t, err)
 		case <-time.After(1 * time.Second):
-			t.Fatalf("Timed out waiting for event %d", i+1)
+			t.Fatalf("Timed out waiting for event %d", len(receivedEvents)+1)
 		}
 	}
 
-	// Verify all events were received
-	assert.Len(t, receivedEvents, len(testEvents))
-
 	// Verify the events match and ordered by resource version
-	receivedNames := make([]string, len(receivedEvents))
-	for i, event := range receivedEvents {
-		receivedNames[i] = event.Name
-	}
-
 	expectedNames := []string{"test-resource-1", "test-resource-2", "test-resource-3"}
-	assert.ElementsMatch(t, expectedNames, receivedNames)
+	assert.ElementsMatch(t, expectedNames, receivedEvents)
 }
