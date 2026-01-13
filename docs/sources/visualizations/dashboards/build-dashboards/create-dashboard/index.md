@@ -520,8 +520,8 @@ You can select any variable that's configured for the dashboard and choose from 
 
 - Equals
 - Not equals
-- Matches (regex values)
-- Not matches (regex values)
+- Matches (regular expression values)
+- Not matches (regular expression values)
 
 You can [add more variables](#add-variables) if you need to without leaving the dashboard.
 
