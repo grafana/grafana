@@ -4,7 +4,13 @@ import { useEffect, useMemo } from 'react';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
-import { DisplayList, iamAPIv0alpha1, useLazyGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
+import {
+  API_GROUP as IAM_API_GROUP,
+  API_VERSION as IAM_API_VERSION,
+  DisplayList,
+  iamAPIv0alpha1,
+  useLazyGetDisplayMappingQuery,
+} from 'app/api/clients/iam/v0alpha1';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
@@ -56,6 +62,8 @@ import {
   ReplaceFolderApiArg,
   useGetAffectedItemsQuery,
   FolderInfo,
+  ObjectMeta,
+  OwnerReference,
 } from './index';
 
 function getFolderUrl(uid: string, title: string): string {
@@ -66,6 +74,10 @@ function getFolderUrl(uid: string, title: string): string {
   return `${config.appSubUrl}/dashboards/f/${uid}/${slug}`;
 }
 
+type CombinedFolder = FolderDTO & {
+  ownerReferences?: OwnerReference[];
+};
+
 const combineFolderResponses = (
   folder: Folder,
   legacyFolder: FolderDTO,
@@ -75,7 +87,7 @@ const combineFolderResponses = (
   const updatedBy = folder.metadata.annotations?.[AnnoKeyUpdatedBy];
   const createdBy = folder.metadata.annotations?.[AnnoKeyCreatedBy];
 
-  const newData: FolderDTO = {
+  const newData: CombinedFolder = {
     canAdmin: legacyFolder.canAdmin,
     canDelete: legacyFolder.canDelete,
     canEdit: legacyFolder.canEdit,
@@ -84,6 +96,7 @@ const combineFolderResponses = (
     createdBy: (createdBy && userDisplay?.display[userDisplay?.keys.indexOf(createdBy)]?.displayName) || 'Anonymous',
     updatedBy: (updatedBy && userDisplay?.display[userDisplay?.keys.indexOf(updatedBy)]?.displayName) || 'Anonymous',
     ...appPlatformFolderToLegacyFolder(folder),
+    ownerReferences: folder.metadata.ownerReferences || [],
   };
 
   if (parents.length) {
@@ -101,7 +114,7 @@ const combineFolderResponses = (
   return newData;
 };
 
-export async function getFolderByUidFacade(uid: string): Promise<FolderDTO> {
+export async function getFolderByUidFacade(uid: string) {
   const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
 
@@ -216,7 +229,7 @@ export function useGetFolderQueryFacade(uid?: string) {
 
   // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
   // api client.
-  let newData: FolderDTO | undefined = undefined;
+  let newData: CombinedFolder | undefined = undefined;
   if (
     resultFolder.data &&
     resultParents.data &&
@@ -359,14 +372,36 @@ export function useCreateFolder() {
     return legacyHook;
   }
 
-  const createFolderAppPlatform = async (folder: NewFolder) => {
-    const payload: CreateFolderApiArg = {
+  const createFolderAppPlatform = async (payload: NewFolder & { createAsTeamFolder?: boolean; teamUid?: string }) => {
+    const { createAsTeamFolder, teamUid, ...folder } = payload;
+    const slugifiedTitle = kbn.slugifyForUrl(folder.title);
+
+    const metadataName = `team-${slugifiedTitle}`;
+    const partialMetadata: ObjectMeta =
+      createAsTeamFolder && teamUid
+        ? {
+            name: metadataName,
+            ownerReferences: [
+              {
+                apiVersion: `${IAM_API_GROUP}/${IAM_API_VERSION}`,
+                kind: 'Team',
+                name: folder.title,
+                uid: teamUid,
+                controller: true,
+                blockOwnerDeletion: false,
+              },
+            ],
+          }
+        : { generateName: 'f' };
+
+    const apiPayload: CreateFolderApiArg = {
       folder: {
         spec: {
           title: folder.title,
+          description: 'Testing a description',
         },
         metadata: {
-          generateName: 'f',
+          ...partialMetadata,
           annotations: {
             ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
           },
@@ -374,7 +409,7 @@ export function useCreateFolder() {
       },
     };
 
-    const result = await createFolder(payload);
+    const result = await createFolder(apiPayload);
     refresh({ childrenOf: folder.parentUid });
     deletedDashboardsCache.clear();
 

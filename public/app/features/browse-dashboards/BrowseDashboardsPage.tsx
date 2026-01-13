@@ -6,8 +6,9 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
+import { LinkButton, FilterInput, useStyles2, Text, Stack, Box, Divider } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { TeamOwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
@@ -147,6 +148,19 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     );
   };
 
+  const ownerReferences = folderDTO && 'ownerReferences' in folderDTO && (
+    <Box>
+      {folderDTO.ownerReferences
+        ?.filter((ref) => ref.kind === 'Team')
+        .map((ref) => (
+          <Stack key={ref.uid} direction="row">
+            <Text>Owned by team:</Text>
+            <TeamOwnerReference ownerReference={ref} />
+          </Stack>
+        ))}
+    </Box>
+  );
+
   return (
     <Page
       navId="dashboards/browse"
@@ -154,7 +168,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       onEditTitle={showEditTitle ? onEditTitle : undefined}
       renderTitle={renderTitle}
       actions={
-        <>
+        <Stack alignItems="center">
+          {ownerReferences}
           {config.featureToggles.restoreDashboards && hasAdminRights && (
             <LinkButton
               variant="secondary"
@@ -174,7 +189,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
               isReadOnlyRepo={isReadOnlyRepo}
             />
           )}
-        </>
+        </Stack>
       }
     >
       <Page.Contents className={styles.pageContents}>

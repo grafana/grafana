@@ -2,7 +2,7 @@ import { UserEvent } from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -27,9 +27,15 @@ const setup = async () => {
   return view;
 };
 
-const attemptCreateTeam = async (user: UserEvent, teamName?: string, teamEmail?: string) => {
+const attemptCreateTeam = async (
+  user: UserEvent,
+  teamName?: string,
+  teamEmail?: string,
+  createTeamFolder?: boolean
+) => {
   teamName && (await user.type(screen.getByRole('textbox', { name: /name/i }), teamName));
   teamEmail && (await user.type(screen.getByLabelText(/email/i), teamEmail));
+  createTeamFolder && (await user.click(screen.getByLabelText(/auto-create a team folder/i)));
   await user.click(screen.getByRole('button', { name: /create/i }));
 };
 
@@ -71,5 +77,23 @@ describe('Create team', () => {
     await attemptCreateTeam(user, MOCK_TEAMS[0].spec.title);
 
     expect(screen.queryByText(/edit team page/i)).not.toBeInTheDocument();
+  });
+
+  describe('team folders enabled', () => {
+    const originalFeatureToggles = config.featureToggles;
+    beforeEach(() => {
+      config.featureToggles = { ...originalFeatureToggles, teamFolders: true };
+    });
+
+    afterEach(() => {
+      config.featureToggles = originalFeatureToggles;
+    });
+
+    it('renders team folder checkbox', async () => {
+      const { user } = await setup();
+      await attemptCreateTeam(user, MOCK_TEAMS[0].spec.title, undefined, true);
+
+      expect(screen.queryByText(/edit team page/i)).not.toBeInTheDocument();
+    });
   });
 });

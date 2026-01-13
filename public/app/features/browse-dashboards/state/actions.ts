@@ -1,3 +1,4 @@
+import { getBackendSrv } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
@@ -53,6 +54,10 @@ export const refreshParents = createAsyncThunk(
   }
 );
 
+const hackGetOwnerRefs = async () => {
+  return getBackendSrv().get('/apis/folder.grafana.app/v1beta1/namespaces/default/folders');
+};
+
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
   async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
@@ -66,6 +71,7 @@ export const refetchChildren = createAsyncThunk(
     let fetchKind: DashboardViewItemKind | undefined = 'folder';
 
     let children = await listFolders(uid, undefined, page, pageSize);
+
     let lastPageOfKind = children.length < pageSize;
 
     // If we've loaded all folders, load the first page of dashboards.
@@ -135,6 +141,16 @@ export const fetchNextChildrenPage = createAsyncThunk(
       fetchKind === 'folder'
         ? await listFolders(uid, undefined, page, pageSize)
         : await listDashboards(uid, page, pageSize);
+
+    const foldersWithOwnerRefs = await hackGetOwnerRefs();
+
+    children.forEach((child) => {
+      const ownerRefs = foldersWithOwnerRefs.items.find((folder) => folder.metadata.name === child.uid)?.metadata
+        .ownerReferences;
+      if (ownerRefs) {
+        child.ownerReferences = ownerRefs;
+      }
+    });
 
     let lastPageOfKind = children.length < pageSize;
 
