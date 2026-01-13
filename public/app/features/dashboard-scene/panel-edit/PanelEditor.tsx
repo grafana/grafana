@@ -280,8 +280,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
       this._subs.add(
         optionsPane.subscribeToState((newState, oldState) => {
-          if (newState.isVizPickerOpen !== oldState.isVizPickerOpen && newState.isVizPickerOpen) {
-            this._setupEditPreview();
+          if (newState.isVizPickerOpen !== oldState.isVizPickerOpen) {
+            if (newState.isVizPickerOpen) {
+              this._setupEditPreview();
+            } else {
+              this.setState({ editPreview: undefined });
+            }
           }
         })
       );
@@ -294,7 +298,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _setupEditPreview() {
     const panel = this.state.panelRef.resolve();
-    let editPreview: VizPanel | undefined;
 
     // we just "pick" timeseries, viz type will likely be overridden by Suggestions.
     const editPreviewBuilder = PanelBuilders.timeseries()
@@ -303,9 +306,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     if (panel.state.$data) {
       editPreviewBuilder.setData(new DataProviderSharer({ source: panel.state.$data.getRef() }));
     }
-    editPreview = editPreviewBuilder.build();
+    const editPreview = editPreviewBuilder.build();
     this.setState({ editPreview });
-    this.state.optionsPane?.setState({ editPreviewRef: editPreview?.getRef() });
+    this.state.optionsPane?.setState({ editPreviewRef: editPreview.getRef() });
   }
 
   private _updateDataPane(plugin: PanelPlugin) {
