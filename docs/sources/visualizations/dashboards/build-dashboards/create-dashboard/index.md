@@ -262,7 +262,7 @@ There are default parameters to constrain the layout, and you can update these t
 - **Min column width**: Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
 - **Max columns**: Set a number up to 10.
 - **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
-- **Fill screen**: Toggle the switch on to have the dashboard fill the entire screen, as shown in the following screen recording:
+- **Fill screen**: Toggle the switch on to have the panel fill the entire height of the row. The **Fill screen** toggle for the row must also be enabled. This is shown in the following screen recording:
 
   {{< video-embed src="layout-fillscreen.mp4" >}}
    <!-- TBA -->
@@ -510,19 +510,19 @@ In this case, you'd set the rule as follows:
 
 ### Template variable rule
 
-Show or hide the panel, row, or tab dynamically based on the variable value.
+Show or hide a panel, row, or tab dynamically based on the variable value.
 You can select any variable that's configured for the dashboard and choose from the following operators for maximum flexibility:
 
 - Equals
 - Not equals
-- Matches
-- Not matches
+- Matches (regex values)
+- Not matches (regex values)
 
-You can also [add more variables](#add-variables) as needed without leaving the dashboard using the outline.
+You can [add more variables](#add-variables) if you need to without leaving the dashboard.
 
 ### Time range less than rule
 
-Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range.
+Show or hide a panel, row, or tab if the dashboard time range is shorter than the selected time range.
 This ensures that as you change the time range of the dashboard, you only see data relevant to that time period.
 
 For example, a dashboard is tracking adoption of a feature over time has the following setup:
@@ -551,7 +551,7 @@ To configure show/hide rules, follow these steps:
 1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
 1. Click **+ Add rule**.
 1. Select a rule type:
-   - **Query result**: Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
+   - **Query result**: Show or hide a panel based on query results. Choose from **Has data** and **No data**.
    - **Template variable**: Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
    - **Time range less than**: Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
 
@@ -567,7 +567,7 @@ To configure show/hide rules, follow these steps:
 1. Click **Exit edit**
 
 Hidden panels, rows, or tabs aren't visible when the dashboard is in view mode.
-In edit mode, hidden dashboard elements are displayed with an icon indicating this.
+In edit mode, hidden dashboard elements are displayed with an icon or overlay indicating this.
 
 ## Move a panel
 
@@ -632,7 +632,12 @@ To access the variables creation flow this way, follow these steps:
 1. Click **Variables** in the outline.
 1. Click **+ Add variable**.
 1. Complete the rest of the steps to [add a variable without leaving the dashboard](#add-variables).
+## Copy and paste dashboard elements
 
+You can copy and paste panels, rows, and tabs.
+
+
+## Duplicate dashboard elements
 ## Copy a dashboard
 
 To make a copy of a dashboard, follow these steps:
