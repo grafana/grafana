@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 
 func TestIntegrationTestDatasource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	expectedAPIVersion := "testdata.datasource.grafana.app/v0alpha1"
+	expectedAPIVersion := "grafana-testdata-datasource.datasource.grafana.app/v0alpha1"
 
 	for _, mode := range []grafanarest.DualWriterMode{
 		grafanarest.Mode0, // Legacy only
@@ -49,14 +49,14 @@ func TestIntegrationTestDatasource(t *testing.T) {
 					featuremgmt.FlagQueryServiceWithConnections,          // enables CRUD endpoints
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"datasources.testdata.datasource.grafana.app": {
+					"datasources.grafana-testdata-datasource.datasource.grafana.app": {
 						DualWriterMode: mode,
 					},
 				},
 			})
 
 			client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
-				Group:    "testdata.datasource.grafana.app",
+				Group:    "grafana-testdata-datasource.datasource.grafana.app",
 				Version:  "v0alpha1",
 				Resource: "datasources",
 			}).Namespace("default")
@@ -64,7 +64,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			t.Run("create", func(t *testing.T) {
 				out, err := client.Create(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
-						"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+						"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 						"kind":       "DataSource",
 						"metadata": map[string]any{
 							"name": "test",
@@ -99,7 +99,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			t.Run("update", func(t *testing.T) {
 				out, err := client.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
-						"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+						"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 						"metadata": map[string]any{
 							"name": "test",
 						},
@@ -165,7 +165,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 			t.Run("execute", func(t *testing.T) {
 				client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
-					Group:    "testdata.datasource.grafana.app",
+					Group:    "grafana-testdata-datasource.datasource.grafana.app",
 					Version:  "v0alpha1",
 					Resource: "datasources",
 				}).Namespace("default")
@@ -189,7 +189,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				// require.NoError(t, err)
 				// //fmt.Printf("GOT: %v\n", string(body))
 				// require.JSONEq(t, `{
-				// 	"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+				// 	"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 				// 	"code": 1,
 				// 	"kind": "HealthCheckResult",
 				// 	"message": "Data source is working",
@@ -201,7 +201,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				raw := apis.DoRequest[any](helper, apis.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
-					Path:   "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resource",
+					Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resource",
 				}, nil)
 				// endpoint is disabled currently because it has not been
 				// sufficiently tested.

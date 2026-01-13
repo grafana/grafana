@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/extensions"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -149,10 +150,19 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				}
 			}
 
-			assert.ElementsMatch(collect, []provisioning.RepositoryType{
-				provisioning.LocalRepositoryType,
-				provisioning.GitHubRepositoryType,
-			}, settings.AvailableRepositoryTypes)
+			if extensions.IsEnterprise {
+				assert.ElementsMatch(collect, []provisioning.RepositoryType{
+					provisioning.LocalRepositoryType,
+					provisioning.GitHubRepositoryType,
+					provisioning.BitbucketRepositoryType,
+					provisioning.GitLabRepositoryType,
+				}, settings.AvailableRepositoryTypes)
+			} else {
+				assert.ElementsMatch(collect, []provisioning.RepositoryType{
+					provisioning.LocalRepositoryType,
+					provisioning.GitHubRepositoryType,
+				}, settings.AvailableRepositoryTypes)
+			}
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 	})
 

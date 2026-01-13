@@ -873,13 +873,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "logsExploreTableDefaultVisualization",
-			Description:  "Sets the logs table as default visualisation in logs explore",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityLogsSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
 			Stage:        FeatureStagePrivatePreview,
@@ -1039,13 +1032,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "exploreLogsLimitedTimeRange",
-			Description:  "Used in Logs Drilldown to limit the time range",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "appPlatformGrpcClientAuth",
 			Description:  "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
 			Stage:        FeatureStageExperimental,
@@ -1086,20 +1072,6 @@ var (
 			Description: "Enables the new role picker drawer design",
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
-		},
-		{
-			Name:         "unifiedStorageSearch",
-			Description:  "Enable unified storage search",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-		},
-		{
-			Name:         "unifiedStorageSearchSprinkles",
-			Description:  "Enable sprinkles on unified storage search",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "managedDualWriter",
@@ -1161,14 +1133,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
-		},
-		{
-			Name:         "exploreMetricsRelatedLogs",
-			Description:  "Display Related Logs in Grafana Metrics Drilldown",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
-			FrontendOnly: true,
-			HideFromDocs: false,
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",
