@@ -371,7 +371,7 @@ func SnowflakeFromRV(rv int64) int64 {
 }
 
 // It is generally not possible to convert from a snowflakeID to a microsecond RV due to the loss in precision
-// (snowflake ID stores tiemstamp in milliseconds). However, this implementation stores the microsecond fraction
+// (snowflake ID stores timestamp in milliseconds). However, this implementation stores the microsecond fraction
 // in the step bits (see SnowflakeFromRV), allowing us to compute the microsecond timestamp.
 func RVFromSnowflake(snowflakeID int64) int64 {
 	msFraction := snowflakeID & ((1 << snowflake.StepBits) - 1)
