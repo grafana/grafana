@@ -1,49 +1,54 @@
+import { handleRequestError } from '@grafana/api-clients';
 import {
   Correlation as CorrelationK8s,
   useListCorrelationQuery,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { SupportedTransformationType } from '@grafana/data';
 import { CorrelationData, CorrelationExternal, CorrelationQuery } from '@grafana/runtime';
 
 import { toEnrichedCorrelationData } from './useCorrelations';
 
 export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationData | undefined => {
-  if (item.metadata.name !== undefined) {
-    const baseCor = {
-      uid: item.metadata.name,
-      sourceUID: item.spec.source.name, //todo
-      label: item.spec.label,
-      description: item.spec.description,
-      provisioned: false, // todo,
-    };
+  const baseCor = {
+    uid: item.metadata.name!,
+    sourceUID: item.spec.source.name, //todo
+    label: item.spec.label,
+    description: item.spec.description,
+    provisioned: false, // todo
+  };
 
-    if (item.spec.type === 'external') {
-      const extCorr: CorrelationExternal = {
-        ...baseCor,
-        type: 'external',
-        config: {
-          field: item.spec.config.field,
-          target: {
-            url: item.spec.config?.target?.url || '',
-          },
-          transformations: [], // todo fix
+  const transformationsFmt = item.spec.config.transformations?.map((trans) => {
+    return {
+      ...trans,
+      type: trans.type === 'regex' ? SupportedTransformationType.Regex : SupportedTransformationType.Logfmt,
+    };
+  });
+
+  if (item.spec.type === 'external') {
+    const extCorr: CorrelationExternal = {
+      ...baseCor,
+      type: 'external',
+      config: {
+        field: item.spec.config.field,
+        target: {
+          url: item.spec.config?.target?.url || '',
         },
-      };
-      return toEnrichedCorrelationData(extCorr);
-    } else {
-      const queryCorr: CorrelationQuery = {
-        ...baseCor,
-        type: 'query',
-        targetUID: item.spec.target?.name || '', // todo
-        config: {
-          field: item.spec.config.field,
-          target: item.spec.config.target,
-          transformations: [], // todo fix
-        },
-      };
-      return toEnrichedCorrelationData(queryCorr);
-    }
+        transformations: transformationsFmt,
+      },
+    };
+    return toEnrichedCorrelationData(extCorr);
   } else {
-    return undefined;
+    const queryCorr: CorrelationQuery = {
+      ...baseCor,
+      type: 'query',
+      targetUID: item.spec.target?.name || '', // todo
+      config: {
+        field: item.spec.config.field,
+        target: item.spec.config.target,
+        transformations: transformationsFmt,
+      },
+    };
+    return toEnrichedCorrelationData(queryCorr);
   }
 };
 
@@ -60,13 +65,13 @@ export const useCorrelationsK8s = (limit = 100, page: number) => {
 
   const enrichedCorrelations =
     currentData !== undefined
-      ? pagedData.map((item) => toEnrichedCorrelationDataK8s(item)).filter((i) => i !== undefined)
+      ? pagedData
+          .filter((i) => i.metadata.name !== undefined)
+          .map((item) => toEnrichedCorrelationDataK8s(item))
+          .filter((i) => i !== undefined)
       : [];
-  let fmtedError = undefined;
 
-  if (error !== undefined) {
-    fmtedError = new Error(error?.toString() ?? 'useListCorrelationQuery error');
-  }
+  const fmtedError = error ? handleRequestError(error) : undefined;
 
   return {
     currentData: enrichedCorrelations,

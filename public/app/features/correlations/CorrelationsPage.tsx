@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { CorrelationData, CorrelationsData, isFetchError, reportInteraction } from '@grafana/runtime';
+import { CorrelationData, CorrelationsData, FetchError, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
   Button,
@@ -31,7 +31,7 @@ import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
 import type { Correlation, GetCorrelationsParams, RemoveCorrelationParams } from './types';
 
 type CorrelationsPageProps = {
-  fetchCorrelations: (params: GetCorrelationsParams) => Promise<CorrelationsData>;
+  fetchCorrelations: (params: GetCorrelationsParams) => Promise<CorrelationsData> | CorrelationsData;
   correlations?: CorrelationsData;
   isLoading: boolean;
   changePageFn?: (page: number) => void;
@@ -41,7 +41,7 @@ type CorrelationsPageProps = {
       }
     | Status
   >;
-  error?: Error;
+  error?: Error | FetchError;
   hasNextPage?: boolean;
 };
 

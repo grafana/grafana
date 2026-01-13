@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
+import { handleRequestError } from '@grafana/api-clients';
 import { useDeleteCorrelationMutation } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { config, CorrelationsData } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import CorrelationsPage from './CorrelationsPage';
-import { RemoveCorrelationParams } from './types';
+import { GetCorrelationsParams, RemoveCorrelationParams } from './types';
 import { useCorrelations } from './useCorrelations';
 import { useCorrelationsK8s } from './useCorrelationsK8s';
 
@@ -23,18 +24,16 @@ export function CorrelationsPageLegacy() {
 
 function CorrelationsPageAppPlatform() {
   const [page, setPage] = useState(1);
-  let totalItems = useRef(0);
   const limit = 100;
-  const { currentData, isLoading, error, remainingItems, doesContinue } = useCorrelationsK8s(limit, page);
+  const { currentData, isLoading, error, doesContinue } = useCorrelationsK8s(limit, page);
   const [deleteCorrelation] = useDeleteCorrelationMutation();
-  if (page === 1) {
-    totalItems.current = remainingItems;
-  }
 
   // we cant do a straight refetch, we have to pass in new pages if necessary
-  const enhRefetch = (): Promise<CorrelationsData> => {
-    return new Promise(() => currentData);
+  const enhRefetch = (params: GetCorrelationsParams) => {
+    return { correlations: currentData, page: params.page, limit, totalCount: 0 };
   };
+
+  const fmtedError = error ? handleRequestError(error) : undefined;
 
   return (
     <CorrelationsPage
@@ -46,10 +45,10 @@ function CorrelationsPageAppPlatform() {
         correlations: currentData,
         page: 0,
         limit: limit,
-        totalCount: totalItems.current,
+        totalCount: 0,
       }}
       isLoading={isLoading}
-      error={error}
+      error={fmtedError?.error}
       removeFn={(params: RemoveCorrelationParams) => {
         const deleteData = deleteCorrelation({ name: params.uid });
         return deleteData.unwrap();

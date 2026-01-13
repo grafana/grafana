@@ -65,7 +65,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if options.FieldSelector != nil {
 		for _, r := range options.FieldSelector.Requirements() {
 			switch r.Field {
-			case "metadata.name":
+			case "spec.datasource.name":
 				switch r.Operator {
 				case selection.Equals, selection.DoubleEquals:
 					uids = []string{r.Value}
