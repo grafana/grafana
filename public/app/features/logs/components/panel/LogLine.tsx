@@ -258,12 +258,12 @@ const LogLineComponent = memo(
               ...(displayedFields.length > 0
                 ? {
                     display: 'grid',
-                    gridTemplateColumns: `auto ${log.displayLevel || !wrapLogMessage ? '0.4fr ' : ''}${displayedFields
+                    gridTemplateColumns: `auto ${log.displayLevel || !wrapLogMessage ? '0.5fr ' : ''}${displayedFields
                       .map((field) =>
                         field === LOG_LINE_BODY_FIELD_NAME
                           ? log.displayLevel || !wrapLogMessage
                             ? '10fr'
-                            : '10.4fr'
+                            : '10.5fr'
                           : '1fr'
                       )
                       .join(' ')}`,
