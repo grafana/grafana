@@ -9,5 +9,4 @@
  * and be subject to the standard policies
  */
 
-// This is a dummy export so typescript doesn't error importing an "empty module"
-export const unstable = {};
+export { default as themeJsonSchema } from './themes/schema.generated.json';

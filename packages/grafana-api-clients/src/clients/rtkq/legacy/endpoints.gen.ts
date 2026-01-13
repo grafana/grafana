@@ -5340,6 +5340,7 @@ export type OrgUserDto = {
   };
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   isDisabled?: boolean;
   isExternallySynced?: boolean;
@@ -6118,6 +6119,7 @@ export type ChangeUserPasswordCommand = {
 export type UserSearchHitDto = {
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   id?: number;
   isAdmin?: boolean;

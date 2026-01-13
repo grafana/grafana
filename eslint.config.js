@@ -585,6 +585,8 @@ module.exports = [
       // FIXME: Remove once all enterprise issues are fixed -
       // we don't have a suppressions file/approach for enterprise code yet
       ...enterpriseIgnores,
+      // Ignore decoupled plugin webpack configs
+      'public/app/**/webpack.config.ts',
     ],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
