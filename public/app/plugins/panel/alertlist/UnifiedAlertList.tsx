@@ -5,7 +5,7 @@ import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { config, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   Alert,
   BigValue,
@@ -17,7 +17,6 @@ import {
   ScrollContainer,
   useStyles2,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
