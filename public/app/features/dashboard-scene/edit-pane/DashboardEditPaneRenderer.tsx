@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneObject, SceneObjectState, useSceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneObject, SceneObjectState, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -14,7 +14,7 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
-import { getDefaultVizPanel } from '../utils/utils';
+import { getDefaultVizPanel, getRowOrTabForSceneObject } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
@@ -50,11 +50,10 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
     return undefined;
   }, [selection]);
 
-  
   const onSetLayoutElement = (obj: SceneObject<SceneObjectState> | undefined) => {
-    if (obj instanceof RowItem || obj instanceof TabItem) {
-      setSelectedLayoutElement(obj);
-    } else if (!(obj instanceof VizPanel)) {
+    if (obj) {
+      setSelectedLayoutElement(getRowOrTabForSceneObject(obj) || dashboard);
+    } else {
       setSelectedLayoutElement(dashboard);
     }
   };

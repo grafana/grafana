@@ -26,10 +26,10 @@ interface Props {
   isEditing?: boolean;
   body?: React.ReactNode;
   controls?: React.ReactNode;
-  isEmptyDashboard?: boolean;
+  isNewEmptyDashboard?: boolean;
 }
 
-export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls, isEmptyDashboard = false }: Props) {
+export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls, isNewEmptyDashboard = false }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
@@ -66,7 +66,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   }, [isEditing, editPane]);
 
   useEffectOnce(() => {
-    if (isEmptyDashboard) {
+    if (isNewEmptyDashboard) {
       editPane.openPane('add');
     }
   });
@@ -74,7 +74,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
 
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane) || isEmptyDashboard,
+    hasOpenPane: Boolean(openPane) || isNewEmptyDashboard,
     contentMargin: 1,
     position: 'right',
     persistanceKey: 'dashboard',

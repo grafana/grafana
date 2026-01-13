@@ -33,7 +33,7 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
       context.compact && styles.compact,
       active && styles.active,
       context.position === 'left' && styles.leftButton,
-      isAddButton && 'primary'
+      isAddButton && 'addButton'
     );
 
     return (
@@ -85,7 +85,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: `none`,
-      '&.primary': css({
+      '&.addButton': css({
         svg: {
           backgroundColor: theme.colors.primary.main,
           color: theme.colors.getContrastText(theme.colors.primary.main),

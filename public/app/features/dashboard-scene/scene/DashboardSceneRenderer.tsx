@@ -9,10 +9,12 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types/store';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
+import { isEmptyDashboard } from '../saving/DashboardPrompt';
 
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
+import { getDashboardSceneFor } from '../utils/utils';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -103,7 +105,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         {!editPanel && (
           <DashboardEditPaneSplitter
             dashboard={model}
-            isEmptyDashboard={!model.state.uid}
+            isNewEmptyDashboard={!model.state.uid}
             isEditing={isEditing}
             controls={controls && <controls.Component model={controls} />}
             body={renderBody()}

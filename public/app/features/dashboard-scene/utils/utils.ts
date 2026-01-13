@@ -27,6 +27,8 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
@@ -411,6 +413,15 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
   }
 
   throw new Error('Could not find layout manager for scene object');
+}
+
+export function getRowOrTabForSceneObject(sceneObject: SceneObject): SceneObject | null {
+  if (sceneObject instanceof RowItem || sceneObject instanceof TabItem) {
+    return sceneObject;
+  } else if (sceneObject.parent) {
+    return getRowOrTabForSceneObject(sceneObject.parent);
+  }
+  return null;
 }
 
 export function getGridItemKeyForPanelId(panelId: number): string {
