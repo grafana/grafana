@@ -187,6 +187,31 @@ func toError(name string, list field.ErrorList) error {
 	)
 }
 
+// ListRepositories returns the list of repositories accessible through this GitHub App connection.
+func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
+	if c.obj.Spec.GitHub == nil {
+		return nil, fmt.Errorf("github configuration is required")
+	}
+
+	ghClient := c.ghFactory.New(ctx, c.obj.Secure.Token.Create)
+
+	repos, err := ghClient.ListInstallationRepositories(ctx, c.obj.Spec.GitHub.InstallationID)
+	if err != nil {
+		return nil, fmt.Errorf("list installation repositories: %w", err)
+	}
+
+	result := make([]provisioning.ExternalRepository, 0, len(repos))
+	for _, repo := range repos {
+		result = append(result, provisioning.ExternalRepository{
+			Name:  repo.Name,
+			Owner: repo.Owner,
+			URL:   repo.URL,
+		})
+	}
+
+	return result, nil
+}
+
 var (
 	_ connection.Connection = (*Connection)(nil)
 )

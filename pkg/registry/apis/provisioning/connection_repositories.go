@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"net/http"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,10 +13,14 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-type connectionRepositoriesConnector struct{}
+type connectionRepositoriesConnector struct {
+	getter ConnectionGetter
+}
 
-func NewConnectionRepositoriesConnector() *connectionRepositoriesConnector {
-	return &connectionRepositoriesConnector{}
+func NewConnectionRepositoriesConnector(getter ConnectionGetter) *connectionRepositoriesConnector {
+	return &connectionRepositoriesConnector{
+		getter: getter,
+	}
 }
 
 func (*connectionRepositoriesConnector) New() runtime.Object {
@@ -43,23 +48,34 @@ func (*connectionRepositoriesConnector) NewConnectOptions() (runtime.Object, boo
 func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "connection-repositories-connector", "connection_name", name)
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			responder.Error(apierrors.NewMethodNotSupported(provisioning.ConnectionResourceInfo.GroupResource(), r.Method))
 			return
 		}
 
-		logger.Debug("repositories endpoint called but not yet implemented")
+		logger.Debug("listing repositories from connection")
 
-		// TODO: Implement repository listing from external git provider
-		// This will require:
-		// 1. Get the Connection object using logging.Context(r.Context(), logger)
-		// 2. Use the connection credentials to authenticate with the git provider
-		// 3. List repositories from the provider (GitHub, GitLab, Bitbucket)
-		// 4. Return ExternalRepositoryList with Name, Owner, and URL for each repository
+		conn, err := c.getter.GetConnection(r.Context(), name)
+		if err != nil {
+			logger.Error("failed to get connection", "error", err)
+			responder.Error(err)
+			return
+		}
 
-		responder.Error(apierrors.NewMethodNotSupported(provisioning.ConnectionResourceInfo.GroupResource(), "repositories endpoint not yet implemented"))
-	}), nil
+		repos, err := conn.ListRepositories(r.Context())
+		if err != nil {
+			logger.Error("failed to list repositories", "error", err)
+			responder.Error(apierrors.NewInternalError(err))
+			return
+		}
+
+		result := &provisioning.ExternalRepositoryList{
+			Items: repos,
+		}
+
+		responder.Object(http.StatusOK, result)
+	}), 30*time.Second), nil
 }
 
 var (

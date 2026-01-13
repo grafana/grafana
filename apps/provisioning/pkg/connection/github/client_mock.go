@@ -134,6 +134,65 @@ func (_c *MockClient_GetAppInstallation_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// ListInstallationRepositories provides a mock function with given fields: ctx, installationID
+func (_m *MockClient) ListInstallationRepositories(ctx context.Context, installationID string) ([]Repository, error) {
+	ret := _m.Called(ctx, installationID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListInstallationRepositories")
+	}
+
+	var r0 []Repository
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]Repository, error)); ok {
+		return rf(ctx, installationID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []Repository); ok {
+		r0 = rf(ctx, installationID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]Repository)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, installationID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_ListInstallationRepositories_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListInstallationRepositories'
+type MockClient_ListInstallationRepositories_Call struct {
+	*mock.Call
+}
+
+// ListInstallationRepositories is a helper method to define mock.On call
+//   - ctx context.Context
+//   - installationID string
+func (_e *MockClient_Expecter) ListInstallationRepositories(ctx interface{}, installationID interface{}) *MockClient_ListInstallationRepositories_Call {
+	return &MockClient_ListInstallationRepositories_Call{Call: _e.mock.On("ListInstallationRepositories", ctx, installationID)}
+}
+
+func (_c *MockClient_ListInstallationRepositories_Call) Run(run func(ctx context.Context, installationID string)) *MockClient_ListInstallationRepositories_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_ListInstallationRepositories_Call) Return(_a0 []Repository, _a1 error) *MockClient_ListInstallationRepositories_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_ListInstallationRepositories_Call) RunAndReturn(run func(context.Context, string) ([]Repository, error)) *MockClient_ListInstallationRepositories_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockClient creates a new instance of MockClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockClient(t interface {
