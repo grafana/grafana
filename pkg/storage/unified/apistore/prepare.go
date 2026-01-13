@@ -85,6 +85,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if !ok {
 		return v, errors.New("missing auth info")
 	}
+	if err := s.checkGVK(newObject); err != nil {
+		return v, err
+	}
 
 	obj, err := utils.MetaAccessor(newObject)
 	if err != nil {
@@ -152,6 +155,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	info, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return v, errors.New("missing auth info")
+	}
+	if err := s.checkGVK(updateObject); err != nil {
+		return v, err
 	}
 
 	obj, err := utils.MetaAccessor(updateObject)
@@ -273,10 +279,9 @@ func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMet
 	return nil
 }
 
-func (s *Storage) encode(obj runtime.Object, w io.Writer) error {
-	// The standard encoder is fine when only one type maps to a group
+func (s *Storage) checkGVK(obj runtime.Object) error {
 	if s.opts.Scheme == nil {
-		return s.codec.Encode(obj, w)
+		return nil // we can not do anything
 	}
 
 	// Ensure group+version+kind are configured
@@ -285,7 +290,7 @@ func (s *Storage) encode(obj runtime.Object, w io.Writer) error {
 	if gvk.Group == "" || gvk.Kind == "" || gvk.Version == "" {
 		gvks, _, err := s.opts.Scheme.ObjectKinds(obj)
 		if err != nil {
-			return fmt.Errorf("unable to encode object %w", err)
+			return fmt.Errorf("unknown object kind %w", err)
 		}
 		for _, v := range gvks {
 			if v.Group != s.gr.Group {
@@ -297,9 +302,23 @@ func (s *Storage) encode(obj runtime.Object, w io.Writer) error {
 				gvk.Version = v.Version
 			}
 			info.SetGroupVersionKind(gvk)
-			break
+			return nil
 		}
 	}
+	return nil
+}
 
+func (s *Storage) encode(obj runtime.Object, w io.Writer) error {
+	// The standard encoder is fine when only one type maps to a group
+	if s.opts.Scheme == nil {
+		return s.codec.Encode(obj, w)
+	}
+	if err := s.checkGVK(obj); err != nil {
+		return err
+	}
+
+	// This will always write the saved GVK, unlike:
+	// https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
+	// that picks an arbitrary GVK that may not match the same group!
 	return json.NewEncoder(w).Encode(obj)
 }
