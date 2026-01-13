@@ -11,12 +11,15 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -50,25 +53,39 @@ func (a *api) getResourcePermissionsFromK8s(ctx context.Context, namespace strin
 	}
 
 	resourcePermName := a.buildResourcePermissionName(resourceID)
-
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 	unstructuredObj, err := resourcePermResource.Get(ctx, resourcePermName, metav1.GetOptions{})
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return getResourcePermissionsResponse{}, nil
-		}
+
+	dto := make(getResourcePermissionsResponse, 0)
+
+	if err != nil && !k8serrors.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to get resource permission from k8s: %w", err)
 	}
 
-	var resourcePerm iamv0.ResourcePermission
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, &resourcePerm); err != nil {
-		return nil, fmt.Errorf("failed to convert to typed resource permission: %w", err)
+	if unstructuredObj != nil {
+		var resourcePerm iamv0.ResourcePermission
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, &resourcePerm); err != nil {
+			return nil, fmt.Errorf("failed to convert to typed resource permission: %w", err)
+		}
+
+		directDTO, err := a.convertK8sResourcePermissionToDTO(&resourcePerm, namespace, false)
+		if err != nil {
+			return nil, err
+		}
+		dto = append(dto, directDTO...)
 	}
 
-	return a.convertK8sResourcePermissionToDTO(&resourcePerm, namespace)
+	inheritedDTO, err := a.getInheritedPermissions(ctx, namespace, resourceID, dynamicClient)
+	if err != nil {
+		a.logger.Warn("Failed to get inherited permissions from k8s API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
+	} else {
+		dto = append(dto, inheritedDTO...)
+	}
+
+	return dto, nil
 }
 
-func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePermission, namespace string) (getResourcePermissionsResponse, error) {
+func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
 	permissions := resourcePerm.Spec.Permissions
 	if len(permissions) == 0 {
 		return getResourcePermissionsResponse{}, nil
@@ -107,7 +124,7 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 			Permission:  permission,
 			Actions:     actions,
 			IsManaged:   true,
-			IsInherited: false,
+			IsInherited: isInherited,
 		}
 
 		switch kind {
@@ -160,6 +177,115 @@ func getMapKeys(m map[string][]string) []string {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+func (a *api) getInheritedPermissions(ctx context.Context, namespace string, resourceID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
+	switch a.service.options.Resource {
+	case "folders":
+		return a.getFolderHierarchyPermissions(ctx, namespace, resourceID, dynamicClient)
+
+	case "dashboards":
+		return a.getDashboardInheritedPermissions(ctx, namespace, resourceID, dynamicClient)
+
+	default:
+		return getResourcePermissionsResponse{}, nil
+	}
+}
+
+func (a *api) getDashboardInheritedPermissions(ctx context.Context, namespace string, dashboardUID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
+	dashboardsGVR := schema.GroupVersionResource{
+		Group:    "dashboard.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "dashboards",
+	}
+
+	dashboardResource := dynamicClient.Resource(dashboardsGVR).Namespace(namespace)
+	unstructuredDash, err := dashboardResource.Get(ctx, dashboardUID, metav1.GetOptions{})
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return getResourcePermissionsResponse{}, nil
+		}
+		return nil, fmt.Errorf("failed to get dashboard from k8s: %w", err)
+	}
+
+	annotations := unstructuredDash.GetAnnotations()
+	parentFolderUID := annotations[utils.AnnoKeyFolder]
+
+	if parentFolderUID == "" {
+		return getResourcePermissionsResponse{}, nil
+	}
+
+	return a.getFolderHierarchyPermissions(ctx, namespace, parentFolderUID, dynamicClient)
+}
+
+// getFolderHierarchyPermissions gets permissions from a folder and all its parents
+func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace string, folderUID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
+	foldersGVR := schema.GroupVersionResource{
+		Group:    "folder.grafana.app",
+		Version:  "v1beta1",
+		Resource: "folders",
+	}
+
+	// GET /apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{folderUID}/parents
+	parentsResource := dynamicClient.Resource(foldersGVR).Namespace(namespace)
+	unstructuredResult, err := parentsResource.Get(ctx, folderUID, metav1.GetOptions{}, "parents")
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			// Folder not found or no parents
+			return getResourcePermissionsResponse{}, nil
+		}
+		return nil, fmt.Errorf("failed to get folder parents from k8s: %w", err)
+	}
+
+	var folderInfoList folderv1.FolderInfoList
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredResult.Object, &folderInfoList); err != nil {
+		return nil, fmt.Errorf("failed to convert folder parents response: %w", err)
+	}
+
+	if len(folderInfoList.Items) == 0 {
+		return getResourcePermissionsResponse{}, nil
+	}
+
+	allInheritedPermissions := make(getResourcePermissionsResponse, 0)
+	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
+
+	for _, parentFolder := range folderInfoList.Items {
+		if parentFolder.Detached {
+			a.logger.Debug("Skipping detached parent folder", "folderName", parentFolder.Name)
+			continue
+		}
+
+		if parentFolder.Name == folderUID {
+			continue
+		}
+
+		parentPermName := a.buildResourcePermissionName(parentFolder.Name)
+
+		unstructuredObj, err := resourcePermResource.Get(ctx, parentPermName, metav1.GetOptions{})
+		if err != nil {
+			if k8serrors.IsNotFound(err) {
+				continue
+			}
+			a.logger.Warn("Failed to get parent folder permission from k8s", "error", err, "parentFolder", parentFolder.Name)
+			continue
+		}
+
+		var parentResourcePerm iamv0.ResourcePermission
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, &parentResourcePerm); err != nil {
+			a.logger.Warn("Failed to convert parent folder permission", "error", err, "parentFolder", parentFolder.Name)
+			continue
+		}
+
+		inheritedDTO, err := a.convertK8sResourcePermissionToDTO(&parentResourcePerm, namespace, true)
+		if err != nil {
+			a.logger.Warn("Failed to convert parent folder permissions to DTO", "error", err, "parentFolder", parentFolder.Name)
+			continue
+		}
+
+		allInheritedPermissions = append(allInheritedPermissions, inheritedDTO...)
+	}
+
+	return allInheritedPermissions, nil
 }
 
 func (a *api) buildResourcePermissionName(resourceID string) string {
