@@ -13,9 +13,10 @@ const (
 )
 
 // PluginAssetsCalculator is an interface for calculating plugin asset information.
-// LocalProvider requires this to calculate loading strategy.
+// LocalProvider requires this to calculate loading strategy and module hash.
 type PluginAssetsCalculator interface {
 	LoadingStrategy(ctx context.Context, p pluginstore.Plugin) plugins.LoadingStrategy
+	ModuleHash(ctx context.Context, p pluginstore.Plugin) string
 }
 
 // LocalProvider retrieves plugin metadata for locally installed plugins.
@@ -26,7 +27,7 @@ type LocalProvider struct {
 }
 
 // NewLocalProvider creates a new LocalProvider for locally installed plugins.
-// pluginAssets is required for calculating loading strategy.
+// pluginAssets is required for calculating loading strategy and module hash.
 func NewLocalProvider(pluginStore pluginstore.Store, pluginAssets PluginAssetsCalculator) *LocalProvider {
 	return &LocalProvider{
 		store:        pluginStore,
@@ -42,7 +43,7 @@ func (p *LocalProvider) GetMeta(ctx context.Context, pluginID, version string) (
 	}
 
 	loadingStrategy := p.pluginAssets.LoadingStrategy(ctx, plugin)
-	moduleHash := plugin.ModuleHash
+	moduleHash := p.pluginAssets.ModuleHash(ctx, plugin)
 
 	spec := pluginStorePluginToMeta(plugin, loadingStrategy, moduleHash)
 	return &Result{
