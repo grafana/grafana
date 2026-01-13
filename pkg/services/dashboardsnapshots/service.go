@@ -71,8 +71,10 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 		cmd.Name = "Unnamed snapshot"
 	}
 
-	// Handle external snapshot creation
+	var snapshotURL string
+
 	if cmd.External {
+		// Handle external snapshot creation
 		if !cfg.ExternalEnabled {
 			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
 			return
@@ -89,21 +91,25 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 		cmd.ExternalURL = resp.Url
 		cmd.ExternalDeleteURL = resp.DeleteUrl
 		cmd.Dashboard = &common.Unstructured{}
+		snapshotURL = resp.Url
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
+	} else {
+		// Handle local snapshot creation
+		originalDashboardURL, err := createOriginalDashboardURL(&cmd)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)
+			return
+		}
 
-		saveAndRespond(c, svc, cmd, resp.Url)
-		return
+		snapshotURL, err = prepareLocalSnapshot(&cmd, originalDashboardURL)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
+			return
+		}
 	}
 
-	// Handle local snapshot creation
-	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
-	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)
-		return
-	}
-
-	createLocalSnapshot(c, svc, cmd, originalDashboardURL)
+	saveAndRespond(c, svc, cmd, snapshotURL)
 }
 
 // CreateDashboardSnapshotPublic creates a snapshot when running Grafana in public mode.
@@ -119,36 +125,38 @@ func CreateDashboardSnapshotPublic(c *contextmodel.ReqContext, cfg snapshot.Snap
 		cmd.Name = "Unnamed snapshot"
 	}
 
-	createLocalSnapshot(c, svc, cmd, "")
+	snapshotURL, err := prepareLocalSnapshot(&cmd, "")
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
+		return
+	}
+
+	saveAndRespond(c, svc, cmd, snapshotURL)
 }
 
-// createLocalSnapshot handles local snapshot creation (non-external).
-func createLocalSnapshot(c *contextmodel.ReqContext, svc Service, cmd CreateDashboardSnapshotCommand, originalDashboardURL string) {
+// prepareLocalSnapshot prepares the command for a local snapshot and returns the snapshot URL.
+func prepareLocalSnapshot(cmd *CreateDashboardSnapshotCommand, originalDashboardURL string) (string, error) {
 	cmd.Dashboard.SetNestedField(originalDashboardURL, "snapshot", "originalUrl")
 
 	if cmd.Key == "" {
-		var err error
-		cmd.Key, err = util.GetRandomString(32)
+		key, err := util.GetRandomString(32)
 		if err != nil {
-			c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
-			return
+			return "", err
 		}
+		cmd.Key = key
 	}
 
 	if cmd.DeleteKey == "" {
-		var err error
-		cmd.DeleteKey, err = util.GetRandomString(32)
+		deleteKey, err := util.GetRandomString(32)
 		if err != nil {
-			c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
-			return
+			return "", err
 		}
+		cmd.DeleteKey = deleteKey
 	}
-
-	snapshotURL := setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key)
 
 	metrics.MApiDashboardSnapshotCreate.Inc()
 
-	saveAndRespond(c, svc, cmd, snapshotURL)
+	return setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key), nil
 }
 
 // saveAndRespond saves the snapshot and sends the response.
