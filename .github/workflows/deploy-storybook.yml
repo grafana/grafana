@@ -78,7 +78,7 @@ jobs:
       - name: Cleanup old storybook
         id: cleanup-old-storybook
         run: |
-          gsutil -m rm "gs://${{ env.BUCKET_NAME }}/${{ steps.create-deploy-name.outputs.deploy-name }}/**" || echo "No existing files to delete"
+          gcloud storage rm "gs://${{ env.BUCKET_NAME }}/${{ steps.create-deploy-name.outputs.deploy-name }}/**" || echo "No existing files to delete"
 
       - name: Upload new storybook
         id: upload-new-storybook
