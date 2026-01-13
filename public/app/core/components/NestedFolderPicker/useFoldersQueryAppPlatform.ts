@@ -2,6 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -21,6 +22,7 @@ type GetFolderChildrenRequest = {
 };
 
 const rootFolderToken = 'general';
+const sharedWithMeFolderToken = 'sharedwithme';
 const collator = new Intl.Collator();
 
 /**
@@ -130,40 +132,76 @@ export function useFoldersQueryAppPlatform({
       let folders = response?.data?.hits ? [...response.data.hits] : [];
       folders.sort((a, b) => collator.compare(a.title, b.title));
 
-      const list = folders.flatMap((item) => {
-        const name = item.name;
-        const folderIsOpen = openFolders[name];
+      const list: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = [];
+
+      // Add virtual "Shared with me" folder under the top-level "Dashboards" root.
+      // This is backed by the same search endpoint, using `folder=sharedwithme`.
+      if (parentUid === rootFolderToken && rootFolderUID === undefined) {
+        const folderIsOpen = openFolders[sharedWithMeFolderToken];
         const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
           isOpen: Boolean(folderIsOpen),
-          level: level,
+          level,
+          disabled: true, // virtual container; not a real folder UID
           item: {
             kind: 'folder' as const,
-            title: item.title,
-            // We use resource name as UID because well, not sure what metadata.uid would be used for now as you cannot
-            // query by it.
-            uid: name,
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            managedBy: item.managedBy?.kind as ManagerKind | undefined,
-            parentUID: item.folder,
+            title: t('browse-dashboards.folder-picker.shared-with-me', 'Shared with me'),
+            uid: sharedWithMeFolderToken,
+            parentUID: rootFolderToken,
           },
         };
 
-        const childResponse = folderIsOpen && state.responseByParent[name];
+        list.push(flatItem);
+
+        const childResponse = folderIsOpen && state.responseByParent[sharedWithMeFolderToken];
         if (childResponse) {
-          // If we finished loading and there are no children add to empty list
           if (
             childResponse.data &&
             childResponse.status !== QueryStatus.pending &&
             childResponse.data.hits.length === 0
           ) {
-            setEmptyFolders((prev) => new Set(prev).add(name));
+            setEmptyFolders((prev) => new Set(prev).add(sharedWithMeFolderToken));
           }
-          const childFlatItems = createFlatList(name, childResponse, level + 1);
-          return [flatItem, ...childFlatItems];
-        }
 
-        return flatItem;
-      });
+          list.push(...createFlatList(sharedWithMeFolderToken, childResponse, level + 1));
+        }
+      }
+
+      list.push(
+        ...folders.flatMap((item) => {
+          const name = item.name;
+          const folderIsOpen = openFolders[name];
+          const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
+            isOpen: Boolean(folderIsOpen),
+            level: level,
+            item: {
+              kind: 'folder' as const,
+              title: item.title,
+              // We use resource name as UID because well, not sure what metadata.uid would be used for now as you cannot
+              // query by it.
+              uid: name,
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              managedBy: item.managedBy?.kind as ManagerKind | undefined,
+              parentUID: item.folder,
+            },
+          };
+
+          const childResponse = folderIsOpen && state.responseByParent[name];
+          if (childResponse) {
+            // If we finished loading and there are no children add to empty list
+            if (
+              childResponse.data &&
+              childResponse.status !== QueryStatus.pending &&
+              childResponse.data.hits.length === 0
+            ) {
+              setEmptyFolders((prev) => new Set(prev).add(name));
+            }
+            const childFlatItems = createFlatList(name, childResponse, level + 1);
+            return [flatItem, ...childFlatItems];
+          }
+
+          return flatItem;
+        })
+      );
 
       if (!response) {
         // The pagination placeholders are what actually triggers the call to the next page. So if there is no response,
