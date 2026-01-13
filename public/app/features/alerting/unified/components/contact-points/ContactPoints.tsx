@@ -7,6 +7,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
+import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useNotificationConfigNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { isExtraConfig } from '../../utils/alertmanager/extraConfigs';
@@ -22,6 +23,11 @@ import { useContactPointsWithStatus } from './useContactPoints';
 import { useContactPointsSearch } from './useContactPointsSearch';
 import { ALL_CONTACT_POINTS, useExportContactPoint } from './useExportContactPoint';
 import { ContactPointWithMetadata } from './utils';
+
+export enum ActiveTab {
+  ContactPoints = 'contact_points',
+  NotificationTemplates = 'templates',
+}
 
 const DEFAULT_PAGE_SIZE = 10;
 

@@ -436,8 +436,8 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
 	var alertActivityChildren []*navtree.NavLink
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 			alertActivityChildren = append(alertActivityChildren, &navtree.NavLink{

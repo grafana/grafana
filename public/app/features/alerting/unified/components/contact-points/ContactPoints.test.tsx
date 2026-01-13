@@ -1,14 +1,6 @@
 import { MemoryHistoryBuildOptions } from 'history';
 import { ComponentProps, ReactNode } from 'react';
-import {
-  render,
-  screen,
-  testWithFeatureToggles,
-  userEvent,
-  waitFor,
-  waitForElementToBeRemoved,
-  within,
-} from 'test/test-utils';
+import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';

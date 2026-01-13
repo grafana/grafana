@@ -1,6 +1,6 @@
 import { produce } from 'immer';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/test-utils';
+import { render, screen, userEvent, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';

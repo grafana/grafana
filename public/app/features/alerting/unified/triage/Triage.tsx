@@ -1,4 +1,3 @@
-import { t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { withErrorBoundary } from '@grafana/ui';
 

@@ -11,7 +11,7 @@ describe('useAlertRulesNav', () => {
       id: 'alert-rules',
       text: 'Alert rules',
       url: '/alerting/list',
-      icon: 'list-ul',
+      icon: 'list-ul' as const,
     },
     'alert-rules-list': {
       id: 'alert-rules-list',

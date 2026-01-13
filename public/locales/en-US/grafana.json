@@ -938,10 +938,6 @@
       "label-search-by-name-or-type": "Search by name or type",
       "placeholder-search": "Search"
     },
-    "contact-points-page-contents": {
-      "label-contact-points": "Contact Points",
-      "label-notification-templates": "Notification Templates"
-    },
     "contact-points-tab": {
       "aria-label-add-contact-point": "add contact point",
       "aria-label-export-all": "export all",
@@ -1645,7 +1641,9 @@
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
       "monitor-status-system-tooltip": "Alerting insights provides pre-built dashboards to monitor your alerting data.",
-      "monitor-status-system-tooltip-identify": "You can identify patterns in why things go wrong and discover trends in alerting performance within your organization."
+      "monitor-status-system-tooltip-identify": "You can identify patterns in why things go wrong and discover trends in alerting performance within your organization.",
+      "not-available": "Insights are not available. Please configure the required data sources.",
+      "subtitle": "Analytics and history for alerting"
     },
     "insights-menu-button-renderer": {
       "aria-label-rate-this-panel": "Rate this panel",
@@ -1928,6 +1926,18 @@
       "select-group": "Select group",
       "select-namespace": "Select namespace"
     },
+    "navigation": {
+      "active-notifications": "Active notifications",
+      "alert-rules": "Alert rules",
+      "alert-state-history": "Alert state history",
+      "alerts": "Alerts",
+      "contact-points": "Contact points",
+      "notification-policies": "Notification policies",
+      "notification-templates": "Notification templates",
+      "recently-deleted": "Recently deleted",
+      "system-insights": "System Insights",
+      "time-intervals": "Time intervals"
+    },
     "need-help-info": {
       "need-help": "Need help?"
     },
@@ -1975,10 +1985,6 @@
     "notification-policies-list": {
       "title-error-loading-alertmanager-config": "Error loading Alertmanager config",
       "title-notification-policies-have-changed": "Notification policies have changed"
-    },
-    "notification-policies-tabs": {
-      "label-notification-policies": "Notification Policies",
-      "label-time-intervals": "Time intervals"
     },
     "notification-policy-drawer": {
       "view-notification-policy-tree": "View notification policy tree"
@@ -2044,12 +2050,6 @@
     "other-alert-managers-available": {
       "body-selected-alertmanager-not-found": "The selected Alertmanager no longer exists or you may not have permission to access it. You can select a different Alertmanager from the dropdown.",
       "title-selected-alertmanager-not-found": "Selected Alertmanager not found."
-    },
-    "pages": {
-      "triage": {
-        "subtitle": "See what is currently alerting and explore historical data to investigate current or past issues.",
-        "title": "Alerts"
-      }
     },
     "panel-alert-tab-content": {
       "alert": {
