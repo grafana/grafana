@@ -164,17 +164,15 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := logger.FromContext(ctx)
+	result := backend.NewQueryDataResponse()
 
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
-		resp := backend.NewQueryDataResponse()
 		for _, q := range req.Queries {
-			resp.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(backend.PluginError(err))
+			result.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(backend.PluginError(err))
 		}
-		return resp, nil
+		return result, nil
 	}
-
-	result := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
 		metric, err := BuildMetric(query)
