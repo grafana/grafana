@@ -24,7 +24,7 @@ For a tutorial on working with Teams, refer to [Create users and teams](https://
 
 Before you begin creating and working with Grafana Teams:
 
-- Ensure that you have `Organization Administrator` permissions. Team administrators who are not Organization Administrators cannot add or remove team members or view the team members list.
+- Ensure that you have either the `Organization Administrator` role or `team administrator` permissions.
   Refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles) and [RBAC permissions, actions, and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#rbac-permissions-actions-and-scopes) for a list of Grafana roles and role-based access control actions.
 - Decide which users belong to which teams and what permissions team members receive.
 - Configure the default basic role for users to join Grafana. This role applies to users where no role is set by the identity provider (IDP).
@@ -66,9 +66,14 @@ To create a Team, complete the following steps:
 
 ## Add a Team member
 
-Add a member to a new Team or add a team member to an existing Team when you want to provide access to team dashboards and folders to another user. This task requires that you have `Organization Administrator` permissions.
+**Note**
+>
+> In Grafana Enterprise or Grafana Cloud with RBAC enforcement enabled, adding or viewing team members requires the `org.users:read` permission, which is typically granted only to Organization Administrators.
+>
+> In Grafana OSS (unlicensed), Team Administrators may still be able to search for users and add team members due to the OSS permission evaluator fallback.
 
-**Note:** Managing team membership requires access to organization-wide user information, which requires the `org.users:read` permission. This permission is only granted to Organization Administrators.
+
+Add a member to a new Team or add a team member to an existing Team when you want to provide access to team dashboards and folders to another user.
 
 To add a team member, complete the following steps:
 
