@@ -32,6 +32,7 @@ export type AppPluginConfig = {
   path: string;
   version: string;
   preload: boolean;
+  /** @deprecated it will be removed in a future release */
   angular: AngularMeta;
   loadingStrategy: PluginLoadingStrategy;
   dependencies: PluginDependencies;

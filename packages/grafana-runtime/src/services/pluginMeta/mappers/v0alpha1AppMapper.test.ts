@@ -36,7 +36,7 @@ describe('v0alpha1AppMapper', () => {
     it('should map angular property correctly', () => {
       const result = v0alpha1AppMapper(v0alpha1Response);
 
-      expect(result[pluginId].angular).toEqual(apps[pluginId].angular);
+      expect(result[pluginId].angular).toEqual({});
     });
 
     it('should map loadingStrategy property correctly', () => {

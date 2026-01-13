@@ -11,10 +11,8 @@ import type { AppPluginMetas, AppPluginMetasMapper, PluginMetasResponse } from '
 import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
 
 function angularyMapper(spec: v0alpha1Spec): AngularMeta {
-  const detected = spec.angular?.detected ?? false;
-
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return { detected } as AngularMeta;
+  return {} as AngularMeta;
 }
 
 function dependenciesMapper(spec: v0alpha1Spec): PluginDependencies {
