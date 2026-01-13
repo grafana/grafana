@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
   applyFieldOverrides,
   DataFrame,
+  FieldConfigSource,
   GrafanaTheme2,
   PanelProps,
   transformDataFrame,
@@ -23,15 +24,22 @@ import {
   LogsFrame,
   parseLogsFrame,
 } from '../../../features/logs/logsFrame';
+import { isSetDisplayedFields } from '../logs/types';
 import { TablePanel } from '../table/TablePanel';
 import type { Options as TableOptions } from '../table/panelcfg.gen';
 
-import type { Options } from './panelcfg.gen';
+import type { Options as LogsTableOptions } from './panelcfg.gen';
+import { isOnLogsTableOptionsChange, onLogsTableOptionsChangeType } from './types';
 
-interface LogsTablePanelProps extends PanelProps<Options> {
+interface LogsTablePanelProps extends PanelProps<LogsTableOptions> {
   frameIndex?: number;
   showHeader?: boolean;
 }
+
+// keeping alias @todo remove
+//@ts-expect-error
+const a: TableOptions = {};
+console.log('a', a);
 
 const sidebarWidth = 200;
 
@@ -55,7 +63,10 @@ export const LogsTable = ({
   id,
   renderCounter,
 }: LogsTablePanelProps) => {
+  // Variables
   const dataFrame = data.series[frameIndex];
+
+  // Hooks
   const logsFrame: LogsFrame | null = useMemo(() => parseLogsFrame(dataFrame), [dataFrame]);
   const defaultDisplayedFields = useMemo(
     () => [
@@ -65,17 +76,53 @@ export const LogsTable = ({
     [logsFrame?.timeField.name, logsFrame?.bodyField.name]
   );
 
+  // State
   const [extractedFrame, setExtractedFrame] = useState<DataFrame[] | null>(null);
   const [organizedFrame, setOrganizedFrame] = useState<DataFrame[] | null>(null);
   const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? defaultDisplayedFields);
   const styles = useStyles2(getStyles, sidebarWidth, height, width);
   const dataLinksContext = useDataLinksContext();
-
-  const onTableOptionsChange = (options: TableOptions) => {
-    onOptionsChange({});
-  };
-
   const unTransformedDataFrame = data.series[frameIndex];
+
+  // Methods
+  const onLogsTableOptionsChange: onLogsTableOptionsChangeType | undefined = isOnLogsTableOptionsChange(onOptionsChange)
+    ? onOptionsChange
+    : undefined;
+
+  const setDisplayedFieldsFn = isSetDisplayedFields(options.setDisplayedFields)
+    ? options.setDisplayedFields
+    : setDisplayedFields;
+
+  const onTableOptionsChange = useCallback(
+    (options: TableOptions) => {
+      console.log('onTableOptionsChange', options);
+      onLogsTableOptionsChange?.(options);
+    },
+    [onLogsTableOptionsChange]
+  );
+
+  const handleLogsTableOptionsChange = useCallback(
+    (options: LogsTableOptions) => {
+      onOptionsChange(options);
+    },
+    [onOptionsChange]
+  );
+
+  const handleSetDisplayedFields = useCallback(
+    (displayedFields: string[]) => {
+      setDisplayedFieldsFn(displayedFields);
+      handleLogsTableOptionsChange({ ...options, displayedFields: displayedFields });
+    },
+    [handleLogsTableOptionsChange, options, setDisplayedFieldsFn]
+  );
+
+  const handleTableOnFieldConfigChange = useCallback(
+    (fieldConfig: FieldConfigSource) => {
+      console.log('onTableOnFieldConfigChange', fieldConfig);
+      onFieldConfigChange(fieldConfig);
+    },
+    [onFieldConfigChange]
+  );
 
   /**
    * Extract fields transform
@@ -91,10 +138,7 @@ export const LogsTable = ({
       setExtractedFrame(
         applyFieldOverrides({
           data: frame,
-          fieldConfig: {
-            defaults: {},
-            overrides: [],
-          },
+          fieldConfig,
           replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           theme: config.theme2,
           timeZone: timeZone,
@@ -102,7 +146,7 @@ export const LogsTable = ({
         })
       );
     });
-  }, [dataLinksContext.dataLinkPostProcessor, timeZone, unTransformedDataFrame]);
+  }, [dataLinksContext.dataLinkPostProcessor, fieldConfig, timeZone, unTransformedDataFrame]);
 
   /**
    * Organize fields transform
@@ -164,9 +208,9 @@ export const LogsTable = ({
           sidebarWidth={sidebarWidth}
           toggle={(key: string) => {
             if (displayedFields.includes(key)) {
-              setDisplayedFields(displayedFields.filter((f) => f !== key));
+              handleSetDisplayedFields(displayedFields.filter((f) => f !== key));
             } else {
-              setDisplayedFields([...displayedFields, key]);
+              handleSetDisplayedFields([...displayedFields, key]);
             }
           }}
         />
@@ -186,7 +230,7 @@ export const LogsTable = ({
           title={title}
           eventBus={eventBus}
           onOptionsChange={onTableOptionsChange}
-          onFieldConfigChange={onFieldConfigChange}
+          onFieldConfigChange={handleTableOnFieldConfigChange}
           replaceVariables={replaceVariables}
           onChangeTimeRange={onChangeTimeRange}
         />
