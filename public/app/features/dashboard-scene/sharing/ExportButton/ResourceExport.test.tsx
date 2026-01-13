@@ -58,13 +58,17 @@ const expandOptions = async () => {
 
 describe('ResourceExport', () => {
   describe('export mode options for v1 dashboard', () => {
-    it('should show all three export mode options for v1 dashboard', async () => {
+    it('should show three export mode options in correct order: Classic, V1 Resource, V2 Resource', async () => {
       render(<ResourceExport {...createDefaultProps()} />);
       await expandOptions();
 
       const radioGroup = screen.getByRole('radiogroup');
-      const radios = within(radioGroup).getAllByRole('radio');
-      expect(radios).toHaveLength(3);
+      const labels = within(radioGroup)
+        .getAllByRole('radio')
+        .map((radio) => radio.parentElement?.textContent?.trim());
+
+      expect(labels).toHaveLength(3);
+      expect(labels).toEqual(['Classic', 'V1 Resource', 'V2 Resource']);
     });
 
     it('should have first option selected by default when exportMode is Classic', async () => {
@@ -89,13 +93,17 @@ describe('ResourceExport', () => {
   });
 
   describe('export mode options for v2 dashboard', () => {
-    it('should show only two export mode options for v2 dashboard', async () => {
+    it('should show two export mode options in correct order: V2 Resource, V1 Resource', async () => {
       render(<ResourceExport {...createDefaultProps({ dashboardJson: createV2DashboardJson() })} />);
       await expandOptions();
 
       const radioGroup = screen.getByRole('radiogroup');
-      const radios = within(radioGroup).getAllByRole('radio');
-      expect(radios).toHaveLength(2);
+      const labels = within(radioGroup)
+        .getAllByRole('radio')
+        .map((radio) => radio.parentElement?.textContent?.trim());
+
+      expect(labels).toHaveLength(2);
+      expect(labels).toEqual(['V2 Resource', 'V1 Resource']);
     });
   });
 
