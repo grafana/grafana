@@ -107,6 +107,7 @@ COPY apps/investigations apps/investigations
 COPY apps/logsdrilldown apps/logsdrilldown
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
+COPY apps/dashvalidator apps/dashvalidator
 COPY apps/folder apps/folder
 COPY apps/iam apps/iam
 COPY apps apps
