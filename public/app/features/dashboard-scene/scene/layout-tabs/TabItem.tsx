@@ -232,6 +232,19 @@ export class TabItem
 
     if (isDashboardLayoutGrid(layout)) {
       layout.addGridItem(gridItem);
+    } else if (layout instanceof RowsLayoutManager) {
+      // For RowsLayoutManager, add to the first row's layout
+      const firstRow = layout.state.rows[0];
+      if (firstRow) {
+        const rowLayout = firstRow.getLayout();
+        if (isDashboardLayoutGrid(rowLayout)) {
+          rowLayout.addGridItem(gridItem);
+        } else {
+          const warningMessage = 'First row layout does not support addGridItem';
+          console.warn(warningMessage);
+          logWarning(warningMessage);
+        }
+      }
     } else {
       const warningMessage = 'Layout manager does not support addGridItem';
       console.warn(warningMessage);
