@@ -20,7 +20,7 @@ export enum SampleUnit {
 export enum SelectedView {
   TopTable = 'topTable',
   FlameGraph = 'flameGraph',
-  Both = 'both',
+  Multi = 'multi',
   CallTree = 'callTree',
 }
 

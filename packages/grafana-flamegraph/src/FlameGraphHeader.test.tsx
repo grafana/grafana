@@ -29,7 +29,7 @@ describe('FlameGraphHeader', () => {
       <FlameGraphHeader
         search={''}
         setSearch={setSearch}
-        selectedView={SelectedView.Both}
+        selectedView={SelectedView.Multi}
         setSelectedView={setSelectedView}
         viewMode={ViewMode.Split}
         setViewMode={setViewMode}

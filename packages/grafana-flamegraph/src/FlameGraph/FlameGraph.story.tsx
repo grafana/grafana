@@ -16,7 +16,7 @@ const meta: Meta<typeof FlameGraph> = {
     rangeMax: 1,
     textAlign: 'left',
     colorScheme: ColorScheme.PackageBased,
-    selectedView: SelectedView.Both,
+    selectedView: SelectedView.Multi,
     search: '',
   },
 };

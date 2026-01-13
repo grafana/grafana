@@ -87,7 +87,7 @@ const FlameGraphHeader = ({
         />
       </div>
 
-      {selectedView === SelectedView.Both && viewMode === ViewMode.Split && (
+      {selectedView === SelectedView.Multi && viewMode === ViewMode.Split && (
         <div className={styles.middleContainer}>
           <RadioButtonGroup<PaneView>
             size="sm"
@@ -131,7 +131,7 @@ const FlameGraphHeader = ({
           />
         )}
         {extraHeaderElements && <div className={styles.extraElements}>{extraHeaderElements}</div>}
-        {selectedView === SelectedView.Both ? (
+        {selectedView === SelectedView.Multi ? (
           <>
             {viewMode === ViewMode.Single && (
               <RadioButtonGroup<PaneView>
@@ -182,8 +182,8 @@ function getViewOptions(width: number, vertical?: boolean): Array<SelectableValu
 
   if (width >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH || vertical) {
     viewOptions.push({
-      value: SelectedView.Both,
-      label: 'Both',
+      value: SelectedView.Multi,
+      label: 'Multi',
       description: 'Show split or single view with multiple visualizations',
     });
   }
