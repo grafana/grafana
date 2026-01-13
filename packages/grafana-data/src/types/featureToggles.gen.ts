@@ -531,6 +531,10 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
+  * Enables the new Alerting navigation structure with improved menu grouping
+  */
+  alertingNavigationV2?: boolean;
+  /**
   * Enables saved searches for alert rules list
   */
   alertingSavedSearches?: boolean;
