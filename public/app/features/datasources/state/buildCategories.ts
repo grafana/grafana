@@ -17,6 +17,7 @@ import droneSvg from 'img/plugins/drone.svg';
 import dynatracePng from 'img/plugins/dynatrace.png';
 import gitlabSvg from 'img/plugins/gitlab.svg';
 import honeycombPng from 'img/plugins/honeycomb.png';
+import db2Svg from 'img/plugins/db2.svg';
 import jiraLogoPng from 'img/plugins/jira_logo.png';
 import logicMonitorSvg from 'img/plugins/logicmonitor.svg';
 import mongodbSvg from 'img/plugins/mongodb.svg';
@@ -417,6 +418,15 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       ),
       name: 'SolarWinds',
       imgUrl: solarWindsSvg,
+    }),
+    getPhantomPlugin({
+      id: 'grafana-db2-datasource',
+      description: t(
+        'datasources.get-enterprise-phantom-plugins.description.db2-datasource',
+        'IBM Db2 data source'
+      ),
+      name: 'Db2',
+      imgUrl: db2Svg,
     }),
   ];
 }
