@@ -68,9 +68,9 @@ To create a Team, complete the following steps:
 
 **Note**
 >
-> In Grafana Enterprise or Grafana Cloud with RBAC enforcement enabled, adding or viewing team members requires the `org.users:read` permission, which is typically granted only to Organization Administrators.
+> In Grafana Enterprise or Grafana Cloud with RBAC enforcement enabled, adding or viewing team members requires the `org.users:read` permission, which is typically granted only to `Organization Administrators`.
 >
-> In Grafana OSS (unlicensed), Team Administrators may still be able to search for users and add team members due to the OSS permission evaluator fallback.
+> In Grafana OSS (or unlicensed), `team administrators` can search for and add any user in the organization without requiring additional permission.
 
 
 Add a member to a new Team or add a team member to an existing Team when you want to provide access to team dashboards and folders to another user.
