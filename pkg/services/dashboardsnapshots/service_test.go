@@ -184,6 +184,49 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "External dashboard creation is disabled", response["message"])
 	})
+
+	t.Run("should create local snapshot", func(t *testing.T) {
+		mockService := NewMockService(t)
+		cfg := snapshot.SnapshotSharingOptions{
+			SnapshotsEnabled: true,
+		}
+		testUser := createTestUser()
+		dashboard := createTestDashboard(t)
+
+		cmd := CreateDashboardSnapshotCommand{
+			DashboardCreateCommand: snapshot.DashboardCreateCommand{
+				Dashboard: dashboard,
+				Name:      "Test Local Snapshot",
+			},
+			Key:       "local-key",
+			DeleteKey: "local-delete-key",
+		}
+
+		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
+			Return(nil)
+		mockService.On("CreateDashboardSnapshot", mock.Anything, mock.Anything).
+			Return(&DashboardSnapshot{
+				Key:       "local-key",
+				DeleteKey: "local-delete-key",
+			}, nil)
+
+		req, _ := http.NewRequest("POST", "/api/snapshots", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		ctx, recorder := createReqContext(t, req, testUser)
+
+		CreateDashboardSnapshot(ctx, cfg, cmd, mockService)
+
+		mockService.AssertExpectations(t)
+		assert.Equal(t, http.StatusOK, recorder.Code)
+
+		var response map[string]any
+		err := json.Unmarshal(recorder.Body.Bytes(), &response)
+		require.NoError(t, err)
+		assert.Equal(t, "local-key", response["key"])
+		assert.Equal(t, "local-delete-key", response["deleteKey"])
+		assert.Contains(t, response["url"], "dashboard/snapshot/local-key")
+		assert.Contains(t, response["deleteUrl"], "api/snapshots-delete/local-delete-key")
+	})
 }
 
 // TestCreateDashboardSnapshotPublic tests snapshot creation in public mode.
@@ -268,5 +311,61 @@ func TestCreateDashboardSnapshotPublic(t *testing.T) {
 		err := json.Unmarshal(recorder.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "Dashboard Snapshots are disabled", response["message"])
+	})
+}
+
+// TestDeleteExternalDashboardSnapshot tests deletion of external snapshots.
+// This function is called in public mode and doesn't require user context.
+func TestDeleteExternalDashboardSnapshot(t *testing.T) {
+	t.Run("should return nil on successful deletion", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		err := DeleteExternalDashboardSnapshot(server.URL)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should gracefully handle already deleted snapshot", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			response := map[string]any{
+				"message": "Failed to get dashboard snapshot",
+			}
+			_ = json.NewEncoder(w).Encode(response)
+		}))
+		defer server.Close()
+
+		err := DeleteExternalDashboardSnapshot(server.URL)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return error on unexpected status code", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer server.Close()
+
+		err := DeleteExternalDashboardSnapshot(server.URL)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "unexpected response when deleting external snapshot")
+		assert.Contains(t, err.Error(), "404")
+	})
+
+	t.Run("should return error on 500 with different message", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			response := map[string]any{
+				"message": "Some other error",
+			}
+			_ = json.NewEncoder(w).Encode(response)
+		}))
+		defer server.Close()
+
+		err := DeleteExternalDashboardSnapshot(server.URL)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "500")
 	})
 }
