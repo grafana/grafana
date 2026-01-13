@@ -68,7 +68,20 @@ jobs:
         run: |
           echo "deploy-name=canary" >> "$GITHUB_OUTPUT"
 
-      - name: Upload Storybook
+      - name: Log in to GCS
+        id: login-to-gcs
+        uses: grafana/shared-workflows/actions/login-to-gcs@main
+        with:
+          environment: prod
+          service_account: github-gf-storybook-deploy@grafanalabs-workload-identity.iam.gserviceaccount.com
+
+      - name: Cleanup old storybook
+        id: cleanup-old-storybook
+        run: |
+          gsutil -m rm "gs://${{ env.BUCKET_NAME }}/${{ steps.create-deploy-name.outputs.deploy-name }}/**" || echo "No existing files to delete"
+
+      - name: Upload new storybook
+        id: upload-new-storybook
         uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           environment: prod
