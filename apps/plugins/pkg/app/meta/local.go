@@ -18,7 +18,6 @@ type LocalProvider struct {
 }
 
 // NewLocalProvider creates a new LocalProvider for locally installed plugins.
-// pluginAssets is kept for backward compatibility but is no longer used.
 func NewLocalProvider(pluginStore pluginstore.Store) *LocalProvider {
 	return &LocalProvider{
 		store: pluginStore,
