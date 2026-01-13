@@ -240,7 +240,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	}
 
-	if s.encode(updateObject, &v.raw); err == nil {
+	if err = s.encode(updateObject, &v.raw); err == nil {
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
 	return v, err
