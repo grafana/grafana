@@ -781,6 +781,10 @@ export function tabItemToSaveModel(
     panels: [],
   };
 
+  if (tab.state.repeatByVariable) {
+    rowPanel.repeat = tab.state.repeatByVariable;
+  }
+
   panelsArray.push(rowPanel);
 
   // The base Y position for panels in this tab (after the row panel)
