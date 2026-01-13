@@ -31,6 +31,10 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
+	// FlagUnifiedStorageBM25Scoring
+	// Use BM25 scoring model for unified storage search indexing (instead of TF-IDF)
+	FlagUnifiedStorageBM25Scoring = "unifiedStorageBM25Scoring"
+
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"

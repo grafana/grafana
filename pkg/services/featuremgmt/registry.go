@@ -2069,6 +2069,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: false,
 		},
+		{
+			Name:            "unifiedStorageBM25Scoring",
+			Description:     "Use BM25 scoring model for unified storage search indexing (instead of TF-IDF)",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			RequiresRestart: true,
+		},
 	}
 )
 

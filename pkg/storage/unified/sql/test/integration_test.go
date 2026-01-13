@@ -133,6 +133,8 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		FileThreshold: 0,
 		Root:          t.TempDir(),
+		// TODO: enable once it's the default scoring model
+		//ScoringModel: index.BM25Scoring,
 	}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, search)
