@@ -88,7 +88,7 @@ type Alertmanager struct {
 	promoteConfig bool
 	externalURL   string
 
-	dispatchTimer string
+	runtimeConfig remoteClient.RuntimeConfig
 }
 
 type AlertmanagerConfig struct {
@@ -115,8 +115,8 @@ type AlertmanagerConfig struct {
 	// Timeout for the HTTP client.
 	Timeout time.Duration
 
-	// DispatchTimer specifies which timer to use in the dispatcher
-	DispatchTimer string
+	// RuntimeConfig specifies runtime behavior settings for the remote Alertmanager.
+	RuntimeConfig remoteClient.RuntimeConfig
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -209,7 +209,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		externalURL:   cfg.ExternalURL,
 		promoteConfig: cfg.PromoteConfig,
 		smtp:          cfg.SmtpConfig,
-		dispatchTimer: cfg.DispatchTimer,
+		runtimeConfig: cfg.RuntimeConfig,
 	}
 
 	// Parse the default configuration once and remember its hash so we can compare it later.
@@ -338,13 +338,11 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 			AlertmanagerConfig: mergeResult.Config,
 			Templates:          templates,
 		},
-		CreatedAt:   createdAtEpoch,
-		Promoted:    am.promoteConfig,
-		ExternalURL: am.externalURL,
-		SmtpConfig:  am.smtp,
-		RuntimeConfig: remoteClient.RuntimeConfig{
-			DispatchTimer: am.dispatchTimer,
-		},
+		CreatedAt:     createdAtEpoch,
+		Promoted:      am.promoteConfig,
+		ExternalURL:   am.externalURL,
+		SmtpConfig:    am.smtp,
+		RuntimeConfig: am.runtimeConfig,
 	}
 
 	cfgHash, err := calculateUserGrafanaConfigHash(payload)
