@@ -290,11 +290,13 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 
 	// Use round_robin to balance requests more evenly over the available Storage server.
 	// Enable health checking so round_robin excludes unhealthy backends (e.g., terminated pods).
-	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin","healthCheckConfig":{"serviceName":""}}`))
+	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
 
 	// Disable looking up service config from TXT DNS records.
 	// This reduces the number of requests made to the DNS servers.
 	opts = append(opts, grpc.WithDisableServiceConfig())
+
+	opts = append(opts, connectionBackoffOptions())
 
 	if clientKeepaliveTime > 0 {
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{

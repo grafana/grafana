@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -132,6 +133,8 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 			return nil, err
 		}
 
+		opts = append(opts, connectionBackoffOptions())
+
 		conn, err := grpc.NewClient(inst.Addr, opts...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to dial resource server %s %s: %s", inst.Id, inst.Addr, err)
@@ -170,4 +173,18 @@ func ringClientRetryInstrument(metric *prometheus.CounterVec) grpc.UnaryClientIn
 		}
 		return invoker(ctx, method, req, resp, cc, opts...)
 	}
+}
+
+// connectionBackoffOptions configures connection backoff parameters for faster recovery from
+// transient connection failures (e.g., during pod restarts).
+func connectionBackoffOptions() grpc.DialOption {
+	return grpc.WithConnectParams(grpc.ConnectParams{
+		Backoff: backoff.Config{
+			BaseDelay:  100 * time.Millisecond,
+			Multiplier: 1.6,
+			Jitter:     0.2,
+			MaxDelay:   10 * time.Second,
+		},
+		MinConnectTimeout: 5 * time.Second,
+	})
 }
