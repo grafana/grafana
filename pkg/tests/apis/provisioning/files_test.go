@@ -594,6 +594,156 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 	})
 }
 
+func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "readme-test-repo"
+	const readmeContent = "# Test Repository\n\nThis is a test README for the provisioning API."
+
+	// Create a repo with a README.md file
+	helper.CreateRepo(t, TestRepo{
+		Name:   repo,
+		Path:   helper.ProvisioningPath,
+		Target: "instance",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "dashboard1.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    0,
+	})
+
+	// Write README.md directly to the provisioning path
+	helper.WriteToProvisioningPath(t, "README.md", []byte(readmeContent))
+
+	t.Run("GET README.md file should succeed", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "should return 200 OK for README.md")
+
+		// Read response body
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		// Parse the response
+		var result map[string]interface{}
+		err = json.Unmarshal(body, &result)
+		require.NoError(t, err)
+
+		// Check that the response contains the file content
+		resource, ok := result["resource"].(map[string]interface{})
+		require.True(t, ok, "response should have resource field")
+
+		file, ok := resource["file"].(map[string]interface{})
+		require.True(t, ok, "resource should have file field")
+
+		content, ok := file["content"].(string)
+		require.True(t, ok, "file should have content field")
+		require.Equal(t, readmeContent, content, "content should match the README")
+	})
+
+	t.Run("GET nested README.md should succeed", func(t *testing.T) {
+		// Write a nested README.md
+		nestedReadmeContent := "# Nested Folder README\n\nThis is inside a folder."
+		helper.WriteToProvisioningPath(t, "folder/README.md", []byte(nestedReadmeContent))
+
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "should return 200 OK for nested README.md")
+
+		// Read response body
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		// Parse the response
+		var result map[string]interface{}
+		err = json.Unmarshal(body, &result)
+		require.NoError(t, err)
+
+		// Check the content
+		resource := result["resource"].(map[string]interface{})
+		file := resource["file"].(map[string]interface{})
+		content := file["content"].(string)
+		require.Equal(t, nestedReadmeContent, content, "nested README content should match")
+	})
+
+	t.Run("GET non-existent README.md should return 404", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/nonexistent/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusNotFound, resp.StatusCode, "should return 404 for non-existent README.md")
+	})
+
+	t.Run("POST README.md should be rejected", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/new-readme.md", addr, repo)
+		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBufferString("# New README"))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "text/plain")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for POST .md files")
+	})
+
+	t.Run("PUT README.md should be rejected", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodPut, url, bytes.NewBufferString("# Updated README"))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "text/plain")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for PUT .md files")
+	})
+
+	t.Run("DELETE README.md should be rejected", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "should return 400 for DELETE .md files")
+	})
+
+	t.Run("viewer can GET README.md", func(t *testing.T) {
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/README.md", addr, repo)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "viewer should be able to GET README.md")
+	})
+}
+
 func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
