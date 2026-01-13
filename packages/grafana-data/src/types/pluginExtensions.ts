@@ -28,7 +28,7 @@ export type PluginExtensionLink = PluginExtensionBase & {
   type: PluginExtensionTypes.link;
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
-  icon?: IconName;
+  icon?: IconName | React.ReactNode;
   category?: string;
   openInNewTab?: boolean;
 };
@@ -106,7 +106,7 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       description: string;
       path: string;
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-      icon: IconName;
+      icon: IconName | React.ReactNode;
       category: string;
       openInNewTab: boolean;
     }>
@@ -136,7 +136,7 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   configure?: PluginAddedLinksConfigureFunc<Context>;
 
   // (Optional) A icon that can be displayed in the ui for the extension option.
-  icon?: IconName;
+  icon?: IconName | React.ReactNode;
 
   // (Optional) A category to be used when grouping the options in the ui
   category?: string;
