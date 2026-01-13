@@ -1253,21 +1253,23 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		queryExact.SetField(resource.SEARCH_FIELD_TITLE)
 		queryExact.Analyzer = keyword.Name                // don't analyze the query input - treat it as a single token
 		queryExact.Operator = query.MatchQueryOperatorAnd // This doesn't make a difference for keyword analyzer, we add it just to be explicit.
+		searchQuery := bleve.NewDisjunctionQuery(queryExact)
 
 		// Query 2: Phrase query with standard analyzer
 		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
 		queryPhrase.SetBoost(5.0)
 		queryPhrase.SetField(resource.SEARCH_FIELD_TITLE)
 		queryPhrase.Analyzer = standard.Name
+		searchQuery.AddQuery(queryPhrase)
 
 		// Query 3: Match query with standard analyzer
 		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
 		queryAnalyzed.SetField(resource.SEARCH_FIELD_TITLE)
+		queryAnalyzed.SetBoost(2.0)
 		queryAnalyzed.Analyzer = standard.Name
 		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
+		searchQuery.AddQuery(queryAnalyzed)
 
-		// At least one of the queries must match
-		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
 		queries = append(queries, searchQuery)
 	}
 

@@ -134,6 +134,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'LegendLabelCell',
       maxWidth: 0,
       width: '100%',
+      minWidth: theme.spacing(16),
     }),
     labelCellInner: css({
       label: 'LegendLabelCellInner',
