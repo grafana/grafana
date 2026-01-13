@@ -632,12 +632,30 @@ To access the variables creation flow this way, follow these steps:
 1. Click **Variables** in the outline.
 1. Click **+ Add variable**.
 1. Complete the rest of the steps to [add a variable without leaving the dashboard](#add-variables).
-## Copy and paste dashboard elements
 
-You can copy and paste panels, rows, and tabs.
+## Copy or duplicate dashboard elements
 
+You can copy and paste or duplicate panels, rows, and tabs.
 
-## Duplicate dashboard elements
+To copy or duplicate dashboard elements, follow these steps:
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click the panel, row, or tab you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
+
+   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+
+1. In the top-corner of the edit pane, click the **Copy or Duplicate** icon and do one of the following:
+   - Click **Copy**.
+   - Click **Duplicate**. The duplicated element is added next to the original one. Proceed to step 6.
+
+1. If you selected **Copy**, navigate to the part of the dashboard where you want to add the copied element, and click **Paste panel**, **Paste row**, or **Paste tab**.
+1. Update the copied or duplicated element if needed.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**
+
 ## Copy a dashboard
 
 To make a copy of a dashboard, follow these steps:
