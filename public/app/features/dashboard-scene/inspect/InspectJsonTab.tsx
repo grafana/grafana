@@ -8,6 +8,7 @@ import {
   SceneDataTransformer,
   sceneGraph,
   SceneGridItemStateLike,
+  SceneGridLayout,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -126,6 +127,12 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     }
 
     panel.parent.setState(newState);
+
+    // Force the grid layout to re-render with the new positions
+    const layout = sceneGraph.getLayout(panel);
+    if (layout instanceof SceneGridLayout) {
+      layout.forceRender();
+    }
 
     //Report relevant updates
     reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
