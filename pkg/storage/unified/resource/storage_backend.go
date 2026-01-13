@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -22,6 +23,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
 
@@ -68,6 +71,8 @@ type kvStorageBackend struct {
 	withExperimentalClusterScope bool
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
+
+	rvManager *rvmanager.ResourceVersionManager
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -85,6 +90,10 @@ type KVBackendOptions struct {
 	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
 	Tracer                       trace.Tracer          // TODO add tracing
 	Reg                          prometheus.Registerer // TODO add metrics
+
+	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
+	// unified/sql
+	RvManager *rvmanager.ResourceVersionManager
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
@@ -119,6 +128,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
 		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
+		rvManager:                    opts.RvManager,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -317,9 +327,32 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Action:          action,
 		Folder:          obj.GetFolder(),
 	}
-	err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value))
-	if err != nil {
-		return 0, fmt.Errorf("failed to write data: %w", err)
+
+	if k.rvManager != nil {
+		dataKey.GUID = uuid.New().String()
+		var err error
+		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
+			if err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
+				return "", fmt.Errorf("failed to write data: %w", err)
+			}
+
+			if err := k.dataStore.applyBackwardsCompatibleChanges(ctx, tx, event, dataKey); err != nil {
+				return "", fmt.Errorf("failed to apply backwards compatible updates: %w", err)
+			}
+
+			return dataKey.GUID, nil
+		})
+		if err != nil {
+			return 0, fmt.Errorf("failed to write data: %w", err)
+		}
+
+		rv = rvmanager.SnowflakeFromRv(rv)
+		dataKey.ResourceVersion = rv
+	} else {
+		err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value))
+		if err != nil {
+			return 0, fmt.Errorf("failed to write data: %w", err)
+		}
 	}
 
 	// Optimistic concurrency control to verify our write is the latest version
@@ -340,13 +373,13 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		}
 
 		// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
-		if latestKey.ResourceVersion != rv {
+		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
 		}
 
-		if prevKey.ResourceVersion != event.PreviousRV {
+		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
 			// Another concurrent write happened between our read and write
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
@@ -366,7 +399,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		}
 
 		// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
-		if latestKey.ResourceVersion != rv {
+		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
@@ -386,12 +419,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
 		Name:            event.Key.Name,
-		ResourceVersion: rv,
+		ResourceVersion: dataKey.ResourceVersion,
 		Action:          action,
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
 	}
-	err = k.eventStore.Save(ctx, eventData)
+	err := k.eventStore.Save(ctx, eventData)
 	if err != nil {
 		// Clean up the data we wrote since event save failed
 		_ = k.dataStore.Delete(ctx, dataKey)

@@ -140,7 +140,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const dashboard: Dashboard = {
     ...defaultDashboard,
     title: state.title,
-    description: state.description || undefined,
+    description: state.description,
     uid: state.uid,
     id: state.id,
     editable: state.editable,

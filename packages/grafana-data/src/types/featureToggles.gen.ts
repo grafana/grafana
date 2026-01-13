@@ -126,11 +126,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Writes error logs to the request logger
-  * @default true
-  */
-  unifiedRequestLog?: boolean;
-  /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
   */
   renderAuthJWT?: boolean;
@@ -211,6 +206,10 @@ export interface FeatureToggles {
   * Enables rendering retries for the reporting feature
   */
   reportingRetries?: boolean;
+  /**
+  * Enables CSV encoding options in the reporting feature
+  */
+  reportingCsvEncodingOptions?: boolean;
   /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
@@ -361,10 +360,6 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Use the v2 kubernetes API in the frontend for dashboards
-  */
-  kubernetesDashboardsV2?: boolean;
-  /**
   * Enables undo/redo in dynamic dashboards
   */
   dashboardUndoRedo?: boolean;
@@ -409,10 +404,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Use the kubernetes API for feature toggle management in the frontend
-  */
-  kubernetesFeatureToggles?: boolean;
-  /**
   * Enabled grafana cloud specific RBAC roles
   */
   cloudRBACRoles?: boolean;
@@ -425,6 +416,10 @@ export interface FeatureToggles {
   * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
+  /**
+  * Enable audit logging with Kubernetes under app platform
+  */
+  auditLoggingAppPlatform?: boolean;
   /**
   * Enable the secrets management API and services under app platform
   */
@@ -532,13 +527,13 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
-  * Sets the logs table as default visualisation in logs explore
-  */
-  logsExploreTableDefaultVisualization?: boolean;
-  /**
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables saved searches for alert rules list
+  */
+  alertingSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
@@ -627,10 +622,6 @@ export interface FeatureToggles {
   */
   exploreLogsAggregatedMetrics?: boolean;
   /**
-  * Used in Logs Drilldown to limit the time range
-  */
-  exploreLogsLimitedTimeRange?: boolean;
-  /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
   appPlatformGrpcClientAuth?: boolean;
@@ -657,14 +648,6 @@ export interface FeatureToggles {
   * Enables the new role picker drawer design
   */
   rolePickerDrawer?: boolean;
-  /**
-  * Enable unified storage search
-  */
-  unifiedStorageSearch?: boolean;
-  /**
-  * Enable sprinkles on unified storage search
-  */
-  unifiedStorageSearchSprinkles?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -703,10 +686,6 @@ export interface FeatureToggles {
   * Enable passwordless login via magic link authentication
   */
   passwordlessMagicLinkAuthentication?: boolean;
-  /**
-  * Display Related Logs in Grafana Metrics Drilldown
-  */
-  exploreMetricsRelatedLogs?: boolean;
   /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   */
@@ -783,19 +762,10 @@ export interface FeatureToggles {
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
-  * Displays the navigation history so the user can navigate back to previous pages
-  */
-  unifiedHistory?: boolean;
-  /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
   */
   lokiLabelNamesQueryApi?: boolean;
-  /**
-  * Enable the investigations backend API
-  * @default false
-  */
-  investigationsBackend?: boolean;
   /**
   * Enable folder's api server counts
   * @default false
@@ -967,7 +937,8 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Registers AuthZ /apis endpoint
+  * Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
+  * @deprecated
   */
   kubernetesAuthzApis?: boolean;
   /**
@@ -982,6 +953,18 @@ export interface FeatureToggles {
   * Enable sync of Zanzana authorization store on AuthZ CRD mutations
   */
   kubernetesAuthzZanzanaSync?: boolean;
+  /**
+  * Registers AuthZ Core Roles /apis endpoint
+  */
+  kubernetesAuthzCoreRolesApi?: boolean;
+  /**
+  * Registers AuthZ Roles /apis endpoint
+  */
+  kubernetesAuthzRolesApi?: boolean;
+  /**
+  * Registers AuthZ Role Bindings /apis endpoint
+  */
+  kubernetesAuthzRoleBindingsApi?: boolean;
   /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
@@ -1000,6 +983,11 @@ export interface FeatureToggles {
   * @default false
   */
   recentlyViewedDashboards?: boolean;
+  /**
+  * A/A test for recently viewed dashboards feature
+  * @default false
+  */
+  experimentRecentlyViewedDashboards?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
@@ -1134,11 +1122,6 @@ export interface FeatureToggles {
   */
   pluginContainers?: boolean;
   /**
-  * Run search queries through the tempo backend
-  * @default false
-  */
-  tempoSearchBackendMigration?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
@@ -1198,6 +1181,11 @@ export interface FeatureToggles {
   */
   onlyStoreActionSets?: boolean;
   /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
+  /**
   * Enables a new panel time settings drawer
   */
   panelTimeSettings?: boolean;
@@ -1251,4 +1239,16 @@ export interface FeatureToggles {
   * Enables support for variables whose values can have multiple properties
   */
   multiPropsVariables?: boolean;
+  /**
+  * Enables the ASAP smoothing transformation for time series data
+  */
+  smoothingTransformation?: boolean;
+  /**
+  * Enables the creation of keepers that manage secrets stored on AWS secrets manager
+  */
+  secretsManagementAppPlatformAwsKeeper?: boolean;
+  /**
+  * Enables profiles exemplars support in profiles drilldown
+  */
+  profilesExemplars?: boolean;
 }

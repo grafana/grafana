@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/extensions"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -149,10 +150,19 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				}
 			}
 
-			assert.ElementsMatch(collect, []provisioning.RepositoryType{
-				provisioning.LocalRepositoryType,
-				provisioning.GitHubRepositoryType,
-			}, settings.AvailableRepositoryTypes)
+			if extensions.IsEnterprise {
+				assert.ElementsMatch(collect, []provisioning.RepositoryType{
+					provisioning.LocalRepositoryType,
+					provisioning.GitHubRepositoryType,
+					provisioning.BitbucketRepositoryType,
+					provisioning.GitLabRepositoryType,
+				}, settings.AvailableRepositoryTypes)
+			} else {
+				assert.ElementsMatch(collect, []provisioning.RepositoryType{
+					provisioning.LocalRepositoryType,
+					provisioning.GitHubRepositoryType,
+				}, settings.AvailableRepositoryTypes)
+			}
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 	})
 
@@ -578,7 +588,13 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 	const targetPath = "all-panels.json"
 
 	// Set up the repository.
-	helper.CreateRepo(t, TestRepo{Name: repo})
+	helper.CreateRepo(t, TestRepo{
+		Name:                   repo,
+		Target:                 "folder",
+		ExpectedDashboards:     0,
+		ExpectedFolders:        1, // folder sync creates a folder for the repo
+		SkipResourceAssertions: false,
+	})
 
 	// Write a file -- this will create it *both* in the local file system, and in grafana
 	t.Run("write all panels", func(t *testing.T) {
@@ -744,10 +760,10 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// Set up the repository and the file to import.
 	testRepo := TestRepo{
 		Name:               repo,
-		Target:             "instance",
+		Target:             "folder",
 		Copies:             map[string]string{"testdata/all-panels.json": "all-panels.json"},
 		ExpectedDashboards: 1,
-		ExpectedFolders:    0,
+		ExpectedFolders:    1, // folder sync creates a folder
 	}
 	// We create the repository
 	helper.CreateRepo(t, testRepo)
@@ -948,5 +964,68 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 
 		require.NoError(t, result.Error(), "admin should be able to POST jobs")
 		require.Equal(t, http.StatusAccepted, statusCode, "should return 202 Accepted")
+	})
+}
+
+func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "refs-permissions-test"
+	testRepo := TestRepo{
+		Name:               repo,
+		Template:           "testdata/github-readonly.json.tmpl",
+		Target:             "folder",
+		ExpectedDashboards: 3,
+		ExpectedFolders:    3, // Repository creates folders
+	}
+	helper.CreateRepo(t, testRepo)
+
+	t.Run("editor can GET refs", func(t *testing.T) {
+		var statusCode int
+		result := helper.EditorREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("refs").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.NoError(t, result.Error(), "editor should be able to GET refs")
+		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+		// Verify we can parse the refs and it contains at least main branch
+		refs := &provisioning.RefList{}
+		err := result.Into(refs)
+		require.NoError(t, err, "should parse refs response")
+		require.NotEmpty(t, refs.Items, "should have at least one ref")
+	})
+
+	t.Run("viewer cannot GET refs", func(t *testing.T) {
+		var statusCode int
+		result := helper.ViewerREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("refs").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.Error(t, result.Error(), "viewer should not be able to GET refs")
+		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+		require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
+	})
+
+	t.Run("admin can GET refs", func(t *testing.T) {
+		var statusCode int
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("refs").
+			Do(ctx).StatusCode(&statusCode)
+
+		require.NoError(t, result.Error(), "admin should be able to GET refs")
+		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 	})
 }

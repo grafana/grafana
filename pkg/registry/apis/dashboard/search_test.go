@@ -507,6 +507,15 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 							[]byte("publicfolder"), // folder uid
 						},
 					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "sharedfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
 				},
 			},
 		}
@@ -550,6 +559,15 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 							[]byte("privatefolder"), // folder uid
 						},
 					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "sharedfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
 				},
 			},
 		}
@@ -571,6 +589,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		allPermissions := make(map[int64]map[string][]string)
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
+		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:sharedfolder"}
 		allPermissions[1] = permissions
 		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
@@ -581,14 +600,19 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// first call gets all dashboards user has permission for
 		firstCall := mockClient.MockCalls[0]
-		assert.Equal(t, firstCall.Options.Fields[0].Values, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder"})
+		assert.Equal(t, firstCall.Options.Fields[0].Values, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"})
+		// verify federated field is set to include folders
+		assert.NotNil(t, firstCall.Federated)
+		assert.Equal(t, 1, len(firstCall.Federated))
+		assert.Equal(t, "folder.grafana.app", firstCall.Federated[0].Group)
+		assert.Equal(t, "folders", firstCall.Federated[0].Resource)
 		// second call gets folders associated with the previous dashboards
 		secondCall := mockClient.MockCalls[1]
 		assert.Equal(t, secondCall.Options.Fields[0].Values, []string{"privatefolder", "publicfolder"})
-		// lastly, search ONLY for dashboards user has permission to read that are within folders the user does NOT have
+		// lastly, search ONLY for dashboards and folders user has permission to read that are within folders the user does NOT have
 		// permission to read
 		thirdCall := mockClient.MockCalls[2]
-		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder"})
+		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder", "sharedfolder"})
 
 		resp := rr.Result()
 		defer func() {
@@ -814,6 +838,38 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 					"tags":   {Field: "tags", Limit: 50},
 					"folder": {Field: "folder", Limit: 50},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields with custom limit": {
+			queryString: "facet=tags&facetLimit=500",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 500},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields with limit exceeding max": {
+			queryString: "facet=tags&facetLimit=5000",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 1000},
 				},
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},

@@ -14,13 +14,12 @@ export interface Props {
 }
 
 export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
-  // skip rendering if:
-  // folder is not present
-  // folder have parentUID
-  // folder is not managed
-  // if whole instance is provisioned
-  const isProvisionedInstance = useIsProvisionedInstance();
-  const skipRender = getShouldSkipRender(folder, isProvisionedInstance);
+  // Check if we can skip early without needing the useIsProvisionedInstance query
+  // This reduces RTK Query subscriptions and prevents re-render loops on API errors
+  const canSkipEarly = getCanSkipEarly(folder);
+
+  const isProvisionedInstance = useIsProvisionedInstance({ skip: canSkipEarly });
+  const skipRender = canSkipEarly || isProvisionedInstance;
 
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
@@ -51,11 +50,19 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   );
 });
 
-function getShouldSkipRender(folder: FolderDTO | DashboardViewItem | undefined, isProvisionedInstance?: boolean) {
-  // Skip render if parentUID is present, then we should skip rendering. we only display icon for root folders
-  const hasParent = folder && Boolean('parentUID' in folder && folder.parentUID);
-  // Skip render if folder is not managed by Repo
-  const isNotManaged = folder && folder.managedBy !== ManagerKind.Repo;
-
-  return !folder || hasParent || isNotManaged || isProvisionedInstance;
+// Check conditions that don't require the useIsProvisionedInstance hook
+function getCanSkipEarly(folder: FolderDTO | DashboardViewItem | undefined): boolean {
+  if (!folder) {
+    return true;
+  }
+  // Skip render if parentUID is present - we only display icon for root folders
+  const hasParent = Boolean('parentUID' in folder && folder.parentUID);
+  if (hasParent) {
+    return true;
+  }
+  const isNotManaged = folder.managedBy !== ManagerKind.Repo;
+  if (isNotManaged) {
+    return true;
+  }
+  return false;
 }

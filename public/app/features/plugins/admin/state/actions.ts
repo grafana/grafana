@@ -3,7 +3,6 @@ import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
 import { PanelPlugin, PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Settings } from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types/store';
 
@@ -13,6 +12,7 @@ import {
   getPluginErrors,
   getLocalPlugins,
   getPluginDetails,
+  getPluginInsights,
   installPlugin,
   uninstallPlugin,
   getInstancePlugins,
@@ -165,6 +165,22 @@ export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, stri
   }
 );
 
+export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string>, { id: string; version?: string }>(
+  `${STATE_PREFIX}/fetchPluginInsights`,
+  async ({ id, version }, thunkApi) => {
+    try {
+      const insights = await getPluginInsights(id, version);
+
+      return {
+        id,
+        changes: { insights },
+      };
+    } catch (e) {
+      return thunkApi.rejectWithValue('Unknown error.');
+    }
+  }
+);
+
 export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
 
 // 1. gets remote equivalents from the store (if there are any)
@@ -265,7 +281,8 @@ export const panelPluginLoaded = createAction<PanelPlugin>(`${STATE_PREFIX}/pane
 // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
 export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> => {
   return async (dispatch, getStore) => {
-    let plugin = getStore().plugins.panels[id];
+    const state = getStore();
+    let plugin = state.plugins.panels[id];
 
     if (!plugin) {
       plugin = await importPanelPlugin(id);
@@ -283,7 +300,7 @@ export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> =
 function updatePanels() {
   return getBackendSrv()
     .get('/api/frontend/settings')
-    .then((settings: Settings) => {
+    .then((settings) => {
       config.panels = settings.panels;
     });
 }

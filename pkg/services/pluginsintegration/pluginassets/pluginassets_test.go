@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService_Calculate(t *testing.T) {
@@ -31,7 +30,7 @@ func TestService_Calculate(t *testing.T) {
 
 	tcs := []struct {
 		name           string
-		pluginSettings setting.PluginSettings
+		pluginSettings config.PluginSettings
 		plugin         pluginstore.Plugin
 		expected       plugins.LoadingStrategy
 	}{
@@ -81,7 +80,7 @@ func TestService_Calculate(t *testing.T) {
 		},
 		{
 			name: "Expected LoadingStrategyFetch when parent create-plugin version is not set, is configured as CDN enabled and plugin is not angular",
-			pluginSettings: setting.PluginSettings{
+			pluginSettings: config.PluginSettings{
 				"parent-datasource": {
 					"cdn": "true",
 				},
@@ -94,7 +93,7 @@ func TestService_Calculate(t *testing.T) {
 		},
 		{
 			name: "Expected LoadingStrategyFetch when parent create-plugin version is not set, is configured as CDN enabled and plugin is angular",
-			pluginSettings: setting.PluginSettings{
+			pluginSettings: config.PluginSettings{
 				"parent-datasource": {
 					"cdn": "true",
 				},
@@ -107,7 +106,7 @@ func TestService_Calculate(t *testing.T) {
 		},
 		{
 			name:           "Expected LoadingStrategyFetch when parent create-plugin version is not set, is not configured as CDN enabled and plugin is angular",
-			pluginSettings: setting.PluginSettings{},
+			pluginSettings: config.PluginSettings{},
 			plugin: newPlugin(pluginID, withAngular(true), withFS(plugins.NewFakeFS()), func(p pluginstore.Plugin) pluginstore.Plugin {
 				p.Parent = &pluginstore.ParentPlugin{ID: "parent-datasource"}
 				return p
@@ -375,9 +374,9 @@ func TestService_ModuleHash(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			var pluginSettings setting.PluginSettings
+			var pluginSettings config.PluginSettings
 			if tc.cdn {
-				pluginSettings = setting.PluginSettings{
+				pluginSettings = config.PluginSettings{
 					pluginID: {
 						"cdn": "true",
 					},
@@ -412,7 +411,7 @@ func TestService_ModuleHash(t *testing.T) {
 
 func TestService_ModuleHash_Cache(t *testing.T) {
 	pCfg := &config.PluginManagementCfg{
-		PluginSettings: setting.PluginSettings{},
+		PluginSettings: config.PluginSettings{},
 		Features:       config.Features{SriChecksEnabled: true},
 	}
 	svc := ProvideService(
@@ -448,7 +447,7 @@ func TestService_ModuleHash_Cache(t *testing.T) {
 
 		pCfg = &config.PluginManagementCfg{
 			PluginsCDNURLTemplate: "https://cdn.grafana.com",
-			PluginSettings: setting.PluginSettings{
+			PluginSettings: config.PluginSettings{
 				pluginID: {
 					"cdn": "true",
 				},
@@ -577,14 +576,14 @@ func withClass(class plugins.Class) func(p pluginstore.Plugin) pluginstore.Plugi
 	}
 }
 
-func newCfg(ps setting.PluginSettings) *config.PluginManagementCfg {
+func newCfg(ps config.PluginSettings) *config.PluginManagementCfg {
 	return &config.PluginManagementCfg{
 		PluginSettings: ps,
 	}
 }
 
-func newPluginSettings(pluginID string, kv map[string]string) setting.PluginSettings {
-	return setting.PluginSettings{
+func newPluginSettings(pluginID string, kv map[string]string) config.PluginSettings {
+	return config.PluginSettings{
 		pluginID: kv,
 	}
 }

@@ -205,20 +205,3 @@ func (s *SocialOkta) getGroups(data *OktaUserInfoJson) []string {
 	}
 	return groups
 }
-
-// TODO: remove this in a separate PR and use the isGroupMember from the social.go
-func (s *SocialOkta) isGroupMember(groups []string) bool {
-	if len(s.info.AllowedGroups) == 0 {
-		return true
-	}
-
-	for _, allowedGroup := range s.info.AllowedGroups {
-		for _, group := range groups {
-			if group == allowedGroup {
-				return true
-			}
-		}
-	}
-
-	return false
-}
