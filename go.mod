@@ -38,6 +38,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.225.2 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/sts v1.39.1 // indirect; @grafana/grafana-operator-experience-squad
 	github.com/aws/smithy-go v1.23.2 // @grafana/aws-datasources
 	github.com/beevik/etree v1.4.1 // @grafana/grafana-backend-group
@@ -112,6 +113,7 @@ require (
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f // @grafana/observability-traces-and-profiling
+	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // @grafana/grafana-backend-group
@@ -653,10 +655,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
-
-require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
-
-require github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7 // @grafana/grafana-operator-experience-squad
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
