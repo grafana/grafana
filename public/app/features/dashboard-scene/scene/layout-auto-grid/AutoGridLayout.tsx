@@ -4,6 +4,7 @@ import { SceneLayout, SceneObjectBase, SceneObjectState, VizPanel, SceneGridItem
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';
+import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutRenderer } from './AutoGridLayoutRenderer';
@@ -229,11 +230,11 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     const dropTargetGridItemKey = document
       .elementsFromPoint(evt.clientX, evt.clientY)
       ?.find((element) => {
-        const key = element.getAttribute('data-auto-grid-item-drop-target');
+        const key = element.getAttribute(AUTO_GRID_ITEM_DROP_TARGET_ATTR);
 
         return !!key && key !== this._draggedGridItem!.state.key;
       })
-      ?.getAttribute('data-auto-grid-item-drop-target');
+      ?.getAttribute(AUTO_GRID_ITEM_DROP_TARGET_ATTR);
 
     if (dropTargetGridItemKey && dropTargetGridItemKey !== this._lastDropTargetGridItemKey) {
       this._onDragOverItem(dropTargetGridItemKey);

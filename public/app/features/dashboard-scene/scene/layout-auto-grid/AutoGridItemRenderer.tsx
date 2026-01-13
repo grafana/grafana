@@ -9,8 +9,9 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
-import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
+import { useSoloPanelContext, renderMatchingSoloPanels } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
+import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
@@ -53,7 +54,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
-                ? { ref: model.containerRef, ['data-auto-grid-item-drop-target']: showDropTarget ? key : undefined }
+                ? { ref: model.containerRef, [AUTO_GRID_ITEM_DROP_TARGET_ATTR]: showDropTarget ? key : undefined }
                 : {})}
               className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
             >

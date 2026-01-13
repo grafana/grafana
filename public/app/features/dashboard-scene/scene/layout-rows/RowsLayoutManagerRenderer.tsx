@@ -12,6 +12,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, getLayoutOrchestratorFor } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { RowItem } from './RowItem';
 import { RowItemRepeater } from './RowItemRepeater';
@@ -74,7 +75,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
             className={styles.wrapper}
             ref={dropProvided.innerRef}
             {...dropProvided.droppableProps}
-            {...(showAsDropTarget ? { 'data-dashboard-drop-target-key': key } : {})}
+            {...(showAsDropTarget ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: key } : {})}
           >
             {rows.map((row) => (
               <RowWrapper row={row} manager={model} key={row.state.key!} />

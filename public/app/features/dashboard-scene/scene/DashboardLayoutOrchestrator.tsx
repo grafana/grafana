@@ -21,7 +21,12 @@ import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
-import { DashboardDropTarget, isDashboardDropTarget } from './types/DashboardDropTarget';
+import {
+  AUTO_GRID_ITEM_DROP_TARGET_ATTR,
+  DASHBOARD_DROP_TARGET_KEY_ATTR,
+  DashboardDropTarget,
+  isDashboardDropTarget,
+} from './types/DashboardDropTarget';
 
 const TAB_ACTIVATION_DELAY_MS = 600;
 
@@ -389,8 +394,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   private _captureRowDimensions(row: RowItem): void {
-    // Try to find the DOM element for the row using data-dashboard-drop-target-key
-    const element = document.querySelector(`[data-dashboard-drop-target-key="${row.state.key}"]`);
+    // Try to find the DOM element for the row using DASHBOARD_DROP_TARGET_KEY_ATTR
+    const element = document.querySelector(`[${DASHBOARD_DROP_TARGET_KEY_ATTR}="${row.state.key}"]`);
     if (element) {
       const rect = element.getBoundingClientRect();
       this._previewWidth = rect.width;
@@ -405,7 +410,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   private _captureRowDragOffset(cursorX: number, cursorY: number, row: RowItem): void {
     // Try to find the DOM element for the row
-    const element = document.querySelector(`[data-dashboard-drop-target-key="${row.state.key}"]`);
+    const element = document.querySelector(`[${DASHBOARD_DROP_TARGET_KEY_ATTR}="${row.state.key}"]`);
     if (element) {
       const rect = element.getBoundingClientRect();
       this._dragOffsetX = cursorX - rect.left;
@@ -594,8 +599,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     // Find which AutoGridItem we're hovering over
     const elementsUnderPoint = document.elementsFromPoint(clientX, clientY);
-    const targetElement = elementsUnderPoint?.find((el) => el.getAttribute('data-auto-grid-item-drop-target'));
-    const targetKey = targetElement?.getAttribute('data-auto-grid-item-drop-target');
+    const targetElement = elementsUnderPoint?.find((el) => el.getAttribute(AUTO_GRID_ITEM_DROP_TARGET_ATTR));
+    const targetKey = targetElement?.getAttribute(AUTO_GRID_ITEM_DROP_TARGET_ATTR);
 
     const children = dropTarget.state.layout.state.children;
 
@@ -658,7 +663,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _getDropTargetUnderMouse(evt: MouseEvent): DashboardDropTarget | null {
     const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
     const cursorIsInSourceTarget = elementsUnderPoint.some(
-      (el) => el.getAttribute('data-dashboard-drop-target-key') === this._sourceDropTarget?.state.key
+      (el) => el.getAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR) === this._sourceDropTarget?.state.key
     );
 
     if (cursorIsInSourceTarget) {
@@ -666,8 +671,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
 
     const key = elementsUnderPoint
-      ?.find((element) => element.getAttribute('data-dashboard-drop-target-key'))
-      ?.getAttribute('data-dashboard-drop-target-key');
+      ?.find((element) => element.getAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR))
+      ?.getAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR);
 
     if (!key) {
       return null;

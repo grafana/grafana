@@ -9,6 +9,7 @@ import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { AutoGridLayout, AutoGridLayoutState } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
@@ -57,7 +58,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     <div
       className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
       ref={model.containerRef}
-      data-dashboard-drop-target-key={layoutManager.state.key}
+      {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: layoutManager.state.key }}
     >
       {renderChildren()}
       {showCanvasActions && <CanvasGridAddActions layoutManager={layoutManager} />}
