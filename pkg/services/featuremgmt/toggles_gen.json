@@ -1367,6 +1367,21 @@
     },
     {
       "metadata": {
+        "name": "experimentRecentlyViewedDashboards",
+        "resourceVersion": "1768214542023",
+        "creationTimestamp": "2026-01-12T10:42:22Z"
+      },
+      "spec": {
+        "description": "A/A test for recently viewed dashboards feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "exploreLogsAggregatedMetrics",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-08-29T13:55:59Z"
@@ -1382,7 +1397,8 @@
       "metadata": {
         "name": "exploreLogsLimitedTimeRange",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-08-29T13:55:59Z"
+        "creationTimestamp": "2024-08-29T13:55:59Z",
+        "deletionTimestamp": "2026-01-12T22:18:14Z"
       },
       "spec": {
         "description": "Used in Logs Drilldown to limit the time range",
@@ -1408,7 +1424,8 @@
       "metadata": {
         "name": "exploreMetricsRelatedLogs",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-11-05T16:28:43Z"
+        "creationTimestamp": "2024-11-05T16:28:43Z",
+        "deletionTimestamp": "2026-01-09T22:14:53Z"
       },
       "spec": {
         "description": "Display Related Logs in Grafana Metrics Drilldown",
@@ -1951,11 +1968,27 @@
     {
       "metadata": {
         "name": "kubernetesAuthzApis",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-06-18T07:43:01Z"
+        "resourceVersion": "1767954559317",
+        "creationTimestamp": "2025-06-18T07:43:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-09 10:29:19.317164 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Registers AuthZ /apis endpoint",
+        "description": "Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead",
+        "stage": "deprecated",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzCoreRolesApi",
+        "resourceVersion": "1767954459090",
+        "creationTimestamp": "2026-01-09T10:27:39Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ Core Roles /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
@@ -1970,6 +2003,32 @@
       },
       "spec": {
         "description": "Registers AuthZ resource permission /apis endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzRoleBindingsApi",
+        "resourceVersion": "1767954459090",
+        "creationTimestamp": "2026-01-09T10:27:39Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ Role Bindings /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzRolesApi",
+        "resourceVersion": "1767954459090",
+        "creationTimestamp": "2026-01-09T10:27:39Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ Roles /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
@@ -2163,13 +2222,16 @@
     {
       "metadata": {
         "name": "logQLScope",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-11-11T11:53:24Z"
+        "resourceVersion": "1768317398145",
+        "creationTimestamp": "2024-11-11T11:53:24Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-13 15:16:38.145488 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into loki queries.",
         "stage": "privatePreview",
-        "codeowner": "@grafana/observability-logs",
+        "codeowner": "@grafana/oss-big-tent",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2204,7 +2266,8 @@
       "metadata": {
         "name": "logsExploreTableDefaultVisualization",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-05-02T15:28:15Z"
+        "creationTimestamp": "2024-05-02T15:28:15Z",
+        "deletionTimestamp": "2026-01-12T14:11:46Z"
       },
       "spec": {
         "description": "Sets the logs table as default visualisation in logs explore",
@@ -2244,38 +2307,47 @@
     {
       "metadata": {
         "name": "lokiExperimentalStreaming",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-06-19T10:03:51Z"
+        "resourceVersion": "1768317398145",
+        "creationTimestamp": "2023-06-19T10:03:51Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-13 15:16:38.145488 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Support new streaming approach for loki (prototype, needs special loki build)",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-logs"
+        "codeowner": "@grafana/oss-big-tent"
       }
     },
     {
       "metadata": {
         "name": "lokiLabelNamesQueryApi",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-12-13T14:31:41Z"
+        "resourceVersion": "1768317398145",
+        "creationTimestamp": "2024-12-13T14:31:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-13 15:16:38.145488 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Defaults to using the Loki `/labels` API instead of `/series`",
         "stage": "GA",
-        "codeowner": "@grafana/observability-logs",
+        "codeowner": "@grafana/oss-big-tent",
         "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "lokiLogsDataplane",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-07-13T07:58:00Z"
+        "resourceVersion": "1768317398145",
+        "creationTimestamp": "2023-07-13T07:58:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-13 15:16:38.145488 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Changes logs responses from Loki to be compliant with the dataplane specification.",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-logs"
+        "codeowner": "@grafana/oss-big-tent"
       }
     },
     {
@@ -2308,13 +2380,16 @@
     {
       "metadata": {
         "name": "lokiRunQueriesInParallel",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-09-19T09:34:01Z"
+        "resourceVersion": "1768317398145",
+        "creationTimestamp": "2023-09-19T09:34:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-13 15:16:38.145488 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables running Loki queries in parallel",
         "stage": "privatePreview",
-        "codeowner": "@grafana/observability-logs"
+        "codeowner": "@grafana/oss-big-tent"
       }
     },
     {
@@ -3655,7 +3730,8 @@
       "metadata": {
         "name": "unifiedStorageSearch",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-09-30T19:46:14Z"
+        "creationTimestamp": "2024-09-30T19:46:14Z",
+        "deletionTimestamp": "2026-01-12T10:02:12Z"
       },
       "spec": {
         "description": "Enable unified storage search",
@@ -3672,19 +3748,6 @@
       },
       "spec": {
         "description": "Enable dual reader for unified storage search",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "unifiedStorageSearchSprinkles",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-12-18T17:00:54Z"
-      },
-      "spec": {
-        "description": "Enable sprinkles on unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "hideFromDocs": true

@@ -2230,6 +2230,20 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 					Options: options,
 				},
 			}
+
+			// Extract disabled if present (optional, transformations are enabled by default)
+			if disabled, ok := tMap["disabled"].(bool); ok && disabled {
+				transformationKind.Spec.Disabled = &disabled
+			}
+
+			// Extract filter if present (optional frame matcher for transformations)
+			if filterMap, ok := tMap["filter"].(map[string]interface{}); ok {
+				transformationKind.Spec.Filter = &dashv2alpha1.DashboardMatcherConfig{
+					Id:      schemaversion.GetStringValue(filterMap, "id"),
+					Options: filterMap["options"],
+				}
+			}
+
 			result = append(result, transformationKind)
 		}
 	}
@@ -2347,14 +2361,6 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		for k, v := range opts {
 			options[k] = v
 		}
-	}
-
-	// Add frontend-style default options to match frontend behavior
-	if legend, ok := options["legend"].(map[string]interface{}); ok {
-		// Add showLegend: true to match frontend behavior
-		showLegend := getBoolField(legend, "showLegend", true)
-		legend["showLegend"] = showLegend
-		options["legend"] = legend
 	}
 
 	// Handle Angular panel migrations
@@ -2531,6 +2537,15 @@ func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.Da
 		fieldConfigDefaults.Writeable = val
 		hasDefaults = true
 	}
+	if val, ok := extractBoolField(defaults, "fieldMinMax"); ok {
+		fieldConfigDefaults.FieldMinMax = val
+		hasDefaults = true
+	}
+	if val, ok := defaults["nullValueMode"].(string); ok {
+		nullValueMode := dashv2alpha1.DashboardNullValueMode(val)
+		fieldConfigDefaults.NullValueMode = &nullValueMode
+		hasDefaults = true
+	}
 
 	// Extract array field - strip BOMs from link URLs
 	if linksArray, ok := extractArrayField(defaults, "links"); ok {
@@ -2540,6 +2555,12 @@ func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.Da
 		} else {
 			fieldConfigDefaults.Links = linksArray
 		}
+		hasDefaults = true
+	}
+
+	// Extract actions array
+	if actionsArray, ok := extractArrayField(defaults, "actions"); ok {
+		fieldConfigDefaults.Actions = convertActionsToV2(actionsArray)
 		hasDefaults = true
 	}
 
@@ -2837,6 +2858,157 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 		}
 
 		result = append(result, fieldOverride)
+	}
+
+	return result
+}
+
+// convertActionsToV2 converts an array of V1 action objects to V2 DashboardAction structs.
+func convertActionsToV2(actionsArray []interface{}) []dashv2alpha1.DashboardAction {
+	if len(actionsArray) == 0 {
+		return nil
+	}
+
+	result := make([]dashv2alpha1.DashboardAction, 0, len(actionsArray))
+	for _, action := range actionsArray {
+		actionMap, ok := action.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		dashAction := dashv2alpha1.DashboardAction{
+			Type:  dashv2alpha1.DashboardActionType(schemaversion.GetStringValue(actionMap, "type")),
+			Title: schemaversion.GetStringValue(actionMap, "title"),
+		}
+
+		// Convert confirmation
+		if confirmation, ok := actionMap["confirmation"].(string); ok && confirmation != "" {
+			dashAction.Confirmation = &confirmation
+		}
+
+		// Convert oneClick
+		if oneClick, ok := actionMap["oneClick"].(bool); ok {
+			dashAction.OneClick = &oneClick
+		}
+
+		// Convert fetch options
+		if fetchMap, ok := actionMap["fetch"].(map[string]interface{}); ok {
+			dashAction.Fetch = convertFetchOptionsToV2(fetchMap)
+		}
+
+		// Convert infinity options
+		if infinityMap, ok := actionMap["infinity"].(map[string]interface{}); ok {
+			dashAction.Infinity = convertInfinityOptionsToV2(infinityMap)
+		}
+
+		// Convert variables
+		if variablesArray, ok := actionMap["variables"].([]interface{}); ok {
+			dashAction.Variables = convertActionVariablesToV2(variablesArray)
+		}
+
+		// Convert style
+		if styleMap, ok := actionMap["style"].(map[string]interface{}); ok {
+			dashAction.Style = convertActionStyleToV2(styleMap)
+		}
+
+		result = append(result, dashAction)
+	}
+
+	return result
+}
+
+func convertFetchOptionsToV2(fetchMap map[string]interface{}) *dashv2alpha1.DashboardFetchOptions {
+	fetchOptions := &dashv2alpha1.DashboardFetchOptions{
+		Method: dashv2alpha1.DashboardHttpRequestMethod(schemaversion.GetStringValue(fetchMap, "method")),
+		Url:    schemaversion.GetStringValue(fetchMap, "url"),
+	}
+
+	if body, ok := fetchMap["body"].(string); ok {
+		fetchOptions.Body = &body
+	}
+
+	// Convert queryParams (2D array of strings) - preserve empty arrays
+	if queryParams, ok := fetchMap["queryParams"].([]interface{}); ok {
+		fetchOptions.QueryParams = convert2DStringArrayPreserveEmpty(queryParams)
+	}
+
+	// Convert headers (2D array of strings) - preserve empty arrays
+	if headers, ok := fetchMap["headers"].([]interface{}); ok {
+		fetchOptions.Headers = convert2DStringArrayPreserveEmpty(headers)
+	}
+
+	return fetchOptions
+}
+
+func convertInfinityOptionsToV2(infinityMap map[string]interface{}) *dashv2alpha1.DashboardInfinityOptions {
+	infinityOptions := &dashv2alpha1.DashboardInfinityOptions{
+		Method:        dashv2alpha1.DashboardHttpRequestMethod(schemaversion.GetStringValue(infinityMap, "method")),
+		Url:           schemaversion.GetStringValue(infinityMap, "url"),
+		DatasourceUid: schemaversion.GetStringValue(infinityMap, "datasourceUid"),
+	}
+
+	if body, ok := infinityMap["body"].(string); ok {
+		infinityOptions.Body = &body
+	}
+
+	if queryParams, ok := infinityMap["queryParams"].([]interface{}); ok {
+		infinityOptions.QueryParams = convert2DStringArrayPreserveEmpty(queryParams)
+	}
+
+	if headers, ok := infinityMap["headers"].([]interface{}); ok {
+		infinityOptions.Headers = convert2DStringArrayPreserveEmpty(headers)
+	}
+
+	return infinityOptions
+}
+
+func convertActionVariablesToV2(variablesArray []interface{}) []dashv2alpha1.DashboardActionVariable {
+	if len(variablesArray) == 0 {
+		return nil
+	}
+
+	result := make([]dashv2alpha1.DashboardActionVariable, 0, len(variablesArray))
+	for _, variable := range variablesArray {
+		variableMap, ok := variable.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		result = append(result, dashv2alpha1.DashboardActionVariable{
+			Key:  schemaversion.GetStringValue(variableMap, "key"),
+			Name: schemaversion.GetStringValue(variableMap, "name"),
+			Type: schemaversion.GetStringValue(variableMap, "type"),
+		})
+	}
+
+	return result
+}
+
+func convertActionStyleToV2(styleMap map[string]interface{}) *dashv2alpha1.DashboardV2alpha1ActionStyle {
+	style := &dashv2alpha1.DashboardV2alpha1ActionStyle{}
+
+	if backgroundColor, ok := styleMap["backgroundColor"].(string); ok {
+		style.BackgroundColor = &backgroundColor
+	}
+
+	return style
+}
+
+// convert2DStringArrayPreserveEmpty is like convert2DStringArray but returns
+// an empty slice (not nil) when input is empty, to ensure JSON marshals as []
+func convert2DStringArrayPreserveEmpty(arr []interface{}) [][]string {
+	// Return empty slice (not nil) to preserve [] in JSON output
+	result := make([][]string, 0, len(arr))
+	for _, item := range arr {
+		if innerArr, ok := item.([]interface{}); ok {
+			stringArr := make([]string, 0, len(innerArr))
+			for _, s := range innerArr {
+				if str, ok := s.(string); ok {
+					stringArr = append(stringArr, str)
+				}
+			}
+			result = append(result, stringArr)
+		}
 	}
 
 	return result

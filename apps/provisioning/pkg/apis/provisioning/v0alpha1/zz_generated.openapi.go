@@ -320,7 +320,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref common.Reference
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue"),
 						},
 					},
-					"webhook": {
+					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back",
 							Default:     map[string]interface{}{},
