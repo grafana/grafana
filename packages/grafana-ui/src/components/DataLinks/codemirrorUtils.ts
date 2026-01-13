@@ -40,6 +40,34 @@ export function createDataLinkHighlighter(): Extension {
 }
 
 /**
+ * Helper function to generate the apply text for a variable suggestion
+ */
+function getApplyText(suggestion: VariableSuggestion): string {
+  if (suggestion.origin !== VariableOrigin.Template || suggestion.value === DataLinkBuiltInVars.includeVars) {
+    return `\${${suggestion.value}}`;
+  }
+  return `\${${suggestion.value}:queryparam}`;
+}
+
+/**
+ * Helper function to create a completion option from a suggestion
+ */
+function createCompletionOption(
+  suggestion: VariableSuggestion,
+  customApply?: (view: EditorView, completion: Completion, from: number, to: number) => void
+): Completion {
+  const applyText = getApplyText(suggestion);
+
+  return {
+    label: suggestion.label,
+    detail: suggestion.origin,
+    info: suggestion.documentation,
+    apply: customApply ?? applyText,
+    type: 'variable',
+  };
+}
+
+/**
  * Creates autocomplete source function for data link variables
  * Triggers on $ and = characters
  */
@@ -47,10 +75,6 @@ export function dataLinkAutocompletion(
   suggestions: VariableSuggestion[]
 ): (context: CompletionContext) => CompletionResult | null {
   return (context: CompletionContext): CompletionResult | null => {
-    // Match $ or = followed by optional { and word characters
-    // This will match: $, ${, ${word, =, etc.
-    const word = context.matchBefore(/[$=]\{?[\w.]*$/);
-
     // Don't show completions if there are no suggestions
     if (suggestions.length === 0) {
       return null;
@@ -58,29 +82,16 @@ export function dataLinkAutocompletion(
 
     // For explicit completion (Ctrl+Space), show at cursor position
     if (context.explicit) {
-      const options: Completion[] = suggestions.map((suggestion) => {
-        let applyText: string;
-
-        if (suggestion.origin !== VariableOrigin.Template || suggestion.value === DataLinkBuiltInVars.includeVars) {
-          applyText = `\${${suggestion.value}}`;
-        } else {
-          applyText = `\${${suggestion.value}:queryparam}`;
-        }
-
-        return {
-          label: suggestion.label,
-          detail: suggestion.origin,
-          info: suggestion.documentation,
-          apply: applyText,
-          type: 'variable',
-        };
-      });
-
+      const options = suggestions.map((suggestion) => createCompletionOption(suggestion));
       return {
         from: context.pos,
         options,
       };
     }
+
+    // Match $ or = followed by optional { and word characters
+    // This will match: $, ${, ${word, =, etc.
+    const word = context.matchBefore(/[$=]\{?[\w.]*$/);
 
     // If no match on typing, don't show completions
     if (!word) {
@@ -93,37 +104,25 @@ export function dataLinkAutocompletion(
       return null;
     }
 
-    // For single trigger character ($ or =), start from current position to show completions
-    // But the 'apply' text will still replace correctly
+    // For single trigger character ($ or =), use custom apply function to handle replacement
     const isSingleChar = word.text.length === 1;
 
-    const options: Completion[] = suggestions.map((suggestion) => {
-      // Always insert the full variable syntax
-      let applyText: string;
-
-      if (suggestion.origin !== VariableOrigin.Template || suggestion.value === DataLinkBuiltInVars.includeVars) {
-        applyText = `\${${suggestion.value}}`;
-      } else {
-        applyText = `\${${suggestion.value}:queryparam}`;
+    const options = suggestions.map((suggestion) => {
+      if (!isSingleChar) {
+        return createCompletionOption(suggestion);
       }
 
-      return {
-        label: suggestion.label,
-        detail: suggestion.origin,
-        info: suggestion.documentation,
-        // Use a custom apply function to handle replacement properly
-        apply: isSingleChar
-          ? (view, completion, from, to) => {
-              // Replace from the trigger character position
-              let wordFrom = triggerChar === '=' ? context.pos : word.from;
-              view.dispatch({
-                changes: { from: wordFrom, to, insert: applyText },
-                selection: { anchor: wordFrom + applyText.length }, // Move cursor to end of inserted text
-              });
-            }
-          : applyText,
-        type: 'variable',
+      const applyText = getApplyText(suggestion);
+      const customApply = (view: EditorView, completion: Completion, from: number, to: number) => {
+        // Replace from the trigger character position
+        const wordFrom = triggerChar === '=' ? context.pos : word.from;
+        view.dispatch({
+          changes: { from: wordFrom, to, insert: applyText },
+          selection: { anchor: wordFrom + applyText.length },
+        });
       };
+
+      return createCompletionOption(suggestion, customApply);
     });
 
     return {
