@@ -649,10 +649,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Enable sprinkles on unified storage search
-  */
-  unifiedStorageSearchSprinkles?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;

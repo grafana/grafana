@@ -237,7 +237,6 @@ kubernetesFolders = true
 unifiedStorage = true
 unifiedStorageHistoryPruner = true
 unifiedStorageSearchPermissionFiltering = false
-unifiedStorageSearchSprinkles = false
 
 [unified_storage]
 enable_search = true
@@ -314,9 +313,6 @@ To enable it, add the following to your `custom.ini` under the `[feature_toggles
 [feature_toggles]
 ; Used by the Grafana instance
 unifiedStorageSearchUI = true
-
-; (optional) Allows you to sort dashboards by usage insights fields when using enterprise
-; unifiedStorageSearchSprinkles = true
 
 [unified_storage]
 ; Used by unified storage server
@@ -934,7 +930,6 @@ Unified Search requires several feature flags to be enabled depending on the des
 | Feature Flag | Purpose | Stage | Required For |
 |--------------|---------|-------|--------------|
 | `unifiedStorageSearchUI` | Frontend search interface | Experimental | Grafana UI search |
-| `unifiedStorageSearchSprinkles` | Usage insights integration | Experimental | Dashboard usage sorting (Enterprise) |
 | `unifiedStorageSearchDualReaderEnabled` | Shadow traffic to unified search | Experimental | Shadow traffic during migration |
 
 #### Unified Search Specific Configuration
@@ -954,9 +949,6 @@ unifiedStorageSearchUI = true
 
 ; Enable shadow traffic during migration (optional)
 unifiedStorageSearchDualReaderEnabled = true
-
-; Enable usage insights sorting (Enterprise only)
-unifiedStorageSearchSprinkles = true
 
 [unified_storage]
 ; Enable core search functionality (required)
