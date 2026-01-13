@@ -852,6 +852,21 @@ func convertAutoGridLayoutToPanelsWithOffset(elements map[string]dashv2alpha1.Da
 			},
 		}
 
+		// Convert AutoGridRepeatOptions to RepeatOptions if present
+		// AutoGridRepeatOptions only has mode and value; infer direction and maxPerRow from AutoGrid settings:
+		// - direction: always "h" (AutoGrid flows horizontally, left-to-right then wraps)
+		// - maxPerRow: from AutoGrid's maxColumnCount
+		if item.Spec.Repeat != nil {
+			directionH := dashv2alpha1.DashboardRepeatOptionsDirectionH
+			maxPerRow := int64(maxColumnCount)
+			gridItem.Spec.Repeat = &dashv2alpha1.DashboardRepeatOptions{
+				Mode:      item.Spec.Repeat.Mode,
+				Value:     item.Spec.Repeat.Value,
+				Direction: &directionH,
+				MaxPerRow: &maxPerRow,
+			}
+		}
+
 		panel, err := convertPanelFromElement(&element, &gridItem)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)

@@ -611,8 +611,11 @@
           "y": 22
         },
         "id": 6,
+        "maxPerRow": 3,
         "options": {},
         "pluginVersion": "12.4.0-19736337744",
+        "repeat": "custom_var_panel",
+        "repeatDirection": "h",
         "targets": [
           {
             "refId": "A"
