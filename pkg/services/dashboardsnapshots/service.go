@@ -107,6 +107,8 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 			c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
 			return
 		}
+
+		metrics.MApiDashboardSnapshotCreate.Inc()
 	}
 
 	saveAndRespond(c, svc, cmd, snapshotURL)
@@ -131,6 +133,8 @@ func CreateDashboardSnapshotPublic(c *contextmodel.ReqContext, cfg snapshot.Snap
 		return
 	}
 
+	metrics.MApiDashboardSnapshotCreate.Inc()
+
 	saveAndRespond(c, svc, cmd, snapshotURL)
 }
 
@@ -153,8 +157,6 @@ func prepareLocalSnapshot(cmd *CreateDashboardSnapshotCommand, originalDashboard
 		}
 		cmd.DeleteKey = deleteKey
 	}
-
-	metrics.MApiDashboardSnapshotCreate.Inc()
 
 	return setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key), nil
 }
