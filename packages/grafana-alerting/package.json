@@ -58,14 +58,12 @@
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./testing ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
-    "@rtk-query/codegen-openapi": "^2.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -96,8 +94,9 @@
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@faker-js/faker": "^9.8.0",
+    "@grafana/api-clients": "12.4.0-pre",
     "@grafana/i18n": "12.4.0-pre",
-    "@reduxjs/toolkit": "^2.9.0",
+    "@reduxjs/toolkit": "2.10.1",
     "fishery": "^2.3.1",
     "lodash": "^4.17.21",
     "tinycolor2": "^1.6.0"

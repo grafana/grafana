@@ -3124,9 +3124,12 @@
       "table": "テーブル"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "アラートルールが発生される前に満たすべき条件を定義します",
       "description-configure-firing-alert-instances-routed-contact": "発生中のアラートインスタンスを連絡先にルーティングする方法を設定",
       "description-configure-receives-notifications": "通知の受信者と送信方法を設定",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "アラートルール",
       "title-contact-points": "コンタクトポイント",
       "title-notification-policies": "通知ポリシー"
@@ -3740,7 +3743,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4394,6 +4396,7 @@
       },
       "no-properties-changed": "関連するプロパティは変更されていません",
       "table": {
+        "notes": "",
         "updated": "日付",
         "updatedBy": "更新者",
         "version": "バージョン"
@@ -4592,6 +4595,7 @@
     },
     "canvas-actions": {
       "add-panel": "パネルを追加",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "行にグループ化",
@@ -4852,7 +4856,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "カンマで区切った値"
         },
         "datasource-options": {
           "name-filter": "名前フィルター",
@@ -5671,6 +5676,7 @@
     "validation": {
       "invalid-dashboard-id": "有効なGrafana.com IDが見つかりませんでした",
       "invalid-json": "無効なJSON",
+      "tag-too-long": "",
       "tags-expected-array": "タグは配列を期待しています",
       "tags-expected-strings": "タグは文字列の配列を期待しています"
     },
@@ -5776,6 +5782,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5943,6 +5950,9 @@
     },
     "custom-variable-form": {
       "custom-options": "カスタムオプション",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "カンマ区切りの値",
       "selection-options": "選択オプション"
     },
@@ -6528,6 +6538,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "ダッシュボードが保存されました"
     },
@@ -6551,6 +6566,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6610,8 +6626,8 @@
       "tooltip-show-usages": "使用状況を表示"
     },
     "variable-values-preview": {
-      "preview-of-values": "値のプレビュー",
-      "show-more": "さらに表示"
+      "show-more": "さらに表示",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9203,7 +9219,8 @@
     "tags-input": {
       "add": "追加",
       "placeholder-new-tag": "新しいタグ (Enterキーで追加)",
-      "remove": "タグ、{{name}}を削除"
+      "remove": "タグ、{{name}}を削除",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "時間を同期",
@@ -10662,18 +10679,6 @@
     "help/documentation": "ドキュメント",
     "help/keyboard-shortcuts": "キーボードショートカット",
     "help/support": "サポート",
-    "history-container": {
-      "drawer-tittle": "履歴"
-    },
-    "history-wrapper": {
-      "collapse": "折りたたみ表示",
-      "expand": "展開",
-      "icon-selected": "選択したエントリー",
-      "icon-unselected": "通常のエントリー",
-      "show-more": "さらに表示",
-      "today": "今日",
-      "yesterday": "昨日"
-    },
     "home": {
       "title": "ホーム"
     },
@@ -14338,6 +14343,17 @@
       },
       "name": {
         "series-to-rows": "系列を行に変換"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

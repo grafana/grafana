@@ -3135,9 +3135,12 @@
       "table": "Tabela"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Defina a condição que deve ser atendida antes que uma regra de alerta seja acionada",
       "description-configure-firing-alert-instances-routed-contact": "Configure como as instâncias de alertas ativos são encaminhadas para os pontos de contato",
       "description-configure-receives-notifications": "Configure quem recebe notificações e como elas são enviadas",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Regras de alerta",
       "title-contact-points": "Pontos de contato",
       "title-notification-policies": "Política de notificações"
@@ -3756,7 +3759,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4413,6 +4415,7 @@
       },
       "no-properties-changed": "Nenhuma propriedade relevante alterada",
       "table": {
+        "notes": "",
         "updated": "Data",
         "updatedBy": "Atualizada por",
         "version": "Versão"
@@ -4611,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Adicionar painel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Agrupar em linha",
@@ -4871,7 +4875,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Valores separados por vírgula"
         },
         "datasource-options": {
           "name-filter": "Filtro de nome",
@@ -5691,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Não foi possível encontrar um ID do Grafana.com válido",
       "invalid-json": "JSON inválido",
+      "tag-too-long": "",
       "tags-expected-array": "matriz de tags esperada",
       "tags-expected-strings": "matriz de strings de tags esperada"
     },
@@ -5796,6 +5802,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5964,6 +5971,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Opções personalizadas",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Valores separados por vírgula",
       "selection-options": "Opções de seleção"
     },
@@ -6551,6 +6561,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Painel de controle salvo"
     },
@@ -6574,6 +6589,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6633,8 +6649,9 @@
       "tooltip-show-usages": "Exibir usos"
     },
     "variable-values-preview": {
-      "preview-of-values": "Pré-visualização de valores",
-      "show-more": "Exibir mais"
+      "show-more": "Exibir mais",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9238,7 +9255,8 @@
     "tags-input": {
       "add": "Adicionar",
       "placeholder-new-tag": "Nova tag (pressione Enter para adicionar)",
-      "remove": "Remover etiqueta: {{name}}"
+      "remove": "Remover etiqueta: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Horários sincronizados",
@@ -10705,18 +10723,6 @@
     "help/documentation": "Documentação",
     "help/keyboard-shortcuts": "Atalhos do teclado",
     "help/support": "Suporte",
-    "history-container": {
-      "drawer-tittle": "Histórico"
-    },
-    "history-wrapper": {
-      "collapse": "Recolher",
-      "expand": "Expandir",
-      "icon-selected": "Entrada selecionada",
-      "icon-unselected": "Entrada normal",
-      "show-more": "Exibir mais",
-      "today": "Hoje",
-      "yesterday": "Ontem"
-    },
     "home": {
       "title": "Página inicial"
     },
@@ -14394,6 +14400,17 @@
       },
       "name": {
         "series-to-rows": "Série para fileiras"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

@@ -3124,9 +3124,12 @@
       "table": "Tabel"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Tentukan syarat yang harus dipenuhi sebelum aturan peringatan menyala",
       "description-configure-firing-alert-instances-routed-contact": "Konfigurasikan cara instans peringatan yang menyala dirutekan ke titik kontak",
       "description-configure-receives-notifications": "Konfigurasikan penerima pemberitahuan dan cara pemberitahuan dikirim",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Aturan peringatan",
       "title-contact-points": "Titik kontak",
       "title-notification-policies": "Kebijakan pemberitahuan"
@@ -3740,7 +3743,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4394,6 +4396,7 @@
       },
       "no-properties-changed": "Tidak ada properti yang relevan yang diubah",
       "table": {
+        "notes": "",
         "updated": "Tanggal",
         "updatedBy": "Diperbarui Oleh",
         "version": "Versi"
@@ -4592,6 +4595,7 @@
     },
     "canvas-actions": {
       "add-panel": "Tambah panel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Kelompokkan ke dalam baris",
@@ -4852,7 +4856,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Nilai dipisahkan dengan koma"
         },
         "datasource-options": {
           "name-filter": "Filter nama",
@@ -5671,6 +5676,7 @@
     "validation": {
       "invalid-dashboard-id": "Tidak dapat menemukan ID Grafana.com yang valid",
       "invalid-json": "JSON Tidak Valid",
+      "tag-too-long": "",
       "tags-expected-array": "tag array yang diharapkan",
       "tags-expected-strings": "tag array yang diharapkan dari string"
     },
@@ -5776,6 +5782,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5943,6 +5950,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Opsi kustom",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Nilai dipisahkan dengan koma",
       "selection-options": "Opsi pemilihan"
     },
@@ -6528,6 +6538,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dasbor disimpan"
     },
@@ -6551,6 +6566,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6610,8 +6626,8 @@
       "tooltip-show-usages": "Tampilkan penggunaan"
     },
     "variable-values-preview": {
-      "preview-of-values": "Pratinjau nilai",
-      "show-more": "Tampilkan lebih banyak"
+      "show-more": "Tampilkan lebih banyak",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9203,7 +9219,8 @@
     "tags-input": {
       "add": "Tambahkan",
       "placeholder-new-tag": "Tag baru (masukkan kunci untuk menambahkan)",
-      "remove": "Hapus tag: {{name}}"
+      "remove": "Hapus tag: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Sinkronkan waktu",
@@ -10662,18 +10679,6 @@
     "help/documentation": "Dokumentasi",
     "help/keyboard-shortcuts": "Pintasan keyboard",
     "help/support": "Dukungan",
-    "history-container": {
-      "drawer-tittle": "Sejarah"
-    },
-    "history-wrapper": {
-      "collapse": "Ciutkan",
-      "expand": "Perluas",
-      "icon-selected": "Entri yang dipilih",
-      "icon-unselected": "Entri Normal",
-      "show-more": "Tampilkan lebih banyak",
-      "today": "Hari ini",
-      "yesterday": "Kemarin"
-    },
     "home": {
       "title": "Beranda"
     },
@@ -14338,6 +14343,17 @@
       },
       "name": {
         "series-to-rows": "Deret ke baris"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

@@ -3124,9 +3124,12 @@
       "table": "表格"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "定義警報規則觸發前必須滿足的條件",
       "description-configure-firing-alert-instances-routed-contact": "設定如何將觸發的警報執行個體傳送至聯絡點",
       "description-configure-receives-notifications": "設定接收通知的對象以及傳送方式",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "警報規則",
       "title-contact-points": "聯絡點",
       "title-notification-policies": "通知政策"
@@ -3740,7 +3743,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4394,6 +4396,7 @@
       },
       "no-properties-changed": "沒有相關的屬性變更",
       "table": {
+        "notes": "",
         "updated": "日期",
         "updatedBy": "更新者",
         "version": "版本"
@@ -4592,6 +4595,7 @@
     },
     "canvas-actions": {
       "add-panel": "新增面板",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "將群組分成列",
@@ -4852,7 +4856,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "以逗號分隔的值"
         },
         "datasource-options": {
           "name-filter": "名稱篩選",
@@ -5671,6 +5676,7 @@
     "validation": {
       "invalid-dashboard-id": "沒有找到有效的 Grafana.com ID",
       "invalid-json": "無效的 JSON",
+      "tag-too-long": "",
       "tags-expected-array": "標籤預期陣列",
       "tags-expected-strings": "標籤預期字串陣列"
     },
@@ -5776,6 +5782,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5943,6 +5950,9 @@
     },
     "custom-variable-form": {
       "custom-options": "自訂選項",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "以逗號分隔的值",
       "selection-options": "選擇選項"
     },
@@ -6528,6 +6538,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
     },
@@ -6551,6 +6566,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6610,8 +6626,8 @@
       "tooltip-show-usages": "顯示使用情況"
     },
     "variable-values-preview": {
-      "preview-of-values": "數值預覽",
-      "show-more": "顯示更多"
+      "show-more": "顯示更多",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9203,7 +9219,8 @@
     "tags-input": {
       "add": "新增",
       "placeholder-new-tag": "新標記（輸入金鑰以新增）",
-      "remove": "移除標籤：{{name}}"
+      "remove": "移除標籤：{{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "同步次數",
@@ -10662,18 +10679,6 @@
     "help/documentation": "文件",
     "help/keyboard-shortcuts": "鍵盤捷徑",
     "help/support": "支援",
-    "history-container": {
-      "drawer-tittle": "歷史紀錄"
-    },
-    "history-wrapper": {
-      "collapse": "收闔",
-      "expand": "展開",
-      "icon-selected": "已選取條目",
-      "icon-unselected": "一般條目",
-      "show-more": "顯示更多",
-      "today": "今天",
-      "yesterday": "昨天"
-    },
     "home": {
       "title": "首頁"
     },
@@ -14338,6 +14343,17 @@
       },
       "name": {
         "series-to-rows": "將序列轉為列"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {
