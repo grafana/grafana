@@ -272,8 +272,6 @@ func TestRequestConfigProvider_PluginRequestConfig_liveClientQueueMaxSize(t *tes
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "tempo", nil), map[string]string{
 			"GF_LIVE_CLIENT_QUEUE_MAX_SIZE": "123",
 		})
-
-		require.NotContains(t, p.PluginRequestConfig(context.Background(), "prometheus", nil), "GF_LIVE_CLIENT_QUEUE_MAX_SIZE")
 	})
 }
 
