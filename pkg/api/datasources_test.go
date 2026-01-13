@@ -91,7 +91,7 @@ func setupDsConfigHandlerMetrics() (prometheus.Registerer, *prometheus.Histogram
 		Namespace: "grafana",
 		Name:      "ds_config_handler_requests_duration_seconds",
 		Help:      "Duration of requests handled by datasource configuration handlers",
-	}, []string{"code_path", "handler"})
+	}, []string{"handler"})
 	promRegister.MustRegister(dsConfigHandlerRequestsDuration)
 	return promRegister, dsConfigHandlerRequestsDuration
 }
@@ -343,7 +343,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 		Cfg:                  setting.NewCfg(),
 		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
-		Live:                 newTestLive(t, nil),
+		Live:                 newTestLive(t),
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources/1")
@@ -450,7 +450,7 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 				hs.Cfg = setting.NewCfg()
 				hs.DataSourcesService = &dataSourcesServiceMock{expectedDatasource: &datasources.DataSource{}}
 				hs.accesscontrolService = actest.FakeService{}
-				hs.Live = newTestLive(t, hs.SQLStore)
+				hs.Live = newTestLive(t)
 				hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
 			})
 

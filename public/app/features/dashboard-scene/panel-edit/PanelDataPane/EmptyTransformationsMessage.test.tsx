@@ -56,6 +56,7 @@ describe('EmptyTransformationsMessage', () => {
           onShowPicker={onShowPicker}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
+          data={[]}
         />
       );
 
@@ -75,6 +76,7 @@ describe('EmptyTransformationsMessage', () => {
           onShowPicker={onShowPicker}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
+          data={[]}
         />
       );
 
@@ -92,6 +94,7 @@ describe('EmptyTransformationsMessage', () => {
           onShowPicker={onShowPicker}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
+          data={[]}
         />
       );
 
@@ -103,13 +106,15 @@ describe('EmptyTransformationsMessage', () => {
     });
 
     it('should not show SQL transformation card when onGoToQueries is not provided', () => {
-      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} onAddTransformation={onAddTransformation} />);
+      render(
+        <EmptyTransformationsMessage onShowPicker={onShowPicker} onAddTransformation={onAddTransformation} data={[]} />
+      );
 
       expect(screen.queryByText('Transform with SQL')).not.toBeInTheDocument();
     });
 
     it('should not show transformation cards grid when neither onGoToQueries nor onAddTransformation are provided', () => {
-      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} />);
+      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} data={[]} />);
 
       expect(screen.queryByText('Transform with SQL')).not.toBeInTheDocument();
 

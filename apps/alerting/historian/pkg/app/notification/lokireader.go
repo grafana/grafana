@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"sort"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis/alertinghistorian/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/app/logutil"
 )
 
@@ -29,6 +31,10 @@ const (
 	maxLimit           = 1000
 	Namespace          = "grafana"
 	Subsystem          = "alerting"
+
+	// LogQL field path for alert rule UID after JSON parsing.
+	// Loki flattens nested JSON fields with underscores: alert.labels.__alert_rule_uid__ -> alert_labels___alert_rule_uid__
+	lokiAlertRuleUIDField = "alert_labels___alert_rule_uid__"
 )
 
 var (
@@ -47,7 +53,7 @@ type LokiReader struct {
 	logger logging.Logger
 }
 
-func NewLokiReader(cfg lokiclient.LokiConfig, reg prometheus.Registerer, logger logging.Logger, tracer trace.Tracer) *LokiReader {
+func NewLokiReader(cfg config.LokiConfig, reg prometheus.Registerer, logger logging.Logger, tracer trace.Tracer) *LokiReader {
 	duration := instrument.NewHistogramCollector(promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: Namespace,
 		Subsystem: Subsystem,
@@ -56,9 +62,13 @@ func NewLokiReader(cfg lokiclient.LokiConfig, reg prometheus.Registerer, logger 
 		Buckets:   instrument.DefBuckets,
 	}, instrument.HistogramCollectorBuckets))
 
+	requester := &http.Client{
+		Transport: cfg.Transport,
+	}
+
 	gkLogger := logutil.ToGoKitLogger(logger)
 	return &LokiReader{
-		client: lokiclient.NewLokiClient(cfg, lokiclient.NewRequester(), nil, duration, gkLogger, tracer, LokiClientSpanName),
+		client: lokiclient.NewLokiClient(cfg.LokiConfig, requester, nil, duration, gkLogger, tracer, LokiClientSpanName),
 		logger: logger,
 	}
 }
@@ -105,12 +115,12 @@ func buildQuery(query Query) (string, error) {
 		fmt.Sprintf(`%s=%q`, historian.LabelFrom, historian.LabelFromValue),
 	}
 
-	if query.RuleUID != nil {
-		selectors = append(selectors,
-			fmt.Sprintf(`%s=%q`, historian.LabelRuleUID, *query.RuleUID))
-	}
-
 	logql := fmt.Sprintf(`{%s} | json`, strings.Join(selectors, `,`))
+
+	// Add ruleUID filter as JSON line filter if specified.
+	if query.RuleUID != nil && *query.RuleUID != "" {
+		logql += fmt.Sprintf(` | %s = %q`, lokiAlertRuleUIDField, *query.RuleUID)
+	}
 
 	// Add receiver filter if specified.
 	if query.Receiver != nil && *query.Receiver != "" {
@@ -205,16 +215,13 @@ func parseLokiEntry(s lokiclient.Sample) (Entry, error) {
 		groupLabels = make(map[string]string)
 	}
 
-	alerts := make([]EntryAlert, len(lokiEntry.Alerts))
-	for i, a := range lokiEntry.Alerts {
-		alerts[i] = EntryAlert{
-			Status:      a.Status,
-			Labels:      a.Labels,
-			Annotations: a.Annotations,
-			StartsAt:    a.StartsAt,
-			EndsAt:      a.EndsAt,
-		}
-	}
+	alerts := []EntryAlert{{
+		Status:      lokiEntry.Alert.Status,
+		Labels:      lokiEntry.Alert.Labels,
+		Annotations: lokiEntry.Alert.Annotations,
+		StartsAt:    lokiEntry.Alert.StartsAt,
+		EndsAt:      lokiEntry.Alert.EndsAt,
+	}}
 
 	return Entry{
 		Timestamp:    s.T,

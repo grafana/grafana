@@ -44,7 +44,7 @@ const mockComponent = {
 };
 
 const mockPluginMeta = {
-  pluginId: 'grafana-investigations-app',
+  pluginId: 'grafana-assistant-app',
   addedComponents: [mockComponent],
 };
 
@@ -109,7 +109,7 @@ describe('ExtensionToolbarItem', () => {
 
   it('should render a dropdown menu when multiple components are available', async () => {
     const multipleComponentsMeta = {
-      pluginId: 'grafana-investigations-app',
+      pluginId: 'grafana-assistant-app',
       addedComponents: [
         { ...mockComponent, title: 'Component 1' },
         { ...mockComponent, title: 'Component 2' },
@@ -141,7 +141,7 @@ describe('ExtensionToolbarItem', () => {
 
   it('should show menu items when clicking the dropdown button', async () => {
     const multipleComponentsMeta = {
-      pluginId: 'grafana-investigations-app',
+      pluginId: 'grafana-assistant-app',
       addedComponents: [
         { ...mockComponent, title: 'Component 1' },
         { ...mockComponent, title: 'Component 2' },
@@ -165,7 +165,7 @@ describe('ExtensionToolbarItem', () => {
 
   it('should toggle the sidebar when clicking a menu item', async () => {
     const multipleComponentsMeta = {
-      pluginId: 'grafana-investigations-app',
+      pluginId: 'grafana-assistant-app',
       addedComponents: [
         { ...mockComponent, title: 'Component 1' },
         { ...mockComponent, title: 'Component 2' },
@@ -192,7 +192,7 @@ describe('ExtensionToolbarItem', () => {
 
   it('should close the sidebar when clicking an active menu item', async () => {
     const multipleComponentsMeta = {
-      pluginId: 'grafana-investigations-app',
+      pluginId: 'grafana-assistant-app',
       addedComponents: [
         { ...mockComponent, title: 'Component 1' },
         { ...mockComponent, title: 'Component 2' },
@@ -218,13 +218,13 @@ describe('ExtensionToolbarItem', () => {
 
   it('should render individual buttons when multiple plugins are available', async () => {
     const plugin1Meta = {
-      pluginId: 'grafana-investigations-app',
-      addedComponents: [{ ...mockComponent, title: 'Investigations' }],
+      pluginId: 'grafana-assistant-app',
+      addedComponents: [{ ...mockComponent, title: 'Assistant' }],
     };
 
     const plugin2Meta = {
-      pluginId: 'grafana-assistant-app',
-      addedComponents: [{ ...mockComponent, title: 'Assistant' }],
+      pluginId: 'grafana-dash-app',
+      addedComponents: [{ ...mockComponent, title: 'Dash' }],
     };
 
     (usePluginLinks as jest.Mock).mockReturnValue({
@@ -249,7 +249,7 @@ describe('ExtensionToolbarItem', () => {
     expect(buttons).toHaveLength(2);
 
     // Each button should have the correct title
-    expect(buttons[0]).toHaveAttribute('aria-label', 'Open Investigations');
-    expect(buttons[1]).toHaveAttribute('aria-label', 'Open Assistant');
+    expect(buttons[0]).toHaveAttribute('aria-label', 'Open Assistant');
+    expect(buttons[1]).toHaveAttribute('aria-label', 'Open Dash');
   });
 });

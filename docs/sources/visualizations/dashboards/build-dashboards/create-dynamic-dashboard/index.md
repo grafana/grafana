@@ -245,11 +245,12 @@ To configure repeats, follow these steps:
 1. Click **Save**.
 1. Toggle off the edit mode switch.
 
-### Repeating rows and the Dashboard special data source
+### Repeating rows and tabs and the Dashboard special data source
 
 <!-- is this next section still true? -->
 
 If a row includes panels using the special [Dashboard data source](ref:built-in-special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+The same behavior applies to tabs.
 
 For example, in a dashboard:
 

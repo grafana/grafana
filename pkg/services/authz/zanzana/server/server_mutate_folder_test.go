@@ -30,7 +30,7 @@ func testMutateFolders(t *testing.T, srv *Server) {
 	setupMutateFolders(t, srv)
 
 	t.Run("should create new folder parent relation", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -61,7 +61,7 @@ func testMutateFolders(t *testing.T, srv *Server) {
 	})
 
 	t.Run("should delete folder parent relation", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -88,7 +88,7 @@ func testMutateFolders(t *testing.T, srv *Server) {
 	})
 
 	t.Run("should clean up all parent relations", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -115,7 +115,7 @@ func testMutateFolders(t *testing.T, srv *Server) {
 	})
 
 	t.Run("should perform batch mutate if multiple operations are provided", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{

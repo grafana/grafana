@@ -30,7 +30,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
   templateVariableOptions,
 }) => {
   const isPercentile = aggregate.reduce?.name === 'percentile';
-  const isCountAggregate = aggregate.reduce?.name?.includes('count');
+  const isCountAggregate = aggregate.reduce?.name === 'count';
 
   const [percentileValue, setPercentileValue] = useState(aggregate.parameters?.[0]?.value || '');
   const [columnValue, setColumnValue] = useState(

@@ -12,11 +12,11 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // getDefaultDatasourceType gets the default datasource type using the datasource provider
@@ -58,7 +58,7 @@ func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemavers
 // datasource: { type: "datasource" } with no UID, it should resolve to uid: "grafana".
 func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
 	if dsType == "datasource" && dsUID == "" {
-		return grafanads.DatasourceUID
+		return dashboard.GrafanaDatasourceUID
 	}
 	return dsUID
 }
@@ -229,6 +229,46 @@ func getBoolField(m map[string]interface{}, key string, defaultValue bool) bool 
 	return defaultValue
 }
 
+// stripBOM removes Byte Order Mark (BOM) characters from a string.
+// BOMs (U+FEFF) can be introduced through copy/paste from certain editors
+// and cause CUE validation errors ("illegal byte order mark").
+func stripBOM(s string) string {
+	return strings.ReplaceAll(s, "\ufeff", "")
+}
+
+// stripBOMFromInterface recursively strips BOM characters from all strings
+// in an interface{} value (map, slice, or string).
+func stripBOMFromInterface(v interface{}) interface{} {
+	switch val := v.(type) {
+	case string:
+		return stripBOM(val)
+	case map[string]interface{}:
+		result := make(map[string]interface{}, len(val))
+		for k, v := range val {
+			result[k] = stripBOMFromInterface(v)
+		}
+		return result
+	case []interface{}:
+		result := make([]interface{}, len(val))
+		for i, item := range val {
+			result[i] = stripBOMFromInterface(item)
+		}
+		return result
+	default:
+		return v
+	}
+}
+
+func getUnionField[T ~string](m map[string]interface{}, key string) *T {
+	if val, ok := m[key]; ok {
+		if str, ok := val.(string); ok && str != "" {
+			result := T(str)
+			return &result
+		}
+	}
+	return nil
+}
+
 // Helper function to create int64 pointer
 func int64Ptr(i int64) *int64 {
 	return &i
@@ -383,7 +423,8 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 				// Optional field - only set if present
 				if url, exists := linkMap["url"]; exists {
 					if urlStr, ok := url.(string); ok {
-						dashLink.Url = &urlStr
+						cleanUrl := stripBOM(urlStr)
+						dashLink.Url = &cleanUrl
 					}
 				}
 
@@ -491,11 +532,9 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsIndexProvi
 
 			if currentRow != nil {
 				// If currentRow is a hidden-header row (panels before first explicit row),
-				// set its collapse to match the first explicit row's collapsed value
-				// This matches frontend behavior: collapse: panel.collapsed
+				// it should not be collapsed because it will disappear and be visible only in edit mode
 				if currentRow.Spec.HideHeader != nil && *currentRow.Spec.HideHeader {
-					rowCollapsed := getBoolField(panelMap, "collapsed", false)
-					currentRow.Spec.Collapse = &rowCollapsed
+					currentRow.Spec.Collapse = &[]bool{false}[0]
 				}
 				// Flush current row to layout
 				rows = append(rows, *currentRow)
@@ -1177,6 +1216,10 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			// If no UID and no type, use default
 			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
+	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
+		// Handle datasource variable reference (e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1195,6 +1238,7 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 			Refresh:          transformVariableRefreshToEnum(varMap["refresh"]),
 			Sort:             transformVariableSortToEnum(varMap["sort"]),
 			Regex:            schemaversion.GetStringValue(varMap, "regex"),
+			RegexApplyTo:     getUnionField[dashv2alpha1.DashboardVariableRegexApplyTo](varMap, "regexApplyTo"),
 			Query:            buildDataQueryKindForVariable(varMap["query"], datasourceType),
 			AllowCustomValue: getBoolField(varMap, "allowCustomValue", true),
 		},
@@ -1290,6 +1334,17 @@ func buildCustomVariable(varMap map[string]interface{}, commonProps CommonVariab
 
 	if allValue := schemaversion.GetStringValue(varMap, "allValue"); allValue != "" {
 		customVar.Spec.AllValue = &allValue
+	}
+
+	if valuesFormat := schemaversion.GetStringValue(varMap, "valuesFormat"); valuesFormat != "" {
+		switch valuesFormat {
+		case string(dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson):
+			format := dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson
+			customVar.Spec.ValuesFormat = &format
+		case string(dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv):
+			format := dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv
+			customVar.Spec.ValuesFormat = &format
+		}
 	}
 
 	return dashv2alpha1.DashboardVariableKind{
@@ -1523,6 +1578,10 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 			// If no UID and no type, use default
 			datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 		}
+	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
+		// Handle datasource variable reference (e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1539,25 +1598,37 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		},
 	}
 
-	// Transform baseFilters if they exist
+	// Transform baseFilters if they exist, otherwise default to empty array
 	if baseFilters, exists := varMap["baseFilters"]; exists {
 		if baseFiltersArray, ok := baseFilters.([]interface{}); ok {
 			adhocVar.Spec.BaseFilters = transformAdHocFilters(baseFiltersArray)
 		}
 	}
+	// Ensure baseFilters is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.BaseFilters == nil {
+		adhocVar.Spec.BaseFilters = []dashv2alpha1.DashboardAdHocFilterWithLabels{}
+	}
 
-	// Transform filters if they exist
+	// Transform filters if they exist, otherwise default to empty array
 	if filters, exists := varMap["filters"]; exists {
 		if filtersArray, ok := filters.([]interface{}); ok {
 			adhocVar.Spec.Filters = transformAdHocFilters(filtersArray)
 		}
 	}
+	// Ensure filters is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.Filters == nil {
+		adhocVar.Spec.Filters = []dashv2alpha1.DashboardAdHocFilterWithLabels{}
+	}
 
-	// Transform defaultKeys if they exist
+	// Transform defaultKeys if they exist, otherwise default to empty array
 	if defaultKeys, exists := varMap["defaultKeys"]; exists {
 		if defaultKeysArray, ok := defaultKeys.([]interface{}); ok {
 			adhocVar.Spec.DefaultKeys = transformMetricFindValues(defaultKeysArray)
 		}
+	}
+	// Ensure defaultKeys is always set (default to empty array if not present or invalid)
+	if adhocVar.Spec.DefaultKeys == nil {
+		adhocVar.Spec.DefaultKeys = []dashv2alpha1.DashboardMetricFindValue{}
 	}
 
 	// Only include datasource if datasourceUID exists (matching frontend behavior)
@@ -1688,6 +1759,10 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 
 		// Resolve Grafana datasource UID when type is "datasource" and UID is empty
 		datasourceUID = resolveGrafanaDatasourceUID(datasourceType, datasourceUID)
+	} else if dsStr, ok := datasource.(string); ok && isTemplateVariable(dsStr) {
+		// Handle datasource variable reference (e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		datasourceUID = dsStr
 	} else {
 		datasourceType = getDefaultDatasourceType(ctx, dsIndexProvider)
 	}
@@ -1701,7 +1776,9 @@ func buildGroupByVariable(ctx context.Context, varMap map[string]interface{}, co
 			Hide:        commonProps.Hide,
 			SkipUrlSync: commonProps.SkipUrlSync,
 			Current:     buildVariableCurrent(varMap["current"]),
-			Multi:       getBoolField(varMap, "multi", false),
+			// We set it to true by default because GroupByVariable
+			// constructor defaults to multi: true
+			Multi: getBoolField(varMap, "multi", true),
 		},
 	}
 
@@ -1982,6 +2059,34 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 					Uid:  &dsUID,
 				}
 			}
+		} else if dsStr, ok := ds.(string); ok && isTemplateVariable(dsStr) {
+			// Handle legacy panel datasource as string (template variable reference e.g., "$datasource")
+			// Only process template variables - other string values are not supported in V2 format
+			panelDatasource = &dashv2alpha1.DashboardDataSourceRef{
+				Uid: &dsStr,
+			}
+		}
+	}
+
+	// Ensure each target has a non-empty refId. We only fill missing refIds;
+	existingRefIds := make(map[string]bool)
+	for _, target := range targets {
+		if targetMap, ok := target.(map[string]interface{}); ok {
+			if refId := schemaversion.GetStringValue(targetMap, "refId"); refId != "" {
+				existingRefIds[refId] = true
+			}
+		}
+	}
+	for _, target := range targets {
+		targetMap, ok := target.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		refId := schemaversion.GetStringValue(targetMap, "refId")
+		if refId == "" {
+			refId = nextAvailableRefId(existingRefIds)
+			targetMap["refId"] = refId
+			existingRefIds[refId] = true
 		}
 	}
 
@@ -1997,8 +2102,32 @@ func transformPanelQueries(ctx context.Context, panelMap map[string]interface{},
 	return queries
 }
 
+// nextAvailableRefId returns the next unused refId using the same sequence as the
+// frontend helper (A, B, ..., Z, AA, AB, ...).
+func nextAvailableRefId(existing map[string]bool) string {
+	const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	var refIdFromIndex func(num int) string
+	refIdFromIndex = func(num int) string {
+		if num < len(letters) {
+			return string(letters[num])
+		}
+		return refIdFromIndex(num/len(letters)-1) + string(letters[num%len(letters)])
+	}
+
+	for i := 0; ; i++ {
+		refId := refIdFromIndex(i)
+		if !existing[refId] {
+			return refId
+		}
+	}
+}
+
 func transformSingleQuery(ctx context.Context, targetMap map[string]interface{}, panelDatasource *dashv2alpha1.DashboardDataSourceRef, dsIndexProvider schemaversion.DataSourceIndexProvider) dashv2alpha1.DashboardPanelQueryKind {
 	refId := schemaversion.GetStringValue(targetMap, "refId", "A")
+	if refId == "" {
+		refId = "A"
+	}
 	hidden := getBoolField(targetMap, "hide", false)
 
 	// Extract datasource from query or use panel datasource
@@ -2022,6 +2151,10 @@ func transformSingleQuery(ctx context.Context, targetMap map[string]interface{},
 			// Resolve Grafana datasource UID when type is "datasource" and UID is empty
 			queryDatasourceUID = resolveGrafanaDatasourceUID(queryDatasourceType, queryDatasourceUID)
 		}
+	} else if dsStr, ok := targetMap["datasource"].(string); ok && isTemplateVariable(dsStr) {
+		// Handle legacy target datasource as string (template variable reference e.g., "$datasource")
+		// Only process template variables - other string values are not supported in V2 format
+		queryDatasourceUID = dsStr
 	}
 
 	// Use panel datasource if target datasource is missing or empty
@@ -2158,7 +2291,7 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 		if linkMap, ok := link.(map[string]interface{}); ok {
 			dataLink := dashv2alpha1.DashboardDataLink{
 				Title: schemaversion.GetStringValue(linkMap, "title"),
-				Url:   schemaversion.GetStringValue(linkMap, "url"),
+				Url:   stripBOM(schemaversion.GetStringValue(linkMap, "url")),
 			}
 			if _, exists := linkMap["targetBlank"]; exists {
 				targetBlank := getBoolField(linkMap, "targetBlank", false)
@@ -2169,6 +2302,32 @@ func transformDataLinks(panelMap map[string]interface{}) []dashv2alpha1.Dashboar
 		}
 	}
 
+	return result
+}
+
+// knownPanelProperties lists all properties defined in the Panel schema (dashboard_kind.cue)
+// that should NOT be passed to Angular migration handlers. Only "unknown" Angular-specific
+// properties should be passed to migration handlers.
+var knownPanelProperties = map[string]bool{
+	"type": true, "id": true, "pluginVersion": true, "targets": true,
+	"title": true, "description": true, "transparent": true, "datasource": true,
+	"gridPos": true, "links": true, "repeat": true, "repeatDirection": true,
+	"maxPerRow": true, "maxDataPoints": true, "transformations": true,
+	"interval": true, "timeFrom": true, "timeShift": true, "hideTimeOverride": true,
+	"timeCompare": true, "libraryPanel": true, "cacheTimeout": true,
+	"queryCachingTTL": true, "options": true, "fieldConfig": true, "autoMigrateFrom": true,
+}
+
+// extractAngularOptions extracts only the Angular-specific options from a panel map,
+// filtering out all known Panel schema properties. This is used to pass just the
+// Angular options to migration handlers (e.g., sparkline, valueName, format for singlestat).
+func extractAngularOptions(panelMap map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for key, value := range panelMap {
+		if !knownPanelProperties[key] {
+			result[key] = value
+		}
+	}
 	return result
 }
 
@@ -2184,7 +2343,10 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 
 	options := make(map[string]interface{})
 	if opts, ok := panelMap["options"].(map[string]interface{}); ok {
-		options = opts
+		// Deep copy options to avoid modifying the original
+		for k, v := range opts {
+			options[k] = v
+		}
 	}
 
 	// Add frontend-style default options to match frontend behavior
@@ -2195,11 +2357,43 @@ func buildVizConfig(panelMap map[string]interface{}) dashv2alpha1.DashboardVizCo
 		options["legend"] = legend
 	}
 
+	// Handle Angular panel migrations
+	// This replicates the v0→v1 migration logic for panels that weren't migrated yet.
+	// We check two cases:
+	// 1. Panel already has autoMigrateFrom set (from v0→v1 migration) - panel type already converted
+	// 2. Panel type is a known Angular panel - need to convert type AND set autoMigrateFrom
+	// 3. Panel has original options - need to set autoMigrateFrom and originalOptions
+	autoMigrateFrom, hasAutoMigrateFrom := panelMap["autoMigrateFrom"].(string)
+	originalOptions := extractAngularOptions(panelMap)
+
+	if !hasAutoMigrateFrom || autoMigrateFrom == "" {
+		// Check if panel type is an Angular type that needs migration
+		if newType := getAngularPanelMigration(panelType, panelMap); newType != "" {
+			autoMigrateFrom = panelType // Original Angular type
+			panelType = newType         // New modern type
+		} else if len(originalOptions) > 0 {
+			autoMigrateFrom = panelType
+		}
+	}
+
+	if autoMigrateFrom != "" {
+		options["__angularMigration"] = map[string]interface{}{
+			"autoMigrateFrom": autoMigrateFrom,
+			"originalOptions": originalOptions,
+		}
+	}
+
+	// Strip BOMs from options (may contain dataLinks with URLs that have BOMs)
+	cleanedOptions := stripBOMFromInterface(options)
+	if cleanedMap, ok := cleanedOptions.(map[string]interface{}); ok {
+		options = cleanedMap
+	}
+
 	// Build field config by mapping each field individually
 	fieldConfigSource := extractFieldConfigSource(fieldConfig)
 
 	return dashv2alpha1.DashboardVizConfigKind{
-		Kind: panelType, // Use panelType as Kind (plugin ID) to match schema comment
+		Kind: panelType, // Use panelType as Kind (plugin ID) - may be converted from Angular type
 		Spec: dashv2alpha1.DashboardVizConfigSpec{
 			PluginVersion: pluginVersion,
 			FieldConfig:   fieldConfigSource,
@@ -2338,9 +2532,14 @@ func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.Da
 		hasDefaults = true
 	}
 
-	// Extract array field
+	// Extract array field - strip BOMs from link URLs
 	if linksArray, ok := extractArrayField(defaults, "links"); ok {
-		fieldConfigDefaults.Links = linksArray
+		cleanedLinks := stripBOMFromInterface(linksArray)
+		if cleanedArray, ok := cleanedLinks.([]interface{}); ok {
+			fieldConfigDefaults.Links = cleanedArray
+		} else {
+			fieldConfigDefaults.Links = linksArray
+		}
 		hasDefaults = true
 	}
 
@@ -2495,22 +2694,15 @@ func buildRegexMap(mappingMap map[string]interface{}) *dashv2alpha1.DashboardReg
 	regexMap := &dashv2alpha1.DashboardRegexMap{}
 	regexMap.Type = dashv2alpha1.DashboardMappingTypeRegex
 
-	opts, ok := mappingMap["options"].([]interface{})
-	if !ok || len(opts) == 0 {
-		return nil
-	}
-
-	optMap, ok := opts[0].(map[string]interface{})
+	optMap, ok := mappingMap["options"].(map[string]interface{})
 	if !ok {
 		return nil
 	}
 
 	r := dashv2alpha1.DashboardV2alpha1RegexMapOptions{}
-	if pattern, ok := optMap["regex"].(string); ok {
+	if pattern, ok := optMap["pattern"].(string); ok {
 		r.Pattern = pattern
 	}
-
-	// Result is a DashboardValueMappingResult
 	if resMap, ok := optMap["result"].(map[string]interface{}); ok {
 		r.Result = buildValueMappingResult(resMap)
 	}
@@ -2633,9 +2825,11 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 				fieldOverride.Properties = make([]dashv2alpha1.DashboardDynamicConfigValue, 0, len(propertiesArray))
 				for _, property := range propertiesArray {
 					if propertyMap, ok := property.(map[string]interface{}); ok {
+						// Strip BOMs from property values (may contain links with URLs)
+						cleanedValue := stripBOMFromInterface(propertyMap["value"])
 						fieldOverride.Properties = append(fieldOverride.Properties, dashv2alpha1.DashboardDynamicConfigValue{
 							Id:    schemaversion.GetStringValue(propertyMap, "id"),
-							Value: propertyMap["value"],
+							Value: cleanedValue,
 						})
 					}
 				}
@@ -2646,4 +2840,11 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 	}
 
 	return result
+}
+
+// getAngularPanelMigration is a convenience wrapper around schemaversion.GetAngularPanelMigration.
+// It checks if a panel type is an Angular panel and returns the new type to migrate to.
+// Returns the new panel type if migration is needed, empty string otherwise.
+func getAngularPanelMigration(panelType string, panelMap map[string]interface{}) string {
+	return schemaversion.GetAngularPanelMigration(panelType, panelMap)
 }

@@ -4,10 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
+	"math"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -16,11 +21,166 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationSearchDevDashboards(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+		UnifiedStorageEnableSearch: true,
+	})
+	defer helper.Shutdown()
+
+	// Create devenv dashboards from legacy API
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &dashboardV0.GroupVersion
+	adminClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+	adminClient.Get()
+
+	fileCount := 0
+	devenv := "../../../../devenv/dev-dashboards/panel-timeseries"
+	err = filepath.WalkDir(devenv, func(p string, d fs.DirEntry, e error) error {
+		require.NoError(t, err)
+		if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
+			return nil
+		}
+
+		// use the filename as UID
+		uid := strings.TrimSuffix(d.Name(), ".json")
+		if len(uid) > 40 {
+			uid = uid[:40] // avoid uid too long, max 40 characters
+		}
+
+		// nolint:gosec
+		data, err := os.ReadFile(p)
+		require.NoError(t, err)
+
+		cmd := dashboards.SaveDashboardCommand{
+			Dashboard: &simplejson.Json{},
+			Overwrite: true,
+		}
+		err = cmd.Dashboard.FromDB(data)
+		require.NoError(t, err)
+		cmd.Dashboard.Set("id", nil)
+		cmd.Dashboard.Set("uid", uid)
+		data, err = json.Marshal(cmd)
+		require.NoError(t, err)
+
+		var statusCode int
+		result := adminClient.Post().AbsPath("api", "dashboards", "db").
+			Body(data).
+			SetHeader("Content-type", "application/json").
+			Do(ctx).
+			StatusCode(&statusCode)
+		require.NoError(t, result.Error(), "file: [%d] %s [status:%d]", fileCount, d.Name(), statusCode)
+		require.Equal(t, int(http.StatusOK), statusCode)
+		fileCount++
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, 16, fileCount, "file count from %s", devenv)
+
+	// Helper to call search
+	callSearch := func(user apis.User, params string) dashboardV0.SearchResults {
+		require.NotNil(t, user)
+		ns := user.Identity.GetNamespace()
+		cfg := dynamic.ConfigFor(user.NewRestConfig())
+		cfg.GroupVersion = &dashboardV0.GroupVersion
+		restClient, err := k8srest.RESTClientFor(cfg)
+		require.NoError(t, err)
+
+		var statusCode int
+		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+			Param("limit", "1000").
+			Param("type", "dashboard") // Only search dashboards
+
+		for kv := range strings.SplitSeq(params, "&") {
+			if kv == "" {
+				continue
+			}
+			parts := strings.SplitN(kv, "=", 2)
+			if len(parts) == 2 {
+				req = req.Param(parts[0], parts[1])
+			}
+		}
+		res := req.Do(ctx).StatusCode(&statusCode)
+		require.NoError(t, res.Error())
+		require.Equal(t, int(http.StatusOK), statusCode)
+		var sr dashboardV0.SearchResults
+		raw, err := res.Raw()
+		require.NoError(t, err)
+		require.NoError(t, json.Unmarshal(raw, &sr))
+
+		// Normalize scores and query cost for snapshot comparison
+		sr.QueryCost = 0 // this depends on the hardware
+		sr.MaxScore = roundTo(sr.MaxScore, 3)
+		for i := range sr.Hits {
+			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
+		}
+		return sr
+	}
+
+	// Compare a results to snapshots
+	testCases := []struct {
+		name   string
+		user   apis.User
+		params string
+	}{
+		{
+			name:   "all",
+			user:   helper.Org1.Admin,
+			params: "", // only dashboards
+		},
+		{
+			name:   "simple-query",
+			user:   helper.Org1.Admin,
+			params: "query=stacking",
+		},
+		{
+			name:   "with-text-panel",
+			user:   helper.Org1.Admin,
+			params: "field=panel_types&panelType=text",
+		},
+	}
+	for i, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := callSearch(tc.user, tc.params)
+			jj, err := json.MarshalIndent(res, "", "  ")
+			require.NoError(t, err)
+
+			fname := fmt.Sprintf("testdata/searchV0/t%02d-%s.json", i, tc.name)
+			// nolint:gosec
+			snapshot, err := os.ReadFile(fname)
+			if err != nil {
+				assert.Failf(t, "Failed to read snapshot", "file: %s", fname)
+				err = os.WriteFile(fname, jj, 0o644)
+				require.NoErrorf(t, err, "Failed to write snapshot file %s", fname)
+				return
+			}
+
+			if !assert.JSONEq(t, string(snapshot), string(jj)) {
+				err = os.WriteFile(fname, jj, 0o644)
+				require.NoErrorf(t, err, "Failed to write snapshot file %s", fname)
+			}
+		})
+	}
+}
 
 func TestIntegrationSearchPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -37,9 +197,10 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
+			DisableDataMigrations: true,
+			AppModeProduction:     true,
+			DisableAnonymous:      true,
+			APIServerStorageType:  "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
@@ -283,4 +444,12 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	}, &struct{}{})
 
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
+}
+
+// roundTo rounds a float64 to a specified number of decimal places.
+func roundTo(n float64, decimals uint32) float64 {
+	// Calculate the power of 10 for the desired number of decimals
+	scale := math.Pow(10, float64(decimals))
+	// Multiply, round to the nearest integer, and then divide back
+	return math.Round(n*scale) / scale
 }

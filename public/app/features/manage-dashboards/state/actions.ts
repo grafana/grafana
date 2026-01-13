@@ -6,8 +6,8 @@ import {
   PanelQueryKind,
   AnnotationQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ThunkResult } from 'app/types/store';

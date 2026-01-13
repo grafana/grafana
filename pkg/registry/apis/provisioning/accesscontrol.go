@@ -12,6 +12,12 @@ const (
 	ActionProvisioningRepositoriesRead   = "provisioning.repositories:read"   // GET + LIST.
 	ActionProvisioningRepositoriesDelete = "provisioning.repositories:delete" // DELETE.
 
+	// Connections
+	ActionProvisioningConnectionsCreate = "provisioning.connections:create" // CREATE.
+	ActionProvisioningConnectionsWrite  = "provisioning.connections:write"  // UPDATE.
+	ActionProvisioningConnectionsRead   = "provisioning.connections:read"   // GET + LIST.
+	ActionProvisioningConnectionsDelete = "provisioning.connections:delete" // DELETE.
+
 	// Jobs
 	ActionProvisioningJobsCreate = "provisioning.jobs:create" // CREATE.
 	ActionProvisioningJobsWrite  = "provisioning.jobs:write"  // UPDATE.
@@ -20,6 +26,12 @@ const (
 
 	// Historic Jobs
 	ActionProvisioningHistoricJobsRead = "provisioning.historicjobs:read" // GET + LIST.
+
+	// Settings (read-only, needed by multiple UI pages)
+	ActionProvisioningSettingsRead = "provisioning.settings:read" // GET + LIST.
+
+	// Stats (read-only, admin-only)
+	ActionProvisioningStatsRead = "provisioning.stats:read" // GET + LIST.
 )
 
 func registerAccessControlRoles(service accesscontrol.Service) error {
@@ -57,6 +69,46 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 				{
 					Action: ActionProvisioningRepositoriesDelete,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
+	// Connections
+	connectionsReader := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:provisioning.connections:reader",
+			DisplayName: "Connections Reader",
+			Description: "Read and list provisioning connections.",
+			Group:       "Provisioning",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningConnectionsRead,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
+	connectionsWriter := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:provisioning.connections:writer",
+			DisplayName: "Connections Writer",
+			Description: "Create, update and delete provisioning connections.",
+			Group:       "Provisioning",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningConnectionsCreate,
+				},
+				{
+					Action: ActionProvisioningConnectionsRead,
+				},
+				{
+					Action: ActionProvisioningConnectionsWrite,
+				},
+				{
+					Action: ActionProvisioningConnectionsDelete,
 				},
 			},
 		},
@@ -119,11 +171,47 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
+	// Settings - granted to Viewer (accessible by all logged-in users)
+	settingsReader := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:provisioning.settings:reader",
+			DisplayName: "Settings Reader",
+			Description: "Read provisioning settings.",
+			Group:       "Provisioning",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningSettingsRead,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleViewer)},
+	}
+
+	// Stats - granted to Admin only
+	statsReader := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:provisioning.stats:reader",
+			DisplayName: "Stats Reader",
+			Description: "Read provisioning stats.",
+			Group:       "Provisioning",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningStatsRead,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
 	return service.DeclareFixedRoles(
 		repositoriesReader,
 		repositoriesWriter,
+		connectionsReader,
+		connectionsWriter,
 		jobsReader,
 		jobsWriter,
 		historicJobsReader,
+		settingsReader,
+		statsReader,
 	)
 }

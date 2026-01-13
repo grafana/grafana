@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +26,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	manifestdata "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -54,12 +57,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -120,11 +123,11 @@ type DashboardsAPIBuilder struct {
 	snapshotService              dashboardsnapshots.Service
 	snapshotOptions              dashv0.SnapshotSharingOptions
 	namespacer                   request.NamespaceMapper
+	dashboardActivityChannel     live.DashboardActivityChannel
 	isStandalone                 bool // skips any handling including anything to do with legacy storage
 }
 
 func RegisterAPIService(
-	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
@@ -149,7 +152,15 @@ func RegisterAPIService(
 	libraryPanels libraryelements.Service,
 	publicDashboardService publicdashboards.Service,
 	snapshotService dashboardsnapshots.Service,
+	dashboardActivityChannel live.DashboardActivityChannel,
+	configProvider configprovider.ConfigProvider,
 ) *DashboardsAPIBuilder {
+	cfg, err := configProvider.Get(context.Background())
+	if err != nil {
+		logging.DefaultLogger.Error("failed to load settings configuration instance", "stackId", cfg.StackID, "err", err)
+		return nil
+	}
+
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -183,6 +194,7 @@ func RegisterAPIService(
 		snapshotService:              snapshotService,
 		snapshotOptions:              snapshotOptions,
 		namespacer:                   namespacer,
+		dashboardActivityChannel:     dashboardActivityChannel,
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 			DashboardService: dashboardService,
@@ -194,13 +206,30 @@ func RegisterAPIService(
 		datasourceService: datasourceService,
 	}, &libraryElementIndexProvider{
 		libraryElementService: libraryPanels,
-	})
+	}, cfg.DashboardSchemaMigrationCacheTTL)
+
+	// For single-tenant deployments (indicated by StackID), preload the cache in the background
+	if cfg.StackID != "" {
+		// Single namespace for cloud stack
+		stackID, err := strconv.ParseInt(cfg.StackID, 10, 64)
+		if err == nil {
+			var nsInfo authlib.NamespaceInfo
+			nsInfo, err = authlib.ParseNamespace(authlib.CloudNamespaceFormatter(stackID))
+			if err == nil {
+				migration.PreloadCacheInBackground([]authlib.NamespaceInfo{nsInfo})
+			}
+		}
+		if err != nil {
+			logging.DefaultLogger.Error("failed to parse namespace for cache preloading", "stackId", cfg.StackID, "err", err)
+		}
+	}
+
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
-	migration.Initialize(datasourceProvider, libraryElementProvider)
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler) *DashboardsAPIBuilder {
+	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
 		accessClient:           ac,
@@ -208,12 +237,13 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,
+		search:                 search,
 		isStandalone:           true,
 	}
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts, featuremgmt.FlagKubernetesDashboardsV2) {
+	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
 		// If dashboards v2 is enabled, we want to use v2beta1 as the default API version.
 		return []schema.GroupVersion{
 			dashv2beta1.DashboardResourceInfo.GroupVersion(),
@@ -359,6 +389,11 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
+	// Validate tags
+	if err := validateDashboardTags(dashObj); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting requester: %w", err)
@@ -426,6 +461,11 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 
 	// Basic validations
 	if err := b.dashboardService.ValidateBasicDashboardProperties(title, newAccessor.GetName(), newAccessor.GetMessage()); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	// Validate tags
+	if err := validateDashboardTags(newDashObj); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -524,6 +564,32 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	}
 
 	return title, refresh, nil
+}
+
+// validateDashboardTags validates that all dashboard tags are within the maximum length
+func validateDashboardTags(obj runtime.Object) error {
+	var tags []string
+
+	switch d := obj.(type) {
+	case *dashv0.Dashboard:
+		tags = d.Spec.GetNestedStringSlice("tags")
+	case *dashv1.Dashboard:
+		tags = d.Spec.GetNestedStringSlice("tags")
+	case *dashv2alpha1.Dashboard:
+		tags = d.Spec.Tags
+	case *dashv2beta1.Dashboard:
+		tags = d.Spec.Tags
+	default:
+		return fmt.Errorf("unsupported dashboard version: %T", obj)
+	}
+
+	for _, tag := range tags {
+		if len(tag) > 50 {
+			return dashboards.ErrDashboardTagTooLong
+		}
+	}
+
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -677,9 +743,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	if err != nil {
 		return err
 	}
-	storage[dashboards.StoragePath()] = dashboardStoragePermissionWrapper{
-		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
+	storage[dashboards.StoragePath()] = dashboardStorageWrapper{
 		Storage:                 dw,
+		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
+		live:                    b.dashboardActivityChannel,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
@@ -722,7 +789,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			ResourceInfo: *snapshots,
 			Service:      b.snapshotService,
 			Namespacer:   b.namespacer,
-			Options:      b.snapshotOptions,
 		}
 		storage[snapshots.StoragePath()] = snapshotLegacyStore
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(dashboards, b.snapshotService)
@@ -756,11 +822,6 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 }
 
 var defaultDashboardPermissions = []map[string]any{
-	{
-		"kind": "BasicRole",
-		"name": "Admin",
-		"verb": "admin",
-	},
 	{
 		"kind": "BasicRole",
 		"name": "Editor",
@@ -843,6 +904,50 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 		maps.Copy(defs, dashv1.GetOpenAPIDefinitions(ref))
 		maps.Copy(defs, dashv2alpha1.GetOpenAPIDefinitions(ref))
 		maps.Copy(defs, dashv2beta1.GetOpenAPIDefinitions(ref))
+		md := manifestdata.LocalManifest().ManifestData
+		// Overwrite the OpenAPI generated from kubernetes (sourced from the go types) with the OpenAPI generated by grafana-app-sdk
+		// from the manifest CUE, as it correctly handles the CUE disjunctions in the dashboard spec.
+		// We don't touch any types which were not specified in the manifest CUE (such as custom route types).
+		for _, version := range md.Versions {
+			// We don't need to correct the v0 or v1 openAPI as the spec type is just `any`
+			if len(version.Name) > 1 && (version.Name[1] == '0' || version.Name[1] == '1') {
+				continue
+			}
+			for _, kind := range version.Kinds {
+				pkgPrefix := fmt.Sprintf("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/%s", version.Name)
+				oapi, err := kind.Schema.AsKubeOpenAPI(schema.GroupVersionKind{
+					Group:   md.Group,
+					Version: version.Name,
+					Kind:    kind.Kind,
+				}, ref, pkgPrefix)
+				if err != nil {
+					logging.DefaultLogger.Error("unable to generate openAPI for kind %s: %w", kind.Kind, err)
+					continue
+				}
+				maps.Copy(defs, oapi)
+			}
+		}
+
+		// Fix legacyOptions schema for v2alpha1 and v2beta1 to allow any value type
+		// The generated schema incorrectly restricts values to objects, but map[string]interface{} can hold any type
+		// This fix must be applied here so structured-merge-diff uses the correct schema
+		// For some reason this issue occurs with both the kubernetes-generated openAPI sourced from go, _and_ the OpenAPI from the AppManifest
+		// TODO: @IfSentient this should really be addressed in the app-sdk's generation, or work out what about this particular CUE value is broken
+		for _, defKey := range []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardAnnotationQuerySpec",
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationQuerySpec",
+		} {
+			if def, ok := defs[defKey]; ok {
+				if legacyOptions, ok := def.Schema.Properties["legacyOptions"]; ok {
+					// Fix: Use additionalProperties: true to allow any value type (string, number, boolean, array, object, etc.)
+					// instead of restricting to objects only. This must match map[string]interface{} semantics.
+					legacyOptions.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
+					def.Schema.Properties["legacyOptions"] = legacyOptions
+					defs[defKey] = def
+				}
+			}
+		}
+
 		return defs
 	}
 }

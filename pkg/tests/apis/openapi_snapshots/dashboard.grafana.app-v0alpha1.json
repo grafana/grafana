@@ -1803,6 +1803,15 @@
             }
           },
           {
+            "name": "facetLimit",
+            "in": "query",
+            "description": "maximum number of terms to return per facet (default 50, max 1000)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
             "name": "tags",
             "in": "query",
             "description": "tag query filter",
@@ -1817,6 +1826,22 @@
             "name": "libraryPanel",
             "in": "query",
             "description": "find dashboards that reference a given libraryPanel",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "panelType",
+            "in": "query",
+            "description": "find dashboards using panels of a given plugin type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataSourceType",
+            "in": "query",
+            "description": "find dashboards using datasources of a given plugin type",
             "schema": {
               "type": "string"
             }
@@ -2158,6 +2183,43 @@
             }
           }
         ]
+      }
+    },
+    "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/snapshots/settings": {
+      "get": {
+        "tags": [
+          "Snapshot"
+        ],
+        "description": "Get Snapshot sharing settings",
+        "operationId": "getSnapshotSettings",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": "{\"snapshotsEnabled\":true,\"externalSnapshotURL\":\"https://externalurl.com\",\"externalSnapshotName\":\"external\",\"externalEnabled\":true}"
+              }
+            }
+          }
+        },
+        "x-grafana-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v0alpha1",
+          "kind": "SnapshotSharingOptions"
+        }
       }
     },
     "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/snapshots/{name}": {

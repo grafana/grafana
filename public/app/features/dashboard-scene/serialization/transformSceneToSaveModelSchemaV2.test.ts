@@ -1,4 +1,4 @@
-import { VariableRefresh } from '@grafana/data';
+import { VariableRefresh, PanelData, LoadingState, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -18,6 +18,8 @@ import {
   VizPanel,
   SceneDataQuery,
   SceneQueryRunner,
+  SceneDataTransformer,
+  SceneDataNode,
   sceneUtils,
   dataLayers,
 } from '@grafana/scenes';
@@ -33,6 +35,7 @@ import {
   TabsLayoutSpec,
   defaultDataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -283,6 +286,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             sort: VariableSortV1.alphabeticalDesc,
             refresh: VariableRefresh.onDashboardLoad,
             regex: 'regex1',
+            regexApplyTo: 'value',
             allValue: '*',
             includeAll: true,
             isMulti: true,
@@ -952,6 +956,103 @@ describe('getVizPanelQueries', () => {
     expect(result[1].spec.query.datasource?.name).toBe('prometheus-uid');
     expect(result[1].spec.query.group).toBe('prometheus');
     expect(result[1].spec.query.version).toBe('v0');
+  });
+
+  describe('snapshot mode', () => {
+    it('should return empty queries when isSnapshot is true but panel has no data provider', () => {
+      const vizPanel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        // No $data provider
+      });
+
+      const result = getVizPanelQueries(vizPanel, undefined, true);
+      expect(result).toEqual([]);
+    });
+
+    it('should create snapshot query from SceneQueryRunner data when isSnapshot is true', () => {
+      const mockDataFrame = toDataFrame({
+        name: 'test-series',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+        ],
+      });
+
+      const panelData: PanelData = {
+        series: [mockDataFrame],
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+      };
+
+      const queryRunner = new SceneQueryRunner({
+        queries: [],
+        data: panelData,
+      });
+
+      const vizPanel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: queryRunner,
+      });
+
+      const result = getVizPanelQueries(vizPanel, undefined, true);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].kind).toBe('PanelQuery');
+      expect(result[0].spec.refId).toBe('A');
+      expect(result[0].spec.hidden).toBe(false);
+      expect(result[0].spec.query.kind).toBe('DataQuery');
+      expect(result[0].spec.query.version).toBe(defaultDataQueryKind().version);
+      expect(result[0].spec.query.group).toBe('grafana');
+      expect(result[0].spec.query.datasource).toEqual({ name: 'grafana' });
+      expect(result[0].spec.query.spec.queryType).toBe(GrafanaQueryType.Snapshot);
+      expect(result[0].spec.query.spec.snapshot).toBeDefined();
+      expect(result[0].spec.query.spec.snapshot).toHaveLength(1);
+      expect(result[0].spec.query.spec.snapshot[0].schema?.fields).toBeDefined();
+    });
+
+    it('should create snapshot query from SceneDataTransformer data when isSnapshot is true', () => {
+      const mockDataFrame = toDataFrame({
+        name: 'transformed-series',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'transformed', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+
+      const panelData: PanelData = {
+        series: [mockDataFrame],
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+      };
+
+      const dataNode = new SceneDataNode({
+        data: panelData,
+      });
+
+      const dataTransformer = new SceneDataTransformer({
+        $data: dataNode,
+        transformations: [],
+      });
+
+      const vizPanel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: dataTransformer,
+      });
+
+      const result = getVizPanelQueries(vizPanel, undefined, true);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].kind).toBe('PanelQuery');
+      expect(result[0].spec.query.kind).toBe('DataQuery');
+      expect(result[0].spec.query.spec.queryType).toBe(GrafanaQueryType.Snapshot);
+      expect(result[0].spec.query.spec.snapshot).toBeDefined();
+      expect(result[0].spec.query.spec.snapshot).toHaveLength(1);
+      // Verify it gets data from the nested $data (SceneDataNode) not the transformer
+      expect(result[0].spec.query.spec.snapshot[0].schema?.fields).toBeDefined();
+    });
   });
 });
 

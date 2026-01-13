@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -22,6 +23,17 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(defaultTimeField, to, from, es.DateFormatEpochMS)
 	filters.AddQueryStringFilter(q.RawQuery, true)
+
+	if q.EditorType != nil && *q.EditorType == "code" {
+		cfg := backend.GrafanaConfigFromContext(e.ctx)
+		if !cfg.FeatureToggles().IsEnabled("elasticsearchRawDSLQuery") {
+			return backend.DownstreamError(fmt.Errorf("raw DSL query feature is disabled. Enable the elasticsearchRawDSLQuery feature toggle to use this query type"))
+		}
+
+		if err := e.processRawDSLQuery(q, b); err != nil {
+			return err
+		}
+	}
 
 	if isLogsQuery(q) {
 		processLogsQuery(q, b, from, to, defaultTimeField)
@@ -182,6 +194,46 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 			})
 		}
 	}
+}
+
+func (e *elasticsearchDataQuery) processRawDSLQuery(q *Query, b *es.SearchRequestBuilder) error {
+	if q.RawDSLQuery == "" {
+		return backend.DownstreamError(fmt.Errorf("raw DSL query is empty"))
+	}
+
+	// Parse the raw DSL query JSON
+	var queryBody map[string]any
+	if err := json.Unmarshal([]byte(q.RawDSLQuery), &queryBody); err != nil {
+		return backend.DownstreamError(fmt.Errorf("invalid raw DSL query JSON: %w", err))
+	}
+
+	if len(q.Metrics) > 0 {
+		firstMetricType := q.Metrics[0].Type
+		if firstMetricType != logsType && firstMetricType != rawDataType && firstMetricType != rawDocumentType {
+			bucketAggs, metricAggs, err := e.aggregationParserDSLRawQuery.Parse(q.RawDSLQuery)
+			if err != nil {
+				return backend.DownstreamError(fmt.Errorf("failed to parse aggregations: %w", err))
+			}
+
+			// If there is no metric agg in the query, it is a count agg
+			if len(metricAggs) == 0 {
+				metricAggs = append(metricAggs, &MetricAgg{Type: "count"})
+			}
+
+			q.BucketAggs = bucketAggs
+			q.Metrics = metricAggs
+
+			if queryPart, ok := queryBody["query"].(map[string]any); ok {
+				queryJSON, _ := json.Marshal(queryPart)
+				q.RawQuery = string(queryJSON)
+			}
+			return nil
+		}
+	}
+
+	// For non-time-series queries (logs, raw data), pass through the raw body directly
+	b.SetRawBody(queryBody)
+	return nil
 }
 
 // getPipelineAggField returns the pipeline aggregation field
