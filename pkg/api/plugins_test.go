@@ -674,9 +674,9 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 
 func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	return &plugins.Plugin{
-		JSONData:       jd,
-		Class:          class,
-		FS:             files,
+		JSONData:        jd,
+		Class:           class,
+		FS:              files,
 		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 }

@@ -74,7 +74,6 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		pluginsSettings = &pluginsettings.FakePluginSettings{}
 	}
 
-
 	hs := &HTTPServer{
 		authnService: &authntest.FakeService{},
 		Cfg:          cfg,
@@ -694,4 +693,3 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 		})
 	}
 }
-
