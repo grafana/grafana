@@ -433,24 +433,29 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 }
 
 func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
-	// V2 Navigation - Grouped structure
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
-	// 1. Alert activity (parent with tabs: Alerts, Active notifications)
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	var alertActivityChildren []*navtree.NavLink
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) {
-		// Alerts tab
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 			alertActivityChildren = append(alertActivityChildren, &navtree.NavLink{
-				Text: "Alerts", SubTitle: "Visualize active and pending alerts", Id: "alert-activity-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell",
+				Text:     "Alerts",
+				SubTitle: "Visualize active and pending alerts",
+				Id:       "alert-activity-alerts",
+				Url:      s.cfg.AppSubURL + "/alerting/alerts",
+				Icon:     "bell",
 			})
 		}
-		// Active notifications tab
+
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
 			alertActivityChildren = append(alertActivityChildren, &navtree.NavLink{
-				Text: "Active notifications", SubTitle: "See grouped alerts with active notifications", Id: "alert-activity-groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group",
+				Text:     "Active notifications",
+				SubTitle: "See grouped alerts with active notifications",
+				Id:       "alert-activity-groups",
+				Url:      s.cfg.AppSubURL + "/alerting/groups",
+				Icon:     "layer-group",
 			})
 		}
 		if len(alertActivityChildren) > 0 {
@@ -466,11 +471,14 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	// 2. Alert rules (parent with tabs: Alert rules, Recently deleted)
 	var alertRulesChildren []*navtree.NavLink
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		alertRulesChildren = append(alertRulesChildren, &navtree.NavLink{
-			Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-rules-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+			Text:     "Alert rules",
+			SubTitle: "Rules that determine whether an alert will fire",
+			Id:       "alert-rules-list",
+			Url:      s.cfg.AppSubURL + "/alerting/list",
+			Icon:     "list-ul",
 		})
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -493,7 +501,6 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	// 3. Notification configuration (parent with tabs: Contact points, Notification policies, Templates, Time intervals)
 	var notificationConfigChildren []*navtree.NavLink
 
 	contactPointsPerms := []ac.Evaluator{
@@ -509,7 +516,11 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
 		notificationConfigChildren = append(notificationConfigChildren, &navtree.NavLink{
-			Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "notification-config-contact-points", Url: s.cfg.AppSubURL + "/alerting/notifications", Icon: "comment-alt-share",
+			Text:     "Contact points",
+			SubTitle: "Choose how to notify your contact points when an alert instance fires",
+			Id:       "notification-config-contact-points",
+			Url:      s.cfg.AppSubURL + "/alerting/notifications",
+			Icon:     "comment-alt-share",
 		})
 	}
 
@@ -522,18 +533,24 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
 	)) {
 		notificationConfigChildren = append(notificationConfigChildren, &navtree.NavLink{
-			Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "notification-config-policies", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap",
+			Text:     "Notification policies",
+			SubTitle: "Determine how alerts are routed to contact points",
+			Id:       "notification-config-policies",
+			Url:      s.cfg.AppSubURL + "/alerting/routes",
+			Icon:     "sitemap",
 		})
 	}
 
-	// Templates
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
 		notificationConfigChildren = append(notificationConfigChildren, &navtree.NavLink{
-			Text: "Notification templates", SubTitle: "Manage notification templates", Id: "notification-config-templates", Url: s.cfg.AppSubURL + "/alerting/notifications/templates", Icon: "file-alt",
+			Text:     "Notification templates",
+			SubTitle: "Manage notification templates",
+			Id:       "notification-config-templates",
+			Url:      s.cfg.AppSubURL + "/alerting/notifications/templates",
+			Icon:     "file-alt",
 		})
 	}
 
-	// Time intervals
 	if hasAccess(ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
@@ -543,7 +560,11 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
 	)) {
 		notificationConfigChildren = append(notificationConfigChildren, &navtree.NavLink{
-			Text: "Time intervals", SubTitle: "Configure time intervals for notification policies", Id: "notification-config-time-intervals", Url: s.cfg.AppSubURL + "/alerting/routes?tab=time_intervals", Icon: "clock-nine",
+			Text:     "Time intervals",
+			SubTitle: "Configure time intervals for notification policies",
+			Id:       "notification-config-time-intervals",
+			Url:      s.cfg.AppSubURL + "/alerting/routes?tab=time_intervals",
+			Icon:     "clock-nine",
 		})
 	}
 
@@ -558,16 +579,16 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	// 4. Insights (parent with tabs: System Insights, Alert state history)
 	var insightsChildren []*navtree.NavLink
 
-	// System Insights
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		insightsChildren = append(insightsChildren, &navtree.NavLink{
-			Text: "System Insights", SubTitle: "View system insights and analytics", Id: "insights-system", Url: s.cfg.AppSubURL + "/alerting/insights", Icon: "chart-line",
+			Text:     "System Insights",
+			SubTitle: "View system insights and analytics",
+			Id:       "insights-system", Url: s.cfg.AppSubURL + "/alerting/insights",
+			Icon: "chart-line",
 		})
 	}
-
 	// Alert state history
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
@@ -593,11 +614,13 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	// 5. Settings (parent with tab: Settings)
 	if c.GetOrgRole() == org.RoleAdmin {
 		settingsChildren := []*navtree.NavLink{
 			{
-				Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin", Icon: "cog",
+				Text: "Settings",
+				Id:   "alerting-admin",
+				Url:  s.cfg.AppSubURL + "/alerting/admin",
+				Icon: "cog",
 			},
 		}
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
@@ -610,11 +633,15 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	// Create alert rule (hidden from tabs)
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Create alert rule", SubTitle: "Create an alert rule", Id: "alert",
-			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, IsCreateAction: true,
+			Text:           "Create alert rule",
+			SubTitle:       "Create an alert rule",
+			Id:             "alert",
+			Icon:           "plus",
+			Url:            s.cfg.AppSubURL + "/alerting/new",
+			HideFromTabs:   true,
+			IsCreateAction: true,
 		})
 	}
 
