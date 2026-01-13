@@ -271,7 +271,7 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	retryCfg := retryConfig{
 		Max:           3,
 		Backoff:       time.Second,
-		BackoffJitter: 0.5,
+		BackoffJitter: 0.1,
 	}
 	unary = append(unary, unaryRetryInterceptor(retryCfg))
 	unary = append(unary, unaryRetryInstrument(metrics.requestRetries))
@@ -289,7 +289,6 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// Use round_robin to balance requests more evenly over the available Storage server.
-	// Enable health checking so round_robin excludes unhealthy backends (e.g., terminated pods).
 	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
 
 	// Disable looking up service config from TXT DNS records.

@@ -158,7 +158,7 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 func ringClientRetryInterceptor() grpc.UnaryClientInterceptor {
 	return grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(3),
-		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.1)),
 		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
 	)
 }
