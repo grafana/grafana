@@ -1802,6 +1802,95 @@ func TestEnsurePanelsHaveUniqueIds(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "assign_ids_considering_panels_in_rows",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"type": "text", "title": "Top level panel"}, // No ID
+				},
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title": "Row 1",
+						"panels": []interface{}{
+							map[string]interface{}{"type": "timeseries", "id": float64(1), "title": "Row panel 1"},
+							map[string]interface{}{"type": "table", "id": float64(2), "title": "Row panel 2"},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					// Should get ID 3 because 1 and 2 are already used in rows
+					map[string]interface{}{"type": "text", "title": "Top level panel", "id": float64(3)},
+				},
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title": "Row 1",
+						"panels": []interface{}{
+							map[string]interface{}{"type": "timeseries", "id": float64(1), "title": "Row panel 1"},
+							map[string]interface{}{"type": "table", "id": float64(2), "title": "Row panel 2"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "fix_duplicate_ids_across_panels_and_rows",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"type": "text", "id": float64(1), "title": "Top level panel"}, // ID 1
+				},
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title": "Row 1",
+						"panels": []interface{}{
+							map[string]interface{}{"type": "timeseries", "id": float64(1), "title": "Row panel 1"}, // Duplicate ID 1
+							map[string]interface{}{"type": "table", "id": float64(2), "title": "Row panel 2"},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"type": "text", "id": float64(1), "title": "Top level panel"}, // Keeps ID 1
+				},
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title": "Row 1",
+						"panels": []interface{}{
+							// Should get new ID 3 because 1 is already used
+							map[string]interface{}{"type": "timeseries", "id": float64(3), "title": "Row panel 1"},
+							map[string]interface{}{"type": "table", "id": float64(2), "title": "Row panel 2"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "assign_ids_to_row_panels_without_ids",
+			input: map[string]interface{}{
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title": "Row 1",
+						"panels": []interface{}{
+							map[string]interface{}{"type": "timeseries", "title": "Row panel 1"}, // No ID
+							map[string]interface{}{"type": "table", "title": "Row panel 2"},      // No ID
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title": "Row 1",
+						"panels": []interface{}{
+							map[string]interface{}{"type": "timeseries", "title": "Row panel 1", "id": float64(1)},
+							map[string]interface{}{"type": "table", "title": "Row panel 2", "id": float64(2)},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

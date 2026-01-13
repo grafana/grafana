@@ -432,6 +432,23 @@ func getPanels(dashboard map[string]interface{}) []map[string]interface{} {
 		}
 	}
 
+	// Also get panels from rows (pre-v16 dashboard format)
+	// This is needed for ensurePanelsHaveUniqueIds to work correctly
+	// before the row upgrade migration runs
+	if rows, ok := dashboard["rows"].([]interface{}); ok {
+		for _, rowInterface := range rows {
+			if row, ok := rowInterface.(map[string]interface{}); ok {
+				if rowPanels, ok := row["panels"].([]interface{}); ok {
+					for _, panelInterface := range rowPanels {
+						if panel, ok := panelInterface.(map[string]interface{}); ok {
+							panels = append(panels, panel)
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return panels
 }
 
