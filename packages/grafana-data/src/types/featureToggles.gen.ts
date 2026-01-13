@@ -622,10 +622,6 @@ export interface FeatureToggles {
   */
   exploreLogsAggregatedMetrics?: boolean;
   /**
-  * Used in Logs Drilldown to limit the time range
-  */
-  exploreLogsLimitedTimeRange?: boolean;
-  /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
   appPlatformGrpcClientAuth?: boolean;
@@ -652,10 +648,6 @@ export interface FeatureToggles {
   * Enables the new role picker drawer design
   */
   rolePickerDrawer?: boolean;
-  /**
-  * Enable sprinkles on unified storage search
-  */
-  unifiedStorageSearchSprinkles?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -694,10 +686,6 @@ export interface FeatureToggles {
   * Enable passwordless login via magic link authentication
   */
   passwordlessMagicLinkAuthentication?: boolean;
-  /**
-  * Display Related Logs in Grafana Metrics Drilldown
-  */
-  exploreMetricsRelatedLogs?: boolean;
   /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   */
@@ -995,6 +983,11 @@ export interface FeatureToggles {
   * @default false
   */
   recentlyViewedDashboards?: boolean;
+  /**
+  * A/A test for recently viewed dashboards feature
+  * @default false
+  */
+  experimentRecentlyViewedDashboards?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
