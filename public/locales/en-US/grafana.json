@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Add panel",
+      "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to 2 levels",
       "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
@@ -5695,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
       "invalid-json": "Not valid JSON",
+      "tag-too-long": "Dashboard tag too long, max 50 characters",
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
     },
@@ -9253,7 +9255,8 @@
     "tags-input": {
       "add": "Add",
       "placeholder-new-tag": "New tag (enter key to add)",
-      "remove": "Remove tag: {{name}}"
+      "remove": "Remove tag: {{name}}",
+      "tag-too-long": "Tag too long, max 50 characters"
     },
     "time-sync-button": {
       "aria-label-sync": "Sync times",
@@ -11803,7 +11806,53 @@
       "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
+    "connection-form": {
+      "alert-connection-deleted": "Connection deleted",
+      "alert-connection-saved": "Connection saved",
+      "alert-connection-updated": "Connection updated",
+      "back-to-connections": "Back to connections",
+      "button-save": "Save",
+      "button-saving": "Saving...",
+      "description-app-id": "The ID of your GitHub App",
+      "description-installation-id": "The installation ID of your GitHub App",
+      "description-private-key": "The private key for your GitHub App in PEM format",
+      "description-provider": "Select the provider type",
+      "error-delete-connection": "Failed to delete connection",
+      "error-required": "This field is required",
+      "error-save-connection": "Failed to save connection",
+      "label-app-id": "GitHub App ID",
+      "label-installation-id": "GitHub Installation ID",
+      "label-private-key": "Private Key (PEM)",
+      "label-provider": "Provider",
+      "not-found": "Connection not found",
+      "not-found-description": "The connection you are looking for does not exist.",
+      "page-subtitle": "Configure a connection to authenticate with external providers",
+      "page-title-create": "Create connection",
+      "page-title-edit": "Edit connection",
+      "placeholder-app-id": "123456",
+      "placeholder-installation-id": "12345678",
+      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----..."
+    },
+    "connections": {
+      "add-connection": "Add connection",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
+      "delete-title": "Delete connection",
+      "error-loading": "Failed to load connections",
+      "no-connections": "No connections configured",
+      "no-connections-message": "Add a connection to authenticate with external providers",
+      "no-results": "No results matching your query",
+      "page-subtitle": "View and manage your app connections",
+      "page-title": "Connections",
+      "search-placeholder": "Search connections",
+      "status-connected": "Connected",
+      "status-disconnected": "Disconnected",
+      "status-unknown": "Unknown",
+      "view": "View"
+    },
     "delete-repository-button": {
+      "button-cancel": "Cancel",
       "button-delete": "Delete",
       "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
       "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
@@ -12067,6 +12116,7 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
+      "connections": "Connections",
       "settings": "Settings",
       "source-code": "Source code"
     },
