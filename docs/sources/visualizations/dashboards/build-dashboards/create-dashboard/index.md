@@ -365,7 +365,7 @@ Ungrouping behavior depends on whether you're working with first-level or nested
 | Row > tabs | **Ungroup tabs** ungroups all the nested tabs in that row. Tabs in other rows are not affected.    |
 | Tab > rows | **Ungroup rows** ungroups all the nested rows in that tab. Rows in other tabs are not affected.    |
 
-{{< figure src="screenshot-ungrouping-v1.png" alt="Dashboard with ungrouping behavior annotated" max-width="750px" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-ungrouping-v12.4.png" alt="Dashboard with ungrouping behavior annotated" max-width="750px" >}}
 
 {{< admonition type="caution" >}}
 If you delete a grouping, rather than ungrouping it, its panels are deleted as well.
