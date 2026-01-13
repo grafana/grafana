@@ -1030,12 +1030,15 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-10-23T08:55:45Z"
+        "resourceVersion": "1768300388607",
+        "creationTimestamp": "2024-10-23T08:55:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-13 10:33:08.607446 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables experimental new dashboard layouts",
-        "stage": "experimental",
+        "description": "Enables new dashboard layouts",
+        "stage": "privatePreview",
         "codeowner": "@grafana/dashboards-squad"
       }
     },
