@@ -251,6 +251,22 @@ describe('ChannelSubForm', () => {
 
   describe('version-specific options display', () => {
     // Create a mock notifier with different options for v0 and v1
+    const legacyOptions = [
+      {
+        element: 'input' as const,
+        inputType: 'text',
+        label: 'Legacy URL',
+        description: 'The legacy endpoint URL',
+        placeholder: '',
+        propertyName: 'legacyUrl',
+        required: true,
+        secure: false,
+        showWhen: { field: '', is: '' },
+        validationRule: '',
+        dependsOn: '',
+      },
+    ];
+
     const webhookWithVersions: NotifierDTO = {
       ...grafanaAlertNotifiers.webhook,
       versions: [
@@ -259,21 +275,14 @@ describe('ChannelSubForm', () => {
           label: 'Webhook (Legacy)',
           description: 'Legacy webhook from Mimir',
           canCreate: false,
-          options: [
-            {
-              element: 'input',
-              inputType: 'text',
-              label: 'Legacy URL',
-              description: 'The legacy endpoint URL',
-              placeholder: '',
-              propertyName: 'legacyUrl',
-              required: true,
-              secure: false,
-              showWhen: { field: '', is: '' },
-              validationRule: '',
-              dependsOn: '',
-            },
-          ],
+          options: legacyOptions,
+        },
+        {
+          version: 'v0mimir2',
+          label: 'Webhook (Legacy v2)',
+          description: 'Legacy webhook v2 from Mimir',
+          canCreate: false,
+          options: legacyOptions,
         },
         {
           version: 'v1',
