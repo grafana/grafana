@@ -55,6 +55,6 @@ describe('ContactPointHeader', () => {
 
     renderWithProvider(<ContactPointHeader contactPoint={contactPointWithConvertedPrometheus} onDelete={jest.fn()} />);
 
-    expect(screen.getByText('Imported from Prometheus/Mimir')).toBeInTheDocument();
+    expect(screen.getByText('Imported')).toBeInTheDocument();
   });
 });

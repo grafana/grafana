@@ -2181,7 +2181,7 @@
     },
     "provisioning-badge": {
       "badge": {
-        "text-converted-prometheus": "Imported from Prometheus/Mimir",
+        "text-converted-prometheus": "Imported",
         "text-provisioned": "Provisioned"
       }
     },

@@ -66,12 +66,12 @@ describe('TemplatesTable', () => {
     ]);
   });
 
-  it('shows "Imported from Prometheus/Mimir" badge for templates with converted_prometheus provenance', () => {
+  it('shows "Imported" badge for templates with converted_prometheus provenance', () => {
     const templates = [mockTemplates[0]]; // mimir-template
     renderWithProvider(templates);
 
     const templateRow = screen.getByRole('row', { name: /mimir-template/i });
-    const badge = within(templateRow).getByText('Imported from Prometheus/Mimir');
+    const badge = within(templateRow).getByText('Imported');
     expect(badge).toBeInTheDocument();
   });
 
