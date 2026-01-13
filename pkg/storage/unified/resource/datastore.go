@@ -955,7 +955,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 func isSnowflake(rv int64) bool {
 	ts := time.UnixMicro(rv)
 	oneHourFromNow := time.Now().Add(time.Hour)
-	isMsRV := ts.Before(oneHourFromNow)
+	isMicroSecRV := ts.Before(oneHourFromNow)
 
-	return !isMsRV
+	return !isMicroSecRV
 }

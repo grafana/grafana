@@ -374,8 +374,8 @@ func SnowflakeFromRV(rv int64) int64 {
 // (snowflake ID stores timestamp in milliseconds). However, this implementation stores the microsecond fraction
 // in the step bits (see SnowflakeFromRV), allowing us to compute the microsecond timestamp.
 func RVFromSnowflake(snowflakeID int64) int64 {
-	msFraction := snowflakeID & ((1 << snowflake.StepBits) - 1)
-	return ((snowflakeID>>(snowflake.NodeBits+snowflake.StepBits))+snowflake.Epoch)*1000 + msFraction
+	microSecFraction := snowflakeID & ((1 << snowflake.StepBits) - 1)
+	return ((snowflakeID>>(snowflake.NodeBits+snowflake.StepBits))+snowflake.Epoch)*1000 + microSecFraction
 }
 
 // helper utility to compare two RVs. The first RV must be in snowflake format. Will convert rv2 to snowflake and retry
