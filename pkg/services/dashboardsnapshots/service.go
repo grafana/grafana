@@ -36,6 +36,9 @@ var client = &http.Client{
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }
 
+// CreateDashboardSnapshot creates a snapshot when running Grafana in regular mode.
+// It validates the user and dashboard exist before creating the snapshot.
+// This mode supports both local and external snapshots.
 func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSharingOptions, cmd CreateDashboardSnapshotCommand, svc Service) {
 	if !cfg.SnapshotsEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
@@ -44,40 +47,31 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 
 	uid := cmd.Dashboard.GetNestedString("uid")
 
-	var user identity.Requester
-	var err error
-	var originalDashboardURL string
-	// In Grafana is running in snapshots.public_mode, skip this validation since the public server does not contain dashboard information
-	if !cfg.PublicMode {
-		user, err = identity.GetRequester(c.Req.Context())
-		if err != nil {
-			c.JsonApiErr(http.StatusBadRequest, "missing user in context", nil)
-			return
-		}
-
-		err = svc.ValidateDashboardExists(c.Req.Context(), user.GetOrgID(), uid)
-		if err != nil {
-			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				c.JsonApiErr(http.StatusBadRequest, "Dashboard not found", err)
-				return
-			}
-			c.JsonApiErr(http.StatusInternalServerError, "Failed to get dashboard", err)
-			return
-		}
-		cmd.ExternalURL = ""
-		cmd.OrgID = user.GetOrgID()
-		cmd.UserID, _ = identity.UserIdentifier(user.GetID())
-		originalDashboardURL, err = createOriginalDashboardURL(&cmd)
-		if err != nil {
-			c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)
-			return
-		}
+	user, err := identity.GetRequester(c.Req.Context())
+	if err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "missing user in context", nil)
+		return
 	}
+
+	err = svc.ValidateDashboardExists(c.Req.Context(), user.GetOrgID(), uid)
+	if err != nil {
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			c.JsonApiErr(http.StatusBadRequest, "Dashboard not found", err)
+			return
+		}
+		c.JsonApiErr(http.StatusInternalServerError, "Failed to get dashboard", err)
+		return
+	}
+
+	cmd.ExternalURL = ""
+	cmd.OrgID = user.GetOrgID()
+	cmd.UserID, _ = identity.UserIdentifier(user.GetID())
+
 	if cmd.Name == "" {
 		cmd.Name = "Unnamed snapshot"
 	}
 
-	var snapshotUrl string
+	// Handle external snapshot creation
 	if cmd.External {
 		if !cfg.ExternalEnabled {
 			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
@@ -90,7 +84,6 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 			return
 		}
 
-		snapshotUrl = resp.Url
 		cmd.Key = resp.Key
 		cmd.DeleteKey = resp.DeleteKey
 		cmd.ExternalURL = resp.Url
@@ -98,32 +91,68 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 		cmd.Dashboard = &common.Unstructured{}
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
-	} else {
-		cmd.Dashboard.SetNestedField(originalDashboardURL, "snapshot", "originalUrl")
 
-		if cmd.Key == "" {
-			var err error
-			cmd.Key, err = util.GetRandomString(32)
-			if err != nil {
-				c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
-				return
-			}
-		}
-
-		if cmd.DeleteKey == "" {
-			var err error
-			cmd.DeleteKey, err = util.GetRandomString(32)
-			if err != nil {
-				c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
-				return
-			}
-		}
-
-		snapshotUrl = setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key)
-
-		metrics.MApiDashboardSnapshotCreate.Inc()
+		saveAndRespond(c, svc, cmd, resp.Url)
+		return
 	}
 
+	// Handle local snapshot creation
+	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)
+		return
+	}
+
+	createLocalSnapshot(c, svc, cmd, originalDashboardURL)
+}
+
+// CreateDashboardSnapshotPublic creates a snapshot when running Grafana in public mode.
+// In public mode, there is no user or dashboard information to validate.
+// Only local snapshots are supported (external snapshots are not available).
+func CreateDashboardSnapshotPublic(c *contextmodel.ReqContext, cfg snapshot.SnapshotSharingOptions, cmd CreateDashboardSnapshotCommand, svc Service) {
+	if !cfg.SnapshotsEnabled {
+		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+		return
+	}
+
+	if cmd.Name == "" {
+		cmd.Name = "Unnamed snapshot"
+	}
+
+	createLocalSnapshot(c, svc, cmd, "")
+}
+
+// createLocalSnapshot handles local snapshot creation (non-external).
+func createLocalSnapshot(c *contextmodel.ReqContext, svc Service, cmd CreateDashboardSnapshotCommand, originalDashboardURL string) {
+	cmd.Dashboard.SetNestedField(originalDashboardURL, "snapshot", "originalUrl")
+
+	if cmd.Key == "" {
+		var err error
+		cmd.Key, err = util.GetRandomString(32)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
+			return
+		}
+	}
+
+	if cmd.DeleteKey == "" {
+		var err error
+		cmd.DeleteKey, err = util.GetRandomString(32)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "Could not generate random string", err)
+			return
+		}
+	}
+
+	snapshotURL := setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key)
+
+	metrics.MApiDashboardSnapshotCreate.Inc()
+
+	saveAndRespond(c, svc, cmd, snapshotURL)
+}
+
+// saveAndRespond saves the snapshot and sends the response.
+func saveAndRespond(c *contextmodel.ReqContext, svc Service, cmd CreateDashboardSnapshotCommand, snapshotURL string) {
 	result, err := svc.CreateDashboardSnapshot(c.Req.Context(), &cmd)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to create snapshot", err)
@@ -133,7 +162,7 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 	c.JSON(http.StatusOK, snapshot.DashboardCreateResponse{
 		Key:       result.Key,
 		DeleteKey: result.DeleteKey,
-		URL:       snapshotUrl,
+		URL:       snapshotURL,
 		DeleteURL: setting.ToAbsUrl("api/snapshots-delete/" + result.DeleteKey),
 	})
 }
