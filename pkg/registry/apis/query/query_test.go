@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -176,9 +177,10 @@ func TestQueryAPI(t *testing.T) {
 				instanceProvider: mockClient{
 					stubbedFrame: tc.stubbedFrame,
 				},
-				tracer:                 tracing.InitializeTracerForTest(),
-				log:                    log.New("test"),
-				legacyDatasourceLookup: &mockLegacyDataSourceLookup{},
+				tracer:                     tracing.InitializeTracerForTest(),
+				log:                        log.New("test"),
+				legacyDatasourceLookup:     &mockLegacyDataSourceLookup{},
+				dataSourceRequestValidator: &NoOpTestRequestValidator{},
 			}
 
 			reqCtx := claims.WithAuthInfo(identity.WithRequester(context.Background(), mockUser{}), &mockAuthInfo{})
@@ -446,5 +448,11 @@ type mockAuthInfo struct {
 }
 
 func (main mockAuthInfo) GetExtra() map[string][]string {
+	return nil
+}
+
+type NoOpTestRequestValidator struct{}
+
+func (*NoOpTestRequestValidator) Validate(*datasources.DataSource, *http.Request) error {
 	return nil
 }

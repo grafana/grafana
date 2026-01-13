@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -44,14 +45,15 @@ type QueryAPIBuilder struct {
 
 	authorizer authorizer.Authorizer
 
-	tracer                 tracing.Tracer
-	metrics                *metrics.ExprMetrics
-	instanceProvider       clientapi.InstanceProvider
-	registry               query.DataSourceApiServerRegistry
-	converter              *expr.ResultConverter
-	queryTypes             *query.QueryTypeDefinitionList
-	legacyDatasourceLookup service.LegacyDataSourceLookup
-	connections            DataSourceConnectionProvider
+	tracer                     tracing.Tracer
+	metrics                    *metrics.ExprMetrics
+	instanceProvider           clientapi.InstanceProvider
+	registry                   query.DataSourceApiServerRegistry
+	converter                  *expr.ResultConverter
+	queryTypes                 *query.QueryTypeDefinitionList
+	legacyDatasourceLookup     service.LegacyDataSourceLookup
+	connections                DataSourceConnectionProvider
+	dataSourceRequestValidator validations.DataSourceRequestValidator
 }
 
 func NewQueryAPIBuilder(
@@ -64,6 +66,7 @@ func NewQueryAPIBuilder(
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	connections DataSourceConnectionProvider,
 	concurrentQueryLimit int,
+	dataSourceRequestValidator validations.DataSourceRequestValidator,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
@@ -96,7 +99,8 @@ func NewQueryAPIBuilder(
 			Features: features,
 			Tracer:   tracer,
 		},
-		legacyDatasourceLookup: legacyDatasourceLookup,
+		legacyDatasourceLookup:     legacyDatasourceLookup,
+		dataSourceRequestValidator: dataSourceRequestValidator,
 	}, nil
 }
 
@@ -113,6 +117,7 @@ func RegisterAPIService(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	exprService *expr.Service,
+	dataSourceRequestValidator validations.DataSourceRequestValidator,
 ) (*QueryAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagQueryService,
@@ -145,6 +150,7 @@ func RegisterAPIService(
 		legacyDatasourceLookup,
 		&connectionsProvider{dsService: dataSourcesService, registry: reg},
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
+		dataSourceRequestValidator,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err

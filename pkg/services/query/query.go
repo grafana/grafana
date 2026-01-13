@@ -226,12 +226,12 @@ func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	return splitResponse{er, http.Header{}}
 }
 
-func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string, concurrentQueryLimit int) (*backend.QueryDataResponse, error) {
+func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, qsDatasourceClientBuilder dsquerierclient.QSDatasourceClientBuilder, headers map[string]string, concurrentQueryLimit int, validator validations.DataSourceRequestValidator) (*backend.QueryDataResponse, error) {
 	s := &ServiceImpl{
 		log:                        log,
 		dataSourceCache:            dscache,
 		expressionService:          exprService,
-		dataSourceRequestValidator: validations.ProvideValidator(),
+		dataSourceRequestValidator: validator,
 		qsDatasourceClientBuilder:  qsDatasourceClientBuilder,
 		headers:                    headers,
 		concurrentQueryLimit:       concurrentQueryLimit,

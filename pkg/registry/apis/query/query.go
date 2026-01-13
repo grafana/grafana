@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -340,8 +341,8 @@ func prepareQuery(
 	}, nil
 }
 
-func handlePreparedQuery(ctx context.Context, pq *preparedQuery, concurrentQueryLimit int) (*backend.QueryDataResponse, error) {
-	resp, err := service.QueryData(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers, concurrentQueryLimit)
+func handlePreparedQuery(ctx context.Context, pq *preparedQuery, concurrentQueryLimit int, validator validations.DataSourceRequestValidator) (*backend.QueryDataResponse, error) {
+	resp, err := service.QueryData(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers, concurrentQueryLimit, validator)
 	pq.reportMetrics()
 	return resp, err
 }
@@ -359,7 +360,7 @@ func handleQuery(
 		responder.Error(err)
 		return nil, err
 	}
-	return handlePreparedQuery(ctx, pq, b.concurrentQueryLimit)
+	return handlePreparedQuery(ctx, pq, b.concurrentQueryLimit, b.dataSourceRequestValidator)
 }
 
 type responderWrapper struct {
