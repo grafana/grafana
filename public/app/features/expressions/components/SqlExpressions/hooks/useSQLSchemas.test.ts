@@ -15,4 +15,12 @@ describe('isDashboardDatasource', () => {
 
     expect(backendQueries.map((q) => q.refId)).toEqual(['A', 'C']);
   });
+
+  it('returns true when query has dashboard datasource uid', () => {
+    const query: DataQuery = {
+      refId: 'A',
+      datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' },
+    };
+    expect(isDashboardDatasource(query)).toBe(true);
+  });
 });
