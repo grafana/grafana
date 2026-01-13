@@ -9,7 +9,6 @@ import {
   QueryEditorProps,
   Field,
   DataFrame,
-  MetricFindValue,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorMode, EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
@@ -36,9 +35,13 @@ export class SQLVariableSupport extends CustomVariableSupport<SqlDatasource, SQL
     const updatedQuery = migrateVariableQuery(request.targets[0]);
     return this.datasource.query({ ...request, targets: [updatedQuery] }).pipe(
       map((d: DataQueryResponse) => {
-        const frames = d.data || [];
-        const metricFindValues = convertDataFramesToMetricFindValues(frames, updatedQuery.meta);
-        return { data: metricFindValues };
+        return {
+          ...d,
+          data: (d.data || []).map((frame: DataFrame) => ({
+            ...frame,
+            fields: convertOriginalFieldsToVariableFields(frame.fields, updatedQuery.meta),
+          })),
+        };
       })
     );
   }
@@ -135,40 +138,20 @@ const migrateVariableQuery = (rawQuery: string | SQLQuery): SQLVariableQuery => 
   };
 };
 
-const convertDataFramesToMetricFindValues = (frames: DataFrame[], meta?: SQLQueryMeta): MetricFindValue[] => {
-  if (!frames.length) {
-    throw new Error('no results found');
+const convertOriginalFieldsToVariableFields = (original_fields: Field[], meta?: SQLQueryMeta): Field[] => {
+  if (original_fields.length < 1) {
+    throw new Error('at least one field expected for variable');
   }
-
-  const frame = frames[0];
-
-  const fields = frame.fields;
-
-  if (fields.length < 1) {
-    throw new Error('no fields found in the response');
+  let tf = original_fields.find((f) => f.name === '__text');
+  let vf = original_fields.find((f) => f.name === '__value');
+  if (meta) {
+    tf = meta.textField ? original_fields.find((f) => f.name === meta.textField) : undefined;
+    vf = meta.valueField ? original_fields.find((f) => f.name === meta.valueField) : undefined;
   }
-
-  let textField = fields.find((f) => f.name === '__text');
-  let valueField = fields.find((f) => f.name === '__value');
-  if (meta?.textField) {
-    textField = fields.find((f) => f.name === meta.textField);
-  }
-  if (meta?.valueField) {
-    valueField = fields.find((f) => f.name === meta.valueField);
-  }
-  const resolvedTextField = textField || valueField || fields[0];
-  const resolvedValueField = valueField || textField || fields[0];
-
-  const results: MetricFindValue[] = [];
-  const rowCount = frame.length;
-  for (let i = 0; i < rowCount; i++) {
-    const text = String(resolvedTextField.values[i] ?? '');
-    const value = String(resolvedValueField.values[i] ?? '');
-    const properties: Record<string, string> = {};
-    for (const field of fields) {
-      properties[field.name] = String(field.values[i] ?? '');
-    }
-    results.push({ text, value, properties });
-  }
-  return results;
+  const textField = tf || vf || original_fields[0];
+  const valueField = vf || tf || original_fields[0];
+  return [
+    { ...textField, name: 'text' },
+    { ...valueField, name: 'value' },
+  ];
 };
