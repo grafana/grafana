@@ -108,9 +108,15 @@ export interface NotifierDTO<T = NotifierType> {
    */
   versions?: NotifierVersion[];
   /**
-   * Integration versioning support for single alert manager migration
-   * v0 = Mimir (legacy), v1 = Grafana (current)
-   * Set when flattening versions into individual notifiers
+   * The default version that the backend will use when creating new integrations.
+   * Returned by the backend from /api/alert-notifiers?version=2
+   *
+   * - "v1" for most notifiers (modern Grafana version)
+   * - "v0mimir1" for legacy-only notifiers (e.g., WeChat)
+   *
+   * Note: Currently not used in the frontend. The backend handles version
+   * selection automatically. Could be used in the future to display
+   * version information or validate notifier capabilities.
    */
   currentVersion?: string;
 }
