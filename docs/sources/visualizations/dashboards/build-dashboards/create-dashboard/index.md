@@ -17,77 +17,6 @@ labels:
 title: Create dashboards
 description: Create and edit a dashboard
 weight: 1
-refs:
-  built-in-special-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
-  visualization-specific-options:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
-  configure-standard-options:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-standard-options/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/
-  configure-value-mappings:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-value-mappings/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-value-mappings/
-  generative-ai-features:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
-  configure-thresholds:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-thresholds/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-thresholds/
-  data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
-  add-a-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
-  about-users-and-permissions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
-  visualizations-options:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
-  configure-repeating-panels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-panels
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-panels
-  override-field-values:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-overrides/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
-  saved-queries:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
-  save-query:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 image_maps:
   - key: editpane-sidebar
     src: /media/docs/grafana/dashboards/screenshot-edit-sidebar-v12.4.png
@@ -138,7 +67,7 @@ Each panel needs at least one query to display a visualization.
 
 **Before you begin:**
 
-- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions](ref:about-users-and-permissions).
+- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 - Understand the query language of the target data source.
 
 ## Create a dashboard
@@ -150,7 +79,7 @@ To create a dashboard, follow these steps:
 1. Click **+ Add visualization**.
 1. In the dialog box that opens, do one of the following:
    - Select one of your existing data sources.
-   - Select one of the Grafana [built-in special data sources](ref:built-in-special-data-sources).
+   - Select one of the Grafana [built-in special data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources).
    - Click **Configure a new data source** to set up a new one (Admins only).
 
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
@@ -158,16 +87,16 @@ To create a dashboard, follow these steps:
    The **Edit panel** view opens with your data source selected.
    You can change the panel data source later using the drop-down in the **Query** tab of the panel editor if needed.
 
-   For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
+   For more information about data sources, refer to [Data sources](/docs/grafana/<GRAFANA_VERSION>/datasources/) for specific guidelines.
 
 1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source.
-   - Open the **Saved queries** drop-down menu and click **Replace query** to reuse a [saved query](ref:saved-queries).
+   - Open the **Saved queries** drop-down menu and click **Replace query** to reuse a [saved query](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries).
 
-1. (Optional) To [save the query](ref:save-query) for reuse, open the **Saved queries** drop-down menu and click the **Save query** option.
+1. (Optional) To [save the query](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query) for reuse, open the **Saved queries** drop-down menu and click the **Save query** option.
 
    {{< admonition type="note" >}}
-   [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+   [Saved queries](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
    {{< /admonition >}}
 
 1. Click **Refresh** to query the data source.
@@ -177,20 +106,20 @@ To create a dashboard, follow these steps:
 
    Grafana displays a preview of your query results with the visualization applied.
 
-   For more information about configuring individual visualizations, refer to [Visualizations options](ref:visualizations-options).
+   For more information about configuring individual visualizations, refer to [Visualizations options](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/).
 
-1. Under **Panel options**, enter a title and description for the panel or have Grafana create them using [generative AI features](ref:generative-ai-features).
+1. Under **Panel options**, enter a title and description for the panel or have Grafana create them using [generative AI features](/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
-   - [Configure value mappings](ref:configure-value-mappings)
-   - [Visualization-specific options](ref:visualization-specific-options)
-   - [Override field values](ref:override-field-values)
-   - [Configure thresholds](ref:configure-thresholds)
-   - [Configure standard options](ref:configure-standard-options)
+   - [Configure value mappings](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-value-mappings/)
+   - [Visualization-specific options](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/)
+   - [Override field values](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-overrides/)
+   - [Configure thresholds](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-thresholds/)
+   - [Configure standard options](/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-standard-options/)
 
 1. When you've finished editing the panel, click **Save**.
-1. Enter a title and description for the dashboard if you haven't already or have Grafana create them using [generative AI features](ref:generative-ai-features).
+1. Enter a title and description for the dashboard if you haven't already or have Grafana create them using [generative AI features](/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back to dashboard**.
@@ -488,7 +417,7 @@ To configure repeats, follow these steps:
 
 ### Repeating rows and tabs and the Dashboard special data source
 
-If a row includes panels using the special [Dashboard data source](ref:built-in-special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+If a row includes panels using the special [Dashboard data source](/docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 The same behavior applies to tabs.
 
 For example, in a dashboard:
