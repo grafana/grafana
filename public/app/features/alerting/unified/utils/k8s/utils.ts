@@ -1,6 +1,6 @@
 import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { KnownProvenance } from '../../types/knownProvenance';
 
@@ -24,7 +24,7 @@ type EntityToCheck = {
  */
 export const isK8sEntityProvisioned = (k8sEntity: EntityToCheck) => {
   const provenance = getAnnotation(k8sEntity, K8sAnnotations.Provenance);
-  return Boolean(provenance && provenance !== PROVENANCE_NONE);
+  return isProvisionedResource(provenance);
 };
 
 export const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
@@ -63,10 +63,5 @@ export const stringifyFieldSelector = (fieldSelectors: FieldSelector[]): string 
 };
 
 export function isProvisionedResource(provenance?: string): boolean {
-  return (
-    provenance !== undefined &&
-    provenance !== null &&
-    provenance !== PROVENANCE_NONE &&
-    provenance !== KnownProvenance.None
-  );
+  return Boolean(provenance && provenance !== KnownProvenance.None);
 }

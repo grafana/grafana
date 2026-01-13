@@ -12,7 +12,7 @@ import { NotificationTemplate } from '../contact-points/useNotificationTemplates
 
 import { TemplatesTable } from './TemplatesTable';
 
-const mockTemplates: NotificationTemplate[] = [
+const mockTemplates: Array<Partial<NotificationTemplate>> = [
   {
     uid: 'mimir-template',
     title: 'mimir-template',
@@ -41,14 +41,14 @@ const mockTemplates: NotificationTemplate[] = [
     uid: 'undefined-provenance-template',
     title: 'undefined-provenance-template',
     content: '{{ define "undefined-provenance-template" }}Undefined provenance template{{ end }}',
-    provenance: '',
+    provenance: undefined,
   },
 ];
 
-const renderWithProvider = (templates: NotificationTemplate[]) => {
+const renderWithProvider = (templates: Array<Partial<NotificationTemplate>>) => {
   return render(
     <AlertmanagerProvider accessType={'notification'}>
-      <TemplatesTable alertManagerName={GRAFANA_RULES_SOURCE_NAME} templates={templates} />
+      <TemplatesTable alertManagerName={GRAFANA_RULES_SOURCE_NAME} templates={templates as NotificationTemplate[]} />
       <AppNotificationList />
     </AlertmanagerProvider>
   );
@@ -80,7 +80,7 @@ describe('TemplatesTable', () => {
     [mockTemplates[1], mockTemplates[2]].forEach((template) => {
       renderWithProvider([template]);
 
-      const templateRow = screen.getByRole('row', { name: new RegExp(template.title, 'i') });
+      const templateRow = screen.getByRole('row', { name: new RegExp(template.title ?? '', 'i') });
       const badge = within(templateRow).getByText('Provisioned');
       expect(badge).toBeInTheDocument();
     });
@@ -91,7 +91,7 @@ describe('TemplatesTable', () => {
     [mockTemplates[3], mockTemplates[4]].forEach((template) => {
       renderWithProvider([template]);
 
-      const templateRow = screen.getByRole('row', { name: new RegExp(template.title, 'i') });
+      const templateRow = screen.getByRole('row', { name: new RegExp(template.title ?? '', 'i') });
       expect(within(templateRow).queryByText('Provisioned')).not.toBeInTheDocument();
     });
   });

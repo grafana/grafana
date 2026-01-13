@@ -21,10 +21,9 @@ import {
   updateRouteAction,
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
 import { FormAmRoute } from '../../types/amroutes';
-import { KnownProvenance } from '../../types/knownProvenance';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
-import { K8sAnnotations, PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
-import { getAnnotation, shouldUseK8sApi } from '../../utils/k8s/utils';
+import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { routeAdapter } from '../../utils/routeAdapter';
 import {
   InsertPosition,
@@ -36,12 +35,7 @@ import {
 
 export function isRouteProvisioned(route: Route): boolean {
   const provenance = route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
-  return (
-    provenance !== undefined &&
-    provenance !== null &&
-    provenance !== PROVENANCE_NONE &&
-    provenance !== KnownProvenance.None
-  );
+  return isProvisionedResource(provenance);
 }
 
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
