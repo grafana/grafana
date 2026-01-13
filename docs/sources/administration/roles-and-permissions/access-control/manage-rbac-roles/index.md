@@ -53,6 +53,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
+  rbac-terraform-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-terraform-provisioning/
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
@@ -145,7 +150,13 @@ Refer to the [RBAC HTTP API](ref:api-rbac-get-a-role) for more details.
 
 ## Create custom roles
 
-This section shows you how to create a custom RBAC role using Grafana provisioning and the HTTP API.
+This section shows you how to create a custom RBAC role using Grafana provisioning or the HTTP API.
+
+Creating and editing custom roles is not currently possible in the Grafana UI. To manage custom roles, use one of the following methods:
+
+- [Provisioning](ref:rbac-grafana-provisioning) (for self-managed instances)
+- [HTTP API](ref:api-rbac-create-a-new-custom-role)
+- [Terraform](ref:rbac-terraform-provisioning)
 
 Create a custom role when basic roles and fixed roles do not meet your permissions requirements.
 
@@ -153,14 +164,101 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 
 - [Plan your RBAC rollout strategy](ref:plan-rbac-rollout-strategy).
 - Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions, actions, and scopes](ref:custom-role-actions-scopes).
-- [Enable role provisioning](ref:rbac-grafana-provisioning).
 - Ensure that you have permissions to create a custom role.
   - By default, the Grafana Admin role has permission to create custom roles.
   - A Grafana Admin can delegate the custom role privilege to another user by creating a custom role with the relevant permissions and adding the `permissions:type:delegate` scope.
 
-### Create custom roles using provisioning
+### Create custom roles using the HTTP API
 
-[File-based provisioning](ref:rbac-grafana-provisioning) is one method you can use to create custom roles.
+The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role](ref:api-rbac-create-a-new-custom-role).
+
+{{< admonition type="note" >}}
+You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
+{{< /admonition >}}
+
+The following example creates a `custom:users:admin` role and assigns the `users:create` action to it.
+
+**Example request**
+
+```
+curl --location --request POST '<grafana_url>/api/access-control/roles/' \
+--header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "version": 1,
+    "uid": "jZrmlLCkGksdka",
+    "name": "custom:users:admin",
+    "displayName": "custom users admin",
+    "description": "My custom role which gives users permissions to create users",
+    "global": true,
+    "permissions": [
+        {
+            "action": "users:create"
+        }
+    ]
+}'
+```
+
+**Example response**
+
+```
+{
+    "version": 1,
+    "uid": "jZrmlLCkGksdka",
+    "name": "custom:users:admin",
+    "displayName": "custom users admin",
+    "description": "My custom role which gives users permissions to create users",
+    "global": true,
+    "permissions": [
+        {
+            "action": "users:create"
+            "updated": "2021-05-17T22:07:31.569936+02:00",
+            "created": "2021-05-17T22:07:31.569935+02:00"
+        }
+    ],
+    "updated": "2021-05-17T22:07:31.564403+02:00",
+    "created": "2021-05-17T22:07:31.564403+02:00"
+}
+```
+
+Refer to the [RBAC HTTP API](ref:api-rbac-create-a-new-custom-role) for more details.
+
+### Create custom roles using Terraform
+
+You can use the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to manage custom roles and their assignments. This is the recommended method for Grafana Cloud users who want to manage RBAC as code. For more information, refer to [Provisioning RBAC with Terraform](ref:rbac-terraform-provisioning).
+
+The following example creates a custom role and assigns it to a team:
+
+```terraform
+resource "grafana_role" "custom_folder_manager" {
+  name        = "custom:folders:manager"
+  description = "Custom role for reading and creating folders"
+  uid         = "custom-folders-manager"
+  version     = 1
+  global      = true
+
+  permissions {
+    action = "folders:read"
+    scope  = "folders:*"
+  }
+
+  permissions {
+    action = "folders:create"
+    scope  = "folders:uid:general" # Allows creating folders at the root level
+  }
+}
+
+resource "grafana_role_assignment" "custom_folder_manager_assignment" {
+  role_uid = grafana_role.custom_folder_manager.uid
+  teams    = ["<TEAM_UID>"]
+}
+```
+
+For more information, refer to the [`grafana_role`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) and [`grafana_role_assignment`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment) documentation in the Terraform Registry.
+
+### Create custom roles using file-based provisioning
+
+[File-based provisioning](ref:rbac-grafana-provisioning) is one method you can use to create custom roles for self-managed instances.
 
 1. Open the YAML configuration file and locate the `roles` section.
 
@@ -250,61 +348,6 @@ roles:
         scope: 'users:*'
         state: 'absent'
 ```
-
-### Create custom roles using the HTTP API
-
-The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role](ref:api-rbac-create-a-new-custom-role).
-
-{{< admonition type="note" >}}
-You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
-{{< /admonition >}}
-
-The following example creates a `custom:users:admin` role and assigns the `users:create` action to it.
-
-**Example request**
-
-```
-curl --location --request POST '<grafana_url>/api/access-control/roles/' \
---header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "version": 1,
-    "uid": "jZrmlLCkGksdka",
-    "name": "custom:users:admin",
-    "displayName": "custom users admin",
-    "description": "My custom role which gives users permissions to create users",
-    "global": true,
-    "permissions": [
-        {
-            "action": "users:create"
-        }
-    ]
-}'
-```
-
-**Example response**
-
-```
-{
-    "version": 1,
-    "uid": "jZrmlLCkGksdka",
-    "name": "custom:users:admin",
-    "displayName": "custom users admin",
-    "description": "My custom role which gives users permissions to create users",
-    "global": true,
-    "permissions": [
-        {
-            "action": "users:create"
-            "updated": "2021-05-17T22:07:31.569936+02:00",
-            "created": "2021-05-17T22:07:31.569935+02:00"
-        }
-    ],
-    "updated": "2021-05-17T22:07:31.564403+02:00",
-    "created": "2021-05-17T22:07:31.564403+02:00"
-}
-```
-
-Refer to the [RBAC HTTP API](ref:api-rbac-create-a-new-custom-role) for more details.
 
 ## Update basic role permissions
 
