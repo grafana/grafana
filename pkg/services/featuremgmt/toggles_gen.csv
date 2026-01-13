@@ -120,7 +120,6 @@ queryLibrary,preview,@grafana/sharing-squad,false,false,false
 dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
-logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingSavedSearches,experimental,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
@@ -143,14 +142,12 @@ vizActionsAuth,preview,@grafana/dataviz-squad,false,false,true
 alertingPrometheusRulesPrimary,experimental,@grafana/alerting-squad,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
-exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
 appPlatformGrpcClientAuth,experimental,@grafana/identity-access-team,false,false,false
 groupAttributeSync,privatePreview,@grafana/identity-access-team,false,false,false
 alertingQueryAndExpressionsStepMode,GA,@grafana/alerting-squad,false,false,true
 improvedExternalSessionHandling,GA,@grafana/identity-access-team,false,false,false
 useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
-unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchSprinkles,experimental,@grafana/search-and-storage,false,false,false
 managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
@@ -161,7 +158,6 @@ newTimeRangeZoomShortcuts,experimental,@grafana/dataviz-squad,false,false,true
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
-exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
 prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 enableSCIM,preview,@grafana/identity-access-team,false,false,false
