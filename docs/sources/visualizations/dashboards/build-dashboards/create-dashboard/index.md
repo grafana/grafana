@@ -88,6 +88,41 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
+image_maps:
+  - key: editpane-sidebar
+    src: /media/docs/grafana/dashboards/screenshot-edit-sidebar-v12.4.png
+    alt: An annotated image of the edit pane and sidebar
+    points:
+      - x_coord: 96
+        y_coord: 17
+        content: |
+          **Dashboard options**
+
+          Click the icon to open the edit pane. Edit mode only.
+      - x_coord: 96
+        y_coord: 25
+        content: |
+          **Feedback**
+
+          Submit feedback on the new editing experience. Edit mode only.
+      - x_coord: 96
+        y_coord: 33
+        content: |
+          **Export**
+
+          Click to display [export](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
+      - x_coord: 96
+        y_coord: 41
+        content: |
+          **Content outline**
+
+          Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
+      - x_coord: 96
+        y_coord: 49
+        content: |
+          **Dashboard insights**
+
+          View [dashboard analytics](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
 ---
 
 # Create dashboards
@@ -179,27 +214,9 @@ You can make several updates without leaving the dashboard by using the edit pan
 
 The _edit pane_ allows you to make changes without leaving the dashboard, by displaying options associated with the part of the dashboard that's in focus.
 The _sidebar_ is on the next to the edit pane, and it includes options that are useful to have available all the time.
-The following image shows the parts of the edit pane and the sidebar:
+The following image shows the parts of the edit pane and the sidebar followed by descriptions of the sidebar options:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-edit-pane-focus-v12.png" max-width="750px" alt="Dashboard with a panel in focus" >}}
-
-<!-- screenshot here with annotations for sidebar options including which ones are only in edit mode
-
-| Option | View mode | Edit mode |
-| ------ | --------- | --------- |
-| Dashboard options | | x |
-| Feedback | | x |
-| Export | x | x |
-| Content outline | x | x |
-| Dashboard insights | x | x | -->
-
-The sidebar includes the icons for the following options:
-
-- Dashboard options (opens the edit pane)
-- Feedback
-- [Export](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards)
-- [Content outline](#navigate-using-the-content-outline)
-- [Dashboard insights](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/)
+{{< image-map key="editpane-sidebar" >}}
 
 {{< admonition type="note" >}}
 The sidebar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
