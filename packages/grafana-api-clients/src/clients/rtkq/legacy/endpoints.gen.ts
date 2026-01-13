@@ -658,10 +658,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/dashboards/db`, method: 'POST', body: queryArg.saveDashboardCommand }),
         invalidatesTags: ['dashboards'],
       }),
-      getHomeDashboard: build.query<GetHomeDashboardApiResponse, GetHomeDashboardApiArg>({
-        query: () => ({ url: `/dashboards/home` }),
-        providesTags: ['dashboards'],
-      }),
       importDashboard: build.mutation<ImportDashboardApiResponse, ImportDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/import`, method: 'POST', body: queryArg.importDashboardRequest }),
         invalidatesTags: ['dashboards'],
@@ -1025,6 +1021,7 @@ const injectedRtkApi = api
             typeFilter: queryArg.typeFilter,
             excludeUid: queryArg.excludeUid,
             folderFilter: queryArg.folderFilter,
+            folderFilterUIDs: queryArg.folderFilterUiDs,
             perPage: queryArg.perPage,
             page: queryArg.page,
           },
@@ -2574,8 +2571,6 @@ export type PostDashboardApiResponse = /** status 200 (empty) */ {
 export type PostDashboardApiArg = {
   saveDashboardCommand: SaveDashboardCommand;
 };
-export type GetHomeDashboardApiResponse = /** status 200 (empty) */ GetHomeDashboardResponse;
-export type GetHomeDashboardApiArg = void;
 export type ImportDashboardApiResponse =
   /** status 200 (empty) */ ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard;
 export type ImportDashboardApiArg = {
@@ -2921,8 +2916,11 @@ export type GetLibraryElementsApiArg = {
   typeFilter?: string;
   /** Element UID to exclude from search results. */
   excludeUid?: string;
-  /** A comma separated list of folder ID(s) to filter the elements by. */
+  /** A comma separated list of folder ID(s) to filter the elements by.
+    Deprecated: Use FolderFilterUIDs instead. */
   folderFilter?: string;
+  /** A comma separated list of folder UID(s) to filter the elements by. */
+  folderFilterUiDs?: string;
   /** The number of results per page. */
   perPage?: number;
   /** The page for a set of records, given that only perPage records are returned at a time. Numbering starts at 1. */
@@ -3446,16 +3444,16 @@ export type RemoveTeamGroupApiQueryApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RemoveTeamGroupApiQueryApiArg = {
   groupId?: string;
-  teamId: number;
+  teamId: string;
 };
 export type GetTeamGroupsApiApiResponse = /** status 200 (empty) */ TeamGroupDto[];
 export type GetTeamGroupsApiApiArg = {
-  teamId: number;
+  teamId: string;
 };
 export type AddTeamGroupApiApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AddTeamGroupApiApiArg = {
-  teamId: number;
+  teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
 export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
@@ -4399,51 +4397,6 @@ export type SaveDashboardCommand = {
   overwrite?: boolean;
   userId?: number;
 };
-export type AnnotationActions = {
-  canAdd?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-};
-export type AnnotationPermission = {
-  dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
-};
-export type DashboardMeta = {
-  annotationsPermissions?: AnnotationPermission;
-  apiVersion?: string;
-  canAdmin?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-  canSave?: boolean;
-  canStar?: boolean;
-  created?: string;
-  createdBy?: string;
-  expires?: string;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderTitle?: string;
-  folderUid?: string;
-  folderUrl?: string;
-  hasAcl?: boolean;
-  isFolder?: boolean;
-  isSnapshot?: boolean;
-  isStarred?: boolean;
-  provisioned?: boolean;
-  provisionedExternalId?: string;
-  publicDashboardEnabled?: boolean;
-  slug?: string;
-  type?: string;
-  updated?: string;
-  updatedBy?: string;
-  url?: string;
-  version?: number;
-};
-export type GetHomeDashboardResponse = {
-  dashboard?: Json;
-  meta?: DashboardMeta;
-} & {
-  redirectUri?: string;
-};
 export type ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard = {
   dashboardId?: number;
   description?: string;
@@ -4534,6 +4487,45 @@ export type PublicDashboardDto = {
   share?: ShareType;
   timeSelectionEnabled?: boolean;
   uid?: string;
+};
+export type AnnotationActions = {
+  canAdd?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+};
+export type AnnotationPermission = {
+  dashboard?: AnnotationActions;
+  organization?: AnnotationActions;
+};
+export type DashboardMeta = {
+  annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
+  canAdmin?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+  canSave?: boolean;
+  canStar?: boolean;
+  created?: string;
+  createdBy?: string;
+  expires?: string;
+  /** Deprecated: use FolderUID instead */
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
+  hasAcl?: boolean;
+  isFolder?: boolean;
+  isSnapshot?: boolean;
+  isStarred?: boolean;
+  provisioned?: boolean;
+  provisionedExternalId?: string;
+  publicDashboardEnabled?: boolean;
+  slug?: string;
+  type?: string;
+  updated?: string;
+  updatedBy?: string;
+  url?: string;
+  version?: number;
 };
 export type DashboardFullWithMeta = {
   dashboard?: Json;
@@ -5324,7 +5316,8 @@ export type PatchPrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export type UpdatePrefsCmd = {
@@ -5337,7 +5330,8 @@ export type UpdatePrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export type OrgUserDto = {
@@ -5346,6 +5340,7 @@ export type OrgUserDto = {
   };
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   isDisabled?: boolean;
   isExternallySynced?: boolean;
@@ -5566,6 +5561,7 @@ export type ReportDashboard = {
 };
 export type Type = string;
 export type ReportOptions = {
+  csvEncoding?: string;
   layout?: string;
   orientation?: string;
   pdfCombineOneFile?: boolean;
@@ -6123,6 +6119,7 @@ export type ChangeUserPasswordCommand = {
 export type UserSearchHitDto = {
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   id?: number;
   isAdmin?: boolean;
@@ -6619,8 +6616,6 @@ export const {
   useSearchDashboardSnapshotsQuery,
   useLazySearchDashboardSnapshotsQuery,
   usePostDashboardMutation,
-  useGetHomeDashboardQuery,
-  useLazyGetHomeDashboardQuery,
   useImportDashboardMutation,
   useInterpolateDashboardMutation,
   useListPublicDashboardsQuery,

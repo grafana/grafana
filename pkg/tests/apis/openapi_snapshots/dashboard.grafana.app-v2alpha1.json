@@ -1786,6 +1786,13 @@
           "skipUrlSync": {
             "type": "boolean",
             "default": false
+          },
+          "valuesFormat": {
+            "enum": [
+              "csv",
+              "json"
+            ],
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -3020,6 +3027,9 @@
             "type": "string",
             "default": ""
           },
+          "regexApplyTo": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableRegexApplyTo"
+          },
           "skipUrlSync": {
             "type": "boolean",
             "default": false
@@ -3928,6 +3938,14 @@
           "never",
           "onDashboardLoad",
           "onTimeRangeChanged"
+        ]
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableRegexApplyTo": {
+        "description": "Determine whether regex applies to variable value or display text\nAccepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)",
+        "type": "string",
+        "enum": [
+          "value",
+          "text"
         ]
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableSort": {

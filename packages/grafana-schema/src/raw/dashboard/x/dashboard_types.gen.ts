@@ -188,6 +188,10 @@ export interface VariableModel {
    */
   regex?: string;
   /**
+   * Determine whether regex applies to variable value or display text
+   */
+  regexApplyTo?: VariableRegexApplyTo;
+  /**
    * Whether the variable value should be managed by URL query params or not
    */
   skipUrlSync?: boolean;
@@ -207,6 +211,10 @@ export interface VariableModel {
    * Type of variable
    */
   type: VariableType;
+  /**
+   * Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+   */
+  valuesFormat?: ('csv' | 'json');
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
@@ -216,6 +224,7 @@ export const defaultVariableModel: Partial<VariableModel> = {
   options: [],
   skipUrlSync: false,
   staticOptions: [],
+  valuesFormat: 'csv',
 };
 
 /**
@@ -258,6 +267,12 @@ export enum VariableHide {
   hideVariable = 2,
   inControlsMenu = 3,
 }
+
+/**
+ * Determine whether regex applies to variable value or display text
+ * Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+ */
+export type VariableRegexApplyTo = ('value' | 'text');
 
 /**
  * Sort variable options
@@ -828,6 +843,11 @@ export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSy
  * Dashboard panels are the basic visualization building blocks.
  */
 export interface Panel {
+  /**
+   * When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+   * This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+   */
+  autoMigrateFrom?: string;
   /**
    * Sets panel queries cache timeout.
    */

@@ -50,7 +50,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 
 	t.Run("service gets receiver from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
-		recv, err := sut.GetReceiver(context.Background(), singleQ(1, "slack receiver"), redactedUser)
+		recv, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("slack receiver"), false, redactedUser)
 		require.NoError(t, err)
 		require.Equal(t, "slack receiver", recv.Name)
 		require.Len(t, recv.Integrations, 1)
@@ -60,7 +60,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 	t.Run("service returns error when receiver does not exist", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		_, err := sut.GetReceiver(context.Background(), singleQ(1, "receiver1"), redactedUser)
+		_, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
 		require.ErrorIs(t, err, legacy_storage.ErrReceiverNotFound)
 	})
 
@@ -68,7 +68,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 		t.Run("gets imported receivers", func(t *testing.T) {
 			sut := createReceiverServiceSut(t, secretsService, withImportedIncluded)
 
-			recv, err := sut.GetReceiver(context.Background(), singleQ(1, "receiver1"), redactedUser)
+			recv, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
 			require.NoError(t, err)
 			assert.Equal(t, models.ResourceOriginImported, recv.Origin)
 			assert.Equal(t, "receiver1", recv.Name)
@@ -81,9 +81,9 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 
 		t.Run("falls to only Grafana if cannot read imported receivers", func(t *testing.T) {
 			sut := createReceiverServiceSut(t, secretsService, withImportedIncluded, withInvalidExtraConfig)
-			_, err := sut.GetReceiver(context.Background(), singleQ(1, "receiver1"), redactedUser)
+			_, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
 			require.ErrorIs(t, err, legacy_storage.ErrReceiverNotFound)
-			_, err = sut.GetReceiver(context.Background(), singleQ(1, "slack receiver"), redactedUser)
+			_, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid("slack receiver"), false, redactedUser)
 			require.NoError(t, err)
 		})
 	})
@@ -188,12 +188,6 @@ func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 			err:     "[alerting.unauthorized] user is not authorized to read any decrypted receiver",
 		},
 		{
-			name:    "service returns error if user is nil and decrypt is true",
-			decrypt: true,
-			user:    nil,
-			err:     "[alerting.unauthorized] user is not authorized to read any decrypted receiver",
-		},
-		{
 			name:    "service decrypts receivers with permission",
 			decrypt: true,
 			user:    secretUser,
@@ -224,18 +218,16 @@ func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 			},
 		}
 
-		for _, o := range origin {
-			for _, method := range getMethods {
-				t.Run(fmt.Sprintf("%s %s", tc.name, method), func(t *testing.T) {
+		for _, method := range getMethods {
+			t.Run(fmt.Sprintf("%s %s", tc.name, method), func(t *testing.T) {
+				for _, o := range origin {
 					t.Run(fmt.Sprintf("%s %s (%s)", tc.name, method, o.origin), func(t *testing.T) {
 						sut := createReceiverServiceSut(t, secretsService, o.opts...)
 
 						var res *models.Receiver
 						var err error
 						if method == "single" {
-							q := singleQ(1, o.receiver)
-							q.Decrypt = tc.decrypt
-							res, err = sut.GetReceiver(context.Background(), q, tc.user)
+							res, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(o.receiver), tc.decrypt, tc.user)
 						} else {
 							q := multiQ(1, o.receiver)
 							q.Decrypt = tc.decrypt
@@ -267,8 +259,8 @@ func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 							require.NotEqual(t, o.decryptedSettingValue, res.Integrations[0].SecureSettings[o.secureSettingKey])
 						}
 					})
-				})
-			}
+				}
+			})
 		}
 	}
 }
@@ -412,8 +404,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			// Ensure receiver saved to store is correct.
 			name, err := legacy_storage.UidToName(tc.deleteUID)
 			require.NoError(t, err)
-			q := models.GetReceiverQuery{OrgID: tc.user.GetOrgID(), Name: name}
-			_, err = sut.GetReceiver(context.Background(), q, writer)
+			_, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(name), false, writer)
 			assert.ErrorIs(t, err, legacy_storage.ErrReceiverNotFound)
 
 			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
@@ -626,8 +617,7 @@ func TestReceiverService_Create(t *testing.T) {
 			assert.Equal(t, tc.expectedCreate, *created)
 
 			// Ensure receiver saved to store is correct.
-			q := models.GetReceiverQuery{OrgID: tc.user.GetOrgID(), Name: tc.receiver.Name, Decrypt: true}
-			stored, err := sut.GetReceiver(context.Background(), q, decryptUser)
+			stored, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(tc.receiver.Name), true, decryptUser)
 			require.NoError(t, err)
 			decrypted := models.CopyReceiverWith(tc.expectedCreate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
 			decrypted.Version = tc.expectedCreate.Version // Version is calculated before decryption.
@@ -659,8 +649,9 @@ func TestReceiverService_Update(t *testing.T) {
 
 	writer := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
-			accesscontrol.ActionAlertingNotificationsWrite: nil,
-			accesscontrol.ActionAlertingNotificationsRead:  nil,
+			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingNotificationsRead:        nil,
+			accesscontrol.ActionAlertingReceiversUpdateProtected: {models.ScopeReceiversAll},
 		},
 	}}
 	decryptUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -930,8 +921,7 @@ func TestReceiverService_Update(t *testing.T) {
 			assert.Equal(t, tc.expectedUpdate, *updated)
 
 			// Ensure receiver saved to store is correct.
-			q := models.GetReceiverQuery{OrgID: tc.user.GetOrgID(), Name: tc.receiver.Name, Decrypt: true}
-			stored, err := sut.GetReceiver(context.Background(), q, decryptUser)
+			stored, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(tc.receiver.Name), true, decryptUser)
 			require.NoError(t, err)
 			decrypted := models.CopyReceiverWith(tc.expectedUpdate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
 			decrypted.Version = tc.expectedUpdate.Version // Version is calculated before decryption.
@@ -1053,7 +1043,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut.ruleNotificationsStore = ruleStore
 
 		newReceiverName = "receiver1"
-		actual, err := sut.GetReceiver(context.Background(), models.GetReceiverQuery{OrgID: writer.GetOrgID(), Name: newReceiverName}, writer)
+		actual, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
 		require.NoError(t, err)
 		require.Equal(t, models.ResourceOriginImported, actual.Origin)
 		require.Equal(t, newReceiverName, actual.Name)
@@ -1066,7 +1056,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		require.NotEqual(t, actual, recv)
 		require.Equal(t, models.ResourceOriginGrafana, recv.Origin)
 
-		actual, err = sut.GetReceiver(context.Background(), models.GetReceiverQuery{OrgID: writer.GetOrgID(), Name: newReceiverName}, writer)
+		actual, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
 		require.NoError(t, err)
 		require.Equal(t, recv.Name, actual.Name)
 	})
@@ -1184,7 +1174,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 				return false
 			}
 			for _, recv := range allReceivers() {
-				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
+				response, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(recv.Name), false, usr)
 				if isVisible(recv.UID) {
 					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
 					assert.NotNil(t, response)
@@ -1206,7 +1196,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			}
 			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true)
 			for _, recv := range allReceivers() {
-				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
+				response, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(recv.Name), false, usr)
 				if isVisibleInProvisioning(recv.UID) {
 					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
 					assert.NotNil(t, response)
@@ -1310,7 +1300,7 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 		},
 	}}
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))
+	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("webhook"))
 	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
 	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
@@ -1322,8 +1312,8 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 		name        string
 		permissions map[string][]string
 		existing    []models.Receiver
-
-		hasAccess []models.Receiver
+		incoming    []models.Receiver
+		hasAccess   []models.Receiver
 	}{
 		{
 			name:      "not authorized without permissions",
@@ -1411,6 +1401,43 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 			existing:  allReceivers(),
 			hasAccess: []models.Receiver{recv1, recv3},
 		},
+		{
+			name: "protected fields modified without permission",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversUpdate: {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversRead:   {models.ScopeReceiversAll},
+			},
+			existing: []models.Receiver{
+				recv1,
+			},
+			incoming: []models.Receiver{
+				func() models.Receiver {
+					f := recv1.Clone()
+					f.Integrations[0].Settings["url"] = "https://example.com/new"
+					return f
+				}(),
+			},
+			hasAccess: nil,
+		},
+		{
+			name: "protected fields modified with permission",
+			permissions: map[string][]string{
+				accesscontrol.ActionAlertingReceiversUpdate:          {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversRead:            {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversUpdateProtected: {models.ScopeReceiversAll},
+			},
+			existing: []models.Receiver{
+				recv1,
+			},
+			incoming: []models.Receiver{
+				func() models.Receiver {
+					f := recv1.Clone()
+					f.Integrations[0].Settings["url"] = "https://example.com/new"
+					return f
+				}(),
+			},
+			hasAccess: []models.Receiver{recv1},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1436,7 +1463,11 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 				}
 				return false
 			}
-			for _, recv := range allReceivers() {
+			incoming := allReceivers()
+			if tc.incoming != nil {
+				incoming = tc.incoming
+			}
+			for _, recv := range incoming {
 				clone := recv.Clone()
 				clone.Version = versions[recv.UID]
 				response, err := sut.UpdateReceiver(context.Background(), &clone, nil, orgId, usr)
@@ -1724,7 +1755,7 @@ func TestReceiverService_AccessControlMetadata(t *testing.T) {
 		},
 	}}
 
-	r, err := sut.GetReceiver(context.Background(), models.GetReceiverQuery{OrgID: 1, Name: "receiver1"}, admin)
+	r, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, admin)
 	require.NoError(t, err)
 
 	t.Run("should override metadata for imported receivers", func(t *testing.T) {
@@ -1734,6 +1765,7 @@ func TestReceiverService_AccessControlMetadata(t *testing.T) {
 		expectedPermissions.Set(models.ReceiverPermissionAdmin, false)
 		expectedPermissions.Set(models.ReceiverPermissionWrite, false)
 		expectedPermissions.Set(models.ReceiverPermissionDelete, false)
+		expectedPermissions.Set(models.ReceiverPermissionModifyProtected, false)
 		expectedPermissions.Set(models.ReceiverPermissionReadSecret, true)
 
 		expected := map[string]models.ReceiverPermissionSet{
@@ -1797,13 +1829,6 @@ func createEncryptedConfig(t *testing.T, secretService secretService, extraConfi
 	bytes, err := json.Marshal(c)
 	require.NoError(t, err)
 	return string(bytes)
-}
-
-func singleQ(orgID int64, name string) models.GetReceiverQuery {
-	return models.GetReceiverQuery{
-		OrgID: orgID,
-		Name:  name,
-	}
 }
 
 func multiQ(orgID int64, names ...string) models.GetReceiversQuery {

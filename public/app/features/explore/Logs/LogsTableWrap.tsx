@@ -19,7 +19,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, InlineField, Select, useStyles2 } from '@grafana/ui';
 import {
-  getSidebarWidth,
+  getFieldSelectorWidth,
   LogsTableFieldSelector,
   MIN_WIDTH,
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
@@ -279,7 +279,7 @@ export function LogsTableWrap(props: Props) {
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps]);
 
-  const [sidebarWidth, setSidebarWidth] = useState(getSidebarWidth(SETTING_KEY_ROOT));
+  const [sidebarWidth, setSidebarWidth] = useState(getFieldSelectorWidth(SETTING_KEY_ROOT));
   const tableWidth = props.width - sidebarWidth;
 
   const styles = useStyles2(getStyles, height, sidebarWidth);

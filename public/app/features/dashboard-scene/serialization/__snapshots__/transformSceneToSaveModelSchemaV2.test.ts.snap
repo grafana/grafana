@@ -173,6 +173,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
         "refresh": "onDashboardLoad",
         "regex": "regex1",
+        "regexApplyTo": "value",
         "skipUrlSync": false,
         "sort": "alphabeticalDesc",
       },
@@ -195,6 +196,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "options": [],
         "query": "option1, option2",
         "skipUrlSync": false,
+        "valuesFormat": "csv",
       },
     },
     {

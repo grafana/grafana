@@ -62,6 +62,7 @@ export function PluginUsage({ plugin }: Props) {
                 keyboardEvents={of()}
                 onTagSelected={() => {}}
                 trackingSource="PluginDetailsPage_PluginUsage"
+                onClickItem={() => {}}
               />
             );
           }}
@@ -74,13 +75,13 @@ export function PluginUsage({ plugin }: Props) {
     return <Spinner />;
   }
 
-  if (!config.featureToggles.panelTitleSearch) {
+  if (!config.featureToggles.unifiedStorageSearchUI) {
     return (
       <Alert
         title={t(
           'plugins.plugin-usage.title-missing-feature-toggle-panel-title-search',
           'Missing feature toggle: {{toggle}}',
-          { toggle: 'panelTitleSearch' }
+          { toggle: 'unifiedStorageSearchUI' }
         )}
         severity="warning"
       >

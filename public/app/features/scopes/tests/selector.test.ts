@@ -91,7 +91,7 @@ describe('Selector', () => {
   it('Should initializae values from the URL', async () => {
     const mockLocation = {
       pathname: '/dashboard',
-      search: '?scopes=grafana&scope_parent=applications',
+      search: '?scopes=grafana&scope_node=applications-grafana',
       hash: '',
       key: 'test',
       state: null,
@@ -132,11 +132,12 @@ describe('Selector', () => {
       expectRecentScope('Grafana Applications');
       expectRecentScope('Grafana, Mimir Applications');
       await selectRecentScope('Grafana Applications');
+      await jest.runOnlyPendingTimersAsync();
 
       expectScopesSelectorValue('Grafana');
 
       await openSelector();
-      // Close to root node so we can see the recent scopes
+      // Collapse tree to root level to see recent scopes section
       await expandResultApplications();
 
       await expandRecentScopes();
@@ -155,8 +156,8 @@ describe('Selector', () => {
       await applyScopes();
 
       await openSelector();
-      // Close to root node so we can try to see the recent scopes
-      await expandResultApplications();
+      // Tree expands to show selected scope, so recent scopes are not visible
+      // (recent scopes only show at root level with tree collapsed)
       expectRecentScopeNotPresentInDocument();
     });
 
@@ -174,6 +175,7 @@ describe('Selector', () => {
       await applyScopes();
 
       // Deselect all scopes
+      await hoverSelector();
       await clearSelector();
 
       // Recent scopes should still be available
@@ -196,6 +198,7 @@ describe('Selector', () => {
       await selectResultApplicationsMimir();
       await applyScopes();
 
+      await hoverSelector();
       await clearSelector();
 
       // Check recent scopes are updated

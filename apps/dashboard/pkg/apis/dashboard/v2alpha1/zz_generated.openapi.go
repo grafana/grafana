@@ -1548,6 +1548,12 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardCustomVariableSpec(ref common.R
 							Format:  "",
 						},
 					},
+					"valuesFormat": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "query", "current", "options", "multi", "includeAll", "hide", "skipUrlSync", "allowCustomValue"},
 			},
@@ -3644,6 +3650,12 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardQueryVariableSpec(ref common.Re
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
+						},
+					},
+					"regexApplyTo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"sort": {
