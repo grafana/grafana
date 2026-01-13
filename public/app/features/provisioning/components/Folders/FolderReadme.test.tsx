@@ -1,22 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
-import { config } from '@grafana/runtime';
 import { useGetRepositoryFilesWithPathQuery, RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 
-import { FolderReadme } from './FolderReadme';
+import { FolderReadmeContent } from './FolderReadme';
 
 // Mock dependencies
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    featureToggles: {
-      provisioning: true,
-    },
-  },
-}));
-
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
 }));
@@ -52,31 +42,13 @@ const mockFolder = {
   status: {},
 };
 
-describe('FolderReadme', () => {
+describe('FolderReadmeContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (config.featureToggles as Record<string, boolean>).provisioning = true;
-  });
-
-  describe('when provisioning is disabled', () => {
-    it('should not render anything', () => {
-      (config.featureToggles as Record<string, boolean>).provisioning = false;
-
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        repository: mockRepository,
-        folder: mockFolder,
-        isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: false,
-      });
-
-      const { container } = render(<FolderReadme folderUID="test-folder" />);
-      expect(container).toBeEmptyDOMElement();
-    });
   });
 
   describe('when folder is not provisioned', () => {
-    it('should not render anything when repository is undefined', () => {
+    it('should show not provisioned message when repository is undefined', () => {
       mockUseGetResourceRepositoryView.mockReturnValue({
         repository: undefined,
         folder: undefined,
@@ -85,26 +57,21 @@ describe('FolderReadme', () => {
         isReadOnlyRepo: false,
       });
 
-      const { container } = render(<FolderReadme folderUID="test-folder" />);
-      expect(container).toBeEmptyDOMElement();
-    });
-
-    it('should not render anything when folderUID is undefined', () => {
-      mockUseGetResourceRepositoryView.mockReturnValue({
-        repository: mockRepository,
-        folder: mockFolder,
+      mockUseGetRepositoryFilesWithPathQuery.mockReturnValue({
+        data: undefined,
         isLoading: false,
-        isInstanceManaged: false,
-        isReadOnlyRepo: false,
+        isError: false,
+        error: undefined,
+        refetch: jest.fn(),
       });
 
-      const { container } = render(<FolderReadme folderUID={undefined} />);
-      expect(container).toBeEmptyDOMElement();
+      render(<FolderReadmeContent folderUID="test-folder" />);
+      expect(screen.getByText(/not managed by a Git repository/i)).toBeInTheDocument();
     });
   });
 
   describe('when loading', () => {
-    it('should not render anything while loading repository info', () => {
+    it('should show loading spinner while loading repository info', () => {
       mockUseGetResourceRepositoryView.mockReturnValue({
         repository: mockRepository,
         folder: mockFolder,
@@ -113,8 +80,8 @@ describe('FolderReadme', () => {
         isReadOnlyRepo: false,
       });
 
-      const { container } = render(<FolderReadme folderUID="test-folder" />);
-      expect(container).toBeEmptyDOMElement();
+      render(<FolderReadmeContent folderUID="test-folder" />);
+      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
     });
 
     it('should show loading spinner while fetching README', () => {
@@ -134,14 +101,13 @@ describe('FolderReadme', () => {
         refetch: jest.fn(),
       });
 
-      render(<FolderReadme folderUID="test-folder" />);
-      // Check for spinner by looking for the role or a common class
+      render(<FolderReadmeContent folderUID="test-folder" />);
       expect(screen.getByTestId('Spinner')).toBeInTheDocument();
     });
   });
 
   describe('when README fetch fails', () => {
-    it('should not render anything on error', () => {
+    it('should show not found message on error', () => {
       mockUseGetResourceRepositoryView.mockReturnValue({
         repository: mockRepository,
         folder: mockFolder,
@@ -158,11 +124,11 @@ describe('FolderReadme', () => {
         refetch: jest.fn(),
       });
 
-      const { container } = render(<FolderReadme folderUID="test-folder" />);
-      expect(container).toBeEmptyDOMElement();
+      render(<FolderReadmeContent folderUID="test-folder" />);
+      expect(screen.getByText(/No README.md file found/i)).toBeInTheDocument();
     });
 
-    it('should not render anything when file data is empty', () => {
+    it('should show not found message when file data is empty', () => {
       mockUseGetResourceRepositoryView.mockReturnValue({
         repository: mockRepository,
         folder: mockFolder,
@@ -179,8 +145,8 @@ describe('FolderReadme', () => {
         refetch: jest.fn(),
       });
 
-      const { container } = render(<FolderReadme folderUID="test-folder" />);
-      expect(container).toBeEmptyDOMElement();
+      render(<FolderReadmeContent folderUID="test-folder" />);
+      expect(screen.getByText(/No README.md file found/i)).toBeInTheDocument();
     });
   });
 
@@ -208,7 +174,7 @@ describe('FolderReadme', () => {
         refetch: jest.fn(),
       });
 
-      render(<FolderReadme folderUID="test-folder" />);
+      render(<FolderReadmeContent folderUID="test-folder" />);
 
       // The markdown should be rendered as HTML
       expect(screen.getByText('Hello World')).toBeInTheDocument();
@@ -236,11 +202,11 @@ describe('FolderReadme', () => {
         refetch: jest.fn(),
       });
 
-      render(<FolderReadme folderUID="test-folder" />);
+      render(<FolderReadmeContent folderUID="test-folder" />);
       expect(screen.getByText('Direct String Content')).toBeInTheDocument();
     });
 
-    it('should not render when file content cannot be extracted', () => {
+    it('should show parse error when file content cannot be extracted', () => {
       mockUseGetResourceRepositoryView.mockReturnValue({
         repository: mockRepository,
         folder: mockFolder,
@@ -261,8 +227,8 @@ describe('FolderReadme', () => {
         refetch: jest.fn(),
       });
 
-      const { container } = render(<FolderReadme folderUID="test-folder" />);
-      expect(container).toBeEmptyDOMElement();
+      render(<FolderReadmeContent folderUID="test-folder" />);
+      expect(screen.getByText(/Unable to display README content/i)).toBeInTheDocument();
     });
   });
 
@@ -284,7 +250,7 @@ describe('FolderReadme', () => {
         refetch: jest.fn(),
       });
 
-      render(<FolderReadme folderUID="test-folder" />);
+      render(<FolderReadmeContent folderUID="test-folder" />);
 
       // Verify the query was called with the correct path
       expect(mockUseGetRepositoryFilesWithPathQuery).toHaveBeenCalledWith({
@@ -319,7 +285,7 @@ describe('FolderReadme', () => {
         refetch: jest.fn(),
       });
 
-      render(<FolderReadme folderUID="test-folder" />);
+      render(<FolderReadmeContent folderUID="test-folder" />);
 
       expect(mockUseGetRepositoryFilesWithPathQuery).toHaveBeenCalledWith({
         name: 'test-repo',

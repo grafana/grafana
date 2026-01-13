@@ -2,27 +2,24 @@ import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Card, Spinner, useStyles2 } from '@grafana/ui';
+import { Box, Spinner, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 
-interface FolderReadmeProps {
-  folderUID: string | undefined;
+interface FolderReadmeContentProps {
+  folderUID: string;
 }
 
 /**
- * FolderReadme fetches and renders a README.md file from a Git Sync provisioned folder.
- * It only renders when:
- * - The provisioning feature is enabled
- * - The folder is managed by a repository
- * - The README.md file exists and can be fetched
+ * FolderReadmeContent fetches and renders a README.md file from a Git Sync provisioned folder.
+ * This is the main content component used in the README tab.
  */
-export function FolderReadme({ folderUID }: FolderReadmeProps) {
+export function FolderReadmeContent({ folderUID }: FolderReadmeContentProps) {
   const styles = useStyles2(getStyles);
-  const provisioningEnabled = config.featureToggles.provisioning;
 
   // Get repository info for the folder
   const { repository, folder, isLoading: isRepoLoading } = useGetResourceRepositoryView({
@@ -34,7 +31,7 @@ export function FolderReadme({ folderUID }: FolderReadmeProps) {
   const readmePath = sourcePath ? `${sourcePath}/README.md` : 'README.md';
 
   // Determine if we should fetch the README
-  const shouldFetch = provisioningEnabled && !!repository && !!folderUID && !isRepoLoading;
+  const shouldFetch = !!repository && !!folderUID && !isRepoLoading;
 
   // Fetch the README.md file from the repository
   const {
@@ -50,82 +47,101 @@ export function FolderReadme({ folderUID }: FolderReadmeProps) {
       : skipToken
   );
 
-  // Don't render if provisioning is disabled or folder is not managed
-  if (!provisioningEnabled || !folderUID || !repository) {
-    return null;
-  }
-
-  // Show loading spinner while fetching repository info
-  if (isRepoLoading) {
-    return null;
-  }
-
-  // Show loading spinner while fetching README
-  if (isFileLoading) {
+  // Show loading spinner while fetching repository info or README
+  if (isRepoLoading || isFileLoading) {
     return (
-      <Card className={styles.card}>
-        <div className={styles.loadingContainer}>
-          <Spinner size="sm" />
-        </div>
-      </Card>
+      <Box display="flex" justifyContent="center" alignItems="center" paddingY={4}>
+        <Spinner size="lg" />
+      </Box>
     );
   }
 
-  // Don't render if there was an error (README doesn't exist or unsupported)
+  // Show empty state if folder is not managed by a repository
+  if (!repository) {
+    return (
+      <Box paddingY={4}>
+        <Stack direction="column" alignItems="center" gap={2}>
+          <Text color="secondary">
+            <Trans i18nKey="browse-dashboards.readme.not-provisioned">
+              This folder is not managed by a Git repository.
+            </Trans>
+          </Text>
+        </Stack>
+      </Box>
+    );
+  }
+
+  // Show empty state if there was an error or no README exists
   if (isError || !fileData) {
-    return null;
+    return (
+      <Box paddingY={4}>
+        <Stack direction="column" alignItems="center" gap={2}>
+          <Text color="secondary">
+            <Trans i18nKey="browse-dashboards.readme.not-found">
+              No README.md file found in this folder.
+            </Trans>
+          </Text>
+          <Text color="secondary" variant="bodySmall">
+            <Trans i18nKey="browse-dashboards.readme.add-hint">
+              Add a README.md file to your repository to display documentation here.
+            </Trans>
+          </Text>
+        </Stack>
+      </Box>
+    );
   }
 
   // Extract the raw content from the file data
-  // The API returns a ResourceWrapper with resource.file containing the file data
   const fileContent = fileData.resource?.file;
   if (!fileContent) {
     return null;
   }
 
-  // For markdown files, the content might be in different formats depending on how the API returns it
   // Try to get the content as a string
   let markdownContent: string | undefined;
 
   if (typeof fileContent === 'string') {
     markdownContent = fileContent;
   } else if (typeof fileContent === 'object') {
-    // If it's an object, try common property names
     markdownContent =
       (fileContent as Record<string, unknown>).content as string | undefined ||
       (fileContent as Record<string, unknown>).data as string | undefined ||
       (fileContent as Record<string, unknown>).spec as string | undefined;
 
-    // If still not found, try to get raw text if available
     if (!markdownContent && (fileContent as Record<string, unknown>).raw) {
       markdownContent = (fileContent as Record<string, unknown>).raw as string;
     }
   }
 
-  // Don't render if we couldn't extract the content
   if (!markdownContent || typeof markdownContent !== 'string') {
-    return null;
+    return (
+      <Box paddingY={4}>
+        <Text color="secondary">
+          <Trans i18nKey="browse-dashboards.readme.parse-error">
+            Unable to display README content.
+          </Trans>
+        </Text>
+      </Box>
+    );
   }
 
   // Render the markdown content
   const renderedHtml = renderMarkdown(markdownContent);
 
   return (
-    <Card className={styles.card}>
+    <div className={styles.container}>
       <div className="markdown-html" dangerouslySetInnerHTML={{ __html: renderedHtml }} />
-    </Card>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  card: css({
-    marginBottom: theme.spacing(2),
+  container: css({
     padding: theme.spacing(2),
-  }),
-  loadingContainer: css({
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.spacing(2),
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.shape.radius.default,
   }),
 });
+
+// Keep the old export for backwards compatibility during transition
+export { FolderReadmeContent as FolderReadme };

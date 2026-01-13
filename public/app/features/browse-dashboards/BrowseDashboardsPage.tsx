@@ -17,7 +17,6 @@ import { contextSrv } from '../../core/services/context_srv';
 import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
-import { FolderReadme } from '../provisioning/components/Folders/FolderReadme';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
@@ -180,7 +179,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
-        {folderUID && <FolderReadme folderUID={folderUID} />}
         {/* only show recently viewed dashboards when in root */}
         {!folderUID && <RecentlyViewedDashboards />}
         <div>

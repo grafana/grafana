@@ -485,6 +485,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/f/:uid/:slug/readme',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "FolderReadmePage"*/ 'app/features/browse-dashboards/BrowseFolderReadmePage'
+          )
+      ),
+    },
+    {
       path: '/dashboards/f/:uid/:slug/library-panels',
       component: SafeDynamicImport(
         () =>
