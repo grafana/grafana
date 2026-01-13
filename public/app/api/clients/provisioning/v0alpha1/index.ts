@@ -58,6 +58,17 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       }),
       onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories'),
     },
+    listConnection: {
+      providesTags: (result) =>
+        result
+          ? [
+              { type: 'Connection', id: 'LIST' },
+              ...result.items
+                .map((connection) => ({ type: 'Connection' as const, id: connection.metadata?.name }))
+                .filter(Boolean),
+            ]
+          : [{ type: 'Connection', id: 'LIST' }],
+    },
     deleteRepository: {
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
@@ -273,6 +284,7 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     deleteConnection: {
+      invalidatesTags: (result, error) => (error ? [] : [{ type: 'Connection', id: 'LIST' }]),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
