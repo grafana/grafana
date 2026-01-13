@@ -13,7 +13,7 @@ export function useAppPluginMeta(pluginId: string) {
 }
 
 /**
- * Hook that checks if an app plugin is installed.
+ * Hook that checks if an app plugin is installed. The hook does not check if the app plugin is enabled.
  * @param pluginId - The ID of the app plugin.
  * @returns loading, error, value of the app plugin installed status.
  * The value is true if the app plugin is installed, false otherwise.

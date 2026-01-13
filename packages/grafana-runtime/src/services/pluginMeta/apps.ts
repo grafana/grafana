@@ -43,7 +43,7 @@ export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfi
 }
 
 /**
- * Check if an app plugin is installed.
+ * Check if an app plugin is installed. The function does not check if the app plugin is enabled.
  * @param pluginId - The id of the app plugin.
  * @returns True if the app plugin is installed, false otherwise.
  */
