@@ -6760,6 +6760,7 @@
         "cloudflare-datasource": "Cloudflare datasource",
         "cockroach-db-datasource": "CockroachDB datasource",
         "data-dog-integration-and-data-source": "DataDog integration and data source",
+        "db2-datasource": "IBM Db2 data source",
         "drone-datasource": "Drone datasource",
         "git-lab-integration-and-datasource": "GitLab integration and datasource",
         "honeycomb-integration-and-datasource": "Honeycomb integration and datasource",
