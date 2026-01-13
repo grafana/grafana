@@ -338,11 +338,13 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 			AlertmanagerConfig: mergeResult.Config,
 			Templates:          templates,
 		},
-		CreatedAt:     createdAtEpoch,
-		Promoted:      am.promoteConfig,
-		ExternalURL:   am.externalURL,
-		SmtpConfig:    am.smtp,
-		DispatchTimer: am.dispatchTimer,
+		CreatedAt:   createdAtEpoch,
+		Promoted:    am.promoteConfig,
+		ExternalURL: am.externalURL,
+		SmtpConfig:  am.smtp,
+		RuntimeConfig: remoteClient.RuntimeConfig{
+			DispatchTimer: am.dispatchTimer,
+		},
 	}
 
 	cfgHash, err := calculateUserGrafanaConfigHash(payload)
