@@ -1367,6 +1367,21 @@
     },
     {
       "metadata": {
+        "name": "experimentRecentlyViewedDashboards",
+        "resourceVersion": "1768214542023",
+        "creationTimestamp": "2026-01-12T10:42:22Z"
+      },
+      "spec": {
+        "description": "A/A test for recently viewed dashboards feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "exploreLogsAggregatedMetrics",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-08-29T13:55:59Z"
