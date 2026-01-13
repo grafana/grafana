@@ -1,14 +1,28 @@
 import OpenLayersMap from 'ol/Map';
+import ImageLayer from 'ol/layer/Image';
+import TileLayer from 'ol/layer/Tile';
+import ImageArcGISRest from 'ol/source/ImageArcGISRest';
+import XYZ from 'ol/source/XYZ';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, RegistryItem, Registry, EventBus } from '@grafana/data';
+import {
+  MapLayerRegistryItem,
+  MapLayerOptions,
+  GrafanaTheme2,
+  RegistryItem,
+  Registry,
+  EventBus,
+  PanelData,
+  textUtil,
+} from '@grafana/data';
 
-import { xyzTiles, defaultXYZConfig, XYZConfig } from './generic';
+import { defaultXYZConfig, XYZConfig } from './generic';
 
 interface PublicServiceItem extends RegistryItem {
   slug: string;
 }
 
 const CUSTOM_SERVICE = 'custom';
+const CUSTOM_DYNAMIC_SERVICE = 'custom-dynamic';
 const DEFAULT_SERVICE = 'streets';
 
 export const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
@@ -48,10 +62,17 @@ export const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
     description: 'Use a custom MapServer with pre-cached values',
     slug: '',
   },
+  {
+    id: CUSTOM_DYNAMIC_SERVICE,
+    name: 'Custom Dynamic MapServer',
+    description: 'Use a custom MapServer with dynamic values',
+    slug: '',
+  },
 ]);
 
 export interface ESRIXYZConfig extends XYZConfig {
   server: string;
+  refreshOnUpdate?: boolean;
 }
 
 export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
@@ -68,21 +89,45 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   ) => {
     const cfg = { ...options.config };
     const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
-    if (svc.id !== CUSTOM_SERVICE) {
+    const noRepeat = options.noRepeat ?? false;
+    const useDynamic = svc.id === CUSTOM_DYNAMIC_SERVICE;
+
+    // Configure URL for built-in services
+    if (svc.id !== CUSTOM_SERVICE && svc.id !== CUSTOM_DYNAMIC_SERVICE) {
       const base = 'https://services.arcgisonline.com/ArcGIS/rest/services/';
       cfg.url = `${base}${svc.slug}/MapServer/tile/{z}/{y}/{x}`;
       cfg.attribution = `Tiles © <a href="${base}${svc.slug}/MapServer">ArcGIS</a>`;
     }
-    const opts = { ...options, config: cfg as XYZConfig };
-    return xyzTiles.create(map, opts, eventBus, theme).then((xyz) => {
-      xyz.registerOptionsUI = (builder) => {
+
+    // Create layer based on service type
+    let layer;
+    let source;
+
+    if (useDynamic) {
+      const baseUrl = cfg.url ? cfg.url.replace(/\/tile\/\{z\}\/\{y\}\/\{x\}$/, '') : '';
+      const sanitizedUrl = baseUrl ? textUtil.sanitizeUrl(baseUrl) : '';
+      source = sanitizedUrl
+        ? new ImageArcGISRest({ url: sanitizedUrl, params: {}, ratio: 1, attributions: cfg.attribution })
+        : undefined;
+      layer = new ImageLayer({ source });
+    } else {
+      source = new XYZ({ url: cfg.url, attributions: cfg.attribution, wrapX: !noRepeat });
+      layer = new TileLayer({ source, minZoom: cfg.minZoom, maxZoom: cfg.maxZoom });
+    }
+
+    return {
+      init: () => layer,
+      update: (data: PanelData) => {
+        if ((useDynamic || cfg.refreshOnUpdate) && source) {
+          source.refresh();
+        }
+      },
+      registerOptionsUI: (builder) => {
         builder
           .addSelect({
             path: 'config.server',
             name: 'Server instance',
-            settings: {
-              options: publicServiceRegistry.selectOptions().options,
-            },
+            settings: { options: publicServiceRegistry.selectOptions().options },
           })
           .addTextInput({
             path: 'config.url',
@@ -100,10 +145,33 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
               placeholder: defaultXYZConfig.attribution,
             },
             showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+          })
+          .addBooleanSwitch({
+            path: 'config.refreshOnUpdate',
+            name: 'Refresh on update',
+            description: 'Reload tiles when dashboard refreshes',
+            defaultValue: false,
+            showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+          })
+          .addTextInput({
+            path: 'config.url',
+            name: 'URL template',
+            description: 'URL to ArcGIS MapServer',
+            settings: {
+              placeholder: 'https://example.com/arcgis/rest/services/MyService/MapServer',
+            },
+            showIf: (cfg) => cfg.config?.server === CUSTOM_DYNAMIC_SERVICE,
+          })
+          .addTextInput({
+            path: 'config.attribution',
+            name: 'Attribution',
+            settings: {
+              placeholder: defaultXYZConfig.attribution,
+            },
+            showIf: (cfg) => cfg.config?.server === CUSTOM_DYNAMIC_SERVICE,
           });
-      };
-      return xyz;
-    });
+      },
+    };
   },
 
   defaultOptions: {
