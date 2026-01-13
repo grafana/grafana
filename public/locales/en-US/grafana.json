@@ -808,7 +808,7 @@
       "label-notification-settings": "Notification settings",
       "label-section": "Optional {{name}} settings",
       "test": "Test",
-      "tooltip-version": "Integration version: {{version}}"
+      "tooltip-legacy-version": "This is a legacy integration (version: {{version}}). It cannot be modified."
     },
     "classic-condition-viewer": {
       "of": "OF",
