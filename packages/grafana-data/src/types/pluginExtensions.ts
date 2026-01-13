@@ -28,7 +28,9 @@ export type PluginExtensionLink = PluginExtensionBase & {
   type: PluginExtensionTypes.link;
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
-  icon?: IconName | React.ReactNode;
+  icon?: IconName;
+  suffix?: React.ReactElement;
+  prefix?: React.ReactElement;
   category?: string;
   openInNewTab?: boolean;
 };
@@ -106,7 +108,9 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       description: string;
       path: string;
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-      icon: IconName | React.ReactNode;
+      icon: IconName;
+      suffix: React.ReactElement;
+      prefix: React.ReactElement;
       category: string;
       openInNewTab: boolean;
     }>
@@ -136,7 +140,7 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   configure?: PluginAddedLinksConfigureFunc<Context>;
 
   // (Optional) A icon that can be displayed in the ui for the extension option.
-  icon?: IconName | React.ReactNode;
+  icon?: IconName;
 
   // (Optional) A category to be used when grouping the options in the ui
   category?: string;
@@ -144,6 +148,12 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   // (Optional) If true, opens the link in a new tab (renders with target="_blank")
   // (Important: this is not guaranteed, depends on the extension point if it implements it.)
   openInNewTab?: boolean;
+
+  // (Optional) A React element that will be displayed after the title
+  suffix?: React.ReactElement;
+
+  // (Optional) A React element that will be displayed before the title
+  prefix?: React.ReactElement;
 };
 
 export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionConfigBase & {

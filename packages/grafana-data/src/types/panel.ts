@@ -188,6 +188,7 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
 export interface PanelMenuItem {
   type?: 'submenu' | 'divider' | 'group';
   text: string;
+  prefix?: React.ReactElement;
   iconClassName?: IconName;
   onClick?: (event: React.MouseEvent) => void;
   shortcut?: string;

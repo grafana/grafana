@@ -11,6 +11,7 @@ import { IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
+import { MenuItemPrefix } from './MenuItemPrefix';
 import { SubMenu } from './SubMenu';
 
 /** @internal */
@@ -30,6 +31,8 @@ export interface MenuItemProps<T = unknown> {
   target?: LinkTarget;
   /** Icon of the menu item */
   icon?: IconName;
+  /** Prefix of the menu item if icon is specified prefix will be ignored */
+  prefix?: React.ReactElement;
   /** Role of the menu item */
   role?: AriaRole;
   /** Url of the menu item */
@@ -79,6 +82,7 @@ export const MenuItem = React.memo(
       customSubMenuContainerStyles,
       shortcut,
       testId,
+      prefix,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -176,7 +180,7 @@ export const MenuItem = React.memo(
         {...disabledProps}
       >
         <Stack direction="row" justifyContent="flex-start" alignItems="center">
-          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+          <MenuItemPrefix icon={icon} prefix={prefix} />
           <span className={cx(styles.ellipsis, styles.label)}>{label}</span>
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
@@ -271,9 +275,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: 'none',
         color: theme.colors.action.disabledText,
       },
-    }),
-    icon: css({
-      opacity: 0.7,
     }),
     rightWrapper: css({
       display: 'flex',

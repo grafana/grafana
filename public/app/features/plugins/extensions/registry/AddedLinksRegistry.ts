@@ -20,6 +20,8 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
   onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   configure?: PluginAddedLinksConfigureFunc<Context>;
   icon?: IconName;
+  suffix?: React.ReactElement;
+  prefix?: React.ReactElement;
   category?: string;
   openInNewTab?: boolean;
 };

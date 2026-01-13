@@ -86,6 +86,8 @@ export function usePluginLinks({
         path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
         category: overrides?.category || addedLink.category,
         openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
+        suffix: overrides?.suffix || addedLink.suffix,
+        prefix: overrides?.prefix || addedLink.prefix,
       };
 
       extensions.push(extension);

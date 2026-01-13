@@ -421,6 +421,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
         onClick: extension.onClick,
         iconClassName: extension.icon,
         target: extension.openInNewTab ? '_blank' : undefined,
+        prefix: extension.prefix,
       });
       continue;
     }
@@ -435,6 +436,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
       onClick: extension.onClick,
       iconClassName: extension.icon,
       target: extension.openInNewTab ? '_blank' : undefined,
+      prefix: extension.prefix,
     });
   }
 
@@ -484,6 +486,8 @@ export function getLinkExtensionOverrides(
       icon = config.icon,
       category = config.category,
       openInNewTab = config.openInNewTab,
+      suffix = config.suffix,
+      prefix = config.prefix,
       ...rest
     } = overrides;
 
@@ -509,6 +513,8 @@ export function getLinkExtensionOverrides(
       icon,
       category,
       openInNewTab,
+      suffix,
+      prefix,
     };
   } catch (error) {
     if (error instanceof Error) {
