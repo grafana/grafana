@@ -421,7 +421,7 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
     }),
     getPhantomPlugin({
       id: 'grafana-ibmdb2-datasource',
-      description: t('datasources.get-enterprise-phantom-plugins.description.db2-datasource', 'IBM Db2 data source'),
+      description: t('datasources.get-enterprise-phantom-plugins.description.ibmdb2-datasource', 'IBM Db2 data source'),
       name: 'IBM Db2',
       imgUrl: db2Svg,
     }),
