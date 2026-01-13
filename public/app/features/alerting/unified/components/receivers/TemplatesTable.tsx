@@ -141,7 +141,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
           <CollapseToggle isCollapsed={!isExpanded} onToggle={() => setIsExpanded(!isExpanded)} />
         </td>
         <td>
-          {name} {isProvisioned && <ProvisioningBadge provenance={provenance} />}{' '}
+          {name} {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}{' '}
           {missing && !isGrafanaAlertmanager && (
             <Tooltip
               content={
