@@ -214,7 +214,9 @@ You can make several updates without leaving the dashboard by using the edit pan
 
 The _edit pane_ allows you to make changes without leaving the dashboard, by displaying options associated with the part of the dashboard that's in focus.
 The _sidebar_ is on the next to the edit pane, and it includes options that are useful to have available all the time.
-The following image shows the parts of the edit pane and the sidebar followed by descriptions of the sidebar options:
+
+The following image shows the parts of the edit pane and the sidebar.
+Hover your cursor over the numbers to display descriptions of the sidebar options (descriptions also follow the image):
 
 {{< image-map key="editpane-sidebar" >}}
 
@@ -225,7 +227,7 @@ The sidebar is displayed in both edit and view mode, but the **Dashboard options
 You can dock, undock, and resize the edit pane.
 When the edit pane is closed, you can resize the sidebar so the icon names are visible.
 
-<!-- Screen recording here -->
+{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-edit-side-v12.4.mp4" >}}
 
 The available configuration options in the edit pane differ depending on the selected dashboard element:
 
@@ -238,9 +240,7 @@ The available configuration options in the edit pane differ depending on the sel
 The **Content outline** provides a tree-like structure that shows you all the parts of the dashboard and their relationships to each other, including panels, rows, tabs, and variables.
 The outline also lets you quickly navigate the dashboard and is available in both view and edit modes (note that variables are only included in edit mode).
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-outline-v12.png" max-width="750px" alt="Dashboard with outline open showing panel in focus" >}}
-
-<!-- update this -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-content-outline-v12.4.png" max-width="750px" alt="Dashboard with outline open" >}}
 
 To navigate the dashboard using the outline, follow these steps:
 
@@ -284,10 +284,7 @@ There are default parameters to constrain the layout, and you can update these t
 - **Min column width**: Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
 - **Max columns**: Set a number up to 10.
 - **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
-- **Fill screen**: Toggle the switch on to have the panel fill the entire height of the row. The **Fill screen** toggle for the row must also be enabled. This is shown in the following screen recording:
-
-  {{< video-embed src="layout-fillscreen.mp4" >}}
-   <!-- TBA -->
+- **Fill screen**: Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled.
 
 ### Update panel layout
 
@@ -435,7 +432,7 @@ Ungrouping behavior depends on whether you're working with first-level or nested
 | Row > tabs | **Ungroup tabs** ungroups all the nested tabs in that row. Tabs in other rows are not affected.    |
 | Tab > rows | **Ungroup rows** ungroups all the nested rows in that tab. Rows in other tabs are not affected.    |
 
-<!-- screenshot or recording here -->
+<!-- screenshot or recording here? -->
 
 {{< admonition type="caution" >}}
 If you delete a grouping, rather than ungrouping it, its panels are deleted as well.
