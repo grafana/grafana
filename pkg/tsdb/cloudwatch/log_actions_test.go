@@ -873,6 +873,204 @@ func TestQuery_GetQueryResults(t *testing.T) {
 	}, resp)
 }
 
+func Test_expandLogGroupsMacro(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var cli fakeCWLogsClient
+
+	NewCWLogsClient = func(cfg aws.Config) models.CWLogsClient {
+		return &cli
+	}
+
+	t.Run("expands $__logGroups macro with log group names when not a monitoring account", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM $__logGroups",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1", "name": "group1"}, {"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group2", "name": "group2"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['group1', 'group2'])`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("expands $__logGroups macro with ARNs when monitoring account", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.monitoringAccountCache.Store("us-east-1", true)
+		})
+
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM $__logGroups",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1", "name": "group1"}, {"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group2", "name": "group2"}],
+						"region": "us-east-1"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['arn:aws:logs:us-east-1:123456789012:log-group:group1', 'arn:aws:logs:us-east-1:123456789012:log-group:group2'])`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("strips trailing * from ARNs when expanding macro", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.monitoringAccountCache.Store("us-east-1", true)
+		})
+
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM $__logGroups",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1*", "name": "group1"}],
+						"region": "us-east-1"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['arn:aws:logs:us-east-1:123456789012:log-group:group1'])`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("returns error when $__logGroups macro is used but no log groups are selected", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM $__logGroups"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Contains(t, resp.Responses["A"].Error.Error(), "query contains $__logGroups but no log groups are selected")
+	})
+
+	t.Run("does not expand macro when query does not contain $__logGroups", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM ` + "`logGroups(logGroupIdentifier: ['my-log-group'])`" + `"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['my-log-group'])`", *cli.calls.startQuery[0].QueryString)
+	})
+
+	t.Run("does not expand macro for non-SQL query languages", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "CWLI",
+						"queryString":"fields @message | $__logGroups",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1", "name": "group1"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Contains(t, *cli.calls.startQuery[0].QueryString, "$__logGroups")
+	})
+
+	t.Run("expands macro with single log group", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource()
+
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"queryLanguage": "SQL",
+						"queryString":"SELECT * FROM $__logGroups",
+						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:single-group", "name": "single-group"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		require.Len(t, cli.calls.startQuery, 1)
+		assert.Equal(t, "SELECT * FROM `logGroups(logGroupIdentifier: ['single-group'])`", *cli.calls.startQuery[0].QueryString)
+	})
+}
+
 func TestGroupResponseFrame(t *testing.T) {
 	t.Run("Doesn't group results without time field", func(t *testing.T) {
 		frame := data.NewFrameOfFieldTypes("test", 0, data.FieldTypeString, data.FieldTypeInt32)

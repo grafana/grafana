@@ -488,6 +488,7 @@ export const language: CloudWatchLanguage = {
     root: [
       { include: '@comments' },
       { include: '@whitespace' },
+      { include: '@macros' },
       { include: '@customParams' },
       { include: '@numbers' },
       { include: '@binaries' },
@@ -519,6 +520,7 @@ export const language: CloudWatchLanguage = {
       [/\*\//, { token: 'comment.quote', next: '@pop' }],
       [/./, 'comment'],
     ],
+    macros: [[/\$__[a-zA-Z0-9_]+/, 'type']],
     customParams: [
       [/\${[A-Za-z0-9._-]*}/, 'variable'],
       [/\@\@{[A-Za-z0-9._-]*}/, 'variable'],

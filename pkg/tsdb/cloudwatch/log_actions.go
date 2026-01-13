@@ -30,6 +30,7 @@ const (
 	defaultLogGroupLimit        = int32(50)
 	logIdentifierInternal       = "__log__grafana_internal__"
 	logStreamIdentifierInternal = "__logstream__grafana_internal__"
+	logGroupsMacro              = "$__logGroups"
 )
 
 type AWSError struct {
@@ -189,6 +190,47 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 		logsQuery.QueryLanguage = &cwli
 	}
 
+	region := logsQuery.Region
+	if region == "" || region == defaultRegion {
+		region = ds.Settings.Region
+	}
+
+	useARN := false
+	if len(logsQuery.LogGroups) > 0 && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) && region != "" {
+		isMonitoringAccount, err := ds.isMonitoringAccount(ctx, region)
+		if err != nil {
+			ds.logger.FromContext(ctx).Debug("failed to determine monitoring account status", "err", err)
+		} else {
+			useARN = isMonitoringAccount
+		}
+	}
+
+	var logGroupIdentifiers []string
+	if len(logsQuery.LogGroups) > 0 {
+		// Log queries should use ARNs when querying a monitoring account because log group names are not unique across accounts.
+		if useARN {
+			for _, lg := range logsQuery.LogGroups {
+				if lg.Arn != "" {
+					// The startQuery api does not support arns with a trailing * so we need to remove it
+					logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(lg.Arn, "*"))
+				}
+			}
+		} else {
+			// deduplicate log group names because we only deduplicate log groups by their ARNs instead of their names when the query is created
+			seen := make(map[string]struct{}, len(logsQuery.LogGroups))
+			for _, lg := range logsQuery.LogGroups {
+				if lg.Name == "" {
+					continue
+				}
+				if _, exists := seen[lg.Name]; exists {
+					continue
+				}
+				seen[lg.Name] = struct{}{}
+				logGroupIdentifiers = append(logGroupIdentifiers, lg.Name)
+			}
+		}
+	}
+
 	finalQueryString := logsQuery.QueryString
 	// Only for CWLI queries
 	// The fields @log and @logStream are always included in the results of a user's query
@@ -198,6 +240,21 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 	if *logsQuery.QueryLanguage == dataquery.LogsQueryLanguageCWLI {
 		finalQueryString = "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " +
 			logStreamIdentifierInternal + "|" + logsQuery.QueryString
+	}
+
+	// Expand $__logGroups macro for SQL queries
+	if *logsQuery.QueryLanguage == dataquery.LogsQueryLanguageSQL {
+		if strings.Contains(finalQueryString, logGroupsMacro) {
+			if len(logGroupIdentifiers) == 0 {
+				return nil, backend.DownstreamError(fmt.Errorf("query contains %s but no log groups are selected", logGroupsMacro))
+			}
+			quoted := make([]string, len(logGroupIdentifiers))
+			for i, id := range logGroupIdentifiers {
+				quoted[i] = fmt.Sprintf("'%s'", id)
+			}
+			replacement := fmt.Sprintf("`logGroups(logGroupIdentifier: [%s])`", strings.Join(quoted, ", "))
+			finalQueryString = strings.Replace(finalQueryString, logGroupsMacro, replacement, 1)
+		}
 	}
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
@@ -213,47 +270,13 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 
 	// log group identifiers can be left out if the query is an SQL query
 	if *logsQuery.QueryLanguage != dataquery.LogsQueryLanguageSQL {
-		useLogGroupIdentifiers := false
-		logGroupsFromQuery := len(logsQuery.LogGroups) > 0
-		if logGroupsFromQuery && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
-			region := logsQuery.Region
-			if region == "" || region == defaultRegion {
-				region = ds.Settings.Region
-			}
-			if region != "" {
-				isMonitoringAccount, err := ds.isMonitoringAccount(ctx, region)
-				if err != nil {
-					ds.logger.FromContext(ctx).Debug("failed to determine monitoring account status", "err", err)
-				} else if isMonitoringAccount {
-					// monitoring accounts require querying by log group identifiers because log group names are not unique across accounts.
-					var logGroupIdentifiers []string
-					for _, lg := range logsQuery.LogGroups {
-						// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
-						arn := strings.TrimSuffix(lg.Arn, "*")
-						logGroupIdentifiers = append(logGroupIdentifiers, arn)
-					}
-					startQueryInput.LogGroupIdentifiers = logGroupIdentifiers
-					useLogGroupIdentifiers = true
-				}
-			}
-		}
-
-		if !useLogGroupIdentifiers {
+		if useARN {
+			startQueryInput.LogGroupIdentifiers = logGroupIdentifiers
+		} else {
 			// even though logsQuery.LogGroupNames is deprecated, we still need to support it for backwards compatibility and alert queries
 			startQueryInput.LogGroupNames = append([]string(nil), logsQuery.LogGroupNames...)
-			if len(startQueryInput.LogGroupNames) == 0 && logGroupsFromQuery {
-				// deduplicate log group names because we only deduplicate log groups by their ARNs instead of their names when the query is created
-				seenLogGroupNames := make(map[string]struct{}, len(logsQuery.LogGroups))
-				for _, lg := range logsQuery.LogGroups {
-					if lg.Name == "" {
-						continue
-					}
-					if _, exists := seenLogGroupNames[lg.Name]; exists {
-						continue
-					}
-					seenLogGroupNames[lg.Name] = struct{}{}
-					startQueryInput.LogGroupNames = append(startQueryInput.LogGroupNames, lg.Name)
-				}
+			if len(startQueryInput.LogGroupNames) == 0 && len(logGroupIdentifiers) > 0 {
+				startQueryInput.LogGroupNames = logGroupIdentifiers
 			}
 		}
 	}

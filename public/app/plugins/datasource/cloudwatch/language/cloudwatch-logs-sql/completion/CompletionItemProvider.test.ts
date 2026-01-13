@@ -97,14 +97,22 @@ describe('LogsSQLCompletionItemProvider', () => {
       const suggestions = await getSuggestions(singleLineFullQuery.query, { lineNumber: 1, column: 103 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(
-        expect.arrayContaining([FROM, `${FROM} \`logGroups(logGroupIdentifier: [...])\``, CASE, ...ALL_FUNCTIONS])
+        expect.arrayContaining([
+          FROM,
+          `${FROM} $__logGroups`,
+          `${FROM} \`logGroups(logGroupIdentifier: [...])\``,
+          CASE,
+          ...ALL_FUNCTIONS,
+        ])
       );
     });
 
-    it('returns logGroups suggestion after from keyword', async () => {
+    it('returns logGroups and $__logGroups suggestion after from keyword', async () => {
       const suggestions = await getSuggestions(singleLineFullQuery.query, { lineNumber: 1, column: 108 });
       const suggestionLabels = suggestions.map((s) => s.label);
-      expect(suggestionLabels).toEqual(expect.arrayContaining(['`logGroups(logGroupIdentifier: [...])`']));
+      expect(suggestionLabels).toEqual(
+        expect.arrayContaining(['$__logGroups', '`logGroups(logGroupIdentifier: [...])`'])
+      );
     });
 
     it('returns where, having, limit, group by, order by, and join suggestions after from arguments', async () => {

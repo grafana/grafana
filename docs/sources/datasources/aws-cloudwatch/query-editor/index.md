@@ -270,7 +270,17 @@ Click **View in CloudWatch console** to interactively view, search, and analyze 
 
 ### Query Log groups with OpenSearch SQL
 
-When querying log groups with OpenSearch SQL, you **must** explicitly state the log group identifier or ARN in the `FROM` clause:
+When querying log groups with OpenSearch SQL, you can use the `$__logGroups` macro to automatically reference log groups selected in the query editor's log group selector. This is the recommended approach as it allows you to manage log groups through the UI.
+
+```sql
+SELECT window.start, COUNT(*) AS exceptionCount
+FROM $__logGroups
+WHERE `@message` LIKE '%Exception%'
+```
+
+The `$__logGroups` macro expands to the proper `logGroups(logGroupIdentifier: [...])` syntax with the log groups you've selected in the UI.
+
+Alternatively, you can manually specify a single log group directly in the `FROM` clause:
 
 ```sql
 SELECT window.start, COUNT(*) AS exceptionCount
@@ -278,13 +288,15 @@ FROM `log_group`
 WHERE `@message` LIKE '%Exception%'
 ```
 
-or, when querying multiple log groups:
+or, when querying multiple log groups you **must** use the `logGroups(logGroupIdentifier: [...])` syntax:
 
 ```sql
 SELECT window.start, COUNT(*) AS exceptionCount
 FROM `logGroups( logGroupIdentifier: ['LogGroup1', 'LogGroup2'])`
 WHERE `@message` LIKE '%Exception%'
 ```
+
+To reference log groups in a monitoring account, use ARNs instead of LogGroup names.
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html).
 When making `stats` queries in [Explore](ref:explore), ensure you are in Metrics Explore mode.
