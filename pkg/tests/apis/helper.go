@@ -59,6 +59,8 @@ import (
 const (
 	Org1 = "Org1"
 	Org2 = "OrgB"
+
+	DefaultNamespace = "default"
 )
 
 var (
