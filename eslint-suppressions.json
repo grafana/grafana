@@ -1156,11 +1156,6 @@
       "count": 2
     }
   },
-  "public/app/core/config.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 2
-    }
-  },
   "public/app/core/navigation/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
