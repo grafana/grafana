@@ -249,7 +249,7 @@ To edit a dashboard, follow these steps:
 Panel layouts control the size and arrangement of panels in the dashboard.
 There are two panel layout options:
 
-- **Custom**: You can position and size panels individually. This is the default selection. **Show/hide rules** are not supported.
+- **Custom**: You can position and size panels individually. This is the default selection for a new dashboard. **Show/hide rules** are not supported.
 - **Auto grid**: Panels resize and fit automatically to create a uniform grid. You can't make manual changes to this layout. **Show/hide rules** are supported.
 
 You can use both layouts in row or tab groupings.
@@ -291,7 +291,7 @@ Rows and tabs are the next largest containers, and they contain panels.
 
 You can also nest:
 
-- Row in a row
+- Rows in a row
 - Rows in a tab
 - Tabs in a row
 
@@ -328,7 +328,7 @@ The following table describes the options you can set for a row or tab:
 | Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
 | Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](#panel-layouts) or [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
-| Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on query results, variable values, or a time range. |
+| Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variable values, a time range, or query results (panels only). |
 
 <!-- prettier-ignore-end -->
 
@@ -372,7 +372,7 @@ To group panels, follow these steps:
 
 #### Add nested groupings
 
-To add a second-level, or nested, grouping, follow these steps:
+To add a second-level (or nested) grouping, follow these steps:
 
 1. In the existing grouping, under the panels, click **Group panels**.
 1. Click **Group into row** or **Group into tab** (**Group into tab** is only available if the parent grouping is a row).
