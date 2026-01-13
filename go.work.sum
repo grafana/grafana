@@ -280,7 +280,6 @@ github.com/Azure/go-amqp v0.17.0/go.mod h1:9YJ3RhxRT1gquYnzpZO1vcYMMpAdJT+QEg6fw
 github.com/Azure/go-amqp v1.4.0 h1:Xj3caqi4comOF/L1Uc5iuBxR/pB6KumejC01YQOqOR4=
 github.com/Azure/go-amqp v1.4.0/go.mod h1:vZAogwdrkbyK3Mla8m/CxSc/aKdnTZ4IbPxl51Y5WZE=
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
-github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/Azure/go-autorest/autorest v0.11.18/go.mod h1:dSiJPy22c3u0OtOKDNttNgqpNFY/GeWa7GH/Pz56QRA=
 github.com/Azure/go-autorest/autorest/azure/auth v0.5.13 h1:Ov8avRZi2vmrE2JcXw+tu5K/yB41r7xK9GZDiBF7NdM=
 github.com/Azure/go-autorest/autorest/azure/auth v0.5.13/go.mod h1:5BAVfWLWXihP47vYrPuBKKf4cS0bXI+KM9Qx6ETDJYo=
@@ -906,6 +905,8 @@ github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB7
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20250729175202-b4b881b7b263/go.mod h1:VKxaR93Gff0ZlO2sPcdPVob1a/UzArFEW5zx3Bpyhls=
 github.com/grafana/alerting v0.0.0-20251009192429-9427c24835ae/go.mod h1:VGjS5gDwWEADPP6pF/drqLxEImgeuHlEW5u8E5EfIrM=
+github.com/grafana/alerting v0.0.0-20260112110054-6c6f13659ad3 h1:KVncUdAc5YwY/OQmw6HgzJmbRKn6IwrhvtcBAd1yDHo=
+github.com/grafana/alerting v0.0.0-20260112110054-6c6f13659ad3/go.mod h1:Oy4MthJqfErlieO14ryZXdukDrUACy8Lg56P3zP7S1k=
 github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43/go.mod h1:1fWkOiL+m32NBgRHZtlZGz2ji868tPZACYbqP3nBRJI=
 github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
 github.com/grafana/authlib/types v0.0.0-20250926065801-df98203cff37/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
@@ -1911,6 +1912,7 @@ go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.37.0/go.mod h
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.19.0/go.mod h1:oVdCUtjq9MK9BlS7TtucsQwUcXcymNiEDjgDD2jMtZU=
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.22.0/go.mod h1:hYwym2nDEeZfG/motx0p7L7J1N1vyzIThemQsb4g2qY=
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.28.0/go.mod h1:Y5+XiUG4Emn1hTfciPzGPJaSI+RpDts6BnCIir0SLqk=
+go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.36.0/go.mod h1:r49hO7CgrxY9Voaj3Xe8pANWtr0Oq916d0XAmOoCZAQ=
 go.opentelemetry.io/otel/exporters/prometheus v0.58.0/go.mod h1:7qo/4CLI+zYSNbv0GMNquzuss2FVZo3OYrGh96n4HNc=
 go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.36.0/go.mod h1:dowW6UsM9MKbJq5JTz2AMVp3/5iW5I/TStsk8S+CfHw=
 go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.36.0/go.mod h1:PD57idA/AiFD5aqoxGxCvT/ILJPeHy3MjqU/NS7KogY=
