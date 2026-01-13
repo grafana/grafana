@@ -200,8 +200,11 @@ func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert 
 		return nil, err
 	}
 
+	aliasRegex := regexp.MustCompile(`(alias\(|aliasByMetric|aliasByNode|aliasByTags|aliasQuery|aliasSub)`)
+
 	frames = data.Frames{}
 	for _, series := range responseData {
+		aliasMatch := aliasRegex.MatchString(series.Target)
 		timeVector := make([]time.Time, 0, len(series.DataPoints))
 		values := make([]*float64, 0, len(series.DataPoints))
 
@@ -217,7 +220,9 @@ func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert 
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				if fromAlert {
+				// Queries with aliases should use the target as the name
+				// to ensure multi-dimensional queries are distinguishable from each other
+				if fromAlert || aliasMatch {
 					value = series.Target
 				}
 			}
