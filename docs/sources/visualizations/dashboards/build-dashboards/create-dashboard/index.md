@@ -325,7 +325,7 @@ You can only have one type of grouping at each level.
 Inside of those groupings however, you have to freedom to add different elements.
 Also, custom and auto grid panel layouts are supported for rows and tabs, so each grouping can have a different panel layout.
 
-<!-- screenshots with limitations here -->
+<!-- {{< figure src="/media/docs/grafana/dashboards/screenshot-groupings-v12.4.png" alt="Dashboard with nested groupings" max-width="750px" >}} -->
 
 The following sections describe:
 
@@ -394,6 +394,9 @@ To group panels, follow these steps:
 To add a second-level (or nested) grouping, follow these steps:
 
 1. In the existing grouping, under the panels, click **Group panels**.
+
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-nest-group-v12.4.png" alt="Adding a nested grouping" max-width="500px" >}}
+
 1. Click **Group into row** or **Group into tab** (**Group into tab** is only available if the parent grouping is a row).
 
    The new grouping is added inside the first grouping, and the panels are moved into the nested grouping.
@@ -410,14 +413,15 @@ To add a second-level (or nested) grouping, follow these steps:
 To add more first-level groupings, follow these steps:
 
 1. On the dashboard, outside the existing first-level grouping, click **New row** or **New tab** (only one option will be available).
+
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-group-v12.4.png" alt="Adding a nested grouping" max-width="500px" >}}
+
 1. Set the configuration options for the new grouping.
 1. Click **+ Add panel** to begin adding panels.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
-
-<!-- Screenshot here of a 2-level nest with area highlighted -->
 
 ### Ungroup panels
 
@@ -432,7 +436,7 @@ Ungrouping behavior depends on whether you're working with first-level or nested
 | Row > tabs | **Ungroup tabs** ungroups all the nested tabs in that row. Tabs in other rows are not affected.    |
 | Tab > rows | **Ungroup rows** ungroups all the nested rows in that tab. Rows in other tabs are not affected.    |
 
-<!-- screenshot or recording here? -->
+{{< figure src="screenshot-ungrouping-v1.png" alt="Dashboard with ungrouping behavior annotated" max-width="750px" >}}
 
 {{< admonition type="caution" >}}
 If you delete a grouping, rather than ungrouping it, its panels are deleted as well.
