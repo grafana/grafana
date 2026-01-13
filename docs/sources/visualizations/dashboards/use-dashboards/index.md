@@ -21,7 +21,6 @@ menuTitle: Use dashboards
 title: Use dashboards
 description: Learn about the features of a Grafana dashboard
 weight: 100
-title: My Page
 image_maps:
   - key: annotated-dashboard
     src: /media/docs/grafana/dashboards/screenshot-ann-dashboards-v12.4.png
