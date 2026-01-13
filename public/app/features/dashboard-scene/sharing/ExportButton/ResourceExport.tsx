@@ -144,7 +144,6 @@ export function ResourceExport({
           )}
           severity="warning"
           topSpacing={2}
-          data-testid={selector.libraryPanelsAlert}
         >
           <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
             Due to limitations in the new dashboard schema (V2), library panels will be converted to regular panels with

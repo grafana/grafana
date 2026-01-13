@@ -908,9 +908,6 @@ export const versionedPages = {
       cancelButton: {
         '11.3.0': 'data-testid export as json cancel button',
       },
-      libraryPanelsAlert: {
-        '11.3.0': 'data-testid export library panels alert',
-      },
     },
   },
   PublicDashboard: {
