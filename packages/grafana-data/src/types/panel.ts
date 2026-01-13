@@ -8,6 +8,7 @@ import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
+import { LinkTarget } from './dataLink';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { FieldConfigSource } from './fieldOverrides';
 import { IconName } from './icon';
@@ -191,6 +192,7 @@ export interface PanelMenuItem {
   onClick?: (event: React.MouseEvent) => void;
   shortcut?: string;
   href?: string;
+  target?: LinkTarget;
   subMenu?: PanelMenuItem[];
 }
 
