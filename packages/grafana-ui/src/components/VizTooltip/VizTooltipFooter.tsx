@@ -132,7 +132,7 @@ export const VizTooltipFooter = ({
                 i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-filter"
                 data-testid={selectors.components.VizTooltipFooter.buttons.apply}
               >
-                Apply as filter
+                Filter on this value
               </Trans>
             </Button>
             <Button
@@ -145,7 +145,7 @@ export const VizTooltipFooter = ({
                 i18nKey="grafana-ui.viz-tooltip.footer-apply-series-as-inverse-filter"
                 data-testid={selectors.components.VizTooltipFooter.buttons.applyInverse}
               >
-                Apply as inverse filter
+                Filter out this value
               </Trans>
             </Button>
           </Stack>
