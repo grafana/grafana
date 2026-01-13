@@ -39,7 +39,7 @@ image_maps:
         content: |
           **Export**
 
-          Click to display [export](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
+          Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
       - x_coord: 96
         y_coord: 41
         content: |
@@ -51,7 +51,7 @@ image_maps:
         content: |
           **Dashboard insights**
 
-          View [dashboard analytics](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
+          View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
 ---
 
 # Create dashboards

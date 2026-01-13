@@ -134,13 +134,13 @@ image_maps:
         content: |
           **Row title**
 
-          A row is one way you can [group panels](https://grafana.com/docs/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-groupings) in a dashboard.
+          A row is one way you can [group panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-groupings) in a dashboard.
       - x_coord: 20
         y_coord: 36
         content: |
           **Tab title**
 
-          A tab is one way you can [group panels](https://grafana.com/docs/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-groupings) in a dashboard.
+          A tab is one way you can [group panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-groupings) in a dashboard.
       - x_coord: 21
         y_coord: 45
         content: |
