@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -378,8 +379,10 @@ func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
 
 	err := featuremgmt.InitOpenFeature(featuremgmt.OpenFeatureConfig{
 		ProviderType: setting.StaticProviderType,
-		StaticFlags: map[string]bool{
-			featuremgmt.FlagPluginsAutoUpdate: flagValue,
+		StaticFlags: map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagPluginsAutoUpdate: {
+				Key: featuremgmt.FlagPluginsAutoUpdate, Variants: map[string]any{"": flagValue},
+			},
 		},
 	})
 	require.NoError(t, err)

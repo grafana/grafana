@@ -4,6 +4,7 @@ import { useAsyncRetry } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 import { Button, CollapsableSection, Spinner, Stack, Text, useStyles2, Grid } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -35,11 +36,19 @@ export function RecentlyViewedDashboards() {
   const { foldersByUid } = useDashboardLocationInfo(recentDashboards.length > 0);
 
   const handleClearHistory = () => {
+    reportInteraction('grafana_recently_viewed_dashboards_clear_history');
     store.set(recentDashboardsKey, JSON.stringify([]));
     retry();
   };
 
-  if (!evaluateBooleanFlag('recentlyViewedDashboards', false)) {
+  const handleSectionToggle = () => {
+    reportInteraction('grafana_recently_viewed_dashboards_toggle_section', {
+      expanded: !isOpen,
+    });
+    setIsOpen(!isOpen);
+  };
+
+  if (!evaluateBooleanFlag('recentlyViewedDashboards', false) || recentDashboards.length === 0) {
     return null;
   }
 
@@ -48,7 +57,7 @@ export function RecentlyViewedDashboards() {
       headerDataTestId="browseDashboardsRecentlyViewedTitle"
       label={
         <Stack direction="row" justifyContent="space-between" alignItems="baseline" width="100%">
-          <Text variant="h5" element="h3" onClick={() => setIsOpen(!isOpen)}>
+          <Text variant="h5" element="h3" onClick={handleSectionToggle}>
             <Trans i18nKey="browse-dashboards.recently-viewed.title">Recently viewed</Trans>
           </Text>
           <Button icon="times" size="xs" variant="secondary" fill="text" onClick={handleClearHistory}>
@@ -76,17 +85,14 @@ export function RecentlyViewedDashboards() {
         </>
       )}
       {loading && <Spinner />}
-      {/* TODO: Better empty state https://github.com/grafana/grafana/issues/114804 */}
-      {!loading && recentDashboards.length === 0 && (
-        <Text>{t('browse-dashboards.recently-viewed.empty', 'Nothing viewed yet')}</Text>
-      )}
 
       {!loading && recentDashboards.length > 0 && (
         <ul className={styles.list}>
           <Grid columns={{ xs: 1, sm: 2, md: 3, lg: 5 }} gap={2}>
-            {recentDashboards.map((dash) => (
+            {recentDashboards.map((dash, idx) => (
               <li key={dash.uid} className={styles.listItem}>
                 <DashListItem
+                  order={idx + 1}
                   key={dash.uid}
                   dashboard={dash}
                   url={dash.url}

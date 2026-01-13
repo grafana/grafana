@@ -207,6 +207,10 @@ export interface FeatureToggles {
   */
   reportingRetries?: boolean;
   /**
+  * Enables CSV encoding options in the reporting feature
+  */
+  reportingCsvEncodingOptions?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
   sseGroupByDatasource?: boolean;
@@ -400,10 +404,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Use the kubernetes API for feature toggle management in the frontend
-  */
-  kubernetesFeatureToggles?: boolean;
-  /**
   * Enabled grafana cloud specific RBAC roles
   */
   cloudRBACRoles?: boolean;
@@ -527,10 +527,6 @@ export interface FeatureToggles {
   */
   dashboardTemplates?: boolean;
   /**
-  * Sets the logs table as default visualisation in logs explore
-  */
-  logsExploreTableDefaultVisualization?: boolean;
-  /**
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
@@ -626,10 +622,6 @@ export interface FeatureToggles {
   */
   exploreLogsAggregatedMetrics?: boolean;
   /**
-  * Used in Logs Drilldown to limit the time range
-  */
-  exploreLogsLimitedTimeRange?: boolean;
-  /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
   appPlatformGrpcClientAuth?: boolean;
@@ -656,10 +648,6 @@ export interface FeatureToggles {
   * Enables the new role picker drawer design
   */
   rolePickerDrawer?: boolean;
-  /**
-  * Enable unified storage search
-  */
-  unifiedStorageSearch?: boolean;
   /**
   * Enable sprinkles on unified storage search
   */
@@ -702,10 +690,6 @@ export interface FeatureToggles {
   * Enable passwordless login via magic link authentication
   */
   passwordlessMagicLinkAuthentication?: boolean;
-  /**
-  * Display Related Logs in Grafana Metrics Drilldown
-  */
-  exploreMetricsRelatedLogs?: boolean;
   /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   */
@@ -782,19 +766,10 @@ export interface FeatureToggles {
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
-  * Displays the navigation history so the user can navigate back to previous pages
-  */
-  unifiedHistory?: boolean;
-  /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
   */
   lokiLabelNamesQueryApi?: boolean;
-  /**
-  * Enable the investigations backend API
-  * @default false
-  */
-  investigationsBackend?: boolean;
   /**
   * Enable folder's api server counts
   * @default false
@@ -966,7 +941,8 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Registers AuthZ /apis endpoint
+  * Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
+  * @deprecated
   */
   kubernetesAuthzApis?: boolean;
   /**
@@ -981,6 +957,18 @@ export interface FeatureToggles {
   * Enable sync of Zanzana authorization store on AuthZ CRD mutations
   */
   kubernetesAuthzZanzanaSync?: boolean;
+  /**
+  * Registers AuthZ Core Roles /apis endpoint
+  */
+  kubernetesAuthzCoreRolesApi?: boolean;
+  /**
+  * Registers AuthZ Roles /apis endpoint
+  */
+  kubernetesAuthzRolesApi?: boolean;
+  /**
+  * Registers AuthZ Role Bindings /apis endpoint
+  */
+  kubernetesAuthzRoleBindingsApi?: boolean;
   /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
@@ -1133,11 +1121,6 @@ export interface FeatureToggles {
   */
   pluginContainers?: boolean;
   /**
-  * Run search queries through the tempo backend
-  * @default false
-  */
-  tempoSearchBackendMigration?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
@@ -1259,4 +1242,12 @@ export interface FeatureToggles {
   * Enables the ASAP smoothing transformation for time series data
   */
   smoothingTransformation?: boolean;
+  /**
+  * Enables the creation of keepers that manage secrets stored on AWS secrets manager
+  */
+  secretsManagementAppPlatformAwsKeeper?: boolean;
+  /**
+  * Enables profiles exemplars support in profiles drilldown
+  */
+  profilesExemplars?: boolean;
 }

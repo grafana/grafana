@@ -45,7 +45,7 @@ import (
 const (
 	indexStorageMemory = "memory"
 	indexStorageFile   = "file"
-	boltTimeout        = "500ms"
+	boltTimeout        = "1s"
 )
 
 // Keys used to store internal data in index.
@@ -417,25 +417,18 @@ func (b *bleveBackend) BuildIndex(
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
 		if cachedIndex == nil && !rebuild {
-			result := b.findPreviousFileBasedIndex(resourceDir)
-			if result != nil && result.IsOpen {
-				// Index file exists but is opened by another process, fallback to memory.
-				// Keep the name so we can skip cleanup of that directory.
-				newIndexType = indexStorageMemory
-				fileIndexName = result.Name
-			} else if result != nil && result.Index != nil {
-				// Found and opened existing index successfully
-				index = result.Index
-				fileIndexName = result.Name
-				indexRV = result.RV
+			var findErr error
+			index, fileIndexName, indexRV, findErr = b.findPreviousFileBasedIndex(resourceDir)
+			if findErr != nil {
+				return nil, findErr
 			}
 		}
 
-		if newIndexType == indexStorageFile && index != nil {
+		if index != nil {
 			build = false
 			logWithDetails.Debug("Existing index found on filesystem", "indexRV", indexRV, "directory", filepath.Join(resourceDir, fileIndexName))
 			defer closeIndexOnExit(index, "") // Close index, but don't delete directory.
-		} else if newIndexType == indexStorageFile {
+		} else {
 			// Building index from scratch. Index name has a time component in it to be unique, but if
 			// we happen to create non-unique name, we bump the time and try again.
 
@@ -462,9 +455,7 @@ func (b *bleveBackend) BuildIndex(
 			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
 			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
-	}
-
-	if newIndexType == indexStorageMemory {
+	} else {
 		index, err = newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
@@ -567,7 +558,7 @@ func cleanFileSegment(input string) string {
 	return input
 }
 
-// cleanOldIndexes deletes all subdirectories inside resourceDir, skipping directory with "skipName".
+// cleanOldIndexes deletes all subdirectories inside dir, skipping directory with "skipName".
 // "skipName" can be empty.
 func (b *bleveBackend) cleanOldIndexes(resourceDir string, skipName string) {
 	entries, err := os.ReadDir(resourceDir)
@@ -578,19 +569,19 @@ func (b *bleveBackend) cleanOldIndexes(resourceDir string, skipName string) {
 		b.log.Warn("error cleaning folders from", "directory", resourceDir, "error", err)
 		return
 	}
-	for _, ent := range entries {
-		if ent.IsDir() && ent.Name() != skipName {
-			indexDir := filepath.Join(resourceDir, ent.Name())
-			if !isPathWithinRoot(indexDir, b.opts.Root) {
-				b.log.Warn("Skipping cleanup of directory", "directory", indexDir)
+	for _, entry := range entries {
+		if entry.IsDir() && entry.Name() != skipName {
+			entryDir := filepath.Join(resourceDir, entry.Name())
+			if !isPathWithinRoot(entryDir, b.opts.Root) {
+				b.log.Warn("Skipping cleanup of directory", "directory", entryDir)
 				continue
 			}
 
-			err = os.RemoveAll(indexDir)
+			err = os.RemoveAll(entryDir)
 			if err != nil {
-				b.log.Error("Unable to remove old index folder", "directory", indexDir, "error", err)
+				b.log.Error("Unable to remove old index folder", "directory", entryDir, "error", err)
 			} else {
-				b.log.Info("Removed old index folder", "directory", indexDir)
+				b.log.Info("Removed old index folder", "directory", entryDir)
 			}
 		}
 	}
@@ -637,17 +628,10 @@ func formatIndexName(now time.Time) string {
 	return now.Format("20060102-150405")
 }
 
-type fileIndex struct {
-	Index  bleve.Index
-	Name   string
-	RV     int64
-	IsOpen bool
-}
-
-func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) *fileIndex {
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Index, string, int64, error) {
 	entries, err := os.ReadDir(resourceDir)
 	if err != nil {
-		return nil
+		return nil, "", 0, nil
 	}
 
 	for _, ent := range entries {
@@ -657,14 +641,15 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) *fileIndex
 
 		indexName := ent.Name()
 		indexDir := filepath.Join(resourceDir, indexName)
-
 		idx, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
 		if err != nil {
+			// On timeout, the file probably is locked by another process.
+			// This indicates a setup issue that should be fixed rather than worked around by creating a new index file.
 			if errors.Is(err, bolterrors.ErrTimeout) {
-				b.log.Debug("Index is opened by another process (timeout), skipping", "indexDir", indexDir)
-				return &fileIndex{Name: indexName, IsOpen: true}
+				b.log.Error("index is locked by another process", "indexDir", indexDir, "err", err)
+				return nil, "", 0, fmt.Errorf("index is locked by another process: indexDir=%s, err=%w", indexDir, err)
 			}
-			b.log.Debug("error opening index", "indexDir", indexDir, "err", err)
+			b.log.Error("error opening index", "indexDir", indexDir, "err", err)
 			continue
 		}
 
@@ -675,14 +660,10 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) *fileIndex
 			continue
 		}
 
-		return &fileIndex{
-			Index: idx,
-			Name:  indexName,
-			RV:    indexRV,
-		}
+		return idx, indexName, indexRV, nil
 	}
 
-	return nil
+	return nil, "", 0, nil
 }
 
 // Stop closes all indexes and stops background tasks.
@@ -1272,21 +1253,23 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		queryExact.SetField(resource.SEARCH_FIELD_TITLE)
 		queryExact.Analyzer = keyword.Name                // don't analyze the query input - treat it as a single token
 		queryExact.Operator = query.MatchQueryOperatorAnd // This doesn't make a difference for keyword analyzer, we add it just to be explicit.
+		searchQuery := bleve.NewDisjunctionQuery(queryExact)
 
 		// Query 2: Phrase query with standard analyzer
 		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
 		queryPhrase.SetBoost(5.0)
 		queryPhrase.SetField(resource.SEARCH_FIELD_TITLE)
 		queryPhrase.Analyzer = standard.Name
+		searchQuery.AddQuery(queryPhrase)
 
 		// Query 3: Match query with standard analyzer
 		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
 		queryAnalyzed.SetField(resource.SEARCH_FIELD_TITLE)
+		queryAnalyzed.SetBoost(2.0)
 		queryAnalyzed.Analyzer = standard.Name
 		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
+		searchQuery.AddQuery(queryAnalyzed)
 
-		// At least one of the queries must match
-		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
 		queries = append(queries, searchQuery)
 	}
 
