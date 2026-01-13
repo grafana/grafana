@@ -36,6 +36,7 @@ func DefaultDecorateFuncs(cfg *config.PluginManagementCfg, cdn *pluginscdn.Servi
 		AppChildDecorateFunc(),
 		SkipHostEnvVarsDecorateFunc(cfg),
 		ModuleHashDecorateFunc(cfg, cdn),
+		LoadingStrategyDecorateFunc(cfg, cdn),
 	}
 }
 
@@ -163,6 +164,14 @@ func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 func ModuleHashDecorateFunc(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		p.ModuleHash = pluginassets.CalculateModuleHash(p, cfg, cdn)
+		return p, nil
+	}
+}
+
+// LoadingStrategyDecorateFunc returns a DecorateFunc that calculates and sets the loading strategy for the plugin.
+func LoadingStrategyDecorateFunc(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) DecorateFunc {
+	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		p.LoadingStrategy = pluginassets.CalculateLoadingStrategy(p, cfg, cdn)
 		return p, nil
 	}
 }

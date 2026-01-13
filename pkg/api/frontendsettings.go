@@ -170,7 +170,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Signature:       string(panel.Signature),
 			Sort:            getPanelSort(panel.ID),
 			Angular:         panel.Angular,
-			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), panel),
+			LoadingStrategy: panel.LoadingStrategy,
 			Translations:    panel.Translations,
 		}
 	}
@@ -531,7 +531,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			BaseURL:                   plugin.BaseURL,
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
-			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+			LoadingStrategy:           plugin.LoadingStrategy,
 			Translations:              plugin.Translations,
 		}
 
@@ -638,7 +638,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Path:            plugin.Module,
 		Preload:         false,
 		Angular:         plugin.Angular,
-		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
+		LoadingStrategy: plugin.LoadingStrategy,
 		Extensions:      plugin.Extensions,
 		Dependencies:    plugin.Dependencies,
 		ModuleHash:      plugin.ModuleHash,

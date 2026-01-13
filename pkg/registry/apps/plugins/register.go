@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -35,7 +34,6 @@ func ProvideAppInstaller(
 	cfgProvider configprovider.ConfigProvider,
 	restConfigProvider apiserver.RestConfigProvider,
 	pluginStore pluginstore.Store,
-	pluginAssetsService *pluginassets.Service,
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
 	features featuremgmt.FeatureToggles,
 ) (*AppInstaller, error) {
@@ -46,7 +44,7 @@ func ProvideAppInstaller(
 		}
 	}
 
-	localProvider := meta.NewLocalProvider(pluginStore, pluginAssetsService)
+	localProvider := meta.NewLocalProvider(pluginStore)
 	metaProviderManager := meta.NewProviderManager(localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
 	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager)

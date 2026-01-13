@@ -127,6 +127,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:       plugins.SignatureStatusInternal,
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -240,6 +241,7 @@ func TestLoader_Load(t *testing.T) {
 					SignatureOrg:    "Grafana Labs",
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -292,6 +294,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:       "unsigned",
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -357,6 +360,7 @@ func TestLoader_Load(t *testing.T) {
 					Signature:       plugins.SignatureStatusUnsigned,
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -479,6 +483,7 @@ func TestLoader_Load(t *testing.T) {
 					BaseURL:         "public/plugins/test-app",
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -571,6 +576,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 				},
 				SkipHostEnvVars: true,
 				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
@@ -688,6 +694,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						SignatureOrg:    "Will Browne",
 						SkipHostEnvVars: true,
 						Translations:    map[string]string{},
+						LoadingStrategy: plugins.LoadingStrategyScript,
 					},
 				},
 				pluginErrors: map[string]*plugins.Error{
@@ -822,6 +829,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 					BaseURL:         "public/plugins/test-app",
 					SkipHostEnvVars: true,
 					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -906,6 +914,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 				Module:          "public/plugins/test-datasource/module.js",
 				BaseURL:         "public/plugins/test-datasource",
 				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
@@ -1010,6 +1019,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 				BaseURL:         "public/plugins/test-app",
 				SkipHostEnvVars: true,
 				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
@@ -1118,6 +1128,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 				BaseURL:         "public/plugins/test-app",
 				SkipHostEnvVars: true,
 				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
@@ -1295,6 +1306,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		Class:           plugins.ClassExternal,
 		SkipHostEnvVars: true,
 		Translations:    map[string]string{},
+		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 
 	child := &plugins.Plugin{
@@ -1354,6 +1366,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		Class:           plugins.ClassExternal,
 		SkipHostEnvVars: true,
 		Translations:    map[string]string{},
+		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 
 	parent.Children = []*plugins.Plugin{child}
@@ -1520,6 +1533,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			Class:           plugins.ClassExternal,
 			SkipHostEnvVars: true,
 			Translations:    map[string]string{},
+			LoadingStrategy: plugins.LoadingStrategyScript,
 		}
 
 		child := &plugins.Plugin{
@@ -1587,6 +1601,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			Class:           plugins.ClassExternal,
 			SkipHostEnvVars: true,
 			Translations:    map[string]string{},
+			LoadingStrategy: plugins.LoadingStrategyScript,
 		}
 
 		parent.Children = []*plugins.Plugin{child}

@@ -41,7 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -675,9 +674,10 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 
 func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	return &plugins.Plugin{
-		JSONData: jd,
-		Class:    class,
-		FS:       files,
+		JSONData:       jd,
+		Class:          class,
+		FS:             files,
+		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 }
 
@@ -844,9 +844,6 @@ func Test_PluginsSettings(t *testing.T) {
 						ErrorCode: tc.errCode,
 					})
 				}
-				pCfg := &config.PluginManagementCfg{}
-				pluginCDN := pluginscdn.ProvideService(pCfg)
-				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, hs.pluginStore)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,

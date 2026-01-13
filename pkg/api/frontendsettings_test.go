@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -44,7 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service, passets *pluginassets.Service) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
 	// nolint:staticcheck
@@ -75,10 +74,6 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		pluginsSettings = &pluginsettings.FakePluginSettings{}
 	}
 
-	var pluginsAssets = passets
-	if pluginsAssets == nil {
-		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, pluginStore)
-	}
 
 	hs := &HTTPServer{
 		authnService: &authntest.FakeService{},
@@ -96,7 +91,6 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		AccessControl:         accesscontrolmock.New(),
 		PluginSettings:        pluginsSettings,
 		pluginsCDNService:     pluginsCDN,
-		pluginAssets:          pluginsAssets,
 		namespacer:            request.GetNamespaceMapper(cfg),
 		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
 		managedPluginsService: managedplugins.NewNoop(),
@@ -129,7 +123,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testi
 	cfg.BuildVersion = "7.8.9"
 	cfg.BuildCommit = "01234567"
 
-	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil, nil)
+	m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
@@ -221,7 +215,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.
 			if test.mutateCfg != nil {
 				test.mutateCfg(cfg)
 			}
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil, nil)
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), nil, nil)
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()
@@ -246,7 +240,6 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		desc           string
 		pluginStore    func() pluginstore.Store
 		pluginSettings func() pluginsettings.Service
-		pluginAssets   func() *pluginassets.Service
 		expected       settings
 	}{
 		{
@@ -263,7 +256,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -273,7 +267,6 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", false),
 				}
 			},
-			pluginAssets: newPluginAssets(),
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -301,7 +294,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -311,7 +305,6 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssets(),
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -338,8 +331,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							Angular: plugins.AngularMeta{Detected: true},
-							FS:      &pluginfakes.FakePluginFS{},
+							Angular:         plugins.AngularMeta{Detected: true},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyFetch,
 						},
 					},
 				}
@@ -349,7 +343,6 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssets(),
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -376,6 +369,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -385,13 +379,6 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssetsWithConfig(&config.PluginManagementCfg{
-				PluginSettings: map[string]map[string]string{
-					"test-app": {
-						pluginassets.CreatePluginVersionCfgKey: pluginassets.CreatePluginVersionScriptSupportEnabled,
-					},
-				},
-			}),
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -421,6 +408,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 							FS: &pluginfakes.FakePluginFS{TypeFunc: func() plugins.FSType {
 								return plugins.FSTypeCDN
 							}},
+							LoadingStrategy: plugins.LoadingStrategyFetch,
 						},
 					},
 				}
@@ -430,7 +418,6 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					Plugins: newAppSettings("test-app", true),
 				}
 			},
-			pluginAssets: newPluginAssets(),
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
@@ -448,7 +435,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings(), test.pluginAssets())
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings())
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
 
 			recorder := httptest.NewRecorder()
@@ -549,7 +536,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -599,7 +587,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -639,7 +628,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -667,7 +657,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), nil, nil)
+			m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), nil)
 
 			// Create a request with the appropriate context
 			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
@@ -705,12 +695,3 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 	}
 }
 
-func newPluginAssets() func() *pluginassets.Service {
-	return newPluginAssetsWithConfig(&config.PluginManagementCfg{})
-}
-
-func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *pluginassets.Service {
-	return func() *pluginassets.Service {
-		return pluginassets.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), &pluginstore.FakePluginStore{})
-	}
-}

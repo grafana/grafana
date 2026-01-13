@@ -82,7 +82,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -151,7 +150,6 @@ type HTTPServer struct {
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
-	pluginAssets                 *pluginassets.Service
 	pluginPreinstall             pluginchecker.Preinstall
 	SearchService                search.Service
 	ShortURLService              shorturls.Service
@@ -255,7 +253,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatemanager.GrafanaService,
 	pluginsUpdateChecker *updatemanager.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
-	serviceaccountsService serviceaccounts.Service, pluginAssets *pluginassets.Service,
+	serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
@@ -294,7 +292,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
 		pluginDashboardService:       pluginDashboardService,
-		pluginAssets:                 pluginAssets,
 		pluginErrorResolver:          pluginErrorResolver,
 		pluginFileStore:              pluginFileStore,
 		grafanaUpdateChecker:         grafanaUpdateChecker,

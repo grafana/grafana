@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -12,25 +11,17 @@ const (
 	defaultLocalTTL = 1 * time.Hour
 )
 
-// PluginAssetsCalculator is an interface for calculating plugin asset information.
-// LocalProvider requires this to calculate loading strategy.
-type PluginAssetsCalculator interface {
-	LoadingStrategy(ctx context.Context, p pluginstore.Plugin) plugins.LoadingStrategy
-}
-
 // LocalProvider retrieves plugin metadata for locally installed plugins.
 // It uses the plugin store to access plugins that have already been loaded.
 type LocalProvider struct {
-	store        pluginstore.Store
-	pluginAssets PluginAssetsCalculator
+	store pluginstore.Store
 }
 
 // NewLocalProvider creates a new LocalProvider for locally installed plugins.
-// pluginAssets is required for calculating loading strategy.
-func NewLocalProvider(pluginStore pluginstore.Store, pluginAssets PluginAssetsCalculator) *LocalProvider {
+// pluginAssets is kept for backward compatibility but is no longer used.
+func NewLocalProvider(pluginStore pluginstore.Store) *LocalProvider {
 	return &LocalProvider{
-		store:        pluginStore,
-		pluginAssets: pluginAssets,
+		store: pluginStore,
 	}
 }
 
@@ -41,10 +32,7 @@ func (p *LocalProvider) GetMeta(ctx context.Context, pluginID, version string) (
 		return nil, ErrMetaNotFound
 	}
 
-	loadingStrategy := p.pluginAssets.LoadingStrategy(ctx, plugin)
-	moduleHash := plugin.ModuleHash
-
-	spec := pluginStorePluginToMeta(plugin, loadingStrategy, moduleHash)
+	spec := pluginStorePluginToMeta(plugin, plugin.LoadingStrategy, plugin.ModuleHash)
 	return &Result{
 		Meta: spec,
 		TTL:  defaultLocalTTL,
