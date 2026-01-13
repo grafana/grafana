@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { defaultsDeep } from 'lodash';
 import { Provider } from 'react-redux';
 
-import { CoreApp, FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { CoreApp, EventBusSrv, FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { config, PanelDataErrorViewProps } from '@grafana/runtime';
 import { usePanelContext } from '@grafana/ui';
 import { configureStore } from 'app/store/configureStore';
@@ -22,16 +22,17 @@ jest.mock('@grafana/ui', () => ({
   usePanelContext: jest.fn(),
 }));
 
-const mockUsePanelContext = usePanelContext as jest.Mock;
-
+const mockUsePanelContext = jest.mocked(usePanelContext);
 const RUN_QUERY_MESSAGE = 'Run a query to visualize it here or go to all visualizations to add other panel types';
+const panelContextRoot = {
+  app: CoreApp.Dashboard,
+  eventsScope: 'global',
+  eventBus: new EventBusSrv(),
+};
 
 describe('PanelDataErrorView', () => {
   beforeEach(() => {
-    mockUsePanelContext.mockReturnValue({
-      app: CoreApp.Dashboard,
-      eventBus: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-    });
+    mockUsePanelContext.mockReturnValue(panelContextRoot);
   });
 
   it('show No data when there is no data', () => {
@@ -89,10 +90,7 @@ describe('PanelDataErrorView', () => {
   });
 
   it('should show "Run a query..." message when no query is configured and feature toggle is enabled', () => {
-    mockUsePanelContext.mockReturnValue({
-      app: CoreApp.PanelEditor,
-      eventBus: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-    });
+    mockUsePanelContext.mockReturnValue(panelContextRoot);
 
     const originalFeatureToggle = config.featureToggles.newVizSuggestions;
     config.featureToggles.newVizSuggestions = true;
@@ -102,9 +100,6 @@ describe('PanelDataErrorView', () => {
         state: LoadingState.Done,
         series: [],
         timeRange: getDefaultTimeRange(),
-        request: {
-          targets: [],
-        } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       },
     });
 
@@ -114,10 +109,7 @@ describe('PanelDataErrorView', () => {
   });
 
   it('should show "No data" message when feature toggle is disabled even without queries', () => {
-    mockUsePanelContext.mockReturnValue({
-      app: CoreApp.PanelEditor,
-      eventBus: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-    });
+    mockUsePanelContext.mockReturnValue(panelContextRoot);
 
     const originalFeatureToggle = config.featureToggles.newVizSuggestions;
     config.featureToggles.newVizSuggestions = false;
@@ -127,9 +119,6 @@ describe('PanelDataErrorView', () => {
         state: LoadingState.Done,
         series: [],
         timeRange: getDefaultTimeRange(),
-        request: {
-          targets: [],
-        } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       },
     });
 
