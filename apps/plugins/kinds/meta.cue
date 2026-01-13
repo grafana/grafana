@@ -24,6 +24,7 @@ metaV0Alpha1: {
 			translations?: [string]: string
 			// +listType=atomic
 			children?: [...string]
+			aliasIds?: [...string]
 		}
 	}
 }

@@ -573,6 +573,8 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.
 		metaSpec.Translations = plugin.Translations
 	}
 
+	metaSpec.AliasIds = plugin.AliasIDs
+
 	return metaSpec
 }
 
@@ -675,6 +677,8 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 	if len(plugin.Translations) > 0 {
 		metaSpec.Translations = plugin.Translations
 	}
+
+	metaSpec.AliasIds = plugin.AliasIDs
 
 	return metaSpec
 }
