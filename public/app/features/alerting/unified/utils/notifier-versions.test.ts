@@ -2,7 +2,13 @@ import { GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/
 
 import { NotificationChannelOption, NotifierDTO, NotifierVersion } from '../types/alerting';
 
-import { canCreateNotifier, getOptionsForVersion, hasLegacyIntegrations, isLegacyVersion } from './notifier-versions';
+import {
+  canCreateNotifier,
+  getLegacyVersionLabel,
+  getOptionsForVersion,
+  hasLegacyIntegrations,
+  isLegacyVersion,
+} from './notifier-versions';
 
 // Helper to create a minimal NotifierDTO for testing
 function createNotifier(overrides: Partial<NotifierDTO> = {}): NotifierDTO {
@@ -358,6 +364,40 @@ describe('notifier-versions utilities', () => {
         grafana_managed_receiver_configs: [{ type: 'slack', settings: {}, version: 'v2' }],
       });
       expect(hasLegacyIntegrations(contactPoint)).toBe(true);
+    });
+  });
+
+  describe('getLegacyVersionLabel', () => {
+    it('should return "Legacy" for undefined version', () => {
+      expect(getLegacyVersionLabel(undefined)).toBe('Legacy');
+    });
+
+    it('should return "Legacy" for empty string version', () => {
+      expect(getLegacyVersionLabel('')).toBe('Legacy');
+    });
+
+    it('should return "Legacy" for v0mimir1', () => {
+      expect(getLegacyVersionLabel('v0mimir1')).toBe('Legacy');
+    });
+
+    it('should return "Legacy v2" for v0mimir2', () => {
+      expect(getLegacyVersionLabel('v0mimir2')).toBe('Legacy v2');
+    });
+
+    it('should return "Legacy v3" for v0mimir3', () => {
+      expect(getLegacyVersionLabel('v0mimir3')).toBe('Legacy v3');
+    });
+
+    it('should return "Legacy" for v1 (trailing 1)', () => {
+      expect(getLegacyVersionLabel('v1')).toBe('Legacy');
+    });
+
+    it('should return "Legacy v2" for v2 (trailing 2)', () => {
+      expect(getLegacyVersionLabel('v2')).toBe('Legacy v2');
+    });
+
+    it('should return "Legacy" for version strings without trailing number', () => {
+      expect(getLegacyVersionLabel('legacy')).toBe('Legacy');
     });
   });
 });

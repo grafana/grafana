@@ -16,7 +16,12 @@ import {
   GrafanaChannelValues,
   ReceiverFormValues,
 } from '../../../types/receiver-form';
-import { canCreateNotifier, getOptionsForVersion, isLegacyVersion } from '../../../utils/notifier-versions';
+import {
+  canCreateNotifier,
+  getLegacyVersionLabel,
+  getOptionsForVersion,
+  isLegacyVersion,
+} from '../../../utils/notifier-versions';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
@@ -255,12 +260,14 @@ export function ChannelSubForm<R extends ChannelValues>({
               />
               {isLegacy && integrationVersion && (
                 <Badge
-                  text={integrationVersion}
+                  text={getLegacyVersionLabel(integrationVersion)}
                   color="orange"
                   icon="exclamation-triangle"
-                  tooltip={t('alerting.channel-sub-form.tooltip-version', 'Integration version: {{version}}', {
-                    version: integrationVersion,
-                  })}
+                  tooltip={t(
+                    'alerting.channel-sub-form.tooltip-legacy-version',
+                    'This is a legacy integration (version: {{version}}). It cannot be modified.',
+                    { version: integrationVersion }
+                  )}
                 />
               )}
             </Stack>

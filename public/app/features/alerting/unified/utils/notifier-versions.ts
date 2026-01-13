@@ -89,3 +89,34 @@ export function hasLegacyIntegrations(contactPoint?: GrafanaManagedContactPoint)
 
   return contactPoint.grafana_managed_receiver_configs.some((config) => config.version && config.version !== 'v1');
 }
+
+/**
+ * Gets a user-friendly label for a legacy version.
+ * Extracts the version number from the version string and formats it as:
+ * - "Legacy" for version 1 (e.g., v0mimir1)
+ * - "Legacy v2" for version 2 (e.g., v0mimir2)
+ * - etc.
+ *
+ * Precondition: This function assumes the version is already known to be legacy
+ * (i.e., canCreate: false). Use isLegacyVersion() to check before calling this.
+ *
+ * @param version - The version string (e.g., 'v0mimir1', 'v0mimir2')
+ * @returns A user-friendly label like "Legacy" or "Legacy v2"
+ */
+export function getLegacyVersionLabel(version?: string): string {
+  if (!version) {
+    return 'Legacy';
+  }
+
+  // Extract trailing number from version string (e.g., v0mimir1 → 1, v0mimir2 → 2)
+  const match = version.match(/(\d+)$/);
+  if (match) {
+    const num = parseInt(match[1], 10);
+    if (num === 1) {
+      return 'Legacy';
+    }
+    return `Legacy v${num}`;
+  }
+
+  return 'Legacy';
+}

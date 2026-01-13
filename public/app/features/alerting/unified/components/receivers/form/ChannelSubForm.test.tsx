@@ -362,7 +362,7 @@ describe('ChannelSubForm', () => {
       expect(ui.settings.webhook.url.query()).not.toBeInTheDocument();
     });
 
-    it('should display version badge for legacy integration', () => {
+    it('should display "Legacy" badge for v0mimir1 integration', () => {
       const webhookV0: TestChannelValues = {
         __id: 'id-0',
         type: 'webhook',
@@ -373,8 +373,23 @@ describe('ChannelSubForm', () => {
 
       renderVersionedForm(webhookV0, webhookV0);
 
-      // Should show version badge with the version text
-      expect(screen.getByText('v0mimir1')).toBeInTheDocument();
+      // Should show "Legacy" badge for v0mimir1 integrations
+      expect(screen.getByText('Legacy')).toBeInTheDocument();
+    });
+
+    it('should display "Legacy v2" badge for v0mimir2 integration', () => {
+      const webhookV0v2: TestChannelValues = {
+        __id: 'id-0',
+        type: 'webhook',
+        version: 'v0mimir2',
+        settings: { legacyUrl: 'https://legacy.example.com' },
+        secureFields: {},
+      };
+
+      renderVersionedForm(webhookV0v2, webhookV0v2);
+
+      // Should show "Legacy v2" badge for v0mimir2 integrations
+      expect(screen.getByText('Legacy v2')).toBeInTheDocument();
     });
 
     it('should NOT display version badge for v1 integration', () => {
