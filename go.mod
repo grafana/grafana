@@ -32,14 +32,13 @@ require (
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/aws/aws-sdk-go v1.55.7 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2 v1.40.0 // @grafana/aws-datasources
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.21 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.21 // indirect; @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.51.0 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.225.2 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/aws-datasources
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.1 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/service/sts v1.39.1 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/service/sts v1.39.1 // indirect; @grafana/grafana-operator-experience-squad
 	github.com/aws/smithy-go v1.23.2 // @grafana/aws-datasources
 	github.com/beevik/etree v1.4.1 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
@@ -82,7 +81,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // @grafana/grafana-backend-group
 	github.com/golang/snappy v1.0.0 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
-	github.com/google/go-github/v70 v70.0.0 // indirect; @grafana/grafana-git-ui-sync-team
+	github.com/google/go-github/v70 v70.0.0 // @grafana/grafana-git-ui-sync-team
 	github.com/google/go-querystring v1.1.0 // indirect; @grafana/oss-big-tent
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
@@ -260,12 +259,13 @@ require (
 	github.com/grafana/grafana/pkg/aggregator v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/plugins v0.0.0 // @grafana/plugins-platform-backend
 
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/semconv v0.0.0 // @grafana/grafana-app-platform-squad
 )
 
 // Replace the workspace versions
@@ -294,6 +294,8 @@ replace (
 	github.com/grafana/grafana/pkg/aggregator => ./pkg/aggregator
 	github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
+	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
+	github.com/grafana/grafana/pkg/semconv => ./pkg/semconv
 )
 
 require (
@@ -654,9 +656,14 @@ require (
 
 require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 
+require github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7 // @grafana/grafana-operator-experience-squad
+
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/IBM/pgxpoolprometheus v1.1.2 // indirect
+	github.com/Machiel/slugify v1.0.1 // indirect
+	github.com/ProtonMail/go-crypto v1.3.0 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
@@ -676,6 +683,8 @@ require (
 	github.com/google/gnostic v0.7.1 // indirect
 	github.com/gophercloud/gophercloud/v2 v2.9.0 // indirect
 	github.com/grafana/sqlds/v5 v5.0.3 // indirect
+	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.4.2 // indirect
+	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531 // indirect
 	github.com/lufia/plan9stats v0.0.0-20240909124753-873cd0166683 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/moby/go-archive v0.1.0 // indirect
