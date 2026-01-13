@@ -4,12 +4,11 @@ import { t } from '@grafana/i18n';
 import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import { isLocalDevEnv } from '../utils/misc';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import GettingStarted, { WelcomeHeader } from './GettingStarted';
 import IRMCard from './IRMCard';
-import { getInsightsScenes, insightsIsAvailable } from './Insights';
+import { getInsightsScenes } from './Insights';
 import { PluginIntegrations } from './PluginIntegrations';
 import SyntheticMonitoringCard from './SyntheticMonitoringCard';
 
