@@ -166,8 +166,24 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		githubInfo = spec["github"].(map[string]any)
 		assert.Equal(t, "454546", githubInfo["installationID"], "installationID should be updated")
 
-		// DELETE
-		require.NoError(t, helper.Connections.Resource.Delete(ctx, "connection", metav1.DeleteOptions{}), "failed to delete resource")
+		// DELETE - Retry delete to handle resource version conflicts
+		// The controller may have updated the resource after our update, changing the resource version
+		require.Eventually(t, func() bool {
+			err := helper.Connections.Resource.Delete(ctx, "connection", metav1.DeleteOptions{})
+			if err != nil {
+				if k8serrors.IsConflict(err) {
+					// Resource version conflict - retry
+					return false
+				}
+				if k8serrors.IsNotFound(err) {
+					// Already deleted - success
+					return true
+				}
+				// Other error - fail the test
+				require.NoError(t, err, "failed to delete resource")
+			}
+			return true
+		}, 5*time.Second, 100*time.Millisecond, "should successfully delete resource")
 		list, err = helper.Connections.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err, "failed to list resources")
 		assert.Equal(t, 0, len(list.Items), "should have no connections")
