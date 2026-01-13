@@ -332,9 +332,12 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		dataKey.GUID = uuid.New().String()
 		var err error
 		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
-			err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value))
-			if err != nil {
+			if err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
 				return "", fmt.Errorf("failed to write data: %w", err)
+			}
+
+			if err := k.dataStore.applyBackwardsCompatibleChanges(ctx, tx, event, dataKey); err != nil {
+				return "", fmt.Errorf("failed to apply backwards compatible updates: %w", err)
 			}
 
 			return dataKey.GUID, nil
@@ -343,6 +346,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			return 0, fmt.Errorf("failed to write data: %w", err)
 		}
 
+		rv = rvmanager.SnowflakeFromRv(rv)
 		dataKey.ResourceVersion = rv
 	} else {
 		err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value))
@@ -369,22 +373,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		}
 
 		// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
-		if !rvmanager.IsRvEqual(latestKey.ResourceVersion, rv) {
+		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
-			// if we're running with rvManager, convert the ResourceVersion back to snowflake to delete
-			if k.rvManager != nil {
-				dataKey.ResourceVersion = rvmanager.SnowflakeFromRv(dataKey.ResourceVersion)
-			}
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: concurrent modification detected")
 		}
 
 		if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
 			// Another concurrent write happened between our read and write
-			// if we're running with rvManager, convert the ResourceVersion back to snowflake to delete
-			if k.rvManager != nil {
-				dataKey.ResourceVersion = rvmanager.SnowflakeFromRv(dataKey.ResourceVersion)
-			}
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: resource was modified concurrently (expected previous RV %d, found %d)", event.PreviousRV, prevKey.ResourceVersion)
 		}
@@ -403,12 +399,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		}
 
 		// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
-		if !rvmanager.IsRvEqual(latestKey.ResourceVersion, rv) {
+		if latestKey.ResourceVersion != dataKey.ResourceVersion {
 			// Delete the data we just wrote since it's not the latest
-			// if we're running with rvManager, convert the ResourceVersion back to snowflake to delete
-			if k.rvManager != nil {
-				dataKey.ResourceVersion = rvmanager.SnowflakeFromRv(dataKey.ResourceVersion)
-			}
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
 		}
@@ -416,10 +408,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		// Verify that the immediate predecessor is not a create
 		if prevKey.Action == DataActionCreated {
 			// Another concurrent create happened - delete our write and return error
-			// if we're running with rvManager, convert the ResourceVersion back to snowflake to delete
-			if k.rvManager != nil {
-				dataKey.ResourceVersion = rvmanager.SnowflakeFromRv(dataKey.ResourceVersion)
-			}
 			_ = k.dataStore.Delete(ctx, dataKey)
 			return 0, fmt.Errorf("optimistic locking failed: concurrent create detected")
 		}
@@ -431,7 +419,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
 		Name:            event.Key.Name,
-		ResourceVersion: rv,
+		ResourceVersion: dataKey.ResourceVersion,
 		Action:          action,
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,

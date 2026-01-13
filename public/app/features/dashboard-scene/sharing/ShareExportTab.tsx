@@ -23,6 +23,7 @@ import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
+import { createV2RowsLayout, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
@@ -216,7 +217,27 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     }
 
     if (exportMode === ExportMode.V2Resource) {
-      const spec = transformSceneToSaveModelSchemaV2(scene);
+      let sceneForV2Export = scene;
+
+      // When exporting v1 dashboard as v2, we need to recreate the scene with v2 layout creator
+      // to ensure rows are properly serialized. The v1 scene uses DefaultGridLayoutManager which
+      // doesn't know about RowsLayoutManager structure needed for v2 serialization.
+      if (initialSaveModelVersion === 'v1' && initialSaveModel && isV1ClassicDashboard(initialSaveModel)) {
+        // Recreate scene with v2 layout creator to properly handle rows
+        sceneForV2Export = transformSaveModelToScene(
+          {
+            dashboard: { ...initialSaveModel, title: initialSaveModel.title ?? '', uid: initialSaveModel.uid ?? '' },
+            meta: scene.state.meta,
+          },
+          undefined,
+          {
+            createLayout: createV2RowsLayout,
+            targetVersion: 'v2',
+          }
+        );
+      }
+
+      const spec = transformSceneToSaveModelSchemaV2(sceneForV2Export);
       const specCopy = JSON.parse(JSON.stringify(spec));
       const statelessSpec = await makeExportableV2(specCopy, isSharingExternally);
       const exportableV2 = isSharingExternally ? statelessSpec : spec;

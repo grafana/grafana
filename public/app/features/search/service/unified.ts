@@ -106,7 +106,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const qry = query.query ?? '*';
-    let uri = `${searchURI}?facet=tags&query=${qry}&limit=1`;
+    let uri = `${searchURI}?facet=tags&facetLimit=1000&query=${qry}&limit=1`;
     const resp = await getBackendSrv().get<SearchAPIResponse>(uri);
     return resp.facets?.tags?.terms || [];
   }
@@ -295,6 +295,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.kind) {
       // filter resource types
       uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
+    }
+
+    if (query.ds_type?.length) {
+      uri += '&dataSourceType=' + query.ds_type;
+    }
+
+    if (query.panel_type?.length) {
+      uri += '&panelType=' + query.panel_type;
     }
 
     if (query.tags?.length) {

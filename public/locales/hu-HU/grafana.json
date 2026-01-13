@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Adja meg az egyéni jegyzet tartalmát…"
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "A szabályok sikeresen törlődtek a mappából"
@@ -2203,11 +2208,15 @@
       "min-interval": "Min. intervallum = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "A kijelölt lekérdezések és kifejezések nem konvertálhatók alapértelmezettre. Ha kikapcsolja a speciális beállításokat, a lekérdezés és a feltétel visszaáll az alapértelmezett beállításokra."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Előnézet",
-      "previewCondition": "Riasztási szabály előnézeti feltétele"
+      "previewCondition": "Riasztási szabály előnézeti feltétele",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Szűrés kapcsolattartási pontok szerint",
@@ -3126,9 +3135,12 @@
       "table": "Táblázat"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Határozza meg azt a feltételt, amelynek teljesülnie kell, mielőtt egy riasztási szabály aktiválódik",
       "description-configure-firing-alert-instances-routed-contact": "Konfigurálja, hogyan történjen az aktív riasztáspéldányok továbbítása a kapcsolattartási pontokhoz",
       "description-configure-receives-notifications": "Állítsa be, hogy ki kapjon értesítéseket, és hogyan legyenek elküldve",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Riasztási szabályok",
       "title-contact-points": "Kapcsolattartási pontok",
       "title-notification-policies": "Értesítési irányelvek"
@@ -3747,7 +3759,8 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -4402,6 +4415,7 @@
       },
       "no-properties-changed": "Nem változtak meg a releváns tulajdonságok",
       "table": {
+        "notes": "",
         "updated": "Dátum",
         "updatedBy": "Frissítette:",
         "version": "Verzió"
@@ -4600,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Panel hozzáadása",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Csoportosítás sorba",
@@ -4860,7 +4875,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Értékek vesszővel elválasztva"
         },
         "datasource-options": {
           "name-filter": "Névszűrő",
@@ -5680,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Nem található érvényes Grafana.com-azonosító",
       "invalid-json": "Érvénytelen JSON",
+      "tag-too-long": "",
       "tags-expected-array": "címke tömböt várt",
       "tags-expected-strings": "címke karakterláncok tömbjét várta"
     },
@@ -5785,6 +5802,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5953,8 +5971,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Egyéni opciók",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Értékek vesszővel elválasztva",
       "selection-options": "Kijelölés beállításai"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Vissza a listához",
@@ -6537,6 +6561,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Irányítópult elmentve"
     },
@@ -6560,6 +6589,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6619,8 +6649,9 @@
       "tooltip-show-usages": "Használatok megjelenítése"
     },
     "variable-values-preview": {
-      "preview-of-values": "Értékek előnézete",
-      "show-more": "Több megjelenítése"
+      "show-more": "Több megjelenítése",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9224,7 +9255,8 @@
     "tags-input": {
       "add": "Hozzáadás",
       "placeholder-new-tag": "Új címke (nyomja le az Enter billentyűt a hozzáadáshoz)",
-      "remove": "Címke eltávolítása: {{name}}"
+      "remove": "Címke eltávolítása: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Időpontok szinkronizálása",
@@ -10691,18 +10723,6 @@
     "help/documentation": "Dokumentáció",
     "help/keyboard-shortcuts": "Gyorsbillentyűk",
     "help/support": "Ügyfélszolgálat",
-    "history-container": {
-      "drawer-tittle": "Előzmények"
-    },
-    "history-wrapper": {
-      "collapse": "Összecsukás",
-      "expand": "Kibontás",
-      "icon-selected": "Kijelölt bejegyzés",
-      "icon-unselected": "Normál bejegyzés",
-      "show-more": "Több megjelenítése",
-      "today": "Ma",
-      "yesterday": "Tegnap"
-    },
     "home": {
       "title": "Kezdőlap"
     },
@@ -12505,6 +12525,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14374,6 +14400,17 @@
       },
       "name": {
         "series-to-rows": "Sorozatok sorokká alakítása"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

@@ -729,6 +729,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Zadejte obsah vlastní vysvětlivky…"
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Pravidla byla úspěšně odstraněna ze složky"
@@ -2219,11 +2224,15 @@
       "min-interval": "Min. Interval = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Vybrané dotazy a výrazy nelze převést na výchozí. Pokud deaktivujete pokročilé možnosti, váš dotaz a podmínka budou obnoveny do výchozího nastavení."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Náhled",
-      "previewCondition": "Podmínka pravidla náhledu výstrahy"
+      "previewCondition": "Podmínka pravidla náhledu výstrahy",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filtrovat podle kontaktních bodů",
@@ -3148,9 +3157,12 @@
       "table": "Tabulka"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Definujte podmínku, která musí být splněna před spuštěním pravidla výstrahy",
       "description-configure-firing-alert-instances-routed-contact": "Nakonfigurujte způsob přesměrování instancí spouštění výstrah do kontaktních bodů",
       "description-configure-receives-notifications": "Nakonfigurujte, kdo obdrží oznámení a jak jsou odesílána",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Pravidla výstrah",
       "title-contact-points": "Kontaktní body",
       "title-notification-policies": "Zásady oznamování"
@@ -3779,7 +3791,8 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -4440,6 +4453,7 @@
       },
       "no-properties-changed": "Žádné relevantní vlastnosti se nezměnily",
       "table": {
+        "notes": "",
         "updated": "Datum",
         "updatedBy": "Aktualizoval uživatel",
         "version": "Verze"
@@ -4638,6 +4652,7 @@
     },
     "canvas-actions": {
       "add-panel": "Přidat panel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Seskupit do řádku",
@@ -4898,7 +4913,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Hodnoty oddělené čárkou"
         },
         "datasource-options": {
           "name-filter": "Filtr názvu",
@@ -5720,6 +5736,7 @@
     "validation": {
       "invalid-dashboard-id": "Nelze najít platné ID na Grafana.com",
       "invalid-json": "Neplatný JSON",
+      "tag-too-long": "",
       "tags-expected-array": "očekávané pole tagů",
       "tags-expected-strings": "očekávané pole řetězců tagů"
     },
@@ -5825,6 +5842,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5995,8 +6013,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Vlastní možnosti",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Hodnoty oddělené čárkou",
       "selection-options": "Možnosti výběru"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Zpět na seznam",
@@ -6583,6 +6607,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Nástěnka byla uložena"
     },
@@ -6606,6 +6635,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6665,8 +6695,11 @@
       "tooltip-show-usages": "Zobrazit použití"
     },
     "variable-values-preview": {
-      "preview-of-values": "Náhled hodnot",
-      "show-more": "Zobrazit více"
+      "show-more": "Zobrazit více",
+      "preview-of-values_one": "",
+      "preview-of-values_few": "",
+      "preview-of-values_many": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9294,7 +9327,8 @@
     "tags-input": {
       "add": "Přidat",
       "placeholder-new-tag": "Nový štítek (pro přidání stiskněte klávesu Enter)",
-      "remove": "Odebrat tag: {{name}}"
+      "remove": "Odebrat tag: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Synchronizovat časy",
@@ -10777,18 +10811,6 @@
     "help/documentation": "Dokumentace",
     "help/keyboard-shortcuts": "Klávesové zkratky",
     "help/support": "Podpora",
-    "history-container": {
-      "drawer-tittle": "Historie"
-    },
-    "history-wrapper": {
-      "collapse": "Sbalit",
-      "expand": "Rozbalit",
-      "icon-selected": "Vybraný záznam",
-      "icon-unselected": "Normální záznam",
-      "show-more": "Zobrazit více",
-      "today": "Dnes",
-      "yesterday": "Včera"
-    },
     "home": {
       "title": "Domů"
     },
@@ -12609,6 +12631,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14486,6 +14514,17 @@
       },
       "name": {
         "series-to-rows": "Řady na řádky"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

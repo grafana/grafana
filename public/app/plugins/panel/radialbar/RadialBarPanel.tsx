@@ -7,10 +7,9 @@ import {
   getFieldDisplayValues,
   PanelProps,
 } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
-import { config } from 'app/core/config';
 
 import { Options } from './panelcfg.gen';
 
@@ -52,6 +51,7 @@ export function RadialBarPanel({
         nameManualFontSize={options.text?.titleSize}
         endpointMarker={options.endpointMarker !== 'none' ? options.endpointMarker : undefined}
         onClick={menuProps.openMenu}
+        textMode={options.textMode}
       />
     );
   }
@@ -65,9 +65,7 @@ export function RadialBarPanel({
     if (hasLinks && getLinks) {
       return (
         <DataLinksContextMenu links={getLinks} style={{ flexGrow: 1 }}>
-          {(api) => {
-            return renderComponent(valueProps, api);
-          }}
+          {(api) => renderComponent(valueProps, api)}
         </DataLinksContextMenu>
       );
     }

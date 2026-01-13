@@ -62,8 +62,7 @@
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
-    "themes-schema": "typescript-json-schema ./tsconfig.json NewThemeOptions --include 'packages/grafana-data/src/themes/createTheme.ts' --out public/app/features/theme-playground/schema.generated.json",
-    "themes-generate": "yarn themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --conditions=@grafana-app/source --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
+    "themes-generate": "yarn workspace @grafana/data themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --conditions=@grafana-app/source --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "themes:usage": "eslint . --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --plugin '@grafana' --rule '{ @grafana/theme-token-usage: \"error\" }'",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "echo 'bundled plugins are no longer supported'",
@@ -254,7 +253,6 @@
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
     "typescript": "5.9.2",
-    "typescript-json-schema": "^0.65.1",
     "webpack": "5.101.0",
     "webpack-assets-manifest": "^5.1.0",
     "webpack-cli": "6.0.1",
@@ -265,7 +263,7 @@
     "webpackbar": "^7.0.0",
     "yaml": "^2.0.0",
     "yargs": "^18.0.0",
-    "zod": "^4.0.0"
+    "zod": "^4.3.0"
   },
   "dependencies": {
     "@bsull/augurs": "^0.10.0",
@@ -295,8 +293,8 @@
     "@grafana/plugin-ui": "^0.11.1",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "6.52.0",
-    "@grafana/scenes-react": "6.52.0",
+    "@grafana/scenes": "v6.52.1",
+    "@grafana/scenes-react": "v6.52.1",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -347,6 +345,7 @@
     "date-fns": "4.1.0",
     "debounce-promise": "3.1.2",
     "diff": "^8.0.0",
+    "downsample": "1.4.0",
     "fast-deep-equal": "^3.1.3",
     "fast-json-patch": "3.1.1",
     "file-saver": "2.0.5",
@@ -460,8 +459,8 @@
     "tmp@npm:^0.0.33": "~0.2.1",
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
-    "nodemailer": "7.0.7",
-    "@storybook/core@npm:8.6.2": "patch:@storybook/core@npm%3A8.6.2#~/.yarn/patches/@storybook-core-npm-8.6.2-8c752112c0.patch"
+    "nodemailer": "7.0.11",
+    "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch"
   },
   "workspaces": {
     "packages": [

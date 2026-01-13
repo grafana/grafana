@@ -1,28 +1,37 @@
+import * as z from 'zod';
+
 import { createBreakpoints } from './breakpoints';
-import { createColors, ThemeColorsInput } from './createColors';
+import { createColors, ThemeColorsInputSchema } from './createColors';
 import { createComponents } from './createComponents';
 import { createShadows } from './createShadows';
-import { createShape, ThemeShapeInput } from './createShape';
-import { createSpacing, ThemeSpacingOptions } from './createSpacing';
+import { createShape, ThemeShapeInputSchema } from './createShape';
+import { createSpacing, ThemeSpacingOptionsSchema } from './createSpacing';
 import { createTransitions } from './createTransitions';
-import { createTypography, ThemeTypographyInput } from './createTypography';
+import { createTypography, ThemeTypographyInputSchema } from './createTypography';
 import { createV1Theme } from './createV1Theme';
-import { createVisualizationColors, ThemeVisualizationColorsInput } from './createVisualizationColors';
+import { createVisualizationColors, ThemeVisualizationColorsInputSchema } from './createVisualizationColors';
 import { GrafanaTheme2 } from './types';
 import { zIndex } from './zIndex';
 
-/** @internal */
-export interface NewThemeOptions {
-  name?: string;
-  colors?: ThemeColorsInput;
-  spacing?: ThemeSpacingOptions;
-  shape?: ThemeShapeInput;
-  typography?: ThemeTypographyInput;
-  visualization?: ThemeVisualizationColorsInput;
-}
+export const NewThemeOptionsSchema = z.object({
+  name: z.string(),
+  id: z.string(),
+  colors: ThemeColorsInputSchema.optional(),
+  spacing: ThemeSpacingOptionsSchema.optional(),
+  shape: ThemeShapeInputSchema.optional(),
+  typography: ThemeTypographyInputSchema.optional(),
+  visualization: ThemeVisualizationColorsInputSchema.optional(),
+});
 
 /** @internal */
-export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
+export type NewThemeOptions = z.infer<typeof NewThemeOptionsSchema>;
+
+/** @internal */
+export function createTheme(
+  options: Omit<NewThemeOptions, 'id' | 'name'> & {
+    name?: NewThemeOptions['name'];
+  } = {}
+): GrafanaTheme2 {
   const {
     name,
     colors: colorsInput = {},

@@ -243,8 +243,11 @@ const injectedRtkApi = api
             type: queryArg['type'],
             folder: queryArg.folder,
             facet: queryArg.facet,
+            facetLimit: queryArg.facetLimit,
             tags: queryArg.tags,
             libraryPanel: queryArg.libraryPanel,
+            panelType: queryArg.panelType,
+            dataSourceType: queryArg.dataSourceType,
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
@@ -283,6 +286,10 @@ const injectedRtkApi = api
       deleteWithKey: build.mutation<DeleteWithKeyApiResponse, DeleteWithKeyApiArg>({
         query: (queryArg) => ({ url: `/snapshots/delete/${queryArg.deleteKey}`, method: 'DELETE' }),
         invalidatesTags: ['Snapshot'],
+      }),
+      getSnapshotSettings: build.query<GetSnapshotSettingsApiResponse, GetSnapshotSettingsApiArg>({
+        query: () => ({ url: `/snapshots/settings` }),
+        providesTags: ['Snapshot'],
       }),
       getSnapshot: build.query<GetSnapshotApiResponse, GetSnapshotApiArg>({
         query: (queryArg) => ({
@@ -663,10 +670,16 @@ export type SearchDashboardsAndFoldersApiArg = {
   folder?: string;
   /** count distinct terms for selected fields */
   facet?: string[];
+  /** maximum number of terms to return per facet (default 50, max 1000) */
+  facetLimit?: number;
   /** tag query filter */
   tags?: string[];
   /** find dashboards that reference a given libraryPanel */
   libraryPanel?: string;
+  /** find dashboards using panels of a given plugin type */
+  panelType?: string;
+  /** find dashboards using datasources of a given plugin type */
+  dataSourceType?: string;
   /** permission needed for the resource (view, edit, admin) */
   permission?: 'view' | 'edit' | 'admin';
   /** sortable field */
@@ -739,6 +752,8 @@ export type DeleteWithKeyApiArg = {
   /** unique key returned in create */
   deleteKey: string;
 };
+export type GetSnapshotSettingsApiResponse = /** status 200 undefined */ any;
+export type GetSnapshotSettingsApiArg = void;
 export type GetSnapshotApiResponse = /** status 200 OK */ Snapshot;
 export type GetSnapshotApiArg = {
   /** name of the Snapshot */
@@ -1270,6 +1285,8 @@ export const {
   useLazyListSnapshotQuery,
   useCreateSnapshotMutation,
   useDeleteWithKeyMutation,
+  useGetSnapshotSettingsQuery,
+  useLazyGetSnapshotSettingsQuery,
   useGetSnapshotQuery,
   useLazyGetSnapshotQuery,
   useDeleteSnapshotMutation,

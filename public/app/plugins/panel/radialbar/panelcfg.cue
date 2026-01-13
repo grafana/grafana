@@ -42,6 +42,7 @@ composableKinds: PanelCfg: {
 					barWidthFactor: number | *0.5
 					barShape: "flat" | "rounded" | *"flat"
 					endpointMarker?: "point" | "glow" | "none" | *"point"
+          textMode?: "auto" | "value_and_name" | "value" | "name" | "none" | *"auto"
 					effects: GaugePanelEffects | *{}
 				} @cuetsy(kind="interface")
 			}

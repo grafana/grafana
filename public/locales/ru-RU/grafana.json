@@ -729,6 +729,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Ввести содержимое пользовательской аннотации..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Правила удалены из папки"
@@ -2219,11 +2224,15 @@
       "min-interval": "Мин. интервал = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Выбранные запросы и выражения не могут быть преобразованы в используемые по умолчанию. Если вы отключите расширенные параметры, ваш запрос и условие будут сброшены до настроек по умолчанию."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Предварительный просмотр",
-      "previewCondition": "Предварительный просмотр условия правила оповещения"
+      "previewCondition": "Предварительный просмотр условия правила оповещения",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Фильтр по точкам контакта",
@@ -3148,9 +3157,12 @@
       "table": "Таблица"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Задайте условие, которое должно быть выполнено до того, как автивируется правило оповещения.",
       "description-configure-firing-alert-instances-routed-contact": "Установите способ направления активных экземпляров оповещений в точки контакта.",
       "description-configure-receives-notifications": "Установите получателей уведомлений и способы их отправки.",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Правила оповещения",
       "title-contact-points": "Точки контакта",
       "title-notification-policies": "Политики уведомления"
@@ -3779,7 +3791,8 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
+      "error": "",
+      "retry": "",
       "title": ""
     },
     "restore": {
@@ -4440,6 +4453,7 @@
       },
       "no-properties-changed": "Нет изменений соответствующих свойств",
       "table": {
+        "notes": "",
         "updated": "Дата",
         "updatedBy": "Обновлено",
         "version": "Версия"
@@ -4638,6 +4652,7 @@
     },
     "canvas-actions": {
       "add-panel": "Добавить панель",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Группировать в строку",
@@ -4898,7 +4913,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Значения, разделенные запятыми"
         },
         "datasource-options": {
           "name-filter": "Фильтр по названию",
@@ -5720,6 +5736,7 @@
     "validation": {
       "invalid-dashboard-id": "Не удалось найти действительный идентификатор Grafana.com",
       "invalid-json": "Неверный JSON-файл",
+      "tag-too-long": "",
       "tags-expected-array": "ожидаемый массив тегов",
       "tags-expected-strings": "ожидаемый массив строк тегов"
     },
@@ -5825,6 +5842,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5995,8 +6013,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Пользовательские параметры",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Значения, разделенные запятыми",
       "selection-options": "Параметры выбора"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Назад к списку",
@@ -6583,6 +6607,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Дашборд сохранен"
     },
@@ -6606,6 +6635,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6665,8 +6695,11 @@
       "tooltip-show-usages": "Показать варианты использования"
     },
     "variable-values-preview": {
-      "preview-of-values": "Просмотр значений",
-      "show-more": "Показать еще"
+      "show-more": "Показать еще",
+      "preview-of-values_one": "",
+      "preview-of-values_few": "",
+      "preview-of-values_many": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9294,7 +9327,8 @@
     "tags-input": {
       "add": "Добавить",
       "placeholder-new-tag": "Новый тег (введите ключ для добавления)",
-      "remove": "Удалить тег: {{name}} "
+      "remove": "Удалить тег: {{name}} ",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Синхронизировать время",
@@ -10777,18 +10811,6 @@
     "help/documentation": "Документация",
     "help/keyboard-shortcuts": "Сочетания клавиш",
     "help/support": "Поддержка",
-    "history-container": {
-      "drawer-tittle": "История"
-    },
-    "history-wrapper": {
-      "collapse": "Свернуть",
-      "expand": "Развернуть",
-      "icon-selected": "Выделенная запись",
-      "icon-unselected": "Обычная запись",
-      "show-more": "Показать еще",
-      "today": "Сегодня",
-      "yesterday": "Вчера"
-    },
     "home": {
       "title": "Главная"
     },
@@ -12609,6 +12631,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14486,6 +14514,17 @@
       },
       "name": {
         "series-to-rows": "Ряды в строки"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {
