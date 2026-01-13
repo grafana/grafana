@@ -179,9 +179,9 @@ Default Views are also available including:
 
 #### Enable dashboard variable (Experimental)
 
-If toggled the Geomap panel update, if exists, the dashboard's variable named `mapViewData` with the bounding box of the current view.
+When toggled, the Geomap panel updates the dashboard variable named `mapViewData` (if it exists) with the bounding box data of the current view.
 
-The variable can be a `Custom` variable type and can be hidden on the dashbaord (Show on dashboard: Nothing).
+The variable should be of the type `Custom` and can be hidden on the dashboard by setting its visibility to “Nothing” (Show on dashboard: Nothing).
 
 You can use then the variable inside your query to receive on the server side a string like this:
 
