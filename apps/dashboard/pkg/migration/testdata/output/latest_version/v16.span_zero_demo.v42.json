@@ -40,7 +40,7 @@
         "x": 0,
         "y": 0
       },
-      "id": 1,
+      "id": 23,
       "options": {
         "content": "This dashboard demonstrates various monitoring components for application observability and performance metrics.\n",
         "mode": "markdown"
