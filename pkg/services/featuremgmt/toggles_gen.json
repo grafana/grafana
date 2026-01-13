@@ -1382,7 +1382,8 @@
       "metadata": {
         "name": "exploreLogsLimitedTimeRange",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-08-29T13:55:59Z"
+        "creationTimestamp": "2024-08-29T13:55:59Z",
+        "deletionTimestamp": "2026-01-12T22:18:14Z"
       },
       "spec": {
         "description": "Used in Logs Drilldown to limit the time range",
@@ -1408,7 +1409,8 @@
       "metadata": {
         "name": "exploreMetricsRelatedLogs",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-11-05T16:28:43Z"
+        "creationTimestamp": "2024-11-05T16:28:43Z",
+        "deletionTimestamp": "2026-01-09T22:14:53Z"
       },
       "spec": {
         "description": "Display Related Logs in Grafana Metrics Drilldown",

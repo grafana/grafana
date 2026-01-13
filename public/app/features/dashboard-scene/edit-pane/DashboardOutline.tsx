@@ -57,12 +57,10 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const outlineRename = useOutlineRename(editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
-  const visibleChildren = useMemo(() => {
-    const children = editableElement.getOutlineChildren?.(isEditing) ?? [];
-    return isEditing
-      ? children
-      : children.filter((child) => !getEditableElementFor(child)?.getEditableElementInfo().isHidden);
-  }, [editableElement, isEditing]);
+  const outlineChildren = editableElement.getOutlineChildren?.(isEditing) ?? [];
+  const visibleChildren = isEditing
+    ? outlineChildren
+    : outlineChildren.filter((child) => !getEditableElementFor(child)?.getEditableElementInfo().isHidden);
 
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -258,7 +256,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     nodeButtonClone: css({
       color: theme.colors.text.secondary,
-      cursor: 'not-allowed',
     }),
     outlineInput: css({
       border: `1px solid ${theme.components.input.borderColor}`,

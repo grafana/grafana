@@ -1032,13 +1032,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "exploreLogsLimitedTimeRange",
-			Description:  "Used in Logs Drilldown to limit the time range",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "appPlatformGrpcClientAuth",
 			Description:  "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
 			Stage:        FeatureStageExperimental,
@@ -1147,14 +1140,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
-		},
-		{
-			Name:         "exploreMetricsRelatedLogs",
-			Description:  "Display Related Logs in Grafana Metrics Drilldown",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
-			FrontendOnly: true,
-			HideFromDocs: false,
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",
