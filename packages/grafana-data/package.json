@@ -47,7 +47,7 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "yarn themes-schema && tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
+    "build": "yarn themes-schema && tsc -p ./tsconfig.build.json && cp src/themes/schema.generated.json dist/types/themes/ && rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
