@@ -116,21 +116,16 @@ describe('ResourceExport', () => {
       expect(radioGroups).toHaveLength(1); // Only the export mode radio group
     });
 
-    it('should show format options when export mode is V1Resource', async () => {
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.V1Resource })} />);
-      await expandOptions();
+    it.each([ExportMode.V1Resource, ExportMode.V2Resource])(
+      'should show format options when export mode is %s',
+      async (exportMode) => {
+        render(<ResourceExport {...createDefaultProps({ exportMode })} />);
+        await expandOptions();
 
-      const radioGroups = screen.getAllByRole('radiogroup');
-      expect(radioGroups).toHaveLength(2); // Export mode + format
-    });
-
-    it('should show format options when export mode is V2Resource', async () => {
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.V2Resource })} />);
-      await expandOptions();
-
-      const radioGroups = screen.getAllByRole('radiogroup');
-      expect(radioGroups).toHaveLength(2);
-    });
+        const radioGroups = screen.getAllByRole('radiogroup');
+        expect(radioGroups).toHaveLength(2); // Export mode + format
+      }
+    );
 
     it('should have first format option selected when isViewingYAML is false', async () => {
       render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.V1Resource, isViewingYAML: false })} />);

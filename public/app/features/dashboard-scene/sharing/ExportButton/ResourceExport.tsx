@@ -119,7 +119,7 @@ export function ResourceExport({
         exportMode === ExportMode.Classic ||
         (initialSaveModelVersion === 'v2' && exportMode === ExportMode.V1Resource)) && (
         <Stack gap={1} alignItems="start">
-          <Label htmlFor="share-externally-toggle">
+          <Label>
             <Stack gap={0.5} alignItems="center">
               <Tooltip content={switchExportTooltip} placement="bottom">
                 <Icon name="info-circle" size="sm" />
@@ -128,7 +128,7 @@ export function ResourceExport({
             </Stack>
           </Label>
           <Switch
-            id="share-externally-toggle"
+            label={switchExportLabel}
             value={isSharingExternally}
             onChange={onShareExternallyChange}
             data-testid={selector.exportExternallyToggle}
