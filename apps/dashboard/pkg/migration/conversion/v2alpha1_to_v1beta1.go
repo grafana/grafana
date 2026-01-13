@@ -71,11 +71,6 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert panels: %w", err)
 	}
-	// Count total panels including those in collapsed rows
-	totalPanelsConverted := countTotalPanels(panels)
-	if totalPanelsConverted < len(in.Elements) {
-		return nil, fmt.Errorf("some panels were not converted from v2alpha1 to v1beta1")
-	}
 
 	if len(panels) > 0 {
 		dashboard["panels"] = panels
@@ -196,29 +191,6 @@ func convertLinksToV1(links []dashv2alpha1.DashboardDashboardLink) []map[string]
 		result = append(result, linkMap)
 	}
 	return result
-}
-
-// countTotalPanels counts all panels including those nested in collapsed row panels.
-func countTotalPanels(panels []interface{}) int {
-	count := 0
-	for _, p := range panels {
-		panel, ok := p.(map[string]interface{})
-		if !ok {
-			count++
-			continue
-		}
-
-		// Check if this is a row panel with nested panels
-		if panelType, ok := panel["type"].(string); ok && panelType == "row" {
-			if nestedPanels, ok := panel["panels"].([]interface{}); ok {
-				count += len(nestedPanels)
-			}
-			// Don't count the row itself as a panel element
-		} else {
-			count++
-		}
-	}
-	return count
 }
 
 // convertPanelsFromElementsAndLayout converts V2 layout structures to V1 panel arrays.
