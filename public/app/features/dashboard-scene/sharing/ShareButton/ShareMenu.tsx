@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { IconName, Menu } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';

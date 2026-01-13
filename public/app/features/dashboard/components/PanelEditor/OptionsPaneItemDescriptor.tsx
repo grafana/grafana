@@ -16,7 +16,7 @@ export interface OptionsPaneItemInfo {
   value?: any;
   description?: string;
   popularRank?: number;
-  render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement;
+  render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;
   skipField?: boolean;
   showIf?: () => boolean;
   /** Hook for controlling visibility */
@@ -38,7 +38,7 @@ export class OptionsPaneItemDescriptor {
     this.props = { ...props };
   }
 
-  render(searchQuery?: string) {
+  renderElement(searchQuery?: string) {
     return <OptionsPaneItem key={this.props.id} itemDescriptor={this} searchQuery={searchQuery} />;
   }
 

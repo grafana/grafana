@@ -106,3 +106,4 @@ export { findNumericFieldMinMax } from '../field/fieldOverrides';
 export { type PanelOptionsSupplier } from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
 export { type NestedValueAccess, type NestedPanelOptions, isNestedPanelOptions } from '../utils/OptionsUIBuilders';
+export { NewThemeOptionsSchema } from '../themes/createTheme';

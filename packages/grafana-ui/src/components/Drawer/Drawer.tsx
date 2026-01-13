@@ -1,9 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { useDialog } from '@react-aria/dialog';
-import { FocusScope } from '@react-aria/focus';
-import { useOverlay } from '@react-aria/overlays';
-import RcDrawer from 'rc-drawer';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { FloatingFocusManager, useFloating } from '@floating-ui/react';
+import RcDrawer from '@rc-component/drawer';
+import { ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -16,8 +14,6 @@ import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
-
-import 'rc-drawer/assets/index.css';
 
 export interface Props {
   children: ReactNode;
@@ -83,17 +79,16 @@ export function Drawer({
   const styles = useStyles2(getStyles);
   const wrapperStyles = useStyles2(getWrapperStyles, size);
   const dragStyles = useStyles2(getDragStyles);
+  const titleId = useId();
 
-  const overlayRef = React.useRef(null);
-  const { dialogProps, titleProps } = useDialog({}, overlayRef);
-  const { overlayProps } = useOverlay(
-    {
-      isDismissable: false,
-      isOpen: true,
-      onClose,
+  const { context, refs } = useFloating({
+    open: true,
+    onOpenChange: (open) => {
+      if (!open) {
+        onClose?.();
+      }
     },
-    overlayRef
-  );
+  });
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
@@ -119,6 +114,8 @@ export function Drawer({
           minWidth,
         },
       }}
+      aria-label={typeof title === 'string' ? selectors.components.Drawer.General.title(title) : undefined}
+      aria-labelledby={typeof title !== 'string' ? titleId : undefined}
       width={''}
       motion={{
         motionAppear: true,
@@ -131,18 +128,8 @@ export function Drawer({
         motionName: styles.maskMotion,
       }}
     >
-      <FocusScope restoreFocus contain autoFocus>
-        <div
-          aria-label={
-            typeof title === 'string'
-              ? selectors.components.Drawer.General.title(title)
-              : selectors.components.Drawer.General.title('no title')
-          }
-          className={styles.container}
-          {...overlayProps}
-          {...dialogProps}
-          ref={overlayRef}
-        >
+      <FloatingFocusManager context={context} modal>
+        <div className={styles.container} ref={refs.setFloating}>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             className={cx(dragStyles.dragHandleVertical, styles.resizer)}
@@ -161,7 +148,7 @@ export function Drawer({
             </div>
             {typeof title === 'string' ? (
               <Stack direction="column">
-                <Text element="h3" truncate {...titleProps}>
+                <Text element="h3" truncate>
                   {title}
                 </Text>
                 {subtitle && (
@@ -171,13 +158,13 @@ export function Drawer({
                 )}
               </Stack>
             ) : (
-              title
+              <div id={titleId}>{title}</div>
             )}
             {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
           </div>
           {!scrollableContent ? content : <ScrollContainer showScrollIndicators>{content}</ScrollContainer>}
         </div>
-      </FocusScope>
+      </FloatingFocusManager>
     </RcDrawer>
   );
 }
@@ -264,23 +251,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     drawer: css({
-      top: 0,
+      inset: 0,
+      position: 'fixed',
+      zIndex: theme.zIndex.modalBackdrop,
+      pointerEvents: 'none',
 
       '.rc-drawer-content-wrapper': {
         boxShadow: theme.shadows.z3,
       },
     }),
     drawerContent: css({
-      backgroundColor: `${theme.colors.background.primary} !important`,
+      backgroundColor: theme.colors.background.primary,
       display: 'flex',
-      overflow: 'unset !important',
       flexDirection: 'column',
+      height: '100%',
+      pointerEvents: 'auto',
+      width: '100%',
     }),
     drawerMotion: css({
       '&-appear': {
         [theme.transitions.handleMotion('no-preference')]: {
           transform: 'translateX(100%)',
-          transition: 'none !important',
+          transition: 'none',
         },
         [theme.transitions.handleMotion('reduce')]: {
           opacity: 0,
@@ -288,7 +280,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         '&-active': {
           [theme.transitions.handleMotion('no-preference')]: {
             transform: 'translateX(0)',
-            transition: `${theme.transitions.create('transform')} !important`,
+            transition: theme.transitions.create('transform'),
           },
           [theme.transitions.handleMotion('reduce')]: {
             transition: `opacity 0.2s ease-in-out`,
@@ -302,13 +294,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     // but we don't want the backdrop styling to apply over the top bar as it looks weird
     // instead have a child pseudo element to apply the backdrop styling below the top bar
     mask: css({
-      // The !important here is to override the default .rc-drawer-mask styles
-      backgroundColor: 'transparent !important',
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      position: 'fixed !important' as 'fixed',
+      inset: 0,
+      pointerEvents: 'auto',
+      position: 'fixed',
+      zIndex: theme.zIndex.modalBackdrop,
 
       '&:before': {
-        backgroundColor: `${theme.components.overlay.background} !important`,
+        backgroundColor: theme.components.overlay.background,
         bottom: 0,
         content: '""',
         left: 0,
@@ -370,8 +362,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
   return css({
+    bottom: 0,
     label: `drawer-content-wrapper-${size}`,
-    overflow: 'unset !important',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: theme.zIndex.modalBackdrop,
 
     [theme.breakpoints.down('md')]: {
       width: `calc(100% - ${theme.spacing(2)}) !important`,

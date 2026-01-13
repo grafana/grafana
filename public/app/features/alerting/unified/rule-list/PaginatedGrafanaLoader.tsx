@@ -17,7 +17,7 @@ import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
-import { groupFilter as groupFilterFn } from './hooks/filters';
+import { getGrafanaFilter, hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
@@ -35,20 +35,27 @@ export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter }: LoaderP
 }
 
 function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+  // When backend filters are enabled, groupFilter is handled on the backend
+  const filterState = { namespace: namespaceFilter, groupName: groupFilter };
+  const { backendFilter } = getGrafanaFilter(filterState);
+
+  const hasFilters = Boolean(groupFilter || namespaceFilter);
+  const needsClientSideFiltering = hasGrafanaClientSideFilters(filterState);
+
   // If there are filters, we don't want to populate the cache to avoid performance issues
   // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
-  const hasFilters = Boolean(groupFilter || namespaceFilter);
-
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({
-    populateCache: hasFilters ? false : true,
+    populateCache: needsClientSideFiltering ? false : true,
     limitAlerts: 0,
   });
 
   // If there are no filters we can match one frontend page to one API page.
   // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
-  const apiGroupPageSize = getApiGroupPageSize(hasFilters);
+  const apiGroupPageSize = getApiGroupPageSize(needsClientSideFiltering);
 
-  const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(apiGroupPageSize)));
+  const groupsGenerator = useRef(
+    toIndividualRuleGroups(grafanaGroupsGenerator({ groupLimit: apiGroupPageSize }, backendFilter))
+  );
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;
@@ -57,14 +64,24 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
     };
   }, []);
 
-  const filterFn = useMemo(
-    () => (group: PromRuleGroupDTO) =>
-      groupFilterFn(group, {
-        namespace: namespaceFilter,
-        groupName: groupFilter,
-      }),
-    [namespaceFilter, groupFilter]
-  );
+  const filterFn = useMemo(() => {
+    const { frontendFilter } = getGrafanaFilter({
+      namespace: namespaceFilter,
+      groupName: groupFilter,
+      freeFormWords: [],
+      ruleName: '',
+      labels: [],
+      ruleType: undefined,
+      ruleState: undefined,
+      ruleHealth: undefined,
+      dashboardUid: undefined,
+      dataSourceNames: [],
+      plugins: undefined,
+      contactPoint: undefined,
+      ruleSource: undefined,
+    });
+    return (group: PromRuleGroupDTO) => frontendFilter.groupMatches(group);
+  }, [namespaceFilter, groupFilter]);
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,

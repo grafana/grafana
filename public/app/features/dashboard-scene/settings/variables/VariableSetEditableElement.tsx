@@ -15,6 +15,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { openAddVariablePane } from './VariableAddEditableElement';
+import { isEditableVariableType } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
   const variableListId = useId();
@@ -47,7 +48,8 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   }
 
   public getOutlineChildren() {
-    return this.set.state.variables;
+    // Filter out system and snapshot variables - they should not appear in the outline
+    return this.set.state.variables.filter((variable) => isEditableVariableType(variable.state.type));
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
@@ -71,9 +73,12 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
     DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
   }, [set]);
 
+  // Filter out system and snapshot variables - they should not appear in the list
+  const editableVariables = variables.filter((variable) => isEditableVariableType(variable.state.type));
+
   return (
     <Stack direction="column" gap={0}>
-      {variables.map((variable) => (
+      {editableVariables.map((variable) => (
         // TODO fix keyboard a11y here
         // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
         <div className={styles.variableItem} key={variable.state.name} onClick={() => onEditVariable(variable)}>

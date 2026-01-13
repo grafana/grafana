@@ -13,26 +13,33 @@ import {
   map as _map,
   toPairs,
 } from 'lodash';
-import { lastValueFrom, merge, Observable, of } from 'rxjs';
+import { from, lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
+  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   dateMath,
   DateTime,
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  config,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { prepareAnnotation } from './migrations';
 import { OpenTsdbFilter, OpenTsdbOptions, OpenTsdbQuery } from './types';
 
-export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenTsdbOptions> {
+export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuery, OpenTsdbOptions> {
   type: 'opentsdb';
   url: string;
   name: string;
@@ -70,9 +77,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     };
   }
 
-  // Called once per panel (graph)
   query(options: DataQueryRequest<OpenTsdbQuery>): Observable<DataQueryResponse> {
-    // migrate annotations
     if (options.targets.some((target: OpenTsdbQuery) => target.fromAnnotations)) {
       const streams: Array<Observable<DataQueryResponse>> = [];
 
@@ -83,9 +88,6 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
               this.annotationEvent(options, annotation)
                 .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
                 .catch((ex) => {
-                  // grafana fetch throws the error so for annotation consistency among datasources
-                  // we return an empty array which displays as 'no events found'
-                  // in the annnotation editor
                   return subscriber.next({ data: [toDataFrame([])] });
                 })
                 .finally(() => subscriber.complete());
@@ -95,6 +97,20 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       }
 
       return merge(...streams);
+    }
+
+    if (config.featureToggles.opentsdbBackendMigration) {
+      const hasValidTargets = options.targets.some((target) => target.metric && !target.hide);
+      if (!hasValidTargets) {
+        return of({ data: [] });
+      }
+
+      return super.query(options).pipe(
+        map((response) => {
+          this._saveTagKeysFromFrames(response.data);
+          return response;
+        })
+      );
     }
 
     const start = this.convertToTSDBTime(options.range.raw.from, false, options.timezone);
@@ -160,6 +176,50 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   }
 
   annotationEvent(options: DataQueryRequest, annotation: OpenTsdbQuery): Promise<AnnotationEvent[]> {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      const query: OpenTsdbQuery = {
+        refId: annotation.refId ?? 'Anno',
+        metric: annotation.target,
+        aggregator: 'sum',
+        fromAnnotations: true,
+        isGlobal: annotation.isGlobal,
+        disableDownsampling: true,
+      };
+
+      const queryRequest: DataQueryRequest<OpenTsdbQuery> = {
+        ...options,
+        targets: [query],
+      };
+
+      return lastValueFrom(
+        super.query(queryRequest).pipe(
+          map((response) => {
+            const eventList: AnnotationEvent[] = [];
+
+            for (const frame of response.data) {
+              const annotationObject = annotation.isGlobal
+                ? frame.meta?.custom?.globalAnnotations
+                : frame.meta?.custom?.annotations;
+
+              if (annotationObject && isArray(annotationObject)) {
+                annotationObject.forEach((ann) => {
+                  const event: AnnotationEvent = {
+                    text: ann.description,
+                    time: Math.floor(ann.startTime) * 1000,
+                    annotation: annotation,
+                  };
+
+                  eventList.push(event);
+                });
+              }
+            }
+
+            return eventList;
+          })
+        )
+      );
+    }
+
     const start = this.convertToTSDBTime(options.range.raw.from, false, options.timezone);
     const end = this.convertToTSDBTime(options.range.raw.to, true, options.timezone);
     const qs = [];
@@ -259,7 +319,20 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     this.tagKeys[metricData.metric] = tagKeys;
   }
 
+  _saveTagKeysFromFrames(frames: DataFrame[]) {
+    for (const frame of frames) {
+      const tagKeys = frame.meta?.custom?.tagKeys;
+      if (frame.name && tagKeys) {
+        this.tagKeys[frame.name] = tagKeys;
+      }
+    }
+  }
+
   _performSuggestQuery(query: string, type: string) {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return from(this.getResource('api/suggest', { type, q: query, max: this.lookupLimit }));
+    }
+
     return this._get('/api/suggest', { type, q: query, max: this.lookupLimit }).pipe(
       map((result) => {
         return result.data;
@@ -270,6 +343,10 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   _performMetricKeyValueLookup(metric: string, keys: string) {
     if (!metric || !keys) {
       return of([]);
+    }
+
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return from(this.getResource('api/search/lookup', { type: 'keyvalue', metric, keys }));
     }
 
     const keysArray = keys.split(',').map((key) => {
@@ -301,6 +378,10 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   _performMetricKeyLookup(metric: string) {
     if (!metric) {
       return of([]);
+    }
+
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return from(this.getResource('api/search/lookup', { type: 'key', metric }));
     }
 
     return this._get('/api/search/lookup', { m: metric, limit: 1000 }).pipe(
@@ -397,7 +478,11 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     return Promise.resolve([]);
   }
 
-  testDatasource() {
+  async testDatasource() {
+    if (config.featureToggles.opentsdbBackendMigration) {
+      return await super.testDatasource();
+    }
+
     return lastValueFrom(
       this._performSuggestQuery('cpu', 'metrics').pipe(
         map(() => {
@@ -409,6 +494,11 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
   getAggregators() {
     if (this.aggregatorsPromise) {
+      return this.aggregatorsPromise;
+    }
+
+    if (config.featureToggles.opentsdbBackendMigration) {
+      this.aggregatorsPromise = this.getResource('api/aggregators');
       return this.aggregatorsPromise;
     }
 
@@ -427,6 +517,11 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
 
   getFilterTypes() {
     if (this.filterTypesPromise) {
+      return this.filterTypesPromise;
+    }
+
+    if (config.featureToggles.opentsdbBackendMigration) {
+      this.filterTypesPromise = this.getResource('api/config/filters');
       return this.filterTypesPromise;
     }
 

@@ -184,8 +184,11 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				continue
 			}
 
-			// nil safety.
-			annotations := ruleForEntry.Annotations
+			// Use persisted annotations if available, otherwise fall back to rule annotations
+			annotations := entry.Annotations
+			if len(annotations) == 0 {
+				annotations = ruleForEntry.Annotations
+			}
 			if annotations == nil {
 				annotations = make(map[string]string)
 			}
@@ -229,9 +232,7 @@ func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprin
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
-// to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
-// history.
+// DeleteStateByRuleUID removes the rule instances from cache and instanceStore.
 func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKeyWithGroup, reason string) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("Resetting state of the rule")
@@ -289,10 +290,14 @@ func (st *Manager) ForgetStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
 // history has to be saved, rule must not be nil.
 func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []StateTransition {
+	if rule == nil {
+		return nil
+	}
+
 	ruleKey := rule.GetKeyWithGroup()
 	transitions := st.DeleteStateByRuleUID(ctx, ruleKey, reason)
 
-	if rule == nil || st.historian == nil || len(transitions) == 0 {
+	if st.historian == nil || len(transitions) == 0 {
 		return transitions
 	}
 
@@ -532,7 +537,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 	missingTransitions := []StateTransition{}
 	var staleStatesCount int64 = 0
 
-	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+	toDelete := func(s *State) bool {
 		// We need only states that are not present in the current evaluation, so
 		// skip the state if it was just evaluated.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
@@ -584,6 +589,20 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 		missingTransitions = append(missingTransitions, record)
 
 		return isStale
+	}
+
+	states := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+
+	toDeleteStates := map[data.Fingerprint]struct{}{}
+	for _, s := range states {
+		if toDelete(s) {
+			toDeleteStates[s.CacheID] = struct{}{}
+		}
+	}
+
+	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+		_, ok := toDeleteStates[s.CacheID]
+		return ok
 	})
 
 	return missingTransitions, staleStatesCount

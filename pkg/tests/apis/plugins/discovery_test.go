@@ -13,12 +13,42 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 
 	t.Run("discovery", func(t *testing.T) {
 		helper := setupHelper(t)
-		disco := helper.GetGroupVersionInfoJSON("plugins.grafana.app")
+		disco, err := helper.GetGroupVersionInfoJSON("plugins.grafana.app")
+		require.NoError(t, err)
 		require.JSONEq(t, `[
 			{
 				"version": "v0alpha1",
 				"freshness": "Current",
 				"resources": [
+					{
+						"resource": "metas",
+						"responseKind": {
+							"group": "",
+							"kind": "Meta",
+							"version": ""
+						},
+						"scope": "Namespaced",
+						"singularResource": "meta",
+						"subresources": [
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "Meta",
+									"version": ""
+								},
+								"subresource": "status",
+								"verbs": [
+									"get",
+									"patch",
+									"update"
+								]
+							}
+						],
+						"verbs": [
+							"get",
+							"list"
+						]
+					},
 					{
 						"resource": "plugins",
 						"responseKind": {
@@ -27,19 +57,8 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 							"version": ""
 						},
 						"scope": "Namespaced",
-						"singularResource": "plugins",
+						"singularResource": "plugin",
 						"subresources": [
-							{
-								"responseKind": {
-									"group": "",
-									"kind": "ResourceCallOptions",
-									"version": ""
-								},
-								"subresource": "meta",
-								"verbs": [
-									"get"
-								]
-							},
 							{
 								"responseKind": {
 									"group": "",

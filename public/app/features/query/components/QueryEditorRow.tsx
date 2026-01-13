@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import { PureComponent, ReactNode } from 'react';
+import { PureComponent, ReactNode, type JSX, createRef } from 'react';
 
 import {
   CoreApp,
@@ -88,6 +88,7 @@ interface State<TQuery extends DataQuery> {
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
   dataSourceSrv = getDataSourceSrv();
   id = '';
+  editorRef = createRef<HTMLDivElement>();
 
   state: State<TQuery> = {
     datasource: null,
@@ -310,11 +311,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
-    if (datasource?.getQueryDisplayText) {
-      return datasource.getQueryDisplayText(this.props.query);
+
+    if (!datasource || typeof datasource.getQueryDisplayText !== 'function') {
+      return null;
     }
 
-    return null;
+    try {
+      return datasource.getQueryDisplayText(this.props.query);
+    } catch (error) {
+      // Some datasource plugins may throw errors in getQueryDisplayText
+      // Return null gracefully to prevent the query editor from crashing.
+      return null;
+    }
   }
 
   renderWarnings = (type: string): JSX.Element | null => {
@@ -412,6 +420,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
             datasourceFilters={datasource?.name ? [datasource.name] : []}
+            parentRef={this.editorRef}
           />
         )}
 
@@ -535,7 +544,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
 
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
+      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows} ref={this.editorRef}>
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader
             query={query}
@@ -604,9 +613,17 @@ function SavedQueryButtons(props: {
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
   datasourceFilters: string[];
+  parentRef: React.RefObject<HTMLDivElement>;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
-  return renderSavedQueryButtons(props.query, props.app, props.onUpdateSuccess, props.onSelectQuery);
+  return renderSavedQueryButtons(
+    props.query,
+    props.app,
+    props.onUpdateSuccess,
+    props.onSelectQuery,
+    undefined,
+    props.parentRef
+  );
 }
 
 // Will render editing header only if query library is enabled

@@ -24,14 +24,15 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	ctx := context.Background()
 	const repo = "move-test-repo"
 	testRepo := TestRepo{
-		Name: repo,
+		Name:   repo,
+		Target: "folder",
 		Copies: map[string]string{
 			"testdata/all-panels.json":    "dashboard1.json",
 			"testdata/text-options.json":  "dashboard2.json",
 			"testdata/timeline-demo.json": "folder/dashboard3.json",
 		},
 		ExpectedDashboards: 3,
-		ExpectedFolders:    1,
+		ExpectedFolders:    2, // folder sync creates a folder for the repo + one nested folder
 	}
 	helper.CreateRepo(t, testRepo)
 
@@ -236,6 +237,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		const refRepo = "move-ref-test-repo"
 		helper.CreateRepo(t, TestRepo{
 			Name:                   refRepo,
+			Target:                 "folder",
 			SkipResourceAssertions: true, // HACK: I am not sure why sometimes it's 6 or 3 dashbaords.
 		})
 

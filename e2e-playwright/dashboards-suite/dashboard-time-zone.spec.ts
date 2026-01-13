@@ -1,4 +1,4 @@
-import { addDays, addHours, differenceInCalendarDays, differenceInMinutes, isBefore, parseISO, toDate } from 'date-fns';
+import { differenceInMinutes, parseISO, toDate } from 'date-fns';
 import { Page } from 'playwright-core';
 
 import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
@@ -7,7 +7,8 @@ const TIMEZONE_DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.KUBERNETES_DASHBOARDS === 'true',
+    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });
 
@@ -213,10 +214,7 @@ const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => 
   }
 
   const utcDate = toDate(parseISO(inUtc));
-  const utcDateWithOffset = addHours(toDate(parseISO(inUtc)), offset);
-  const dayDifference = differenceInCalendarDays(utcDate, utcDateWithOffset); // if the utcDate +/- offset is the day before/after then we need to adjust reference
-  const dayOffset = isBefore(utcDateWithOffset, utcDate) ? dayDifference * -1 : dayDifference;
-  const tzDate = addDays(toDate(parseISO(inTz)), dayOffset); // adjust tzDate with any dayOffset
+  const tzDate = toDate(parseISO(inTz));
   const diff = Math.abs(differenceInMinutes(utcDate, tzDate)); // use Math.abs if tzDate is in future
 
   return diff <= Math.abs(offset * 60);

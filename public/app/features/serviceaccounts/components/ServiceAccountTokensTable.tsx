@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
+import type { JSX } from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, TimeZone, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { ApiKey } from 'app/types/apiKeys';
@@ -83,9 +84,9 @@ function formatDate(timeZone: TimeZone, expiration?: string): string {
 }
 
 function formatSecondsLeftUntilExpiration(secondsUntilExpiration: number): string {
-  const days = Math.ceil(secondsUntilExpiration / (3600 * 24));
-  const daysFormat = days > 1 ? `${days} days` : `${days} day`;
-  return `Expires in ${daysFormat}`;
+  const expirationTime = Date.now() + secondsUntilExpiration * 1000;
+  const daysFormat = dateTimeFormatTimeAgo(expirationTime, { timeZone: 'browser' });
+  return `Expires ${daysFormat}`;
 }
 
 const TokenRevoked = () => {
@@ -125,14 +126,14 @@ const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
   }
   if (token.secondsUntilExpiration) {
     return (
-      <span className={styles.secondsUntilExpiration}>
+      <span className={styles.secondsUntilExpiration} title={formatDate(timeZone, token.expiration)}>
         {formatSecondsLeftUntilExpiration(token.secondsUntilExpiration)}
       </span>
     );
   }
   if (token.hasExpired) {
     return (
-      <span className={styles.hasExpired}>
+      <span className={styles.hasExpired} title={formatDate(timeZone, token.expiration)}>
         <Trans i18nKey="serviceaccounts.token-expiration.expired-label">Expired</Trans>
         <span className={styles.tooltipContainer}>
           <Tooltip

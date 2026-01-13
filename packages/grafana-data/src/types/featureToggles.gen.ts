@@ -122,19 +122,9 @@ export interface FeatureToggles {
   */
   lokiLogsDataplane?: boolean;
   /**
-  * Support dataplane contract field name change for transformations and field name matchers where the name is different
-  * @default true
-  */
-  dataplaneFrontendFallback?: boolean;
-  /**
   * Disables dataplane specific processing in server side expressions.
   */
   disableSSEDataplane?: boolean;
-  /**
-  * Writes error logs to the request logger
-  * @default true
-  */
-  unifiedRequestLog?: boolean;
   /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
   */
@@ -165,11 +155,6 @@ export interface FeatureToggles {
   * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
-  /**
-  * Enables the transformations redesign
-  * @default true
-  */
-  transformationsRedesign?: boolean;
   /**
   * Enable support for Machine Learning in server-side expressions
   */
@@ -222,6 +207,10 @@ export interface FeatureToggles {
   */
   reportingRetries?: boolean;
   /**
+  * Enables CSV encoding options in the reporting feature
+  */
+  reportingCsvEncodingOptions?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
   sseGroupByDatasource?: boolean;
@@ -241,11 +230,6 @@ export interface FeatureToggles {
   * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
   */
   disableClassicHTTPHistogram?: boolean;
-  /**
-  * Enable format string transformer
-  * @default true
-  */
-  formatString?: boolean;
   /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
@@ -275,6 +259,10 @@ export interface FeatureToggles {
   * Adds support for Kubernetes correlations
   */
   kubernetesCorrelations?: boolean;
+  /**
+  * Adds support for Kubernetes unified storage quotas
+  */
+  kubernetesUnifiedStorageQuotas?: boolean;
   /**
   * Adds support for Kubernetes logs drilldown
   */
@@ -320,10 +308,6 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
-  * Routes explore requests to the new query service
-  */
-  queryServiceFromExplore?: boolean;
-  /**
   * Runs CloudWatch metrics queries as separate batches
   */
   cloudWatchBatchQueries?: boolean;
@@ -332,11 +316,6 @@ export interface FeatureToggles {
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
   /**
-  * Add cumulative and window functions to the add field from calculation transformation
-  * @default true
-  */
-  addFieldFromCalculationStatFunctions?: boolean;
-  /**
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   */
   alertmanagerRemoteSecondary?: boolean;
@@ -344,6 +323,14 @@ export interface FeatureToggles {
   * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
   */
   alertingProvenanceLockWrites?: boolean;
+  /**
+  * Enables the UI to use certain backend-side filters
+  */
+  alertingUIUseBackendFilters?: boolean;
+  /**
+  * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
+  */
+  alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
@@ -381,6 +368,22 @@ export interface FeatureToggles {
   */
   unlimitedLayoutsNesting?: boolean;
   /**
+  * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
+  */
+  drilldownRecommendations?: boolean;
+  /**
+  * Enables viewing non-applicable drilldowns on a panel level
+  */
+  perPanelNonApplicableDrilldowns?: boolean;
+  /**
+  * Enables a group by action per panel
+  */
+  panelGroupBy?: boolean;
+  /**
+  * Enables filtering by grouping labels on the panel level through legend or tooltip
+  */
+  perPanelFiltering?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   */
   panelFilterVariable?: boolean;
@@ -397,31 +400,9 @@ export interface FeatureToggles {
   */
   timeComparison?: boolean;
   /**
-  * Enables infinite scrolling for the Logs panel in Explore and Dashboards
-  * @default true
-  */
-  logsInfiniteScrolling?: boolean;
-  /**
-  * Enable filtering menu displayed when text of a log line is selected
-  * @default true
-  */
-  logRowsPopoverMenu?: boolean;
-  /**
-  * Disables passing host environment variable to plugin processes
-  */
-  pluginsSkipHostEnvVars?: boolean;
-  /**
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
-  /**
-  * Enables regression analysis transformation
-  */
-  regressionTransformation?: boolean;
-  /**
-  * Use the kubernetes API for feature toggle management in the frontend
-  */
-  kubernetesFeatureToggles?: boolean;
   /**
   * Enabled grafana cloud specific RBAC roles
   */
@@ -436,10 +417,9 @@ export interface FeatureToggles {
   */
   jitterAlertRulesWithinGroups?: boolean;
   /**
-  * Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
-  * @default true
+  * Enable audit logging with Kubernetes under app platform
   */
-  onPremToCloudMigrations?: boolean;
+  auditLoggingAppPlatform?: boolean;
   /**
   * Enable the secrets management API and services under app platform
   */
@@ -486,16 +466,6 @@ export interface FeatureToggles {
   */
   sqlExpressionsColumnAutoComplete?: boolean;
   /**
-  * Enables the group to nested table transformation
-  * @default true
-  */
-  groupToNestedTableTransformation?: boolean;
-  /**
-  * New implementation for the dashboard-to-PDF rendering
-  * @default true
-  */
-  newPDFRendering?: boolean;
-  /**
   * Enable grafana's embedded kube-aggregator
   */
   kubernetesAggregator?: boolean;
@@ -516,9 +486,17 @@ export interface FeatureToggles {
   */
   oauthRequireSubClaim?: boolean;
   /**
+  * Require that refresh tokens are present in oauth tokens.
+  */
+  refreshTokenRequired?: boolean;
+  /**
   * Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
+  /**
+  * Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
+  */
+  dashboardAdHocAndGroupByWrapper?: boolean;
   /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
@@ -537,21 +515,25 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
-  * Enable dashboard library experiments that are production ready
+  * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   */
   dashboardLibrary?: boolean;
   /**
-  * Enable suggested dashboards when creating new dashboards
+  * Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
   */
   suggestedDashboards?: boolean;
   /**
-  * Sets the logs table as default visualisation in logs explore
+  * Enables a flow to get started with a new dashboard from a template
   */
-  logsExploreTableDefaultVisualization?: boolean;
+  dashboardTemplates?: boolean;
   /**
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables saved searches for alert rules list
+  */
+  alertingSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   */
@@ -574,11 +556,6 @@ export interface FeatureToggles {
   * @default true
   */
   azureMonitorPrometheusExemplars?: boolean;
-  /**
-  * Enables pinning of nav items
-  * @default true
-  */
-  pinNavItems?: boolean;
   /**
   * Enables the gRPC server for authorization
   */
@@ -637,17 +614,13 @@ export interface FeatureToggles {
   */
   alertingPrometheusRulesPrimary?: boolean;
   /**
-  * Used in Logs Drilldown to split queries into multiple queries based on the number of shards
+  * Deprecated. Replace with lokiShardSplitting. Used in Logs Drilldown to split queries into multiple queries based on the number of shards
   */
   exploreLogsShardSplitting?: boolean;
   /**
   * Used in Logs Drilldown to query by aggregated metrics
   */
   exploreLogsAggregatedMetrics?: boolean;
-  /**
-  * Used in Logs Drilldown to limit the time range
-  */
-  exploreLogsLimitedTimeRange?: boolean;
   /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
@@ -676,14 +649,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Enable unified storage search
-  */
-  unifiedStorageSearch?: boolean;
-  /**
-  * Enable sprinkles on unified storage search
-  */
-  unifiedStorageSearchSprinkles?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -705,6 +670,10 @@ export interface FeatureToggles {
   */
   timeRangePan?: boolean;
   /**
+  * Enables new keyboard shortcuts for time range zoom operations
+  */
+  newTimeRangeZoomShortcuts?: boolean;
+  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -717,10 +686,6 @@ export interface FeatureToggles {
   * Enable passwordless login via magic link authentication
   */
   passwordlessMagicLinkAuthentication?: boolean;
-  /**
-  * Display Related Logs in Grafana Metrics Drilldown
-  */
-  exploreMetricsRelatedLogs?: boolean;
   /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   */
@@ -788,10 +753,6 @@ export interface FeatureToggles {
   */
   alertingNotificationsStepMode?: boolean;
   /**
-  * Enables a button to send feedback from the Grafana UI
-  */
-  feedbackButton?: boolean;
-  /**
   * Enable unified storage search UI
   */
   unifiedStorageSearchUI?: boolean;
@@ -801,19 +762,10 @@ export interface FeatureToggles {
   */
   elasticsearchCrossClusterSearch?: boolean;
   /**
-  * Displays the navigation history so the user can navigate back to previous pages
-  */
-  unifiedHistory?: boolean;
-  /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
   */
   lokiLabelNamesQueryApi?: boolean;
-  /**
-  * Enable the investigations backend API
-  * @default false
-  */
-  investigationsBackend?: boolean;
   /**
   * Enable folder's api server counts
   * @default false
@@ -849,6 +801,10 @@ export interface FeatureToggles {
   * Use a POST request to list rules by passing down the namespaces user has access to
   */
   fetchRulesUsingPost?: boolean;
+  /**
+  * Add compact=true when fetching rules
+  */
+  fetchRulesInCompactMode?: boolean;
   /**
   * Enables the new logs panel
   * @default true
@@ -903,10 +859,6 @@ export interface FeatureToggles {
   */
   infinityRunQueriesInParallel?: boolean;
   /**
-  * Renders invite user button along the app
-  */
-  inviteUserExperimental?: boolean;
-  /**
   * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
   * @default true
   */
@@ -916,11 +868,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingImportYAMLUI?: boolean;
-  /**
-  * Enables the unified storage history pruner
-  * @default true
-  */
-  unifiedStorageHistoryPruner?: boolean;
   /**
   * Enables the logs builder mode for the Azure Monitor data source
   * @default false
@@ -968,10 +915,6 @@ export interface FeatureToggles {
   */
   grafanaAssistantInProfilesDrilldown?: boolean;
   /**
-  * Enables using PGX instead of libpq for PostgreSQL datasource
-  */
-  postgresDSUsePGX?: boolean;
-  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;
@@ -994,7 +937,8 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Registers AuthZ /apis endpoint
+  * Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
+  * @deprecated
   */
   kubernetesAuthzApis?: boolean;
   /**
@@ -1010,14 +954,35 @@ export interface FeatureToggles {
   */
   kubernetesAuthzZanzanaSync?: boolean;
   /**
+  * Registers AuthZ Core Roles /apis endpoint
+  */
+  kubernetesAuthzCoreRolesApi?: boolean;
+  /**
+  * Registers AuthZ Roles /apis endpoint
+  */
+  kubernetesAuthzRolesApi?: boolean;
+  /**
+  * Registers AuthZ Role Bindings /apis endpoint
+  */
+  kubernetesAuthzRoleBindingsApi?: boolean;
+  /**
   * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
+  /**
+  * Routes external group mapping requests from /api to the /apis endpoint
+  */
+  kubernetesExternalGroupMapping?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
   */
   restoreDashboards?: boolean;
+  /**
+  * Enables recently viewed dashboards section in the browsing dashboard page
+  * @default false
+  */
+  recentlyViewedDashboards?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
@@ -1138,7 +1103,7 @@ export interface FeatureToggles {
   graphiteBackendMode?: boolean;
   /**
   * Enables the updated Azure Monitor resource picker
-  * @default false
+  * @default true
   */
   azureResourcePickerUpdates?: boolean;
   /**
@@ -1151,11 +1116,6 @@ export interface FeatureToggles {
   * @default false
   */
   pluginContainers?: boolean;
-  /**
-  * Run search queries through the tempo backend
-  * @default false
-  */
-  tempoSearchBackendMigration?: boolean;
   /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
@@ -1182,6 +1142,16 @@ export interface FeatureToggles {
   */
   newVizSuggestions?: boolean;
   /**
+  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
+  * @default false
+  */
+  externalVizSuggestions?: boolean;
+  /**
+  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
+  * @default false
+  */
+  heatmapRowsAxisOptions?: boolean;
+  /**
   * Restrict PanelChrome contents with overflow: hidden;
   * @default true
   */
@@ -1197,7 +1167,7 @@ export interface FeatureToggles {
   pluginStoreServiceLoading?: boolean;
   /**
   * Increases panel padding globally
-  * @default false
+  * @default true
   */
   newPanelPadding?: boolean;
   /**
@@ -1206,17 +1176,19 @@ export interface FeatureToggles {
   */
   onlyStoreActionSets?: boolean;
   /**
+  * Show insights for plugins in the plugin details page
+  * @default false
+  */
+  pluginInsights?: boolean;
+  /**
   * Enables a new panel time settings drawer
   */
   panelTimeSettings?: boolean;
   /**
-  * Enable template dashboards
+  * Enables the raw DSL query editor in the Elasticsearch data source
+  * @default false
   */
-  dashboardTemplates?: boolean;
-  /**
-  * Enables Advisor app installer
-  */
-  grafanaAdvisorAppInstaller?: boolean;
+  elasticsearchRawDSLQuery?: boolean;
   /**
   * Enables app platform API for annotations
   * @default false
@@ -1227,4 +1199,51 @@ export interface FeatureToggles {
   * @default false
   */
   awsDatasourcesHttpProxy?: boolean;
+  /**
+  * Show transformation quick-start cards in empty transformations state
+  */
+  transformationsEmptyPlaceholder?: boolean;
+  /**
+  * Run queries through the data source backend
+  * @default false
+  */
+  opentsdbBackendMigration?: boolean;
+  /**
+  * Enable TTL plugin instance manager
+  */
+  ttlPluginInstanceManager?: boolean;
+  /**
+  * Send X-Loki-Query-Limits-Context header to Loki on first split request
+  */
+  lokiQueryLimitsContext?: boolean;
+  /**
+  * Enables the new version of rudderstack
+  * @default false
+  */
+  rudderstackUpgrade?: boolean;
+  /**
+  * Adds support for Kubernetes alerting historian APIs
+  */
+  kubernetesAlertingHistorian?: boolean;
+  /**
+  * Enables plugins decoupling from bootdata
+  * @default false
+  */
+  useMTPlugins?: boolean;
+  /**
+  * Enables support for variables whose values can have multiple properties
+  */
+  multiPropsVariables?: boolean;
+  /**
+  * Enables the ASAP smoothing transformation for time series data
+  */
+  smoothingTransformation?: boolean;
+  /**
+  * Enables the creation of keepers that manage secrets stored on AWS secrets manager
+  */
+  secretsManagementAppPlatformAwsKeeper?: boolean;
+  /**
+  * Enables profiles exemplars support in profiles drilldown
+  */
+  profilesExemplars?: boolean;
 }

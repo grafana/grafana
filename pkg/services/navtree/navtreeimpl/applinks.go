@@ -216,18 +216,13 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		// Add Service Center as a standalone nav item under Alerts & IRM
 		if alertsSection := treeRoot.FindById(navtree.NavIDAlertsAndIncidents); alertsSection != nil {
 			serviceLink := &navtree.NavLink{
-				Text:       "Service Center",
+				Text:       "Service center",
 				Id:         "standalone-plugin-page-slo-services",
 				Url:        s.cfg.AppSubURL + "/a/grafana-slo-app/services",
 				SortWeight: 1,
 				IsNew:      true,
 			}
 			alertsSection.Children = append(alertsSection.Children, serviceLink)
-
-			reportsNavLink := navtree.FindByURL(alertsSection.Children, "/a/grafana-slo-app/reports")
-			if reportsNavLink != nil {
-				reportsNavLink.IsNew = true
-			}
 		}
 	}
 

@@ -72,10 +72,25 @@ type UpdateInfo struct {
 type FS interface {
 	fs.FS
 
-	Type() string
+	Type() FSType
 	Base() string
 	Files() ([]string, error)
 	Rel(string) (string, error)
+}
+
+type FSType string
+
+const (
+	FSTypeCDN   FSType = "cdn"
+	FSTypeLocal FSType = "local"
+)
+
+func (f FSType) CDN() bool {
+	return f == FSTypeCDN
+}
+
+func (f FSType) Local() bool {
+	return f == FSTypeLocal
 }
 
 type FSRemover interface {
@@ -125,7 +140,9 @@ type Licensing interface {
 }
 
 type SignatureCalculator interface {
-	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
+	// Calculate calculates the signature and returns both the signature and the manifest.
+	// The manifest may be nil if the plugin is unsigned or if an error occurred.
+	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, *PluginManifest, error)
 }
 
 type KeyStore interface {

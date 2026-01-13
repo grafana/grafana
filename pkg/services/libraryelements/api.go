@@ -148,6 +148,7 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
 		l.k8sHandler.getK8sLibraryElement(c)
 		return nil // already handled in the k8s handler
@@ -423,6 +424,9 @@ func (l *LibraryElementService) toLibraryElementError(err error, message string)
 	if errors.Is(err, model.ErrLibraryElementUIDTooLong) {
 		return response.Error(http.StatusBadRequest, model.ErrLibraryElementUIDTooLong.Error(), err)
 	}
+	if errors.Is(err, model.ErrLibraryElementProvisionedFolder) {
+		return response.Error(http.StatusConflict, model.ErrLibraryElementProvisionedFolder.Error(), err)
+	}
 	if err != nil && strings.Contains(err.Error(), "insufficient permissions") {
 		return response.Error(http.StatusForbidden, err.Error(), err)
 	}
@@ -497,9 +501,15 @@ type GetLibraryElementsParams struct {
 	// required:false
 	ExcludeUID string `json:"excludeUid"`
 	// A comma separated list of folder ID(s) to filter the elements by.
+	// Deprecated: Use FolderFilterUIDs instead.
 	// in:query
 	// required:false
+	// deprecated:true
 	FolderFilter string `json:"folderFilter"`
+	// A comma separated list of folder UID(s) to filter the elements by.
+	// in:query
+	// required:false
+	FolderFilterUIDs string `json:"folderFilterUIDs"`
 	// The number of results per page.
 	// in:query
 	// required:false

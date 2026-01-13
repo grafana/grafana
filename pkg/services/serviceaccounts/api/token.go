@@ -157,6 +157,10 @@ func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.
 	}
 
 	if api.cfg.SATokenExpirationDayLimit > 0 {
+		if cmd.SecondsToLive == 0 {
+			return response.Error(http.StatusBadRequest, "Cannot create token with no expiration date when service_accounts.token_expiration_day_limit is set", nil)
+		}
+
 		dayExpireLimit := time.Now().Add(time.Duration(api.cfg.SATokenExpirationDayLimit) * time.Hour * 24).Truncate(24 * time.Hour)
 		expirationDate := time.Now().Add(time.Duration(cmd.SecondsToLive) * time.Second).Truncate(24 * time.Hour)
 		if expirationDate.After(dayExpireLimit) {

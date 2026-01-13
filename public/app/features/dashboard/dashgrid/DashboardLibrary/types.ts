@@ -22,9 +22,9 @@ export interface Logo {
 
 export interface GnetDashboard {
   id: number;
-  uid: string;
   name: string;
   description: string;
+  slug: string;
   downloads: number;
   datasource: string;
   screenshots?: Screenshot[];
@@ -39,10 +39,11 @@ export interface GnetDashboard {
   orgSlug?: string;
   userId?: number;
   userName?: string;
+  panelTypeSlugs?: string[];
 }
 
 export interface GnetDashboardsResponse {
   page: number;
   pages: number;
-  dashboards: GnetDashboard[];
+  items: GnetDashboard[];
 }

@@ -283,23 +283,6 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
           queryType: 'expression',
         });
       }
-    })
-    .addCase(updateExpressionType, (state, action) => {
-      state.queries = state.queries.map((query) => {
-        return query.refId === action.payload.refId
-          ? {
-              ...query,
-              model: {
-                ...expressionDatasource.newQuery({
-                  type: action.payload.type,
-                  conditions: [{ ...defaultCondition, query: { params: [] } }],
-                  expression: '',
-                }),
-                refId: action.payload.refId,
-              },
-            }
-          : query;
-      });
     });
 });
 

@@ -1,5 +1,11 @@
+import { PanelModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { dispatch } from 'app/types/store';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { MappingContext } from '../SuggestedDashboardsModal';
@@ -9,33 +15,11 @@ import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
 
-/**
- * Extract datasource types from URL parameters for tracking purposes.
- * Supports two formats:
- * - datasourceTypes: JSON array of datasource types (for community dashboards)
- * - pluginId: Single datasource type (legacy format for provisioned dashboards)
- *
- * @returns Array of datasource type strings, or undefined if not available
- */
-export function extractDatasourceTypesFromUrl(): string[] | undefined {
-  const params = locationService.getSearchObject();
-  const datasourceTypesParam = params.datasourceTypes;
-  const pluginIdParam = params.pluginId;
-
-  if (datasourceTypesParam && typeof datasourceTypesParam === 'string') {
-    try {
-      return JSON.parse(datasourceTypesParam);
-    } catch {
-      // If parsing fails, return undefined
-      return undefined;
-    }
-  } else if (pluginIdParam && typeof pluginIdParam === 'string') {
-    // Fallback to legacy pluginId for provisioned dashboards
-    return [pluginIdParam];
-  }
-
-  return undefined;
-}
+// Constants for community dashboard pagination and API params
+// We want to get the most 6 downloaded dashboards, but we first query 12
+// to be sure the next filters we apply to that list doesn not reduce it below 6
+export const COMMUNITY_PAGE_SIZE_QUERY = 12;
+export const COMMUNITY_RESULT_SIZE = 6;
 
 /**
  * Extract thumbnail URL from dashboard screenshots
@@ -68,20 +52,10 @@ export function formatDate(dateString?: string): string {
 }
 
 /**
- * Create URL-friendly slug from dashboard name
- */
-export function createSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-/**
  * Build Grafana.com URL for a dashboard
  */
 export function buildGrafanaComUrl(dashboard: GnetDashboard): string {
-  return `https://grafana.com/grafana/dashboards/${dashboard.id}-${createSlug(dashboard.name)}/`;
+  return `https://grafana.com/grafana/dashboards/${dashboard.id}-${dashboard.slug}/`;
 }
 
 /**
@@ -150,11 +124,109 @@ interface UseCommunityDashboardParams {
 }
 
 /**
+ * Check if a panel contains JavaScript code using heuristic pattern matching.
+ *
+ * IMPORTANT: This is a heuristic-based detection, not a perfect mechanism.
+ *
+ * Patterns checked:
+ * - HTML/Script tags: Direct XSS attack vectors
+ * - Event handlers: Common JS injection points (onclick, onload, etc.)
+ * - Function declarations: Actual executable code patterns
+ * - eval/Function constructor: Dynamic code execution
+ * - setTimeout/setInterval: Deferred code execution
+ *
+ * What we DON'T check:
+ * - Panel title and description are excluded (already sanitized by Grafana's rendering layer)
+ * - Only the panel's options and configuration are scanned
+ *
+ * @param panel - The panel model to check
+ * @returns true if the panel might contain JavaScript code, false otherwise
+ */
+function canPanelContainJS(panel: PanelModel): boolean {
+  // Create a copy of the panel without title and description, as they are already sanitized
+  // This reduces false positives while still checking all other properties for JavaScript code
+  const { title, description, ...panelWithoutSanitizedFields } = panel;
+
+  let panelJson: string;
+  try {
+    panelJson = JSON.stringify(panelWithoutSanitizedFields);
+  } catch (e) {
+    console.warn('Failed to stringify panel', e);
+    return true;
+  }
+
+  // Patterns that indicate actual JavaScript code in values
+  const valuePatterns = [
+    /<script\b/i, // HTML script tags
+    /\bon\w+\s*=\s*/i, // HTML event handlers: onclick=, onload=, etc.
+    /\bjavascript\s*:/i,
+    /\bfunction\s*\(/, // Anonymous function declarations: function(
+    /\bfunction\s+[\w$]+\s*\(/, // Named function declarations: function name(
+    /=>\s*\{[^}]*\breturn\b/, // Arrow function with return statement: () => { return ... }
+    /\beval\s*\(/i, // eval() calls
+    /\bnew\s+Function\s*\(/i, // new Function() constructor
+    /\bsetTimeout\s*\(/i, // setTimeout calls
+    /\bsetInterval\s*\(/i, // setInterval calls
+  ];
+
+  // Patterns for suspicious JSON keys that might indicate JS hooks
+  const keyPatterns = [
+    /"on[a-zA-Z]+"\s*:/, // Event handlers as keys (both camelCase and lowercase): "onClick": or "onclick":
+    /"beforeRender"\s*:/i, // beforeRender hook as JSON key
+    /"afterRender"\s*:/i, // afterRender hook as JSON key
+    /"javascript"\s*:/i, // "javascript" as a key
+    /"customCode"\s*:/i, // Common pattern for custom code injection
+    /"script"\s*:/i, // "script" as a JSON key
+    /"handler"\s*:/i, // "handler" as a JSON key - common for event handlers
+  ];
+
+  const hasSuspiciousValue = valuePatterns.some((pattern) => {
+    if (pattern.test(panelJson)) {
+      console.warn('Panel contains JavaScript code in value');
+      return true;
+    }
+    return false;
+  });
+
+  const hasSuspiciousKey = keyPatterns.some((pattern) => {
+    if (pattern.test(panelJson)) {
+      console.warn('Panel contains JavaScript code in key');
+      return true;
+    }
+    return false;
+  });
+
+  return hasSuspiciousValue || hasSuspiciousKey;
+}
+
+function isPanelModel(panel: unknown): panel is PanelModel {
+  if (!panel || typeof panel !== 'object') {
+    return false;
+  }
+  return 'options' in panel && 'type' in panel;
+}
+
+/**
+ * Check if a dashboard contains JavaScript code. This is not a perfect check, but good enough
+ * Used as a second filter after the first filter of panel types (see api/dashboardLibraryApi.ts)
+ */
+const canDashboardContainJS = (dashboard: DashboardJson): boolean => {
+  return dashboard.panels?.some((panel) => {
+    // Skip library panels - they don't have options/type and are already validated
+    if (isPanelModel(panel)) {
+      return canPanelContainJS(panel);
+    }
+    return false;
+  });
+};
+
+/**
  * Handles the flow when a user selects a community dashboard:
  * 1. Tracks analytics
  * 2. Fetches full dashboard JSON with __inputs
- * 3. Attempts auto-mapping of datasources
- * 4. Either navigates directly or shows mapping form
+ * 3. Filters out dashboards that contain JavaScript code due to security reasons
+ * 4. Attempts auto-mapping of datasources
+ * 5. Either navigates directly or shows mapping form
  */
 export async function onUseCommunityDashboard({
   dashboard,
@@ -169,6 +241,10 @@ export async function onUseCommunityDashboard({
     // Fetch full dashboard from Gcom, this is the JSON with __inputs
     const fullDashboard = await fetchCommunityDashboard(dashboard.id);
     const dashboardJson = fullDashboard.json;
+
+    if (canDashboardContainJS(dashboardJson)) {
+      throw new Error(`Community dashboard ${dashboard.id} "${dashboard.name}" might contain JavaScript code`);
+    }
 
     // Parse datasource requirements from __inputs
     const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
@@ -227,6 +303,11 @@ export async function onUseCommunityDashboard({
     }
   } catch (err) {
     console.error('Error loading community dashboard:', err);
-    // TODO: Show error notification
+    dispatch(
+      notifyApp(
+        createErrorNotification(t('dashboard-library.community-error-title', 'Error loading community dashboard'))
+      )
+    );
+    throw err;
   }
 }

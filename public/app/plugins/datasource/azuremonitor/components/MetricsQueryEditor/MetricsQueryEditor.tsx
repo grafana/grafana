@@ -2,9 +2,10 @@ import { PanelData } from '@grafana/data';
 import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/plugin-ui';
 
 import { multiResourceCompatibleTypes } from '../../azureMetadata/resourceTypes';
+import { AzureMonitorResource } from '../../dataquery.gen';
 import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery, AzureMonitorResource } from '../../types/query';
+import { AzureMonitorQuery } from '../../types/query';
 import { AzureMonitorOption, AzureMonitorErrorish } from '../../types/types';
 import ResourceField from '../ResourceField/ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';

@@ -224,6 +224,7 @@ export class GrafanaBootConfig {
   rudderstackWriteKey?: string;
   rudderstackDataPlaneUrl?: string;
   rudderstackSdkUrl?: string;
+  rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
   analyticsConsoleReporting = false;
@@ -241,6 +242,7 @@ export class GrafanaBootConfig {
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
+  cloudMigrationEnabled?: boolean;
   cloudMigrationIsTarget?: boolean;
   cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;

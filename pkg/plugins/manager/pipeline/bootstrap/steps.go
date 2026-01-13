@@ -5,11 +5,13 @@ import (
 	"path"
 	"slices"
 
-	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/Machiel/slugify"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -27,12 +29,13 @@ func DefaultConstructFunc(cfg *config.PluginManagementCfg, signatureCalculator p
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
-func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
+func DefaultDecorateFuncs(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
 		AppChildDecorateFunc(),
 		SkipHostEnvVarsDecorateFunc(cfg),
+		ModuleHashDecorateFunc(cfg, cdn),
 	}
 }
 
@@ -47,19 +50,30 @@ func NewDefaultConstructor(cfg *config.PluginManagementCfg, signatureCalculator 
 
 // Construct will calculate the plugin's signature state and create the plugin using the pluginFactoryFunc.
 func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error) {
-	sig, err := c.signatureCalculator.Calculate(ctx, src, bundle.Primary)
+	// Calculate signature and cache manifest
+	sig, manifest, err := c.signatureCalculator.Calculate(ctx, src, bundle.Primary)
 	if err != nil {
 		c.log.Warn("Could not calculate plugin signature state", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err
 	}
+
 	plugin, err := c.pluginFactoryFunc(bundle, src.PluginClass(ctx), sig)
 	if err != nil {
 		c.log.Error("Could not create primary plugin base", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err
 	}
+
+	plugin.Manifest = manifest
+
 	res := make([]*plugins.Plugin, 0, len(plugin.Children)+1)
 	res = append(res, plugin)
-	res = append(res, plugin.Children...)
+	for _, child := range plugin.Children {
+		// Child plugins use the parent's manifest
+		if child.Parent != nil && child.Parent.Manifest != nil {
+			child.Manifest = child.Parent.Manifest
+		}
+		res = append(res, child)
+	}
 	return res, nil
 }
 
@@ -137,11 +151,18 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 }
 
 // SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
-// It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin is not present in the
-// ForwardHostEnvVars plugin ids list.
+// It will be set to true if the plugin is not present in the ForwardHostEnvVars plugin ids list.
 func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.SkipHostEnvVars = cfg.Features.SkipHostEnvVarsEnabled && !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
+		p.SkipHostEnvVars = !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
+		return p, nil
+	}
+}
+
+// ModuleHashDecorateFunc returns a DecorateFunc that calculates and sets the module hash for the plugin.
+func ModuleHashDecorateFunc(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) DecorateFunc {
+	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		p.ModuleHash = pluginassets.CalculateModuleHash(p, cfg, cdn)
 		return p, nil
 	}
 }

@@ -3,10 +3,11 @@ import { EntityGroup, Function, ScalarParameter, TabularParameter } from '@kusto
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '@grafana/azure-sdk';
 import { DataSourceInstanceSettings, DataSourceSettings, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 
+import { ResultFormat } from '../dataquery.gen';
 import Datasource from '../datasource';
 
 import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
-import { AzureMonitorQuery, ResultFormat } from './query';
+import { AzureMonitorQuery } from './query';
 
 export type AzureMonitorDataSourceSettings = DataSourceSettings<
   AzureMonitorDataSourceJsonData,

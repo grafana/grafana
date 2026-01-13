@@ -19,10 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugin"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -161,9 +161,9 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pr := prometheus.ProvideService(hcp)
 	tmpo := tempo.ProvideService(hcp, tracer)
 	td := testdatasource.ProvideService()
-	pg := postgres.ProvideService(cfg)
+	pg := postgres.ProvideService()
 	my := mysql.ProvideService()
-	ms := mssql.ProvideService(cfg)
+	ms := mssql.ProvideService()
 	db := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
 	sv2 := searchV2.ProvideService(cfg, db, nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil, features)

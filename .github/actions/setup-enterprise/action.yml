@@ -33,16 +33,48 @@ runs:
       env:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       run: |
-        git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise;
+        RETRIES="5"
+
+        for i in $(seq 1 $RETRIES); do
+          echo "Attempt $i to clone..."
+
+          if git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
+            echo "Clone succeeded on attempt $i"
+            break
+          fi
+
+          if [ $i -eq $RETRIES ]; then
+            echo "Clone failed after $RETRIES attempts, failing pipeline."
+            exit 1
+          fi
+
+          sleep "$i"
+        done
 
         cd ../grafana-enterprise
 
-        if git checkout ${GITHUB_HEAD_REF}; then
-          echo "checked out ${GITHUB_HEAD_REF}"
-        elif git checkout ${GITHUB_BASE_REF}; then
-          echo "checked out ${GITHUB_BASE_REF}"
-        else
-          git checkout main
-        fi
+        for i in $(seq 1 $RETRIES); do
+          echo "Attempt $i to checkout..."
+
+          if git checkout ${GITHUB_HEAD_REF}; then
+            echo "checked out ${GITHUB_HEAD_REF}"
+          elif git checkout ${GITHUB_BASE_REF}; then
+            echo "checked out ${GITHUB_BASE_REF}"
+          else
+            git checkout main
+          fi
+
+          if [ $? -eq 0 ]; then
+            echo "Checkout succeeded, breaking retry loop"
+            break
+          fi
+
+          if [ $i -eq $RETRIES ]; then
+            echo "Checkout failed after $RETRIES attempts, failing pipeline."
+            exit 1
+          fi
+
+          sleep "$i"
+        done
 
         QUIET=1 ./build.sh

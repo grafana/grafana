@@ -2,19 +2,12 @@ package pluginassets
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/hex"
-	"fmt"
-	"path"
-	"path/filepath"
-	"sync"
 
 	"github.com/Masterminds/semver/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
@@ -28,24 +21,20 @@ var (
 	scriptLoadingMinSupportedVersion = semver.MustParse(CreatePluginVersionScriptSupportEnabled)
 )
 
-func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, sig *signature.Signature, store pluginstore.Store) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, store pluginstore.Store) *Service {
 	return &Service{
-		cfg:       cfg,
-		cdn:       cdn,
-		signature: sig,
-		store:     store,
-		log:       log.New("pluginassets"),
+		cfg:   cfg,
+		cdn:   cdn,
+		store: store,
+		log:   log.New("pluginassets"),
 	}
 }
 
 type Service struct {
-	cfg       *config.PluginManagementCfg
-	cdn       *pluginscdn.Service
-	signature *signature.Signature
-	store     pluginstore.Store
-	log       log.Logger
-
-	moduleHashCache sync.Map
+	cfg   *config.PluginManagementCfg
+	cdn   *pluginscdn.Service
+	store pluginstore.Store
+	log   log.Logger
 }
 
 // LoadingStrategy calculates the loading strategy for a plugin.
@@ -70,105 +59,16 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 
 		// Since the parent plugin is not explicitly configured as script loading compatible,
 		// If the plugin is either loaded from the CDN (via its parent) or contains Angular, we should use fetch
-		if s.cdnEnabled(p.Parent.ID, p.Class) || p.Angular.Detected {
+		if s.cdnEnabled(p.Parent.ID, p.FS) || p.Angular.Detected {
 			return plugins.LoadingStrategyFetch
 		}
 	}
 
-	if !s.cdnEnabled(p.ID, p.Class) && !p.Angular.Detected {
+	if !s.cdnEnabled(p.ID, p.FS) && !p.Angular.Detected {
 		return plugins.LoadingStrategyScript
 	}
 
 	return plugins.LoadingStrategyFetch
-}
-
-// ModuleHash returns the module.js SHA256 hash for a plugin in the format expected by the browser for SRI checks.
-// The module hash is read from the plugin's MANIFEST.txt file.
-// The plugin can also be a nested plugin.
-// If the plugin is unsigned, an empty string is returned.
-// The results are cached to avoid repeated reads from the MANIFEST.txt file.
-func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
-	k := s.moduleHashCacheKey(p)
-	cachedValue, ok := s.moduleHashCache.Load(k)
-	if ok {
-		return cachedValue.(string)
-	}
-	mh, err := s.moduleHash(ctx, p, "")
-	if err != nil {
-		s.log.Error("Failed to calculate module hash", "plugin", p.ID, "error", err)
-	}
-	s.moduleHashCache.Store(k, mh)
-	return mh
-}
-
-// moduleHash is the underlying function for ModuleHash. See its documentation for more information.
-// If the plugin is not a CDN plugin, the function will return an empty string.
-// It will read the module hash from the MANIFEST.txt in the [[plugins.FS]] of the provided plugin.
-// If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
-// module.js file, rather than for the provided plugin.
-func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSBase string) (r string, err error) {
-	if !s.cfg.Features.SriChecksEnabled {
-		return "", nil
-	}
-
-	// Ignore unsigned plugins
-	if !p.Signature.IsValid() {
-		return "", nil
-	}
-
-	if p.Parent != nil {
-		// Nested plugin
-		parent, ok := s.store.Plugin(ctx, p.Parent.ID)
-		if !ok {
-			return "", fmt.Errorf("parent plugin plugin %q for child plugin %q not found", p.Parent.ID, p.ID)
-		}
-
-		// The module hash is contained within the parent's MANIFEST.txt file.
-		// For example, the parent's MANIFEST.txt will contain an entry similar to this:
-		//
-		// ```
-		// "datasource/module.js": "1234567890abcdef..."
-		// ```
-		//
-		// Recursively call moduleHash with the parent plugin and with the children plugin folder path
-		// to get the correct module hash for the nested plugin.
-		if childFSBase == "" {
-			childFSBase = p.Base()
-		}
-		return s.moduleHash(ctx, parent, childFSBase)
-	}
-
-	// Only CDN plugins are supported for SRI checks.
-	// CDN plugins have the version as part of the URL, which acts as a cache-buster.
-	// Needed due to: https://github.com/grafana/plugin-tools/pull/1426
-	// FS plugins build before this change will have SRI mismatch issues.
-	if !s.cdnEnabled(p.ID, p.Class) {
-		return "", nil
-	}
-
-	manifest, err := s.signature.ReadPluginManifestFromFS(ctx, p.FS)
-	if err != nil {
-		return "", fmt.Errorf("read plugin manifest: %w", err)
-	}
-	if !manifest.IsV2() {
-		return "", nil
-	}
-
-	var childPath string
-	if childFSBase != "" {
-		// Calculate the relative path of the child plugin folder from the parent plugin folder.
-		childPath, err = p.FS.Rel(childFSBase)
-		if err != nil {
-			return "", fmt.Errorf("rel path: %w", err)
-		}
-		// MANIFETS.txt uses forward slashes as path separators.
-		childPath = filepath.ToSlash(childPath)
-	}
-	moduleHash, ok := manifest.Files[path.Join(childPath, "module.js")]
-	if !ok {
-		return "", nil
-	}
-	return convertHashForSRI(moduleHash)
 }
 
 func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
@@ -185,20 +85,6 @@ func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
 	return false
 }
 
-func (s *Service) cdnEnabled(pluginID string, class plugins.Class) bool {
-	return s.cdn.PluginSupported(pluginID) || class == plugins.ClassCDN
-}
-
-// convertHashForSRI takes a SHA256 hash string and returns it as expected by the browser for SRI checks.
-func convertHashForSRI(h string) (string, error) {
-	hb, err := hex.DecodeString(h)
-	if err != nil {
-		return "", fmt.Errorf("hex decode string: %w", err)
-	}
-	return "sha256-" + base64.StdEncoding.EncodeToString(hb), nil
-}
-
-// moduleHashCacheKey returns a unique key for the module hash cache.
-func (s *Service) moduleHashCacheKey(p pluginstore.Plugin) string {
-	return p.ID + ":" + p.Info.Version
+func (s *Service) cdnEnabled(pluginID string, fs plugins.FS) bool {
+	return s.cdn.PluginSupported(pluginID) || fs.Type().CDN()
 }

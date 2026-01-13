@@ -27,7 +27,6 @@ var _ contracts.SecureValueService = (*SecureValueService)(nil)
 type SecureValueService struct {
 	tracer                     trace.Tracer
 	accessClient               claims.AccessClient
-	database                   contracts.Database
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	secureValueValidator       contracts.SecureValueValidator
 	secureValueMutator         contracts.SecureValueMutator
@@ -39,7 +38,6 @@ type SecureValueService struct {
 func ProvideSecureValueService(
 	tracer trace.Tracer,
 	accessClient claims.AccessClient,
-	database contracts.Database,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	secureValueValidator contracts.SecureValueValidator,
 	secureValueMutator contracts.SecureValueMutator,
@@ -50,7 +48,6 @@ func ProvideSecureValueService(
 	return &SecureValueService{
 		tracer:                     tracer,
 		accessClient:               accessClient,
-		database:                   database,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		secureValueValidator:       secureValueValidator,
 		secureValueMutator:         secureValueMutator,
@@ -93,7 +90,13 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.Secur
 		s.metrics.SecureValueCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	return s.createNewVersion(ctx, sv, actorUID)
+	// Secure value creation uses the active keeper
+	keeperName, keeperCfg, err := s.keeperMetadataStorage.GetActiveKeeperConfig(ctx, sv.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("fetching active keeper config: namespace=%+v %w", sv.Namespace, err)
+	}
+
+	return s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID)
 }
 
 func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, sync bool, updateErr error) {
@@ -128,38 +131,41 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		s.metrics.SecureValueUpdateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	if newSecureValue.Spec.Value == nil {
-		currentVersion, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{})
-		if err != nil {
-			return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
-		}
+	currentVersion, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{})
+	if err != nil {
+		return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
+	}
 
-		// TODO: does this need to be for update?
-		keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, newSecureValue.Namespace, newSecureValue.Spec.Keeper, contracts.ReadOpts{ForUpdate: true})
-		if err != nil {
-			return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", newSecureValue.Namespace, newSecureValue.Spec.Keeper, err)
-		}
+	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{})
+	if err != nil {
+		return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v keeper: %q %w", newSecureValue.Namespace, currentVersion.Status.Keeper, err)
+	}
 
+	if newSecureValue.Spec.Value == nil && newSecureValue.Spec.Ref == nil {
 		keeper, err := s.keeperService.KeeperForConfig(keeperCfg)
 		if err != nil {
-			return nil, false, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", newSecureValue.Namespace, newSecureValue.Spec.Keeper, err)
+			return nil, false, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", newSecureValue.Namespace, newSecureValue.Status.Keeper, err)
 		}
-		logging.FromContext(ctx).Debug("retrieved keeper", "namespace", newSecureValue.Namespace, "keeperName", newSecureValue.Spec.Keeper, "type", keeperCfg.Type())
+		logging.FromContext(ctx).Debug("retrieved keeper", "namespace", newSecureValue.Namespace, "type", keeperCfg.Type())
 
 		secret, err := keeper.Expose(ctx, keeperCfg, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, currentVersion.Status.Version)
 		if err != nil {
-			return nil, false, fmt.Errorf("reading secret value from keeper: %w", err)
+			return nil, false, fmt.Errorf("reading secret value from keeper: %w %w", contracts.ErrSecureValueMissingSecretAndRef, err)
 		}
 
 		newSecureValue.Spec.Value = &secret
 	}
 
+	// Secure value updates use the keeper used to create the secure value
 	const updateIsSync = true
-	createdSv, err := s.createNewVersion(ctx, newSecureValue, actorUID)
+	createdSv, err := s.createNewVersion(ctx, currentVersion.Status.Keeper, keeperCfg, newSecureValue, actorUID)
 	return createdSv, updateIsSync, err
 }
 
-func (s *SecureValueService) createNewVersion(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
+func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName string, keeperCfg secretv1beta1.KeeperConfig, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
+	if keeperName == "" {
+		return nil, fmt.Errorf("keeper name is required, got empty string")
+	}
 	if err := s.secureValueMutator.Mutate(sv, admission.Create); err != nil {
 		return nil, err
 	}
@@ -168,37 +174,47 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, sv *secretv1b
 		return nil, contracts.NewErrValidateSecureValue(errorList)
 	}
 
-	createdSv, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
+	if sv.Spec.Ref != nil && keeperCfg.Type() == secretv1beta1.SystemKeeperType {
+		return nil, contracts.ErrReferenceWithSystemKeeper
+	}
+
+	createdSv, err := s.secureValueMetadataStorage.Create(ctx, keeperName, sv, actorUID)
 	if err != nil {
 		return nil, fmt.Errorf("creating secure value: %w", err)
 	}
+
 	createdSv.Status = secretv1beta1.SecureValueStatus{
 		Version: createdSv.Status.Version,
-	}
-
-	// TODO: does this need to be for update?
-	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, createdSv.Namespace, createdSv.Spec.Keeper, contracts.ReadOpts{ForUpdate: true})
-	if err != nil {
-		return nil, fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", createdSv.Namespace, createdSv.Spec.Keeper, err)
+		Keeper:  keeperName,
 	}
 
 	keeper, err := s.keeperService.KeeperForConfig(keeperCfg)
 	if err != nil {
-		return nil, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", createdSv.Namespace, createdSv.Spec.Keeper, err)
+		return nil, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", createdSv.Namespace, keeperName, err)
 	}
-	logging.FromContext(ctx).Debug("retrieved keeper", "namespace", createdSv.Namespace, "keeperName", createdSv.Spec.Keeper, "type", keeperCfg.Type())
-
+	logging.FromContext(ctx).Debug("retrieved keeper", "namespace", createdSv.Namespace, "type", keeperCfg.Type())
 	// TODO: can we stop using external id?
 	// TODO: store uses only the namespace and returns and id. It could be a kv instead.
 	// TODO: check that the encrypted store works with multiple versions
-	externalID, err := keeper.Store(ctx, keeperCfg, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
-	if err != nil {
-		return nil, fmt.Errorf("storing secure value in keeper: %w", err)
-	}
-	createdSv.Status.ExternalID = string(externalID)
+	switch {
+	case sv.Spec.Value != nil:
+		externalID, err := keeper.Store(ctx, keeperCfg, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
+		if err != nil {
+			return nil, fmt.Errorf("storing secure value in keeper: %w", err)
+		}
+		createdSv.Status.ExternalID = string(externalID)
 
-	if err := s.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, externalID); err != nil {
-		return nil, fmt.Errorf("setting secure value external id: %w", err)
+		if err := s.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, externalID); err != nil {
+			return nil, fmt.Errorf("setting secure value external id: %w", err)
+		}
+
+	case sv.Spec.Ref != nil:
+		// No-op, there's nothing to store in the keeper since the
+		// secret is already stored in the 3rd party secret store
+		// and it's being referenced.
+
+	default:
+		return nil, fmt.Errorf("secure value doesn't specify either a secret value or a reference")
 	}
 
 	if err := s.secureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version); err != nil {
@@ -363,4 +379,21 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 	}
 
 	return sv, nil
+}
+
+func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace xkube.Namespace, name string) error {
+	// The system keeper is not in the database, so skip checking it exists.
+	// TODO: should the system keeper be in the database?
+	if name != contracts.SystemKeeperName {
+		// Check keeper exists. No need to worry about time of check to time of use
+		// since trying to activate a just deleted keeper will result in all
+		// keepers being inactive and defaulting to the system keeper.
+		if _, err := s.keeperMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{}); err != nil {
+			return fmt.Errorf("reading keeper before setting as active: %w", err)
+		}
+	}
+	if err := s.keeperMetadataStorage.SetAsActive(ctx, namespace, name); err != nil {
+		return fmt.Errorf("calling keeper metadata storage to set keeper as active: %w", err)
+	}
+	return nil
 }

@@ -4,31 +4,37 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { RuleFrame, countRules, parseAlertstateFilter } from './SummaryStats';
 
 describe('parseAlertstateFilter', () => {
-  it('should return "firing" when filter contains alertstate="firing"', () => {
-    expect(parseAlertstateFilter('alertstate="firing"')).toBe(PromAlertingRuleState.Firing);
+  it('should return array with "firing" when filter contains alertstate="firing"', () => {
+    expect(parseAlertstateFilter('alertstate="firing"')).toEqual([PromAlertingRuleState.Firing]);
   });
 
-  it('should return "pending" when filter contains alertstate="pending"', () => {
-    expect(parseAlertstateFilter('alertstate="pending"')).toBe(PromAlertingRuleState.Pending);
+  it('should return array with "pending" when filter contains alertstate="pending"', () => {
+    expect(parseAlertstateFilter('alertstate="pending"')).toEqual([PromAlertingRuleState.Pending]);
   });
 
-  it('should return null when filter contains both firing and pending', () => {
-    expect(parseAlertstateFilter('alertstate=~"firing|pending"')).toBe(null);
+  it('should return both states when filter contains both firing and pending', () => {
+    expect(parseAlertstateFilter('alertstate=~"firing|pending"')).toEqual([
+      PromAlertingRuleState.Firing,
+      PromAlertingRuleState.Pending,
+    ]);
   });
 
-  it('should return null when no alertstate filter', () => {
-    expect(parseAlertstateFilter('')).toBe(null);
-    expect(parseAlertstateFilter('namespace="default"')).toBe(null);
+  it('should return both states when no alertstate filter', () => {
+    expect(parseAlertstateFilter('')).toEqual([PromAlertingRuleState.Firing, PromAlertingRuleState.Pending]);
+    expect(parseAlertstateFilter('namespace="default"')).toEqual([
+      PromAlertingRuleState.Firing,
+      PromAlertingRuleState.Pending,
+    ]);
   });
 
   it('should handle regex operator =~', () => {
-    expect(parseAlertstateFilter('alertstate=~"firing"')).toBe(PromAlertingRuleState.Firing);
-    expect(parseAlertstateFilter('alertstate=~"pending"')).toBe(PromAlertingRuleState.Pending);
+    expect(parseAlertstateFilter('alertstate=~"firing"')).toEqual([PromAlertingRuleState.Firing]);
+    expect(parseAlertstateFilter('alertstate=~"pending"')).toEqual([PromAlertingRuleState.Pending]);
   });
 
   it('should handle whitespace', () => {
-    expect(parseAlertstateFilter('alertstate = "firing"')).toBe(PromAlertingRuleState.Firing);
-    expect(parseAlertstateFilter('alertstate =~ "pending"')).toBe(PromAlertingRuleState.Pending);
+    expect(parseAlertstateFilter('alertstate = "firing"')).toEqual([PromAlertingRuleState.Firing]);
+    expect(parseAlertstateFilter('alertstate =~ "pending"')).toEqual([PromAlertingRuleState.Pending]);
   });
 });
 
@@ -58,7 +64,7 @@ describe('countRules', () => {
         { ruleUID: 'rule3', alertstate: PromAlertingRuleState.Pending },
       ]);
 
-      const result = countRules(ruleDfv, null);
+      const result = countRules(ruleDfv, [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending]);
 
       expect(result.firing).toBe(2);
       expect(result.pending).toBe(1);
@@ -71,13 +77,13 @@ describe('countRules', () => {
         { ruleUID: 'rule3', alertstate: PromAlertingRuleState.Firing },
       ]);
 
-      const result = countRules(ruleDfv, null);
+      const result = countRules(ruleDfv, [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending]);
 
       expect(result.firing).toBe(1);
       expect(result.pending).toBe(2);
     });
 
-    it('should count rules with BOTH firing and pending as firing (firing takes precedence)', () => {
+    it('should count rules with BOTH firing and pending in both counts', () => {
       const ruleDfv = createMockRuleDfv([
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Firing },
         { ruleUID: 'rule1', alertstate: PromAlertingRuleState.Pending }, // Same rule, both states
@@ -85,13 +91,13 @@ describe('countRules', () => {
         { ruleUID: 'rule3', alertstate: PromAlertingRuleState.Pending }, // Only pending
       ]);
 
-      const result = countRules(ruleDfv, null);
+      const result = countRules(ruleDfv, [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending]);
 
-      // rule1 should be counted as firing (firing takes precedence)
-      // rule2 should be counted as firing
-      // rule3 should be counted as pending
+      // rule1 has both states, so counted in both
+      // rule2 counted only in firing
+      // rule3 counted only in pending
       expect(result.firing).toBe(2); // rule1 and rule2
-      expect(result.pending).toBe(1); // only rule3
+      expect(result.pending).toBe(2); // rule1 and rule3
     });
 
     it('should handle multiple instances of the same rule with same state', () => {
@@ -102,7 +108,7 @@ describe('countRules', () => {
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Pending }, // Same rule, duplicate entry
       ]);
 
-      const result = countRules(ruleDfv, null);
+      const result = countRules(ruleDfv, [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending]);
 
       // Each rule should only be counted once despite multiple entries
       expect(result.firing).toBe(1);
@@ -112,7 +118,7 @@ describe('countRules', () => {
     it('should return 0 for both counts when no rules', () => {
       const ruleDfv = createMockRuleDfv([]);
 
-      const result = countRules(ruleDfv, null);
+      const result = countRules(ruleDfv, [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending]);
 
       expect(result.firing).toBe(0);
       expect(result.pending).toBe(0);
@@ -128,7 +134,7 @@ describe('countRules', () => {
         { ruleUID: 'rule3', alertstate: PromAlertingRuleState.Firing }, // Only firing
       ]);
 
-      const result = countRules(ruleDfv, PromAlertingRuleState.Pending);
+      const result = countRules(ruleDfv, [PromAlertingRuleState.Pending]);
 
       // Should count rule1 and rule2 (both have pending instances)
       expect(result.pending).toBe(2);
@@ -144,7 +150,7 @@ describe('countRules', () => {
         { ruleUID: 'rule3', alertstate: PromAlertingRuleState.Pending },
       ]);
 
-      const result = countRules(ruleDfv, PromAlertingRuleState.Pending);
+      const result = countRules(ruleDfv, [PromAlertingRuleState.Pending]);
 
       // Should count all three rules (all have pending instances)
       expect(result.pending).toBe(3);
@@ -158,14 +164,13 @@ describe('countRules', () => {
         { ruleUID: 'rule2', alertstate: PromAlertingRuleState.Pending },
       ]);
 
-      const noFilterResult = countRules(ruleDfv, null);
-      const pendingFilterResult = countRules(ruleDfv, PromAlertingRuleState.Pending);
+      const noFilterResult = countRules(ruleDfv, [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending]);
+      const pendingFilterResult = countRules(ruleDfv, [PromAlertingRuleState.Pending]);
 
       // With pending filter: should count rule1 and rule2 = 2
-      // Without filter: should count only rule2 = 1 (rule1 is counted as firing, not pending)
-      expect(pendingFilterResult.pending).toBeGreaterThanOrEqual(noFilterResult.pending);
+      // Without filter: should also count both rules = 2 (both have pending instances)
       expect(pendingFilterResult.pending).toBe(2);
-      expect(noFilterResult.pending).toBe(1); // Only rule2 (rule1 is firing)
+      expect(noFilterResult.pending).toBe(2); // Both rule1 and rule2 have pending instances
       expect(noFilterResult.firing).toBe(1); // rule1
     });
   });
@@ -179,7 +184,7 @@ describe('countRules', () => {
         { ruleUID: 'rule3', alertstate: PromAlertingRuleState.Pending }, // Only pending
       ]);
 
-      const result = countRules(ruleDfv, PromAlertingRuleState.Firing);
+      const result = countRules(ruleDfv, [PromAlertingRuleState.Firing]);
 
       // Should count rule1 and rule2 (both have firing instances)
       expect(result.firing).toBe(2);
@@ -208,18 +213,18 @@ describe('countRules', () => {
         { ruleUID: 'ruleE', alertstate: PromAlertingRuleState.Pending },
       ]);
 
-      // No filter: Firing takes precedence
-      const noFilter = countRules(ruleDfv, null);
-      expect(noFilter.firing).toBe(3); // Rule A, C, and D (C has firing so it's counted as firing)
-      expect(noFilter.pending).toBe(2); // Rule B and E (only those with NO firing)
+      // No filter: Count all rules with at least one instance in each state
+      const noFilter = countRules(ruleDfv, [PromAlertingRuleState.Firing, PromAlertingRuleState.Pending]);
+      expect(noFilter.firing).toBe(3); // Rule A, C, and D (all have at least one firing instance)
+      expect(noFilter.pending).toBe(3); // Rule B, C, and E (all have at least one pending instance)
 
       // With pending filter: Count all rules with ANY pending instances
-      const pendingFilter = countRules(ruleDfv, PromAlertingRuleState.Pending);
+      const pendingFilter = countRules(ruleDfv, [PromAlertingRuleState.Pending]);
       expect(pendingFilter.pending).toBe(3); // Rule B, C, and E
       expect(pendingFilter.firing).toBe(0);
 
       // With firing filter: Count all rules with ANY firing instances
-      const firingFilter = countRules(ruleDfv, PromAlertingRuleState.Firing);
+      const firingFilter = countRules(ruleDfv, [PromAlertingRuleState.Firing]);
       expect(firingFilter.firing).toBe(3); // Rule A, C, and D
       expect(firingFilter.pending).toBe(0);
     });

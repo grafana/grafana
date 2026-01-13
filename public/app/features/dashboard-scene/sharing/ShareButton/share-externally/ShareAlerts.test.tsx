@@ -10,7 +10,7 @@ import {
   VizPanel,
   VizPanelState,
 } from '@grafana/scenes';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardScene, DashboardSceneState } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 

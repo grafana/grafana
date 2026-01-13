@@ -9,9 +9,9 @@ import { config, getBackendSrv, isFetchError, locationService } from '@grafana/r
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
-import appEvents from 'app/core/app_events';
-import { contextSrv } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 import { setStarred } from 'app/core/reducers/navBarTree';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder, Resource, ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
@@ -94,9 +94,17 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // get folder info (e.g. title, parents) but *not* children
-    getFolder: builder.query<FolderDTO, string>({
-      providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
-      query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+    getFolder: builder.query<FolderDTO, { folderUID: string; accesscontrol: boolean; isLegacyCall: boolean }>({
+      providesTags: (_result, _error, { folderUID }) => [{ type: 'getFolder', id: folderUID }],
+      query: ({ folderUID, accesscontrol, isLegacyCall }) => ({
+        url: `/folders/${folderUID}`,
+        params: {
+          accesscontrol,
+          // Add additional query param so we can tell when
+          // this was called for app platform compatibility purposes vs. actually needing to use the legacy API
+          isLegacyCall,
+        },
+      }),
     }),
 
     // create a new folder

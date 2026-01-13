@@ -25,12 +25,64 @@ type ruleStates struct {
 type cache struct {
 	states    map[int64]map[string]*ruleStates // orgID > alertRuleUID > stateID > state
 	mtxStates sync.RWMutex
+	metrics   alertMetrics
+}
+
+type alertMetrics struct {
+	lastUpdate  time.Time
+	mtx         sync.RWMutex
+	stateCounts map[eval.State]float64
 }
 
 func newCache() *cache {
 	return &cache{
 		states: make(map[int64]map[string]*ruleStates),
 	}
+}
+
+func (c *cache) calcMetrics(states map[eval.State]struct{}) map[eval.State]float64 {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	counts := make(map[eval.State]float64, len(states))
+	for state := range states {
+		counts[state] = 0
+	}
+	for _, orgMap := range c.states {
+		for _, rule := range orgMap {
+			for _, st := range rule.states {
+				for state := range states {
+					if st.State == state {
+						counts[state] += 1
+					}
+				}
+			}
+		}
+	}
+	return counts
+}
+
+func (c *cache) updateMetrics() {
+	c.metrics.mtx.Lock()
+	defer c.metrics.mtx.Unlock()
+	if time.Since(c.metrics.lastUpdate) < time.Second {
+		return // avoid updating too frequently
+	}
+	newMetrics := c.calcMetrics(map[eval.State]struct{}{
+		eval.Normal:     {},
+		eval.Alerting:   {},
+		eval.Pending:    {},
+		eval.Error:      {},
+		eval.NoData:     {},
+		eval.Recovering: {},
+	})
+	c.metrics.lastUpdate = time.Now()
+	c.metrics.stateCounts = newMetrics
+}
+
+func (c *cache) countAlertsBy(state eval.State) float64 {
+	c.metrics.mtx.RLock()
+	defer c.metrics.mtx.RUnlock()
+	return c.metrics.stateCounts[state]
 }
 
 // RegisterMetrics registers a set of Gauges in the form of collectors for the alerts in the cache.
@@ -43,6 +95,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 			Help:        "How many alerts by state are in the scheduler.",
 			ConstLabels: prometheus.Labels{"state": strings.ToLower(state.String())},
 		}, func() float64 {
+			c.updateMetrics()
 			return c.countAlertsBy(state)
 		})
 	}
@@ -53,23 +106,6 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 	r.MustRegister(newAlertCountByState(eval.Error))
 	r.MustRegister(newAlertCountByState(eval.NoData))
 	r.MustRegister(newAlertCountByState(eval.Recovering))
-}
-
-func (c *cache) countAlertsBy(state eval.State) float64 {
-	c.mtxStates.RLock()
-	defer c.mtxStates.RUnlock()
-	var count float64
-	for _, orgMap := range c.states {
-		for _, rule := range orgMap {
-			for _, st := range rule.states {
-				if st.State == state {
-					count++
-				}
-			}
-		}
-	}
-
-	return count
 }
 
 func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
@@ -305,6 +341,7 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 				states = append(states, ngModels.AlertInstance{
 					AlertInstanceKey:  key,
 					Labels:            ngModels.InstanceLabels(v2.Labels),
+					Annotations:       v2.Annotations,
 					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
 					CurrentReason:     v2.StateReason,
 					LastEvalTime:      v2.LastEvaluationTime,

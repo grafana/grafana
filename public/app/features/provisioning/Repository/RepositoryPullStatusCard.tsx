@@ -23,7 +23,7 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
   const { url: lastCommitUrl, hasUrl } = getRepoCommitUrl(repo.spec, status?.sync.lastRef);
 
   return (
-    <Card noMargin>
+    <Card noMargin className={styles.card}>
       <Card.Heading>
         <Trans i18nKey="provisioning.repository-overview.pull-status">Pull status</Trans>
       </Card.Heading>
@@ -89,7 +89,7 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
           </div>
         </Grid>
       </Card.Description>
-      <Card.Actions>
+      <Card.Actions className={styles.actions}>
         <SyncRepository repository={repo} />
       </Card.Actions>
     </Card>
@@ -98,6 +98,14 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    card: css({
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    actions: css({
+      marginTop: 'auto',
+    }),
     spanTwo: css({
       gridColumn: 'span 2',
     }),

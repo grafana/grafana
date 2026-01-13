@@ -137,7 +137,7 @@ describe('XAxisInteractionAreaPlugin', () => {
       expect(mockQueryZoom).not.toHaveBeenCalled();
     });
 
-    it('should set isPanning state during drag and clear on mouseup', () => {
+    it('should set isPanning state during drag and mark isTimeRangePending on mouseup', () => {
       setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
 
       xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
@@ -152,6 +152,20 @@ describe('XAxisInteractionAreaPlugin', () => {
       });
 
       document.dispatchEvent(new MouseEvent('mouseup', { clientX: 350, bubbles: true }));
+
+      expect(mockConfigBuilder.setState).toHaveBeenCalledWith({
+        isPanning: true,
+        min: expectedRange.from,
+        max: expectedRange.to,
+        isTimeRangePending: true,
+      });
+    });
+
+    it('should clear isPanning state immediately for small drags below threshold', () => {
+      setupXAxisPan(asUPlot(mockUPlot), asConfigBuilder(mockConfigBuilder), mockQueryZoom);
+
+      xAxisElement.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 402, bubbles: true }));
 
       expect(mockConfigBuilder.setState).toHaveBeenCalledWith({ isPanning: false });
     });

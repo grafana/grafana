@@ -22,6 +22,9 @@ import (
 //
 // the headers X-Real-IP and X-Forwarded-For are used by the HostedGrafanaACHeaderMiddleware at
 // https://github.com/grafana/grafana/blob/f191acf8114ab79609fc631e0f01fe2b47371188/pkg/services/pluginsintegration/clientmiddleware/grafana_request_id_header_middleware.go#L107
+//
+// the Cookie header is used by the CookiesMiddleware at
+// https://github.com/grafana/grafana/blob/326d374266077fbacc28c740f276748c636774f5/pkg/services/pluginsintegration/clientmiddleware/cookies_middleware.go#L60
 var expectedHeaders = map[string]string{
 	strings.ToLower(models.FromAlertHeaderName):        models.FromAlertHeaderName,
 	strings.ToLower(models.CacheSkipHeaderName):        models.CacheSkipHeaderName,
@@ -40,6 +43,9 @@ var expectedHeaders = map[string]string{
 	strings.ToLower(queryService.HeaderPanelPluginId):  queryService.HeaderPanelPluginId,
 	strings.ToLower(queryService.HeaderDashboardTitle): queryService.HeaderDashboardTitle,
 	strings.ToLower(queryService.HeaderPanelTitle):     queryService.HeaderPanelTitle,
+	strings.ToLower("X-Real-IP"):                       "X-Real-IP",
+	strings.ToLower("X-Forwarded-For"):                 "X-Forwarded-For",
+	strings.ToLower("Cookie"):                          "Cookie",
 }
 
 func ExtractKnownHeaders(header http.Header) map[string]string {

@@ -23,7 +23,7 @@
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/lodash": "4.17.20",
-    "@types/node": "24.9.2",
+    "@types/node": "24.10.1",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "jest": "29.7.0",
@@ -35,11 +35,11 @@
     "@grafana/runtime": "*"
   },
   "scripts": {
-    "build": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production",
-    "build:commit": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
-    "dev": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -w -c ./webpack.config.ts --env development",
+    "build": "webpack -c ./webpack.config.ts --env production",
+    "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
+    "dev": "webpack -w -c ./webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.10.3"
+  "packageManager": "yarn@4.11.0"
 }

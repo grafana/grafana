@@ -47,9 +47,7 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
               "type": "and",
             },
             "query": {
-              "params": [
-                "B",
-              ],
+              "params": [],
             },
             "reducer": {
               "params": [],
@@ -85,9 +83,7 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
               "type": "and",
             },
             "query": {
-              "params": [
-                "C",
-              ],
+              "params": [],
             },
             "reducer": {
               "params": [],

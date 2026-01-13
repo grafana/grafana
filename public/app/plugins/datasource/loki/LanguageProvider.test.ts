@@ -2,6 +2,7 @@ import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, ScopedVars } fro
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
+import { LokiQueryType } from './dataquery.gen';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import { createDetectedFieldValuesMetadataRequest } from './mocks/createDetectedFieldValuesMetadataRequest';
 import { createDetectedFieldsMetadataRequest } from './mocks/createDetectedFieldsMetadataRequest';
@@ -12,7 +13,7 @@ import {
   extractLabelKeysFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType, LokiQueryType } from './types';
+import { DetectedFieldsResult, LabelType } from './types';
 
 jest.mock('./responseUtils');
 
@@ -557,6 +558,23 @@ describe('Language completion provider', () => {
           end: 1560163909000,
           query: '{foo="bar"}',
           start: 1560153109000,
+        });
+      });
+
+      it('should interpolate variables in stream selector', async () => {
+        const datasource = setup({});
+        jest.spyOn(datasource, 'getTimeRangeParams').mockReturnValue({ start: 0, end: 1 });
+        jest
+          .spyOn(datasource, 'interpolateString')
+          .mockImplementation((string: string) => string.replace(/\$test_var/g, 'age'));
+
+        const languageProvider = new LanguageProvider(datasource);
+        languageProvider.request = jest.fn().mockResolvedValue([]);
+        await languageProvider.fetchLabels({ streamSelector: '{age="new", $test_var="new"}' });
+        expect(languageProvider.request).toHaveBeenCalledWith('labels', {
+          end: 1,
+          query: '{age="new", age="new"}',
+          start: 0,
         });
       });
     });

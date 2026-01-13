@@ -35,7 +35,7 @@ import {
   templateVariableValueUpdated,
 } from 'app/types/events';
 
-import { appEvents } from '../../../core/core';
+import { appEvents } from '../../../core/app_events';
 import { dispatch } from '../../../store/store';
 import {
   VariablesChanged,
@@ -182,7 +182,6 @@ export class DashboardModel implements TimeModel {
 
     this.initMeta(meta);
     this.updateSchema(data, options?.targetSchemaVersion);
-
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
     this.panelsAffectedByVariableChange = null;

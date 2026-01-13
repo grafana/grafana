@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"path"
 	"strings"
 	"time"
 
@@ -141,14 +140,20 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	if info.Parsed.GVK.Kind == dashboardKind {
 		// FIXME: extract the logic out of a dashboard URL builder/injector or similar
 		// for testability and decoupling
+		urlBuilder, err := url.Parse(baseURL)
+		if err != nil {
+			info.Error = err.Error()
+			return info
+		}
+
 		if info.Parsed.Existing != nil {
-			info.GrafanaURL = fmt.Sprintf("%sd/%s/%s", baseURL, obj.GetName(),
-				slugify.Slugify(info.Title))
+			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
+			info.GrafanaURL = grafanaURL.String()
 		}
 
 		// Load this file directly
-		info.PreviewURL = baseURL + path.Join("admin/provisioning",
-			info.Parsed.Repo.Name, "dashboard/preview", info.Parsed.Info.Path)
+		previewURL := urlBuilder.JoinPath("admin/provisioning", info.Parsed.Repo.Name, "dashboard/preview", info.Parsed.Info.Path)
+		info.PreviewURL = previewURL.String()
 
 		query := url.Values{}
 		query.Set("ref", info.Parsed.Info.Ref)

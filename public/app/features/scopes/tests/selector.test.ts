@@ -1,4 +1,7 @@
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { MOCK_SCOPES } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { ScopesService } from '../ScopesService';
@@ -15,6 +18,7 @@ import {
   expandResultApplications,
   selectRecentScope,
   clearSelector,
+  hoverSelector,
 } from './utils/actions';
 import {
   expectRecentScope,
@@ -24,7 +28,7 @@ import {
   expectResultApplicationsGrafanaSelected,
   expectScopesSelectorValue,
 } from './utils/assertions';
-import { getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 import { getListOfScopes } from './utils/selectors';
 
@@ -32,10 +36,12 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('Selector', () => {
   let fetchSelectedScopesSpy: jest.SpyInstance;
@@ -66,7 +72,7 @@ describe('Selector', () => {
     await selectResultCloud();
     await applyScopes();
     expect(fetchSelectedScopesSpy).toHaveBeenCalled();
-    expect(getListOfScopes(scopesService)).toEqual(mocksScopes.filter(({ metadata: { name } }) => name === 'cloud'));
+    expect(getListOfScopes(scopesService)).toEqual(MOCK_SCOPES.filter(({ metadata: { name } }) => name === 'cloud'));
   });
 
   it('Does not save the scopes on close', async () => {
@@ -90,7 +96,7 @@ describe('Selector', () => {
   it('Should initializae values from the URL', async () => {
     const mockLocation = {
       pathname: '/dashboard',
-      search: '?scopes=grafana&scope_parent=applications',
+      search: '?scopes=grafana&scope_node=applications-grafana',
       hash: '',
       key: 'test',
       state: null,
@@ -121,7 +127,8 @@ describe('Selector', () => {
       await selectResultApplicationsMimir();
       await applyScopes();
 
-      // recent scopes only show on top level, so we need to make sure the scopes tree is not exapnded.
+      // recent scopes only show on top level, so we need to make sure the scopes tree is not expanded.
+      await hoverSelector();
       await clearSelector();
 
       await openSelector();
@@ -130,11 +137,12 @@ describe('Selector', () => {
       expectRecentScope('Grafana Applications');
       expectRecentScope('Grafana, Mimir Applications');
       await selectRecentScope('Grafana Applications');
+      await jest.runOnlyPendingTimersAsync();
 
       expectScopesSelectorValue('Grafana');
 
       await openSelector();
-      // Close to root node so we can see the recent scopes
+      // Collapse tree to root level to see recent scopes section
       await expandResultApplications();
 
       await expandRecentScopes();
@@ -153,8 +161,8 @@ describe('Selector', () => {
       await applyScopes();
 
       await openSelector();
-      // Close to root node so we can try to see the recent scopes
-      await expandResultApplications();
+      // Tree expands to show selected scope, so recent scopes are not visible
+      // (recent scopes only show at root level with tree collapsed)
       expectRecentScopeNotPresentInDocument();
     });
 
@@ -172,6 +180,7 @@ describe('Selector', () => {
       await applyScopes();
 
       // Deselect all scopes
+      await hoverSelector();
       await clearSelector();
 
       // Recent scopes should still be available
@@ -194,6 +203,7 @@ describe('Selector', () => {
       await selectResultApplicationsMimir();
       await applyScopes();
 
+      await hoverSelector();
       await clearSelector();
 
       // Check recent scopes are updated
