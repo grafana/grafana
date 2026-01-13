@@ -53,7 +53,7 @@ Grafana dashboards are represented as JSON objects that store metadata, panels, 
 
 There are currently three dashboard JSON schema models:
 
-- [Classic](#classic-model) - A non-Kubernetes resource used before the adoption of the Kubernetes API by Grafana in v12.2.0. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection (grafana.com/dashboards).
+- [Classic](#classic-model) - A non-Kubernetes resource used before the adoption of the Kubernetes API by Grafana in v12.2.0. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection at [grafana.com/dashboards(https://grafana.com/grafana/dashboards/).
 - [V1 Resource](#v1-resource-model) - The Classic dashboard schema formatted as a Kubernetes-style resource. Its `spec` property contains the Classic model of the schema. This is the default format for API communication after Grafana v12.2.0, which enabled the Kubernetes Platform API as default backend for Grafana dashboards. Dashboards created using the Classic model can be exported using either the Classic or the V1 Resource format. 
 - [V2 Resource](#v2-resource-model) - The latest format, supporting new features such as advanced layouts and conditional rendering. It models all dashboard elements as Kubernetes kinds, following Kubernetes conventions for declaring dashboard components. This format is future-proof and represents the evolving standard for dashboards.
 
@@ -324,7 +324,6 @@ The `spec` property of the schema contains the Classic-style model of the schema
 Dashboards created using the Classic model can be exported using either this model or the Classic one.
 
 The following code snippet shows the fields included in the V1 Resource model.
-For the detailed V1 Resource schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1beta1).
 
 ```json
 {
