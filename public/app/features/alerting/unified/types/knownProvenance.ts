@@ -1,7 +1,5 @@
-import { PROVENANCE_NONE } from '../utils/k8s/constants';
-
 export enum KnownProvenance {
-  None = `${PROVENANCE_NONE}`,
+  None = 'none' /** Value of {@link PROVENANCE_ANNOTATION} given for entities that were not provisioned */,
   API = 'api',
   File = 'file',
   ConvertedPrometheus = 'converted_prometheus',

@@ -1,6 +1,5 @@
 import { KnownProvenance } from '../../types/knownProvenance';
 
-import { PROVENANCE_NONE } from './constants';
 import { encodeFieldSelector, isProvisionedResource } from './utils';
 
 describe('encodeFieldSelector', () => {
@@ -42,12 +41,8 @@ describe('isProvisionedResource', () => {
     expect(isProvisionedResource(KnownProvenance.ConvertedPrometheus)).toBe(true);
   });
 
-  it('should return true when provenance is an empty string', () => {
-    expect(isProvisionedResource(KnownProvenance.None)).toBe(false);
-  });
-
   it('should return false when provenance is none', () => {
-    expect(isProvisionedResource(PROVENANCE_NONE)).toBe(false);
+    expect(isProvisionedResource(KnownProvenance.None)).toBe(false);
   });
 
   it('should return false when provenance is undefined', () => {
