@@ -173,7 +173,7 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role](ref:api-rbac-create-a-new-custom-role).
 
 {{< admonition type="note" >}}
-You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
+When you create a custom role you can only give it the same permissions you already have. For example, if you only have `users:create` permissions, then you can't create a role that includes other permissions.
 {{< /admonition >}}
 
 The following example creates a `custom:users:admin` role and assigns the `users:create` action to it.
@@ -258,7 +258,7 @@ For more information, refer to the [`grafana_role`](https://registry.terraform.i
 
 ### Create custom roles using file-based provisioning
 
-[File-based provisioning](ref:rbac-grafana-provisioning) is one method you can use to create custom roles for self-managed instances.
+You can use [file-based provisioning](ref:rbac-grafana-provisioning) to create custom roles for self-managed instances.
 
 1. Open the YAML configuration file and locate the `roles` section.
 

@@ -37,7 +37,7 @@ For Grafana Cloud users, Grafana Support is not authorised to make org role chan
 
 A Grafana server administrator (sometimes referred to as a **Grafana Admin**) manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
 
-{{< admonition type="note" >}}
+{{< admonition type="caution" >}}
 The server administrator role is distinct from the [organization administrator](#organization-roles) role.
 {{< /admonition >}}
 
