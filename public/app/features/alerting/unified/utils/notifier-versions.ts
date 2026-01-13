@@ -76,18 +76,22 @@ export function getOptionsForVersion(notifier: NotifierDTO, version?: string): N
 
 /**
  * Checks if a contact point has any legacy (imported) integrations.
- * A contact point is considered imported if any of its integrations has a version
- * that is not 'v1' (the default Grafana version).
+ * A contact point has legacy integrations if any of its integrations uses a version
+ * with canCreate: false in the corresponding notifier's versions array.
  *
  * @param contactPoint - The contact point to check
+ * @param notifiers - Array of notifier DTOs to look up version info
  * @returns True if the contact point has at least one legacy/imported integration
  */
-export function hasLegacyIntegrations(contactPoint?: GrafanaManagedContactPoint): boolean {
-  if (!contactPoint?.grafana_managed_receiver_configs) {
+export function hasLegacyIntegrations(contactPoint?: GrafanaManagedContactPoint, notifiers?: NotifierDTO[]): boolean {
+  if (!contactPoint?.grafana_managed_receiver_configs || !notifiers) {
     return false;
   }
 
-  return contactPoint.grafana_managed_receiver_configs.some((config) => config.version && config.version !== 'v1');
+  return contactPoint.grafana_managed_receiver_configs.some((config) => {
+    const notifier = notifiers.find((n) => n.type === config.type);
+    return notifier ? isLegacyVersion(notifier, config.version) : false;
+  });
 }
 
 /**

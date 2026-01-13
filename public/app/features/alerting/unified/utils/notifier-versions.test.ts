@@ -305,48 +305,74 @@ describe('notifier-versions utilities', () => {
       };
     }
 
+    // Create notifiers with version info for testing
+    const notifiersWithVersions: NotifierDTO[] = [
+      createNotifier({
+        type: 'slack',
+        versions: [
+          createVersion({ version: 'v0mimir1', canCreate: false }),
+          createVersion({ version: 'v1', canCreate: true }),
+        ],
+      }),
+      createNotifier({
+        type: 'webhook',
+        versions: [
+          createVersion({ version: 'v0mimir1', canCreate: false }),
+          createVersion({ version: 'v0mimir2', canCreate: false }),
+          createVersion({ version: 'v1', canCreate: true }),
+        ],
+      }),
+    ];
+
     it('should return false if contact point is undefined', () => {
-      expect(hasLegacyIntegrations(undefined)).toBe(false);
+      expect(hasLegacyIntegrations(undefined, notifiersWithVersions)).toBe(false);
+    });
+
+    it('should return false if notifiers is undefined', () => {
+      const contactPoint = createContactPoint({
+        grafana_managed_receiver_configs: [{ type: 'slack', settings: {}, version: 'v0mimir1' }],
+      });
+      expect(hasLegacyIntegrations(contactPoint, undefined)).toBe(false);
     });
 
     it('should return false if contact point has no integrations', () => {
       const contactPoint = createContactPoint({ grafana_managed_receiver_configs: undefined });
-      expect(hasLegacyIntegrations(contactPoint)).toBe(false);
+      expect(hasLegacyIntegrations(contactPoint, notifiersWithVersions)).toBe(false);
     });
 
     it('should return false if contact point has empty integrations array', () => {
       const contactPoint = createContactPoint({ grafana_managed_receiver_configs: [] });
-      expect(hasLegacyIntegrations(contactPoint)).toBe(false);
+      expect(hasLegacyIntegrations(contactPoint, notifiersWithVersions)).toBe(false);
     });
 
-    it('should return false if all integrations have v1 version', () => {
+    it('should return false if all integrations have v1 version (canCreate: true)', () => {
       const contactPoint = createContactPoint({
         grafana_managed_receiver_configs: [
           { type: 'slack', settings: {}, version: 'v1' },
           { type: 'webhook', settings: {}, version: 'v1' },
         ],
       });
-      expect(hasLegacyIntegrations(contactPoint)).toBe(false);
+      expect(hasLegacyIntegrations(contactPoint, notifiersWithVersions)).toBe(false);
     });
 
-    it('should return false if all integrations have no version (defaults to v1)', () => {
+    it('should return false if all integrations have no version', () => {
       const contactPoint = createContactPoint({
         grafana_managed_receiver_configs: [
           { type: 'slack', settings: {} },
           { type: 'webhook', settings: {} },
         ],
       });
-      expect(hasLegacyIntegrations(contactPoint)).toBe(false);
+      expect(hasLegacyIntegrations(contactPoint, notifiersWithVersions)).toBe(false);
     });
 
-    it('should return true if any integration has a legacy version (v0)', () => {
+    it('should return true if any integration has a legacy version (canCreate: false)', () => {
       const contactPoint = createContactPoint({
         grafana_managed_receiver_configs: [
           { type: 'slack', settings: {}, version: 'v0mimir1' },
           { type: 'webhook', settings: {}, version: 'v1' },
         ],
       });
-      expect(hasLegacyIntegrations(contactPoint)).toBe(true);
+      expect(hasLegacyIntegrations(contactPoint, notifiersWithVersions)).toBe(true);
     });
 
     it('should return true if all integrations have legacy versions', () => {
@@ -356,14 +382,14 @@ describe('notifier-versions utilities', () => {
           { type: 'webhook', settings: {}, version: 'v0mimir2' },
         ],
       });
-      expect(hasLegacyIntegrations(contactPoint)).toBe(true);
+      expect(hasLegacyIntegrations(contactPoint, notifiersWithVersions)).toBe(true);
     });
 
-    it('should return true for any non-v1 version', () => {
+    it('should return false if notifier type is not found in notifiers array', () => {
       const contactPoint = createContactPoint({
-        grafana_managed_receiver_configs: [{ type: 'slack', settings: {}, version: 'v2' }],
+        grafana_managed_receiver_configs: [{ type: 'unknown', settings: {}, version: 'v0mimir1' }],
       });
-      expect(hasLegacyIntegrations(contactPoint)).toBe(true);
+      expect(hasLegacyIntegrations(contactPoint, notifiersWithVersions)).toBe(false);
     });
   });
 

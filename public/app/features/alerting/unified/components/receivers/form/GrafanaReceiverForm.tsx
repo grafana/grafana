@@ -170,8 +170,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         </Alert>
       )}
 
-      {contactPoint?.provisioned && hasLegacyIntegrations(contactPoint) && <ImportedContactPointAlert />}
-      {contactPoint?.provisioned && !hasLegacyIntegrations(contactPoint) && (
+      {contactPoint?.provisioned && hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
+        <ImportedContactPointAlert />
+      )}
+      {contactPoint?.provisioned && !hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
         <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />
       )}
 
