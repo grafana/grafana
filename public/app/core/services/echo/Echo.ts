@@ -1,4 +1,4 @@
-import { EchoBackend, EchoMeta, EchoEvent, EchoSrv } from '@grafana/runtime';
+import { EchoBackend, EchoMeta, EchoEvent, EchoSrv, reportInteraction } from '@grafana/runtime';
 
 import { contextSrv } from '../context_srv';
 
@@ -90,3 +90,15 @@ export class Echo implements EchoSrv {
     };
   };
 }
+
+/** Analytics framework:
+ * Foundational types and functions for the new tracking event process
+ */
+export type TrackingEventProps = {
+  [key: string]: boolean | string | number | undefined;
+};
+export const createEventFactory = (product: string, featureName: string) => {
+  return <P extends TrackingEventProps | undefined = undefined>(eventName: string) =>
+    (props: P extends undefined ? void : P) =>
+      reportInteraction(`${product}_${featureName}_${eventName}`, props ?? undefined);
+};
