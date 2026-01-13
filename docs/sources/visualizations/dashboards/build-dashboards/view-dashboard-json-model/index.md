@@ -53,9 +53,9 @@ Grafana dashboards are represented as JSON objects that store metadata, panels, 
 
 There are currently three dashboard JSON schema models:
 
-- [Classic](#classic-model) - The default schema in self-managed Grafana. (Also referred to as the JSON schema v1.).
-- [V1 Resource](#v1-resource-model) - The Classic dashboard schema formatted as a Kubernetes-style resource. The `spec` property of the schema contains the Classic-style model of the schema. Dashboards created using the Classic model can be exported using either that model or this one.
-- [V2 Resource](#v2-resource-model) - Kubernetes-style resource schema. The default schema in Grafana Cloud. (Also referred to as the JSON schema v2.)
+- [Classic](#classic-model) - A non-Kubernetes resource used before the adoption of the Kubernetes API by Grafana in v12.2.0. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection (grafana.com/dashboards).
+- [V1 Resource](#v1-resource-model) - The Classic dashboard schema formatted as a Kubernetes-style resource. Its `spec` property contains the Classic model of the schema. This is the default format for API communication after Grafana v12.2.0, which enabled the Kubernetes Platform API as default backend for Grafana dashboards. Dashboards created using the Classic model can be exported using either the Classic or the V1 Resource format. 
+- [V2 Resource](#v2-resource-model) - The latest format, supporting new features such as advanced layouts and conditional rendering. It models all dashboard elements as Kubernetes kinds, following Kubernetes conventions for declaring dashboard components. This format is future-proof and represents the evolving standard for dashboards.
 
 {{< admonition type="note" >}}
 [Observability as Code](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/) works with all versions of the JSON model, and it's fully compatible with version 2.
@@ -320,9 +320,6 @@ Usage of the above mentioned fields in the templating section is explained below
 The V1 Resource schema model formats the [Classic JSON model](#classic-model) schema as a Kubernetes-style resource.
 The `spec` property of the schema contains the Classic-style model of the schema.
 
-<!-- Following text is from limitations section of schema v2 docs. What do you see when you open a dashboard that was created before DD was enabled? A v1 Resource schema or a V2 resource schema?
-  With schema v2 enabled, you can still open and view your pre-existing dashboards.
-  Upon saving, they’ll be updated to the new schema where you can take advantage of the new features and functionalities.-->
 
 Dashboards created using the Classic model can be exported using either this model or the Classic one.
 
