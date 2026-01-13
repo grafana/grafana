@@ -60,8 +60,6 @@ function createCompletionOption(
 
   return {
     label: suggestion.label,
-    detail: suggestion.origin,
-    info: suggestion.documentation,
     apply: customApply ?? applyText,
     type: 'variable',
   };

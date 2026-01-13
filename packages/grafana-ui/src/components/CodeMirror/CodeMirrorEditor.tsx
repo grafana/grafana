@@ -12,7 +12,6 @@ import {
   lineNumbers,
   placeholder as placeholderExtension,
   rectangularSelection,
-  tooltips,
   ViewUpdate,
 } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
@@ -56,12 +55,11 @@ export const CodeMirrorEditor = memo((props: CodeMirrorEditorProps) => {
   // Build theme extensions
   const getThemeExtensions = () => {
     const themeExt = themeFactory ? themeFactory(theme) : createGenericTheme(theme);
-    const highlighterExt =
-      highlighterFactory && highlightConfig
-        ? highlighterFactory(highlightConfig)
-        : highlightConfig
-          ? createGenericHighlighter(highlightConfig)
-          : [];
+    const highlighterExt = highlighterFactory
+      ? highlighterFactory(highlightConfig)
+      : highlightConfig
+        ? createGenericHighlighter(highlightConfig)
+        : [];
 
     return [themeExt, highlighterExt];
   };
@@ -90,9 +88,6 @@ export const CodeMirrorEditor = memo((props: CodeMirrorEditorProps) => {
           const newValue = update.state.doc.toString();
           onChange(newValue);
         }
-      }),
-      tooltips({
-        parent: document.body, // Render tooltips at body level to prevent clipping by modals
       }),
       themeCompartment.current.of(getThemeExtensions()),
       EditorState.phrases.of({

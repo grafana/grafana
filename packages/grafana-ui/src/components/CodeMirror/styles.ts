@@ -49,13 +49,11 @@ export function createGenericTheme(theme: GrafanaTheme2): Extension {
       '.cm-gutters': {
         display: 'none',
       },
-      '.cm-tooltip': {
-        zIndex: theme.zIndex.portal + 1, // Above modals and portals (1062)
-      },
       '.cm-tooltip.cm-tooltip-autocomplete': {
         backgroundColor: theme.colors.background.primary,
         border: `1px solid ${theme.colors.border.weak}`,
         boxShadow: theme.shadows.z3,
+        pointerEvents: 'auto',
       },
       '.cm-tooltip.cm-tooltip-autocomplete > ul': {
         fontFamily: theme.typography.fontFamily,
@@ -64,6 +62,10 @@ export function createGenericTheme(theme: GrafanaTheme2): Extension {
       '.cm-tooltip.cm-tooltip-autocomplete > ul > li': {
         padding: '2px 8px',
         color: theme.colors.text.primary,
+        cursor: 'pointer',
+      },
+      '.cm-tooltip.cm-tooltip-autocomplete > ul > li:hover': {
+        backgroundColor: theme.colors.background.secondary,
       },
       '.cm-tooltip-autocomplete ul li[aria-selected]': {
         backgroundColor: theme.colors.background.secondary,
