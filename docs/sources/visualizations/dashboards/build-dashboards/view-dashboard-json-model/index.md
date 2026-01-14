@@ -37,12 +37,6 @@ labels:
 title: JSON model
 description: View and update your Grafana dashboard JSON object
 weight: 700
-refs:
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
 ---
 
 # Dashboard JSON model
@@ -53,7 +47,7 @@ Grafana dashboards are represented as JSON objects that store metadata, panels, 
 
 There are currently three dashboard JSON schema models:
 
-- [Classic](#classic-model) - A non-Kubernetes resource used before the adoption of the Kubernetes API by Grafana in v12.2.0. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection at [grafana.com/dashboards(https://grafana.com/grafana/dashboards/).
+- [Classic](#classic-model) - A non-Kubernetes resource used before the adoption of the Kubernetes API by Grafana in v12.2.0. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection at [grafana.com/dashboards](https://grafana.com/grafana/dashboards/).
 - [V1 Resource](#v1-resource-model) - The Classic dashboard schema formatted as a Kubernetes-style resource. Its `spec` property contains the Classic model of the schema. This is the default format for API communication after Grafana v12.2.0, which enabled the Kubernetes Platform API as default backend for Grafana dashboards. Dashboards created using the Classic model can be exported using either the Classic or the V1 Resource format. 
 - [V2 Resource](#v2-resource-model) - The latest format, supporting new features such as advanced layouts and conditional rendering. It models all dashboard elements as Kubernetes kinds, following Kubernetes conventions for declaring dashboard components. This format is future-proof and represents the evolving standard for dashboards.
 
@@ -127,7 +121,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **time**          | time range for dashboard, i.e. last 6 hours, last 7 days, etc |
 | **timepicker**    | timepicker metadata, see [timepicker section](#timepicker) for details |
 | **templating**    | templating metadata, see [templating section](#templating) for details |
-| **annotations**   | annotations metadata, see [annotations](ref:annotations) for how to add them |
+| **annotations**   | annotations metadata, see [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) for how to add them |
 | **refresh**       | auto-refresh interval|
 | **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to said schema |
 | **version**       | version of the dashboard (integer), incremented each time the dashboard is updated |
