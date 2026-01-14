@@ -2957,6 +2957,18 @@
     },
     {
       "metadata": {
+        "name": "profilesHeatmap",
+        "resourceVersion": "1767703801452",
+        "creationTimestamp": "2026-01-06T12:50:01Z"
+      },
+      "spec": {
+        "description": "Enables heatmap visualization support for Pyroscope profiles",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling"
+      }
+    },
+    {
+      "metadata": {
         "name": "prometheusAzureOverrideAudience",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2022-05-30T15:43:32Z",

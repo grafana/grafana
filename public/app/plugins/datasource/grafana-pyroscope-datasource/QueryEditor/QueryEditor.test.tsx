@@ -34,6 +34,8 @@ describe('QueryEditor', () => {
           maxNodes: 1000,
           groupBy: [],
           includeExemplars: false,
+          includeHeatmap: false,
+          heatmapType: 'individual',
         },
       },
     });
@@ -127,6 +129,8 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
         groupBy: [],
         limit: 42,
         includeExemplars: false,
+        includeHeatmap: false,
+        heatmapType: 'individual',
       }}
       datasource={setupDs()}
       onChange={onChange}

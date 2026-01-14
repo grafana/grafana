@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
+import { ReactElement, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import * as React from 'react';
 import uPlot from 'uplot';
 
@@ -13,7 +13,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
+import { TextLink, TooltipDisplayMode, useTheme2 } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -25,9 +25,8 @@ import {
 } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { ExploreSplitOpenContext } from 'app/features/explore/Heatmap/HeatmapExploreContainer';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
-import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
 import { getDataLinks, getFieldActions } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
@@ -59,25 +58,194 @@ interface HeatmapTooltipProps {
   canExecuteActions?: boolean;
 }
 
-export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
-  if (props.seriesIdx === 2) {
-    const dispValuesAndLinks = getDisplayValuesAndLinks(props.dataRef.current!.exemplars!, props.dataIdxs[2]!);
+// Custom exemplar tooltip that renders field values with inline links
+const HeatmapExemplarTooltip = ({
+  exemplarFrame,
+  rowIndex,
+  isPinned,
+  maxHeight,
+}: {
+  exemplarFrame: PanelData['series'][0];
+  rowIndex: number;
+  isPinned: boolean;
+  maxHeight?: number;
+}) => {
+  const { splitOpen, timeRange } = useContext(ExploreSplitOpenContext);
 
-    if (dispValuesAndLinks == null) {
-      return null;
+  // Get visible fields (excluding private labels starting with __)
+  const visibleFields = exemplarFrame.fields.filter(
+    (f) => !Boolean(f.config.custom?.hideFrom?.tooltip) && !f.name.startsWith('__')
+  );
+
+  if (visibleFields.length === 0) {
+    return null;
+  }
+
+  // Find time field
+  const timeField = visibleFields.find((f) => f.name === 'Time');
+  const timeValue = timeField
+    ? formattedValueToString(
+        timeField.display ? timeField.display(timeField.values[rowIndex]) : { text: `${timeField.values[rowIndex]}` }
+      )
+    : '';
+
+  // Prepare fields to display (excluding time)
+  const displayFields = visibleFields.filter((f) => f !== timeField);
+
+  const theme = useTheme2();
+
+  // Helper to check if this is a Span ID field (not Profile ID)
+  const isSpanIdField = (field: Field) => {
+    return field.config.displayName === 'Span ID';
+  };
+
+  // Helper to check if a label name needs quoting
+  // Label names with non-alphanumeric characters (except _) need to be quoted
+  const needsQuoting = (labelName: string): boolean => {
+    // Valid unquoted label names: start with letter or underscore, followed by alphanumeric or underscore
+    return !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(labelName);
+  };
+
+  // Helper to quote a label name if needed
+  const quoteLabelName = (labelName: string): string => {
+    if (needsQuoting(labelName)) {
+      // Escape any quotes in the label name itself, then wrap in quotes
+      return `"${labelName.replace(/"/g, '\\"')}"`;
+    }
+    return labelName;
+  };
+
+  // Helper to escape label values for Pyroscope label selector
+  // Need to escape backslashes and quotes
+  const escapeLabelValue = (value: string): string => {
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  };
+
+  // Helper to manually generate Explore query for span profile
+  const handleSpanIdClick = (spanId: string) => {
+    if (!splitOpen || !timeRange) {
+      return;
     }
 
-    const { displayValues, links } = dispValuesAndLinks;
+    // Extract profileTypeId from __profile_type__ field
+    const profileTypeField = exemplarFrame.fields.find((f) => f.name === '__profile_type__');
+    const profileTypeId = profileTypeField ? String(profileTypeField.values[rowIndex]) : '';
+
+    // Collect all label fields (excluding Time, Value, Id, and private labels starting with __)
+    const labelFields = exemplarFrame.fields.filter(
+      (f) => f.name !== 'Time' && f.name !== 'Value' && f.name !== 'Id' && !f.name.startsWith('__')
+    );
+
+    // Build label selector with properly escaped values and quoted label names if needed
+    // Format: {label1="value1", "label-2"="value2", ...}
+    const labelParts = labelFields.map((field) => {
+      const value = field.values[rowIndex];
+      const quotedLabelName = quoteLabelName(field.name);
+      const escapedValue = escapeLabelValue(String(value));
+      return `${quotedLabelName}="${escapedValue}"`;
+    });
+    const labelSelector = labelParts.length > 0 ? `{${labelParts.join(', ')}}` : '';
+
+    // Get timestamp from Time field and create a narrow time window around it (+/- 30 seconds)
+    const timeMs = timeField?.values[rowIndex];
+    const timestamp = timeMs instanceof Date ? timeMs.getTime() : timeMs;
+
+    // Create a 60-second window centered on the exemplar (30s before and after)
+    const windowMs = 30 * 1000; // 30 seconds in milliseconds
+    const narrowRange = {
+      from: new Date(timestamp - windowMs).toISOString(),
+      to: new Date(timestamp + windowMs).toISOString(),
+    };
+
+    // Construct the query for span profile
+    const query = {
+      queryType: 'profile',
+      spanSelector: [spanId],
+      labelSelector,
+      profileTypeId,
+      groupBy: [],
+    };
+
+    // Open in explore with the span profile query and narrow time range
+    splitOpen({
+      queries: [query],
+      range: narrowRange,
+    });
+  };
+
+  return (
+    <VizTooltipWrapper>
+      <VizTooltipHeader
+        item={{
+          label: 'Exemplar',
+          value: timeValue,
+        }}
+        isPinned={isPinned}
+      />
+      <VizTooltipContent items={[]} isPinned={isPinned} maxHeight={maxHeight} scrollable={maxHeight != null}>
+        <div style={{ padding: `${theme.spacing(1)} 0` }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <tbody>
+              {displayFields.map((field, i) => {
+                const value = field.values[rowIndex];
+                const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
+                const fieldName = getFieldDisplayName(field, exemplarFrame);
+                const valueString = formattedValueToString(fieldDisplay);
+
+                // Check if this is a Span ID field that should have a link
+                const isSpanId = isSpanIdField(field);
+                const hasLink = isSpanId && splitOpen;
+
+                return (
+                  <tr key={i}>
+                    <td
+                      style={{
+                        padding: `${theme.spacing(0.25)} ${theme.spacing(2)} ${theme.spacing(0.25)} 0`,
+                        fontWeight: theme.typography.fontWeightMedium,
+                      }}
+                    >
+                      {fieldName}:
+                    </td>
+                    <td style={{ padding: `${theme.spacing(0.25)} 0` }}>
+                      {hasLink ? (
+                        <TextLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleSpanIdClick(valueString);
+                          }}
+                          external={false}
+                          weight="medium"
+                          inline={false}
+                        >
+                          {valueString}
+                        </TextLink>
+                      ) : (
+                        valueString
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </VizTooltipContent>
+    </VizTooltipWrapper>
+  );
+};
+
+export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
+  if (props.seriesIdx === 2) {
+    const exemplarFrame = props.dataRef.current!.exemplars!;
+    const rowIndex = props.dataIdxs[2]!;
 
     return (
-      <ExemplarTooltip
-        items={displayValues.map((dispVal) => ({
-          label: dispVal.name,
-          value: dispVal.valueString,
-        }))}
-        links={links}
-        maxHeight={props.maxHeight}
+      <HeatmapExemplarTooltip
+        exemplarFrame={exemplarFrame}
+        rowIndex={rowIndex}
         isPinned={props.isPinned}
+        maxHeight={props.maxHeight}
       />
     );
   }

@@ -95,7 +95,34 @@ export function prepareHeatmapData({
 
   cacheFieldDisplayNames(frames);
 
-  const exemplars = annotations?.find((f) => f.name === 'exemplar');
+  // Helper function to check if two label sets match
+  const labelsMatch = (labels1: Record<string, string> | undefined, labels2: Record<string, string> | undefined) => {
+    if (!labels1 && !labels2) {
+      return true;
+    }
+    if (!labels1 || !labels2) {
+      return false;
+    }
+    const keys1 = Object.keys(labels1);
+    const keys2 = Object.keys(labels2);
+    if (keys1.length !== keys2.length) {
+      return false;
+    }
+    return keys1.every((key) => labels1[key] === labels2[key]);
+  };
+
+  // Find the first heatmap frame to get its labels
+  const heatmapFrame = frames.find((f) => f.meta?.type === DataFrameType.HeatmapCells);
+  const heatmapLabels = heatmapFrame?.fields.find((f) => f.name === 'count')?.labels;
+
+  // Find the exemplar frame that matches the heatmap frame's labels
+  const exemplars = annotations?.find((f) => {
+    if (f.name !== 'exemplar') {
+      return false;
+    }
+    const valueField = f.fields.find((field) => field.name === 'Value');
+    return labelsMatch(heatmapLabels, valueField?.labels);
+  });
 
   exemplars?.fields.forEach((field) => {
     field.getLinks = getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
