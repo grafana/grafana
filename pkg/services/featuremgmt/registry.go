@@ -575,7 +575,7 @@ var (
 		{
 			Name:         "dashboardNewLayouts",
 			Description:  "Enables new dashboard layouts",
-			Stage:        FeatureStagePrivatePreview,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
 			Owner:        grafanaDashboardsSquad,
 		},
