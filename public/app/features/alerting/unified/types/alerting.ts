@@ -80,6 +80,20 @@ export type CloudNotifierType =
   | 'jira';
 
 export type NotifierType = GrafanaNotifierType | CloudNotifierType;
+
+/**
+ * Represents a specific version of a notifier integration
+ * Used for integration versioning during Single Alert Manager migration
+ */
+export interface NotifierVersion {
+  version: string;
+  label: string;
+  description: string;
+  options: NotificationChannelOption[];
+  /** Whether this version can be used to create new integrations */
+  canCreate?: boolean;
+}
+
 export interface NotifierDTO<T = NotifierType> {
   name: string;
   description: string;
@@ -88,6 +102,23 @@ export interface NotifierDTO<T = NotifierType> {
   options: NotificationChannelOption[];
   info?: string;
   secure?: boolean;
+  /**
+   * Available versions for this notifier from the backend
+   * Each version contains version-specific options and metadata
+   */
+  versions?: NotifierVersion[];
+  /**
+   * The default version that the backend will use when creating new integrations.
+   * Returned by the backend from /api/alert-notifiers?version=2
+   *
+   * - "v1" for most notifiers (modern Grafana version)
+   * - "v0mimir1" for legacy-only notifiers (e.g., WeChat)
+   *
+   * Note: Currently not used in the frontend. The backend handles version
+   * selection automatically. Could be used in the future to display
+   * version information or validate notifier capabilities.
+   */
+  currentVersion?: string;
 }
 
 export interface NotificationChannelType {
