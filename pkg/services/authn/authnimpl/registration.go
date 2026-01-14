@@ -141,6 +141,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 40)
 	authnSvc.RegisterPostAuthHook(userSync.SyncLastSeenHook, 130)
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
+	authnSvc.RegisterPostAuthHook(sync.ProvideAuthProxySessionSync(cfg, sessionService, tracer).SyncAuthProxySessionHook, 70)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
