@@ -74,6 +74,12 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
 
   const [currentPath, setCurrentPath] = useState(locationService.getLocation().pathname);
+  const context = useMemo(
+    () => ({
+      path: currentPath,
+    }),
+    [currentPath]
+  );
 
   useEffect(() => {
     const subscription = locationService.getLocationObservable().subscribe((location) => {
@@ -91,9 +97,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   // whether the component is rendered or not
   const { links, isLoading } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
-    context: {
-      path: currentPath,
-    },
+    context,
+    // context: {
+    //   path: currentPath,
+    // },
   });
 
   // get all components for this extension point, but only for the permitted plugins

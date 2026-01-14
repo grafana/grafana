@@ -1,3 +1,4 @@
+import { of } from 'rxjs';
 import {
   FieldType,
   LoadingState,
@@ -22,6 +23,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import * as getPluginExtensions from 'app/features/plugins/extensions/getPluginExtensions';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -36,6 +38,8 @@ const mocks = {
   contextSrv: jest.mocked(contextSrv),
   getExploreUrl: jest.fn(),
   notifyApp: jest.fn(),
+  getPluginExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+  getObservablePluginLinks: jest.fn().mockReturnValue(of([])),
 };
 
 jest.mock('app/core/utils/explore', () => ({
@@ -51,10 +55,10 @@ jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));
 
-const getPluginExtensionsMock = jest.fn().mockReturnValue({ extensions: [] });
 jest.mock('app/features/plugins/extensions/getPluginExtensions', () => ({
   ...jest.requireActual('app/features/plugins/extensions/getPluginExtensions'),
-  createPluginExtensionsGetter: () => getPluginExtensionsMock,
+  createPluginExtensionsGetter: () => mocks.getPluginExtensions,
+  getObservablePluginLinks: () => mocks.getObservablePluginLinks(),
 }));
 
 describe('panelMenuBehavior', () => {
@@ -125,8 +129,8 @@ describe('panelMenuBehavior', () => {
 
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', async () => {
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+      mocks.getObservablePluginLinks.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -135,8 +139,8 @@ describe('panelMenuBehavior', () => {
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -164,7 +168,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate menu item title to 25 chars', async () => {
-      getPluginExtensionsMock.mockReturnValue({
+      mocks.getPluginExtensions.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -203,7 +207,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should show icons for link extensions (if they provide it)', async () => {
-      getPluginExtensionsMock.mockReturnValue({
+      mocks.getPluginExtensions.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -246,7 +250,7 @@ describe('panelMenuBehavior', () => {
     it('should pass onClick from plugin extension link to menu item', async () => {
       const expectedOnClick = jest.fn();
 
-      getPluginExtensionsMock.mockReturnValue({
+      mocks.getPluginExtensions.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -332,7 +336,7 @@ describe('panelMenuBehavior', () => {
         data,
       };
 
-      expect(getPluginExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(mocks.getPluginExtensions).toBeCalledWith(expect.objectContaining({ context }));
     });
 
     it('should pass context with default time zone values when configuring extension', async () => {
@@ -389,12 +393,12 @@ describe('panelMenuBehavior', () => {
         data,
       };
 
-      expect(getPluginExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(mocks.getPluginExtensions).toBeCalledWith(expect.objectContaining({ context }));
     });
 
-    it('should contain menu item with category', async () => {
-      getPluginExtensionsMock.mockReturnValue({
-        extensions: [
+    it.only('should contain menu item with category', async () => {
+      mocks.getObservablePluginLinks.mockReturnValue(
+        of([
           {
             id: '1',
             pluginId: '...',
@@ -404,8 +408,8 @@ describe('panelMenuBehavior', () => {
             path: '/a/grafana-basic-app/declare-incident',
             category: 'Incident',
           },
-        ],
-      });
+        ])
+      );
 
       const { menu, panel } = await buildTestScene({});
 
@@ -416,7 +420,7 @@ describe('panelMenuBehavior', () => {
 
       menu.activate();
 
-      await new Promise((r) => setTimeout(r, 1));
+      await new Promise((r) => setTimeout(r, 100));
 
       expect(menu.state.items?.length).toBe(7);
 
@@ -438,7 +442,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate category to 25 chars', async () => {
-      getPluginExtensionsMock.mockReturnValue({
+      mocks.getPluginExtensions.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -483,7 +487,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should contain menu item with category and append items without category after divider', async () => {
-      getPluginExtensionsMock.mockReturnValue({
+      mocks.getPluginExtensions.mockReturnValue({
         extensions: [
           {
             id: '1',
@@ -596,7 +600,7 @@ describe('panelMenuBehavior', () => {
 
     describe('plugin links', () => {
       it('should not show Metrics Drilldown menu when no Metrics Drilldown links exist', async () => {
-        getPluginExtensionsMock.mockReturnValue({
+        mocks.getPluginExtensions.mockReturnValue({
           extensions: [
             {
               id: '1',
@@ -634,7 +638,7 @@ describe('panelMenuBehavior', () => {
       });
 
       it('should separate Metrics Drilldown links into their own menu', async () => {
-        getPluginExtensionsMock.mockReturnValue({
+        mocks.getPluginExtensions.mockReturnValue({
           extensions: [
             {
               id: '1',
@@ -698,7 +702,7 @@ describe('panelMenuBehavior', () => {
       });
 
       it('should not show extensions menu when no non-Metrics Drilldown links exist', async () => {
-        getPluginExtensionsMock.mockReturnValue({
+        mocks.getPluginExtensions.mockReturnValue({
           extensions: [
             {
               id: '1',

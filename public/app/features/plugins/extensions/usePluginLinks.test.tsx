@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { JSX } from 'react';
 
 import {
@@ -220,6 +220,215 @@ describe('usePluginLinks()', () => {
     expect(result.current.links.length).toBe(2);
     expect(result.current.links[0].title).toBe('1');
     expect(result.current.links[1].title).toBe('2');
+  });
+
+  it('should update link properties using the provided SYNC configure() function', async () => {
+    const context = { foo: 'bar' };
+    let { result, rerender } = renderHook(() => usePluginLinks({ extensionPointId, context }), { wrapper });
+
+    // Add extensions to the registry
+    act(() => {
+      registries.addedLinksRegistry.register({
+        pluginId,
+        configs: [
+          {
+            targets: extensionPointId,
+            title: 'Original Title',
+            description: 'Original Description',
+            path: `/a/${pluginId}/original`,
+            icon: 'heart',
+            category: 'original-category',
+            // @ts-ignore
+            configure: (context: { foo: 'bar' }) => {
+              return {
+                title: `Title: ${context.foo}`,
+                description: 'Updated Description',
+                path: 'updated/path',
+                icon: 'star',
+                category: 'updated-category',
+              };
+            },
+          },
+        ],
+      });
+    });
+
+    // Check if the hook returns the new extensions
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.links.length).toBe(1);
+    });
+
+    rerender();
+
+    expect(result.current.links.length).toBe(1);
+    expect(result.current.links[0].title).toBe('Title: bar');
+    expect(result.current.links[0].description).toBe('Updated Description');
+    // We are adding link tracking parameters to the link when updating via the `configure()` function
+    expect(result.current.links[0].path).toBe(
+      `updated/path?uel_pid=${pluginId}&uel_epid=${encodeURIComponent(extensionPointId)}`
+    );
+    expect(result.current.links[0].icon).toBe('star');
+    expect(result.current.links[0].category).toBe('updated-category');
+  });
+
+  it('should update link properties using the provided ASYNC configure() function', async () => {
+    const context = { foo: 'bar' };
+    let { result, rerender } = renderHook(() => usePluginLinks({ extensionPointId, context }), { wrapper });
+
+    // Add extensions to the registry with async configure function
+    act(() => {
+      registries.addedLinksRegistry.register({
+        pluginId,
+        configs: [
+          {
+            targets: extensionPointId,
+            title: 'Original Title',
+            description: 'Original Description',
+            path: `/a/${pluginId}/original`,
+            icon: 'heart',
+            category: 'original-category',
+            // @ts-ignore
+            configure: async (context: { foo: 'bar' }) => {
+              // Simulate async operation
+              await new Promise((resolve) => setTimeout(resolve, 10));
+              return {
+                title: `Async Title: ${context.foo}`,
+                description: 'Async Updated Description',
+                path: 'async/updated/path',
+                icon: 'cloud',
+                category: 'async-updated-category',
+              };
+            },
+          },
+        ],
+      });
+    });
+
+    // With the new implementation, links should appear incrementally as configure() resolves
+    // Initially, the link may not be visible yet (depending on timing)
+    rerender();
+
+    // Wait for async configure to complete - link should appear
+    await waitFor(() => {
+      expect(result.current.links.length).toBe(1);
+    });
+
+    rerender();
+
+    expect(result.current.links.length).toBe(1);
+    expect(result.current.links[0].title).toBe('Async Title: bar');
+    expect(result.current.links[0].description).toBe('Async Updated Description');
+    // We are adding link tracking parameters to the link when updating via the async `configure()` function
+    expect(result.current.links[0].path).toBe(
+      `async/updated/path?uel_pid=${pluginId}&uel_epid=${encodeURIComponent(extensionPointId)}`
+    );
+    expect(result.current.links[0].icon).toBe('cloud');
+    expect(result.current.links[0].category).toBe('async-updated-category');
+  });
+
+  it('should return static links immediately and update incrementally as async configure() functions resolve', async () => {
+    const context = { foo: 'bar' };
+    let { result, rerender } = renderHook(() => usePluginLinks({ extensionPointId, context }), { wrapper });
+
+    // Add a mix of static link and async configure link
+    act(() => {
+      registries.addedLinksRegistry.register({
+        pluginId,
+        configs: [
+          {
+            targets: extensionPointId,
+            title: 'Static Link',
+            description: 'Static Description',
+            path: `/a/${pluginId}/static`,
+            // No configure function - should appear immediately
+          },
+          {
+            targets: extensionPointId,
+            title: 'Async Link',
+            description: 'Async Description',
+            path: `/a/${pluginId}/async`,
+            // @ts-ignore
+            configure: async (context: { foo: 'bar' }) => {
+              await new Promise((resolve) => setTimeout(resolve, 50));
+              return {
+                title: 'Updated Async Title',
+              };
+            },
+          },
+        ],
+      });
+    });
+
+    rerender();
+
+    // Static link should appear immediately
+    await waitFor(() => {
+      expect(result.current.links.length).toBeGreaterThanOrEqual(1);
+      const staticLink = result.current.links.find((link) => link.title === 'Static Link');
+      expect(staticLink).toBeDefined();
+    });
+
+    // Wait for async configure to complete
+    await waitFor(
+      () => {
+        expect(result.current.links.length).toBe(2);
+        const asyncLink = result.current.links.find((link) => link.title === 'Updated Async Title');
+        expect(asyncLink).toBeDefined();
+      },
+      { timeout: 2000 }
+    );
+  });
+
+  it('should handle buggy async configure() functions that never resolve without blocking', async () => {
+    const context = { foo: 'bar' };
+    let { result, rerender } = renderHook(() => usePluginLinks({ extensionPointId, context }), { wrapper });
+
+    // Add a static link and a buggy async configure link that never resolves
+    act(() => {
+      registries.addedLinksRegistry.register({
+        pluginId,
+        configs: [
+          {
+            targets: extensionPointId,
+            title: 'Static Link',
+            description: 'Static Description',
+            path: `/a/${pluginId}/static`,
+          },
+          {
+            targets: extensionPointId,
+            title: 'Buggy Async Link',
+            description: 'Buggy Description',
+            path: `/a/${pluginId}/buggy`,
+            // @ts-ignore
+            configure: async () => {
+              // This promise never resolves - simulating a buggy implementation
+              return new Promise(() => {
+                // Never resolves
+              });
+            },
+          },
+        ],
+      });
+    });
+
+    rerender();
+
+    // Static link should appear immediately, even though buggy async configure never resolves
+    await waitFor(() => {
+      expect(result.current.links.length).toBe(1);
+      expect(result.current.links[0].title).toBe('Static Link');
+    });
+
+    // Wait a bit to ensure buggy async configure doesn't cause issues
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Static link should still be there, buggy link should not appear
+    rerender();
+    expect(result.current.links.length).toBe(1);
+    expect(result.current.links[0].title).toBe('Static Link');
   });
 
   it('should not validate the extension point meta-info in production mode', () => {
