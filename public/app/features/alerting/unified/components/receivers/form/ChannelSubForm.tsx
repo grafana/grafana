@@ -16,6 +16,7 @@ import {
   GrafanaChannelValues,
   ReceiverFormValues,
 } from '../../../types/receiver-form';
+import { hasPlaceholderEmail } from '../../../utils/receiver-form';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
@@ -71,6 +72,10 @@ export function ChannelSubForm<R extends ChannelValues>({
   // TODO I don't like integration specific code here but other ways require a bigger refactoring
   const onCallIntegrationType = watch(`${settingsFieldPath}.integration_type`);
   const isTestAvailable = onCallIntegrationType !== OnCallIntegrationType.NewIntegration;
+
+  // Check if email integration has placeholder addresses
+  const channelValues = getValues(channelFieldPath) as GrafanaChannelValues | undefined;
+  const isPlaceholderEmail = hasPlaceholderEmail(channelValues);
 
   useEffect(() => {
     register(`${channelFieldPath}.__id`);
@@ -233,7 +238,22 @@ export function ChannelSubForm<R extends ChannelValues>({
         </div>
         <div className={styles.buttons}>
           {isTestable && onTest && isTestAvailable && (
-            <Button size="xs" variant="secondary" type="button" onClick={() => handleTest()} icon="message">
+            <Button
+              disabled={isPlaceholderEmail}
+              size="xs"
+              variant="secondary"
+              type="button"
+              onClick={() => handleTest()}
+              icon="message"
+              tooltip={
+                isPlaceholderEmail
+                  ? t(
+                      'alerting.channel-sub-form.test-disabled-placeholder',
+                      'Please configure a valid email address before testing'
+                    )
+                  : undefined
+              }
+            >
               <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
@@ -260,6 +280,20 @@ export function ChannelSubForm<R extends ChannelValues>({
       </div>
       {notifier && (
         <div className={styles.innerContent}>
+          {isPlaceholderEmail && (
+            <Alert
+              title={t(
+                'alerting.contact-points.email.placeholder-warning-title',
+                'Configure a valid email address'
+              )}
+              severity="info"
+            >
+              <Trans i18nKey="alerting.contact-points.email.placeholder-warning-body">
+                This contact point is using a placeholder email address (<Text variant="code">example@email.com</Text>
+                ). Please update it with a valid email address to receive alerts and enable testing.
+              </Trans>
+            </Alert>
+          )}
           {showTelegramWarning && (
             <Alert
               title={t(
