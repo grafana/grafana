@@ -292,10 +292,50 @@ func (s *service) starting(ctx context.Context) error {
 		serverOptions.OverridesService = overridesSvc
 	}
 
-	server, searchServer, err := NewResourceServer(serverOptions)
-	if err != nil {
-		return err
+	// Handle search mode: "", "embedded", or "remote"
+	// Empty string defaults to "embedded" for backward compatibility
+	var searchServer resource.SearchServer
+	registerSearchServices := true
+
+	switch s.cfg.SearchMode {
+	case "remote":
+		// Use remote search client - don't register search services locally
+		s.log.Info("Using remote search server", "address", s.cfg.SearchServerAddress)
+		remoteSearch, err := newRemoteSearchClient(s.cfg.SearchServerAddress)
+		if err != nil {
+			return fmt.Errorf("failed to create remote search client: %w", err)
+		}
+		searchServer = remoteSearch
+		registerSearchServices = false
+
+	case "", "embedded":
+		// Default: create local search server (backward compatible)
+		s.log.Info("Using embedded search server")
+		// SearchOptions are already configured, NewResourceServer will create the search server
+
+	default:
+		return fmt.Errorf("invalid search_mode: %s (valid values: \"\", \"embedded\", \"remote\")", s.cfg.SearchMode)
 	}
+
+	var server resource.ResourceServer
+	if searchServer != nil {
+		// Remote search mode: pass the remote search client to the resource server
+		// Clear local search options since we're using remote search
+		serverOptions.SearchOptions = resource.SearchOptions{}
+		var err error
+		server, _, err = NewResourceServer(serverOptions)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Embedded mode: create both server and search server together
+		var err error
+		server, searchServer, err = NewResourceServer(serverOptions)
+		if err != nil {
+			return err
+		}
+	}
+
 	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
 	if err != nil {
 		return err
@@ -309,8 +349,11 @@ func (s *service) starting(ctx context.Context) error {
 	srv := s.handler.GetServer()
 	resourcepb.RegisterResourceStoreServer(srv, server)
 	resourcepb.RegisterBulkStoreServer(srv, server)
-	resourcepb.RegisterResourceIndexServer(srv, searchServer)
-	resourcepb.RegisterManagedObjectIndexServer(srv, searchServer)
+	// Only register search services if running in embedded mode
+	if registerSearchServices {
+		resourcepb.RegisterResourceIndexServer(srv, searchServer)
+		resourcepb.RegisterManagedObjectIndexServer(srv, searchServer)
+	}
 	resourcepb.RegisterBlobStoreServer(srv, server)
 	resourcepb.RegisterDiagnosticsServer(srv, server)
 	resourcepb.RegisterQuotasServer(srv, server)

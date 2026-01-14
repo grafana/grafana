@@ -1,0 +1,353 @@
+package sql
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"hash/fnv"
+	"net"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/health/grpc_health_v1"
+
+	"github.com/grafana/dskit/kv"
+	"github.com/grafana/dskit/netutil"
+	"github.com/grafana/dskit/ring"
+	"github.com/grafana/dskit/services"
+
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
+)
+
+var (
+	_ SearchGrpcService = (*searchService)(nil)
+)
+
+// SearchGrpcService is the interface for the standalone search gRPC service.
+type SearchGrpcService interface {
+	services.NamedService
+
+	// GetAddress returns the address where this service is running
+	GetAddress() string
+}
+
+type searchService struct {
+	*services.BasicService
+
+	// Subservices manager
+	subservices        *services.Manager
+	subservicesWatcher *services.FailureWatcher
+	hasSubservices     bool
+
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
+	db       infraDB.DB
+	stopCh   chan struct{}
+	stoppedCh chan error
+
+	handler grpcserver.Provider
+
+	tracing trace.Tracer
+
+	authenticator func(ctx context.Context) (context.Context, error)
+
+	log          log.Logger
+	reg          prometheus.Registerer
+	indexMetrics *resource.BleveIndexMetrics
+
+	docBuilders resource.DocumentBuilderSupplier
+
+	searchRing     *ring.Ring
+	ringLifecycler *ring.BasicLifecycler
+
+	backend resource.StorageBackend
+}
+
+// ProvideSearchGrpcService creates a standalone search gRPC service.
+// This is used when running search-server as a separate target.
+func ProvideSearchGrpcService(
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	db infraDB.DB,
+	log log.Logger,
+	reg prometheus.Registerer,
+	docBuilders resource.DocumentBuilderSupplier,
+	indexMetrics *resource.BleveIndexMetrics,
+	searchRing *ring.Ring,
+	memberlistKVConfig kv.Config,
+	backend resource.StorageBackend,
+) (SearchGrpcService, error) {
+	tracer := otel.Tracer("search-server")
+
+	authn := NewAuthenticatorWithFallback(cfg, reg, tracer, func(ctx context.Context) (context.Context, error) {
+		auth := grpc.Authenticator{Tracer: tracer}
+		return auth.Authenticate(ctx)
+	})
+
+	s := &searchService{
+		cfg:                cfg,
+		features:           features,
+		stopCh:             make(chan struct{}),
+		stoppedCh:          make(chan error, 1),
+		authenticator:      authn,
+		tracing:            tracer,
+		db:                 db,
+		log:                log,
+		reg:                reg,
+		docBuilders:        docBuilders,
+		indexMetrics:       indexMetrics,
+		searchRing:         searchRing,
+		subservicesWatcher: services.NewFailureWatcher(),
+		backend:            backend,
+	}
+
+	subservices := []services.Service{}
+	if cfg.EnableSharding {
+		ringStore, err := kv.NewClient(
+			memberlistKVConfig,
+			ring.GetCodec(),
+			kv.RegistererWithKVName(reg, resource.RingName),
+			log,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create KV store client: %s", err)
+		}
+
+		lifecyclerCfg, err := toSearchLifecyclerConfig(cfg, log)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize search-ring lifecycler config: %s", err)
+		}
+
+		delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, resource.RingNumTokens))
+		delegate = ring.NewLeaveOnStoppingDelegate(delegate, log)
+		delegate = ring.NewAutoForgetDelegate(resource.RingHeartbeatTimeout*2, delegate, log)
+
+		s.ringLifecycler, err = ring.NewBasicLifecycler(
+			lifecyclerCfg,
+			resource.RingName,
+			resource.RingKey,
+			ringStore,
+			delegate,
+			log,
+			reg,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize search-ring lifecycler: %s", err)
+		}
+
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
+		subservices = append(subservices, s.ringLifecycler)
+	}
+
+	if len(subservices) > 0 {
+		s.hasSubservices = true
+		var err error
+		s.subservices, err = services.NewManager(subservices...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create subservices manager: %w", err)
+		}
+	}
+
+	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.SearchServer)
+
+	return s, nil
+}
+
+func (s *searchService) OwnsIndex(key resource.NamespacedResource) (bool, error) {
+	if s.searchRing == nil {
+		return true, nil
+	}
+
+	if st := s.searchRing.State(); st != services.Running {
+		return false, fmt.Errorf("ring is not Running: %s", st)
+	}
+
+	ringHasher := fnv.New32a()
+	_, err := ringHasher.Write([]byte(key.Namespace))
+	if err != nil {
+		return false, fmt.Errorf("error hashing namespace: %w", err)
+	}
+
+	rs, err := s.searchRing.GetWithOptions(ringHasher.Sum32(), searchOwnerRead, ring.WithReplicationFactor(s.searchRing.ReplicationFactor()))
+	if err != nil {
+		return false, fmt.Errorf("error getting replicaset from ring: %w", err)
+	}
+
+	return rs.Includes(s.ringLifecycler.GetInstanceAddr()), nil
+}
+
+func (s *searchService) starting(ctx context.Context) error {
+	if s.hasSubservices {
+		s.subservicesWatcher.WatchManager(s.subservices)
+		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservices); err != nil {
+			return fmt.Errorf("failed to start subservices: %w", err)
+		}
+	}
+
+	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
+	if err != nil {
+		return err
+	}
+
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
+	if err != nil {
+		return err
+	}
+
+	// Create search server
+	searchServer, err := resource.NewSearchServer(searchOptions, s.backend, authzClient, nil, s.indexMetrics, s.OwnsIndex)
+	if err != nil {
+		return fmt.Errorf("failed to create search server: %w", err)
+	}
+
+	if err := searchServer.Init(ctx); err != nil {
+		return fmt.Errorf("failed to initialize search server: %w", err)
+	}
+
+	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
+	if err != nil {
+		return err
+	}
+
+	srv := s.handler.GetServer()
+	resourcepb.RegisterResourceIndexServer(srv, searchServer)
+	resourcepb.RegisterManagedObjectIndexServer(srv, searchServer)
+	grpc_health_v1.RegisterHealthServer(srv, &searchHealthService{searchServer: searchServer})
+
+	// register reflection service
+	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
+	if err != nil {
+		return err
+	}
+
+	if s.cfg.EnableSharding {
+		s.log.Info("waiting until search server is JOINING in the ring")
+		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
+		defer cancel()
+		if err := ring.WaitInstanceState(lfcCtx, s.searchRing, s.ringLifecycler.GetInstanceID(), ring.JOINING); err != nil {
+			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
+		}
+		s.log.Info("search server is JOINING in the ring")
+
+		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
+			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
+		}
+		s.log.Info("search server is ACTIVE in the ring")
+	}
+
+	// start the gRPC server
+	go func() {
+		err := s.handler.Run(ctx)
+		if err != nil {
+			s.stoppedCh <- err
+		} else {
+			s.stoppedCh <- nil
+		}
+	}()
+	return nil
+}
+
+func (s *searchService) GetAddress() string {
+	return s.handler.GetAddress()
+}
+
+func (s *searchService) running(ctx context.Context) error {
+	select {
+	case err := <-s.stoppedCh:
+		if err != nil && !errors.Is(err, context.Canceled) {
+			return err
+		}
+	case err := <-s.subservicesWatcher.Chan():
+		return fmt.Errorf("subservice failure: %w", err)
+	case <-ctx.Done():
+		close(s.stopCh)
+	}
+	return nil
+}
+
+func (s *searchService) stopping(_ error) error {
+	if s.hasSubservices {
+		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
+		if err != nil {
+			return fmt.Errorf("failed to stop subservices: %w", err)
+		}
+	}
+	return nil
+}
+
+func toSearchLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
+	instanceAddr, err := ring.GetInstanceAddr(cfg.MemberlistBindAddr, netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, logger), logger, true)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, err
+	}
+
+	instanceId := cfg.InstanceID
+	if instanceId == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return ring.BasicLifecyclerConfig{}, err
+		}
+		instanceId = hostname
+	}
+
+	_, grpcPortStr, err := net.SplitHostPort(cfg.GRPCServer.Address)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, fmt.Errorf("could not get grpc port from grpc server address: %s", err)
+	}
+
+	grpcPort, err := strconv.Atoi(grpcPortStr)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, fmt.Errorf("error converting grpc address port to int: %s", err)
+	}
+
+	return ring.BasicLifecyclerConfig{
+		Addr:                fmt.Sprintf("%s:%d", instanceAddr, grpcPort),
+		ID:                  instanceId,
+		HeartbeatPeriod:     15 * time.Second,
+		HeartbeatTimeout:    resource.RingHeartbeatTimeout,
+		TokensObservePeriod: 0,
+		NumTokens:           resource.RingNumTokens,
+	}, nil
+}
+
+// searchHealthService implements the health check for the search service.
+type searchHealthService struct {
+	searchServer resource.SearchServer
+}
+
+func (h *searchHealthService) Check(ctx context.Context, req *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
+	return &grpc_health_v1.HealthCheckResponse{
+		Status: grpc_health_v1.HealthCheckResponse_SERVING,
+	}, nil
+}
+
+func (h *searchHealthService) Watch(req *grpc_health_v1.HealthCheckRequest, server grpc_health_v1.Health_WatchServer) error {
+	return fmt.Errorf("watch not implemented")
+}
+
+func (h *searchHealthService) List(ctx context.Context, req *grpc_health_v1.HealthListRequest) (*grpc_health_v1.HealthListResponse, error) {
+	check, err := h.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return &grpc_health_v1.HealthListResponse{
+		Statuses: map[string]*grpc_health_v1.HealthCheckResponse{
+			"": check,
+		},
+	}, nil
+}

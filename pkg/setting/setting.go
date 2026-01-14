@@ -623,6 +623,8 @@ type Cfg struct {
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
 	EnableSQLKVBackend                         bool
+	SearchMode                                 string // "", "embedded", "remote" - empty defaults to embedded
+	SearchServerAddress                        string // gRPC address for remote search server
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings

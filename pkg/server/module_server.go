@@ -205,6 +205,14 @@ func (s *ModuleServer) Run() error {
 		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
 	})
 
+	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
+		docBuilders, err := InitializeDocumentBuilders(s.cfg)
+		if err != nil {
+			return nil, err
+		}
+		return sql.ProvideSearchGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.storageBackend)
+	})
+
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
 		return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer)
 	})

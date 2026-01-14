@@ -10,6 +10,7 @@ const (
 	SearchServerRing        string = "search-server-ring"
 	SearchServerDistributor string = "search-server-distributor"
 	StorageServer           string = "storage-server"
+	SearchServer            string = "search-server"
 	ZanzanaServer           string = "zanzana-server"
 	InstrumentationServer   string = "instrumentation-server"
 	FrontendServer          string = "frontend-server"
@@ -21,6 +22,7 @@ var dependencyMap = map[string][]string{
 	SearchServerRing:        {InstrumentationServer, MemberlistKV},
 	GrafanaAPIServer:        {InstrumentationServer},
 	StorageServer:           {InstrumentationServer, SearchServerRing},
+	SearchServer:            {InstrumentationServer, SearchServerRing},
 	ZanzanaServer:           {InstrumentationServer},
 	SearchServerDistributor: {InstrumentationServer, MemberlistKV, SearchServerRing},
 	Core:                    {},
