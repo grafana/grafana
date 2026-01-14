@@ -984,6 +984,11 @@ export interface FeatureToggles {
   */
   recentlyViewedDashboards?: boolean;
   /**
+  * A/A test for recently viewed dashboards feature
+  * @default false
+  */
+  experimentRecentlyViewedDashboards?: boolean;
+  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
