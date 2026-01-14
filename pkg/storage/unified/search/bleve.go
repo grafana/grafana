@@ -1252,7 +1252,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					{
 						Name:  resource.SEARCH_FIELD_TITLE,
 						Type:  resourcepb.QueryFieldType_KEYWORD,
-						Boost: 10, // exact match
+						Boost: 10, // exact match -- includes edge ngrams!
 					},
 					{
 						Name:  resource.SEARCH_FIELD_TITLE,
@@ -1263,11 +1263,6 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 						Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
 						Type:  resourcepb.QueryFieldType_TEXT,
 						Boost: 6, // standard analyzer
-					},
-					{
-						Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-						Type:  resourcepb.QueryFieldType_KEYWORD,
-						Boost: 5, // prefix match
 					},
 				}
 			}

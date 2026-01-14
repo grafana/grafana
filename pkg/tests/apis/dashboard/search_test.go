@@ -107,6 +107,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 
 		var statusCode int
 		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+			//Param("explain", "true") // helpful to understand which field made things match
 			Param("limit", "1000").
 			Param("type", "dashboard") // Only search dashboards
 
