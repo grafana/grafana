@@ -11,6 +11,7 @@ import { DataFrame } from './dataFrame';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { FieldConfigSource } from './fieldOverrides';
 import { IconName } from './icon';
+import { LinkTarget } from './linkTarget';
 import { OptionEditorConfig } from './options';
 import { PluginMeta } from './plugin';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
@@ -191,6 +192,7 @@ export interface PanelMenuItem {
   onClick?: (event: React.MouseEvent) => void;
   shortcut?: string;
   href?: string;
+  target?: LinkTarget;
   subMenu?: PanelMenuItem[];
 }
 
