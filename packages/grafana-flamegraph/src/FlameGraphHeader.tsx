@@ -170,9 +170,9 @@ const viewModeOptions: Array<SelectableValue<ViewMode>> = [
 ];
 
 const paneViewOptions: Array<SelectableValue<PaneView>> = [
-  { value: PaneView.TopTable, label: 'Table' },
-  { value: PaneView.FlameGraph, label: 'Flame' },
-  { value: PaneView.CallTree, label: 'Tree' },
+  { value: PaneView.TopTable, label: 'Top Table' },
+  { value: PaneView.FlameGraph, label: 'Flame Graph' },
+  { value: PaneView.CallTree, label: 'Call Tree' },
 ];
 
 function getViewOptions(width: number, vertical?: boolean): Array<SelectableValue<SelectedView>> {
