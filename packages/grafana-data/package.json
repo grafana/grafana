@@ -52,7 +52,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "themes-schema": "tsx ./src/themes/scripts/generateSchema.ts"
+    "themes-schema": "tsx ./scripts/generateSchema.ts"
   },
   "dependencies": {
     "@braintree/sanitize-url": "7.0.1",
