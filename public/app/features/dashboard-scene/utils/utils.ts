@@ -293,6 +293,8 @@ export function getDefaultVizPanel(): VizPanel {
       ? ''
       : t('dashboard.new-panel-title', 'New panel');
 
+  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
+
   return new VizPanel({
     title: newPanelTitle,
     pluginId: defaultPluginId,
@@ -310,14 +312,16 @@ export function getDefaultVizPanel(): VizPanel {
     headerActions: new VizPanelHeaderActions({
       hideGroupByAction: !config.featureToggles.panelGroupBy,
     }),
-    $data: new SceneDataTransformer({
-      $data: new SceneQueryRunner({
-        queries: [{ refId: 'A' }],
-        datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
-        $behaviors: [new DashboardDatasourceBehaviour({})],
-      }),
-      transformations: [],
-    }),
+    $data: datasourceSettings
+      ? new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            queries: [{ refId: 'A' }],
+            datasource: getDataSourceRef(datasourceSettings),
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+          transformations: [],
+        })
+      : undefined,
   });
 }
 

@@ -117,28 +117,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     };
   }
 
-  private async _autoSelectVisualization(panel: VizPanel) {
-    const dataObject = sceneGraph.getData(panel);
-
-    this._subs.add(
-      dataObject.subscribeToState(async () => {
-        const { data } = dataObject.state;
-        if (hasData(data) && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-          const { suggestions } = await getAllSuggestions(data);
-
-          if (suggestions.length > 0) {
-            const defaultFirstSuggestion = suggestions[0];
-            await panel.changePluginType(
-              defaultFirstSuggestion.pluginId,
-              defaultFirstSuggestion.options,
-              defaultFirstSuggestion.fieldConfig
-            );
-          }
-        }
-      })
-    );
-  }
-
   private commitChanges() {
     if (!this.state.isDirty && !this._changesHaveBeenMade) {
       // Nothing to commit
@@ -150,7 +128,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const originalState = this._layoutItemState!;
 
     this.setState({ editPreview: undefined });
-    this.state.optionsPane?.setState({ editPreviewRef: undefined });
 
     // Temp fix for old edit mode
     if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
