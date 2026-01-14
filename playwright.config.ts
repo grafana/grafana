@@ -203,5 +203,9 @@ export default defineConfig<PluginOptions>({
       testMatch: ['global-teardown.spec.ts'],
       dependencies: ['dashboard-cujs'],
     }),
+    withAuth({
+      name: 'grafana-e2etest-panel',
+      testDir: path.join(testDirRoot, '/test-plugins/grafana-test-panel'),
+    }),
   ],
 });

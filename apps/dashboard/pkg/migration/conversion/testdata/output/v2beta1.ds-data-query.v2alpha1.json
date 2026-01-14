@@ -852,66 +852,317 @@
             }
           }
         }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Single Dashboard DS Query",
+          "description": "Panel with a single -- Dashboard -- datasource query",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 1,
+                        "withTransforms": true
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "stat",
+            "spec": {
+              "pluginVersion": "12.1.0-pre",
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Multiple Dashboard DS Queries",
+          "description": "Panel with multiple -- Dashboard -- datasource queries (should be mixed)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 1,
+                        "withTransforms": true
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 2,
+                        "withTransforms": true
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "datasource",
+                      "spec": {
+                        "panelId": 3,
+                        "withTransforms": true
+                      }
+                    },
+                    "datasource": {
+                      "type": "datasource",
+                      "uid": "-- Dashboard --"
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "stat",
+            "spec": {
+              "pluginVersion": "12.1.0-pre",
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
-      "kind": "AutoGridLayout",
+      "kind": "RowsLayout",
       "spec": {
-        "maxColumnCount": 3,
-        "columnWidthMode": "standard",
-        "rowHeightMode": "standard",
-        "items": [
+        "rows": [
           {
-            "kind": "AutoGridLayoutItem",
+            "kind": "Row",
             "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-3"
-              }
-            }
-          },
-          {
-            "kind": "AutoGridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-4"
-              }
-            }
-          },
-          {
-            "kind": "AutoGridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-2"
-              }
-            }
-          },
-          {
-            "kind": "AutoGridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-1"
-              }
-            }
-          },
-          {
-            "kind": "AutoGridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-5"
-              }
-            }
-          },
-          {
-            "kind": "AutoGridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-6"
+              "title": "",
+              "collapse": false,
+              "hideHeader": true,
+              "fillScreen": false,
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 8,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-3"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 8,
+                        "y": 0,
+                        "width": 8,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-4"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 16,
+                        "y": 0,
+                        "width": 8,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-2"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 3,
+                        "width": 8,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-1"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 8,
+                        "y": 3,
+                        "width": 8,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-5"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 16,
+                        "y": 3,
+                        "width": 8,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-6"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 6,
+                        "width": 8,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-7"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 8,
+                        "y": 6,
+                        "width": 8,
+                        "height": 3,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-8"
+                        }
+                      }
+                    }
+                  ]
+                }
               }
             }
           }

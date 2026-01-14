@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 import { useSessionStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { FilterInput, ScrollContainer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, Field, FilterInput, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
@@ -20,9 +21,12 @@ import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
 
 export interface Props {
   data?: PanelData;
+  showBackButton?: boolean;
   panel: VizPanel;
-  onChange: (options: VizTypeChangeDetails) => void;
+  editPreview: VizPanel;
+  onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
   onClose: () => void;
+  isNewPanel?: boolean;
 }
 
 const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> => {
@@ -39,9 +43,10 @@ const getTabs = (): Array<{ label: string; value: VisualizationSelectPaneTab }> 
     : [allVisualizationsTab, suggestionsTab];
 };
 
-export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
+export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose, showBackButton, isNewPanel }: Props) {
   const styles = useStyles2(getStyles);
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
+  const filterId = useId();
 
   /** SEARCH */
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,9 +65,6 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
       }, 300),
     []
   );
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-  };
 
   /** TABS */
   const tabs = useMemo(getTabs, []);
@@ -82,17 +84,18 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
     [setListMode]
   );
 
+  const handleBackButtonClick = useCallback(() => {
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.BACK_BUTTON,
+      tab: VisualizationSelectPaneTab[listMode],
+      creator_team: 'grafana_plugins_catalog',
+      schema_version: '1.0.0',
+    });
+    onClose();
+  }, [listMode, onClose]);
+
   return (
     <div className={styles.wrapper}>
-      {/*@TODO: Re-enable/move close button*/}
-      {/*<Button*/}
-      {/*  aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}*/}
-      {/*  variant="secondary"*/}
-      {/*  icon="angle-up"*/}
-      {/*  className={styles.closeButton}*/}
-      {/*  data-testid={selectors.components.PanelEditor.toggleVizPicker}*/}
-      {/*  onClick={onClose}*/}
-      {/*/>*/}
       <TabsBar className={styles.tabs} hideBorder={true}>
         {tabs.map((tab) => (
           <Tab
@@ -105,28 +108,57 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
         ))}
       </TabsBar>
       <ScrollContainer>
-        <TabContent>
-          {listMode === VisualizationSelectPaneTab.Suggestions && (
-            <VisualizationSuggestions onChange={onChange} panel={panelModel} data={data} />
-          )}
-          {listMode === VisualizationSelectPaneTab.Visualizations && (
-            <>
-              <div className={styles.searchRow}>
+        <TabContent className={styles.tabContent}>
+          <Stack gap={1} direction="column">
+            <Field
+              tabIndex={0}
+              className={styles.searchField}
+              noMargin
+              htmlFor={filterId}
+              aria-label={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
+            >
+              <Stack direction="row" gap={1}>
+                {showBackButton && (
+                  <Button
+                    aria-label={t('dashboard-scene.panel-viz-type-picker.title-close', 'Close')}
+                    fill="text"
+                    variant="secondary"
+                    icon="arrow-left"
+                    data-testid={selectors.components.PanelEditor.toggleVizPicker}
+                    onClick={handleBackButtonClick}
+                  >
+                    <Trans i18nKey="dashboard-scene.panel-viz-type-picker.button.close">Back</Trans>
+                  </Button>
+                )}
                 <FilterInput
+                  id={filterId}
                   className={styles.filter}
                   value={searchQuery}
-                  onChange={handleSearchChange}
+                  onChange={setSearchQuery}
                   placeholder={t('dashboard-scene.panel-viz-type-picker.placeholder-search-for', 'Search for...')}
                 />
-              </div>
+              </Stack>
+            </Field>
+
+            {listMode === VisualizationSelectPaneTab.Suggestions && (
+              <VisualizationSuggestions
+                onChange={onChange}
+                panel={panelModel}
+                editPreview={editPreview}
+                data={data}
+                searchQuery={searchQuery}
+                isNewPanel={isNewPanel}
+              />
+            )}
+            {listMode === VisualizationSelectPaneTab.Visualizations && (
               <VizTypePicker
                 pluginId={panel.state.pluginId}
                 searchQuery={searchQuery}
                 trackSearch={trackSearch}
                 onChange={onChange}
               />
-            </>
-          )}
+            )}
+          </Stack>
         </TabContent>
       </ScrollContainer>
     </div>
@@ -138,13 +170,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
-    padding: theme.spacing(2, 1),
     height: '100%',
     gap: theme.spacing(2),
   }),
-  searchRow: css({
-    display: 'flex',
-    marginBottom: theme.spacing(2),
+  searchField: css({
+    margin: theme.spacing(0.5, 0, 1, 0), // input glow with the boundary without this
   }),
   tabs: css({
     width: '100%',
@@ -153,6 +183,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexGrow: 1,
     justifyContent: 'center',
     textAlign: 'center',
+  }),
+  tabContent: css({
+    paddingInline: theme.spacing(2),
   }),
   closeButton: css({
     marginLeft: 'auto',

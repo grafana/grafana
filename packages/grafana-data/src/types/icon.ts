@@ -52,6 +52,7 @@ export const availableIconsIndex = {
   bookmark: true,
   'book-open': true,
   'brackets-curly': true,
+  brain: true,
   'browser-alt': true,
   bug: true,
   building: true,
@@ -288,6 +289,7 @@ export const availableIconsIndex = {
   bitbucket: true,
   git: true,
   'tachometer-fast': true,
+  'tachometer-empty': true,
   'cmab-logo': true,
 };
 

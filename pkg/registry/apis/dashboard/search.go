@@ -66,6 +66,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"Search"},
+							OperationId: "searchDashboardsAndFolders",
 							Description: "Dashboard search",
 							Parameters: []*spec3.Parameter{
 								{
@@ -116,6 +117,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "facetLimit",
+										In:          "query",
+										Description: "maximum number of terms to return per facet (default 50, max 1000)",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "tags",
 										In:          "query",
 										Description: "tag query filter",
@@ -128,6 +138,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Name:        "libraryPanel",
 										In:          "query",
 										Description: "find dashboards that reference a given libraryPanel",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "panelType",
+										In:          "query",
+										Description: "find dashboards using panels of a given plugin type",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "dataSourceType",
+										In:          "query",
+										Description: "find dashboards using datasources of a given plugin type",
 										Required:    false,
 										Schema:      spec.StringProperty(),
 									},
@@ -218,6 +246,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"Search"},
+							OperationId: "getSortableFields",
 							Description: "Get sortable fields",
 							Parameters: []*spec3.Parameter{
 								{
@@ -338,6 +367,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func() ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
+	facetLimit := 50
 	offset := 0
 	page := 1
 	if queryParams.Has("limit") {
@@ -418,32 +448,51 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 
-	// The facet term fields
+	// Apply facet terms
 	if facets, ok := queryParams["facet"]; ok {
+		if queryParams.Has("facetLimit") {
+			if parsed, err := strconv.Atoi(queryParams.Get("facetLimit")); err == nil && parsed > 0 {
+				facetLimit = min(parsed, 1000)
+			}
+		}
 		searchRequest.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
 		for _, v := range facets {
 			searchRequest.Facet[v] = &resourcepb.ResourceSearchRequest_Facet{
 				Field: v,
-				Limit: 50,
+				Limit: int64(facetLimit),
 			}
 		}
 	}
 
-	// The tags filter
-	if tags, ok := queryParams["tag"]; ok {
+	if v, ok := queryParams["tag"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "tags",
 			Operator: "=",
-			Values:   tags,
+			Values:   v,
 		})
 	}
 
-	// The libraryPanel filter
-	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
+	if v, ok := queryParams["panelType"]; ok {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TYPES,
+			Operator: "=",
+			Values:   v,
+		})
+	}
+
+	if v, ok := queryParams["dataSourceType"]; ok {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_DS_TYPES,
+			Operator: "=",
+			Values:   v,
+		})
+	}
+
+	if v, ok := queryParams["libraryPanel"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
-			Values:   libraryPanel,
+			Values:   v,
 		})
 	}
 
@@ -503,6 +552,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// gets dashboards that the user was granted read access to
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
+	folderPermissions := permissions[dashboards.ActionFoldersRead]
 	dashboardUids := make([]string, 0)
 	sharedDashboards := make([]string, 0)
 
@@ -510,6 +560,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		if dashboardUid, found := strings.CutPrefix(dashboardPermission, dashboards.ScopeDashboardsPrefix); found {
 			if !slices.Contains(dashboardUids, dashboardUid) {
 				dashboardUids = append(dashboardUids, dashboardUid)
+			}
+		}
+	}
+	for _, folderPermission := range folderPermissions {
+		if folderUid, found := strings.CutPrefix(folderPermission, dashboards.ScopeFoldersPrefix); found {
+			if !slices.Contains(dashboardUids, folderUid) && folderUid != foldermodel.SharedWithMeFolderUID && folderUid != foldermodel.GeneralFolderUID {
+				dashboardUids = append(dashboardUids, folderUid)
 			}
 		}
 	}
@@ -523,9 +580,15 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
+	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
+	if err != nil {
+		return sharedDashboards, err
+	}
+
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields: []string{"folder"},
-		Limit:  int64(len(dashboardUids)),
+		Federated: []*resourcepb.ResourceKey{folderKey},
+		Fields:    []string{"folder"},
+		Limit:     int64(len(dashboardUids)),
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{{
@@ -561,12 +624,6 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 
-	// only folders the user has access to will be returned here
-	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
-	if err != nil {
-		return sharedDashboards, err
-	}
-
 	folderSearchRequest := &resourcepb.ResourceSearchRequest{
 		Fields: []string{"folder"},
 		Limit:  int64(len(allFolders)),
@@ -579,6 +636,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
+	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
 	if err != nil {
 		return sharedDashboards, err

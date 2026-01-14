@@ -978,8 +978,11 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
+            "datasource": {
+              "name": "$datasource"
+            },
             "spec": {
               "__legacyStringValue": "label_values(up, job)"
             }
@@ -1007,8 +1010,11 @@
           "skipUrlSync": false,
           "query": {
             "kind": "DataQuery",
-            "group": "prometheus",
+            "group": "",
             "version": "v0",
+            "datasource": {
+              "name": "$datasource"
+            },
             "spec": {
               "__legacyStringValue": "label_values(up{job=~\"$cluster\"}, instance)"
             }
@@ -1023,5 +1029,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

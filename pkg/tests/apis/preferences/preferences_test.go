@@ -67,7 +67,7 @@ func TestIntegrationPreferences(t *testing.T) {
 			Path:   fmt.Sprintf("/api/teams/%d/preferences", helper.Org1.Staff.ID),
 			Body: []byte(`{
 				"weekStart": "sunday",
-				"timezone": "africa"
+				"timezone": "Africa/Johannesburg"
 			}`),
 		}, &raw)
 		require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "create preference for user")
@@ -79,7 +79,7 @@ func TestIntegrationPreferences(t *testing.T) {
 			Path:   "/api/org/preferences",
 			Body: []byte(`{
 				"weekStart": "sunday",
-				"timezone": "africa",
+				"timezone": "Africa/Accra",
 				"theme": "dark"
 			}`),
 		}, &raw)
@@ -144,7 +144,7 @@ func TestIntegrationPreferences(t *testing.T) {
 
 		jj, _ = json.Marshal(bootdata.Result.User)
 		require.JSONEq(t, `{
-			"timezone":"africa",
+			"timezone":"Africa/Johannesburg",
 			"weekStart":"saturday",
 			"theme":"dark",
 			"language":"en-US", `+ // FROM global default!
@@ -157,10 +157,10 @@ func TestIntegrationPreferences(t *testing.T) {
 			Path:   "/apis/preferences.grafana.app/v1alpha1/namespaces/default/preferences/merged",
 		}, &preferences.Preferences{})
 		require.Equal(t, http.StatusOK, merged.Response.StatusCode, "get merged preferences")
-		require.Equal(t, "saturday", *merged.Result.Spec.WeekStart)        // from user
-		require.Equal(t, "africa", *merged.Result.Spec.Timezone)           // from team
-		require.Equal(t, "dark", *merged.Result.Spec.Theme)                // from org
-		require.Equal(t, "en-US", *merged.Result.Spec.Language)            // settings.ini
-		require.Equal(t, "dd/mm/yyyy", *merged.Result.Spec.RegionalFormat) // from user update
+		require.Equal(t, "saturday", *merged.Result.Spec.WeekStart)           // from user
+		require.Equal(t, "Africa/Johannesburg", *merged.Result.Spec.Timezone) // from team
+		require.Equal(t, "dark", *merged.Result.Spec.Theme)                   // from org
+		require.Equal(t, "en-US", *merged.Result.Spec.Language)               // settings.ini
+		require.Equal(t, "dd/mm/yyyy", *merged.Result.Spec.RegionalFormat)    // from user update
 	})
 }

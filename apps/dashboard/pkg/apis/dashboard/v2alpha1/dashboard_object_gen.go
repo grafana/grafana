@@ -25,6 +25,13 @@ type Dashboard struct {
 	Status DashboardStatus `json:"status" yaml:"status"`
 }
 
+func NewDashboard() *Dashboard {
+	return &Dashboard{
+		Spec:   *NewDashboardSpec(),
+		Status: *NewDashboardStatus(),
+	}
+}
+
 func (o *Dashboard) GetSpec() any {
 	return o.Spec
 }

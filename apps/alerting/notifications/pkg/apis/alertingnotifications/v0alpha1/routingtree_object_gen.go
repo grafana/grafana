@@ -23,6 +23,12 @@ type RoutingTree struct {
 	Spec RoutingTreeSpec `json:"spec" yaml:"spec"`
 }
 
+func NewRoutingTree() *RoutingTree {
+	return &RoutingTree{
+		Spec: *NewRoutingTreeSpec(),
+	}
+}
+
 func (o *RoutingTree) GetSpec() any {
 	return o.Spec
 }

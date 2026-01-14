@@ -200,6 +200,7 @@ type FrontendSettingsDTO struct {
 	RudderstackWriteKey        string `json:"rudderstackWriteKey"`
 	RudderstackDataPlaneUrl    string `json:"rudderstackDataPlaneUrl"`
 	RudderstackSdkUrl          string `json:"rudderstackSdkUrl"`
+	RudderstackV3SdkUrl        string `json:"rudderstackV3SdkUrl"`
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 

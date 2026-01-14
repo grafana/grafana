@@ -8,6 +8,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -36,44 +37,41 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 			return fmt.Errorf("get client for %s: %w", kind.Resource, err)
 		}
 
-		// When requesting v2 (or v0) dashboards over the v1 api, we want to keep the original apiVersion if conversion fails
+		// When requesting dashboards over the v1 api, we want to keep the original apiVersion if conversion fails
 		var shim conversionShim
 		if kind.GroupResource() == resources.DashboardResource.GroupResource() {
-			var v2clientAlphaV1, v2clientAlphaV2 dynamic.ResourceInterface
+			// Cache clients for different versions
+			versionClients := make(map[string]dynamic.ResourceInterface)
 			shim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				// Check if there's a stored version in the conversion status.
 				// This indicates the original API version the dashboard was created with,
 				// which should be preserved during export regardless of whether conversion succeeded or failed.
 				storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
 				if storedVersion != "" {
-					// For v2 we need to request the original version
-					if strings.HasPrefix(storedVersion, "v2alpha1") {
-						if v2clientAlphaV1 == nil {
-							v2clientAlphaV1, _, err = clients.ForResource(ctx, resources.DashboardResourceV2alpha1)
-							if err != nil {
-								return nil, err
-							}
-						}
-						return v2clientAlphaV1.Get(ctx, item.GetName(), metav1.GetOptions{})
-					}
-
-					if strings.HasPrefix(storedVersion, "v2beta1") {
-						if v2clientAlphaV2 == nil {
-							v2clientAlphaV2, _, err = clients.ForResource(ctx, resources.DashboardResourceV2beta1)
-							if err != nil {
-								return nil, err
-							}
-						}
-						return v2clientAlphaV2.Get(ctx, item.GetName(), metav1.GetOptions{})
-					}
-
-					// For v0 we can simply fallback -- the full model is saved, but
+					// For v0 we can simply fallback -- the full model is saved
 					if strings.HasPrefix(storedVersion, "v0") {
 						item.SetAPIVersion(fmt.Sprintf("%s/%s", kind.Group, storedVersion))
 						return item, nil
 					}
 
-					return nil, fmt.Errorf("unsupported dashboard version: %s", storedVersion)
+					// For any other version (v1, v2, v3, etc.), fetch the original version via client
+					// Check if we already have a client cached for this version
+					versionClient, ok := versionClients[storedVersion]
+					if !ok {
+						// Dynamically construct the GroupVersionResource for any version
+						versionGVR := schema.GroupVersionResource{
+							Group:    kind.Group,
+							Version:  storedVersion,
+							Resource: kind.Resource,
+						}
+						var err error
+						versionClient, _, err = clients.ForResource(ctx, versionGVR)
+						if err != nil {
+							return nil, fmt.Errorf("get client for version %s: %w", storedVersion, err)
+						}
+						versionClients[storedVersion] = versionClient
+					}
+					return versionClient.Get(ctx, item.GetName(), metav1.GetOptions{})
 				}
 
 				// If conversion failed but there's no storedVersion, this is an error condition

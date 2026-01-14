@@ -244,7 +244,6 @@ addFieldFromCalculationStatFunctions,2023-11-03T14:39:58Z,2025-11-17T15:58:43Z,6
 pdfTables,2023-11-06T13:39:22Z,,95b48339f89c7d267bce7d894404d26ccd75d0e3,Agnès Toulet
 newVizTooltips,2023-11-06T16:35:59Z,2024-04-03T00:32:01Z,6b4b7127544865b78f712d907e6f1719595f4232,Adela Almasan
 ssoSettingsApi,2023-11-08T09:50:01Z,2025-07-03T08:53:33Z,5285e9503be5702680acb2b52a6bda0632f4603d,Misi
-logsInfiniteScrolling,2023-11-09T10:54:03Z,,174c2ab45a2af912519153c5c3e671f04396d7d7,Matias Chomicki
 flameGraphItemCollapsing,2023-11-09T14:31:07Z,2024-07-15T12:45:41Z,494a07b522df4e3ff9512b47767745a94c15f080,Andrej Ocenas
 alertingDetailsViewV2,2023-11-09T17:35:03Z,2024-03-14T14:18:01Z,323ee7c38ceb18b8e71c780d797fabac7041a673,Gilles De Mey
 alertingSimplifiedRouting,2023-11-10T13:14:39Z,2025-05-09T13:30:56Z,68e37c3925080cf64a5e7570eabb042f19ca2dbf,Sonia Aguilar
@@ -410,7 +409,6 @@ lokiLabelNamesQueryApi,2024-12-13T14:31:41Z,,5ac7443fcec0db412d3333044a82c2c26b5
 kubernetesCliDashboards,2024-12-13T22:55:43Z,2025-02-18T23:11:26Z,8f6e9f8ed0a5024a510cc337c9f1e6972bfb23d4,Stephanie Hingtgen
 useV2DashboardsAPI,2024-12-17T21:17:09Z,2025-03-12T17:43:32Z,070f0e4457c5967102ef157197073dc2662f6fb8,Dominik Prokop
 investigationsBackend,2024-12-18T08:31:03Z,,f46c07aba7b6faccd2ecafc83051d1410cacc867,Jackson Coelho
-unifiedStorageSearchSprinkles,2024-12-18T17:00:54Z,,4837585cab0fd84184a8c6f5d6891f442a2b95f1,owensmallwood
 prometheusSpecialCharsInLabelValues,2024-12-18T21:31:08Z,,721c50a304588ebd7cea76e301ec0f68a5a55d68,Nick Richmond
 unifiedStorageSearchUI,2024-12-19T18:21:48Z,,a8f347144ddc16f2033fdeb4f3474e49239ba7ab,Scott Lepper
 playlistsReconciler,2024-12-20T03:09:31Z,,24bf337c562dc9b9d8684cc9acb7ea171ea83414,Charandas

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	index "github.com/blevesearch/bleve_index_api"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 )
@@ -20,7 +20,8 @@ func TestBleveSearchBackend(t *testing.T) {
 		backend, err := NewBleveBackend(BleveOptions{
 			Root:          tempDir,
 			FileThreshold: 5,
-		}, tracing.NewNoopTracerService(), nil)
+			ScoringModel:  index.BM25Scoring,
+		}, nil)
 		require.NoError(t, err)
 		require.NotNil(t, backend)
 
@@ -45,11 +46,40 @@ func TestSearchBackendBenchmark(t *testing.T) {
 	// Create a new bleve backend
 	backend, err := NewBleveBackend(BleveOptions{
 		Root: tempDir,
-	}, tracing.NewNoopTracerService(), nil)
+	}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 
 	t.Cleanup(backend.Stop)
 
 	unitest.BenchmarkSearchBackend(t, backend, opts)
+}
+
+func BenchmarkScoringModels(b *testing.B) {
+	models := []string{index.TFIDFScoring, index.BM25Scoring}
+
+	for _, model := range models {
+		b.Run(model, func(b *testing.B) {
+			tempDir := b.TempDir()
+
+			backend, err := NewBleveBackend(BleveOptions{
+				Root:         tempDir,
+				ScoringModel: model,
+			}, nil)
+			require.NoError(b, err)
+			require.NotNil(b, backend)
+
+			b.Cleanup(backend.Stop)
+
+			opts := &unitest.BenchmarkOptions{
+				NumResources:     1000,
+				Concurrency:      4,
+				NumNamespaces:    10,
+				NumGroups:        10,
+				NumResourceTypes: 10,
+			}
+
+			unitest.BenchmarkSearchBackend(b, backend, opts)
+		})
+	}
 }

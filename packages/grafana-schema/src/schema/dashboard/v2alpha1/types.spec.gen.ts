@@ -19,6 +19,8 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Mappings define how to convert data frame fields to annotation event fields.
+	mappings?: Record<string, AnnotationEventFieldMapping>;
 	// Catch-all field for datasource-specific properties
 	legacyOptions?: Record<string, any>;
 }
@@ -62,6 +64,20 @@ export interface AnnotationPanelFilter {
 export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 	exclude: false,
 	ids: [],
+});
+
+// Annotation event field mapping. Defines how to map a data frame field to an annotation event field.
+export interface AnnotationEventFieldMapping {
+	// Source type for the field value
+	source?: string;
+	// Constant value to use when source is "text"
+	value?: string;
+	// Regular expression to apply to the field value
+	regex?: string;
+}
+
+export const defaultAnnotationEventFieldMapping = (): AnnotationEventFieldMapping => ({
+	source: "field",
 });
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -284,7 +300,7 @@ export interface FieldConfig {
 	description?: string;
 	// An explicit path to the field in the datasource.  When the frame meta includes a path,
 	// This will default to `${frame.meta.path}/${field.name}
-	// 
+	//
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
 	path?: string;
@@ -1089,6 +1105,7 @@ export interface QueryVariableSpec {
 	datasource?: DataSourceRef;
 	query: DataQueryKind;
 	regex: string;
+	regexApplyTo?: VariableRegexApplyTo;
 	sort: VariableSort;
 	definition?: string;
 	options: VariableOption[];
@@ -1109,6 +1126,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	skipUrlSync: false,
 	query: defaultDataQueryKind(),
 	regex: "",
+	regexApplyTo: "value",
 	sort: "disabled",
 	options: [],
 	multi: false,
@@ -1144,6 +1162,12 @@ export const defaultVariableHide = (): VariableHide => ("dontHide");
 export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
 
 export const defaultVariableRefresh = (): VariableRefresh => ("never");
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+export type VariableRegexApplyTo = "value" | "text";
+
+export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value");
 
 // Sort variable options
 // Accepted values are:
@@ -1329,6 +1353,7 @@ export interface CustomVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+  valuesFormat?: "csv" | "json";
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1341,6 +1366,7 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	hide: "dontHide",
 	skipUrlSync: false,
 	allowCustomValue: true,
+  valuesFormat: undefined,
 });
 
 // Group variable kind
@@ -1525,4 +1551,3 @@ export const defaultSpec = (): Spec => ({
 	title: "",
 	variables: [],
 });
-

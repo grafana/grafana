@@ -54,18 +54,6 @@ SCIM offers several advantages for managing users and teams in Grafana:
 
 ## Authentication and access requirements
 
-{{< admonition type="warning" title="Critical: Aligning SAML Identifier with SCIM externalId" >}}
-When using SAML for authentication alongside SCIM provisioning, a critical security measure is to ensure proper alignment between the the SCIM user's `externalId` and the SAML user identifier. The unique identifier used for SCIM provisioning (which becomes the `externalId` in Grafana, often sourced from a stable IdP attribute like Entra ID's `user.objectid`) **must also be sent as a claim in the SAML assertion from your Identity Provider.**
-Furthermore, the Grafana SAML configuration must be correctly set up to identify and use this specific claim for linking the authenticated SAML user to their SCIM-provisioned user. This can be achieved by either ensuring the primary SAML login identifier by using the `assertion_attribute_external_uid` setting in Grafana to explicitly set the name of the SAML claim that contains the stable unique identifier attribute.
-
-**Why is this important?**
-A mismatch or inconsistent mapping between this SAML login identifier and the SCIM `externalId` creates a critical security vulnerability. If these two identifiers are not reliably and uniquely aligned for each individual user, Grafana may fail to correctly link an authenticated SAML session to the intended SCIM-provisioned user profile and its associated permissions. This can enable a malicious actor to impersonate another user—for instance, by crafting a SAML assertion that, due to the identifier misalignment, incorrectly grants them the access rights of the targeted user.
-
-Grafana relies on this linkage to correctly associate the authenticated user from SAML with the provisioned user from SCIM. Failure to ensure a consistent and unique identifier across both systems can break this linkage, leading to incorrect user mapping and potential unauthorized access.
-
-Always verify that your SAML identity provider is configured to send a stable, unique user identifier that your SCIM configuration maps to `externalId`. Refer to your identity provider's documentation and the specific Grafana SCIM integration guides (e.g., for [Entra ID](configure-scim-with-azuread/) or [Okta](configure-scim-with-okta/)) for detailed instructions on configuring these attributes correctly.
-{{< /admonition >}}
-
 When you enable SCIM in Grafana, the following requirements and restrictions apply:
 
 1. **Use the same identity provider for user provisioning and for authentication flow**: You must use the same identity provider for both authentication and user provisioning.
@@ -73,6 +61,12 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
 2. **Security restriction**: When using SAML, the login authentication flow requires the SAML assertion exchange between the Identity Provider and Grafana to include the `userUID` SAML assertion with the user's unique identifier at the Identity Provider.
    - Configure `userUID` SAML assertion in [Entra ID](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
    - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
+
+### Align SAML identifier with SCIM `externalId`
+
+When you use SAML with SCIM provisioning, align the SCIM `externalId` with the SAML user identifier. Use a stable IdP attribute (for example, Entra ID `user.objectid`) as the SCIM `externalId`, and send that same value as a SAML claim. Configure Grafana to read this claim with the `assertion_attribute_external_uid` setting so SAML authentication links to the SCIM-provisioned user and its permissions.
+
+If the SAML identifier and SCIM `externalId` differ, Grafana may not link the authenticated user to the intended SCIM profile, which can result in incorrect access. Verify your IdP sends a stable, unique identifier and that it matches the SCIM `externalId`. Refer to your IdP docs and the Grafana SCIM integration guides for [Entra ID](configure-scim-with-azuread/) and [Okta](configure-scim-with-okta/) for attribute configuration details.
 
 ## Configure SCIM using the Grafana user interface
 

@@ -15,11 +15,14 @@ var _ authorizer.Authorizer = &roleAuthorizer{}
 
 var orgRoleNoneAsViewerAPIGroups = []string{
 	"productactivation.ext.grafana.com",
+	// playlist can be removed after this issue is resolved: https://github.com/grafana/grafana/issues/115712
+	"playlist.grafana.app",
 }
 
 type roleAuthorizer struct{}
 
-func newRoleAuthorizer() *roleAuthorizer {
+// Deprecated: NewRoleAuthorizer exists for apps that were launched with simplistic authorization requirements. Consider using NewResourceAuthorizer instead.
+func NewRoleAuthorizer() *roleAuthorizer {
 	return &roleAuthorizer{}
 }
 

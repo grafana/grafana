@@ -23,6 +23,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAdHocFilterWithLabels":                                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardAdHocFilterWithLabels(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAdhocVariableKind":                                                                                     schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAdhocVariableSpec":                                                                                     schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationEventFieldMapping":                                                                           schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationEventFieldMapping(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationPanelFilter":                                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationPanelFilter(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationQueryKind":                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationQueryKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationQuerySpec":                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationQuerySpec(ref),
@@ -653,6 +654,40 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 	}
 }
 
+func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationEventFieldMapping(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Annotation event field mapping. Defines how to map a data frame field to an annotation event field.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Source type for the field value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Constant value to use when source is \"text\"",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"regex": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Regular expression to apply to the field value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationPanelFilter(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -774,6 +809,21 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationQuerySpec(ref common.R
 							Format:      "",
 						},
 					},
+					"mappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Mappings define how to convert data frame fields to annotation event fields.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationEventFieldMapping"),
+									},
+								},
+							},
+						},
+					},
 					"legacyOptions": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Catch-all field for datasource-specific properties. Should not be available in as code tooling.",
@@ -794,7 +844,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationQuerySpec(ref common.R
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationPanelFilter", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardDataQueryKind"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationEventFieldMapping", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationPanelFilter", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardDataQueryKind"},
 	}
 }
 
@@ -1508,6 +1558,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableSpec(ref common.Re
 							Default: false,
 							Type:    []string{"boolean"},
 							Format:  "",
+						},
+					},
+					"valuesFormat": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
@@ -2226,6 +2282,20 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfig(ref common.Reference
 									},
 								},
 							},
+						},
+					},
+					"fieldMinMax": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Calculate min max per field",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"nullValueMode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "How null values should be handled when calculating field stats \"null\" - Include null values, \"connected\" - Ignore nulls, \"null as zero\" - Treat nulls as zero",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -3604,6 +3674,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableSpec(ref common.Ref
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
+						},
+					},
+					"regexApplyTo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"sort": {

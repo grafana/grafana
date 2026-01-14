@@ -805,9 +805,20 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			OrgID:        orgID,
 		})).GenerateManyRef(3)
 
+		// Plugin rule with __grafana_origin label for plugins filter test
+		pluginRule := gen.With(
+			gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				RuleGroup:    "plugins-test-plugin",
+				NamespaceUID: "folder-2",
+				OrgID:        orgID,
+			}),
+			gen.WithLabels(map[string]string{"__grafana_origin": "plugin/grafana-slo-app"}),
+		).GenerateRef()
+
 		ruleStore.PutRule(context.Background(), rulesInGroup1...)
 		ruleStore.PutRule(context.Background(), rulesInGroup2...)
 		ruleStore.PutRule(context.Background(), rulesInGroup3...)
+		ruleStore.PutRule(context.Background(), pluginRule)
 
 		api := NewPrometheusSrv(
 			log.NewNopLogger(),
@@ -818,7 +829,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			fakes.NewFakeProvisioningStore(),
 		)
 
-		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
+		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3, []*ngmodels.AlertRule{pluginRule}), orgID)
 		user := &user.SignedInUser{
 			OrgID:       orgID,
 			Permissions: permissions,
@@ -947,6 +958,68 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.Equal(t, expectedRuleInGroup1.UID, result.Data.RuleGroups[1].Rules[0].UID)
 				require.Equal(t, expectedRuleInGroup3.UID, result.Data.RuleGroups[0].Rules[0].UID)
 			}
+		})
+
+		t.Run("should filter rules by plugins parameter", func(t *testing.T) {
+			t.Run("returns all groups when plugins filter not specified", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 2, "should return all groups including plugin group")
+			})
+
+			t.Run("excludes plugin rules when plugins=hide", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2&plugins=hide", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 1, "should only return non-plugin groups")
+				for _, group := range result.Data.RuleGroups {
+					require.NotEqual(t, "plugins-test-plugin", group.Name, "should not include plugin group")
+				}
+			})
+
+			t.Run("returns only plugin rules when plugins=only", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2&plugins=only", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 1, "should only return plugin group")
+				require.Equal(t, "plugins-test-plugin", result.Data.RuleGroups[0].Name)
+			})
+
+			t.Run("returns all groups when plugins filter has invalid value", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2&plugins=invalid", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 2, "invalid value should return all groups")
+			})
 		})
 	})
 
@@ -2169,6 +2242,57 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 	})
 
+	t.Run("compact mode with receiver_name filter returns only matching rules", func(t *testing.T) {
+		fakeStore, _, api := setupAPI(t)
+
+		ruleA := gen.With(
+			gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				NamespaceUID: "folder-1",
+				RuleGroup:    "group-1",
+				OrgID:        orgID,
+			}),
+			gen.WithNotificationSettings(
+				ngmodels.NotificationSettings{
+					Receiver: "receiver-a",
+					GroupBy:  []string{"alertname"},
+				},
+			),
+		).GenerateRef()
+		fakeStore.PutRule(context.Background(), ruleA)
+
+		ruleB := gen.With(
+			gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				NamespaceUID: "folder-2",
+				RuleGroup:    "group-2",
+				OrgID:        orgID,
+			}),
+			gen.WithNotificationSettings(
+				ngmodels.NotificationSettings{
+					Receiver: "receiver-b",
+					GroupBy:  []string{"alertname"},
+				},
+			),
+		).GenerateRef()
+		fakeStore.PutRule(context.Background(), ruleB)
+		r, err := http.NewRequest("GET", "/api/v1/rules?compact=true&receiver_name=receiver-a", nil)
+		require.NoError(t, err)
+		c := &contextmodel.ReqContext{
+			Context: &web.Context{Req: r},
+			SignedInUser: &user.SignedInUser{
+				OrgID:       orgID,
+				Permissions: queryPermissions,
+			},
+		}
+		resp := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, resp.Status())
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+		require.Len(t, res.Data.RuleGroups, 1)
+		require.Equal(t, "group-1", res.Data.RuleGroups[0].Name)
+		require.Empty(t, res.Data.RuleGroups[0].Rules[0].Query, "Query should be empty in compact mode")
+	})
+
 	t.Run("provenance as expected", func(t *testing.T) {
 		fakeStore, fakeAIM, api, provStore := setupAPIFull(t)
 		// Rule without provenance
@@ -2316,6 +2440,140 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				}
 				require.True(t, hasFiring)
 			}
+		})
+
+		t.Run("multi-page pagination loads provenance correctly", func(t *testing.T) {
+			fakeStore, fakeAIM, api, fakeProvisioning := setupAPIFull(t)
+
+			// Create 3 groups with 1 rule each: groups 1 and 3 firing, group 2 normal
+			for i := 1; i <= 3; i++ {
+				rule := gen.With(gen.WithOrgID(orgID), func(r *ngmodels.AlertRule) {
+					r.NamespaceUID = "ns-1"
+					r.RuleGroup = fmt.Sprintf("group-%d", i)
+					r.UID = fmt.Sprintf("rule-%d", i)
+				}, withClassicConditionSingleQuery()).GenerateRef()
+
+				alertState := eval.Normal
+				if i != 2 {
+					alertState = eval.Alerting
+				}
+				fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+					s.State = alertState
+					s.Labels = data.Labels{"test": "label"}
+					return s
+				})
+				fakeStore.PutRule(context.Background(), rule)
+			}
+
+			// Set provenance for all rules
+			err := fakeProvisioning.SetProvenance(context.Background(),
+				&ngmodels.AlertRule{UID: "rule-1", OrgID: orgID}, orgID, ngmodels.ProvenanceAPI)
+			require.NoError(t, err)
+			err = fakeProvisioning.SetProvenance(context.Background(),
+				&ngmodels.AlertRule{UID: "rule-3", OrgID: orgID}, orgID, ngmodels.ProvenanceFile)
+			require.NoError(t, err)
+
+			// Request firing groups with group_limit=2 - fetches multiple pages, skipping group 2
+			req, err := http.NewRequest("GET", "/api/v1/rules?state=firing&group_limit=2", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// Should return 2 firing groups
+			require.Len(t, res.Data.RuleGroups, 2)
+			require.Equal(t, "group-1", res.Data.RuleGroups[0].Name)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), res.Data.RuleGroups[0].Rules[0].Provenance)
+			require.Equal(t, "group-3", res.Data.RuleGroups[1].Name)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceFile), res.Data.RuleGroups[1].Rules[0].Provenance)
+		})
+
+		t.Run("provenance fetch error returns error response in paginated mode", func(t *testing.T) {
+			fakeStore, fakeAIM, api, fakeProvisioning := setupAPIFull(t)
+
+			rule := gen.With(gen.WithOrgID(orgID), func(r *ngmodels.AlertRule) {
+				r.NamespaceUID = "ns-1"
+				r.RuleGroup = "group-1"
+				r.UID = "rule-1"
+			}, withClassicConditionSingleQuery()).GenerateRef()
+
+			fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+				s.State = eval.Alerting
+				s.Labels = data.Labels{"test": "label"}
+				return s
+			})
+			fakeStore.PutRule(context.Background(), rule)
+
+			fakeProvisioning.GetProvenancesByUIDsFunc = func(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]ngmodels.Provenance, error) {
+				return nil, errors.New("database connection failed")
+			}
+
+			req, err := http.NewRequest("GET", "/api/v1/rules?group_limit=10", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusInternalServerError, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Equal(t, "error", res.Status)
+			require.Contains(t, res.Error, "failed to load provenance")
+		})
+
+		t.Run("provenance fetch error returns error response in non-paginated mode", func(t *testing.T) {
+			fakeStore, fakeAIM, api, fakeProvisioning := setupAPIFull(t)
+
+			rule := gen.With(gen.WithOrgID(orgID), func(r *ngmodels.AlertRule) {
+				r.NamespaceUID = "ns-1"
+				r.RuleGroup = "group-1"
+				r.UID = "rule-1"
+			}, withClassicConditionSingleQuery()).GenerateRef()
+
+			fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+				s.State = eval.Alerting
+				s.Labels = data.Labels{"test": "label"}
+				return s
+			})
+			fakeStore.PutRule(context.Background(), rule)
+
+			fakeProvisioning.GetProvenancesFunc = func(ctx context.Context, orgID int64, resourceType string) (map[string]ngmodels.Provenance, error) {
+				return nil, errors.New("database connection failed")
+			}
+
+			req, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: req},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusInternalServerError, resp.Status())
+
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Equal(t, "error", res.Status)
+			require.Contains(t, res.Error, "failed to load provenance")
 		})
 
 		t.Run("state filter continues when first page has no matches", func(t *testing.T) {
@@ -2885,6 +3143,189 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.ElementsMatch(t, tc.expectedUIDs, actualUIDs)
 			})
 		}
+	})
+
+	t.Run("with rule_matcher filter", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule1"), gen.WithLabels(map[string]string{"team": "alerting", "severity": "critical"}), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule2"), gen.WithLabels(map[string]string{"team": "Alerting", "severity": "warning"}), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule3"), gen.WithLabels(map[string]string{"team": "platform", "severity": "critical"}), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule4"), gen.WithLabels(map[string]string{"env": "production"}), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule_special"), gen.WithLabels(map[string]string{"key": `value"with"quotes`}), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule_empty"), gen.WithLabels(map[string]string{"empty": ""}), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule_nonempty"), gen.WithLabels(map[string]string{"empty": "nonempty"}), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule_multiline"), gen.WithLabels(map[string]string{"description": "line1\nline2\\end\"quote"}), gen.WithNoNotificationSettings())
+
+		testCases := []struct {
+			name         string
+			matchers     []string
+			expectedUIDs []string
+		}{
+			{
+				name:         "equality matcher filters by team=alerting",
+				matchers:     []string{`{"name":"team","value":"alerting","isRegex":false,"isEqual":true}`},
+				expectedUIDs: []string{"rule1"},
+			},
+			{
+				name:         "inequality matcher filters severity!=warning",
+				matchers:     []string{`{"name":"severity","value":"warning","isRegex":false,"isEqual":false}`},
+				expectedUIDs: []string{"rule1", "rule3", "rule4", "rule_special", "rule_empty", "rule_nonempty", "rule_multiline"},
+			},
+			{
+				name:         "regex matcher filters team=~plat.*",
+				matchers:     []string{`{"name":"team","value":"plat.*","isRegex":true,"isEqual":true}`},
+				expectedUIDs: []string{"rule3"},
+			},
+			{
+				name:         "not-regex matcher filters severity!~warn.*",
+				matchers:     []string{`{"name":"severity","value":"warn.*","isRegex":true,"isEqual":false}`},
+				expectedUIDs: []string{"rule1", "rule3", "rule4", "rule_special", "rule_empty", "rule_nonempty", "rule_multiline"},
+			},
+			{
+				name: "multiple matchers are ANDed",
+				matchers: []string{
+					`{"name":"team","value":"alerting","isRegex":false,"isEqual":true}`,
+					`{"name":"severity","value":"critical","isRegex":false,"isEqual":true}`,
+				},
+				expectedUIDs: []string{"rule1"},
+			},
+			{
+				name:         "matcher with non-existent label returns no rules",
+				matchers:     []string{`{"name":"nonexistent","value":"value","isRegex":false,"isEqual":true}`},
+				expectedUIDs: []string{},
+			},
+			{
+				name:         "equality matcher is case-sensitive",
+				matchers:     []string{`{"name":"team","value":"Alerting","isRegex":false,"isEqual":true}`},
+				expectedUIDs: []string{"rule2"},
+			},
+			{
+				name:         "quotes in label value are handled correctly",
+				matchers:     []string{`{"name":"key","value":"value\"with\"quotes","isRegex":false,"isEqual":true}`},
+				expectedUIDs: []string{"rule_special"},
+			},
+			{
+				name:         "no matchers returns all rules",
+				matchers:     []string{},
+				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4", "rule_special", "rule_empty", "rule_nonempty", "rule_multiline"},
+			},
+			{
+				name:         "empty string value matches correctly",
+				matchers:     []string{`{"name":"empty","value":"","isRegex":false,"isEqual":true}`},
+				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4", "rule_special", "rule_empty", "rule_multiline"},
+			},
+			{
+				name:         "special characters in label value are handled correctly",
+				matchers:     []string{`{"name":"description","value":"line1\nline2\\end\"quote","isRegex":false,"isEqual":true}`},
+				expectedUIDs: []string{"rule_multiline"},
+			},
+			{
+				name:         "inequality matcher on non-existent label matches all rules",
+				matchers:     []string{`{"name":"nonexistent","value":"value","isRegex":false,"isEqual":false}`},
+				expectedUIDs: []string{"rule1", "rule2", "rule3", "rule4", "rule_special", "rule_empty", "rule_nonempty", "rule_multiline"},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				reqURL := "/api/v1/rules"
+				for i, matcher := range tc.matchers {
+					if i == 0 {
+						reqURL += "?rule_matcher=" + url.QueryEscape(matcher)
+					} else {
+						reqURL += "&rule_matcher=" + url.QueryEscape(matcher)
+					}
+				}
+
+				req, err := http.NewRequest("GET", reqURL, nil)
+				require.NoError(t, err)
+				ctx := &contextmodel.ReqContext{
+					Context:      &web.Context{Req: req},
+					SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions},
+				}
+
+				resp := api.RouteGetRuleStatuses(ctx)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				var res apimodels.RuleResponse
+				require.NoError(t, json.Unmarshal(resp.Body(), &res))
+				require.Equal(t, "success", res.Status)
+
+				actualUIDs := []string{}
+				for _, group := range res.Data.RuleGroups {
+					for _, rule := range group.Rules {
+						actualUIDs = append(actualUIDs, rule.UID)
+					}
+				}
+
+				require.ElementsMatch(t, tc.expectedUIDs, actualUIDs)
+			})
+		}
+	})
+
+	t.Run("pagination with rule_matcher in-memory filtering", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+
+		// Create 3 groups with 2 rules each:
+		// Group 1 & 2: team=backend (won't match filter)
+		// Group 3: team=frontend (will match filter)
+		// This tests that pagination continues fetching when early pages are filtered out
+
+		group1Key := ngmodels.AlertRuleGroupKey{OrgID: orgID, NamespaceUID: "namespace1", RuleGroup: "group1"}
+		group2Key := ngmodels.AlertRuleGroupKey{OrgID: orgID, NamespaceUID: "namespace2", RuleGroup: "group2"}
+		group3Key := ngmodels.AlertRuleGroupKey{OrgID: orgID, NamespaceUID: "namespace3", RuleGroup: "group3"}
+
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule1"), gen.WithLabels(map[string]string{"team": "security"}), gen.WithGroupKey(group1Key), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule2"), gen.WithLabels(map[string]string{"team": "security"}), gen.WithGroupKey(group1Key), gen.WithNoNotificationSettings())
+
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule3"), gen.WithLabels(map[string]string{"team": "security"}), gen.WithGroupKey(group2Key), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule4"), gen.WithLabels(map[string]string{"team": "security"}), gen.WithGroupKey(group2Key), gen.WithNoNotificationSettings())
+
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule5"), gen.WithLabels(map[string]string{"team": "alerting"}), gen.WithGroupKey(group3Key), gen.WithNoNotificationSettings())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(),
+			gen.WithUID("rule6"), gen.WithLabels(map[string]string{"team": "alerting"}), gen.WithGroupKey(group3Key), gen.WithNoNotificationSettings())
+
+		// Request with regex rule_matcher filter for team=~"alerting" and group_limit=1 to force pagination
+		matcher := `{"name":"team","value":"alerting","isRegex":true,"isEqual":true}`
+		reqURL := "/api/v1/rules?rule_matcher=" + url.QueryEscape(matcher) + "&group_limit=1"
+
+		req, err := http.NewRequest("GET", reqURL, nil)
+		require.NoError(t, err)
+		ctx := &contextmodel.ReqContext{
+			Context:      &web.Context{Req: req},
+			SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions},
+		}
+
+		resp := api.RouteGetRuleStatuses(ctx)
+		require.Equal(t, http.StatusOK, resp.Status())
+
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(resp.Body(), &res))
+		require.Equal(t, "success", res.Status)
+
+		actualUIDs := []string{}
+		for _, group := range res.Data.RuleGroups {
+			for _, rule := range group.Rules {
+				actualUIDs = append(actualUIDs, rule.UID)
+			}
+		}
+
+		// Should return group3 rules (rule5, rule6), pagination should continue past filtered groups
+		require.ElementsMatch(t, []string{"rule5", "rule6"}, actualUIDs)
 	})
 }
 

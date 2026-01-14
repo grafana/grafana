@@ -10,7 +10,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { UserView } from './types';
 
 export interface UserIconProps {
-  /** An object that contains the user's details and 'lastActiveAt' status */
+  /** An object that contains the user's details and an optional 'lastActiveAt' status */
   userView: UserView;
   /** A boolean value that determines whether the tooltip should be shown or not */
   showTooltip?: boolean;
@@ -64,7 +64,8 @@ export const UserIcon = ({
   showTooltip = true,
 }: PropsWithChildren<UserIconProps>) => {
   const { user, lastActiveAt } = userView;
-  const isActive = dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
+  const hasActive = lastActiveAt !== undefined && lastActiveAt !== null;
+  const isActive = hasActive && dateTime(lastActiveAt).diff(dateTime(), 'minutes', true) >= -15;
   const theme = useTheme2();
   const styles = useMemo(() => getStyles(theme, isActive), [theme, isActive]);
   const content = (
@@ -88,18 +89,20 @@ export const UserIcon = ({
     const tooltip = (
       <div className={styles.tooltipContainer}>
         <div className={styles.tooltipName}>{user.name}</div>
-        <div className={styles.tooltipDate}>
-          {isActive ? (
-            <div className={styles.dotContainer}>
-              <span>
-                <Trans i18nKey="grafana-ui.user-icon.active-text">Active last 15m</Trans>
-              </span>
-              <span className={styles.dot}></span>
-            </div>
-          ) : (
-            formatViewed(lastActiveAt)
-          )}
-        </div>
+        {hasActive && (
+          <div className={styles.tooltipDate}>
+            {isActive ? (
+              <div className={styles.dotContainer}>
+                <span>
+                  <Trans i18nKey="grafana-ui.user-icon.active-text">Active last 15m</Trans>
+                </span>
+                <span className={styles.dot}></span>
+              </div>
+            ) : (
+              formatViewed(lastActiveAt)
+            )}
+          </div>
+        )}
       </div>
     );
 

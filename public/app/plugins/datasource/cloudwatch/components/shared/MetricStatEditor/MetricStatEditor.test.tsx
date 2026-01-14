@@ -4,9 +4,9 @@ import selectEvent from 'react-select-event';
 
 import { config } from '@grafana/runtime';
 
+import { MetricStat } from '../../../dataquery.gen';
 import { setupMockedDataSource, statisticVariable } from '../../../mocks/CloudWatchDataSource';
 import { validMetricSearchBuilderQuery } from '../../../mocks/queries';
-import { MetricStat } from '../../../types';
 
 import { MetricStatEditor } from './MetricStatEditor';
 

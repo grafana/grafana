@@ -57,24 +57,34 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	if s.dsConfigHandlerRequestsDuration != nil {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.List"), time.Since(start).Seconds())
+		}()
+	}
 	return s.datasources.ListDataSources(ctx)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	start := time.Now()
-	defer func() {
-		metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Get"), time.Since(start).Seconds())
-	}()
+	if s.dsConfigHandlerRequestsDuration != nil {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Get"), time.Since(start).Seconds())
+		}()
+	}
 
 	return s.datasources.GetDataSource(ctx, name)
 }
 
 // Create implements rest.Creater.
 func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	start := time.Now()
-	defer func() {
-		metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Create"), time.Since(start).Seconds())
-	}()
+	if s.dsConfigHandlerRequestsDuration != nil {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Create"), time.Since(start).Seconds())
+		}()
+	}
 
 	ds, ok := obj.(*v0alpha1.DataSource)
 	if !ok {
@@ -85,10 +95,12 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 
 // Update implements rest.Updater.
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	start := time.Now()
-	defer func() {
-		metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Create"), time.Since(start).Seconds())
-	}()
+	if s.dsConfigHandlerRequestsDuration != nil {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Update"), time.Since(start).Seconds())
+		}()
+	}
 
 	old, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
@@ -126,10 +138,12 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 // Delete implements rest.GracefulDeleter.
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	start := time.Now()
-	defer func() {
-		metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Create"), time.Since(start).Seconds())
-	}()
+	if s.dsConfigHandlerRequestsDuration != nil {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Delete"), time.Since(start).Seconds())
+		}()
+	}
 
 	err := s.datasources.DeleteDataSource(ctx, name)
 	return nil, false, err
@@ -137,6 +151,13 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // DeleteCollection implements rest.CollectionDeleter.
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	if s.dsConfigHandlerRequestsDuration != nil {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.DeleteCollection"), time.Since(start).Seconds())
+		}()
+	}
+
 	dss, err := s.datasources.ListDataSources(ctx)
 	if err != nil {
 		return nil, err

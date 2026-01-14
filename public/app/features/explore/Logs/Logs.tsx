@@ -73,7 +73,7 @@ import {
   contentOutlineTrackUnpinClicked,
 } from '../ContentOutline/ContentOutlineAnalyticEvents';
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
-import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
@@ -83,6 +83,7 @@ import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { getExploreBaseUrl } from './utils/url';
 
 interface Props extends Themeable2 {
   width: number;
@@ -147,9 +148,6 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   }
   if (visualisationType === 'logs') {
     return 'logs';
-  }
-  if (config.featureToggles.logsExploreTableDefaultVisualization) {
-    return 'table';
   }
   return 'logs';
 };
@@ -308,6 +306,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         refId: undefined,
         displayedFields: undefined,
         sortOrder: undefined,
+        tableSortBy: undefined,
+        tableSortDir: undefined,
       })
     );
   });
@@ -324,6 +324,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
             displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
+            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
+            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
           })
         );
       }
@@ -334,6 +336,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       panelState?.logs?.columns,
       panelState?.logs?.displayedFields,
       panelState?.logs?.refId,
+      panelState?.logs?.tableSortBy,
+      panelState?.logs?.tableSortDir,
       visualisationType,
     ]
   );
@@ -440,7 +444,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       reportInteraction('grafana_explore_logs_visualisation_changed', {
         newVisualizationType: visualisation,
         datasourceType: props.datasourceType ?? 'unknown',
-        defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
       });
     },
     [panelState?.logs, props.datasourceType, updatePanelState]
@@ -611,7 +614,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
       // append changed urlState to baseUrl
       const serializedState = serializeStateToUrlParam(urlState);
-      const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
+      const baseUrl = getExploreBaseUrl();
       const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
       await createAndCopyShortLink(url);
 
@@ -782,7 +785,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           logOptionsStorageKey={SETTING_KEY_ROOT}
           timeZone={timeZone}
           displayedFields={displayedFields}
-          onPermalinkClick={onPermalinkClick}
           onClickShowField={showField}
           onClickHideField={hideField}
         />
@@ -808,6 +810,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               onDisplayedSeriesChanged={onDisplayedSeriesChanged}
               eventBus={logsVolumeEventBus}
               onClose={() => onToggleLogsVolumeCollapse(true)}
+              logs={logRows}
             />
           )}
         </PanelChrome>
@@ -995,6 +998,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 panelState={panelState?.logs}
                 updatePanelState={updatePanelState}
                 datasourceType={props.datasourceType}
+                displayedFields={displayedFields}
+                exploreId={props.exploreId}
+                absoluteRange={props.absoluteRange}
+                logRows={props.logRows}
               />
             </div>
           )}
@@ -1049,6 +1056,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onLogOptionsChange={onLogOptionsChange}
                   filterLevels={filterLevels}
                   timeRange={props.range}
+                  exploreId={props.exploreId}
+                  absoluteRange={props.absoluteRange}
                 />
               </div>
             )}

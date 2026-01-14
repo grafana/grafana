@@ -69,7 +69,25 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "align": "auto",
+                        "pattern": "Time",
+                        "type": "number"
+                      },
+                      {
+                        "align": "auto",
+                        "pattern": "Value",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -126,5 +144,10 @@
     "title": "V22 Table Panel Styles Test",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -14,12 +14,21 @@ import {
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui';
-import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import {
+  calculateBucketFactor,
+  isHeatmapCellsDense,
+  readHeatmapRowsCustomMeta,
+} from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
 import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './types';
+
+/** Validates and returns a safe log base (2 or 10), defaults to 2 if invalid */
+export function toLogBase(value: number | undefined): 2 | 10 {
+  return value === 10 ? 10 : 2;
+}
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -54,6 +63,7 @@ interface PrepConfigOpts {
   ySizeDivisor?: number;
   selectionMode?: HeatmapSelectionMode;
   xAxisConfig?: Parameters<UPlotConfigPrepFn>[0]['xAxisConfig'];
+  rowsFrame?: { yBucketScale?: { type: ScaleDistribution; log?: number; linearThreshold?: number } };
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -69,7 +79,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     ySizeDivisor,
     selectionMode = HeatmapSelectionMode.X,
     xAxisConfig,
+    rowsFrame,
   } = opts;
+
+  const yBucketScale = rowsFrame?.yBucketScale;
 
   const xScaleKey = 'x';
   let isTime = true;
@@ -196,7 +209,20 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
-  const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
+
+  const scaleDistribution = (() => {
+    if (yBucketScale) {
+      return yBucketScale.type;
+    }
+    if (yScale.type !== ScaleDistribution.Linear || isSparseHeatmap) {
+      return ScaleDistribution.Log;
+    }
+    return ScaleDistribution.Linear;
+  })();
+
+  const scaleLog = toLogBase(yBucketScale?.log ?? yScale.log);
+  const scaleLinearThreshold = yBucketScale?.linearThreshold;
+
   const isOrdinalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   // random to prevent syncing y in other heatmaps
@@ -210,8 +236,9 @@ export function prepConfig(opts: PrepConfigOpts) {
     orientation: ScaleOrientation.Vertical,
     direction: yAxisReverse ? ScaleDirection.Down : ScaleDirection.Up,
     // should be tweakable manually
-    distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
-    log: yScale.log ?? 2,
+    distribution: scaleDistribution,
+    log: scaleLog,
+    linearThreshold: scaleLinearThreshold,
     range:
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       isSparseHeatmap
@@ -224,15 +251,15 @@ export function prepConfig(opts: PrepConfigOpts) {
 
             let scaleMin: number | null, scaleMax: number | null;
 
-            [scaleMin, scaleMax] = shouldUseLogScale
-              ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
-              : [dataMin, dataMax];
+            const isLogScale =
+              scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
+            [scaleMin, scaleMax] = isLogScale ? uPlot.rangeLog(dataMin, dataMax, scaleLog, true) : [dataMin, dataMax];
 
-            if (shouldUseLogScale && !isOrdinalY) {
+            let { min: explicitMin, max: explicitMax } = yAxisConfig;
+
+            if (isLogScale && !isOrdinalY) {
               let yExp = u.scales[yScaleKey].log!;
               let log = yExp === 2 ? Math.log2 : Math.log10;
-
-              let { min: explicitMin, max: explicitMax } = yAxisConfig;
 
               // guard against <= 0
               if (explicitMin != null && explicitMin > 0) {
@@ -245,6 +272,9 @@ export function prepConfig(opts: PrepConfigOpts) {
                 let maxLog = log(explicitMax);
                 scaleMax = yExp ** incrRoundUp(maxLog, 1);
               }
+            } else if (!isOrdinalY) {
+              // Apply explicit min/max for linear scale
+              [scaleMin, scaleMax] = applyExplicitMinMax(scaleMin, scaleMax, explicitMin, explicitMax);
             }
 
             return [scaleMin, scaleMax];
@@ -257,7 +287,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             let { min: explicitMin, max: explicitMax } = yAxisConfig;
 
             // logarithmic expansion
-            if (shouldUseLogScale) {
+            if (scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog) {
               let yExp = u.scales[yScaleKey].log!;
 
               let minExpanded = false;
@@ -280,17 +310,31 @@ export function prepConfig(opts: PrepConfigOpts) {
                 }
               }
 
+              // For pre-bucketed data with explicit scale, calculate expansion factor from actual bucket spacing
+              // For calculated heatmaps, use the full log base
+              let expansionFactor: number = yExp;
+
+              if (yBucketScale !== undefined) {
+                // Try to infer the bucket factor from the actual data spacing
+                const yValues = u.data[1]?.[1];
+                if (Array.isArray(yValues) && yValues.length >= 2 && typeof yValues[0] === 'number') {
+                  expansionFactor = calculateBucketFactor(yValues, yExp);
+                }
+              }
+
               if (dataRef.current?.yLayout === HeatmapCellLayout.le) {
                 if (!minExpanded) {
-                  scaleMin /= yExp;
+                  scaleMin /= expansionFactor;
                 }
               } else if (dataRef.current?.yLayout === HeatmapCellLayout.ge) {
                 if (!maxExpanded) {
-                  scaleMax *= yExp;
+                  scaleMax *= expansionFactor;
                 }
               } else {
-                scaleMin /= yExp / 2;
-                scaleMax *= yExp / 2;
+                // Unknown layout - expand both directions
+                const factor = Math.sqrt(expansionFactor); // Use sqrt for balanced expansion
+                scaleMin /= factor;
+                scaleMax *= factor;
               }
 
               if (!isOrdinalY) {
@@ -383,7 +427,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             return splits.map((v) =>
               v < 0
                 ? (meta.yMinDisplay ?? '') // Check prometheus style labels
-                : (meta.yOrdinalDisplay[v] ?? '')
+                : (meta.yOrdinalDisplay?.[v] ?? '')
             );
           }
           return splits;
@@ -585,15 +629,19 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         let ySize: number;
 
         if (scaleX.distr === 3) {
-          xSize = Math.abs(valToPosX(xs[0] * scaleX.log!, scaleX, xDim, xOff) - valToPosX(xs[0], scaleX, xDim, xOff));
+          // For log scales, calculate cell size from actual adjacent bucket positions
+          const nextXValue = xs[yBinQty] ?? xs[0] * scaleX.log!;
+          xSize = Math.abs(valToPosX(nextXValue, scaleX, xDim, xOff) - valToPosX(xs[0], scaleX, xDim, xOff));
         } else {
           xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
         }
 
         if (scaleY.distr === 3) {
-          ySize =
-            Math.abs(valToPosY(ys[0] * scaleY.log!, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff)) /
-            ySizeDivisor;
+          // Use actual data spacing for pre-bucketed data, or full magnitude for calculated heatmaps with splits
+          const nextYValue = ySizeDivisor === 1 ? (ys[1] ?? ys[0] * scaleY.log!) : ys[0] * scaleY.log!;
+
+          const baseYSize = Math.abs(valToPosY(nextYValue, scaleY, yDim, yOff) - valToPosY(ys[0], scaleY, yDim, yOff));
+          ySize = baseYSize / ySizeDivisor;
         } else {
           ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff)) / ySizeDivisor;
         }
@@ -882,3 +930,30 @@ export const valuesToFills = (values: number[], palette: string[], minValue: num
 
   return indexedFills;
 };
+
+/**
+ * Calculates the Y-axis size divisor for heatmap cell rendering.
+ * For log/symlog scales with calculated data (no explicit scale), divides cells by the split value.
+ * Otherwise returns 1 (no division).
+ */
+export function calculateYSizeDivisor(
+  scaleType: ScaleDistribution | undefined,
+  hasExplicitScale: boolean,
+  splitValue: number | string | undefined
+): number {
+  const isLogScale = scaleType === ScaleDistribution.Log || scaleType === ScaleDistribution.Symlog;
+  return isLogScale && !hasExplicitScale ? +(splitValue || 1) : 1;
+}
+
+/**
+ * Applies explicit min/max values to scale range for linear scales.
+ * Returns the original values if explicitMin/explicitMax are undefined.
+ */
+export function applyExplicitMinMax(
+  scaleMin: number | null,
+  scaleMax: number | null,
+  explicitMin: number | undefined,
+  explicitMax: number | undefined
+): [number | null, number | null] {
+  return [explicitMin ?? scaleMin, explicitMax ?? scaleMax];
+}
