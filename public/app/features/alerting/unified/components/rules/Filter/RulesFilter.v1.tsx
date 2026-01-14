@@ -19,6 +19,7 @@ import { RuleHealth, getSearchFilterFromQuery } from '../../../search/rulesSearc
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
+import { RulesSortingSelector, useRulesSorting } from '../RulesSortingSelector';
 
 import { RulesViewModeSelector } from './RulesViewModeSelector';
 
@@ -46,6 +47,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
+  const { sortOrder, setSortOrder } = useRulesSorting();
 
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
@@ -99,6 +101,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
 
   const handleClearFiltersClick = () => {
     setSearchQuery(undefined);
+    setSortOrder(undefined);
     onClear();
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
@@ -304,6 +307,12 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             </Field>
             <input type="submit" hidden />
           </form>
+          <div>
+            <Label>
+              <Trans i18nKey="alerting.rules-filter.sort-by">Sort by</Trans>
+            </Label>
+            <RulesSortingSelector sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
+          </div>
           <div>
             <Label>
               <Trans i18nKey="alerting.rules-filter.view-as">View as</Trans>
