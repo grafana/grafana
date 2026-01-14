@@ -251,7 +251,7 @@ export function addDataSource(
     };
 
     const result = await api.createDataSource(newInstance);
-    // const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);
+    const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);
 
     await getDatasourceSrv().reload();
     await contextSrv.fetchUserPermissions();
@@ -264,7 +264,7 @@ export function addDataSource(
       path: window.location.pathname,
     });
 
-    locationService.push('/add-new-connection?cat=data-source');
+    locationService.push(editLink);
   };
 }
 
