@@ -61,7 +61,7 @@ type kvStorageBackend struct {
 	bulkLock                     *BulkLock
 	dataStore                    *dataStore
 	eventStore                   *eventStore
-	notifier                     *notifier
+	notifier                     notifier
 	builder                      DocumentBuilder
 	log                          logging.Logger
 	withPruner                   bool
