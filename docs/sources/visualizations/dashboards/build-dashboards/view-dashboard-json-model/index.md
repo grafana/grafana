@@ -59,11 +59,11 @@ There are currently three dashboard JSON schema models:
 
 To access the JSON representation of a dashboard:
 
-1. Click **Edit** in the top-right corner of the dashboard.
-1. Click the gear icon in the right sidebar and click **Settings** in the secondary sidebar.
-1. Select the **JSON Model** tab.
-1. Update the JSON structure as needed.
-1. Click **Save changes**.
+1. Click **Edit**.
+1. In the sidebar, click the **Dashboard options** icon.
+1. In the edit pane, click **Settings**.
+1. Go to the **JSON Model** tab.
+1. When you've finished viewing the JSON, click **Back to dashboard** and **Exit edit**.
 
 ## Classic model
 
