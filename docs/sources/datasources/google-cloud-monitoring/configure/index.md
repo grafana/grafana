@@ -141,10 +141,11 @@ You're taken to the **Settings** tab where you configure the data source.
 
 The following are configuration options for the Google Cloud Monitoring data source.
 
-| Setting     | Description                                                              |
-| ----------- | ------------------------------------------------------------------------ |
-| **Name**    | Sets the name you use to refer to the data source in panels and queries. |
-| **Default** | Sets whether the data source is pre-selected for new panels.             |
+| Setting             | Description                                                                                                                                                                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                                                      |
+| **Default**         | Sets whether the data source is pre-selected for new panels.                                                                                                                                                                                  |
+| **Universe Domain** | The universe domain to connect to. For more information, refer to the [Google Cloud universe domains documentation](https://cloud.google.com/docs/overview#universe_domains). Defaults to `googleapis.com`.                                  |
 
 ### Authentication
 
@@ -208,6 +209,7 @@ datasources:
       clientEmail: stackdriver@myproject.iam.gserviceaccount.com
       authenticationType: jwt
       defaultProject: my-project-name
+      universeDomain: googleapis.com
     secureJsonData:
       privateKey: |
         -----BEGIN PRIVATE KEY-----
@@ -231,6 +233,7 @@ datasources:
       clientEmail: stackdriver@myproject.iam.gserviceaccount.com
       authenticationType: jwt
       defaultProject: my-project-name
+      universeDomain: googleapis.com
       privateKeyPath: /etc/secrets/gce.pem
 ```
 
@@ -245,6 +248,7 @@ datasources:
     access: proxy
     jsonData:
       authenticationType: gce
+      universeDomain: googleapis.com
 ```
 
 ## Provision the data source using Terraform
@@ -304,6 +308,7 @@ resource "grafana_data_source" "google_cloud_monitoring" {
     clientEmail        = "<SERVICE_ACCOUNT_EMAIL>"
     authenticationType = "jwt"
     defaultProject     = "<GCP_PROJECT_ID>"
+    universeDomain     = "googleapis.com"
   })
 
   secure_json_data_encoded = jsonencode({
@@ -324,6 +329,7 @@ resource "grafana_data_source" "google_cloud_monitoring" {
     clientEmail        = "<SERVICE_ACCOUNT_EMAIL>"
     authenticationType = "jwt"
     defaultProject     = "<GCP_PROJECT_ID>"
+    universeDomain     = "googleapis.com"
     privateKeyPath     = "/etc/secrets/gce.pem"
   })
 }
@@ -338,6 +344,7 @@ resource "grafana_data_source" "google_cloud_monitoring" {
 
   json_data_encoded = jsonencode({
     authenticationType = "gce"
+    universeDomain     = "googleapis.com"
   })
 }
 ```
