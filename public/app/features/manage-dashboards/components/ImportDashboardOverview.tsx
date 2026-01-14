@@ -61,8 +61,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
     // when kubernetesDashboard are enabled, we bypass api/dashboard/import
     // and hit the k8s dashboard API directly
     if (config.featureToggles.kubernetesDashboards) {
-      // 1. process datasources so the template placeholder is replaced with the actual value user selected
-
+      // process datasources so the template placeholder is replaced with the actual value user selected
       const annotations = dashboard.annotations.list.map((annotation: AnnotationQuery) => {
         return processAnnotation(annotation, inputs, form);
       });
@@ -116,7 +115,6 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
         },
       };
 
-      // hit v1 API directly
       const result = await getDashboardAPI('v1').saveDashboard(dashboardK8SPayload);
 
       if (result.url) {
