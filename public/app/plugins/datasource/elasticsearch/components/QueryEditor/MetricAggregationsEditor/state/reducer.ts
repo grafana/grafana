@@ -1,7 +1,6 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { ElasticsearchDataQuery, MetricAggregation } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
-
+import { ElasticsearchDataQuery, MetricAggregation } from '../../../../dataquery.gen';
 import { defaultMetricAgg, queryTypeToMetricType } from '../../../../queryDef';
 import { removeEmpty } from '../../../../utils';
 import { changeEditorTypeAndResetQuery, initQuery } from '../../state';
@@ -57,6 +56,7 @@ export const reducer = (
         It the future would be nice to have the same behavior but it's hard without a proper definition,
         as Elasticsearch will error sometimes if some settings are not compatible.
       */
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return {
           id: metric.id,
           type: action.payload.type,
