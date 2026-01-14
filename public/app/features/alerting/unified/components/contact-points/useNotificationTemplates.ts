@@ -10,6 +10,7 @@ import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNe
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList,
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupSpec,
 } from '../../openapi/templatesApi.gen';
 import {
   addNotificationTemplateAction,
@@ -17,6 +18,7 @@ import {
   updateNotificationTemplateAction,
 } from '../../reducers/alertmanager/notificationTemplates';
 import { KnownProvenance } from '../../types/knownProvenance';
+import { TemplateKind } from '../../types/notification-template';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { getAnnotation, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
@@ -26,12 +28,22 @@ interface BaseAlertmanagerArgs {
   alertmanager: string;
 }
 
+/**
+ * Extended spec type that includes the `kind` field.
+ * The generated types are outdated and missing this field, but the API returns it.
+ * This avoids inline type assertions and keeps the code type-safe.
+ */
+type TemplateGroupSpecWithKind = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupSpec & {
+  kind?: TemplateKind;
+};
+
 export interface NotificationTemplate {
   uid: string;
   title: string;
   content: string;
   provenance: string;
   missing?: boolean;
+  kind: TemplateKind;
 }
 
 const { useGetAlertmanagerConfigurationQuery, useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
@@ -81,12 +93,14 @@ function templateGroupToTemplate(
   templateGroup: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
 ): NotificationTemplate {
   const provenance = getAnnotation(templateGroup, K8sAnnotations.Provenance) ?? KnownProvenance.None;
+  const spec: TemplateGroupSpecWithKind = templateGroup.spec;
   return {
     // K8s entities should always have a metadata.name property. The type is marked as optional because it's also used in other places
-    uid: templateGroup.metadata.name ?? templateGroup.spec.title,
-    title: templateGroup.spec.title,
-    content: templateGroup.spec.content,
+    uid: templateGroup.metadata.name ?? spec.title,
+    title: spec.title,
+    content: spec.content,
     provenance,
+    kind: spec.kind ?? TemplateKind.Grafana,
   };
 }
 
@@ -100,6 +114,7 @@ function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemp
     // Undefined, null or empty string should be converted to KnownProvenance.None
     provenance: (config.template_file_provenances ?? {})[title] || KnownProvenance.None,
     missing: !templates.includes(title),
+    kind: TemplateKind.Grafana, // Config API templates are always Grafana templates
   }));
 }
 

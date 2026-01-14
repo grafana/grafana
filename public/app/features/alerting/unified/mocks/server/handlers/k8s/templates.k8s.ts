@@ -4,10 +4,15 @@ import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/serve
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup } from 'app/features/alerting/unified/openapi/templatesApi.gen';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
+import { TemplateKind } from 'app/features/alerting/unified/types/notification-template';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
+
+type TemplateGroupSpecWithKind = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup['spec'] & {
+  kind?: TemplateKind;
+};
 
 // Map alertmanager templates to k8s templates
 const mappedTemplates = Object.entries(
@@ -20,7 +25,8 @@ const mappedTemplates = Object.entries(
   spec: {
     title: title,
     content: template,
-  },
+    kind: TemplateKind.Grafana,
+  } as TemplateGroupSpecWithKind,
 }));
 
 const templatesDb = new Map<string, ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup>(
@@ -98,4 +104,28 @@ export default handlers;
 
 function titleToK8sResourceName(title: string) {
   return `k8s-${title}-resource-name`;
+}
+
+export function addTemplateToDb(title: string, content: string, kind: TemplateKind = TemplateKind.Grafana): void {
+  const name = titleToK8sResourceName(title);
+  templatesDb.set(name, {
+    metadata: {
+      name,
+      annotations: { [PROVENANCE_ANNOTATION]: KnownProvenance.None },
+    },
+    spec: {
+      title,
+      content,
+      kind,
+    } as TemplateGroupSpecWithKind,
+  });
+}
+
+export function clearTemplatesDb(): void {
+  templatesDb.clear();
+}
+
+export function resetTemplatesDb(): void {
+  templatesDb.clear();
+  mappedTemplates.forEach((t) => templatesDb.set(t.metadata.name!, t));
 }
