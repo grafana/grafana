@@ -49,7 +49,7 @@ var (
 			Name:        "lokiExperimentalStreaming",
 			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
+			Owner:       grafanaOSSBigTent,
 		},
 		{
 			Name:        "featureHighlights",
@@ -177,7 +177,7 @@ var (
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
+			Owner:       grafanaOSSBigTent,
 		},
 		{
 			Name:        "disableSSEDataplane",
@@ -323,6 +323,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "reportingCsvEncodingOptions",
+			Description:  "Enables CSV encoding options in the reporting feature",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
@@ -333,7 +340,7 @@ var (
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaObservabilityLogsSquad,
+			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:        "externalServiceAccounts",
@@ -567,8 +574,8 @@ var (
 		},
 		{
 			Name:         "dashboardNewLayouts",
-			Description:  "Enables experimental new dashboard layouts",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables new dashboard layouts",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
 			Owner:        grafanaDashboardsSquad,
 		},
@@ -738,7 +745,7 @@ var (
 			Name:         "logQLScope",
 			Description:  "In-development feature that will allow injection of labels into loki queries.",
 			Stage:        FeatureStagePrivatePreview,
-			Owner:        grafanaObservabilityLogsSquad,
+			Owner:        grafanaOSSBigTent,
 			Expression:   "false",
 			HideFromDocs: true,
 		},
@@ -866,18 +873,18 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:         "logsExploreTableDefaultVisualization",
-			Description:  "Sets the logs table as default visualisation in logs explore",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityLogsSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
 			Stage:        FeatureStagePrivatePreview,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "alertingNavigationV2",
+			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: false,
 		},
 		{
 			Name:         "alertingSavedSearches",
@@ -981,7 +988,8 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
-		}, {
+		},
+		{
 			Name:         "alertingFilterV2",
 			Description:  "Enable the new alerting search experience",
 			Stage:        FeatureStageExperimental,
@@ -1032,13 +1040,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "exploreLogsLimitedTimeRange",
-			Description:  "Used in Logs Drilldown to limit the time range",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "appPlatformGrpcClientAuth",
 			Description:  "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
 			Stage:        FeatureStageExperimental,
@@ -1079,20 +1080,6 @@ var (
 			Description: "Enables the new role picker drawer design",
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
-		},
-		{
-			Name:         "unifiedStorageSearch",
-			Description:  "Enable unified storage search",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-		},
-		{
-			Name:         "unifiedStorageSearchSprinkles",
-			Description:  "Enable sprinkles on unified storage search",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "managedDualWriter",
@@ -1154,14 +1141,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
-		},
-		{
-			Name:         "exploreMetricsRelatedLogs",
-			Description:  "Display Related Logs in Grafana Metrics Drilldown",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
-			FrontendOnly: true,
-			HideFromDocs: false,
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",
@@ -1284,27 +1263,13 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "unifiedHistory",
-			Description:  "Displays the navigation history so the user can navigate back to previous pages",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendSearchNavOrganise,
-			FrontendOnly: true,
-		},
-		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
 			// since users on v2.9 need it to disable the feature, as it doesn't work for them.
 			Name:        "lokiLabelNamesQueryApi",
 			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityLogsSquad,
+			Owner:       grafanaOSSBigTent,
 			Expression:  "true",
-		},
-		{
-			Name:        "investigationsBackend",
-			Description: "Enable the investigations backend API",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
 		},
 		{
 			Name:        "k8SFolderCounts",
@@ -1592,8 +1557,8 @@ var (
 		},
 		{
 			Name:         "kubernetesAuthzApis",
-			Description:  "Registers AuthZ /apis endpoint",
-			Stage:        FeatureStageExperimental,
+			Description:  "Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead",
+			Stage:        FeatureStageDeprecated,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 		},
@@ -1614,6 +1579,27 @@ var (
 		{
 			Name:         "kubernetesAuthzZanzanaSync",
 			Description:  "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "kubernetesAuthzCoreRolesApi",
+			Description:  "Registers AuthZ Core Roles /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "kubernetesAuthzRolesApi",
+			Description:  "Registers AuthZ Roles /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "kubernetesAuthzRoleBindingsApi",
+			Description:  "Registers AuthZ Role Bindings /apis endpoint",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1645,6 +1631,15 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendSearchNavOrganise,
 			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "experimentRecentlyViewedDashboards",
+			Description:  "A/A test for recently viewed dashboards feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendSearchNavOrganise,
+			FrontendOnly: true,
+			HideFromDocs: true,
 			Expression:   "false",
 		},
 		{
@@ -1867,14 +1862,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:            "tempoSearchBackendMigration",
-			Description:     "Run search queries through the tempo backend",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaOSSBigTent,
-			Expression:      "false",
-			RequiresRestart: true,
-		},
-		{
 			Name:         "cdnPluginsLoadFirst",
 			Description:  "Prioritize loading plugins from the CDN before other sources",
 			Stage:        FeatureStageExperimental,
@@ -2089,6 +2076,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:            "alertingSyncDispatchTimer",
+			Description:     "Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			HideFromDocs:    true,
 		},
 	}
 )

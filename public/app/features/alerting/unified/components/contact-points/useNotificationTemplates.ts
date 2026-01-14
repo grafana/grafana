@@ -16,7 +16,8 @@ import {
   deleteNotificationTemplateAction,
   updateNotificationTemplateAction,
 } from '../../reducers/alertmanager/notificationTemplates';
-import { K8sAnnotations, PROVENANCE_NONE } from '../../utils/k8s/constants';
+import { KnownProvenance } from '../../types/knownProvenance';
+import { K8sAnnotations } from '../../utils/k8s/constants';
 import { getAnnotation, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
 import { TemplateFormValues } from '../receivers/TemplateForm';
@@ -79,7 +80,7 @@ function templateGroupsToTemplates(
 function templateGroupToTemplate(
   templateGroup: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
 ): NotificationTemplate {
-  const provenance = getAnnotation(templateGroup, K8sAnnotations.Provenance) ?? PROVENANCE_NONE;
+  const provenance = getAnnotation(templateGroup, K8sAnnotations.Provenance) ?? KnownProvenance.None;
   return {
     // K8s entities should always have a metadata.name property. The type is marked as optional because it's also used in other places
     uid: templateGroup.metadata.name ?? templateGroup.spec.title,
@@ -96,8 +97,8 @@ function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemp
     uid: title,
     title,
     content,
-    // Undefined, null or empty string should be converted to PROVENANCE_NONE
-    provenance: (config.template_file_provenances ?? {})[title] || PROVENANCE_NONE,
+    // Undefined, null or empty string should be converted to KnownProvenance.None
+    provenance: (config.template_file_provenances ?? {})[title] || KnownProvenance.None,
     missing: !templates.includes(title),
   }));
 }
@@ -272,7 +273,7 @@ export function useValidateNotificationTemplate({
 }
 
 interface NotificationTemplateMetadata {
-  isProvisioned: boolean;
+  provenance?: string;
 }
 
 export function useNotificationTemplateMetadata(
@@ -280,11 +281,11 @@ export function useNotificationTemplateMetadata(
 ): NotificationTemplateMetadata {
   if (!template) {
     return {
-      isProvisioned: false,
+      provenance: KnownProvenance.None,
     };
   }
 
   return {
-    isProvisioned: Boolean(template.provenance) && template.provenance !== PROVENANCE_NONE,
+    provenance: template.provenance,
   };
 }

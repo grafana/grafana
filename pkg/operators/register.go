@@ -14,6 +14,12 @@ func init() {
 	})
 
 	server.RegisterOperator(server.Operator{
+		Name:        "provisioning-connection",
+		Description: "Watch provisioning connections",
+		RunFunc:     provisioning.RunConnectionController,
+	})
+
+	server.RegisterOperator(server.Operator{
 		Name:        "iam-folder-reconciler",
 		Description: "Reconcile folder resources into Zanzana",
 		RunFunc:     iam.RunIAMFolderReconciler,

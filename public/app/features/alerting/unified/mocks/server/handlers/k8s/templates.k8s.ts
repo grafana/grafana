@@ -3,8 +3,9 @@ import { HttpResponse, http } from 'msw';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup } from 'app/features/alerting/unified/openapi/templatesApi.gen';
+import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
@@ -14,7 +15,7 @@ const mappedTemplates = Object.entries(
 ).map<ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup>(([title, template]) => ({
   metadata: {
     name: titleToK8sResourceName(title), // K8s uses unique identifiers for resources
-    annotations: { [PROVENANCE_ANNOTATION]: config.template_file_provenances?.[title] || PROVENANCE_NONE },
+    annotations: { [PROVENANCE_ANNOTATION]: config.template_file_provenances?.[title] || KnownProvenance.None },
   },
   spec: {
     title: title,

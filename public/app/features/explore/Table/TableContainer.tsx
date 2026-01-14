@@ -13,10 +13,9 @@ import {
   EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
+import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { AdHocFilterItem, PanelChrome, withTheme2, Themeable2, PanelContextProvider } from '@grafana/ui';
-import { config } from 'app/core/config';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,

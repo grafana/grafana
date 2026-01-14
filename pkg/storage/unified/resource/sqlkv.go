@@ -349,6 +349,11 @@ func (w *sqlWriteCloser) Close() error {
 	}
 
 	w.closed = true
+	value := w.buf.Bytes()
+	if value == nil {
+		// to prevent NOT NULL constraint violations
+		value = []byte{}
+	}
 
 	// do regular kv save: simple key_path + value insert with conflict check.
 	// can only do this on resource_events for now, until we drop the columns in resource_history
@@ -356,7 +361,7 @@ func (w *sqlWriteCloser) Close() error {
 		_, err := dbutil.Exec(w.ctx, w.kv.db, sqlKVSaveEvent, sqlKVSaveRequest{
 			SQLTemplate:     sqltemplate.New(w.kv.dialect),
 			sqlKVSectionKey: w.sectionKey,
-			Value:           w.buf.Bytes(),
+			Value:           value,
 		})
 
 		if err != nil {
@@ -380,7 +385,7 @@ func (w *sqlWriteCloser) Close() error {
 				SQLTemplate:     sqltemplate.New(w.kv.dialect),
 				sqlKVSectionKey: w.sectionKey,
 				GUID:            uuid.New().String(),
-				Value:           w.buf.Bytes(),
+				Value:           value,
 			})
 
 			if err != nil {
@@ -397,7 +402,7 @@ func (w *sqlWriteCloser) Close() error {
 		_, err = dbutil.Exec(w.ctx, w.kv.db, sqlKVUpdateData, sqlKVSaveRequest{
 			SQLTemplate:     sqltemplate.New(w.kv.dialect),
 			sqlKVSectionKey: w.sectionKey,
-			Value:           w.buf.Bytes(),
+			Value:           value,
 		})
 
 		if err != nil {
@@ -432,8 +437,8 @@ func (w *sqlWriteCloser) Close() error {
 
 	_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResourceHistory, sqlKVSaveRequest{
 		SQLTemplate:     sqltemplate.New(w.kv.dialect),
-		sqlKVSectionKey: w.sectionKey,
-		Value:           w.buf.Bytes(),
+		sqlKVSectionKey: w.sectionKey, // unused: key_path is set by rvmanager
+		Value:           value,
 		GUID:            dataKey.GUID,
 		Group:           dataKey.Group,
 		Resource:        dataKey.Resource,
@@ -467,8 +472,6 @@ func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
 	if rows == 0 {
 		return ErrNotFound
 	}
-
-	// TODO reflect change to resource table
 
 	return nil
 }
