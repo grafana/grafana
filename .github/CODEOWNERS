@@ -658,6 +658,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/LocationService.tsx @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/services/LocationSrv.ts @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/services/live.ts @grafana/dashboards-squad
+/packages/grafana-runtime/src/services/pluginMeta @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/utils/chromeHeaderHeight.ts @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/utils/DataSourceWithBackend* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/licensing.ts @grafana/grafana-operator-experience-squad
