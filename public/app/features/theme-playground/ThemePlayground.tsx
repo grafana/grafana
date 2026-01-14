@@ -46,7 +46,7 @@ const themeMap: Record<string, NewThemeOptions> = {
   },
 };
 
-const experimentaldefinitions: Record<string, unknown> = {
+const experimentalDefinitions: Record<string, unknown> = {
   aubergine,
   debug,
   desertbloom,
@@ -62,7 +62,7 @@ const experimentaldefinitions: Record<string, unknown> = {
 };
 
 // Add additional themes
-for (const [name, json] of Object.entries(experimentaldefinitions)) {
+for (const [name, json] of Object.entries(experimentalDefinitions)) {
   const result = NewThemeOptionsSchema.safeParse(json);
   if (!result.success) {
     console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);
