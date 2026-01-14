@@ -2184,6 +2184,7 @@
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "Imported",
         "text-provisioned": "Provisioned"
       }
     },
@@ -6983,6 +6984,7 @@
         "drone-datasource": "Drone datasource",
         "git-lab-integration-and-datasource": "GitLab integration and datasource",
         "honeycomb-integration-and-datasource": "Honeycomb integration and datasource",
+        "ibmdb2-datasource": "IBM Db2 data source",
         "jira-integration-and-datasource": "Jira integration and datasource",
         "logic-monitor-devices-datasource": "LogicMonitor Devices datasource",
         "mongo-db-integration-and-data-source": "MongoDB integration and data source",
