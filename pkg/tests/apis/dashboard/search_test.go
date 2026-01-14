@@ -148,14 +148,29 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			params: "", // only dashboards
 		},
 		{
-			name:   "simple-query",
+			name:   "query-single-word",
 			user:   helper.Org1.Admin,
 			params: "query=stacking",
+		},
+		{
+			name:   "query-multiple-words",
+			user:   helper.Org1.Admin,
+			params: "query=graph softMin", // must match ALL terms
 		},
 		{
 			name:   "with-text-panel",
 			user:   helper.Org1.Admin,
 			params: "field=panel_types&panelType=text",
+		},
+		{
+			name:   "title-ngram-prefix",
+			user:   helper.Org1.Admin,
+			params: "query=zer", // should match "Zero Decimals Y Ticks"
+		},
+		{
+			name:   "title-ngram-middle-word",
+			user:   helper.Org1.Admin,
+			params: "query=decim", // should match "Zero Decimals Y Ticks"
 		},
 	}
 	for i, tc := range testCases {

@@ -1,0 +1,17 @@
+{
+  "totalHits": 1,
+  "hits": [
+    {
+      "resource": "dashboards",
+      "name": "timeseries-soft-limits",
+      "title": "Panel Tests - Graph NG - softMin/softMax",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ],
+      "score": 0.057
+    }
+  ],
+  "maxScore": 0.057
+}
