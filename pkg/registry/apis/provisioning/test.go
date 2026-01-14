@@ -30,23 +30,29 @@ type HealthCheckerProvider interface {
 
 type ConnectorDependencies interface {
 	RepoGetter
+	ConnectionGetter
 	HealthCheckerProvider
 	GetRepoFactory() repository.Factory
 }
 
 type testConnector struct {
-	getter         RepoGetter
-	factory        repository.Factory
-	healthProvider HealthCheckerProvider
-	tester         repository.RepositoryTesterWithExistingChecker
+	repoGetter       RepoGetter
+	repoFactory      repository.Factory
+	connectionGetter ConnectionGetter
+	healthProvider   HealthCheckerProvider
+	tester           repository.RepositoryTesterWithExistingChecker
 }
 
-func NewTestConnector(deps ConnectorDependencies, tester repository.RepositoryTesterWithExistingChecker) *testConnector {
+func NewTestConnector(
+	deps ConnectorDependencies,
+	tester repository.RepositoryTesterWithExistingChecker,
+) *testConnector {
 	return &testConnector{
-		factory:        deps.GetRepoFactory(),
-		getter:         deps,
-		healthProvider: deps,
-		tester:         tester,
+		repoFactory:      deps.GetRepoFactory(),
+		repoGetter:       deps,
+		connectionGetter: deps,
+		healthProvider:   deps,
+		tester:           tester,
 	}
 }
 
@@ -72,7 +78,7 @@ func (*testConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
-func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	ns, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing namespace")
@@ -104,7 +110,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 					name = "hack-on-hack-for-new"
 				} else {
 					// Copy previous secure values if they exist
-					old, _ := s.getter.GetRepository(ctx, name)
+					old, _ := s.repoGetter.GetRepository(ctx, name)
 					if old != nil && !old.Config().Secure.IsZero() {
 						secure := old.Config().Secure
 						if cfg.Secure.Token.IsZero() {
@@ -121,8 +127,27 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 					cfg.SetNamespace(ns)
 				}
 
+				// The new repository should be connected to a Connection resource,
+				// i.e. we should be generating the token based on it.
+				if cfg.Secure.Token.IsZero() && cfg.Spec.Connection != nil && cfg.Spec.Connection.Name != "" {
+					// A connection must be there
+					c, err := s.connectionGetter.GetConnection(ctx, cfg.Spec.Connection.Name)
+					if err != nil {
+						responder.Error(err)
+						return
+					}
+
+					token, err := c.GenerateRepositoryToken(ctx, &cfg)
+					if err != nil {
+						responder.Error(err)
+						return
+					}
+
+					cfg.Secure.Token.Create = token
+				}
+
 				// Create a temporary repository
-				tmp, err := s.factory.Build(ctx, &cfg)
+				tmp, err := s.repoFactory.Build(ctx, &cfg)
 				if err != nil {
 					responder.Error(err)
 					return
@@ -148,7 +173,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 			}
 
 			// Testing existing repository - get it and update health
-			repo, err = s.getter.GetRepository(ctx, name)
+			repo, err = s.repoGetter.GetRepository(ctx, name)
 			if err != nil {
 				responder.Error(err)
 				return

@@ -10,27 +10,51 @@ import (
 )
 
 type extra struct {
-	factory GithubFactory
+	factory   GithubFactory
+	decrypter connection.Decrypter
 }
 
 func (e *extra) Type() provisioning.ConnectionType {
 	return provisioning.GithubConnectionType
 }
 
-func (e *extra) Build(ctx context.Context, connection *provisioning.Connection) (connection.Connection, error) {
+func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (connection.Connection, error) {
 	logger := logging.FromContext(ctx)
-	if connection == nil || connection.Spec.GitHub == nil {
+	if conn == nil || conn.Spec.GitHub == nil {
 		logger.Error("connection is nil or github info is nil")
 
 		return nil, fmt.Errorf("invalid github connection")
 	}
 
-	c := NewConnection(connection, e.factory)
+	// Decrypt secure values
+	secure := e.decrypter(conn)
+
+	// Decrypt private key
+	pKey, err := secure.PrivateKey(ctx)
+	if err != nil {
+		logger.Error("Failed to decrypt private key", "error", err)
+
+		return nil, err
+	}
+
+	// Decrypt token
+	t, err := secure.Token(ctx)
+	if err != nil {
+		logger.Error("Failed to decrypt token", "error", err)
+
+		return nil, err
+	}
+
+	c := NewConnection(conn, e.factory, ConnectionSecrets{
+		PrivateKey: pKey,
+		Token:      t,
+	})
 	return &c, nil
 }
 
-func Extra(factory GithubFactory) connection.Extra {
+func Extra(decrypter connection.Decrypter, factory GithubFactory) connection.Extra {
 	return &extra{
-		factory: factory,
+		decrypter: decrypter,
+		factory:   factory,
 	}
 }

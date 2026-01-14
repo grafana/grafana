@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -20,18 +21,26 @@ type GithubFactory interface {
 	New(ctx context.Context, ghToken common.RawSecureValue) Client
 }
 
+type ConnectionSecrets struct {
+	PrivateKey common.RawSecureValue
+	Token      common.RawSecureValue
+}
+
 type Connection struct {
 	obj       *provisioning.Connection
 	ghFactory GithubFactory
+	secrets   ConnectionSecrets
 }
 
 func NewConnection(
 	obj *provisioning.Connection,
 	factory GithubFactory,
+	secrets ConnectionSecrets,
 ) Connection {
 	return Connection{
 		obj:       obj,
 		ghFactory: factory,
+		secrets:   secrets,
 	}
 }
 
@@ -51,14 +60,15 @@ func (c *Connection) Mutate(_ context.Context) error {
 
 	c.obj.Spec.URL = fmt.Sprintf("%s/%s", githubInstallationURL, c.obj.Spec.GitHub.InstallationID)
 
-	// Generate JWT token if private key is being provided.
-	// Same as for the spec.Github, if such a field is required, Validation will take care of that.
-	if !c.obj.Secure.PrivateKey.Create.IsZero() {
-		token, err := generateToken(c.obj.Spec.GitHub.AppID, c.obj.Secure.PrivateKey.Create)
+	// Generate token only if one of the following cases are true
+	// - The object is being created now (generation == 0)
+	// - The token is not there
+	// - A new Private key is being submitted
+	if c.obj.Generation == 0 || c.secrets.Token.IsZero() || !c.obj.Secure.PrivateKey.Create.IsZero() {
+		token, err := generateToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
 		if err != nil {
 			return fmt.Errorf("failed to generate JWT token: %w", err)
 		}
-
 		// Store the generated token
 		c.obj.Secure.Token = common.InlineSecureValue{Create: token}
 	}
@@ -117,10 +127,10 @@ func (c *Connection) Validate(ctx context.Context) error {
 		return toError(c.obj.GetName(), list)
 	}
 
-	if c.obj.Secure.PrivateKey.IsZero() {
+	if c.secrets.PrivateKey.IsZero() {
 		list = append(list, field.Required(field.NewPath("secure", "privateKey"), "privateKey must be specified for GitHub connection"))
 	}
-	if c.obj.Secure.Token.IsZero() {
+	if c.secrets.Token.IsZero() {
 		list = append(list, field.Required(field.NewPath("secure", "token"), "token must be specified for GitHub connection"))
 	}
 	if !c.obj.Secure.ClientSecret.IsZero() {
@@ -150,7 +160,7 @@ func (c *Connection) Validate(ctx context.Context) error {
 
 // validateAppAndInstallation validates the appID and installationID against the given github token.
 func (c *Connection) validateAppAndInstallation(ctx context.Context) *field.Error {
-	ghClient := c.ghFactory.New(ctx, c.obj.Secure.Token.Create)
+	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
 
 	app, err := ghClient.GetApp(ctx)
 	if err != nil {
@@ -185,6 +195,35 @@ func toError(name string, list field.ErrorList) error {
 		name,
 		list,
 	)
+}
+
+// GenerateRepositoryToken generates a repository-scoped access token.
+func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (common.RawSecureValue, error) {
+	if repo == nil {
+		return "", errors.New("a repository is required to generate a token")
+	}
+	if c.obj.Spec.GitHub == nil {
+		return "", errors.New("connection is not a GitHub connection")
+	}
+	if repo.Spec.GitHub == nil {
+		return "", errors.New("repository is not a GitHub repo")
+	}
+
+	_, repoName, err := github.ParseOwnerRepoGithub(repo.Spec.GitHub.URL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse repo URL: %w", err)
+	}
+
+	// Create the GitHub client with the JWT token
+	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+
+	// Create an installation access token scoped to this repository
+	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, repoName)
+	if err != nil {
+		return "", fmt.Errorf("failed to create installation access token: %w", err)
+	}
+
+	return common.RawSecureValue(installationToken.Token), nil
 }
 
 var (

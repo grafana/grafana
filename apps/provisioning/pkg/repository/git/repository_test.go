@@ -170,6 +170,22 @@ func TestGitRepository_Validate(t *testing.T) {
 			want: nil,
 		},
 		{
+			name: "missing token for R/W repository with connection",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:       "test_type",
+					Workflows:  []provisioning.Workflow{provisioning.WriteWorkflow},
+					Connection: &provisioning.ConnectionInfo{Name: "my-connection"},
+				},
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/repo.git",
+				Branch: "main",
+				Token:  "", // Empty token - should be OK because connection is provided
+			},
+			want: nil,
+		},
+		{
 			name: "unsafe path",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
