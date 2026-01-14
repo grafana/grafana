@@ -203,7 +203,7 @@ export function APIEditor({ value, context, onChange }: Props) {
       <Field label={t('canvas.apieditor.label-header-parameters', 'Header parameters')} noMargin>
         <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
       </Field>
-      <Field label={t('canvas.apieditor.label-successmessage', 'Success Message')} noMargin>
+      <Field label={t('canvas.apieditor.label-successmessage', 'Success message')} noMargin>
         <StringValueEditor
           context={context}
           value={value.successMessage}
