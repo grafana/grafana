@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Used in logging to mark a stage
@@ -160,7 +159,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		resSpan.End()
 	}()
 
-	improvedParsingEnabled := isFeatureEnabled(c.ctx, featuremgmt.FlagElasticsearchImprovedParsing)
+	improvedParsingEnabled := isFeatureEnabled(c.ctx, "elasticsearchImprovedParsing")
 	msr, err := c.parser.parseMultiSearchResponse(res.Body, improvedParsingEnabled)
 	if err != nil {
 		return nil, err
