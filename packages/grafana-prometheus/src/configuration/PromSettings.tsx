@@ -30,7 +30,12 @@ import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 import { docsTip, overhaulStyles, validateInput } from './shared/utils';
 
-type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
+type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'> & {
+  /** Hide the Prometheus type and version dropdowns */
+  hidePrometheusTypeVersion?: boolean;
+  /** Hide the Exemplars settings section */
+  hideExemplars?: boolean;
+};
 
 const httpOptions = [
   { value: 'POST', label: 'POST' },
@@ -72,7 +77,7 @@ const getOptionsWithDefaults = (options: DataSourceSettings<PromOptions>) => {
 export const PromSettings = (props: Props) => {
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
-  const { onOptionsChange } = props;
+  const { onOptionsChange, hidePrometheusTypeVersion, hideExemplars } = props;
 
   const editorOptions = [
     {
@@ -259,106 +264,111 @@ export const PromSettings = (props: Props) => {
         title={t('grafana-prometheus.configuration.prom-settings.title-performance', 'Performance')}
         className={styles.container}
       >
-        {!optionsWithDefaults.jsonData.prometheusType &&
-          !optionsWithDefaults.jsonData.prometheusVersion &&
-          optionsWithDefaults.readOnly && (
-            <div className={styles.versionMargin}>
-              <Trans i18nKey="grafana-prometheus.configuration.prom-settings.more-info">
-                For more information on configuring prometheus type and version in data sources, see the{' '}
-                <TextLink external href="https://grafana.com/docs/grafana/latest/administration/provisioning/">
-                  provisioning documentation
-                </TextLink>
-                .
-              </Trans>
-            </div>
-          )}
-        <div className="gf-form-group">
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineField
-                label={t('grafana-prometheus.configuration.prom-settings.label-prometheus-type', 'Prometheus type')}
-                labelWidth={PROM_CONFIG_LABEL_WIDTH}
-                tooltip={
-                  <>
-                    {/* , and attempt to detect the version */}
-                    <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-prometheus-type">
-                      Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos.
-                      Changing this field will save your current settings. Certain types of Prometheus supports or does
-                      not support various APIs. For example, some types support regex matching for label queries to
-                      improve performance. Some types have an API for metadata. If you set this incorrectly you may
-                      experience odd behavior when querying metrics and labels. Please check your Prometheus
-                      documentation to ensure you enter the correct type.
-                    </Trans>{' '}
-                    {docsTip()}
-                  </>
-                }
-                interactive={true}
-                disabled={optionsWithDefaults.readOnly}
-              >
-                <Select
-                  aria-label={t(
-                    'grafana-prometheus.configuration.prom-settings.aria-label-prometheus-type',
-                    'Prometheus type'
-                  )}
-                  options={prometheusFlavorSelectItems}
-                  value={prometheusFlavorSelectItems.find(
-                    (o) => o.value === optionsWithDefaults.jsonData.prometheusType
-                  )}
-                  onChange={onChangeHandler('prometheusType', optionsWithDefaults, onOptionsChange)}
-                  width={40}
-                  data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusType}
-                />
-              </InlineField>
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            {optionsWithDefaults.jsonData.prometheusType && (
-              <div className="gf-form">
-                <InlineField
-                  label={t(
-                    'grafana-prometheus.configuration.prom-settings.label-prom-type-version',
-                    '{{promType}} version',
-                    {
-                      promType: optionsWithDefaults.jsonData.prometheusType,
+        {!hidePrometheusTypeVersion && (
+          <>
+            {!optionsWithDefaults.jsonData.prometheusType &&
+              !optionsWithDefaults.jsonData.prometheusVersion &&
+              optionsWithDefaults.readOnly && (
+                <div className={styles.versionMargin}>
+                  <Trans i18nKey="grafana-prometheus.configuration.prom-settings.more-info">
+                    For more information on configuring prometheus type and version in data sources, see the{' '}
+                    <TextLink external href="https://grafana.com/docs/grafana/latest/administration/provisioning/">
+                      provisioning documentation
+                    </TextLink>
+                    .
+                  </Trans>
+                </div>
+              )}
+            <div className="gf-form-group">
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <InlineField
+                    label={t('grafana-prometheus.configuration.prom-settings.label-prometheus-type', 'Prometheus type')}
+                    labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                    tooltip={
+                      <>
+                        {/* , and attempt to detect the version */}
+                        <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-prometheus-type">
+                          Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos.
+                          Changing this field will save your current settings. Certain types of Prometheus supports or
+                          does not support various APIs. For example, some types support regex matching for label
+                          queries to improve performance. Some types have an API for metadata. If you set this
+                          incorrectly you may experience odd behavior when querying metrics and labels. Please check
+                          your Prometheus documentation to ensure you enter the correct type.
+                        </Trans>{' '}
+                        {docsTip()}
+                      </>
                     }
-                  )}
-                  labelWidth={PROM_CONFIG_LABEL_WIDTH}
-                  tooltip={
-                    <>
-                      <Trans
-                        i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-prom-type-version"
-                        values={{ promType: optionsWithDefaults.jsonData.prometheusType }}
-                      >
-                        Use this to set the version of your {'{{promType}}'} instance if it is not automatically
-                        configured.
-                      </Trans>{' '}
-                      {docsTip()}
-                    </>
-                  }
-                  interactive={true}
-                  disabled={optionsWithDefaults.readOnly}
-                >
-                  <Select
-                    aria-label={t(
-                      'grafana-prometheus.configuration.prom-settings.aria-label-prom-type-type',
-                      '{{promType}} type',
-                      {
-                        promType: optionsWithDefaults.jsonData.prometheusType,
-                      }
-                    )}
-                    options={PromFlavorVersions[optionsWithDefaults.jsonData.prometheusType]}
-                    value={PromFlavorVersions[optionsWithDefaults.jsonData.prometheusType]?.find(
-                      (o) => o.value === optionsWithDefaults.jsonData.prometheusVersion
-                    )}
-                    onChange={onChangeHandler('prometheusVersion', optionsWithDefaults, onOptionsChange)}
-                    width={40}
-                    data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusVersion}
-                  />
-                </InlineField>
+                    interactive={true}
+                    disabled={optionsWithDefaults.readOnly}
+                  >
+                    <Select
+                      aria-label={t(
+                        'grafana-prometheus.configuration.prom-settings.aria-label-prometheus-type',
+                        'Prometheus type'
+                      )}
+                      options={prometheusFlavorSelectItems}
+                      value={prometheusFlavorSelectItems.find(
+                        (o) => o.value === optionsWithDefaults.jsonData.prometheusType
+                      )}
+                      onChange={onChangeHandler('prometheusType', optionsWithDefaults, onOptionsChange)}
+                      width={40}
+                      data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusType}
+                    />
+                  </InlineField>
+                </div>
               </div>
-            )}
-          </div>
-
+              <div className="gf-form-inline">
+                {optionsWithDefaults.jsonData.prometheusType && (
+                  <div className="gf-form">
+                    <InlineField
+                      label={t(
+                        'grafana-prometheus.configuration.prom-settings.label-prom-type-version',
+                        '{{promType}} version',
+                        {
+                          promType: optionsWithDefaults.jsonData.prometheusType,
+                        }
+                      )}
+                      labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                      tooltip={
+                        <>
+                          <Trans
+                            i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-prom-type-version"
+                            values={{ promType: optionsWithDefaults.jsonData.prometheusType }}
+                          >
+                            Use this to set the version of your {'{{promType}}'} instance if it is not automatically
+                            configured.
+                          </Trans>{' '}
+                          {docsTip()}
+                        </>
+                      }
+                      interactive={true}
+                      disabled={optionsWithDefaults.readOnly}
+                    >
+                      <Select
+                        aria-label={t(
+                          'grafana-prometheus.configuration.prom-settings.aria-label-prom-type-type',
+                          '{{promType}} type',
+                          {
+                            promType: optionsWithDefaults.jsonData.prometheusType,
+                          }
+                        )}
+                        options={PromFlavorVersions[optionsWithDefaults.jsonData.prometheusType]}
+                        value={PromFlavorVersions[optionsWithDefaults.jsonData.prometheusType]?.find(
+                          (o) => o.value === optionsWithDefaults.jsonData.prometheusVersion
+                        )}
+                        onChange={onChangeHandler('prometheusVersion', optionsWithDefaults, onOptionsChange)}
+                        width={40}
+                        data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusVersion}
+                      />
+                    </InlineField>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+        <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
               <InlineField
@@ -650,17 +660,19 @@ export const PromSettings = (props: Props) => {
         </div>
       </ConfigSubSection>
 
-      <ExemplarsSettings
-        options={optionsWithDefaults.jsonData.exemplarTraceIdDestinations}
-        onChange={(exemplarOptions) =>
-          updateDatasourcePluginJsonDataOption(
-            { onOptionsChange, options: optionsWithDefaults },
-            'exemplarTraceIdDestinations',
-            exemplarOptions
-          )
-        }
-        disabled={optionsWithDefaults.readOnly}
-      />
+      {!hideExemplars && (
+        <ExemplarsSettings
+          options={optionsWithDefaults.jsonData.exemplarTraceIdDestinations}
+          onChange={(exemplarOptions) =>
+            updateDatasourcePluginJsonDataOption(
+              { onOptionsChange, options: optionsWithDefaults },
+              'exemplarTraceIdDestinations',
+              exemplarOptions
+            )
+          }
+          disabled={optionsWithDefaults.readOnly}
+        />
+      )}
     </>
   );
 };

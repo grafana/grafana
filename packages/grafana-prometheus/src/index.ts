@@ -67,7 +67,7 @@ export { transformV2, transformDFToTable, parseSampleValue, sortSeriesByLabel } 
 export {
   type PromQuery,
   type PrometheusCacheLevel,
-  type PromApplication,
+  PromApplication,
   type PromOptions,
   type ExemplarTraceIdDestination,
   type PromQueryRequest,
