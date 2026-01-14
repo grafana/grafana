@@ -159,7 +159,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 		}
 	}
 
-	search, err := resource.NewSearchServer(opts.SearchOptions, opts.Backend, opts.AccessClient, nil, opts.IndexMetrics, opts.OwnsIndexFn)
+	search, err := resource.NewSearchServer(opts.SearchOptions, serverOptions.Backend, opts.AccessClient, nil, opts.IndexMetrics, opts.OwnsIndexFn)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize search: %w", err)
 	}
