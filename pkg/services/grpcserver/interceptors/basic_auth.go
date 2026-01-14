@@ -53,7 +53,7 @@ func (a *basicAuthenticator) Authenticate(ctx context.Context) (context.Context,
 	validPassword := subtle.ConstantTimeCompare([]byte(password), []byte(a.password)) == 1
 
 	if !validUsername || !validPassword {
-		a.logger.Warn("invalid credentials provided", "username", username)
+		a.logger.Warn("invalid credentials provided")
 		return ctx, status.Error(codes.Unauthenticated, "invalid username or password")
 	}
 

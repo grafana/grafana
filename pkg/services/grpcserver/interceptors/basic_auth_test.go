@@ -17,14 +17,14 @@ func TestBasicAuthenticator_Authenticate(t *testing.T) {
 
 	t.Run("accepts valid credentials", func(t *testing.T) {
 		auth := NewBasicAuthenticator(username, password)
-		ctx := setupBasicAuthContext(username, password)
+		ctx := newBasicAuthContext(username, password)
 		_, err := auth.Authenticate(ctx)
 		require.NoError(t, err)
 	})
 
 	t.Run("rejects invalid username", func(t *testing.T) {
 		auth := NewBasicAuthenticator(username, password)
-		ctx := setupBasicAuthContext("wrong", password)
+		ctx := newBasicAuthContext("wrong", password)
 		_, err := auth.Authenticate(ctx)
 		require.Error(t, err)
 		require.Equal(t, codes.Unauthenticated, status.Code(err))
@@ -32,7 +32,7 @@ func TestBasicAuthenticator_Authenticate(t *testing.T) {
 
 	t.Run("rejects invalid password", func(t *testing.T) {
 		auth := NewBasicAuthenticator(username, password)
-		ctx := setupBasicAuthContext(username, "wrong")
+		ctx := newBasicAuthContext(username, "wrong")
 		_, err := auth.Authenticate(ctx)
 		require.Error(t, err)
 		require.Equal(t, codes.Unauthenticated, status.Code(err))
@@ -72,7 +72,7 @@ func TestBasicAuthenticator_Authenticate(t *testing.T) {
 
 	t.Run("removes auth header from context", func(t *testing.T) {
 		auth := NewBasicAuthenticator(username, password)
-		ctx := setupBasicAuthContext(username, password)
+		ctx := newBasicAuthContext(username, password)
 		md, ok := metadata.FromIncomingContext(ctx)
 		require.True(t, ok)
 		require.NotEmpty(t, md["authorization"])
@@ -85,7 +85,7 @@ func TestBasicAuthenticator_Authenticate(t *testing.T) {
 	})
 }
 
-func setupBasicAuthContext(username, password string) context.Context {
+func newBasicAuthContext(username, password string) context.Context {
 	ctx := context.Background()
 	credentials := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 	md := metadata.New(map[string]string{})
