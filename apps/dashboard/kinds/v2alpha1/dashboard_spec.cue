@@ -790,6 +790,8 @@ VariableOption: {
 	text: string | [...string]
 	// Value of the option
 	value: string | [...string]
+	// Additional properties for multi-props variables
+	properties?: {[string]: string}
 }
 
 // Query variable specification

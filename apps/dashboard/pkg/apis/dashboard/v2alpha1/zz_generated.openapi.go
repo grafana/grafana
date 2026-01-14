@@ -5119,6 +5119,22 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardVariableOption(ref common.Refer
 							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardStringOrArrayOfString"),
 						},
 					},
+					"properties": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Additional properties for multi-props variables",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"text", "value"},
 			},
