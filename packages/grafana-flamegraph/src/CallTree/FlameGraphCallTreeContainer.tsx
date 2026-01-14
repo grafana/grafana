@@ -381,6 +381,7 @@ const FlameGraphCallTreeContainer = memo(
                 styles={styles}
                 allNodes={nodes}
                 compact={compact}
+                toggleRowExpanded={tableInstance.toggleRowExpanded}
               />
             ),
             minWidth: 200,
@@ -464,6 +465,7 @@ const FlameGraphCallTreeContainer = memo(
                 styles={styles}
                 allNodes={nodes}
                 compact={compact}
+                toggleRowExpanded={tableInstance.toggleRowExpanded}
               />
             ),
             minWidth: 200,
@@ -871,6 +873,7 @@ function FunctionCellWithExpander({
   styles,
   allNodes,
   compact = false,
+  toggleRowExpanded,
 }: {
   row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>;
   value: string;
@@ -882,10 +885,25 @@ function FunctionCellWithExpander({
   styles: any;
   allNodes: CallTreeNode[];
   compact?: boolean;
+  toggleRowExpanded: (id: string[], value?: boolean) => void;
 }) {
+  const expandSingleChildChain = (node: CallTreeNode) => {
+    if (node.childCount === 1 && node.subRows && node.subRows.length === 1) {
+      const childNode = node.subRows[0];
+      toggleRowExpanded([childNode.id], true);
+      if (childNode.hasChildren) {
+        expandSingleChildChain(childNode);
+      }
+    }
+  };
+
   const handleClick = () => {
     if (hasChildren) {
+      const wasExpanded = row.isExpanded;
       row.toggleRowExpanded();
+      if (!wasExpanded) {
+        expandSingleChildChain(row.original);
+      }
     }
     onSymbolClick(value);
   };
