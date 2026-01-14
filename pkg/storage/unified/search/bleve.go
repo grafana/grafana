@@ -1255,19 +1255,19 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 						Boost: 10, // exact match
 					},
 					{
-						Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-						Type:  resourcepb.QueryFieldType_KEYWORD,
-						Boost: 6, // prefix match
-					},
-					{
 						Name:  resource.SEARCH_FIELD_TITLE,
 						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 7, // standard analyzer
+						Boost: 8, // standard analyzer
 					},
 					{
 						Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
 						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 5, // standard analyzer
+						Boost: 6, // standard analyzer
+					},
+					{
+						Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
+						Type:  resourcepb.QueryFieldType_KEYWORD,
+						Boost: 5, // prefix match
 					},
 				}
 			}
@@ -1278,7 +1278,8 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
-					q.Analyzer = standard.Name // analyze the text
+					q.Analyzer = standard.Name               // analyze the text
+					q.Operator = query.MatchQueryOperatorAnd // all terms must match
 					disjoin.AddQuery(q)
 
 				case resourcepb.QueryFieldType_KEYWORD:
