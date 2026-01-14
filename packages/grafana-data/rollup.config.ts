@@ -1,20 +1,12 @@
 import json from '@rollup/plugin-json';
 import { createRequire } from 'node:module';
-import copy from 'rollup-plugin-copy';
 
 import { entryPoint, plugins, esmOutput, cjsOutput } from '../rollup.config.parts';
 
 const rq = createRequire(import.meta.url);
 const pkg = rq('./package.json');
 
-const grafanaDataPlugins = [
-  ...plugins,
-  json(),
-  // Copy generated theme schema to dist types to prevent resolution failures
-  copy({
-    targets: [{ src: 'src/themes/schema.generated.json', dest: './dist/types/themes' }],
-  }),
-];
+const grafanaDataPlugins = [...plugins, json()];
 
 export default [
   {
