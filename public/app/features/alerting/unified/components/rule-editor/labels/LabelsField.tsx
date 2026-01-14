@@ -162,7 +162,7 @@ export function useCombinedLabels(
   // This is called by Combobox when the dropdown menu opens
   const createAsyncValuesLoader = useCallback(
     (key: string): AsyncOptionsLoader => {
-      return async (_inputValue: string): Promise<Array<ComboboxOption<string>>> => {
+      return async (valueQuery: string): Promise<Array<ComboboxOption<string>>> => {
         if (!isKeyAllowed(key) || !key) {
           return [];
         }
@@ -188,7 +188,10 @@ export function useCombinedLabels(
         // Combine: existing values first, then unique ops values (Set preserves first occurrence)
         const combinedValues = [...new Set([...existingValues, ...opsValues])];
 
-        return mapLabelsToOptions(combinedValues);
+        const valueQueryLowerCase = valueQuery.toLowerCase();
+        const filteredValues = combinedValues.filter((value) => value.toLowerCase().includes(valueQueryLowerCase));
+
+        return mapLabelsToOptions(filteredValues);
       };
     },
     [labelsByKeyFromExisingAlerts, labelsPluginInstalled, opsLabelKeysSet, fetchLabelValues]

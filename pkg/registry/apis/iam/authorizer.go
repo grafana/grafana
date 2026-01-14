@@ -42,7 +42,6 @@ func newIAMAuthorizer(
 
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
-	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = legacyAuthorizer
 	resourceAuthorizer["display"] = legacyAuthorizer
 
 	// Access specific resources
@@ -55,6 +54,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = allowAuthorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = allowAuthorizer
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
 	// TODO: Implement fine-grained authorization for external group mapping search on the search level
