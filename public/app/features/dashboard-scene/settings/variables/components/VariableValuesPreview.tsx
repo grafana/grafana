@@ -10,13 +10,16 @@ import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2
 
 export interface Props {
   options: VariableValueOption[];
-  hasMultiProps?: boolean;
 }
 
-export const VariableValuesPreview = ({ options, hasMultiProps }: Props) => {
+const hasMultiProps = (options: Props['options']) => {
+  return Object.keys(options[1]?.properties ?? options[0]?.properties ?? {}).length > 0;
+};
+
+export const VariableValuesPreview = ({ options }: Props) => {
   const styles = useStyles2(getStyles);
   const hasOptions = options.length > 0;
-  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasMultiProps;
+  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasOptions && hasMultiProps(options);
 
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>
@@ -43,7 +46,8 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
 
     return {
       data,
-      columns: Object.keys(data[0] ?? {}).map((id) => ({
+      // the option at index 0 can be "All" so we try to grab the column names from the 2nd option
+      columns: Object.keys(data[1] ?? data[0] ?? {}).map((id) => ({
         id,
         // see https://github.com/TanStack/table/issues/1671
         header: unsanitizeKey(id),
@@ -62,7 +66,6 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
     />
   );
 }
-
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
 const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 

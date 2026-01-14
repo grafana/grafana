@@ -284,6 +284,7 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
     value: String(o.value),
     text: o.label,
     selected: Array.isArray(varState.value) ? varState.value.includes(o.value) : varState.value === o.value,
+    ...(o.properties && { properties: o.properties }),
   }));
 }
 

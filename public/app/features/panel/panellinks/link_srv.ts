@@ -81,16 +81,16 @@ const buildLabelPath = (label: string) => {
 };
 
 const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
-  if (!('valuesFormat' in variable) || variable.valuesFormat !== 'json') {
+  if (!('options' in variable) || !variable.options[0].properties) {
     return [];
   }
 
-  function collectFieldPaths(option: Record<string, string>, currentPath: string) {
+  function collectFieldPaths(properties: Record<string, any>, currentPath: string) {
     let paths: string[] = [];
-    for (const field in option) {
-      if (option.hasOwnProperty(field)) {
+    for (const field in properties) {
+      if (properties.hasOwnProperty(field)) {
         const newPath = `${currentPath}.${field}`;
-        const value = option[field];
+        const value = properties[field];
         if (typeof value === 'object' && value !== null) {
           paths = [...paths, ...collectFieldPaths(value, newPath)];
         }
@@ -100,11 +100,7 @@ const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
     return paths;
   }
 
-  try {
-    return collectFieldPaths(JSON.parse(variable.query)[0], variable.name);
-  } catch {
-    return [];
-  }
+  return collectFieldPaths(variable.options[0].properties, variable.name);
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [

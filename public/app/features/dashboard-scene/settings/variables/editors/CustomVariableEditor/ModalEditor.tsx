@@ -69,7 +69,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
           {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
         </div>
         <div>
-          <VariableValuesPreview options={options} hasMultiProps={valuesFormat === 'json'} />
+          <VariableValuesPreview options={options} />
         </div>
       </Stack>
       <Modal.ButtonRow>
