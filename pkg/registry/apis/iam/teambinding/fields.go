@@ -3,7 +3,6 @@ package teambinding
 import (
 	"errors"
 
-	genv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -16,7 +15,7 @@ func GetTeamBindingSelectableFields(obj *iamv0alpha1.TeamBinding) fields.Set {
 	objectMetaFields := generic.ObjectMetaFieldsSet(&obj.ObjectMeta, true)
 
 	// Using the generated schema to get selectable fields dynamically
-	schema := genv0alpha1.TeamBindingSchema()
+	schema := iamv0alpha1.TeamBindingSchema()
 	specificFields := fields.Set{}
 
 	for _, selectableField := range schema.SelectableFields() {
