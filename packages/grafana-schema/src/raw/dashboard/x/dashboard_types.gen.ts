@@ -232,6 +232,10 @@ export const defaultVariableModel: Partial<VariableModel> = {
  */
 export interface VariableOption {
   /**
+   * Additional properties for multi-props variables
+   */
+  properties?: Record<string, string>;
+  /**
    * Whether the option is selected or not
    */
   selected?: boolean;
