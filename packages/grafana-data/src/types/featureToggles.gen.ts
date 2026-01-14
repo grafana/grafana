@@ -649,10 +649,6 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Enable sprinkles on unified storage search
-  */
-  unifiedStorageSearchSprinkles?: boolean;
-  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;
@@ -987,6 +983,11 @@ export interface FeatureToggles {
   * @default false
   */
   recentlyViewedDashboards?: boolean;
+  /**
+  * A/A test for recently viewed dashboards feature
+  * @default false
+  */
+  experimentRecentlyViewedDashboards?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
