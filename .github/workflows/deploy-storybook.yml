@@ -66,10 +66,12 @@ jobs:
       # "canary" on pushes to main
       - name: Create deploy name
         id: create-deploy-name
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           if [[ "${{ github.event_name }}" == "release" ]]; then
             LATEST_RELEASE_TAG=$(curl -s "https://api.github.com/repos/grafana/grafana/releases/latest" | jq -r '.tag_name')
-            if [[ "${{ github.event.release.tag_name }}" == "$LATEST_RELEASE_TAG" ]]; then
+            if [[ "$RELEASE_TAG" == "$LATEST_RELEASE_TAG" ]]; then
               echo "deploy-name=latest" >> "$GITHUB_OUTPUT"
               exit 0
             fi
