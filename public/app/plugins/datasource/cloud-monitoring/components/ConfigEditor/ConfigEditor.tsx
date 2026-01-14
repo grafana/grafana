@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { ConnectionConfig } from '@grafana/google-sdk';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -48,10 +48,11 @@ export const ConfigEditor = memo(({ options, onOptionsChange }: Props) => {
                   width={50}
                   value={options.jsonData.universeDomain}
                   onChange={(event) =>
-                    handleOnOptionsChange({
-                      ...options,
-                      jsonData: { ...options.jsonData, universeDomain: event.currentTarget.value },
-                    })
+                    updateDatasourcePluginJsonDataOption(
+                      { options, onOptionsChange },
+                      'universeDomain',
+                      event.currentTarget.value
+                    )
                   }
                   placeholder="googleapis.com"
                 ></Input>
