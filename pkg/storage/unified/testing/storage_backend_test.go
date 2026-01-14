@@ -36,7 +36,9 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 	})
 }
 
-func TestSQLKVStorageBackend(t *testing.T) {
+func TestIntegrationSQLKVStorageBackend(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	skipTests := map[string]bool{
 		TestWatchWriteEvents:          true,
 		TestList:                      true,
