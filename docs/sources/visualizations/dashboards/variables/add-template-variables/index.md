@@ -145,7 +145,7 @@ To create a variable, follow these steps:
 - Variable drop-down lists are displayed in the order in which they're listed in the **Variables** in dashboard settings, so put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
 - By default, variables don't have a default value. This means that the topmost value in the drop-down list is always preselected. If you want to pre-populate a variable with an empty value, you can use the following workaround in the variable settings:
   1. Select the **Include All Option** checkbox.
-  2. In the **Custom all value** field, enter a value like `+`.
+  2. In the **Custom all value** field, enter a value like `.+`.
 
 ## Add a query variable
 
