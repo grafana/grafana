@@ -74,12 +74,12 @@ Before you create alert rules, ensure the following:
 
 The following query types support alerting:
 
-| Query type                      | Use case                                              | Notes                                              |
-| ------------------------------- | ----------------------------------------------------- | -------------------------------------------------- |
-| **Builder**                     | Threshold-based alerts on GCP resource metrics        | Best suited for alerting; returns time-series data |
-| **MQL**                         | Complex metric queries using Monitoring Query Language | Use for advanced filtering and aggregations        |
-| **Service Level Objectives (SLO)** | Alert on SLO compliance, error budgets, or burn rate | Monitor service reliability                        |
-| **PromQL**                      | Prometheus-style queries on GCP metrics               | Familiar syntax for Prometheus users               |
+| Query type                         | Use case                                               | Notes                                              |
+| ---------------------------------- | ------------------------------------------------------ | -------------------------------------------------- |
+| **Builder**                        | Threshold-based alerts on GCP resource metrics         | Best suited for alerting; returns time-series data |
+| **MQL**                            | Complex metric queries using Monitoring Query Language | Use for advanced filtering and aggregations        |
+| **Service Level Objectives (SLO)** | Alert on SLO compliance, error budgets, or burn rate   | Monitor service reliability                        |
+| **PromQL**                         | Prometheus-style queries on GCP metrics                | Familiar syntax for Prometheus users               |
 
 {{< admonition type="note" >}}
 Alert queries must return numeric data that Grafana can evaluate against a threshold. Queries that return only text or non-numeric data can't be used directly for alerting.
@@ -89,10 +89,10 @@ Alert queries must return numeric data that Grafana can evaluate against a thres
 
 Alerting rules run as background processes without a user context. Both supported authentication methods work with alerting:
 
-| Authentication method          | Supported |
-| ------------------------------ | --------- |
-| Google JWT File                | ✓         |
-| GCE Default Service Account    | ✓         |
+| Authentication method       | Supported |
+| --------------------------- | --------- |
+| Google JWT File             | ✓         |
+| GCE Default Service Account | ✓         |
 
 ## Create an alert rule
 
@@ -262,4 +262,3 @@ For additional troubleshooting help, refer to [Troubleshoot Google Cloud Monitor
 - [Create alert rules](ref:create-alert-rule)
 - [Create recording rules](ref:recording-rules)
 - [Google Cloud Monitoring query editor](ref:query-editor)
-

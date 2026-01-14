@@ -45,10 +45,10 @@ Before you configure authentication, ensure you have the following:
 
 The Google Cloud Monitoring data source supports the following authentication methods:
 
-| Method                           | Use case                                                                                      |
-| -------------------------------- | --------------------------------------------------------------------------------------------- |
-| **Google JWT File**              | Use when Grafana runs outside of GCP, or when you need explicit control over credentials.    |
-| **GCE Default Service Account**  | Use when Grafana runs on a Google Compute Engine VM with a configured service account.       |
+| Method                            | Use case                                                                                            |
+| --------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Google JWT File**               | Use when Grafana runs outside of GCP, or when you need explicit control over credentials.           |
+| **GCE Default Service Account**   | Use when Grafana runs on a Google Compute Engine VM with a configured service account.              |
 | **Service account impersonation** | Use when you need Grafana to act as a different service account than the one it authenticates with. |
 
 ## Use a Google Service Account key file

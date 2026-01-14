@@ -90,4 +90,3 @@ To create annotations for uptime check failures:
 1. Set the **Text** to: `Region: {{resource.label.zone}}`
 
 This creates an annotation marker on your graph each time an uptime check fails.
-

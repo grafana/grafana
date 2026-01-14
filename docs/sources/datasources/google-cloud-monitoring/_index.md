@@ -127,10 +127,10 @@ The following documents will help you get started with the Google Cloud Monitori
 
 The Google Cloud Monitoring data source supports the following query types:
 
-| Query type                          | Description                                                                                                   |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Metrics**                         | Query time series data from GCP resources using the Monitoring Query Language (MQL) or the visual builder.   |
-| **Service Level Objectives (SLOs)** | Query SLO data defined in Google Cloud Monitoring to track service reliability and error budgets.            |
+| Query type                          | Description                                                                                                |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Metrics**                         | Query time series data from GCP resources using the Monitoring Query Language (MQL) or the visual builder. |
+| **Service Level Objectives (SLOs)** | Query SLO data defined in Google Cloud Monitoring to track service reliability and error budgets.          |
 
 ## Additional features
 

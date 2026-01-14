@@ -120,25 +120,25 @@ The following are configuration options for the Google Cloud Monitoring data sou
 
 Configure how Grafana authenticates with Google Cloud.
 
-| Setting                 | Description                                                                                                                                                                      |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting                 | Description                                                                                                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Authentication type** | Select the authentication method. Choose **Google JWT File** to use a service account key file, or **GCE Default Service Account** if Grafana is running on a GCE virtual machine. |
 
 ### JWT Key Details
 
 These settings appear when you select **Google JWT File** as the authentication type.
 
-| Setting       | Description                                                                                                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting       | Description                                                                                                                                                                               |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **JWT token** | Upload or paste your Google JWT token. You can drag and drop a `.json` key file, click **Click to browse files** to upload, or use **Paste JWT Token** or **Fill In JWT Token manually**. |
 
 ### Service account impersonation
 
 Use service account impersonation to have Grafana authenticate as a different service account than the one provided in the JWT token.
 
-| Setting                          | Description                                                                                           |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **Enable**                       | Toggle to enable service account impersonation.                                                       |
+| Setting                            | Description                                                                                         |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Enable**                         | Toggle to enable service account impersonation.                                                     |
 | **Service account to impersonate** | Enter the email address of the service account to impersonate when making requests to Google Cloud. |
 
 ### Private data source connect
@@ -147,8 +147,8 @@ _Only available for Grafana Cloud._
 
 Use private data source connect (PDC) to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. For more information on how PDC works, refer to [Private data source connect](ref:private-data-source-connect). For steps on setting up a PDC connection, refer to [Configure Grafana private data source connect (PDC)](ref:configure-pdc).
 
-| Setting                         | Description                                                                     |
-| ------------------------------- | ------------------------------------------------------------------------------- |
+| Setting                         | Description                                                                 |
+| ------------------------------- | --------------------------------------------------------------------------- |
 | **Private data source connect** | Select a PDC connection from the drop-down menu or create a new connection. |
 
 ### Save and test
@@ -313,4 +313,3 @@ resource "grafana_data_source" "google_cloud_monitoring" {
 ```
 
 For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
-

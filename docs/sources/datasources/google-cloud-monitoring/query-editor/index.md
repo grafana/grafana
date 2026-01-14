@@ -43,12 +43,12 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 
 The Google Cloud Monitoring query editor supports the following query types:
 
-| Query type                              | Description                                                                                      |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [**Builder**](#query-metrics)           | Build metrics queries visually by selecting a service, metric, filters, and aggregation options. |
-| [**MQL**](#use-the-monitoring-query-language) | Write queries using the Monitoring Query Language for advanced use cases.                   |
-| [**Service Level Objectives (SLO)**](#query-service-level-objectives) | Query SLO data to track service reliability and error budgets. |
-| [**PromQL**](#query-with-promql)        | Write Prometheus-style queries against Google Cloud Monitoring metrics.                          |
+| Query type                                                            | Description                                                                                      |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [**Builder**](#query-metrics)                                         | Build metrics queries visually by selecting a service, metric, filters, and aggregation options. |
+| [**MQL**](#use-the-monitoring-query-language)                         | Write queries using the Monitoring Query Language for advanced use cases.                        |
+| [**Service Level Objectives (SLO)**](#query-service-level-objectives) | Query SLO data to track service reliability and error budgets.                                   |
+| [**PromQL**](#query-with-promql)                                      | Write Prometheus-style queries against Google Cloud Monitoring metrics.                          |
 
 ## Query metrics
 
@@ -244,9 +244,9 @@ Press `Shift+Enter` to run the query.
 
 The following options are available for MQL queries:
 
-| Setting          | Description                                                                                                                                     |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Alias by**     | Control the format of legend keys. Refer to [Set alias patterns for MQL queries](#set-alias-patterns-for-mql-queries) for available patterns.  |
+| Setting          | Description                                                                                                                                           |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Alias by**     | Control the format of legend keys. Refer to [Set alias patterns for MQL queries](#set-alias-patterns-for-mql-queries) for available patterns.         |
 | **Graph period** | Enable the toggle to override the default time period. Select a period from the dropdown to control the granularity of the returned time series data. |
 
 ### Set alias patterns for MQL queries
@@ -314,8 +314,8 @@ To create a PromQL query:
 
 The following options are available for PromQL queries:
 
-| Setting      | Description                                                                                                                                                                                   |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting      | Description                                                                                                                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Min step** | Defines the lower bounds on the interval between data points. For example, set this to `1h` to hint that measurements are taken hourly. Supports the `$__interval` and `$__rate_interval` macros. |
 
 ### PromQL query examples
@@ -339,4 +339,3 @@ compute_googleapis_com:instance_cpu_utilization{instance_name="my-instance"}
 ```promql
 rate(logging_googleapis_com:log_entry_count[5m])
 ```
-

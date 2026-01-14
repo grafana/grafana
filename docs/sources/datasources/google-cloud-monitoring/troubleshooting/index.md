@@ -66,13 +66,13 @@ These errors occur when GCP credentials are invalid, missing, or don't have the 
 
 **Possible causes and solutions:**
 
-| Cause                                        | Solution                                                                                                                                                                                                                                           |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Service account missing required permissions | Assign the **Monitoring Viewer** role to the service account in the GCP Console under **IAM & Admin** > **IAM**. Refer to [Configure Google Cloud Monitoring](ref:configure-gcm) for details.                                                     |
-| Incorrect service account key file           | Verify the JSON key file was downloaded correctly and contains valid credentials. Generate a new key if necessary.                                                                                                                                 |
-| Service account key has been deleted         | Check the service account in GCP Console under **IAM & Admin** > **Service Accounts**. If the key was deleted, create a new one.                                                                                                                   |
-| Wrong project selected                       | Verify the default project in the data source configuration matches a project the service account has access to.                                                                                                                                    |
-| APIs not enabled                             | Enable the Monitoring API and Cloud Resource Manager API in the GCP Console. Refer to [Configure Google Cloud Monitoring](ref:configure-gcm) for links.                                                                                            |
+| Cause                                        | Solution                                                                                                                                                                                      |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Service account missing required permissions | Assign the **Monitoring Viewer** role to the service account in the GCP Console under **IAM & Admin** > **IAM**. Refer to [Configure Google Cloud Monitoring](ref:configure-gcm) for details. |
+| Incorrect service account key file           | Verify the JSON key file was downloaded correctly and contains valid credentials. Generate a new key if necessary.                                                                            |
+| Service account key has been deleted         | Check the service account in GCP Console under **IAM & Admin** > **Service Accounts**. If the key was deleted, create a new one.                                                              |
+| Wrong project selected                       | Verify the default project in the data source configuration matches a project the service account has access to.                                                                              |
+| APIs not enabled                             | Enable the Monitoring API and Cloud Resource Manager API in the GCP Console. Refer to [Configure Google Cloud Monitoring](ref:configure-gcm) for links.                                       |
 
 ### "Invalid JWT" or "JWT token error"
 
@@ -161,13 +161,13 @@ These errors occur when querying Google Cloud Monitoring metrics.
 
 **Possible causes and solutions:**
 
-| Cause                           | Solution                                                                                                                        |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Time range doesn't contain data | Expand the dashboard time range. GCP metrics have different retention periods based on the metric type.                         |
-| Wrong project selected          | Verify you've selected the correct project in the query editor.                                                                 |
-| Incorrect metric type           | Verify the service, metric type, and metric are correct. Check available metrics in the GCP Console Metrics Explorer.           |
-| Missing labels/filters          | Some metrics require specific label filters to return data. Try removing filters to see if data appears.                        |
-| Resource not emitting metrics   | Verify the resource exists and is actively emitting metrics. Some metrics only populate under certain conditions.               |
+| Cause                           | Solution                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Time range doesn't contain data | Expand the dashboard time range. GCP metrics have different retention periods based on the metric type.               |
+| Wrong project selected          | Verify you've selected the correct project in the query editor.                                                       |
+| Incorrect metric type           | Verify the service, metric type, and metric are correct. Check available metrics in the GCP Console Metrics Explorer. |
+| Missing labels/filters          | Some metrics require specific label filters to return data. Try removing filters to see if data appears.              |
+| Resource not emitting metrics   | Verify the resource exists and is actively emitting metrics. Some metrics only populate under certain conditions.     |
 
 ### Metrics don't appear in drop-down
 
@@ -336,4 +336,3 @@ If you've tried the solutions above and still encounter issues:
    - Error messages (redact sensitive information)
    - Steps to reproduce
    - Query configuration (redact credentials)
-
