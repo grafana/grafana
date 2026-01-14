@@ -36,6 +36,7 @@ import {
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionDatasourceUID } from '../../expressions/types';
 
+import { QueryActionAssistantButton } from './QueryActionAssistantButton';
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
@@ -399,7 +400,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
+    const { query, queries, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -410,6 +411,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <>
+        <QueryActionAssistantButton
+          query={query}
+          queries={queries}
+          dataSourceInstance={this.props.dataSource}
+          datasource={datasource}
+          app={app}
+        />
         {!isEditingQueryLibrary && !isUnifiedAlerting && !isExpressionQuery && (
           <SavedQueryButtons
             query={{
