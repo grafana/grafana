@@ -182,7 +182,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "target")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -196,7 +196,7 @@ func TestConvertResponses(t *testing.T) {
 		body := `
 		[
 			{
-				"target": "aliasedTarget(target)",
+				"target": "alias(target)",
 				"tags": { "name": "target", "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
@@ -211,13 +211,13 @@ func TestConvertResponses(t *testing.T) {
 				"barTag": "barValue",
 				"int":    "100",
 				"float":  "3.14",
-				"name":   "target",
-			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "aliasedTarget(target)"}),
+				"name":   "alias(target)",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "alias(target)"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "alias(target)")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -240,7 +240,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -281,7 +281,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "target")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -295,7 +295,7 @@ func TestConvertResponses(t *testing.T) {
 		body := `
 		[
 			{
-				"target": "aliasedTarget(target)",
+				"target": "alias(target)",
 				"tags": { "name": "target", "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
@@ -310,13 +310,13 @@ func TestConvertResponses(t *testing.T) {
 				"barTag": "barValue",
 				"int":    "100",
 				"float":  "3.14",
-				"name":   "aliasedTarget(target)",
-			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "aliasedTarget(target)"}),
+				"name":   "alias(target)",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "alias(target)"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, true)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, true, "alias(target)")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -833,7 +833,7 @@ func TestAliasMatching(t *testing.T) {
 			]`, tc.target, tc.tagsName)
 
 			httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-			dataFrames, err := service.toDataFrames(httpResponse, "A", tc.fromAlert)
+			dataFrames, err := service.toDataFrames(httpResponse, "A", tc.fromAlert, tc.target)
 
 			require.NoError(t, err)
 			require.Len(t, dataFrames, 1)
