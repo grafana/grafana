@@ -260,7 +260,7 @@ const (
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
 	// FlagDashboardNewLayouts
-	// Enables experimental new dashboard layouts
+	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
 	// FlagPdfTables
