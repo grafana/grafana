@@ -28,7 +28,7 @@ type check struct {
 	PluginStore               pluginstore.Store
 	PluginContextProvider     PluginContextProvider
 	PluginClient              plugins.Client
-	PluginRepo                repo.Service
+	PluginRepo                checks.PluginInfoGetter
 	GrafanaVersion            string
 	pluginCanBeInstalledCache map[string]bool
 	pluginExistsCacheMu       sync.RWMutex
@@ -39,7 +39,7 @@ func New(
 	pluginStore pluginstore.Store,
 	pluginContextProvider PluginContextProvider,
 	pluginClient plugins.Client,
-	pluginRepo repo.Service,
+	pluginRepo checks.PluginInfoGetter,
 	grafanaVersion string,
 ) checks.Check {
 	return &check{

@@ -61,7 +61,7 @@ type kvStorageBackend struct {
 	bulkLock                     *BulkLock
 	dataStore                    *dataStore
 	eventStore                   *eventStore
-	notifier                     *notifier
+	notifier                     notifier
 	builder                      DocumentBuilder
 	log                          logging.Logger
 	withPruner                   bool
@@ -91,6 +91,7 @@ type KVBackendOptions struct {
 	Tracer                       trace.Tracer          // TODO add tracing
 	Reg                          prometheus.Registerer // TODO add metrics
 
+	UseChannelNotifier bool
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -121,7 +122,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		bulkLock:                     NewBulkLock(),
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
-		notifier:                     newNotifier(eventStore, notifierOptions{}),
+		notifier:                     newNotifier(eventStore, notifierOptions{useChannelNotifier: opts.UseChannelNotifier}),
 		snowflake:                    s,
 		builder:                      StandardDocumentBuilder(), // For now we use the standard document builder.
 		log:                          &logging.NoOpLogger{},     // Make this configurable
@@ -346,7 +347,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			return 0, fmt.Errorf("failed to write data: %w", err)
 		}
 
-		rv = rvmanager.SnowflakeFromRv(rv)
+		rv = rvmanager.SnowflakeFromRV(rv)
 		dataKey.ResourceVersion = rv
 	} else {
 		err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value))
