@@ -36,6 +36,24 @@ export const ProvisioningAlert = ({ resource, ...rest }: ProvisioningAlertProps)
   );
 };
 
+export const ImportedContactPointAlert = (props: ExtraAlertProps) => {
+  return (
+    <Alert
+      title={t(
+        'alerting.provisioning.title-imported',
+        'This contact point was imported and cannot be edited through the UI'
+      )}
+      severity="info"
+      {...props}
+    >
+      <Trans i18nKey="alerting.provisioning.body-imported">
+        This contact point contains integrations that were imported from an external Alertmanager and is currently
+        read-only. The integrations will become editable after the migration process is complete.
+      </Trans>
+    </Alert>
+  );
+};
+
 export const ProvisioningBadge = ({
   tooltip,
   provenance,
