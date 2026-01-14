@@ -179,7 +179,7 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 	select {
 	case <-gracefulStopDone:
 		s.logger.Info("GRPC server: graceful shutdown complete")
-	case <-time.After(30 * time.Second):
+	case <-time.After(s.cfg.GracefulShutdownTimeout):
 		s.logger.Warn("GRPC server: graceful shutdown timed out, forcing stop")
 		s.server.Stop()
 	}
