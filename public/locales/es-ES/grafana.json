@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Añadir panel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Agrupar en fila",
@@ -5695,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "No se ha podido encontrar un ID de Grafana.com válido",
       "invalid-json": "JSON no válido",
+      "tag-too-long": "",
       "tags-expected-array": "etiquetas: matriz prevista",
       "tags-expected-strings": "etiquetas: matriz de cadenas prevista"
     },
@@ -9253,7 +9255,8 @@
     "tags-input": {
       "add": "Añadir",
       "placeholder-new-tag": "Nueva etiqueta (pulsa la tecla Intro para añadirla)",
-      "remove": "Eliminar etiqueta: {{name}}"
+      "remove": "Eliminar etiqueta: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Sincronizar tiempos",
@@ -11803,7 +11806,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Eliminar",
       "confirm-delete-keep-resources": "¿Seguro que quieres eliminar la configuración del repositorio pero conservar sus recursos?",
       "confirm-delete-with-resources": "¿Seguro que quieres eliminar la configuración del repositorio y todos sus recursos?",
@@ -12067,6 +12116,7 @@
       "jobs": "Trabajos"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Configuración",
       "source-code": "Código fuente"
     },
