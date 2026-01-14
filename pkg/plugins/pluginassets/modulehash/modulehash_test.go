@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
-func TestService_ModuleHash(t *testing.T) {
+func Test_ModuleHash(t *testing.T) {
 	const (
 		pluginID       = "grafana-test-datasource"
 		parentPluginID = "grafana-test-app"
@@ -247,7 +247,7 @@ func TestService_ModuleHash(t *testing.T) {
 				Features:              *features,
 			}
 
-			svc := NewModuleHashCalculator(
+			svc := NewCalculator(
 				pCfg,
 				newPluginRegistry(t, tc.registry...),
 				pluginscdn.ProvideService(pCfg),
@@ -259,12 +259,12 @@ func TestService_ModuleHash(t *testing.T) {
 	}
 }
 
-func TestService_ModuleHash_Cache(t *testing.T) {
+func Test_ModuleHash_Cache(t *testing.T) {
 	pCfg := &config.PluginManagementCfg{
 		PluginSettings: config.PluginSettings{},
 		Features:       config.Features{SriChecksEnabled: true},
 	}
-	svc := NewModuleHashCalculator(
+	svc := NewCalculator(
 		pCfg,
 		newPluginRegistry(t),
 		pluginscdn.ProvideService(pCfg),
@@ -305,7 +305,7 @@ func TestService_ModuleHash_Cache(t *testing.T) {
 			Features: config.Features{SriChecksEnabled: true},
 		}
 		reg := newPluginRegistry(t, pV1)
-		svc = NewModuleHashCalculator(
+		svc = NewCalculator(
 			pCfg,
 			reg,
 			pluginscdn.ProvideService(pCfg),

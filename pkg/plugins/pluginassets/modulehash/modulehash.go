@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/Masterminds/semver/v3"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -19,16 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
-const (
-	CreatePluginVersionCfgKey               = "create_plugin_version"
-	CreatePluginVersionScriptSupportEnabled = "4.15.0"
-)
-
-var (
-	scriptLoadingMinSupportedVersion = semver.MustParse(CreatePluginVersionScriptSupportEnabled)
-)
-
-type ModuleHashCalculator struct {
+type Calculator struct {
 	reg       registry.Service
 	cfg       *config.PluginManagementCfg
 	cdn       *pluginscdn.Service
@@ -38,8 +27,8 @@ type ModuleHashCalculator struct {
 	moduleHashCache sync.Map
 }
 
-func NewModuleHashCalculator(cfg *config.PluginManagementCfg, reg registry.Service, cdn *pluginscdn.Service, signature *signature.Signature) *ModuleHashCalculator {
-	return &ModuleHashCalculator{
+func NewCalculator(cfg *config.PluginManagementCfg, reg registry.Service, cdn *pluginscdn.Service, signature *signature.Signature) *Calculator {
+	return &Calculator{
 		cfg:       cfg,
 		reg:       reg,
 		cdn:       cdn,
@@ -53,7 +42,7 @@ func NewModuleHashCalculator(cfg *config.PluginManagementCfg, reg registry.Servi
 // The plugin can also be a nested plugin.
 // If the plugin is unsigned, an empty string is returned.
 // The results are cached to avoid repeated reads from the MANIFEST.txt file.
-func (c *ModuleHashCalculator) ModuleHash(ctx context.Context, pluginID, pluginVersion string) string {
+func (c *Calculator) ModuleHash(ctx context.Context, pluginID, pluginVersion string) string {
 	p, ok := c.reg.Plugin(ctx, pluginID, pluginVersion)
 	if !ok {
 		c.log.Error("Failed to calculate module hash as plugin is not registered", "pluginId", pluginID)
@@ -77,7 +66,7 @@ func (c *ModuleHashCalculator) ModuleHash(ctx context.Context, pluginID, pluginV
 // It will read the module hash from the MANIFEST.txt in the [[plugins.FS]] of the provided plugin.
 // If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
 // module.js file, rather than for the provided plugin.
-func (c *ModuleHashCalculator) moduleHash(ctx context.Context, p *plugins.Plugin, childFSBase string) (r string, err error) {
+func (c *Calculator) moduleHash(ctx context.Context, p *plugins.Plugin, childFSBase string) (r string, err error) {
 	if !c.cfg.Features.SriChecksEnabled {
 		return "", nil
 	}
@@ -136,21 +125,7 @@ func (c *ModuleHashCalculator) moduleHash(ctx context.Context, p *plugins.Plugin
 	return convertHashForSRI(moduleHash)
 }
 
-func (c *ModuleHashCalculator) compatibleCreatePluginVersion(ps map[string]string) bool {
-	if cpv, ok := ps[CreatePluginVersionCfgKey]; ok {
-		createPluginVer, err := semver.NewVersion(cpv)
-		if err != nil {
-			c.log.Warn("Failed to parse create plugin version setting as semver", "version", cpv, "error", err)
-		} else {
-			if !createPluginVer.LessThan(scriptLoadingMinSupportedVersion) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func (c *ModuleHashCalculator) cdnEnabled(pluginID string, fs plugins.FS) bool {
+func (c *Calculator) cdnEnabled(pluginID string, fs plugins.FS) bool {
 	return c.cdn.PluginSupported(pluginID) || fs.Type().CDN()
 }
 
@@ -164,6 +139,6 @@ func convertHashForSRI(h string) (string, error) {
 }
 
 // moduleHashCacheKey returns a unique key for the module hash cache.
-func (c *ModuleHashCalculator) moduleHashCacheKey(pluginId, pluginVersion string) string {
+func (c *Calculator) moduleHashCacheKey(pluginId, pluginVersion string) string {
 	return pluginId + ":" + pluginVersion
 }

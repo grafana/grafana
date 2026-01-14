@@ -850,7 +850,7 @@ func Test_PluginsSettings(t *testing.T) {
 				pCfg := &config.PluginManagementCfg{}
 				pluginCDN := pluginscdn.ProvideService(pCfg)
 				sig := signature.ProvideService(pCfg, statickey.New())
-				calc := modulehash.NewModuleHashCalculator(pCfg, registry.NewInMemory(), pluginCDN, sig)
+				calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), pluginCDN, sig)
 				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, calc)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(

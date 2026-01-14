@@ -82,7 +82,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	var pluginsAssets = passets
 	if pluginsAssets == nil {
 		sig := signature.ProvideService(pluginsCfg, statickey.New())
-		calc := modulehash.NewModuleHashCalculator(pluginsCfg, registry.NewInMemory(), pluginsCDN, sig)
+		calc := modulehash.NewCalculator(pluginsCfg, registry.NewInMemory(), pluginsCDN, sig)
 		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, calc)
 	}
 
@@ -718,7 +718,7 @@ func newPluginAssets() func() *pluginassets.Service {
 func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *pluginassets.Service {
 	return func() *pluginassets.Service {
 		cdn := pluginscdn.ProvideService(pCfg)
-		calc := modulehash.NewModuleHashCalculator(pCfg, registry.NewInMemory(), cdn, signature.ProvideService(pCfg, statickey.New()))
+		calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), cdn, signature.ProvideService(pCfg, statickey.New()))
 		return pluginassets.ProvideService(pCfg, cdn, calc)
 	}
 }

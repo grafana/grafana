@@ -25,7 +25,7 @@ var (
 )
 
 func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service,
-	calc *modulehash.ModuleHashCalculator) *Service {
+	calc *modulehash.Calculator) *Service {
 	return &Service{
 		cfg:  cfg,
 		cdn:  cdn,
@@ -35,14 +35,14 @@ func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service,
 }
 
 func ProvideModuleHashCalculator(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service,
-	signature *signature.Signature, reg registry.Service) *modulehash.ModuleHashCalculator {
-	return modulehash.NewModuleHashCalculator(cfg, reg, cdn, signature)
+	signature *signature.Signature, reg registry.Service) *modulehash.Calculator {
+	return modulehash.NewCalculator(cfg, reg, cdn, signature)
 }
 
 type Service struct {
 	cfg  *config.PluginManagementCfg
 	cdn  *pluginscdn.Service
-	calc *modulehash.ModuleHashCalculator
+	calc *modulehash.Calculator
 
 	log log.Logger
 }
