@@ -13,7 +13,7 @@ const renderWithProvider = (provenance?: string, editMode = false) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
       <MuteTimingForm
-        muteTiming={muteTimeInterval}
+        muteTiming={{ id: 'mock-id', ...muteTimeInterval }}
         provenance={provenance}
         editMode={editMode}
         loading={false}
