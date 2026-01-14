@@ -1392,11 +1392,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/components/mute-timings/MuteTimingForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeInterval.tsx": {
     "no-restricted-syntax": {
       "count": 5
@@ -1517,11 +1512,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/ActiveTimingFields.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/MuteTimingFields.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }

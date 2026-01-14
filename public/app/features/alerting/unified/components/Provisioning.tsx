@@ -54,6 +54,24 @@ export const ImportedContactPointAlert = (props: ExtraAlertProps) => {
   );
 };
 
+export const ImportedTimeIntervalAlert = (props: ExtraAlertProps) => {
+  return (
+    <Alert
+      title={t(
+        'alerting.provisioning.title-imported-time-interval',
+        'This time interval was imported and cannot be edited through the UI'
+      )}
+      severity="info"
+      {...props}
+    >
+      <Trans i18nKey="alerting.provisioning.body-imported-time-interval">
+        This time interval was imported from an external Alertmanager and is currently read-only. The time interval will
+        become editable after the migration process is complete.
+      </Trans>
+    </Alert>
+  );
+};
+
 export const ProvisioningBadge = ({
   tooltip,
   provenance,

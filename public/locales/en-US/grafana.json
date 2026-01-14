@@ -2178,8 +2178,10 @@
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
       "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI",
       "body-imported": "This contact point contains integrations that were imported from an external Alertmanager and is currently read-only. The integrations will become editable after the migration process is complete.",
+      "body-imported-time-interval": "This time interval was imported from an external Alertmanager and is currently read-only. The time interval will become editable after the migration process is complete.",
       "body-provisioned": "This {{resource}} has been provisioned, that means it was created by config. Please contact your server admin to update this {{resource}}.",
       "title-imported": "This contact point was imported and cannot be edited through the UI",
+      "title-imported-time-interval": "This time interval was imported and cannot be edited through the UI",
       "title-provisioned": "This {{resource}} cannot be edited through the UI"
     },
     "provisioning-badge": {
