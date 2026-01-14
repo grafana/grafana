@@ -13,7 +13,7 @@ import (
 type ConnectionSecureApplyConfiguration struct {
 	PrivateKey   *commonv0alpha1.InlineSecureValue `json:"privateKey,omitempty"`
 	ClientSecret *commonv0alpha1.InlineSecureValue `json:"clientSecret,omitempty"`
-	Token        *commonv0alpha1.InlineSecureValue `json:"webhook,omitempty"`
+	Token        *commonv0alpha1.InlineSecureValue `json:"token,omitempty"`
 }
 
 // ConnectionSecureApplyConfiguration constructs a declarative configuration of the ConnectionSecure type for use with
