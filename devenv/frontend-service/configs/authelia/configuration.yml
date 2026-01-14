@@ -1,0 +1,121 @@
+---
+theme: light
+
+server:
+  address: 'tcp://:9091/'
+
+log:
+  level: debug
+  format: text
+
+webauthn:
+  disable: true
+
+duo_api:
+  disable: true
+
+authentication_backend:
+  file:
+    path: /config/users_database.yml
+    password:
+      algorithm: 'argon2'
+  password_change:
+    disable: true
+  password_reset:
+    disable: true
+
+session:
+  secret: insecure_session_secret
+  cookies:
+    - name: authelia_session
+      domain: oauth.localhost
+      authelia_url: https://oauth.localhost:9091
+      expiration: '1 hour'
+      inactivity: '5 minutes'
+      remember_me: '1 month'
+
+access_control:
+  default_policy: one_factor
+
+storage:
+  encryption_key: you_must_generate_a_secret_of_more_than_twenty_chars_and_configure_this
+  local:
+    path: /config/db.sqlite3
+
+notifier:
+  filesystem:
+    filename: /config/notification.txt
+
+identity_validation:
+  reset_password:
+    jwt_secret: a_very_important_secret
+
+identity_providers:
+  oidc:
+    hmac_secret: this_is_a_secret_abc123abc123abc123
+    jwks:
+      - algorithm: RS256
+        key: |
+          -----BEGIN PRIVATE KEY-----
+          MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCbKAl8ITAb+1I8
+          61R1bp2ZbZuSuKxUYXuCGWdGa+lhn45sVJz2HkqtYe7m/BG87WbhiJv5LYvMApFW
+          ajm95LLqp8z3zPzD0ULy3Nks2yNIuMSVyT7/AltvO5wg11gRJZjSkre7knRF/KP6
+          ARbCwF/d1iLwXIWeGj+hCzaz3CPfMm7kSVzXUkzC1XsU38fb9TbDVHm1gQMluiKo
+          Yrmsz2DX6nyTSqJXfj6iblcjePs8Y9jzLNbyda7NyxA6k8WhKMwIHdCQxajsJwy6
+          AnkYLTLvNlR+kD6xa4hSCUs/eDo8zqFWybEchvwwbp/Xys443GgDUf/iGbZbBl09
+          tYWajIerAgMBAAECggEABzAHoHR5IhK2cJQGSZpiOqVVO6rKcO5DJne+zQhau2cE
+          1gflbZFhrD6JLrImsDXfOjt13kk53K2RxgsNubpKf4xedmxMmVWsYEvS070jGU9V
+          7ApynKWjTrfYN71CGyk+tyKM2Gekc0mM3xwFzefTiRdObwwaNITKxc8bLaHZF5HP
+          /FMG2zqf84TU1six4JamVxMK3EQSzBc1PnYoSa5W8hdQCQkZTx+T4YoGSi7UIZG1
+          BAxQN8u9Dj2la8fwd8ttT+ErGScyQqbfgCbs9/5guZSHXq/qBrMJ4LP/Ir8+VVfo
+          lrMtxotHWKvOdZqSy0D9GlUDo7i/tgShrUGojCnQwQKBgQDbZ493k6DvcIlu8N5d
+          kMMScX+zi6jTQtBfJXhDRybj4i+nUTWlRbnhNAZhD7gl+z+ngnnTWqmULTAPm2Np
+          jZudARUNiR+iRJonLrVMWeHF2nrE5/wrF3NDe7gyUxE2lAUy/wFFbAIxCp9pD50s
+          bafU+OYTGe9tTzjo+40PbgMocwKBgQC1CR7QKZjP0WNKO9LQYhY8y8/jkM58GWJm
+          R5qhlVTJ0yLgBZy3kdxlbpUsBoE6aByOC70cNKOO0vh1iimXzGSdtznBJc+PxiXX
+          zDFsPoS0QHlfbCQJmYrwiZhHPNAoCWYbJo8KvkIwVnM1UFrLdpCfk9sQIoZph46+
+          o7CSsI2t6QKBgBjA7FzPWR7qkXbk0hG4XWndSE0XeqqrJRs2/QSKKIcZY8r6zJSi
+          8z/HQNj+jwYp/JqHi/sehXdkScHZBDRKd74U+y0VxW3nU4UMLgQ5N9G8vpEsozSx
+          Zp28faGf4ZdIx/Vi89/DOdQSoL2Xt2Hl1UOf+UU6bdrlT0Rp7RZKkSylAoGAfBWc
+          QSHB0++5FpCalqokg9dOzrPaU8UyZNh/bHFmhE9rgBFYsZoQbpW1OU/cE6R4rgPt
+          wv9xe9uu4SGqEJnP/SoxM+ousmUmWxtiZMcVPldS2czNhqbvTJ+C+JD+O/L1QXbU
+          ZJCz3V3j6Y8CLKM/zaESbaS8bGi1toWL6X+KHMECgYEAloauyKHsgtKiNF3D8OmI
+          unN2E9NnLGFg7R59C0j+T9+qzi5Mkfeqef5euOa7KwkbKmhr1SmGW4sjtJ2m4sdD
+          pyTE9OuMKK7O8xXNSRLEoBk8gjodbeobYPFPjOkAJRZZFnP2JuLhyEklP1P4J0WZ
+          pPBw/R+JfWyZAqJcwrNdmgU=
+          -----END PRIVATE KEY-----
+    lifespans:
+      access_token: '1 hour'
+      authorize_code: '1 minute'
+      id_token: '1 hour'
+      refresh_token: '90 minutes'
+    enable_client_debug_messages: true
+    authorization_policies:
+      grafana_group_policy:
+        default_policy: 'deny'
+        rules:
+          - policy: 'one_factor'
+            subject: 'group:grafana'
+    clients:
+      - client_id: 'grafana'
+        consent_mode: implicit
+        client_name: 'Grafana'
+        client_secret: '$pbkdf2-sha512$310000$c8p78n7pUMln0jzvd4aK4Q$JNRBzwAo0ek5qKn50cFzzvE9RXV88h1wJn5KGiHrD0YKtZaR/nCb2CJPOsKaPK0hjf.9yHxzQGZziziccp6Yng' # The digest of 'insecure_secret'.
+        public: false
+        authorization_policy: 'grafana_group_policy'
+        require_pkce: true
+        pkce_challenge_method: 'S256'
+        redirect_uris:
+          - http://localhost:3000/login/generic_oauth
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'groups'
+          - 'email'
+        response_types:
+          - 'code'
+        grant_types:
+          - 'authorization_code'
+        access_token_signed_response_alg: 'RS256'
+        userinfo_signed_response_alg: 'none'
+        token_endpoint_auth_method: 'client_secret_basic'
