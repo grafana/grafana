@@ -313,6 +313,9 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		// issues/116273: When we have an empty input route (or input that becomes relative to "."), we do not want it
 		//   to be ".". This is because the `CleanRelativePath` function will never return "./" prefixes, and as such,
 		//   the common prefix we need is an empty string.
+		if r1 == "." && proxy.proxyPath != "." {
+			r1 = ""
+		}
 		if r2 == "." && route.Path != "." {
 			r2 = ""
 		}
