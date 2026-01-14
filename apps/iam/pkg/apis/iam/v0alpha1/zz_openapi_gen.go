@@ -3219,13 +3219,6 @@ func schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds6RoutesTeamsGETResponseUs
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 					"teamRef": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
@@ -3239,8 +3232,15 @@ func schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds6RoutesTeamsGETResponseUs
 							Format:  "",
 						},
 					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"title", "teamRef", "permission"},
+				Required: []string{"teamRef", "permission", "external"},
 			},
 		},
 		Dependencies: []string{

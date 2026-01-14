@@ -4,9 +4,9 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam struct {
-	Title      string         `json:"title"`
 	TeamRef    TeamRef        `json:"teamRef"`
 	Permission TeamPermission `json:"permission"`
+	External   bool           `json:"external"`
 }
 
 // NewVersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam creates a new VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam object.

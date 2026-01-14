@@ -38,9 +38,9 @@ userv0alpha1: userKind & {
 			"GET": {
 				response: {
 					#UserTeam: {
-						title: string
 						teamRef: v0alpha1.TeamRef
 						permission: v0alpha1.TeamPermission
+						external: bool
 					}
 					items: [...#UserTeam]
 				}
