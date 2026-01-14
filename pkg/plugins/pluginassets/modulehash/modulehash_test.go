@@ -176,7 +176,7 @@ func TestService_ModuleHash(t *testing.T) {
 			registry: []*plugins.Plugin{newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
-					withFS(plugins.NewLocalFS(filepath.Join("../testdata", "module-hash-valid-nested", "panels", "one"))),
+				withFS(plugins.NewLocalFS(filepath.Join("../testdata", "module-hash-valid-nested", "panels", "one"))),
 				withParent(newPlugin(
 					parentPluginID,
 					withSignatureStatus(plugins.SignatureStatusValid),
@@ -292,7 +292,7 @@ func TestService_ModuleHash_Cache(t *testing.T) {
 			pluginID,
 			withInfo(plugins.Info{Version: "1.0.0"}),
 			withSignatureStatus(plugins.SignatureStatusValid),
-			withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+			withFS(plugins.NewLocalFS(filepath.Join("../testdata", "module-hash-valid"))),
 		)
 
 		pCfg = &config.PluginManagementCfg{
