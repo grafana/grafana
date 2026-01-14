@@ -673,6 +673,42 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			runDatasourceAuthTest(t, secretsService, secretsStore, cfg, test)
 		}
 	})
+
+	t.Run("Regression of 116273: Fallback routes should apply fallback route roles", func(t *testing.T) {
+		ds := &datasources.DataSource{
+			UID:      "dsUID",
+			JsonData: simplejson.New(),
+		}
+		routes := []*plugins.Route{
+			{
+				ReqRole: org.RoleAdmin,
+				Method:  "GET",
+			},
+			{
+				ReqRole: org.RoleAdmin,
+				Method:  "POST",
+			},
+			{
+				ReqRole: org.RoleAdmin,
+				Method:  "PUT",
+			},
+			{
+				ReqRole: org.RoleAdmin,
+				Method:  "DELETE",
+			},
+		}
+
+		req, err := http.NewRequestWithContext(t.Context(), "GET", "http://localhost/unit-test", nil)
+		require.NoError(t, err, "failed to create HTTP request")
+		ctx := &contextmodel.ReqContext{
+			Context:      &web.Context{Req: req},
+			SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
+		}
+		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/v2/leak-ur-secrets")
+		require.NoError(t, err, "failed to setup proxy test")
+		err = proxy.validateRequest()
+		require.ErrorIs(t, err, errPluginProxyRouteAccessDenied, "request was not denied due to access denied?")
+	})
 }
 
 // test DataSourceProxy request handling.

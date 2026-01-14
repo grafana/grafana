@@ -32,6 +32,8 @@ import (
 var (
 	logger = glog.New("data-proxy-log")
 	client = newHTTPClient()
+
+	errPluginProxyRouteAccessDenied = errors.New("plugin proxy route access denied")
 )
 
 type DataSourceProxy struct {
@@ -308,12 +310,18 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if err != nil {
 			return err
 		}
+		// issues/116273: When we have an empty input route (or input that becomes relative to "."), we do not want it
+		//   to be ".". This is because the `CleanRelativePath` function will never return "./" prefixes, and as such,
+		//   the common prefix we need is an empty string.
+		if r2 == "." && route.Path != "." {
+			r2 = ""
+		}
 		if !strings.HasPrefix(r1, r2) {
 			continue
 		}
 
 		if !proxy.hasAccessToRoute(route) {
-			return errors.New("plugin proxy route access denied")
+			return errPluginProxyRouteAccessDenied
 		}
 
 		proxy.matchedRoute = route
