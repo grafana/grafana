@@ -880,6 +880,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "alertingNavigationV2",
+			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: false,
+		},
+		{
 			Name:         "alertingSavedSearches",
 			Description:  "Enables saved searches for alert rules list",
 			Stage:        FeatureStageExperimental,
