@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
@@ -16,7 +17,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
     const category = [t('gauge.category-radial-bar', 'Gauge')];
 
     addStandardDataReduceOptions(builder);
-    addOrientationOption(builder, category);
+
     commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
 
     builder.addRadio({
@@ -31,6 +32,51 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
         ],
       },
     });
+
+    addOrientationOption(builder, category);
+
+    builder
+      .addRadio({
+        path: 'sizing',
+        name: t('gauge.name-gauge-size', 'Gauge size'),
+        settings: {
+          options: [
+            { value: BarGaugeSizing.Auto, label: t('gauge.gauge-size-options.label-auto', 'Auto') },
+            { value: BarGaugeSizing.Manual, label: t('gauge.gauge-size-options.label-manual', 'Manual') },
+          ],
+        },
+        category,
+        defaultValue: defaultOptions.sizing,
+        showIf: (options: Options) => options.orientation !== VizOrientation.Auto,
+      })
+      .addSliderInput({
+        path: 'minVizWidth',
+        name: t('gauge.name-min-width', 'Min width'),
+        description: t('gauge.description-min-width', 'Minimum column width (vertical orientation)'),
+        defaultValue: defaultOptions.minVizWidth,
+        settings: {
+          min: 0,
+          max: 600,
+          step: 1,
+        },
+        category,
+        showIf: (options: Options) =>
+          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Vertical,
+      })
+      .addSliderInput({
+        path: 'minVizHeight',
+        name: t('gauge.name-min-height', 'Min height'),
+        description: t('gauge.description-min-height', 'Minimum row height (horizontal orientation)'),
+        defaultValue: defaultOptions.minVizHeight,
+        category,
+        settings: {
+          min: 0,
+          max: 600,
+          step: 1,
+        },
+        showIf: (options: Options) =>
+          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
+      });
 
     builder.addSliderInput({
       path: 'barWidthFactor',
