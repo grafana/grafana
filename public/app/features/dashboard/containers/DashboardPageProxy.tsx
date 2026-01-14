@@ -1,14 +1,17 @@
+import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScenePage';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { DashboardRoutes } from 'app/types/dashboard';
+import { NIRefreshDashboardEvent } from 'app/types/events';
 
 import { isDashboardV2Resource } from '../api/utils';
-
 import DashboardPage, { DashboardPageParams } from './DashboardPage';
 import { DashboardPageError } from './DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
@@ -26,6 +29,17 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   const params = useParams<DashboardPageParams>();
   const location = useLocation();
   const stateManager = getDashboardScenePageStateManager();
+
+  // Subscribe to NIRefreshDashboardEvent regardless of which dashboard implementation is used
+  useEffect(() => {
+    const subscription = appEvents.subscribe(NIRefreshDashboardEvent, () => {
+      getTimeSrv().refreshTimeModel();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
     return <DashboardScenePage {...props} />;
