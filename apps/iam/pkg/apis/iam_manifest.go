@@ -147,6 +147,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "TeamBindings",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.teamRef.name",
+						"spec.subject.name",
+					},
 				},
 
 				{

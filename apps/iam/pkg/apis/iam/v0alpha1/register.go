@@ -334,6 +334,22 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
+
+	// Enable field selectors for TeamBinding
+	err := scheme.AddFieldLabelConversionFunc(
+		TeamBindingResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.teamRef.name", "spec.subject.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for TeamBinding: %s", label)
+			}
+		},
+	)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
