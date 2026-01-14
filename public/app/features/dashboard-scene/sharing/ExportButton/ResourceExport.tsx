@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { AsyncState } from 'react-use/lib/useAsync';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
