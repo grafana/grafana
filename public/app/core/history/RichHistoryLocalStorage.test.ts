@@ -1,4 +1,5 @@
 import { DataQuery } from '@grafana/data';
+import { createMonitoringLogger, MonitoringLogger } from '@grafana/runtime';
 import store from 'app/core/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
@@ -26,7 +27,14 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => dsMock,
+  createMonitoringLogger: jest.fn().mockReturnValue({ logWarning: jest.fn() }),
 }));
+
+// logger is created at import so we cannot initialize inside the test
+const loggerIndex = (createMonitoringLogger as jest.Mock).mock.calls.findIndex(
+  (args) => args[0] === 'features.query-history.local-storage'
+);
+const loggerMock: MonitoringLogger = (createMonitoringLogger as jest.Mock).mock.results[loggerIndex]?.value;
 
 interface MockQuery extends DataQuery {
   query: string;
@@ -220,6 +228,89 @@ describe('RichHistoryLocalStorage', () => {
       expect(newHistory).toHaveLength(MAX_HISTORY_ITEMS); // starred item added
       expect(newHistory.filter((h) => h.starred)).toHaveLength(starredItemsInHistory + 1); // starred item added
       expect(newHistory.filter((h) => !h.starred)).toHaveLength(starredItemsInHistory - removedNotStarredItems);
+    });
+  });
+
+  describe('quota errors and retries', () => {
+    it('should rotate and retry saving when QuotaExceededError occurs once', async () => {
+      const initial = [
+        { ts: Date.now(), starred: true, comment: 'starred1', queries: [], datasourceName: 'name-of-dev-test' },
+        { ts: Date.now(), starred: false, comment: 'notStarred1', queries: [], datasourceName: 'name-of-dev-test' },
+        { ts: Date.now(), starred: true, comment: 'starred2', queries: [], datasourceName: 'name-of-dev-test' },
+      ];
+      store.setObject(key, initial);
+
+      // Spy on setObject to throw once with QuotaExceededError, then call through
+      const originalSetObject = store.setObject.bind(store);
+      jest
+        .spyOn(store, 'setObject')
+        // first attempt throws and errors
+        .mockImplementationOnce(() => {
+          const err = new Error('quota hit');
+          err.name = 'QuotaExceededError';
+          throw err;
+        })
+        // second attempt calls through
+        .mockImplementation((k: string, value: unknown) => {
+          return originalSetObject(k, value);
+        });
+
+      const result = await storage.addToRichHistory({
+        starred: false,
+        datasourceUid: 'dev-test',
+        datasourceName: 'name-of-dev-test',
+        comment: 'new',
+        queries: [{ refId: 'A' }],
+      });
+      expect(result.richHistoryQuery).toBeDefined();
+
+      // After one failure, rotation removes one unstarred entry
+      const saved = store.getObject<RichHistoryQuery[]>(key)!;
+      expect(saved).toHaveLength(3);
+      expect(saved).toMatchObject([
+        expect.objectContaining({ comment: 'new' }),
+        expect.objectContaining({ comment: 'starred1' }),
+        expect.objectContaining({ comment: 'starred2' }),
+      ]);
+
+      // Ensure logger was called for the failure, with expected flags
+      expect(loggerMock.logWarning).toHaveBeenCalled();
+      const [message, payload] = (loggerMock.logWarning as jest.Mock).mock.calls[0];
+      expect(message).toContain('Failed to save rich history to local storage');
+      expect(payload.saveRetriesLeft).toBe('3');
+      expect(payload.quotaExceededError).toBe('true');
+    });
+
+    it('should throw StorageFull when QuotaExceededError persists for all retries and track attempts', async () => {
+      store.setObject(key, [
+        { ts: Date.now(), starred: false, comment: 'notStarred1', queries: [], datasourceName: 'name-of-dev-test' },
+      ]);
+
+      const setSpy = jest.spyOn(store, 'setObject').mockImplementation(() => {
+        const err = new Error('quota still hit');
+        err.name = 'QuotaExceededError';
+        throw err;
+      });
+
+      await expect(
+        storage.addToRichHistory({
+          starred: false,
+          datasourceUid: 'dev-test',
+          datasourceName: 'name-of-dev-test',
+          comment: 'new',
+          queries: [{ refId: 'B' }],
+        })
+      ).rejects.toMatchObject({ name: 'StorageFull' });
+
+      // 3 tracking attempts should be logged (for each failed try)
+      expect(loggerMock.logWarning).toHaveBeenCalledTimes(3);
+      const calls = (loggerMock.logWarning as jest.Mock).mock.calls;
+      expect(calls[0][0]).toContain('Failed to save rich history to local storage');
+      expect(calls[0][1].saveRetriesLeft).toBe('3');
+      expect(calls[1][1].saveRetriesLeft).toBe('2');
+      expect(calls[2][1].saveRetriesLeft).toBe('1');
+
+      setSpy.mockRestore();
     });
   });
 
