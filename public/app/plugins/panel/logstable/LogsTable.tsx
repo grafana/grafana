@@ -5,6 +5,7 @@ import { lastValueFrom } from 'rxjs';
 import {
   applyFieldOverrides,
   DataFrame,
+  Field,
   FieldConfigSource,
   GrafanaTheme2,
   PanelProps,
@@ -25,13 +26,7 @@ import {
   parseLogsFrame,
 } from '../../../features/logs/logsFrame';
 import { isSetDisplayedFields } from '../logs/types';
-import {
-  AdHocFilterItem,
-  FILTER_FOR_OPERATOR,
-  FILTER_OUT_OPERATOR,
-  TableFilterActionCallback,
-  TablePanel,
-} from '../table/TablePanel';
+import { TablePanel } from '../table/TablePanel';
 import type { Options as TableOptions } from '../table/panelcfg.gen';
 
 import type { Options as LogsTableOptions } from './panelcfg.gen';
@@ -125,38 +120,10 @@ export const LogsTable = ({
 
   const handleTableOnFieldConfigChange = useCallback(
     (fieldConfig: FieldConfigSource) => {
-      console.log('onTableOnFieldConfigChange', fieldConfig);
       onFieldConfigChange(fieldConfig);
     },
     [onFieldConfigChange]
   );
-
-  const handleOnCellFilterAdded: TableFilterActionCallback = (filter: AdHocFilterItem) => {
-    const { value, key, operator } = filter;
-    if (operator === FILTER_FOR_OPERATOR) {
-      onClickFilterLabel(key, value);
-    }
-
-    if (operator === FILTER_OUT_OPERATOR) {
-      onClickFilterOutLabel(key, value);
-    }
-  };
-
-  /**
-   * @todo
-   * Used by Logs details.
-   */
-  const onClickFilterLabel = (key: string, value: string | number, frame?: DataFrame) => {
-    console.log('onClickFilterLabel', key, value, frame);
-  };
-
-  /**
-   * @todo
-   * Used by Logs details.
-   */
-  const onClickFilterOutLabel = (key: string, value: string | number, frame?: DataFrame) => {
-    console.log('onClickFilterOutLabel', key, value, frame);
-  };
 
   /**
    * Extract fields transform
@@ -169,18 +136,32 @@ export const LogsTable = ({
     };
 
     extractFields().then((frame) => {
-      setExtractedFrame(
-        applyFieldOverrides({
-          data: frame,
-          fieldConfig,
-          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-          theme: config.theme2,
-          timeZone: timeZone,
-          dataLinkPostProcessor: dataLinksContext.dataLinkPostProcessor,
-        })
-      );
+      const extractedFrames = applyFieldOverrides({
+        data: frame,
+        fieldConfig: fieldConfig,
+        replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
+        theme: config.theme2,
+        timeZone: timeZone,
+        dataLinkPostProcessor: dataLinksContext.dataLinkPostProcessor,
+      });
+
+      for (let frameIndex = 0; frameIndex < extractedFrames.length; frameIndex++) {
+        const frame = extractedFrames[frameIndex];
+        for (const [, field] of frame.fields.entries()) {
+          field.config = {
+            ...field.config,
+            filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field),
+            custom: {
+              ...field.config.custom,
+              inspect: field.config?.custom?.inspect ?? true,
+            },
+          };
+        }
+      }
+
+      setExtractedFrame(extractedFrames);
     });
-  }, [dataLinksContext.dataLinkPostProcessor, fieldConfig, timeZone, unTransformedDataFrame]);
+  }, [dataLinksContext.dataLinkPostProcessor, fieldConfig, replaceVariables, timeZone, unTransformedDataFrame]);
 
   /**
    * Organize fields transform
@@ -267,7 +248,6 @@ export const LogsTable = ({
           onFieldConfigChange={handleTableOnFieldConfigChange}
           replaceVariables={replaceVariables}
           onChangeTimeRange={onChangeTimeRange}
-          onCellFilterAdded={handleOnCellFilterAdded}
         />
       </div>
     </div>
@@ -291,6 +271,10 @@ function displayedFieldsToColumns(displayedFields: string[], logsFrame: LogsFram
   }
 
   return columns;
+}
+
+function doesFieldSupportAdHocFiltering(field: Field): boolean {
+  return true;
 }
 
 const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, width: number) => {

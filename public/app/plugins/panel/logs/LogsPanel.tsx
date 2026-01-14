@@ -653,6 +653,7 @@ export const LogsPanel = ({
               sortOrder={sortOrder}
             >
               <LogRows
+                fieldConfig={fieldConfig}
                 scrollElement={scrollElement}
                 scrollIntoView={scrollIntoView}
                 permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
@@ -705,6 +706,7 @@ export const LogsPanel = ({
             ref={(scrollElement: HTMLDivElement | null) => {
               setScrollElement(scrollElement);
             }}
+            fieldConfig={fieldConfig}
             visualisationType="logs"
             loading={infiniteScrolling}
             loadMoreLogs={enableInfiniteScrolling ? loadMoreLogs : undefined}

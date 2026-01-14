@@ -1,38 +1,40 @@
 import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
-import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious, useUnmount } from 'react-use';
 
 import {
-  SplitOpen,
-  LogRowModel,
-  LogsMetaItem,
-  DataFrame,
   AbsoluteTimeRange,
-  GrafanaTheme2,
-  LoadingState,
-  TimeZone,
-  RawTimeRange,
-  DataQueryResponse,
-  LogRowContextOptions,
-  EventBus,
-  ExplorePanelsState,
-  TimeRange,
-  LogsDedupStrategy,
-  LogsSortOrder,
   CoreApp,
-  LogsDedupDescription,
-  rangeUtil,
-  ExploreLogsPanelState,
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  serializeStateToUrlParam,
-  urlUtil,
+  DataQueryResponse,
+  EventBus,
+  ExploreLogsPanelState,
+  ExplorePanelsState,
+  FieldConfigSource,
+  GrafanaTheme2,
+  LoadingState,
   LogLevel,
+  LogRowContextOptions,
+  LogRowModel,
+  LogsDedupDescription,
+  LogsDedupStrategy,
+  LogsMetaItem,
+  LogsSortOrder,
+  PanelData,
+  rangeUtil,
+  RawTimeRange,
+  serializeStateToUrlParam,
   shallowCompare,
+  SplitOpen,
+  TimeRange,
+  TimeZone,
+  urlUtil,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataTopic } from '@grafana/schema';
 import {
@@ -47,6 +49,7 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
+import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
@@ -56,15 +59,17 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
-import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
+import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { Options } from 'app/plugins/panel/logstable/panelcfg.gen';
 import { getState } from 'app/store/store';
 import { ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
 
+import { LogsTable } from '../../../plugins/panel/logstable/LogsTable';
 import {
   contentOutlineTrackPinAdded,
   contentOutlineTrackPinClicked,
@@ -80,7 +85,7 @@ import { changeQueries, runQueries } from '../state/query';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
+import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getExploreBaseUrl } from './utils/url';
@@ -127,8 +132,9 @@ interface Props extends Themeable2 {
   range: TimeRange;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
-  loadMoreLogs?(range: AbsoluteTimeRange): void;
   onPinLineCallback?: () => void;
+
+  loadMoreLogs?(range: AbsoluteTimeRange): void;
 }
 
 export type LogsVisualisationType = 'table' | 'logs';
@@ -764,6 +770,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
 
+  // @todo ff
+  const enableNewLogsTable = true;
+  const panelData: PanelData = {
+    state: loading ? LoadingState.Loading : LoadingState.Done,
+    series: props.logsFrames ?? [],
+    timeRange: props.range,
+  };
+
   return (
     <>
       {(!config.featureToggles.newLogsPanel || !config.featureToggles.newLogContext) && getRowContext && contextRow && (
@@ -989,24 +1003,55 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
           {!config.featureToggles.logsPanelControls && visualisationType === 'table' && hasData && (
             <div className={styles.logRows} data-testid="logRowsTable">
-              {/* Width should be full width minus logs navigation and padding */}
-              <LogsTableWrap
-                logsSortOrder={logsSortOrder}
-                range={props.range}
-                splitOpen={splitOpen}
-                timeZone={timeZone}
-                width={width - 80}
-                logsFrames={props.logsFrames ?? []}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                panelState={panelState?.logs}
-                updatePanelState={updatePanelState}
-                datasourceType={props.datasourceType}
-                displayedFields={displayedFields}
-                exploreId={props.exploreId}
-                absoluteRange={props.absoluteRange}
-                logRows={props.logRows}
-              />
+              {/* @todo add flag*/}
+              {enableNewLogsTable && (
+                <LogsTable
+                  id={0}
+                  data={panelData}
+                  timeRange={props.range}
+                  timeZone={timeZone}
+                  options={{}}
+                  transparent={false}
+                  width={width - 80}
+                  height={tableHeight}
+                  fieldConfig={{
+                    defaults: {},
+                    overrides: [],
+                  }}
+                  renderCounter={0}
+                  title={''}
+                  eventBus={props.eventBus}
+                  onOptionsChange={function (options: Options): void {
+                    console.log('onOptionsChange NOT IMP:', options);
+                    // throw new Error('Function not implemented.');
+                  }}
+                  onFieldConfigChange={function (config: FieldConfigSource): void {
+                    console.log('onFieldConfigChange NOT IMP:', config);
+                  }}
+                  replaceVariables={replaceVariables}
+                  onChangeTimeRange={onChangeTime}
+                />
+              )}
+
+              {!enableNewLogsTable && (
+                <LogsTableWrap
+                  logsSortOrder={logsSortOrder}
+                  range={props.range}
+                  splitOpen={splitOpen}
+                  timeZone={timeZone}
+                  width={width - 80}
+                  logsFrames={props.logsFrames ?? []}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  panelState={panelState?.logs}
+                  updatePanelState={updatePanelState}
+                  datasourceType={props.datasourceType}
+                  displayedFields={displayedFields}
+                  exploreId={props.exploreId}
+                  absoluteRange={props.absoluteRange}
+                  logRows={props.logRows}
+                />
+              )}
             </div>
           )}
           {(!config.featureToggles.newLogsPanel || visualisationType === 'table') &&
@@ -1014,6 +1059,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             hasData && (
               <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
                 <ControlledLogRows
+                  fieldConfig={{
+                    defaults: {},
+                    overrides: [],
+                  }}
                   ref={logsContainerRef}
                   logsTableFrames={props.logsFrames}
                   width={width}

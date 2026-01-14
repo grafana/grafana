@@ -10,6 +10,7 @@ import {
   DataFrame,
   LogRowContextOptions,
   TimeRange,
+  FieldConfigSource,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
@@ -73,6 +74,7 @@ export interface Props {
   logRowMenuIconsAfter?: ReactNode[];
   scrollElement: HTMLDivElement | null;
   renderPreview?: boolean;
+  fieldConfig?: FieldConfigSource;
 }
 
 export type PopoverStateType = {
