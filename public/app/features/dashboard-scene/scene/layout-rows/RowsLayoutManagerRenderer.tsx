@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DragUpdate, BeforeCapture, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, BeforeCapture, DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
