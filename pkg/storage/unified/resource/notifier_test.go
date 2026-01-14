@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestNotifier(t *testing.T) (*notifier, *eventStore) {
+func setupTestNotifier(t *testing.T) (*pollingNotifier, *eventStore) {
 	db := setupTestBadgerDB(t)
 	t.Cleanup(func() {
 		err := db.Close()
@@ -22,10 +22,10 @@ func setupTestNotifier(t *testing.T) (*notifier, *eventStore) {
 	kv := NewBadgerKV(db)
 	eventStore := newEventStore(kv)
 	notifier := newNotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
-	return notifier, eventStore
+	return notifier.(*pollingNotifier), eventStore
 }
 
-func setupTestNotifierSqlKv(t *testing.T) (*notifier, *eventStore) {
+func setupTestNotifierSqlKv(t *testing.T) (*pollingNotifier, *eventStore) {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
@@ -33,7 +33,7 @@ func setupTestNotifierSqlKv(t *testing.T) (*notifier, *eventStore) {
 	require.NoError(t, err)
 	eventStore := newEventStore(kv)
 	notifier := newNotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
-	return notifier, eventStore
+	return notifier.(*pollingNotifier), eventStore
 }
 
 func TestNewNotifier(t *testing.T) {
@@ -49,7 +49,7 @@ func TestDefaultWatchOptions(t *testing.T) {
 	assert.Equal(t, defaultBufferSize, opts.BufferSize)
 }
 
-func runNotifierTestWith(t *testing.T, storeName string, newStoreFn func(*testing.T) (*notifier, *eventStore), testFn func(*testing.T, context.Context, *notifier, *eventStore)) {
+func runNotifierTestWith(t *testing.T, storeName string, newStoreFn func(*testing.T) (*pollingNotifier, *eventStore), testFn func(*testing.T, context.Context, *pollingNotifier, *eventStore)) {
 	t.Run(storeName, func(t *testing.T) {
 		ctx := context.Background()
 		notifier, eventStore := newStoreFn(t)
@@ -62,7 +62,7 @@ func TestNotifier_lastEventResourceVersion(t *testing.T) {
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierLastEventResourceVersion)
 }
 
-func testNotifierLastEventResourceVersion(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+func testNotifierLastEventResourceVersion(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
 	// Test with no events
 	rv, err := notifier.lastEventResourceVersion(ctx)
 	assert.Error(t, err)
@@ -113,7 +113,7 @@ func TestNotifier_cachekey(t *testing.T) {
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierCachekey)
 }
 
-func testNotifierCachekey(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+func testNotifierCachekey(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
 	tests := []struct {
 		name     string
 		event    Event
@@ -167,7 +167,7 @@ func TestNotifier_Watch_NoEvents(t *testing.T) {
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchNoEvents)
 }
 
-func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
 	ctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
 
@@ -208,7 +208,7 @@ func TestNotifier_Watch_WithExistingEvents(t *testing.T) {
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchWithExistingEvents)
 }
 
-func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
@@ -282,7 +282,7 @@ func TestNotifier_Watch_EventDeduplication(t *testing.T) {
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchEventDeduplication)
 }
 
-func testNotifierWatchEventDeduplication(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+func testNotifierWatchEventDeduplication(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
@@ -348,7 +348,7 @@ func TestNotifier_Watch_ContextCancellation(t *testing.T) {
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchContextCancellation)
 }
 
-func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	// Add an initial event so that lastEventResourceVersion doesn't return ErrNotFound
@@ -394,7 +394,7 @@ func TestNotifier_Watch_MultipleEvents(t *testing.T) {
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchMultipleEvents)
 }
 
-func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier *notifier, eventStore *eventStore) {
+func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier *pollingNotifier, eventStore *eventStore) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	rv := time.Now().UnixNano()

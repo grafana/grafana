@@ -4,7 +4,8 @@ import { base64UrlEncode } from '@grafana/alerting';
 import { filterBySelector } from 'app/features/alerting/unified/mocks/server/handlers/k8s/utils';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
-import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
+import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 
 /** UID of a time interval that we expect to follow all happy paths within tests/mocks */
 export const TIME_INTERVAL_UID_HAPPY_PATH = 'f4eae7a4895fa786';
@@ -21,7 +22,7 @@ const allTimeIntervals = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNo
     {
       metadata: {
         annotations: {
-          [K8sAnnotations.Provenance]: PROVENANCE_NONE,
+          [K8sAnnotations.Provenance]: KnownProvenance.None,
         },
         name: base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH),
         uid: TIME_INTERVAL_UID_HAPPY_PATH,

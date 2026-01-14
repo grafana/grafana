@@ -117,6 +117,8 @@ module.exports = [
       'scripts/grafana-server/tmp',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
       'public/build-swagger', // swagger build output
+      'apps/plugins/plugin/src/generated/meta/v0alpha1',
+      'apps/plugins/plugin/src/generated/plugin/v0alpha1',
     ],
   },
   ...grafanaConfig,
@@ -574,6 +576,42 @@ module.exports = [
           selector:
             "Property[key.name='a11y'][value.type='ObjectExpression'] Property[key.name='test'][value.value='off']",
           message: 'Skipping a11y tests is not allowed. Please fix the component or story instead.',
+        },
+        {
+          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
+          message:
+            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime instead',
+        },
+      ],
+    },
+  },
+  {
+    files: [...commonTestIgnores],
+    ignores: [
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      ...enterpriseIgnores,
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
+          message:
+            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime instead',
+        },
+      ],
+    },
+  },
+  {
+    files: [...enterpriseIgnores],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
+          message:
+            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime instead',
         },
       ],
     },

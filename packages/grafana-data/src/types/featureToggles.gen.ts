@@ -356,7 +356,7 @@ export interface FeatureToggles {
   */
   dashboardScene?: boolean;
   /**
-  * Enables experimental new dashboard layouts
+  * Enables new dashboard layouts
   */
   dashboardNewLayouts?: boolean;
   /**
@@ -530,6 +530,10 @@ export interface FeatureToggles {
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables the new Alerting navigation structure with improved menu grouping
+  */
+  alertingNavigationV2?: boolean;
   /**
   * Enables saved searches for alert rules list
   */
@@ -984,6 +988,11 @@ export interface FeatureToggles {
   */
   recentlyViewedDashboards?: boolean;
   /**
+  * A/A test for recently viewed dashboards feature
+  * @default false
+  */
+  experimentRecentlyViewedDashboards?: boolean;
+  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1246,4 +1255,8 @@ export interface FeatureToggles {
   * Enables profiles exemplars support in profiles drilldown
   */
   profilesExemplars?: boolean;
+  /**
+  * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+  */
+  alertingSyncDispatchTimer?: boolean;
 }
