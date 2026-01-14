@@ -446,9 +446,32 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
-		})
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			// New navigation: Alert rules parent (tabs managed on frontend)
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-rules", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+			})
+
+			// Add child nav items for permission checking (tabs will be rendered by frontend)
+			// Alert rules list tab
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Alert rules", Id: "alert-rules-list", Url: s.cfg.AppSubURL + "/alerting/list",
+			})
+
+			// Recently deleted tab (check additional feature flags)
+			//nolint:staticcheck // not yet migrated to OpenFeature
+			if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
+				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+					Text: "Recently deleted", Id: "alert-rules-recently-deleted", Url: s.cfg.AppSubURL + "/alerting/recently-deleted",
+				})
+			}
+		} else {
+			// Legacy navigation
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+			})
+		}
 	}
 
 	contactPointsPerms := []ac.Evaluator{
@@ -508,12 +531,16 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text:     "Recently deleted",
-			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
-			Id:       "alerts/recently-deleted",
-			Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
-		})
+		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text:     "Recently deleted",
+				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+				Id:       "alerts/recently-deleted",
+				Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
+			})
+		}
 	}
 
 	if c.GetOrgRole() == org.RoleAdmin {
