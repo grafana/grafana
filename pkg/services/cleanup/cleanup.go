@@ -286,8 +286,8 @@ func (srv *CleanUpService) deleteKubernetesExpiredSnapshots(ctx context.Context)
 		namespaceMapper := request.GetNamespaceMapper(srv.Cfg)
 		snapshots, err := client.Resource(gvr).Namespace(namespaceMapper(o.ID)).List(ctx, v1.ListOptions{})
 		if err != nil {
-			logger.Error("Failed to list snapshots", "error", err.Error())
-			return
+			logger.Error("Failed to list snapshots for org", "orgID", o.ID, "error", err.Error())
+			continue
 		}
 		// Check each snapshot for expiration
 		for _, item := range snapshots.Items {

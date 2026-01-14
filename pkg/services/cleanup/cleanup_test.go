@@ -13,8 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -175,6 +173,27 @@ func TestDeleteExpiredSnapshots_KubernetesMode(t *testing.T) {
 		service.deleteExpiredSnapshots(context.Background())
 		mockResource.AssertExpectations(t)
 	})
+
+	t.Run("continues processing other orgs when one org fails to list snapshots", func(t *testing.T) {
+		// Create an expired snapshot for the second org
+		expiredTime := time.Now().Add(-time.Hour).UnixMilli()
+		expiredSnapshot := createUnstructuredSnapshot("expired-snap-org2", "org-2", expiredTime)
+
+		// Use namespace-aware mock that returns error for first namespace, success for second
+		mockResource := &namespaceAwareMockResource{
+			expiredSnapshot: expiredSnapshot,
+			deletedNames:    make(map[string]bool),
+		}
+
+		mockDynClient := new(mockDynamicClient)
+		mockDynClient.On("Resource", mock.Anything).Return(mockResource)
+
+		service := createK8sCleanupService(t, mockDynClient)
+		service.deleteExpiredSnapshots(context.Background())
+
+		// Verify that the snapshot from the second org was still deleted despite the first org failing
+		require.True(t, mockResource.deletedNames["expired-snap-org2"], "expected snapshot from second org to be deleted")
+	})
 }
 
 // Helper function to create unstructured snapshots for testing
@@ -224,9 +243,11 @@ func (m *mockDynamicClient) Resource(resource schema.GroupVersionResource) dynam
 	return args.Get(0).(dynamic.NamespaceableResourceInterface)
 }
 
-// mockResourceInterface is a minimal mock for dynamic.ResourceInterface
+// mockResourceInterface is a minimal mock for dynamic.ResourceInterface.
+// Embeds dynamic.ResourceInterface to avoid implementing unused methods.
 type mockResourceInterface struct {
 	mock.Mock
+	dynamic.ResourceInterface
 }
 
 func (m *mockResourceInterface) Namespace(ns string) dynamic.ResourceInterface {
@@ -247,31 +268,32 @@ func (m *mockResourceInterface) Delete(ctx context.Context, name string, opts me
 	return args.Error(0)
 }
 
-// Unused methods - panic if called unexpectedly
-func (m *mockResourceInterface) Create(ctx context.Context, obj *unstructured.Unstructured, opts metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	panic("not implemented")
+// namespaceAwareMockResource is a mock that returns different results based on namespace.
+// Used to test that processing continues when one org fails.
+// Embeds dynamic.ResourceInterface to avoid implementing unused methods.
+type namespaceAwareMockResource struct {
+	dynamic.ResourceInterface
+	currentNamespace string
+	expiredSnapshot  *unstructured.Unstructured
+	deletedNames     map[string]bool
 }
-func (m *mockResourceInterface) Update(ctx context.Context, obj *unstructured.Unstructured, opts metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	panic("not implemented")
+
+func (m *namespaceAwareMockResource) Namespace(ns string) dynamic.ResourceInterface {
+	m.currentNamespace = ns
+	return m
 }
-func (m *mockResourceInterface) UpdateStatus(ctx context.Context, obj *unstructured.Unstructured, opts metav1.UpdateOptions) (*unstructured.Unstructured, error) {
-	panic("not implemented")
+
+func (m *namespaceAwareMockResource) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	// Fail for the first org namespace (org ID 1 maps to "default"), succeed for the second (org ID 2 maps to "org-2")
+	if m.currentNamespace == "default" {
+		return nil, errors.New("simulated list error for org-1")
+	}
+	return &unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{*m.expiredSnapshot},
+	}, nil
 }
-func (m *mockResourceInterface) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	panic("not implemented")
-}
-func (m *mockResourceInterface) Get(ctx context.Context, name string, opts metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	panic("not implemented")
-}
-func (m *mockResourceInterface) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	panic("not implemented")
-}
-func (m *mockResourceInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	panic("not implemented")
-}
-func (m *mockResourceInterface) Apply(ctx context.Context, name string, obj *unstructured.Unstructured, opts metav1.ApplyOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	panic("not implemented")
-}
-func (m *mockResourceInterface) ApplyStatus(ctx context.Context, name string, obj *unstructured.Unstructured, opts metav1.ApplyOptions) (*unstructured.Unstructured, error) {
-	panic("not implemented")
+
+func (m *namespaceAwareMockResource) Delete(ctx context.Context, name string, opts metav1.DeleteOptions, subresources ...string) error {
+	m.deletedNames[name] = true
+	return nil
 }
