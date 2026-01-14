@@ -39,6 +39,7 @@ type SearchServer interface {
 
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
+	resourcepb.DiagnosticsServer
 }
 
 // ResourceServer implements all gRPC services
@@ -227,8 +228,7 @@ type ResourceServerOptions struct {
 	Blob BlobConfig
 
 	// Search options
-	SearchOptions SearchOptions // TODO: needed?
-	Search        SearchServer
+	Search SearchServer
 
 	// Quota service
 	OverridesService *OverridesService
@@ -259,6 +259,9 @@ type ResourceServerOptions struct {
 
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
+	// IndexMinUpdateInterval is the time to wait after a successful write operation to ensure read-after-write consistency in search.
+	// This config is shared with search
+	IndexMinUpdateInterval time.Duration
 
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue  QOSEnqueuer
@@ -350,9 +353,8 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
-		search:           opts.Search,
 
-		artificialSuccessfulWriteDelay: opts.SearchOptions.IndexMinUpdateInterval,
+		artificialSuccessfulWriteDelay: opts.IndexMinUpdateInterval,
 	}
 
 	/*
@@ -381,7 +383,6 @@ type server struct {
 	backend          StorageBackend
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
-	search           SearchServer
 	diagnostics      resourcepb.DiagnosticsServer
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
@@ -1520,14 +1521,6 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	case <-queueCtx.Done():
 		return queueCtx.Err() // Timed out or canceled while waiting for execution.
 	}
-}
-
-func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
-	if s.search == nil {
-		return nil, fmt.Errorf("search index not configured")
-	}
-
-	return s.search.RebuildIndexes(ctx, req)
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {

@@ -372,7 +372,7 @@ func initModuleServerForTest(
 	return testModuleServer{server: ms, grpcAddress: cfg.GRPCServer.Address, httpPort: cfg.HTTPPort, healthClient: healthClient, id: cfg.InstanceID}
 }
 
-func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) resource.ResourceServer {
+func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) resource.SearchServer {
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("database")
 	require.NoError(t, err)
@@ -422,7 +422,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 		}
 	}
 
-	return server
+	return searchServer
 }
 
 var counter int

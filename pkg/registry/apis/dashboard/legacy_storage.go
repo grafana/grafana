@@ -41,7 +41,7 @@ func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Sch
 	if err != nil {
 		return nil, err
 	}
-	client := legacy.NewDirectResourceClient(server) // same context
+	client := legacy.NewDirectStorageClient(server) // same context
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil,
 		defaultOpts.StorageConfig.Config, nil,
 	)

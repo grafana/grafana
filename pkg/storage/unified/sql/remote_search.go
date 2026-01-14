@@ -16,9 +16,10 @@ var _ resource.SearchServer = (*remoteSearchClient)(nil)
 // remoteSearchClient wraps gRPC search clients to implement the SearchServer interface.
 // This allows the storage server to delegate search operations to a remote search server.
 type remoteSearchClient struct {
-	conn      *grpc.ClientConn
-	index     resourcepb.ResourceIndexClient
-	moiClient resourcepb.ManagedObjectIndexClient
+	conn        *grpc.ClientConn
+	index       resourcepb.ResourceIndexClient
+	moiClient   resourcepb.ManagedObjectIndexClient
+	diagnostics resourcepb.DiagnosticsClient
 }
 
 // newRemoteSearchClient creates a new remote search client that connects to a search server at the given address.
@@ -36,9 +37,10 @@ func newRemoteSearchClient(address string) (*remoteSearchClient, error) {
 	}
 
 	return &remoteSearchClient{
-		conn:      conn,
-		index:     resourcepb.NewResourceIndexClient(conn),
-		moiClient: resourcepb.NewManagedObjectIndexClient(conn),
+		conn:        conn,
+		index:       resourcepb.NewResourceIndexClient(conn),
+		moiClient:   resourcepb.NewManagedObjectIndexClient(conn),
+		diagnostics: resourcepb.NewDiagnosticsClient(conn),
 	}, nil
 }
 
@@ -80,4 +82,9 @@ func (r *remoteSearchClient) CountManagedObjects(ctx context.Context, req *resou
 // ListManagedObjects implements resourcepb.ManagedObjectIndexServer.
 func (r *remoteSearchClient) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	return r.moiClient.ListManagedObjects(ctx, req)
+}
+
+// IsHealthy implements resourcepb.DiagnosticsServer.
+func (r *remoteSearchClient) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
+	return r.diagnostics.IsHealthy(ctx, req)
 }

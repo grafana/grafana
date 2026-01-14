@@ -210,7 +210,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.storageBackend)
+		return sql.ProvideUnifiedSearchGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.storageBackend)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

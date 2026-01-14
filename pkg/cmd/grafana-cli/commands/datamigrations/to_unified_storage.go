@@ -74,7 +74,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 
-	grpcClient, err := newUnifiedClient(cfg, sqlStore, featureToggles)
+	grpcClient, err := newUnifiedMigratorClient(cfg, sqlStore, featureToggles)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	return runInteractiveMigration(ctx, cfg, opts, dashboardAccess, grpcClient, start)
 }
 
-func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
+func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.MigratorClient, start time.Time) error {
 	migrator := migrations.ProvideUnifiedMigrator(dashboardAccess, grpcClient)
 
 	opts.WithHistory = true // always include history in non-interactive mode
@@ -109,7 +109,7 @@ func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions,
 	return nil
 }
 
-func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
+func runInteractiveMigration(ctx context.Context, cfg *setting.Cfg, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.MigratorClient, start time.Time) error {
 	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
 	if err != nil {
 		return err
@@ -225,7 +225,7 @@ func promptYesNo(prompt string) (bool, error) {
 	}
 }
 
-func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB, featureToggles featuremgmt.FeatureToggles) (resource.ResourceClient, error) {
+func newUnifiedMigratorClient(cfg *setting.Cfg, sqlStore db.DB, featureToggles featuremgmt.FeatureToggles) (resource.MigratorClient, error) {
 	return unified.ProvideUnifiedStorageClient(&unified.Options{
 		Cfg:      cfg,
 		Features: featureToggles,

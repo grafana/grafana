@@ -31,20 +31,33 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// SearchClient is used to interact with unified search
 type SearchClient interface {
 	resourcepb.ResourceIndexClient
 	resourcepb.ManagedObjectIndexClient
 }
 
+// StorageClient is used to interact with unified storage
+type StorageClient interface {
+	resourcepb.ResourceStoreClient
+	resourcepb.BlobStoreClient
+}
+
+// MigratorClient is used to perform migrations to unified storage
+type MigratorClient interface {
+	resourcepb.BulkStoreClient
+	GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error)
+}
+
+// ResourceClient combines all resource-related clients and should be avoided in favor of more specific interfaces when possible
+//
 //go:generate mockery --name ResourceClient --structname MockResourceClient --inpackage --filename client_mock.go --with-expecter
 type ResourceClient interface {
-	resourcepb.ResourceStoreClient
-	resourcepb.BulkStoreClient
-	resourcepb.BlobStoreClient
+	StorageClient
+	SearchClient
+	MigratorClient
 	resourcepb.DiagnosticsClient
 	resourcepb.QuotasClient
-	// SearchClient methods are included for convenience - the client typically needs both
-	SearchClient
 }
 
 // Internal implementation

@@ -26,7 +26,7 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
 
 type RESTOptionsGetter struct {
-	client         resource.ResourceClient
+	client         resource.StorageClient
 	secrets        secret.InlineSecureValueSupport
 	original       storagebackend.Config
 	configProvider RestConfigProvider
@@ -36,7 +36,7 @@ type RESTOptionsGetter struct {
 }
 
 func NewRESTOptionsGetterForClient(
-	client resource.ResourceClient,
+	client resource.StorageClient,
 	secrets secret.InlineSecureValueSupport,
 	original storagebackend.Config,
 	configProvider RestConfigProvider,

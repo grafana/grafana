@@ -30,6 +30,19 @@ type QOSEnqueueDequeuer interface {
 	Dequeue(ctx context.Context) (func(), error)
 }
 
+// SearchServerOptions contains the options for creating a new SearchServer
+type SearchServerOptions struct {
+	Backend       resource.StorageBackend
+	DB            infraDB.DB
+	Cfg           *setting.Cfg
+	Tracer        trace.Tracer
+	Reg           prometheus.Registerer
+	AccessClient  types.AccessClient
+	SearchOptions resource.SearchOptions
+	IndexMetrics  *resource.BleveIndexMetrics
+	OwnsIndexFn   func(key resource.NamespacedResource) (bool, error)
+}
+
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
 	Backend          resource.StorageBackend
@@ -46,6 +59,51 @@ type ServerOptions struct {
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
 	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
+	// Search is an optional pre-created search server. If nil, one will be created.
+	Search resource.SearchServer
+}
+
+// NewSearchServer creates a new SearchServer with the given options.
+// This can be used to create a standalone search server or to create a search server
+// that will be passed to NewResourceServer.
+func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
+	backend := opts.Backend
+	if backend == nil {
+		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+		if err != nil {
+			return nil, err
+		}
+
+		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
+		b, err := NewBackend(BackendOptions{
+			DBProvider:           eDB,
+			Reg:                  opts.Reg,
+			IsHA:                 isHA,
+			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// Initialize the backend before creating search server
+		if err := b.Init(context.Background()); err != nil {
+			return nil, fmt.Errorf("failed to initialize backend: %w", err)
+		}
+		backend = b
+	}
+
+	search, err := resource.NewSearchServer(opts.SearchOptions, backend, opts.AccessClient, nil, opts.IndexMetrics, opts.OwnsIndexFn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create search server: %w", err)
+	}
+
+	if err := search.Init(context.Background()); err != nil {
+		return nil, fmt.Errorf("failed to initialize search server: %w", err)
+	}
+
+	return search, nil
 }
 
 func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.SearchServer, error) {
@@ -148,7 +206,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 				Reg:                  opts.Reg,
 				IsHA:                 isHA,
 				storageMetrics:       opts.StorageMetrics,
-				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+				LastImportTimeMaxAge: opts.Cfg.MaxFileIndexAge, // No need to keep last_import_times older than max index age.
 			})
 			if err != nil {
 				return nil, nil, err
@@ -166,13 +224,18 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 		}
 	}
 
-	search, err := resource.NewSearchServer(opts.SearchOptions, serverOptions.Backend, opts.AccessClient, nil, opts.IndexMetrics, opts.OwnsIndexFn)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to initialize search: %w", err)
-	}
+	// Use pre-created search server if provided, otherwise create one
+	search := opts.Search
+	if search == nil {
+		var err error
+		search, err = resource.NewSearchServer(opts.SearchOptions, serverOptions.Backend, opts.AccessClient, nil, opts.IndexMetrics, opts.OwnsIndexFn)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create search server: %w", err)
+		}
 
-	if err := search.Init(context.Background()); err != nil {
-		return nil, nil, fmt.Errorf("failed to initialize search: %w", err)
+		if err := search.Init(context.Background()); err != nil {
+			return nil, nil, fmt.Errorf("failed to initialize search server: %w", err)
+		}
 	}
 
 	serverOptions.Search = search

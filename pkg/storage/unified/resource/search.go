@@ -614,6 +614,13 @@ func (s *searchSupport) Stop(_ context.Context) error {
 	return nil
 }
 
+// IsHealthy implements resourcepb.DiagnosticsServer
+func (s *searchSupport) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
+	return &resourcepb.HealthCheckResponse{
+		Status: resourcepb.HealthCheckResponse_SERVING,
+	}, nil
+}
+
 func (s *searchSupport) init(ctx context.Context) error {
 	origCtx := ctx
 

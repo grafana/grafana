@@ -35,11 +35,12 @@ import (
 )
 
 var (
-	_ SearchGrpcService = (*searchService)(nil)
+	_ UnifiedSearchGrpcService = (*searchService)(nil)
 )
 
-// SearchGrpcService is the interface for the standalone search gRPC service.
-type SearchGrpcService interface {
+// UnifiedSearchGrpcService is the interface for the standalone search gRPC service.
+// This follows the same naming convention as UnifiedStorageGrpcService.
+type UnifiedSearchGrpcService interface {
 	services.NamedService
 
 	// GetAddress returns the address where this service is running
@@ -54,10 +55,10 @@ type searchService struct {
 	subservicesWatcher *services.FailureWatcher
 	hasSubservices     bool
 
-	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
-	db       infraDB.DB
-	stopCh   chan struct{}
+	cfg       *setting.Cfg
+	features  featuremgmt.FeatureToggles
+	db        infraDB.DB
+	stopCh    chan struct{}
 	stoppedCh chan error
 
 	handler grpcserver.Provider
@@ -78,9 +79,10 @@ type searchService struct {
 	backend resource.StorageBackend
 }
 
-// ProvideSearchGrpcService creates a standalone search gRPC service.
+// ProvideUnifiedSearchGrpcService creates a standalone search gRPC service.
 // This is used when running search-server as a separate target.
-func ProvideSearchGrpcService(
+// It follows the same naming convention as ProvideUnifiedStorageGrpcService.
+func ProvideUnifiedSearchGrpcService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
@@ -91,7 +93,7 @@ func ProvideSearchGrpcService(
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	backend resource.StorageBackend,
-) (SearchGrpcService, error) {
+) (UnifiedSearchGrpcService, error) {
 	tracer := otel.Tracer("search-server")
 
 	authn := NewAuthenticatorWithFallback(cfg, reg, tracer, func(ctx context.Context) (context.Context, error) {
@@ -227,7 +229,12 @@ func (s *searchService) starting(ctx context.Context) error {
 	srv := s.handler.GetServer()
 	resourcepb.RegisterResourceIndexServer(srv, searchServer)
 	resourcepb.RegisterManagedObjectIndexServer(srv, searchServer)
-	grpc_health_v1.RegisterHealthServer(srv, &searchHealthService{searchServer: searchServer})
+	resourcepb.RegisterDiagnosticsServer(srv, searchServer)
+	healthService, err := resource.ProvideHealthService(searchServer)
+	if err != nil {
+		return fmt.Errorf("failed to create health service: %w", err)
+	}
+	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service
 	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
@@ -322,32 +329,5 @@ func toSearchLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLi
 		HeartbeatTimeout:    resource.RingHeartbeatTimeout,
 		TokensObservePeriod: 0,
 		NumTokens:           resource.RingNumTokens,
-	}, nil
-}
-
-// searchHealthService implements the health check for the search service.
-type searchHealthService struct {
-	searchServer resource.SearchServer
-}
-
-func (h *searchHealthService) Check(ctx context.Context, req *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
-	return &grpc_health_v1.HealthCheckResponse{
-		Status: grpc_health_v1.HealthCheckResponse_SERVING,
-	}, nil
-}
-
-func (h *searchHealthService) Watch(req *grpc_health_v1.HealthCheckRequest, server grpc_health_v1.Health_WatchServer) error {
-	return fmt.Errorf("watch not implemented")
-}
-
-func (h *searchHealthService) List(ctx context.Context, req *grpc_health_v1.HealthListRequest) (*grpc_health_v1.HealthListResponse, error) {
-	check, err := h.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
-	if err != nil {
-		return nil, err
-	}
-	return &grpc_health_v1.HealthListResponse{
-		Statuses: map[string]*grpc_health_v1.HealthCheckResponse{
-			"": check,
-		},
 	}, nil
 }

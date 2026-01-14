@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -261,11 +260,6 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
-	if err != nil {
-		return err
-	}
-
 	serverOptions := ServerOptions{
 		Backend:        s.backend,
 		DB:             s.db,
@@ -273,12 +267,9 @@ func (s *service) starting(ctx context.Context) error {
 		Tracer:         s.tracing,
 		Reg:            s.reg,
 		AccessClient:   authzClient,
-		SearchOptions:  searchOptions,
 		StorageMetrics: s.storageMetrics,
-		IndexMetrics:   s.indexMetrics,
 		Features:       s.features,
 		QOSQueue:       s.queue,
-		OwnsIndexFn:    s.OwnsIndex,
 	}
 
 	if s.cfg.OverridesFilePath != "" {

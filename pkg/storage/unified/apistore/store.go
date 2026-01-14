@@ -88,7 +88,7 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store          resource.ResourceClient
+	store          resource.StorageClient
 	getKey         func(string) (*resourcepb.ResourceKey, error)
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
@@ -112,7 +112,7 @@ type RestConfigProvider interface {
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
-	store resource.ResourceClient,
+	store resource.StorageClient,
 	keyFunc func(obj runtime.Object) (string, error),
 	keyParser func(key string) (*resourcepb.ResourceKey, error),
 	newFunc func() runtime.Object,
