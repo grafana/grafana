@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
 
 import FlameGraphCallTreeContainer from './CallTree/FlameGraphCallTreeContainer';
 import FlameGraph from './FlameGraph/FlameGraph';
 import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { CollapsedMap, FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, SelectedView, TextAlign, ViewMode } from './types';
 
@@ -55,16 +55,16 @@ const FlameGraphPane = ({
   const [rangeMax, setRangeMax] = useState(1);
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   const [sandwichItem, setSandwichItem] = useState<string>();
-  const [collapsedMap, setCollapsedMap] = useState(new CollapsedMap());
+  // Initialize collapsedMap from dataContainer to ensure collapsed groups are shown correctly on first render
+  const [collapsedMap, setCollapsedMap] = useState(() => dataContainer.getCollapsedMap());
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
 
   const styles = useMemo(() => getStyles(theme), [theme]);
 
-  // Initialize collapsed map when dataContainer changes
-  useEffect(() => {
-    if (dataContainer) {
-      setCollapsedMap(dataContainer.getCollapsedMap());
-    }
+  // Re-initialize collapsed map when dataContainer changes (e.g., new data loaded)
+  // Using useLayoutEffect to ensure collapsed state is applied before browser paint
+  useLayoutEffect(() => {
+    setCollapsedMap(dataContainer.getCollapsedMap());
   }, [dataContainer]);
 
   // Reset internal state when resetKey changes (triggered by parent's reset button)
