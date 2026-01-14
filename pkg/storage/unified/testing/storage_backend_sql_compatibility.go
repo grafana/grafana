@@ -36,6 +36,10 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 		KvStore: kv,
 	}
 
+	if db.DriverName() == "sqlite3" {
+		kvOpts.UseChannelNotifier = true
+	}
+
 	if withRvManager {
 		dialect := sqltemplate.DialectForDriver(db.DriverName())
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
