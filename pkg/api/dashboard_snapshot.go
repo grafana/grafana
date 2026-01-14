@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
+	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -34,8 +34,8 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
 				return
 			}
-			r.URL.Path = "/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/" +
-				namespaceMapper(user.GetOrgID()) + "/dashboardsnapshots/create"
+			r.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
+				namespaceMapper(user.GetOrgID()) + "/snapshots/create"
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
@@ -76,21 +76,27 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 		return
 	}
 
-	// Do not check permissions when the instance snapshot public mode is enabled
-	if !hs.Cfg.SnapshotPublicMode {
-		evaluator := ac.EvalAll(ac.EvalPermission(dashboards.ActionSnapshotsCreate), ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(cmd.Dashboard.GetNestedString("uid"))))
-		if canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canSave {
-			c.JsonApiErr(http.StatusForbidden, "forbidden", err)
-			return
-		}
-	}
-
-	dashboardsnapshots.CreateDashboardSnapshot(c, dashboardsnapshot.SnapshotSharingOptions{
+	cfg := snapshot.SnapshotSharingOptions{
 		SnapshotsEnabled:     hs.Cfg.SnapshotEnabled,
 		ExternalEnabled:      hs.Cfg.ExternalEnabled,
 		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,
 		ExternalSnapshotURL:  hs.Cfg.ExternalSnapshotUrl,
-	}, cmd, hs.dashboardsnapshotsService)
+	}
+
+	if hs.Cfg.SnapshotPublicMode {
+		// Public mode: no user or dashboard validation needed
+		dashboardsnapshots.CreateDashboardSnapshotPublic(c, cfg, cmd, hs.dashboardsnapshotsService)
+		return
+	}
+
+	// Regular mode: check permissions
+	evaluator := ac.EvalAll(ac.EvalPermission(dashboards.ActionSnapshotsCreate), ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(cmd.Dashboard.GetNestedString("uid"))))
+	if canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canSave {
+		c.JsonApiErr(http.StatusForbidden, "forbidden", err)
+		return
+	}
+
+	dashboardsnapshots.CreateDashboardSnapshot(c, cfg, cmd, hs.dashboardsnapshotsService)
 }
 
 // GET /api/snapshots/:key
@@ -213,13 +219,6 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusUnauthorized, "OrgID mismatch", nil)
 	}
 
-	if queryResult.External {
-		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)
-		}
-	}
-
 	// Dashboard can be empty (creation error or external snapshot). This means that the mustInt here returns a 0,
 	// which before RBAC would result in a dashboard which has no ACL. A dashboard without an ACL would fallback
 	// to the user’s org role, which for editors and admins would essentially always be allowed here. With RBAC,
@@ -236,6 +235,13 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 
 		if !canEdit && queryResult.UserID != c.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return response.Error(http.StatusForbidden, "Access denied to this snapshot", nil)
+		}
+	}
+
+	if queryResult.External {
+		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)
 		}
 	}
 

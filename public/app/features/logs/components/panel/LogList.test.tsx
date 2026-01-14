@@ -33,13 +33,6 @@ jest.mock('@grafana/runtime', () => {
     ...jest.requireActual('@grafana/runtime'),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
     reportInteraction: jest.fn(),
-    config: {
-      ...jest.requireActual('@grafana/runtime').config,
-      featureToggles: {
-        ...jest.requireActual('@grafana/runtime').config.featureToggles,
-        logRowsPopoverMenu: true,
-      },
-    },
   };
 });
 
@@ -464,7 +457,7 @@ describe('LogList', () => {
 
       // Default displayed fields
       expect(screen.getByText('Log line')).toBeInTheDocument();
-      expect(screen.getByText('OTel attributes')).toBeInTheDocument();
+      expect(screen.getByText('Log attributes')).toBeInTheDocument();
 
       // Suggested field
       expect(screen.getByText('scope_name')).toBeInTheDocument();

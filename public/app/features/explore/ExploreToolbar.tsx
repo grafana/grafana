@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
-import { Components } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -15,9 +14,7 @@ import {
   ToolbarButton,
   ButtonGroup,
   useStyles2,
-  Button,
 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
@@ -28,7 +25,6 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
-import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
@@ -91,7 +87,6 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
-  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
 
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
@@ -204,25 +199,9 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
-  const navBarActions = [
-    <Button
-      key="query-history"
-      size="sm"
-      variant={'secondary'}
-      aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
-      onClick={() => setDrawerOpened(!drawerOpened)}
-      data-testid={Components.QueryTab.queryHistoryButton}
-      icon="history"
-    >
-      <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
-    </Button>,
-    <ShortLinkButtonMenu key="share" />,
-  ];
-
   return (
     <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      <AppChromeUpdate actions={navBarActions} />
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
@@ -328,6 +307,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             primary={true}
             width={(showSmallTimePicker ? 35 : 108) + 'px'}
           />,
+          (!splitted || !isLeftPane) && <ShortLinkButtonMenu key="share" hideText={showSmallTimePicker} />,
           datasourceInstance?.meta.streaming && (
             <LiveTailControls key="liveControls" exploreId={exploreId}>
               {(c) => {

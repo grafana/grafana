@@ -1,49 +1,63 @@
 package plugins
 
 import (
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	restclient "k8s.io/client-go/rest"
+	"fmt"
 
-	"github.com/grafana/grafana-app-sdk/app"
+	authlib "github.com/grafana/authlib/types"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/simple"
-	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
+
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 var (
-	_ appsdkapiserver.AppInstaller    = (*PluginsAppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider = (*PluginsAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller    = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider = (*AppInstaller)(nil)
 )
 
-type PluginsAppInstaller struct {
-	appsdkapiserver.AppInstaller
+type AppInstaller struct {
+	metaManager        *meta.ProviderManager
+	cfgProvider        configprovider.ConfigProvider
+	restConfigProvider apiserver.RestConfigProvider
+
+	*pluginsapp.PluginAppInstaller
 }
 
-func RegisterAppInstaller(
-	cfg *setting.Cfg,
+func ProvideAppInstaller(
+	cfgProvider configprovider.ConfigProvider,
+	restConfigProvider apiserver.RestConfigProvider,
+	pluginStore pluginstore.Store,
+	pluginAssetsService *pluginassets.Service,
+	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
 	features featuremgmt.FeatureToggles,
-) (*PluginsAppInstaller, error) {
-	installer := &PluginsAppInstaller{}
-	specificConfig := any(nil)
-	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, pluginsapp.New)
-	appConfig := app.Config{
-		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData:   *pluginsappapis.LocalManifest().ManifestData,
-		SpecificConfig: specificConfig,
+) (*AppInstaller, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginStoreServiceLoading) {
+		if err := registerAccessControlRoles(accessControlService); err != nil {
+			return nil, fmt.Errorf("registering access control roles: %w", err)
+		}
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, pluginsappapis.NewGoTypeAssociator())
+
+	localProvider := meta.NewLocalProvider(pluginStore, pluginAssetsService)
+	metaProviderManager := meta.NewProviderManager(localProvider)
+	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
+	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager)
 	if err != nil {
 		return nil, err
 	}
-	installer.AppInstaller = i
-	return installer, nil
-}
 
-// GetAuthorizer returns the authorizer for the plugins app.
-func (p *PluginsAppInstaller) GetAuthorizer() authorizer.Authorizer {
-	return pluginsapp.GetAuthorizer()
+	return &AppInstaller{
+		metaManager:        metaProviderManager,
+		cfgProvider:        cfgProvider,
+		restConfigProvider: restConfigProvider,
+		PluginAppInstaller: i,
+	}, nil
 }

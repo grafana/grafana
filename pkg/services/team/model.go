@@ -47,11 +47,11 @@ type CreateTeamCommand struct {
 }
 
 type UpdateTeamCommand struct {
-	ID          int64
-	Name        string
-	Email       string
-	ExternalUID string
-	OrgID       int64 `json:"-"`
+	ID          int64  `json:"-"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	ExternalUID string `json:"-"`
+	OrgID       int64  `json:"-"`
 }
 
 type DeleteTeamCommand struct {

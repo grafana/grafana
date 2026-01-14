@@ -175,7 +175,7 @@
         "label-scrape-interval": "Interval scrapingu",
         "label-series-limit": "Limit řady",
         "label-use-series-endpoint": "Použít koncový bod řady",
-        "more-info": "",
+        "more-info": "Další informace o konfiguraci typu a verze Prometheus ve zdrojích dat najdete v <2>dokumentaci k zajišťování</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Příklad: {{example}}",
         "title-interval-behaviour": "Chování intervalu",
         "title-other": "Ostatní",

@@ -1,20 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { memo, PureComponent, ReactElement, useEffect, useRef, useState } from 'react';
+import { memo, ReactElement, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  ConfirmButton,
-  Field,
-  Icon,
-  Modal,
-  stylesFactory,
-  Tooltip,
-  useStyles2,
-  Stack,
-  TextLink,
-} from '@grafana/ui';
+import { Button, ConfirmButton, Field, Icon, Modal, Tooltip, useStyles2, Stack, TextLink } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
@@ -239,7 +228,7 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
 });
 OrgRow.displayName = 'OrgRow';
 
-const getAddToOrgModalStyles = stylesFactory(() => ({
+const getAddToOrgModalStyles = () => ({
   modal: css({
     width: '500px',
   }),
@@ -249,7 +238,7 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
   modalContent: css({
     overflow: 'visible',
   }),
-}));
+});
 
 interface AddToOrgModalProps {
   isOpen: boolean;
@@ -260,126 +249,104 @@ interface AddToOrgModalProps {
   onDismiss?(): void;
 }
 
-interface AddToOrgModalState {
-  selectedOrg: Organization | null;
-  role: OrgRole;
-  roleOptions: Role[];
-  pendingOrgId: number | null;
-  pendingUserId: number | null;
-  pendingRoles: Role[];
-}
+export const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: AddToOrgModalProps) => {
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [pendingOrgId, setPendingOrgId] = useState<number | null>(null);
+  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
+  const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
+  const styles = useStyles2(getAddToOrgModalStyles);
 
-export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
-  state: AddToOrgModalState = {
-    selectedOrg: null,
-    role: OrgRole.Viewer,
-    roleOptions: [],
-    pendingOrgId: null,
-    pendingUserId: null,
-    pendingRoles: [],
-  };
-
-  onOrgSelect = (org: OrgSelectItem) => {
-    const userOrg = this.props.userOrgs.find((userOrg) => userOrg.orgId === org.value?.id);
-    this.setState({ selectedOrg: org.value!, role: userOrg?.role || OrgRole.Viewer });
+  const onOrgSelect = (org: OrgSelectItem) => {
+    const userOrg = userOrgs.find((userOrg) => userOrg.orgId === org.value?.id);
+    setSelectedOrg(org.value!);
+    setRole(userOrg?.role || OrgRole.Viewer);
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
         fetchRoleOptions(org.value?.id)
-          .then((roles) => this.setState({ roleOptions: roles }))
+          .then((roles) => setRoleOptions(roles))
           .catch((e) => console.error(e));
       }
     }
   };
 
-  onOrgRoleChange = (newRole: OrgRole) => {
-    this.setState({
-      role: newRole,
-    });
+  const onOrgRoleChange = (newRole: OrgRole) => {
+    setRole(newRole);
   };
 
-  onAddUserToOrg = async () => {
-    const { selectedOrg, role } = this.state;
-    this.props.onOrgAdd(selectedOrg!.id, role);
+  const onAddUserToOrg = async () => {
+    onOrgAdd(selectedOrg!.id, role);
     // add the stored userRoles also
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
-        if (this.state.pendingUserId) {
-          await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
+        if (pendingUserId) {
+          await updateUserRoles(pendingRoles, pendingUserId, pendingOrgId!);
           // clear pending state
-          this.setState({
-            pendingOrgId: null,
-            pendingRoles: [],
-            pendingUserId: null,
-          });
+          setPendingOrgId(null);
+          setPendingRoles([]);
+          setPendingUserId(null);
         }
       }
     }
   };
 
-  onCancel = () => {
+  const onCancel = () => {
     // clear selectedOrg when modal is canceled
-    this.setState({
-      selectedOrg: null,
-      pendingRoles: [],
-      pendingOrgId: null,
-      pendingUserId: null,
-    });
-    if (this.props.onDismiss) {
-      this.props.onDismiss();
+    setSelectedOrg(null);
+    setPendingRoles([]);
+    setPendingOrgId(null);
+    setPendingUserId(null);
+    if (onDismiss) {
+      onDismiss();
     }
   };
 
-  onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
+  const onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
     // keep the new role assignments for user
-    this.setState({
-      pendingRoles: roles,
-      pendingOrgId: orgId!,
-      pendingUserId: userId,
-    });
+    setPendingRoles(roles);
+    setPendingOrgId(orgId!);
+    setPendingUserId(userId);
   };
 
-  render() {
-    const { isOpen, user, userOrgs } = this.props;
-    const { role, roleOptions, selectedOrg } = this.state;
-    const styles = getAddToOrgModalStyles();
-    return (
-      <Modal
-        className={styles.modal}
-        contentClassName={styles.modalContent}
-        title={t('admin.add-to-org-modal.title-add-to-an-organization', 'Add to an organization')}
-        isOpen={isOpen}
-        onDismiss={this.onCancel}
-      >
-        <Field label={t('admin.add-to-org-modal.label-organization', 'Organization')}>
-          <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} excludeOrgs={userOrgs} autoFocus />
-        </Field>
-        <Field label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null}>
-          <UserRolePicker
-            userId={user?.id || 0}
-            orgId={selectedOrg?.id}
-            basicRole={role}
-            onBasicRoleChange={this.onOrgRoleChange}
-            basicRoleDisabled={false}
-            roleOptions={roleOptions}
-            apply={true}
-            onApplyRoles={this.onRoleUpdate}
-            pendingRoles={this.state.pendingRoles}
-          />
-        </Field>
-        <Modal.ButtonRow>
-          <Stack gap={2} justifyContent="center">
-            <Button variant="secondary" fill="outline" onClick={this.onCancel}>
-              <Trans i18nKey="admin.user-orgs-modal.cancel-button">Cancel</Trans>
-            </Button>
-            <Button variant="primary" disabled={selectedOrg === null} onClick={this.onAddUserToOrg}>
-              <Trans i18nKey="admin.user-orgs-modal.add-button">Add to organization</Trans>
-            </Button>
-          </Stack>
-        </Modal.ButtonRow>
-      </Modal>
-    );
-  }
-}
+  return (
+    <Modal
+      className={styles.modal}
+      contentClassName={styles.modalContent}
+      title={t('admin.add-to-org-modal.title-add-to-an-organization', 'Add to an organization')}
+      isOpen={isOpen}
+      onDismiss={onCancel}
+    >
+      <Field label={t('admin.add-to-org-modal.label-organization', 'Organization')}>
+        <OrgPicker inputId="new-org-input" onSelected={onOrgSelect} excludeOrgs={userOrgs} autoFocus />
+      </Field>
+      <Field label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null}>
+        <UserRolePicker
+          userId={user?.id || 0}
+          orgId={selectedOrg?.id}
+          basicRole={role}
+          onBasicRoleChange={onOrgRoleChange}
+          basicRoleDisabled={false}
+          roleOptions={roleOptions}
+          apply={true}
+          onApplyRoles={onRoleUpdate}
+          pendingRoles={pendingRoles}
+        />
+      </Field>
+      <Modal.ButtonRow>
+        <Stack gap={2} justifyContent="center">
+          <Button variant="secondary" fill="outline" onClick={onCancel}>
+            <Trans i18nKey="admin.user-orgs-modal.cancel-button">Cancel</Trans>
+          </Button>
+          <Button variant="primary" disabled={selectedOrg === null} onClick={onAddUserToOrg}>
+            <Trans i18nKey="admin.user-orgs-modal.add-button">Add to organization</Trans>
+          </Button>
+        </Stack>
+      </Modal.ButtonRow>
+    </Modal>
+  );
+});
+AddToOrgModal.displayName = 'AddToOrgModal';
 
 interface ChangeOrgButtonProps {
   lockMessage?: string;

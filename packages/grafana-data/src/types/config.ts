@@ -32,11 +32,13 @@ export type AppPluginConfig = {
   path: string;
   version: string;
   preload: boolean;
+  /** @deprecated it will be removed in a future release */
   angular: AngularMeta;
   loadingStrategy: PluginLoadingStrategy;
   dependencies: PluginDependencies;
   extensions: PluginExtensions;
   moduleHash?: string;
+  buildMode?: string;
 };
 
 export type PreinstalledPlugin = {
@@ -218,6 +220,7 @@ export interface GrafanaConfig {
   snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
+  /** @deprecated it will be removed in a future release */
   apps: Record<string, AppPluginConfig>;
   auth: AuthSettings;
   minRefreshInterval: string;
@@ -288,6 +291,7 @@ export interface GrafanaConfig {
   rudderstackWriteKey: string;
   rudderstackDataPlaneUrl: string;
   rudderstackSdkUrl: string;
+  rudderstackV3SdkUrl: string;
   rudderstackConfigUrl: string;
   rudderstackIntegrationsUrl: string;
   applicationInsightsConnectionString: string;
@@ -305,6 +309,7 @@ export interface GrafanaConfig {
   sharedWithMeFolderUID: string;
   rootFolderUID: string;
   localFileSystemAvailable: boolean;
+  cloudMigrationEnabled: boolean;
   cloudMigrationIsTarget: boolean;
   cloudMigrationPollIntervalMs: number;
   pluginCatalogURL: string;

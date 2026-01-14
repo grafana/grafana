@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 type DashboardSearchClient struct {
@@ -37,11 +37,11 @@ func NewDashboardSearchClient(dashboardStore dashboards.Store, sorter sort.Servi
 }
 
 var sortByMapping = map[string]string{
-	unisearch.DASHBOARD_VIEWS_LAST_30_DAYS:  "viewed-recently",
-	unisearch.DASHBOARD_VIEWS_TOTAL:         "viewed",
-	unisearch.DASHBOARD_ERRORS_LAST_30_DAYS: "errors-recently",
-	unisearch.DASHBOARD_ERRORS_TOTAL:        "errors",
-	"title":                                 "alpha",
+	builders.DASHBOARD_VIEWS_LAST_30_DAYS:  "viewed-recently",
+	builders.DASHBOARD_VIEWS_TOTAL:         "viewed",
+	builders.DASHBOARD_ERRORS_LAST_30_DAYS: "errors-recently",
+	builders.DASHBOARD_ERRORS_TOTAL:        "errors",
+	"title":                                "alpha",
 }
 
 func ParseSortName(sortName string) (string, bool, error) {
@@ -231,7 +231,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			}
 			query.ManagerIdentity = vals[0]
 
-		case unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE:
+		case builders.DASHBOARD_LIBRARY_PANEL_REFERENCE:
 			if len(vals) != 1 {
 				return nil, apierrors.NewBadRequest("only one library panel uid is supported")
 			}
@@ -360,7 +360,17 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		})
 	}
 
-	list.TotalHits = int64(len(list.Results.Rows))
+	// the UI expects us to populate "TotalHits" with the total search hits, not however many we are returning.
+	// this is a dumb workaround due to the fact that legacy doesn't expose a way of "counting search hits"
+	// it fixes a bug that only happens in mode 1-2 that prevents pagination from working in the dashboard list view
+	// we only have a handful of instances running in this mode and moving towards 0 instances fast, so this is fine
+	query.Limit = 0
+	query.Page = 1
+	res, err = c.dashboardStore.FindDashboards(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	list.TotalHits = int64(len(res))
 
 	return list, nil
 }

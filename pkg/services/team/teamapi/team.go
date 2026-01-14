@@ -312,6 +312,10 @@ type GetTeamByIDParams struct {
 	// in:path
 	// required:true
 	TeamID string `json:"team_id"`
+	// in:query
+	// required:false
+	// default: false
+	AccessControl bool `json:"accesscontrol"`
 }
 
 // swagger:parameters deleteTeamByID

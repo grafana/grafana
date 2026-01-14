@@ -231,6 +231,10 @@ JSON Body schema:
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **spec** – The dashboard json.
 
+{{< admonition type="note" >}}
+Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
+{{< /admonition >}}
+
 **Example Response**:
 
 ```http
@@ -521,6 +525,10 @@ JSON Body schema:
 - **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
 - **spec** – The dashboard json.
 
+{{< admonition type="note" >}}
+Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
+{{< /admonition >}}
+
 **Example Response**:
 
 ```http
@@ -627,6 +635,14 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Not Found
+
+### Retrieve additional access information
+
+`GET /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid/dto`
+
+Retrieves a dashboard with additional access information.
+
+The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request.
 
 ## List Dashboards
 
@@ -767,12 +783,12 @@ Status Codes:
 
 Deletes a dashboard via the dashboard uid.
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
+- **`namespace`**: To read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+- **`uid`**: The unique identifier of the dashboard to update. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#new-dashboard-apis) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |

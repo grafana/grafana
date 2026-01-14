@@ -27,12 +27,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
-	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -43,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -153,7 +152,6 @@ func TestGetRemoteState(t *testing.T) {
 	getOkHandler := func(state string) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
-			require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 
 			res := map[string]any{
 				"status": "success",
@@ -268,7 +266,6 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
-		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 		w.Header().Add("content-type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "error"}))
@@ -278,7 +275,6 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	var configSyncs, stateSyncs int
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
-		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 		res := map[string]any{"status": "success"}
 
 		if r.Method == http.MethodPost {
@@ -301,13 +297,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	var c apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	encryptedReceivers, err := notifier.EncryptedReceivers(c.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
-		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
-		if err != nil {
-			return "", err
-		}
-		return base64.StdEncoding.EncodeToString(encrypted), nil
-	})
+	encryptedReceivers, err := notifier.EncryptedReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	c.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 
@@ -432,7 +422,6 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
-		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 		w.Header().Add("content-type", "application/json")
 
 		b, err := io.ReadAll(r.Body)
@@ -466,13 +455,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	// Create a config with correctly encrypted and encoded secrets.
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
-		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
-		if err != nil {
-			return "", err
-		}
-		return base64.StdEncoding.EncodeToString(encrypted), nil
-	})
+	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 	testGrafanaConfigWithEncryptedSecret, err := json.Marshal(inputCfg)
@@ -639,7 +622,6 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 	var got apimodels.TestReceiversConfigBodyParams
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
-		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 		w.Header().Add("Content-Type", "application/json")
 		require.NoError(t, json.NewDecoder(r.Body).Decode(&got))
 		require.NoError(t, r.Body.Close())
@@ -668,13 +650,7 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 
 	var inputCfg apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
-	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
-		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
-		if err != nil {
-			return "", err
-		}
-		return base64.StdEncoding.EncodeToString(encrypted), nil
-	})
+	encryptedReceivers, err := notifier.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 
@@ -746,7 +722,6 @@ func TestApplyConfigWithExtraConfigs(t *testing.T) {
 	var configSent client.UserGrafanaConfig
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
-		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 
 		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
@@ -828,7 +803,6 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 	var configSent client.UserGrafanaConfig
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
-		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
 
 		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
@@ -1044,13 +1018,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	{
 		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 		require.NoError(t, err)
-		encryptedReceivers, err := notifier.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
-			encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
-			if err != nil {
-				return "", err
-			}
-			return base64.StdEncoding.EncodeToString(encrypted), nil
-		})
+		encryptedReceivers, err := notifier.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 		postableCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 		require.NoError(t, err)
 

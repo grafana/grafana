@@ -20,8 +20,7 @@ func TestValidateCreate(t *testing.T) {
 	tests := []struct {
 		name        string
 		folder      *folders.Folder
-		getter      *folders.FolderInfoList
-		getterError error
+		mockFolders map[string]*folders.Folder
 		expectedErr string
 		maxDepth    int // defaults to 5 unless set
 	}{
@@ -36,10 +35,23 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "p2", Parent: "p3"},
-					{Name: "p3"},
+			mockFolders: map[string]*folders.Folder{
+				"p2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p2",
+						Annotations: map[string]string{"grafana.app/folder": "p3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p2 title",
+					},
+				},
+				"p3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "p3",
+					},
+					Spec: folders.FolderSpec{
+						Title: "p3 title",
+					},
 				},
 			},
 		},
@@ -94,12 +106,41 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "p2", Parent: "p3"},
-					{Name: "p3", Parent: "p4"},
-					{Name: "p4", Parent: folder.GeneralFolderUID},
-					{Name: folder.GeneralFolderUID},
+			mockFolders: map[string]*folders.Folder{
+				"p2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p2",
+						Annotations: map[string]string{"grafana.app/folder": "p3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p2 title",
+					},
+				},
+				"p3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p3",
+						Annotations: map[string]string{"grafana.app/folder": "p4"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p3 title",
+					},
+				},
+				"p4": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p4",
+						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "p4 title",
+					},
+				},
+				folder.GeneralFolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: folder.GeneralFolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "General",
+					},
 				},
 			},
 			maxDepth:    2,
@@ -116,16 +157,94 @@ func TestValidateCreate(t *testing.T) {
 					Title: "some title",
 				},
 			},
-			getter: &folders.FolderInfoList{
-				Items: []folders.FolderInfo{
-					{Name: "4", Parent: "3"},
-					{Name: "3", Parent: "2"},
-					{Name: "2", Parent: "1"},
-					{Name: "1", Parent: folder.GeneralFolderUID},
-					{Name: folder.GeneralFolderUID},
+			mockFolders: map[string]*folders.Folder{
+				"4": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "4",
+						Annotations: map[string]string{"grafana.app/folder": "3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "4 title",
+					},
+				},
+				"3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "3",
+						Annotations: map[string]string{"grafana.app/folder": "2"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "3 title",
+					},
+				},
+				"2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "2",
+						Annotations: map[string]string{"grafana.app/folder": "1"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "2 title",
+					},
+				},
+				"1": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "1",
+					},
+					Spec: folders.FolderSpec{
+						Title: "1 title",
+					},
 				},
 			},
 			maxDepth: folder.MaxNestedFolderDepth,
+		},
+		{
+			name: "cannot create a circular reference",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "3",
+					Annotations: map[string]string{"grafana.app/folder": "2"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			expectedErr: "cyclic folder references found",
+			mockFolders: map[string]*folders.Folder{
+				"2": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "2",
+						Annotations: map[string]string{"grafana.app/folder": "1"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "2 title",
+					},
+				},
+				"1": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "1",
+						Annotations: map[string]string{"grafana.app/folder": "3"},
+					},
+					Spec: folders.FolderSpec{
+						Title: "1 title",
+					},
+				},
+				"3": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "3",
+						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "3 title",
+					},
+				},
+				folder.GeneralFolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: folder.GeneralFolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "General",
+					},
+				},
+			},
 		},
 	}
 
@@ -135,10 +254,16 @@ func TestValidateCreate(t *testing.T) {
 			if maxDepth == 0 {
 				maxDepth = 5
 			}
-			err := validateOnCreate(context.Background(), tt.folder,
-				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
-					return tt.getter, tt.getterError
-				}, maxDepth)
+
+			mockStorage := grafanarest.NewMockStorage(t)
+			for name, f := range tt.mockFolders {
+				f.Name = name
+				mockStorage.On("Get", context.Background(), name, &metav1.GetOptions{}).Return(f, nil).Maybe()
+			}
+
+			getter := newParentsGetter(mockStorage, maxDepth)
+
+			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -157,6 +282,7 @@ func TestValidateUpdate(t *testing.T) {
 		old          *folders.Folder
 		parents      *folders.FolderInfoList
 		parentsError error
+		allFolders   []folders.Folder
 		expectedErr  string
 		maxDepth     int // defaults to 5 unless set
 	}{
@@ -329,6 +455,74 @@ func TestValidateUpdate(t *testing.T) {
 			},
 			expectedErr: "cannot move folder under its own descendant",
 		},
+		{
+			name: "error when moving folder from root to level2 with children exceeds max depth",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "folderWithChildren",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "level2",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "folder with children",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "folderWithChildren",
+				},
+				Spec: folders.FolderSpec{
+					Title: "folder with children",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "level2", Parent: "level1"},
+					{Name: "level1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			allFolders: []folders.Folder{
+				{ObjectMeta: metav1.ObjectMeta{Name: "child1", Annotations: map[string]string{utils.AnnoKeyFolder: "folderWithChildren"}}},
+				{ObjectMeta: metav1.ObjectMeta{Name: "grandchild1", Annotations: map[string]string{utils.AnnoKeyFolder: "child1"}}},
+			},
+			maxDepth:    4,
+			expectedErr: "[folder.maximum-depth-reached]",
+		},
+		{
+			name: "can move folder from root level to level1 with children when within max depth",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "folderWithChildren",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "level1",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "folder with children",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "folderWithChildren",
+				},
+				Spec: folders.FolderSpec{
+					Title: "folder with children",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: "level1", Parent: folder.GeneralFolderUID},
+					{Name: folder.GeneralFolderUID},
+				},
+			},
+			allFolders: []folders.Folder{
+				{ObjectMeta: metav1.ObjectMeta{Name: "child1", Annotations: map[string]string{utils.AnnoKeyFolder: "folderWithChildren"}}},
+				{ObjectMeta: metav1.ObjectMeta{Name: "grandchild1", Annotations: map[string]string{utils.AnnoKeyFolder: "child1"}}},
+			},
+			maxDepth: 4,
+		},
 	}
 
 	for _, tt := range tests {
@@ -349,11 +543,17 @@ func TestValidateUpdate(t *testing.T) {
 					}, nil).Maybe()
 				}
 			}
+			for i := range tt.allFolders {
+				f := tt.allFolders[i]
+				m.On("Get", context.Background(), f.Name, &metav1.GetOptions{}).Return(&f, nil).Maybe()
+			}
 
 			err := validateOnUpdate(context.Background(), tt.folder, tt.old, m,
 				func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
 					return tt.parents, tt.parentsError
-				}, maxDepth)
+				},
+				&mockSearchClient{folders: tt.allFolders},
+				maxDepth)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -568,8 +768,7 @@ type mockSearchClient struct {
 	stats    *resourcepb.ResourceStatsResponse
 	statsErr error
 
-	search    *resourcepb.ResourceSearchResponse
-	searchErr error
+	folders []folders.Folder
 }
 
 // GetStats implements resourcepb.ResourceIndexClient.
@@ -578,6 +777,40 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 }
 
 // Search implements resourcepb.ResourceIndexClient.
-func (m *mockSearchClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	return m.search, m.searchErr
+func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	// get the list of parents from the search request
+	parentSet := make(map[string]bool)
+	if req.Options != nil && req.Options.Fields != nil {
+		for _, field := range req.Options.Fields {
+			if field.Key == "folder" && field.Operator == "in" {
+				for _, v := range field.Values {
+					parentSet[v] = true
+				}
+			}
+		}
+	}
+
+	// find children that match the parent filter
+	var rows []*resourcepb.ResourceTableRow
+	for i := range m.folders {
+		meta, err := utils.MetaAccessor(&m.folders[i])
+		if err != nil {
+			continue
+		}
+		parentUID := meta.GetFolder()
+		if parentSet[parentUID] {
+			rows = append(rows, &resourcepb.ResourceTableRow{
+				Key: &resourcepb.ResourceKey{Name: m.folders[i].Name},
+			})
+		}
+	}
+
+	return &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{Rows: rows},
+	}, nil
+}
+
+// RebuildIndexes implements resourcepb.ResourceIndexClient.
+func (m *mockSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, fmt.Errorf("not implemented")
 }

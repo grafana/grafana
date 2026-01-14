@@ -1,6 +1,7 @@
 import { renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { first, noop } from 'lodash';
+import type { JSX } from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
@@ -16,6 +17,7 @@ import {
 import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
 import { mockReceiversState } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import {
@@ -329,6 +331,60 @@ describe('Policy', () => {
 
     const customPolicy = screen.getByTestId('am-route-container');
     expect(within(customPolicy).getByTestId('matches-all')).toBeInTheDocument();
+  });
+
+  it('shows correct badge when policy has file provenance', () => {
+    const mockRoute: RouteWithID = {
+      id: 'test-route',
+      receiver: 'test-receiver',
+      routes: [],
+    };
+
+    renderPolicy(
+      <Policy
+        readOnly
+        isDefaultPolicy
+        currentRoute={mockRoute}
+        contactPointsState={mockReceiversState()}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={noop}
+        onAddPolicy={noop}
+        onDeletePolicy={noop}
+        onShowAlertInstances={noop}
+        provisioned
+        provenance={KnownProvenance.File}
+      />
+    );
+
+    const badge = screen.getByText('Provisioned');
+    expect(badge).toBeInTheDocument();
+  });
+
+  it('shows correct badge when policy has converted_prometheus provenance', () => {
+    const mockRoute: RouteWithID = {
+      id: 'test-route',
+      receiver: 'test-receiver',
+      routes: [],
+    };
+
+    renderPolicy(
+      <Policy
+        readOnly
+        isDefaultPolicy
+        currentRoute={mockRoute}
+        contactPointsState={mockReceiversState()}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={noop}
+        onAddPolicy={noop}
+        onDeletePolicy={noop}
+        onShowAlertInstances={noop}
+        provisioned
+        provenance={KnownProvenance.ConvertedPrometheus}
+      />
+    );
+
+    const badge = screen.getByText('Imported');
+    expect(badge).toBeInTheDocument();
   });
 });
 

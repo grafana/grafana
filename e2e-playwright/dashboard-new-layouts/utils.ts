@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { DashboardPage, E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
@@ -48,8 +49,9 @@ export const flows = {
   },
   async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.section).click();
+    await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
     await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.dockToggle).click();
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
       .click();
@@ -77,6 +79,20 @@ export const flows = {
       await variableLabelInput.blur();
     }
   },
+  async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
+    await flows.newEditPaneVariableClick(dashboardPage, selectors);
+    await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+    // set the textbox variable value
+    const type = 'variable-type Value';
+    const fieldLabel = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
+    );
+    await expect(fieldLabel).toBeVisible();
+    const inputField = fieldLabel.locator('input');
+    await expect(inputField).toBeVisible();
+    await inputField.fill(variable.value);
+    await inputField.blur();
+  },
 };
 
 export type Variable = {
@@ -87,8 +103,16 @@ export type Variable = {
   value: string;
 };
 
-export async function saveDashboard(dashboardPage: DashboardPage, page: Page, selectors: E2ESelectorGroups) {
+export async function saveDashboard(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  title?: string
+) {
   await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+  if (title) {
+    await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
+  }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
   await expect(page.getByText('Dashboard saved')).toBeVisible();
 }
@@ -97,12 +121,18 @@ export async function checkRepeatedPanelTitles(
   dashboardPage: DashboardPage,
   selectors: E2ESelectorGroups,
   title: string,
-  options: Array<string | number>
+  options: Array<string | number>,
+  expectHidden = false
 ) {
   for (const option of options) {
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(`${title}${option}`))
-    ).toBeVisible();
+    const titleLocator = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Panel.title(`${title}${option}`)
+    );
+    if (expectHidden) {
+      await expect(titleLocator).toBeHidden();
+    } else {
+      await expect(titleLocator).toBeVisible();
+    }
   }
 }
 
@@ -188,6 +218,15 @@ export async function goToEmbeddedPanel(page: Page) {
   await page.goto(soloPanelUrl!);
 }
 
+export async function goToPanelSnapshot(page: Page) {
+  // extracting snapshot url from clipboard
+  const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
+
+  expect(snapshotUrl).toBeDefined();
+
+  await page.goto(snapshotUrl);
+}
+
 export async function moveTab(
   dashboardPage: DashboardPage,
   page: Page,
@@ -231,4 +270,13 @@ export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2
   const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
   const boundingBox = await tab.boundingBox();
   return boundingBox;
+}
+
+export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage) {
+  await page.getByLabel('layout-selection-option-Auto grid').click();
+  // confirm layout change if applicable
+  const confirmModal = dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete);
+  if (confirmModal) {
+    await confirmModal.click();
+  }
 }

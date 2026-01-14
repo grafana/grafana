@@ -473,6 +473,10 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			)
 		}
 
+		if token.RefreshToken == "" {
+			ctxLogger.Warn("Refresh token is missing after token refresh", "authmodule", tokenRefreshMetadata.AuthModule)
+		}
+
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			updateAuthCommand := &login.UpdateAuthInfoCommand{
@@ -654,6 +658,10 @@ func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester
 		}
 
 		return externalSessions[0], nil
+	}
+
+	if sessionToken == nil {
+		return nil, auth.ErrExternalSessionTokenNotFound
 	}
 
 	// For regular users, we use the session token ID to fetch the external session

@@ -21,8 +21,8 @@ import {
   Stack,
   Text,
 } from '@grafana/ui';
-import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { Folder } from '../../types/rule-form';
 import {
@@ -409,9 +409,10 @@ function TargetFolderField() {
           name="targetFolder"
           render={({ field: { onChange, ref, ...field } }) => (
             <Stack width={42}>
-              <NestedFolderPicker
+              <ProvisioningAwareFolderPicker
                 permission="view"
                 showRootFolder={false}
+                repositoryName={undefined}
                 invalid={!!errors.targetFolder?.message}
                 {...field}
                 value={field.value?.uid}

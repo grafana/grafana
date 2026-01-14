@@ -56,11 +56,12 @@ describe('EmptyTransformationsMessage', () => {
           onShowPicker={onShowPicker}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
+          data={[]}
         />
       );
 
       // Should show SQL transformation card
-      expect(screen.getByText('SQL Expressions')).toBeInTheDocument();
+      expect(screen.getByText('Transform with SQL')).toBeInTheDocument();
       expect(screen.getByText('Organize fields by name')).toBeInTheDocument();
       expect(screen.getByText('Group by')).toBeInTheDocument();
       expect(screen.getByText('Extract fields')).toBeInTheDocument();
@@ -75,10 +76,11 @@ describe('EmptyTransformationsMessage', () => {
           onShowPicker={onShowPicker}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
+          data={[]}
         />
       );
 
-      expect(screen.queryByText('SQL Expressions')).not.toBeInTheDocument();
+      expect(screen.queryByText('Transform with SQL')).not.toBeInTheDocument();
       // But should still show transformation cards
       expect(screen.getByText('Organize fields by name')).toBeInTheDocument();
     });
@@ -92,6 +94,7 @@ describe('EmptyTransformationsMessage', () => {
           onShowPicker={onShowPicker}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
+          data={[]}
         />
       );
 
@@ -103,15 +106,17 @@ describe('EmptyTransformationsMessage', () => {
     });
 
     it('should not show SQL transformation card when onGoToQueries is not provided', () => {
-      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} onAddTransformation={onAddTransformation} />);
+      render(
+        <EmptyTransformationsMessage onShowPicker={onShowPicker} onAddTransformation={onAddTransformation} data={[]} />
+      );
 
-      expect(screen.queryByText('SQL Expressions')).not.toBeInTheDocument();
+      expect(screen.queryByText('Transform with SQL')).not.toBeInTheDocument();
     });
 
     it('should not show transformation cards grid when neither onGoToQueries nor onAddTransformation are provided', () => {
-      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} />);
+      render(<EmptyTransformationsMessage onShowPicker={onShowPicker} data={[]} />);
 
-      expect(screen.queryByText('SQL Expressions')).not.toBeInTheDocument();
+      expect(screen.queryByText('Transform with SQL')).not.toBeInTheDocument();
 
       // But should still show the "Show more" button
       expect(screen.getByTestId(selectors.components.Transforms.addTransformationButton)).toBeInTheDocument();

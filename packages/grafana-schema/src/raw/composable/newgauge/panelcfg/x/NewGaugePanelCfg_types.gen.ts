@@ -15,37 +15,45 @@ export const pluginVersion = "12.4.0-pre";
 export interface GaugePanelEffects {
   barGlow?: boolean;
   centerGlow?: boolean;
-  rounded?: boolean;
-  spotlight?: boolean;
+  gradient?: boolean;
 }
 
 export const defaultGaugePanelEffects: Partial<GaugePanelEffects> = {
   barGlow: false,
   centerGlow: false,
-  rounded: false,
-  spotlight: false,
+  gradient: true,
 };
 
 export interface Options extends common.SingleStatBaseOptions {
+  barShape: ('flat' | 'rounded');
   barWidthFactor: number;
   effects: GaugePanelEffects;
-  gradient: ('none' | 'auto');
+  endpointMarker?: ('point' | 'glow' | 'none');
+  minVizHeight: number;
+  minVizWidth: number;
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
+  sizing: common.BarGaugeSizing;
   sparkline?: boolean;
+  textMode?: ('auto' | 'value_and_name' | 'value' | 'name' | 'none');
 }
 
 export const defaultOptions: Partial<Options> = {
+  barShape: 'flat',
   barWidthFactor: 0.5,
   effects: {},
-  gradient: 'auto',
+  endpointMarker: 'point',
+  minVizHeight: 75,
+  minVizWidth: 75,
   segmentCount: 1,
   segmentSpacing: 0.3,
   shape: 'gauge',
   showThresholdLabels: false,
   showThresholdMarkers: true,
+  sizing: common.BarGaugeSizing.Auto,
   sparkline: true,
+  textMode: 'auto',
 };

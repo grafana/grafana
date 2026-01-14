@@ -1,12 +1,20 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { addRulePageEnrichmentSection } from '../../components/rule-viewer/tabs/extensions/RuleViewerExtension';
+import { useEnrichmentAbility } from '../../hooks/useAbilities';
 
 import { __clearRuleViewTabsForTests, addEnrichmentSection, getRuleViewExtensionTabs } from './extensions';
+
+jest.mock('../../hooks/useAbilities');
+
+const mocks = {
+  useEnrichmentAbility: jest.mocked(useEnrichmentAbility),
+};
 
 describe('rule-view-page navigation', () => {
   beforeEach(() => {
     __clearRuleViewTabsForTests();
+    mocks.useEnrichmentAbility.mockReturnValue([false, true]);
   });
 
   it('does not include Alert enrichment tab when not registered', () => {
