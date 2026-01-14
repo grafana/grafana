@@ -30,7 +30,10 @@ export function DashListItem({
   const shortTitle = truncate(dashboard.name, { length: 40, omission: '…' });
 
   const onCardLinkClick = () => {
-    reportInteraction('grafana_recently_viewed_dashboards_click_card', {
+    reportInteraction('grafana_browse_dashboards_page_click_list_item', {
+      itemKind: dashboard.kind,
+      source: 'browseDashboardsPage_BrowseView',
+      uid: dashboard.uid,
       cardOrder: order,
     });
   };
