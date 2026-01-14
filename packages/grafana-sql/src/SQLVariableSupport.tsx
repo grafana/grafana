@@ -120,7 +120,7 @@ const FieldMapping = (props: SQLVariableQueryEditorProps) => {
   );
 };
 
-const migrateVariableQuery = (rawQuery: string | SQLQuery): SQLVariableQuery => {
+export const migrateVariableQuery = (rawQuery: string | SQLQuery): SQLVariableQuery => {
   if (typeof rawQuery !== 'string') {
     return {
       ...rawQuery,
@@ -138,7 +138,7 @@ const migrateVariableQuery = (rawQuery: string | SQLQuery): SQLVariableQuery => 
   };
 };
 
-const convertOriginalFieldsToVariableFields = (original_fields: Field[], meta?: SQLQueryMeta): Field[] => {
+export const convertOriginalFieldsToVariableFields = (original_fields: Field[], meta?: SQLQueryMeta): Field[] => {
   if (original_fields.length < 1) {
     throw new Error('at least one field expected for variable');
   }
