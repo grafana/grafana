@@ -36,18 +36,6 @@ export class HistorySrv {
 
     return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions/${version}`);
   }
-
-  // restore should not be needed -- each result has the full dashboard data,
-  // so just update the dashboard with the data from the version you want to restore
-  restoreDashboard(dashboardUID: string, version: number) {
-    if (typeof dashboardUID !== 'string') {
-      return Promise.resolve({});
-    }
-
-    const url = `api/dashboards/uid/${dashboardUID}/restore`;
-
-    return getBackendSrv().post(url, { version });
-  }
 }
 
 const historySrv = new HistorySrv();
