@@ -369,7 +369,7 @@ func testEventStoreListKeysSince(t *testing.T, ctx context.Context, store *event
 
 	// List events since RV 1500 (should get events with RV 2000 and 3000)
 	retrievedEvents := make([]string, 0, 2)
-	for eventKey, err := range store.ListKeysSince(ctx, 1500) {
+	for eventKey, err := range store.ListKeysSince(ctx, 1500, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
 	}
@@ -429,7 +429,7 @@ func testEventStoreListSince(t *testing.T, ctx context.Context, store *eventStor
 
 	// List events since RV 1500 (should get events with RV 2000 and 3000)
 	retrievedEvents := make([]Event, 0, 2)
-	for event, err := range store.ListSince(ctx, 1500) {
+	for event, err := range store.ListSince(ctx, 1500, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
 	}
@@ -453,7 +453,7 @@ func TestEventStore_ListSince_Empty(t *testing.T) {
 func testEventStoreListSinceEmpty(t *testing.T, ctx context.Context, store *eventStore) {
 	// List events when store is empty
 	retrievedEvents := make([]Event, 0)
-	for event, err := range store.ListSince(ctx, 0) {
+	for event, err := range store.ListSince(ctx, 0, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
 	}
@@ -825,7 +825,7 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 	// List events since 90 minutes ago using subtractDurationFromSnowflake
 	sinceRV := subtractDurationFromSnowflake(snowflakeFromTime(now), 90*time.Minute)
 	retrievedEvents := make([]string, 0)
-	for eventKey, err := range store.ListKeysSince(ctx, sinceRV) {
+	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
 	}
@@ -842,7 +842,7 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 	// List events since 30 minutes ago using subtractDurationFromSnowflake
 	sinceRV = subtractDurationFromSnowflake(snowflakeFromTime(now), 30*time.Minute)
 	retrievedEvents = make([]string, 0)
-	for eventKey, err := range store.ListKeysSince(ctx, sinceRV) {
+	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
 	}

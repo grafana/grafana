@@ -555,7 +555,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			Resource:  "resource",
 		}
 		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
-		require.Greater(t, latestRv, rvCreated)
+		require.Equal(t, latestRv, rvDeleted)
 
 		counter := 0
 		for res, err := range seq {
@@ -629,11 +629,11 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		rvCreated3, _ := writeEvent(ctx, backend, "bItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 
 		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated1-1)
-		require.Greater(t, latestRv, rvCreated3)
+		require.Equal(t, latestRv, rvCreated3)
 
 		counter := 0
-		names := []string{"aItem", "bItem", "cItem"}
-		rvs := []int64{rvCreated2, rvCreated3, rvCreated1}
+		names := []string{"bItem", "aItem", "cItem"}
+		rvs := []int64{rvCreated3, rvCreated2, rvCreated1}
 		for res, err := range seq {
 			require.NoError(t, err)
 			require.Equal(t, key.Namespace, res.Key.Namespace)
