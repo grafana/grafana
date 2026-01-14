@@ -4652,6 +4652,7 @@
     },
     "canvas-actions": {
       "add-panel": "Přidat panel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Seskupit do řádku",
@@ -5735,6 +5736,7 @@
     "validation": {
       "invalid-dashboard-id": "Nelze najít platné ID na Grafana.com",
       "invalid-json": "Neplatný JSON",
+      "tag-too-long": "",
       "tags-expected-array": "očekávané pole tagů",
       "tags-expected-strings": "očekávané pole řetězců tagů"
     },
@@ -9325,7 +9327,8 @@
     "tags-input": {
       "add": "Přidat",
       "placeholder-new-tag": "Nový štítek (pro přidání stiskněte klávesu Enter)",
-      "remove": "Odebrat tag: {{name}}"
+      "remove": "Odebrat tag: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Synchronizovat časy",
@@ -10808,18 +10811,6 @@
     "help/documentation": "Dokumentace",
     "help/keyboard-shortcuts": "Klávesové zkratky",
     "help/support": "Podpora",
-    "history-container": {
-      "drawer-tittle": "Historie"
-    },
-    "history-wrapper": {
-      "collapse": "Sbalit",
-      "expand": "Rozbalit",
-      "icon-selected": "Vybraný záznam",
-      "icon-unselected": "Normální záznam",
-      "show-more": "Zobrazit více",
-      "today": "Dnes",
-      "yesterday": "Včera"
-    },
     "home": {
       "title": "Domů"
     },
@@ -11915,7 +11906,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Odstranit",
       "confirm-delete-keep-resources": "Opravdu chcete odstranit konfiguraci úložiště, ale ponechat jeho zdroje?",
       "confirm-delete-with-resources": "Opravdu chcete odstranit konfiguraci úložiště a všechny jeho zdroje?",
@@ -12183,6 +12220,7 @@
       "jobs": "Práce"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Nastavení",
       "source-code": "Zdrojový kód"
     },

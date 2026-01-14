@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Lägg till panel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Gruppera i rad",
@@ -5695,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Kunde inte hitta ett giltigt Grafana.com-ID\n",
       "invalid-json": "Felaktigt JSON-format",
+      "tag-too-long": "",
       "tags-expected-array": "taggar förväntade matris",
       "tags-expected-strings": "taggar förväntade strängmatris"
     },
@@ -9253,7 +9255,8 @@
     "tags-input": {
       "add": "Lägg till",
       "placeholder-new-tag": "Ny tagg (ange nyckel för att lägga till)",
-      "remove": "Ta bort tagg: {{name}}"
+      "remove": "Ta bort tagg: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Synkronisera tider",
@@ -10720,18 +10723,6 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tangentbordsgenvägar",
     "help/support": "Support",
-    "history-container": {
-      "drawer-tittle": "Historik"
-    },
-    "history-wrapper": {
-      "collapse": "Minimera",
-      "expand": "Expandera",
-      "icon-selected": "Markerad inmatning",
-      "icon-unselected": "Normal inmatning",
-      "show-more": "Visa mer",
-      "today": "Idag",
-      "yesterday": "Igår"
-    },
     "home": {
       "title": "Hem"
     },
@@ -11815,7 +11806,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Ta bort",
       "confirm-delete-keep-resources": "Är du säker på att du vill radera lagringsplatskonfigurationen men behålla dess resurser?",
       "confirm-delete-with-resources": "Är du säker på att du vill radera lagringsplatskonfigurationen och alla dess resurser?",
@@ -12079,6 +12116,7 @@
       "jobs": "Jobb"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Inställningar",
       "source-code": "Källkod"
     },

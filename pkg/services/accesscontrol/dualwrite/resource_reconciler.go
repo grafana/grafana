@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -48,6 +50,12 @@ func newResourceReconciler(name string, legacy legacyTupleCollector, zanzanaColl
 }
 
 func (r resourceReconciler) reconcile(ctx context.Context, namespace string) error {
+	ctx, span := tracer.Start(ctx, "accesscontrol.dualwrite.resourceReconciler.reconcile",
+		trace.WithAttributes(attribute.String("namespace", namespace)),
+		trace.WithAttributes(attribute.String("reconciler", r.name)),
+	)
+	defer span.End()
+
 	info, err := claims.ParseNamespace(namespace)
 	if err != nil {
 		return err
@@ -63,7 +71,12 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	}
 
 	// 1. Fetch grafana resources stored in grafana db.
-	res, err := r.legacy(ctx, info.OrgID)
+	legacyCtx, legacySpan := tracer.Start(ctx, "accesscontrol.dualwrite.resourceReconciler.legacyCollector",
+		trace.WithAttributes(attribute.String("namespace", namespace)),
+		trace.WithAttributes(attribute.String("reconciler", r.name)),
+	)
+	res, err := r.legacy(legacyCtx, info.OrgID)
+	legacySpan.End()
 	if err != nil {
 		return fmt.Errorf("failed to collect legacy tuples for %s: %w", r.name, err)
 	}
@@ -211,6 +224,12 @@ func (r resourceReconciler) collectOrphanDeletes(
 }
 
 func (r resourceReconciler) readAllTuples(ctx context.Context, namespace string) ([]*authzextv1.Tuple, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.dualwrite.resourceReconciler.zanzana.readAllTuples",
+		trace.WithAttributes(attribute.String("namespace", namespace)),
+		trace.WithAttributes(attribute.String("reconciler", r.name)),
+	)
+	defer span.End()
+
 	var (
 		out           []*authzextv1.Tuple
 		continueToken string

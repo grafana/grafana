@@ -378,3 +378,29 @@ func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn 
 	}
 	return encrypted, nil
 }
+
+// DecryptIntegrationSettings returns a function to decrypt integration settings.
+func DecryptIntegrationSettings(ctx context.Context, ss secretService) models.DecryptFn {
+	return func(value string) (string, error) {
+		decoded, err := base64.StdEncoding.DecodeString(value)
+		if err != nil {
+			return "", err
+		}
+		decrypted, err := ss.Decrypt(ctx, decoded)
+		if err != nil {
+			return "", err
+		}
+		return string(decrypted), nil
+	}
+}
+
+// EncryptIntegrationSettings returns a function to encrypt integration settings.
+func EncryptIntegrationSettings(ctx context.Context, ss secretService) models.EncryptFn {
+	return func(payload string) (string, error) {
+		encrypted, err := ss.Encrypt(ctx, []byte(payload), secrets.WithoutScope())
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString(encrypted), nil
+	}
+}
