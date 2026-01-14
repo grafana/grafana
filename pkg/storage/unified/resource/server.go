@@ -227,9 +227,6 @@ type ResourceServerOptions struct {
 	// The blob configuration
 	Blob BlobConfig
 
-	// Search options
-	Search SearchServer
-
 	// Quota service
 	OverridesService *OverridesService
 

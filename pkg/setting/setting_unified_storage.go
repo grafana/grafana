@@ -136,10 +136,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
 
-	// search mode: "", "embedded", "remote" - empty defaults to embedded for backward compatibility
-	cfg.SearchMode = section.Key("search_mode").MustString("")
-	cfg.SearchServerAddress = section.Key("search_server_address").String()
-
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
 }

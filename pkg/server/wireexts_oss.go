@@ -6,6 +6,9 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -146,10 +149,10 @@ var wireExtsBasicSet = wire.NewSet(
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
+	sql.ProvideStorageBackend,
 	unified.ProvideUnifiedStorageClient,
 	wire.Bind(new(resourcepb.ResourceIndexClient), new(resource.ResourceClient)),
 	wire.Bind(new(resource.MigratorClient), new(resource.ResourceClient)),
-	sql.ProvideStorageBackend,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
@@ -198,6 +201,16 @@ var wireExtsModuleServerSet = wire.NewSet(
 	tracing.ProvideTracingConfig,
 	tracing.ProvideService,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
+	otelTracer,
+	// Bus
+	bus.ProvideBus,
+	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
+	// Database migrations
+	migrations.ProvideOSSMigrations,
+	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
+	// Database
+	sqlstore.ProvideService,
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

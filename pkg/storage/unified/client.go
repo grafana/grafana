@@ -46,6 +46,7 @@ type Options struct {
 	Authzc       types.AccessClient
 	Docs         resource.DocumentBuilderSupplier
 	SecureValues secrets.InlineSecureValueSupport
+	Backend      resource.StorageBackend // Shared backend to avoid duplicate metrics registration
 }
 
 type clientMetrics struct {
@@ -67,7 +68,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.Backend)
 	if err == nil {
 		// Decide whether to disable SQL fallback stats per resource in Mode 5.
 		// Otherwise we would still try to query the legacy SQL database in Mode 5.
@@ -103,6 +104,7 @@ func newClient(opts options.StorageOptions,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	secure secrets.InlineSecureValueSupport,
+	backend resource.StorageBackend,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -169,24 +171,14 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
+		// Create search options for the search server
 		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		serverOptions := sql.ServerOptions{
-			DB:             db,
-			Cfg:            cfg,
-			Tracer:         tracer,
-			Reg:            reg,
-			AccessClient:   authzc,
-			SearchOptions:  searchOptions,
-			StorageMetrics: storageMetrics,
-			IndexMetrics:   indexMetrics,
-			Features:       features,
-			SecureValues:   secure,
-		}
-
+		// Setup QOS queue if enabled
+		var qosQueue sql.QOSEnqueueDequeuer
 		if cfg.QOSEnabled {
 			qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
 			queue := scheduler.NewQueue(&scheduler.QueueOptions{
@@ -197,7 +189,7 @@ func newClient(opts options.StorageOptions,
 			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
 				return nil, fmt.Errorf("failed to start queue: %w", err)
 			}
-			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
+			sched, err := scheduler.NewScheduler(queue, &scheduler.Config{
 				NumWorkers: cfg.QOSNumberWorker,
 				Logger:     cfg.Logger,
 			})
@@ -205,31 +197,59 @@ func newClient(opts options.StorageOptions,
 				return nil, fmt.Errorf("failed to create scheduler: %w", err)
 			}
 
-			err = services.StartAndAwaitRunning(ctx, scheduler)
+			err = services.StartAndAwaitRunning(ctx, sched)
 			if err != nil {
 				return nil, fmt.Errorf("failed to start scheduler: %w", err)
 			}
-			serverOptions.QOSQueue = queue
+			qosQueue = queue
 		}
 
-		// only enable if an overrides file path is provided
+		// Setup overrides service if enabled
+		var overridesSvc *resource.OverridesService
 		if cfg.OverridesFilePath != "" {
-			overridesSvc, err := resource.NewOverridesService(ctx, cfg.Logger, reg, tracer, resource.ReloadOptions{
+			overridesSvc, err = resource.NewOverridesService(ctx, cfg.Logger, reg, tracer, resource.ReloadOptions{
 				FilePath:     cfg.OverridesFilePath,
 				ReloadPeriod: cfg.OverridesReloadInterval,
 			})
 			if err != nil {
 				return nil, err
 			}
-
-			serverOptions.OverridesService = overridesSvc
 		}
 
-		server, searchServer, err := sql.NewResourceServer(serverOptions)
+		// Create the search server with shared backend
+		searchServer, err := sql.NewSearchServer(sql.SearchServerOptions{
+			Backend:       backend, // Use shared backend to avoid duplicate metrics registration
+			DB:            db,
+			Cfg:           cfg,
+			Tracer:        tracer,
+			Reg:           reg,
+			AccessClient:  authzc,
+			SearchOptions: searchOptions,
+			IndexMetrics:  indexMetrics,
+		})
 		if err != nil {
 			return nil, err
 		}
-		return resource.NewLocalResourceClient(server, searchServer), nil
+
+		// Create the storage server with shared backend
+		storageServer, err := sql.NewStorageServer(sql.StorageServerOptions{
+			Backend:          backend, // Use shared backend to avoid duplicate metrics registration
+			DB:               db,
+			Cfg:              cfg,
+			Tracer:           tracer,
+			Reg:              reg,
+			AccessClient:     authzc,
+			StorageMetrics:   storageMetrics,
+			Features:         features,
+			QOSQueue:         qosQueue,
+			SecureValues:     secure,
+			OverridesService: overridesSvc,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return resource.NewLocalResourceClient(storageServer, searchServer), nil
 	}
 }
 

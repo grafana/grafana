@@ -5,18 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"net"
-	"os"
-	"strconv"
-	"time"
+	"net/http"
 
+	"github.com/gorilla/mux"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/grafana/dskit/kv"
-	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 
@@ -31,57 +29,44 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
+var _ UnifiedStorageGrpcService = (*searchService)(nil)
+
+// operation used by the search-servers to check if they own the namespace
 var (
-	_ UnifiedSearchGrpcService = (*searchService)(nil)
+	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
 )
-
-// UnifiedSearchGrpcService is the interface for the standalone search gRPC service.
-// This follows the same naming convention as UnifiedStorageGrpcService.
-type UnifiedSearchGrpcService interface {
-	services.NamedService
-
-	// GetAddress returns the address where this service is running
-	GetAddress() string
-}
 
 type searchService struct {
 	*services.BasicService
+
+	backend          resource.StorageBackend
+	cfg              *setting.Cfg
+	features         featuremgmt.FeatureToggles
+	db               infraDB.DB
+	stopCh           chan struct{}
+	stoppedCh        chan error
+	handler          grpcserver.Provider
+	tracing          trace.Tracer
+	authenticator    func(ctx context.Context) (context.Context, error)
+	httpServerRouter *mux.Router
+
+	log          log.Logger
+	reg          prometheus.Registerer
+	docBuilders  resource.DocumentBuilderSupplier
+	indexMetrics *resource.BleveIndexMetrics
+	searchRing   *ring.Ring
+
+	// Ring lifecycle and sharding support
+	ringLifecycler *ring.BasicLifecycler
 
 	// Subservices manager
 	subservices        *services.Manager
 	subservicesWatcher *services.FailureWatcher
 	hasSubservices     bool
-
-	cfg       *setting.Cfg
-	features  featuremgmt.FeatureToggles
-	db        infraDB.DB
-	stopCh    chan struct{}
-	stoppedCh chan error
-
-	handler grpcserver.Provider
-
-	tracing trace.Tracer
-
-	authenticator func(ctx context.Context) (context.Context, error)
-
-	log          log.Logger
-	reg          prometheus.Registerer
-	indexMetrics *resource.BleveIndexMetrics
-
-	docBuilders resource.DocumentBuilderSupplier
-
-	searchRing     *ring.Ring
-	ringLifecycler *ring.BasicLifecycler
-
-	backend resource.StorageBackend
 }
 
-// ProvideUnifiedSearchGrpcService creates a standalone search gRPC service.
-// This is used when running search-server as a separate target.
-// It follows the same naming convention as ProvideUnifiedStorageGrpcService.
 func ProvideUnifiedSearchGrpcService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -93,8 +78,10 @@ func ProvideUnifiedSearchGrpcService(
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	backend resource.StorageBackend,
-) (UnifiedSearchGrpcService, error) {
-	tracer := otel.Tracer("search-server")
+	httpServerRouter *mux.Router,
+) (UnifiedStorageGrpcService, error) {
+	var err error
+	tracer := otel.Tracer("unified-search-server")
 
 	authn := NewAuthenticatorWithFallback(cfg, reg, tracer, func(ctx context.Context) (context.Context, error) {
 		auth := grpc.Authenticator{Tracer: tracer}
@@ -102,6 +89,7 @@ func ProvideUnifiedSearchGrpcService(
 	})
 
 	s := &searchService{
+		backend:            backend,
 		cfg:                cfg,
 		features:           features,
 		stopCh:             make(chan struct{}),
@@ -114,8 +102,8 @@ func ProvideUnifiedSearchGrpcService(
 		docBuilders:        docBuilders,
 		indexMetrics:       indexMetrics,
 		searchRing:         searchRing,
+		httpServerRouter:   httpServerRouter,
 		subservicesWatcher: services.NewFailureWatcher(),
-		backend:            backend,
 	}
 
 	subservices := []services.Service{}
@@ -130,11 +118,13 @@ func ProvideUnifiedSearchGrpcService(
 			return nil, fmt.Errorf("failed to create KV store client: %s", err)
 		}
 
-		lifecyclerCfg, err := toSearchLifecyclerConfig(cfg, log)
+		lifecyclerCfg, err := toLifecyclerConfig(cfg, log)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize search-ring lifecycler config: %s", err)
 		}
 
+		// Define lifecycler delegates in reverse order (last to be called defined first because they're
+		// chained via "next delegate").
 		delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, resource.RingNumTokens))
 		delegate = ring.NewLeaveOnStoppingDelegate(delegate, log)
 		delegate = ring.NewAutoForgetDelegate(resource.RingHeartbeatTimeout*2, delegate, log)
@@ -158,16 +148,34 @@ func ProvideUnifiedSearchGrpcService(
 
 	if len(subservices) > 0 {
 		s.hasSubservices = true
-		var err error
 		s.subservices, err = services.NewManager(subservices...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create subservices manager: %w", err)
 		}
 	}
 
+	// This will be used when running as a dskit service
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.SearchServer)
 
+	// Register HTTP endpoints if router is provided
+	s.RegisterHTTPEndpoints(httpServerRouter)
+
 	return s, nil
+}
+
+func (s *searchService) PrepareDownscale(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		s.log.Info("Preparing for downscale. Will not keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(false)
+	case http.MethodDelete:
+		s.log.Info("Downscale canceled. Will keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
+	case http.MethodGet:
+		// used for delayed downscale use case, which we don't support. Leaving here for completion sake
+		s.log.Info("Received GET request for prepare-downscale. Behavior not implemented.")
+	default:
+	}
 }
 
 func (s *searchService) OwnsIndex(key resource.NamespacedResource) (bool, error) {
@@ -206,19 +214,26 @@ func (s *searchService) starting(ctx context.Context) error {
 		return err
 	}
 
+	// Create search options for the search server
 	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
 	if err != nil {
 		return err
 	}
 
-	// Create search server
-	searchServer, err := resource.NewSearchServer(searchOptions, s.backend, authzClient, nil, s.indexMetrics, s.OwnsIndex)
+	// Create the search server
+	searchServer, err := NewSearchServer(SearchServerOptions{
+		Backend:       s.backend,
+		DB:            s.db,
+		Cfg:           s.cfg,
+		Tracer:        s.tracing,
+		Reg:           s.reg,
+		AccessClient:  authzClient,
+		SearchOptions: searchOptions,
+		IndexMetrics:  s.indexMetrics,
+		OwnsIndexFn:   s.OwnsIndex,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to create search server: %w", err)
-	}
-
-	if err := searchServer.Init(ctx); err != nil {
-		return fmt.Errorf("failed to initialize search server: %w", err)
+		return err
 	}
 
 	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
@@ -226,14 +241,16 @@ func (s *searchService) starting(ctx context.Context) error {
 		return err
 	}
 
+	healthService, err := resource.ProvideHealthService(searchServer)
+	if err != nil {
+		return err
+	}
+
 	srv := s.handler.GetServer()
+	// Register search services
 	resourcepb.RegisterResourceIndexServer(srv, searchServer)
 	resourcepb.RegisterManagedObjectIndexServer(srv, searchServer)
 	resourcepb.RegisterDiagnosticsServer(srv, searchServer)
-	healthService, err := resource.ProvideHealthService(searchServer)
-	if err != nil {
-		return fmt.Errorf("failed to create health service: %w", err)
-	}
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service
@@ -269,6 +286,7 @@ func (s *searchService) starting(ctx context.Context) error {
 	return nil
 }
 
+// GetAddress returns the address of the gRPC server.
 func (s *searchService) GetAddress() string {
 	return s.handler.GetAddress()
 }
@@ -297,37 +315,8 @@ func (s *searchService) stopping(_ error) error {
 	return nil
 }
 
-func toSearchLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
-	instanceAddr, err := ring.GetInstanceAddr(cfg.MemberlistBindAddr, netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, logger), logger, true)
-	if err != nil {
-		return ring.BasicLifecyclerConfig{}, err
+func (s *searchService) RegisterHTTPEndpoints(httpServerRouter *mux.Router) {
+	if httpServerRouter != nil && s.cfg.EnableSharding {
+		httpServerRouter.Path("/prepare-downscale").Methods("GET", "POST", "DELETE").Handler(http.HandlerFunc(s.PrepareDownscale))
 	}
-
-	instanceId := cfg.InstanceID
-	if instanceId == "" {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return ring.BasicLifecyclerConfig{}, err
-		}
-		instanceId = hostname
-	}
-
-	_, grpcPortStr, err := net.SplitHostPort(cfg.GRPCServer.Address)
-	if err != nil {
-		return ring.BasicLifecyclerConfig{}, fmt.Errorf("could not get grpc port from grpc server address: %s", err)
-	}
-
-	grpcPort, err := strconv.Atoi(grpcPortStr)
-	if err != nil {
-		return ring.BasicLifecyclerConfig{}, fmt.Errorf("error converting grpc address port to int: %s", err)
-	}
-
-	return ring.BasicLifecyclerConfig{
-		Addr:                fmt.Sprintf("%s:%d", instanceAddr, grpcPort),
-		ID:                  instanceId,
-		HeartbeatPeriod:     15 * time.Second,
-		HeartbeatTimeout:    resource.RingHeartbeatTimeout,
-		TokensObservePeriod: 0,
-		NumTokens:           resource.RingNumTokens,
-	}, nil
 }

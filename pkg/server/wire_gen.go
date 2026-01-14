@@ -513,6 +513,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	storageBackend, err := sql.ProvideStorageBackend(cfg, sqlStore, tracer, registerer, storageMetrics)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
 		Cfg:          cfg,
 		Features:     featureToggles,
@@ -522,8 +527,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		Authzc:       accessClient,
 		Docs:         documentBuilderSupplier,
 		SecureValues: inlineSecureValueSupport,
+		Backend:      storageBackend,
 	}
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
 	resourceClient, err := unified.ProvideUnifiedStorageClient(options, storageMetrics, bleveIndexMetrics)
 	if err != nil {
@@ -1173,6 +1178,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	storageBackend, err := sql.ProvideStorageBackend(cfg, sqlStore, tracer, registerer, storageMetrics)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
 		Cfg:          cfg,
 		Features:     featureToggles,
@@ -1182,8 +1192,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		Authzc:       accessClient,
 		Docs:         documentBuilderSupplier,
 		SecureValues: inlineSecureValueSupport,
+		Backend:      storageBackend,
 	}
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
 	resourceClient, err := unified.ProvideUnifiedStorageClient(options, storageMetrics, bleveIndexMetrics)
 	if err != nil {
@@ -1748,7 +1758,14 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	moduleRegisterer := ProvideNoopModuleRegisterer()
-	storageBackend, err := sql.ProvideStorageBackend(cfg)
+	ossMigrations := migrations.ProvideOSSMigrations(featureToggles)
+	inProcBus := bus.ProvideBus(tracingService)
+	sqlStore, err := sqlstore.ProvideService(cfg, featureToggles, ossMigrations, inProcBus, tracingService)
+	if err != nil {
+		return nil, err
+	}
+	tracer := otelTracer()
+	storageBackend, err := sql.ProvideStorageBackend(cfg, sqlStore, tracer, registerer, storageMetrics)
 	if err != nil {
 		return nil, err
 	}

@@ -115,10 +115,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		err = searchServer.Init(ctx)
 		require.NoError(t, err)
 
-		// Create a resource server with the search server
+		// Create a resource server separately from the search server
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend: backend,
-			Search:  searchServer,
 		})
 		require.NoError(t, err)
 	})

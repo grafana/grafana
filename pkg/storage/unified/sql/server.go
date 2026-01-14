@@ -16,7 +16,6 @@ import (
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -43,8 +42,8 @@ type SearchServerOptions struct {
 	OwnsIndexFn   func(key resource.NamespacedResource) (bool, error)
 }
 
-// ServerOptions contains the options for creating a new ResourceServer
-type ServerOptions struct {
+// StorageServerOptions contains the options for creating a storage-only server (without search)
+type StorageServerOptions struct {
 	Backend          resource.StorageBackend
 	OverridesService *resource.OverridesService
 	DB               infraDB.DB
@@ -52,20 +51,19 @@ type ServerOptions struct {
 	Tracer           trace.Tracer
 	Reg              prometheus.Registerer
 	AccessClient     types.AccessClient
-	SearchOptions    resource.SearchOptions
 	StorageMetrics   *resource.StorageMetrics
-	IndexMetrics     *resource.BleveIndexMetrics
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
-	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
-	// Search is an optional pre-created search server. If nil, one will be created.
-	Search resource.SearchServer
 }
 
 // NewSearchServer creates a new SearchServer with the given options.
 // This can be used to create a standalone search server or to create a search server
 // that will be passed to NewResourceServer.
+//
+// Important: When running in monolith mode, the backend should be provided by the caller
+// to avoid duplicate metrics registration. Only in standalone microservice mode should
+// this function create its own backend.
 func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
 	backend := opts.Backend
 	if backend == nil {
@@ -106,7 +104,13 @@ func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
 	return search, nil
 }
 
-func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.SearchServer, error) {
+// NewStorageServer creates a storage-only server without search capabilities.
+// Use this when you want to run storage and search as separate services.
+//
+// Important: When running in monolith mode, the backend should be provided by the caller
+// to avoid duplicate metrics registration. Only in standalone microservice mode should
+// this function create its own backend.
+func NewStorageServer(opts StorageServerOptions) (resource.ResourceServer, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 
 	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
@@ -117,7 +121,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 			nil, // not needed for gRPC client mode
 		)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create inline secure value service: %w", err)
+			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
 		}
 		opts.SecureValues = inlineSecureValueService
 	}
@@ -137,7 +141,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 		dir := strings.Replace(serverOptions.Blob.URL, "./data", opts.Cfg.DataPath, 1)
 		err := os.MkdirAll(dir, 0700)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		serverOptions.Blob.URL = "file:///" + dir
 	}
@@ -150,17 +154,16 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 
 	if opts.Backend != nil {
 		serverOptions.Backend = opts.Backend
-		// TODO: we should probably have a proper interface for diagnostics/lifecycle
 	} else {
 		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		if opts.Cfg.EnableSQLKVBackend {
 			sqlkv, err := resource.NewSQLKV(eDB)
 			if err != nil {
-				return nil, nil, fmt.Errorf("error creating sqlkv: %s", err)
+				return nil, fmt.Errorf("error creating sqlkv: %s", err)
 			}
 
 			kvBackendOpts := resource.KVBackendOptions{
@@ -172,12 +175,12 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 			ctx := context.Background()
 			dbConn, err := eDB.Init(ctx)
 			if err != nil {
-				return nil, nil, fmt.Errorf("error initializing DB: %w", err)
+				return nil, fmt.Errorf("error initializing DB: %w", err)
 			}
 
 			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
 			if dialect == nil {
-				return nil, nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 			}
 
 			rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
@@ -185,14 +188,13 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 				DB:      dbConn,
 			})
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to create resource version manager: %w", err)
+				return nil, fmt.Errorf("failed to create resource version manager: %w", err)
 			}
 
-			// TODO add config to decide whether to pass RvManager or not
 			kvBackendOpts.RvManager = rvManager
 			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
 			if err != nil {
-				return nil, nil, fmt.Errorf("error creating kv backend: %s", err)
+				return nil, fmt.Errorf("error creating kv backend: %s", err)
 			}
 
 			serverOptions.Backend = kvBackend
@@ -206,10 +208,10 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 				Reg:                  opts.Reg,
 				IsHA:                 isHA,
 				storageMetrics:       opts.StorageMetrics,
-				LastImportTimeMaxAge: opts.Cfg.MaxFileIndexAge, // No need to keep last_import_times older than max index age.
+				LastImportTimeMaxAge: opts.Cfg.MaxFileIndexAge,
 			})
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 			serverOptions.Backend = backend
 			serverOptions.Diagnostics = backend
@@ -217,56 +219,15 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 		}
 	}
 
-	// Initialize the backend before creating search server (it needs the DB connection)
+	// Initialize the backend before creating server
 	if serverOptions.Lifecycle != nil {
 		if err := serverOptions.Lifecycle.Init(context.Background()); err != nil {
-			return nil, nil, fmt.Errorf("failed to initialize backend: %w", err)
+			return nil, fmt.Errorf("failed to initialize backend: %w", err)
 		}
 	}
 
-	// Use pre-created search server if provided, otherwise create one
-	search := opts.Search
-	if search == nil {
-		var err error
-		search, err = resource.NewSearchServer(opts.SearchOptions, serverOptions.Backend, opts.AccessClient, nil, opts.IndexMetrics, opts.OwnsIndexFn)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create search server: %w", err)
-		}
-
-		if err := search.Init(context.Background()); err != nil {
-			return nil, nil, fmt.Errorf("failed to initialize search server: %w", err)
-		}
-	}
-
-	serverOptions.Search = search
 	serverOptions.QOSQueue = opts.QOSQueue
 	serverOptions.OverridesService = opts.OverridesService
 
-	rs, err := resource.NewResourceServer(serverOptions)
-	if err != nil {
-		_ = search.Stop(context.Background())
-	}
-	return rs, search, err
-}
-
-// isHighAvailabilityEnabled determines if high availability mode should
-// be enabled based on database configuration. High availability is enabled
-// by default except for SQLite databases.
-func isHighAvailabilityEnabled(dbCfg, resourceAPICfg *setting.DynamicSection) bool {
-	// If the resource API is using a non-SQLite database, we assume it's in HA mode.
-	resourceDBType := resourceAPICfg.Key("db_type").String()
-	if resourceDBType != "" && resourceDBType != migrator.SQLite {
-		return true
-	}
-
-	// Check in the config if HA is enabled - by default we always assume a HA setup.
-	isHA := dbCfg.Key("high_availability").MustBool(true)
-
-	// SQLite is not possible to run in HA, so we force it to false.
-	databaseType := dbCfg.Key("type").String()
-	if databaseType == migrator.SQLite {
-		isHA = false
-	}
-
-	return isHA
+	return resource.NewResourceServer(serverOptions)
 }

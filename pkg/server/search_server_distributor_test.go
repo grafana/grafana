@@ -391,17 +391,20 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
-	server, err := sql.NewResourceServer(sql.ServerOptions{
-		DB:             nil,
-		Cfg:            cfg,
-		Tracer:         tracer,
-		Reg:            nil,
-		AccessClient:   nil,
-		SearchOptions:  searchOpts,
-		StorageMetrics: nil,
-		IndexMetrics:   nil,
-		Features:       features,
-		QOSQueue:       nil,
+	searchServer, err := sql.NewSearchServer(sql.SearchServerOptions{
+		DB:            nil,
+		Cfg:           cfg,
+		Tracer:        tracer,
+		Reg:           nil,
+		AccessClient:  nil,
+		SearchOptions: searchOpts,
+		IndexMetrics:  nil,
+	})
+	require.NoError(t, err)
+	storageServer, err := sql.NewStorageServer(sql.StorageServerOptions{
+		Cfg:      cfg,
+		Tracer:   tracer,
+		Features: features,
 	})
 	require.NoError(t, err)
 
@@ -417,7 +420,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 
 	for _, ns := range testNamespaces {
 		for range rand.Intn(maxPlaylistPerNamespace) + 1 {
-			_, err = server.Create(ctx, generatePlaylistPayload(ns))
+			_, err = storageServer.Create(ctx, generatePlaylistPayload(ns))
 			require.NoError(t, err)
 		}
 	}

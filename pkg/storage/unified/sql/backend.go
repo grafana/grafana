@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -44,10 +47,63 @@ const defaultPrunerHistoryLimit = 20
 
 func ProvideStorageBackend(
 	cfg *setting.Cfg,
+	db infraDB.DB,
+	tracer trace.Tracer,
+	reg prometheus.Registerer,
+	storageMetrics *resource.StorageMetrics,
 ) (resource.StorageBackend, error) {
-	// TODO: make this the central place to provide SQL backend
-	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
-	return nil, nil
+	// Create the resource DB
+	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource DB: %w", err)
+	}
+
+	// Check if HA is enabled
+	isHA := isHighAvailabilityEnabled(
+		cfg.SectionWithEnvOverrides("database"),
+		cfg.SectionWithEnvOverrides("resource_api"),
+	)
+
+	// Create the backend
+	backend, err := NewBackend(BackendOptions{
+		DBProvider:           eDB,
+		Reg:                  reg,
+		IsHA:                 isHA,
+		storageMetrics:       storageMetrics,
+		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create backend: %w", err)
+	}
+
+	// Initialize the backend
+	if err := backend.Init(context.Background()); err != nil {
+		return nil, fmt.Errorf("failed to initialize backend: %w", err)
+	}
+
+	return backend, nil
+}
+
+// isHighAvailabilityEnabled determines if high availability mode should
+// be enabled based on database configuration. High availability is enabled
+// by default except for SQLite databases.
+func isHighAvailabilityEnabled(dbCfg, resourceAPICfg *setting.DynamicSection) bool {
+	// If the resource API is using a non-SQLite database, we assume it's in HA mode.
+	resourceDBType := resourceAPICfg.Key("db_type").String()
+	if resourceDBType != "" && resourceDBType != migrator.SQLite {
+		return true
+	}
+
+	// Check in the config if HA is enabled - by default we always assume a HA setup.
+	isHA := dbCfg.Key("high_availability").MustBool(true)
+
+	// SQLite is not possible to run in HA, so we force it to false.
+	databaseType := dbCfg.Key("type").String()
+	if databaseType == migrator.SQLite {
+		isHA = false
+	}
+
+	return isHA
 }
 
 type Backend interface {

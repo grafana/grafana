@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
@@ -36,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -53,38 +55,40 @@ type UnifiedStorageGrpcService interface {
 type service struct {
 	*services.BasicService
 
-	// Subservices manager
-	subservices        *services.Manager
-	subservicesWatcher *services.FailureWatcher
-	hasSubservices     bool
-
-	backend   resource.StorageBackend
-	cfg       *setting.Cfg
-	features  featuremgmt.FeatureToggles
-	db        infraDB.DB
-	stopCh    chan struct{}
-	stoppedCh chan error
-
-	handler grpcserver.Provider
-
-	tracing trace.Tracer
-
-	authenticator func(ctx context.Context) (context.Context, error)
-
+	backend        resource.StorageBackend
+	cfg            *setting.Cfg
+	features       featuremgmt.FeatureToggles
+	stopCh         chan struct{}
+	stoppedCh      chan error
+	authenticator  func(context.Context) (context.Context, error)
+	tracing        trace.Tracer
+	db             infraDB.DB
 	log            log.Logger
 	reg            prometheus.Registerer
+	docBuilders    resource.DocumentBuilderSupplier
 	storageMetrics *resource.StorageMetrics
 	indexMetrics   *resource.BleveIndexMetrics
-
-	docBuilders resource.DocumentBuilderSupplier
-
 	searchRing     *ring.Ring
+
+	// Handler for the gRPC server
+	handler grpcserver.Provider
+
+	// Ring lifecycle and sharding support
 	ringLifecycler *ring.BasicLifecycler
 
-	queue     QOSEnqueueDequeuer
+	// QoS support
+	queue     *scheduler.Queue
 	scheduler *scheduler.Scheduler
+
+	// Subservices management
+	hasSubservices     bool
+	subservices        *services.Manager
+	subservicesWatcher *services.FailureWatcher
 }
 
+// ProvideUnifiedStorageGrpcService provides a combined storage and search service running on the same gRPC server.
+// This is used when running Grafana as a monolith where both services share the same process.
+// Each service (storage and search) maintains its own lifecycle but shares the gRPC server.
 func ProvideUnifiedStorageGrpcService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -100,7 +104,7 @@ func ProvideUnifiedStorageGrpcService(
 	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
 	var err error
-	tracer := otel.Tracer("unified-storage")
+	tracer := otel.Tracer("unified-storage-combined")
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
@@ -177,7 +181,7 @@ func ProvideUnifiedStorageGrpcService(
 			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
 			Registerer:       qosReg,
 		})
-		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
+		sched, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
 			Logger:     log,
 		})
@@ -186,7 +190,7 @@ func ProvideUnifiedStorageGrpcService(
 		}
 
 		s.queue = queue
-		s.scheduler = scheduler
+		s.scheduler = sched
 		subservices = append(subservices, s.queue, s.scheduler)
 	}
 
@@ -199,6 +203,7 @@ func ProvideUnifiedStorageGrpcService(
 	}
 
 	// This will be used when running as a dskit service
+	// Note: We use StorageServer as the module name for backward compatibility
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
 
 	return s, nil
@@ -218,11 +223,6 @@ func (s *service) PrepareDownscale(w http.ResponseWriter, r *http.Request) {
 	default:
 	}
 }
-
-var (
-	// operation used by the search-servers to check if they own the namespace
-	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
-)
 
 func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
 	if s.searchRing == nil {
@@ -260,71 +260,86 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	serverOptions := ServerOptions{
-		Backend:        s.backend,
-		DB:             s.db,
-		Cfg:            s.cfg,
-		Tracer:         s.tracing,
-		Reg:            s.reg,
-		AccessClient:   authzClient,
-		StorageMetrics: s.storageMetrics,
-		Features:       s.features,
-		QOSQueue:       s.queue,
-	}
-
+	// Setup overrides service if enabled
+	var overridesSvc *resource.OverridesService
 	if s.cfg.OverridesFilePath != "" {
-		overridesSvc, err := resource.NewOverridesService(context.Background(), s.log, s.reg, s.tracing, resource.ReloadOptions{
+		overridesSvc, err = resource.NewOverridesService(context.Background(), s.log, s.reg, s.tracing, resource.ReloadOptions{
 			FilePath:     s.cfg.OverridesFilePath,
 			ReloadPeriod: s.cfg.OverridesReloadInterval,
 		})
 		if err != nil {
 			return err
 		}
-		serverOptions.OverridesService = overridesSvc
 	}
 
-	// Handle search mode: "", "embedded", or "remote"
-	// Empty string defaults to "embedded" for backward compatibility
-	var searchServer resource.SearchServer
-	registerSearchServices := true
-
-	switch s.cfg.SearchMode {
-	case "remote":
-		// Use remote search client - don't register search services locally
-		s.log.Info("Using remote search server", "address", s.cfg.SearchServerAddress)
-		remoteSearch, err := newRemoteSearchClient(s.cfg.SearchServerAddress)
+	// Ensure we have a backend - create one if needed
+	// This is critical: we create the backend ONCE and share it between search and storage servers
+	// to avoid duplicate metrics registration
+	backend := s.backend
+	if backend == nil {
+		eDB, err := dbimpl.ProvideResourceDB(s.db, s.cfg, s.tracing)
 		if err != nil {
-			return fmt.Errorf("failed to create remote search client: %w", err)
+			return fmt.Errorf("failed to create resource DB: %w", err)
 		}
-		searchServer = remoteSearch
-		registerSearchServices = false
 
-	case "", "embedded":
-		// Default: create local search server (backward compatible)
-		s.log.Info("Using embedded search server")
-		// SearchOptions are already configured, NewResourceServer will create the search server
+		isHA := isHighAvailabilityEnabled(s.cfg.SectionWithEnvOverrides("database"),
+			s.cfg.SectionWithEnvOverrides("resource_api"))
 
-	default:
-		return fmt.Errorf("invalid search_mode: %s (valid values: \"\", \"embedded\", \"remote\")", s.cfg.SearchMode)
+		b, err := NewBackend(BackendOptions{
+			DBProvider:           eDB,
+			Reg:                  s.reg,
+			IsHA:                 isHA,
+			storageMetrics:       s.storageMetrics,
+			LastImportTimeMaxAge: s.cfg.MaxFileIndexAge,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create backend: %w", err)
+		}
+
+		// Initialize the backend
+		if err := b.Init(context.Background()); err != nil {
+			return fmt.Errorf("failed to initialize backend: %w", err)
+		}
+		backend = b
 	}
 
-	var server resource.ResourceServer
-	if searchServer != nil {
-		// Remote search mode: pass the remote search client to the resource server
-		// Clear local search options since we're using remote search
-		serverOptions.SearchOptions = resource.SearchOptions{}
-		var err error
-		server, _, err = NewResourceServer(serverOptions)
-		if err != nil {
-			return err
-		}
-	} else {
-		// Embedded mode: create both server and search server together
-		var err error
-		server, searchServer, err = NewResourceServer(serverOptions)
-		if err != nil {
-			return err
-		}
+	// Create search options for the search server
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
+	if err != nil {
+		return err
+	}
+
+	// Create the search server - pass the shared backend
+	searchServer, err := NewSearchServer(SearchServerOptions{
+		Backend:       backend, // Use the shared backend
+		DB:            s.db,
+		Cfg:           s.cfg,
+		Tracer:        s.tracing,
+		Reg:           s.reg,
+		AccessClient:  authzClient,
+		SearchOptions: searchOptions,
+		IndexMetrics:  s.indexMetrics,
+		OwnsIndexFn:   s.OwnsIndex,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Create the storage server - pass the shared backend
+	storageServer, err := NewStorageServer(StorageServerOptions{
+		Backend:          backend, // Use the shared backend
+		OverridesService: overridesSvc,
+		DB:               s.db,
+		Cfg:              s.cfg,
+		Tracer:           s.tracing,
+		Reg:              s.reg,
+		AccessClient:     authzClient,
+		StorageMetrics:   s.storageMetrics,
+		Features:         s.features,
+		QOSQueue:         s.queue,
+	})
+	if err != nil {
+		return err
 	}
 
 	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
@@ -332,22 +347,21 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	healthService, err := resource.ProvideHealthService(server)
+	healthService, err := resource.ProvideHealthService(storageServer)
 	if err != nil {
 		return err
 	}
 
 	srv := s.handler.GetServer()
-	resourcepb.RegisterResourceStoreServer(srv, server)
-	resourcepb.RegisterBulkStoreServer(srv, server)
-	// Only register search services if running in embedded mode
-	if registerSearchServices {
-		resourcepb.RegisterResourceIndexServer(srv, searchServer)
-		resourcepb.RegisterManagedObjectIndexServer(srv, searchServer)
-	}
-	resourcepb.RegisterBlobStoreServer(srv, server)
-	resourcepb.RegisterDiagnosticsServer(srv, server)
-	resourcepb.RegisterQuotasServer(srv, server)
+	// Register storage services
+	resourcepb.RegisterResourceStoreServer(srv, storageServer)
+	resourcepb.RegisterBulkStoreServer(srv, storageServer)
+	resourcepb.RegisterBlobStoreServer(srv, storageServer)
+	resourcepb.RegisterDiagnosticsServer(srv, storageServer)
+	resourcepb.RegisterQuotasServer(srv, storageServer)
+	// Register search services
+	resourcepb.RegisterResourceIndexServer(srv, searchServer)
+	resourcepb.RegisterManagedObjectIndexServer(srv, searchServer)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service
