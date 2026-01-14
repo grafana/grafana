@@ -13,7 +13,6 @@ import {
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
-  sceneGraph,
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
@@ -21,8 +20,6 @@ import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
-import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
-import { hasData } from 'app/features/panel/suggestions/utils';
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
