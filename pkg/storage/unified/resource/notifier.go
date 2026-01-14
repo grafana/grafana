@@ -61,7 +61,7 @@ func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	return &pollingNotifier{eventStore: eventStore, log: opts.log}
 }
 
-type channelNotifier struct {}
+type channelNotifier struct{}
 
 func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 	return nil
