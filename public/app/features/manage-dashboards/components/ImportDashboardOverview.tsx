@@ -46,6 +46,7 @@ interface State {
   uidReset: boolean;
 }
 
+// disabling this rule, eventually we will migrate to function components and also stop using redux
 // eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   state: State = {
