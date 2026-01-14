@@ -37,7 +37,7 @@ image_maps:
         content: |
           **Dashboard title**
 
-          Create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
+          Create your own dashboard titles or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
       - x_coord: 23
         y_coord: 5
         content: |
@@ -49,7 +49,7 @@ image_maps:
         content: |
           **Public label**
 
-          [Externally shared dashboards](ref:shared-dashboards), it's marked with the **Public** label.
+          [Externally shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/shared-dashboards/), it's marked with the **Public** label.
       - x_coord: 84
         y_coord: 5
         content: |
@@ -67,13 +67,13 @@ image_maps:
         content: |
           **Variables**
 
-          Use [variables](ref:variables), including ad hoc filters, to create more interactive and dynamic dashboards.
+          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/), including ad hoc filters, to create more interactive and dynamic dashboards.
       - x_coord: 45
         y_coord: 23
         content: |
           **Dashboard links**
 
-          Link to other dashboards, panels, and external websites. Learn more about [dashboard links](ref:dashboard-links).
+          Link to other dashboards, panels, and external websites. Learn more about [dashboard links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/).
       - x_coord: 59
         y_coord: 29
         content: |
@@ -104,7 +104,7 @@ image_maps:
         content: |
           **Share dashboard**
 
-          Access [dashboard sharing](ref:sharing) options.
+          Access [dashboard sharing](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/) options.
       - x_coord: 98
         y_coord: 22.5
         content: |
@@ -116,7 +116,7 @@ image_maps:
         content: |
           **Export**
 
-          Access [dashboard exporting](ref:export-dashboards) options.
+          Access [dashboard exporting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
       - x_coord: 98
         y_coord: 39
         content: |
@@ -128,7 +128,7 @@ image_maps:
         content: |
           **Dashboard insights**
 
-          View [dashboard analytics](ref:dashboard-analytics) including information about users, activity, query counts.
+          View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, query counts.
       - x_coord: 11.5
         y_coord: 30
         content: |
@@ -146,80 +146,19 @@ image_maps:
         content: |
           **Panel title**
 
-          Create your own panel titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
+          Create your own panel titles or have Grafana create them for you using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
       - x_coord: 27
         y_coord: 63
         content: |
           **Dashboard panel**
 
-          The [panel](ref:panel-overview) is the primary building block of a dashboard.
+          The [panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-overview/) is the primary building block of a dashboard.
       - x_coord: 19.5
         y_coord: 91
         content: |
           **Panel legend**
 
           Change series colors as well as y-axis and series visibility directly from the legend.
-refs:
-  dashboard-analytics:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/assess-dashboard-usage/
-  generative-ai-features:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
-  dashboard-settings:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/modify-dashboard-settings/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/modify-dashboard-settings/
-  repeating-rows:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeat-options
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
-  dashboard-folders:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/
-  sharing:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/
-  dashboard-links:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links/
-  panel-overview:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-overview/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-overview/
-  export-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/#export-dashboards
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/#export-dashboards
-  add-ad-hoc-filters:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters
-  shared-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
 ---
 
 # Use dashboards
@@ -400,7 +339,7 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 
 ## Filter dashboard data
 
-Once you've [added an ad hoc filter](ref:add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
+Once you've [added an ad hoc filter](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
 These filters are applied to all metric queries that use the specified data source and to all panels on the dashboard.
 
 To filter dashboard data, follow these steps:
