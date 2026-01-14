@@ -47,8 +47,8 @@ describe('MuteTimingForm', () => {
     expect(screen.queryByText(/provisioned/i)).not.toBeInTheDocument();
   });
 
-  it('should show imported alert when provenance is prometheus_convert', async () => {
-    renderWithProvider('prometheus_convert');
+  it('should show imported alert when provenance is converted_prometheus', async () => {
+    renderWithProvider('converted_prometheus');
 
     expect(
       await screen.findByText(/This time interval was imported and cannot be edited through the UI/i)
@@ -73,8 +73,8 @@ describe('MuteTimingForm', () => {
     expect(await screen.findByText(/This time interval cannot be edited through the UI/i)).toBeInTheDocument();
   });
 
-  it('should disable form when provenance is prometheus_convert', async () => {
-    renderWithProvider('prometheus_convert', true);
+  it('should disable form when provenance is converted_prometheus', async () => {
+    renderWithProvider('converted_prometheus', true);
 
     const nameInput = await screen.findByTestId('mute-timing-name');
     expect(nameInput).toBeDisabled();

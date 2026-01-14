@@ -5,8 +5,7 @@ import { MuteTiming, useMuteTimings } from 'app/features/alerting/unified/compon
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-
-const PROMETHEUS_CONVERT_PROVENANCE = 'prometheus_convert';
+import { isImportedResource } from 'app/features/alerting/unified/utils/k8s/utils';
 
 const mapTimeInterval = ({ name, time_intervals }: MuteTiming): SelectableValue<string> => ({
   value: name,
@@ -17,7 +16,7 @@ const mapTimeInterval = ({ name, time_intervals }: MuteTiming): SelectableValue<
 /** Check if a time interval was imported from an external Alertmanager */
 const isImportedTimeInterval = (timing: MuteTiming): boolean => {
   const provenance = timing.metadata?.annotations?.[K8sAnnotations.Provenance];
-  return provenance === PROMETHEUS_CONVERT_PROVENANCE;
+  return isImportedResource(provenance);
 };
 
 /** Provides a MultiSelect with available time intervals for the given alertmanager */

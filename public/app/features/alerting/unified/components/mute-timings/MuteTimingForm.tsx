@@ -14,14 +14,12 @@ import {
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
-import { PROVENANCE_NONE } from '../../utils/k8s/constants';
+import { isImportedResource, isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink } from '../../utils/misc';
 import { createMuteTiming, defaultTimeInterval, isTimeIntervalDisabled } from '../../utils/mute-timings';
 import { ImportedTimeIntervalAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
-
-const PROMETHEUS_CONVERT_PROVENANCE = 'prometheus_convert';
 
 interface Props {
   muteTiming?: MuteTiming;
@@ -108,8 +106,8 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance, editMode }
     );
   }
 
-  const isProvisioned = Boolean(provenance && provenance !== PROVENANCE_NONE);
-  const isImported = provenance === PROMETHEUS_CONVERT_PROVENANCE;
+  const isProvisioned = isProvisionedResource(provenance);
+  const isImported = isImportedResource(provenance);
 
   return (
     <>

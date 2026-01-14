@@ -52,11 +52,11 @@ describe('MuteTimingsSelector', () => {
     expect(screen.getByText('another-regular')).toBeInTheDocument();
   });
 
-  it('should filter out imported time intervals (provenance: prometheus_convert)', async () => {
+  it('should filter out imported time intervals (provenance: converted_prometheus)', async () => {
     const user = userEvent.setup();
     setTimeIntervalsList([
       { name: 'regular-interval', provenance: 'none' },
-      { name: 'imported-interval', provenance: 'prometheus_convert' },
+      { name: 'imported-interval', provenance: 'converted_prometheus' },
       { name: 'file-provisioned', provenance: 'file' },
     ]);
 
@@ -78,9 +78,9 @@ describe('MuteTimingsSelector', () => {
     const user = userEvent.setup();
     setTimeIntervalsList([
       { name: 'normal-1', provenance: 'none' },
-      { name: 'imported-1', provenance: 'prometheus_convert' },
+      { name: 'imported-1', provenance: 'converted_prometheus' },
       { name: 'normal-2', provenance: 'none' },
-      { name: 'imported-2', provenance: 'prometheus_convert' },
+      { name: 'imported-2', provenance: 'converted_prometheus' },
       { name: 'file-1', provenance: 'file' },
     ]);
 
@@ -113,8 +113,8 @@ describe('MuteTimingsSelector', () => {
   it('should handle list with only imported intervals', async () => {
     const user = userEvent.setup();
     setTimeIntervalsList([
-      { name: 'imported-1', provenance: 'prometheus_convert' },
-      { name: 'imported-2', provenance: 'prometheus_convert' },
+      { name: 'imported-1', provenance: 'converted_prometheus' },
+      { name: 'imported-2', provenance: 'converted_prometheus' },
     ]);
 
     renderWithProvider();
