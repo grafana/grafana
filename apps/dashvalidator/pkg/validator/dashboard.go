@@ -204,8 +204,26 @@ func extractQueriesFromDashboard(dashboardJSON map[string]interface{}) ([]Dashbo
 
 // isV1Dashboard checks if a dashboard is in v1 (legacy) format
 // v1 dashboards have a "panels" array at the top level
+// v2 dashboards have "elements" map and "layout" structure
+//
+// This follows Grafana's official dashboard conversion logic which uses
+// type-safe assertions to distinguish between formats.
+// Reference: apps/dashboard/pkg/migration/conversion/v1beta1_to_v2alpha1.go:450
 func isV1Dashboard(dashboard map[string]interface{}) bool {
-	_, hasPanels := dashboard["panels"]
+	// Check for v2 indicators first (positive identification)
+	// v2 dashboards use a map of elements, not an array
+	if _, hasElements := dashboard["elements"].(map[string]interface{}); hasElements {
+		return false // Definitely v2
+	}
+
+	// v2 dashboards also have a layout structure
+	if _, hasLayout := dashboard["layout"]; hasLayout {
+		return false // v2 has layout field
+	}
+
+	// Check for v1 panels with type assertion (must be an array)
+	// This is type-safe: `{"panels": "string"}` would fail this check and return false
+	_, hasPanels := dashboard["panels"].([]interface{})
 	return hasPanels
 }
 
