@@ -21,13 +21,20 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// This controls what query and analyzers are applied to the specified field
+// See: https://blevesearch.com/docs/Analyzers/
 type QueryFieldType int32
 
 const (
+	// Picks a reasonable analyzer given the input.  Currently this always uses TEXT
+	// In the future, it may change to depend on the indexed field type
 	QueryFieldType_DEFAULT QueryFieldType = 0
-	QueryFieldType_TEXT    QueryFieldType = 1
+	// Use free text analyzer.  The query is broken into a normalized set of tokens
+	QueryFieldType_TEXT QueryFieldType = 1
+	// The query must exactly match the indexed token
 	QueryFieldType_KEYWORD QueryFieldType = 2
-	QueryFieldType_PHRASE  QueryFieldType = 3
+	// Like a text query, but the position and offsets influence the score
+	QueryFieldType_PHRASE QueryFieldType = 3
 )
 
 // Enum value maps for QueryFieldType.

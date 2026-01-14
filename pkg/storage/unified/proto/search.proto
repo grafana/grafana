@@ -9,11 +9,13 @@ import "resource.proto";
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
+  // Query for documents
   rpc Search(ResourceSearchRequest) returns (ResourceSearchResponse);
 
   // Get the resource stats
   rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
 
+  // Rebuild the search index
   rpc RebuildIndexes(RebuildIndexesRequest) returns (RebuildIndexesResponse);
 }
 
@@ -49,10 +51,17 @@ message ResourceStatsResponse {
   repeated Stats stats = 2;
 }
 
+// This controls what query and analyzers are applied to the specified field
+// See: https://blevesearch.com/docs/Analyzers/
 enum QueryFieldType {
+  // Picks a reasonable analyzer given the input.  Currently this always uses TEXT
+  // In the future, it may change to depend on the indexed field type
   DEFAULT = 0;
+  // Use free text analyzer.  The query is broken into a normalized set of tokens
   TEXT = 1;
+  // The query must exactly match the indexed token
   KEYWORD = 2;
+  // Like a text query, but the position and offsets influence the score
   PHRASE = 3; 
 }
 

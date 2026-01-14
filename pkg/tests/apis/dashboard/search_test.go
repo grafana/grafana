@@ -97,7 +97,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	require.Equal(t, 16, fileCount, "file count from %s", devenv)
 
 	// Helper to call search
-	callSearch := func(user apis.User, params string) dashboardV0.SearchResults {
+	callSearch := func(user apis.User, params map[string]string) dashboardV0.SearchResults {
 		require.NotNil(t, user)
 		ns := user.Identity.GetNamespace()
 		cfg := dynamic.ConfigFor(user.NewRestConfig())
@@ -111,14 +111,8 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			Param("limit", "1000").
 			Param("type", "dashboard") // Only search dashboards
 
-		for kv := range strings.SplitSeq(params, "&") {
-			if kv == "" {
-				continue
-			}
-			parts := strings.SplitN(kv, "=", 2)
-			if len(parts) == 2 {
-				req = req.Param(parts[0], parts[1])
-			}
+		for k, v := range params {
+			req = req.Param(k, v)
 		}
 		res := req.Do(ctx).StatusCode(&statusCode)
 		require.NoError(t, res.Error())
@@ -141,37 +135,47 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	testCases := []struct {
 		name   string
 		user   apis.User
-		params string
+		params map[string]string
 	}{
 		{
-			name:   "all",
-			user:   helper.Org1.Admin,
-			params: "", // only dashboards
+			name: "all",
+			user: helper.Org1.Admin,
 		},
 		{
-			name:   "query-single-word",
-			user:   helper.Org1.Admin,
-			params: "query=stacking",
+			name: "query-single-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "stacking",
+			},
 		},
 		{
-			name:   "query-multiple-words",
-			user:   helper.Org1.Admin,
-			params: "query=graph softMin", // must match ALL terms
+			name: "query-multiple-words",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "graph softMin", // must match ALL terms
+			},
 		},
 		{
-			name:   "with-text-panel",
-			user:   helper.Org1.Admin,
-			params: "field=panel_types&panelType=text",
+			name: "with-text-panel",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"field":     "panel_types", // return panel types
+				"panelType": "text",
+			},
 		},
 		{
-			name:   "title-ngram-prefix",
-			user:   helper.Org1.Admin,
-			params: "query=zer", // should match "Zero Decimals Y Ticks"
+			name: "title-ngram-prefix",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "zer", // should match "Zero Decimals Y Ticks"
+			},
 		},
 		{
-			name:   "title-ngram-middle-word",
-			user:   helper.Org1.Admin,
-			params: "query=decim", // should match "Zero Decimals Y Ticks"
+			name: "title-ngram-middle-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "decim", // should match "Zero Decimals Y Ticks"
+			},
 		},
 	}
 	for i, tc := range testCases {
