@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     # Only run in grafana/grafana
-    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.repository == 'grafana/grafana' && (needs.detect-changes.outputs.changed-frontend-packages == 'true' || github.event_name == 'release')
     permissions:
       contents: read
       id-token: write
