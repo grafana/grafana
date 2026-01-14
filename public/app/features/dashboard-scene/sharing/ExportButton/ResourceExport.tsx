@@ -54,30 +54,25 @@ export function ResourceExport({
       : t('share-modal.export.share-externally-label', 'Export for sharing externally');
   const switchExportTooltip = t(
     'dashboard-scene.resource-export.share-externally-tooltip',
-    'Replaces datasource names with their default values and removes references that are unique to this instance'
+    'Removes all instance-specific metadata and data source references from the resource before export.'
   );
   const switchExportModeLabel = t('export.json.export-mode', 'Model');
   const switchExportFormatLabel = t('export.json.export-format', 'Format');
 
-  const exportResourceOptions = useMemo(() => {
-    const classicOption = {
+  const exportResourceOptions = [
+    {
       label: t('dashboard-scene.resource-export.label.classic', 'Classic'),
       value: ExportMode.Classic,
-    };
-    const v1Option = {
+    },
+    {
       label: t('dashboard-scene.resource-export.label.v1-resource', 'V1 Resource'),
       value: ExportMode.V1Resource,
-    };
-    const v2Option = {
+    },
+    {
       label: t('dashboard-scene.resource-export.label.v2-resource', 'V2 Resource'),
       value: ExportMode.V2Resource,
-    };
-
-    if (initialSaveModelVersion === 'v1') {
-      return [classicOption, v1Option, v2Option];
-    }
-    return [v2Option, v1Option];
-  }, [initialSaveModelVersion]);
+    },
+  ];
 
   return (
     <>
@@ -89,14 +84,17 @@ export function ResourceExport({
       >
         <Box marginTop={2}>
           <Stack gap={1} direction="column">
-            <Stack gap={1} alignItems="center">
-              <Label>{switchExportModeLabel}</Label>
-              <RadioButtonGroup
-                options={exportResourceOptions}
-                value={exportMode}
-                onChange={(value) => onExportModeChange(value)}
-              />
-            </Stack>
+            {initialSaveModelVersion === 'v1' && (
+              <Stack gap={1} alignItems="center">
+                <Label>{switchExportModeLabel}</Label>
+                <RadioButtonGroup
+                  options={exportResourceOptions}
+                  value={exportMode}
+                  onChange={(value) => onExportModeChange(value)}
+                  aria-label={switchExportModeLabel}
+                />
+              </Stack>
+            )}
 
             {exportMode !== ExportMode.Classic && (
               <Stack gap={1} alignItems="center">
@@ -108,6 +106,7 @@ export function ResourceExport({
                   ]}
                   value={isViewingYAML ? 'yaml' : 'json'}
                   onChange={onViewYAML}
+                  aria-label={switchExportFormatLabel}
                 />
               </Stack>
             )}

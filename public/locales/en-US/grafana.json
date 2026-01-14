@@ -6391,7 +6391,7 @@
         "yaml": "YAML"
       },
       "share-externally": "Share dashboard with another instance",
-      "share-externally-tooltip": "Replaces datasource names with their default values and removes references that are unique to this instance"
+      "share-externally-tooltip": "Removes all instance-specific metadata and data source references from the resource before export."
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
