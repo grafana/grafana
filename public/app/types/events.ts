@@ -195,6 +195,13 @@ export class DashboardSavedEvent extends BusEventBase {
   static type = 'dashboard-saved';
 }
 
+/**
+ * Custom event that triggers a dashboard refresh.
+ */
+export class NIRefreshDashboardEvent extends BusEventBase {
+  static type = 'ni-refresh-dashboard';
+}
+
 export class AnnotationQueryStarted extends BusEventWithPayload<AnnotationQuery> {
   static type = 'annotation-query-started';
 }
