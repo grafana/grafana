@@ -44,7 +44,7 @@ export type QueryLibraryContextType = {
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void,
     datasourceFilters?: string[],
-    parentRef?: React.RefObject<HTMLDivElement | null>
+    parentRef?: React.RefObject<HTMLDivElement>
   ) => ReactNode;
 
   /**

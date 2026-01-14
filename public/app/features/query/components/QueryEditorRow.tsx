@@ -613,7 +613,7 @@ function SavedQueryButtons(props: {
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
   datasourceFilters: string[];
-  parentRef: React.RefObject<HTMLDivElement | null>;
+  parentRef: React.RefObject<HTMLDivElement>;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
   return renderSavedQueryButtons(
