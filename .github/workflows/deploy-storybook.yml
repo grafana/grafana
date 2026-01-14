@@ -1,10 +1,11 @@
 name: Deploy Storybook
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+  release:
+    types: [released]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -61,11 +62,21 @@ jobs:
         run: yarn storybook:build
 
       # Create the GCS folder name
-      # Right now, this just returns "canary"
-      # But we'll expand this to work for "latest" as well in the future
+      # "latest" when triggered from the latest release
+      # "canary" on pushes to main
       - name: Create deploy name
         id: create-deploy-name
         run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            LATEST_RELEASE_TAG=$(curl -s "https://api.github.com/repos/grafana/grafana/releases/latest" | jq -r '.tag_name')
+            if [[ "${{ github.event.release.tag_name }}" == "$LATEST_RELEASE_TAG" ]]; then
+              echo "deploy-name=latest" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "This is a release but not the latest release; skipping storybook deploy"
+            exit 1
+          fi
+
           echo "deploy-name=canary" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GCS
