@@ -99,6 +99,9 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			return nil, err
 		}
 
+		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
 		if opts.Cfg.EnableSQLKVBackend {
 			sqlkv, err := resource.NewSQLKV(eDB)
 			if err != nil {
@@ -132,6 +135,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 			// TODO add config to decide whether to pass RvManager or not
 			kvBackendOpts.RvManager = rvManager
+			kvBackendOpts.UseChannelNotifier = isHA
 			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
 			if err != nil {
 				return nil, fmt.Errorf("error creating kv backend: %s", err)
@@ -140,9 +144,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			serverOptions.Backend = kvBackend
 			serverOptions.Diagnostics = kvBackend
 		} else {
-			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-				opts.Cfg.SectionWithEnvOverrides("resource_api"))
-
 			backend, err := NewBackend(BackendOptions{
 				DBProvider:           eDB,
 				Reg:                  opts.Reg,

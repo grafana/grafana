@@ -91,6 +91,7 @@ type KVBackendOptions struct {
 	Tracer                       trace.Tracer          // TODO add tracing
 	Reg                          prometheus.Registerer // TODO add metrics
 
+	UseChannelNotifier bool
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -121,7 +122,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		bulkLock:                     NewBulkLock(),
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
-		notifier:                     newNotifier(eventStore, notifierOptions{}),
+		notifier:                     newNotifier(eventStore, notifierOptions{useChannelNotifier: opts.UseChannelNotifier}),
 		snowflake:                    s,
 		builder:                      StandardDocumentBuilder(), // For now we use the standard document builder.
 		log:                          &logging.NoOpLogger{},     // Make this configurable

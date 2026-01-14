@@ -25,7 +25,8 @@ type notifier struct {
 }
 
 type notifierOptions struct {
-	log logging.Logger
+	log                logging.Logger
+	useChannelNotifier bool
 }
 
 type watchOptions struct {
@@ -48,6 +49,12 @@ func newNotifier(eventStore *eventStore, opts notifierOptions) *notifier {
 	if opts.log == nil {
 		opts.log = &logging.NoOpLogger{}
 	}
+
+	if opts.useChannelNotifier {
+		// TODO
+		return nil
+	}
+
 	return &notifier{eventStore: eventStore, log: opts.log}
 }
 
