@@ -513,6 +513,20 @@
     },
     {
       "metadata": {
+        "name": "alertingSyncDispatchTimer",
+        "resourceVersion": "1766161788928",
+        "creationTimestamp": "2025-12-19T16:29:48Z"
+      },
+      "spec": {
+        "description": "Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingTriage",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-31T22:56:50Z",
@@ -662,7 +676,8 @@
       "metadata": {
         "name": "auditLoggingAppPlatform",
         "resourceVersion": "1767013056996",
-        "creationTimestamp": "2025-12-29T12:57:36Z"
+        "creationTimestamp": "2025-12-29T12:57:36Z",
+        "deletionTimestamp": "2026-01-06T09:18:36Z"
       },
       "spec": {
         "description": "Enable audit logging with Kubernetes under app platform",
@@ -1015,12 +1030,15 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-10-23T08:55:45Z"
+        "resourceVersion": "1768382835527",
+        "creationTimestamp": "2024-10-23T08:55:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-14 09:27:15.527103 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables experimental new dashboard layouts",
-        "stage": "experimental",
+        "description": "Enables new dashboard layouts",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad"
       }
     },

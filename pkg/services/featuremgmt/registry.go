@@ -574,8 +574,8 @@ var (
 		},
 		{
 			Name:         "dashboardNewLayouts",
-			Description:  "Enables experimental new dashboard layouts",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables new dashboard layouts",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
 			Owner:        grafanaDashboardsSquad,
 		},
@@ -981,7 +981,8 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
-		}, {
+		},
+		{
 			Name:         "alertingFilterV2",
 			Description:  "Enable the new alerting search experience",
 			Stage:        FeatureStageExperimental,
@@ -2068,6 +2069,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:            "alertingSyncDispatchTimer",
+			Description:     "Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			HideFromDocs:    true,
 		},
 	}
 )

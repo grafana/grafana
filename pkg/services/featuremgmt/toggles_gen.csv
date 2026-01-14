@@ -79,7 +79,7 @@ annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
-dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,false
+dashboardNewLayouts,preview,@grafana/dashboards-squad,false,false,false
 dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
@@ -280,3 +280,4 @@ multiPropsVariables,experimental,@grafana/dashboards-squad,false,false,true
 smoothingTransformation,experimental,@grafana/datapro,false,false,true
 secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false
+alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false

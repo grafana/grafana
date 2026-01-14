@@ -356,7 +356,7 @@ export interface FeatureToggles {
   */
   dashboardScene?: boolean;
   /**
-  * Enables experimental new dashboard layouts
+  * Enables new dashboard layouts
   */
   dashboardNewLayouts?: boolean;
   /**
@@ -1251,4 +1251,8 @@ export interface FeatureToggles {
   * Enables profiles exemplars support in profiles drilldown
   */
   profilesExemplars?: boolean;
+  /**
+  * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+  */
+  alertingSyncDispatchTimer?: boolean;
 }
