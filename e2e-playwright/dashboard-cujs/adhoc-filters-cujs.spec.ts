@@ -1,6 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { setScopes } from '../utils/scope-helpers';
+import { setScopes, setupScopeRoutes } from '../utils/scope-helpers';
+import { testScopes } from '../utils/scopes';
 
 import {
   getAdHocFilterOptionValues,
@@ -13,6 +14,7 @@ import {
 } from './cuj-selectors';
 import { prepareAPIMocks } from './utils';
 
+const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
 const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
 test.use({
@@ -33,6 +35,11 @@ test.describe(
       const apiMocks = await prepareAPIMocks(page);
       const adHocFilterPills = getAdHocFilterPills(page);
       const scopesSelectorInput = getScopesSelectorInput(page);
+
+      // Set up routes before any navigation (only for mocked mode)
+      if (!USE_LIVE_DATA) {
+        await setupScopeRoutes(page, testScopes());
+      }
 
       await test.step('1.Apply filtering to a whole dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
