@@ -107,7 +107,7 @@ func TestConnection_Mutate(t *testing.T) {
 			},
 		},
 		{
-			name: "should not generate JWT token when token is already there",
+			name: "should not generate JWT token when no new private key is provided",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Generation: 1},
 				Spec: provisioning.ConnectionSpec{

@@ -60,11 +60,9 @@ func (c *Connection) Mutate(_ context.Context) error {
 
 	c.obj.Spec.URL = fmt.Sprintf("%s/%s", githubInstallationURL, c.obj.Spec.GitHub.InstallationID)
 
-	// Generate token only if one of the following cases are true
-	// - The object is being created now (generation == 0)
-	// - The token is not there
-	// - A new Private key is being submitted
-	if c.obj.Generation == 0 || c.secrets.Token.IsZero() || !c.obj.Secure.PrivateKey.Create.IsZero() {
+	// Generate JWT token if a new private key is being provided.
+	// Same as for the spec.Github, if such a field is required, Validation will take care of that.
+	if !c.obj.Secure.PrivateKey.Create.IsZero() {
 		token, err := generateToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
 		if err != nil {
 			return fmt.Errorf("failed to generate JWT token: %w", err)
