@@ -1929,6 +1929,10 @@
       "select-group": "Select group",
       "select-namespace": "Select namespace"
     },
+    "navigation": {
+      "alert-rules": "Alert rules",
+      "recently-deleted": "Recently deleted"
+    },
     "need-help-info": {
       "need-help": "Need help?"
     },
