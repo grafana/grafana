@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -99,6 +100,10 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
+			if db.IsTestDbSQLite() {
+				t.Skip("Skipping tests on sqlite until channel notifier is implemented")
+			}
+
 			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
 		})
 	}
