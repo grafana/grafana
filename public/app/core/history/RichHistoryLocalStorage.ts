@@ -86,7 +86,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       throw error;
     }
 
-    const { queriesToKeep, limitExceeded } = cleanUpUnstarredQuery(currentRichHistoryDTOs, MAX_HISTORY_ITEMS);
+    let { queriesToKeep, limitExceeded } = cleanUpUnstarredQuery(currentRichHistoryDTOs, MAX_HISTORY_ITEMS);
 
     let updatedHistory: RichHistoryLocalStorageDTO[] = [newRichHistoryQueryDTO, ...queriesToKeep];
 
@@ -98,16 +98,17 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
         store.setObject(RICH_HISTORY_KEY, updatedHistory);
         saved = true;
       } catch (error) {
-        if (saveRetriesLeft >= 1) {
-          await this.trackLocalStorageUsage('Failed to save rich history to local storage', {
-            saveRetriesLeft: saveRetriesLeft.toString(),
-            quotaExceededError: error instanceof Error && error.name === 'QuotaExceededError' ? 'true' : 'false',
-            errorMessage: error instanceof Error ? error?.message : 'unknown',
-          });
+        await this.trackLocalStorageUsage('Failed to save rich history to local storage', {
+          saveRetriesLeft: saveRetriesLeft.toString(),
+          quotaExceededError: error instanceof Error && error.name === 'QuotaExceededError' ? 'true' : 'false',
+          errorMessage: error instanceof Error ? error?.message : 'unknown',
+        });
 
+        if (saveRetriesLeft >= 1) {
           saveRetriesLeft--;
-          const { queriesToKeep } = cleanUpUnstarredQuery(updatedHistory, updatedHistory.length - 1);
-          updatedHistory = queriesToKeep;
+          const { queriesToKeep: newQueriesToKeep } = cleanUpUnstarredQuery(queriesToKeep, queriesToKeep.length - 1);
+          updatedHistory = [newRichHistoryQueryDTO, ...newQueriesToKeep];
+          queriesToKeep = newQueriesToKeep;
           continue;
         }
 
@@ -255,7 +256,7 @@ export function cleanUpUnstarredQuery(
   // remove oldest non-starred items to give space for the recent query
   let limitExceeded = false;
   let current = queriesToKeep.length - 1;
-  while (current >= 0 && queriesToKeep.length > max) {
+  while (current >= 0 && queriesToKeep.length >= max) {
     if (!queriesToKeep[current].starred) {
       queriesToKeep.splice(current, 1);
       limitExceeded = true;

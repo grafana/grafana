@@ -83,6 +83,8 @@ describe('RichHistoryLocalStorage', () => {
     jest.setSystemTime(now);
     storage = new RichHistoryLocalStorage();
     await storage.deleteAll();
+
+    (loggerMock.logWarning as jest.Mock).mockReset();
   });
 
   afterEach(() => {
@@ -302,13 +304,14 @@ describe('RichHistoryLocalStorage', () => {
         })
       ).rejects.toMatchObject({ name: 'StorageFull' });
 
-      // 3 tracking attempts should be logged (for each failed try)
-      expect(loggerMock.logWarning).toHaveBeenCalledTimes(3);
+      // 4 failed tracking attempts (1 save + 3 retries) should be logged (for each failed try)
+      expect(loggerMock.logWarning).toHaveBeenCalledTimes(4);
       const calls = (loggerMock.logWarning as jest.Mock).mock.calls;
       expect(calls[0][0]).toContain('Failed to save rich history to local storage');
       expect(calls[0][1].saveRetriesLeft).toBe('3');
       expect(calls[1][1].saveRetriesLeft).toBe('2');
       expect(calls[2][1].saveRetriesLeft).toBe('1');
+      expect(calls[3][1].saveRetriesLeft).toBe('0');
 
       setSpy.mockRestore();
     });
