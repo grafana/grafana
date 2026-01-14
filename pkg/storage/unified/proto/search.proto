@@ -49,6 +49,13 @@ message ResourceStatsResponse {
   repeated Stats stats = 2;
 }
 
+enum QueryFieldType {
+  DEFAULT = 0;
+  TEXT = 1;
+  KEYWORD = 2;
+  PHRASE = 3; 
+}
+
 // Search within a single resource
 message ResourceSearchRequest {
   message Sort {
@@ -62,6 +69,18 @@ message ResourceSearchRequest {
     // For now, only term queries, eventually?
     // numeric queries
     // date queries
+  }
+
+  // Defines the field in the index to query
+  // Boost is optional, and allows weighting the field higher in the results
+  message QueryField {
+    // The field name in the index to query
+    string name = 1;
+
+    QueryFieldType type = 2;
+
+    // Boost value for this field
+    float boost = 3;
   }
 
   // The key must include namespace + group + resource
@@ -99,6 +118,9 @@ message ResourceSearchRequest {
   int64 page = 11;
 
   int64 permission = 12;
+
+  // Optionally specify which fields are included in the query
+  repeated QueryField query_fields = 13;
 }
 
 message ResourceSearchResponse {
