@@ -626,6 +626,134 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
 	})
+
+	t.Run("should compute shared dashboards based on requested edit permission", func(t *testing.T) {
+		// dashboardSearchRequest
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dashboardinprivatefolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dashboardinpublicfolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("publicfolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest: only folders the user can EDIT should be returned here
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "publicfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte(""), // root folder uid
+						},
+					},
+				},
+			},
+		}
+
+		// final search should only include items in folders the user cannot edit
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dashboardinprivatefolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
+		}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme&permission=edit", nil)
+		req.Header.Add("content-type", "application/json")
+
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsWrite] = []string{"dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
+		// user can view the private folder, but cannot edit it. This should still classify dashboards in it as "shared with me" for edit.
+		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:privatefolder"}
+		allPermissions[1] = permissions
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, 3, mockClient.CallCount)
+
+		firstCall := mockClient.MockCalls[0]
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), firstCall.Permission)
+		assert.Equal(t, []string{"dashboardinprivatefolder", "dashboardinpublicfolder"}, firstCall.Options.Fields[0].Values)
+
+		secondCall := mockClient.MockCalls[1]
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), secondCall.Permission)
+		assert.Equal(t, []string{"privatefolder", "publicfolder"}, secondCall.Options.Fields[0].Values)
+
+		thirdCall := mockClient.MockCalls[2]
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), thirdCall.Permission)
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[0].Values)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
+	})
 }
 
 func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {

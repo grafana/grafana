@@ -304,6 +304,32 @@ const rootFolder = "general"
 
 var errEmptyResults = fmt.Errorf("empty results")
 
+func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
+	switch p {
+	case dashboardaccess.PERMISSION_EDIT:
+		return dashboards.ActionDashboardsWrite, dashboards.ActionFoldersWrite
+	case dashboardaccess.PERMISSION_ADMIN:
+		return dashboards.ActionDashboardsPermissionsWrite, dashboards.ActionFoldersPermissionsWrite
+	case dashboardaccess.PERMISSION_VIEW:
+		fallthrough
+	default:
+		return dashboards.ActionDashboardsRead, dashboards.ActionFoldersRead
+	}
+}
+
+func permissionFromQueryParams(queryParams url.Values) dashboardaccess.PermissionType {
+	switch strings.ToLower(queryParams.Get("permission")) {
+	case "edit":
+		return dashboardaccess.PERMISSION_EDIT
+	case "view":
+		return dashboardaccess.PERMISSION_VIEW
+	case "admin":
+		return dashboardaccess.PERMISSION_ADMIN
+	default:
+		return dashboardaccess.PERMISSION_VIEW
+	}
+}
+
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -320,8 +346,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	requestedPermission := permissionFromQueryParams(queryParams)
+
 	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func() ([]string, error) {
-		return s.getDashboardsUIDsSharedWithUser(ctx, user)
+		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
 	if err != nil {
 		if errors.Is(err, errEmptyResults) {
@@ -548,11 +576,13 @@ func asResourceKey(ns string, k string) (*resourcepb.ResourceKey, error) {
 	return key, nil
 }
 
-func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
-	// gets dashboards that the user was granted read access to
+func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester, requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+	// Gets dashboards/folders that the user was granted access to, but does not have access to their parent folder.
+	// This powers the virtual "Shared with me" folder.
+	dashboardAction, folderAction := permissionToActions(requestedPermission)
 	permissions := user.GetPermissions()
-	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
-	folderPermissions := permissions[dashboards.ActionFoldersRead]
+	dashboardPermissions := permissions[dashboardAction]
+	folderPermissions := permissions[folderAction]
 	dashboardUids := make([]string, 0)
 	sharedDashboards := make([]string, 0)
 
@@ -586,9 +616,10 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Federated: []*resourcepb.ResourceKey{folderKey},
-		Fields:    []string{"folder"},
-		Limit:     int64(len(dashboardUids)),
+		Federated:  []*resourcepb.ResourceKey{folderKey},
+		Fields:     []string{"folder"},
+		Limit:      int64(len(dashboardUids)),
+		Permission: int64(requestedPermission),
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{{
@@ -625,8 +656,9 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	folderSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields: []string{"folder"},
-		Limit:  int64(len(allFolders)),
+		Fields:     []string{"folder"},
+		Limit:      int64(len(allFolders)),
+		Permission: int64(requestedPermission),
 		Options: &resourcepb.ListOptions{
 			Key: folderKey,
 			Fields: []*resourcepb.Requirement{{
