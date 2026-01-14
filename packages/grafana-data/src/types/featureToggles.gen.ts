@@ -1255,4 +1255,8 @@ export interface FeatureToggles {
   * Enables profiles exemplars support in profiles drilldown
   */
   profilesExemplars?: boolean;
+  /**
+  * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+  */
+  alertingSyncDispatchTimer?: boolean;
 }
