@@ -68,6 +68,40 @@ func TestIntegrationDecrypt(t *testing.T) {
 		}
 	})
 
+	t.Run("when the context is cancelled, it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		svcIdentity := "svc"
+
+		// Create auth context with proper permissions that match the decrypters
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, svcIdentity, types.TypeUser)
+
+		// Setup service
+		sut := testutils.Setup(t)
+
+		// Create a secure value
+		spec := secretv1beta1.SecureValueSpec{
+			Description: "description",
+			Decrypters:  []string{svcIdentity},
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+		}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv.Name = "sv-test"
+		sv.Namespace = "default"
+
+		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
+
+		// Cancel immediately!
+		cancel()
+
+		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-test")
+		require.ErrorIs(t, err, context.Canceled)
+		require.Empty(t, exposed)
+	})
+
 	t.Run("when happy path with valid auth and permissions, it returns decrypted value", func(t *testing.T) {
 		t.Parallel()
 
