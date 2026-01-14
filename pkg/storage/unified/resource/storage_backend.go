@@ -347,7 +347,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			return 0, fmt.Errorf("failed to write data: %w", err)
 		}
 
-		rv = rvmanager.SnowflakeFromRv(rv)
+		rv = rvmanager.SnowflakeFromRV(rv)
 		dataKey.ResourceVersion = rv
 	} else {
 		err := k.dataStore.Save(ctx, dataKey, bytes.NewReader(event.Value))
