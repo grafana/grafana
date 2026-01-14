@@ -1337,11 +1337,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/api/onCallApi.test.ts": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/components/AnnotationDetailsField.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1627,11 +1622,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/mocks/server/configure.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/mocks/server/handlers/plugins.ts": {
     "no-restricted-syntax": {
       "count": 1
@@ -1659,16 +1649,6 @@
   },
   "public/app/features/alerting/unified/types/receiver-form.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/utils/config.test.ts": {
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
-  "public/app/features/alerting/unified/utils/config.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },

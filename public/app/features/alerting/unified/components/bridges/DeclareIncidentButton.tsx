@@ -1,8 +1,8 @@
 import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton, Menu, Tooltip } from '@grafana/ui';
 
-import { usePluginBridge } from '../../hooks/usePluginBridge';
-import { getIrmIfPresentOrIncidentPluginId } from '../../utils/config';
+import { useIrmPlugin } from '../../hooks/usePluginBridge';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { createBridgeURL } from '../PluginBridge';
 
 interface Props {
@@ -11,20 +11,18 @@ interface Props {
   url?: string;
 }
 
-const pluginId = getIrmIfPresentOrIncidentPluginId();
-
 export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: Props) => {
+  const { pluginId, loading, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
+
   const bridgeURL = createBridgeURL(pluginId, '/incidents/declare', {
     title,
     severity,
     url,
   });
 
-  const { loading, installed, settings } = usePluginBridge(pluginId);
-
   return (
     <>
-      {loading === true && (
+      {loading && (
         <Button icon="fire" size="sm" type="button" disabled>
           <Trans i18nKey="alerting.declare-incident-button.declare-incident">Declare Incident</Trans>
         </Button>
@@ -51,17 +49,17 @@ export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: P
 };
 
 export const DeclareIncidentMenuItem = ({ title = '', severity = '', url = '' }: Props) => {
+  const { pluginId, loading, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
+
   const bridgeURL = createBridgeURL(pluginId, '/incidents/declare', {
     title,
     severity,
     url,
   });
 
-  const { loading, installed, settings } = usePluginBridge(pluginId);
-
   return (
     <>
-      {loading === true && (
+      {loading && (
         <Menu.Item
           label={t('alerting.declare-incident-menu-item.label-declare-incident', 'Declare incident')}
           icon="fire"

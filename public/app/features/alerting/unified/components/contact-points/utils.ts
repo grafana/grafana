@@ -15,6 +15,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { extractReceivers } from '../../utils/receivers';
 import { routeAdapter } from '../../utils/routeAdapter';
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
@@ -113,7 +114,8 @@ export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
 type EnhanceContactPointsArgs = {
   status?: ReceiversStateDTO[];
   notifiers?: NotifierDTO[];
-  onCallIntegrations?: OnCallIntegrationDTO[] | undefined | null;
+  onCallIntegrations?: OnCallIntegrationDTO[];
+  onCallPluginId?: SupportedPlugin;
   contactPoints: Receiver[];
   alertmanagerConfiguration?: AlertManagerCortexConfig;
 };
@@ -130,6 +132,7 @@ export function enhanceContactPointsWithMetadata({
   status = [],
   notifiers = [],
   onCallIntegrations,
+  onCallPluginId,
   contactPoints,
   alertmanagerConfiguration,
 }: EnhanceContactPointsArgs): ContactPointWithMetadata[] {
@@ -162,7 +165,7 @@ export function enhanceContactPointsWithMetadata({
           [RECEIVER_META_KEY]: getNotifierMetadata(notifiers, receiver),
           // if OnCall plugin is installed, we'll add it to the receiver's plugin metadata
           [RECEIVER_PLUGIN_META_KEY]: isOnCallReceiver
-            ? getOnCallMetadata(onCallIntegrations, receiver, Boolean(alertmanagerConfiguration))
+            ? getOnCallMetadata(onCallIntegrations, receiver, Boolean(alertmanagerConfiguration), onCallPluginId)
             : undefined,
         };
       }),
