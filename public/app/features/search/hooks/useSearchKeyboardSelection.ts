@@ -38,7 +38,7 @@ export function useSearchKeyboardNavigation(
 ): ItemSelection {
   const highlightIndexRef = useRef<ItemSelection>({ x: 0, y: -1 });
   const [highlightIndex, setHighlightIndex] = useState<ItemSelection>({ x: 0, y: -1 });
-  const urlsRef = useRef<Field>();
+  const urlsRef = useRef<Field | null>(null);
 
   // Clear selection when the search results change
   useEffect(() => {

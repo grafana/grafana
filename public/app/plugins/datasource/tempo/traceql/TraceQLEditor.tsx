@@ -52,7 +52,7 @@ export function TraceQLEditor(props: Props) {
   const onRunQueryRef = useRef(onRunQuery);
   onRunQueryRef.current = onRunQuery;
 
-  const errorTimeoutId = useRef<number>();
+  const errorTimeoutId = useRef<number | null>(null);
 
   return (
     <>
@@ -103,7 +103,9 @@ export function TraceQLEditor(props: Props) {
             }
 
             // Remove previous callback if existing, to prevent squiggles from been shown while the user is still typing
-            window.clearTimeout(errorTimeoutId.current);
+            if (errorTimeoutId.current) {
+              window.clearTimeout(errorTimeoutId.current);
+            }
 
             const errorNodes = getErrorNodes(model.getValue());
             const cursorPosition = changeEvent.changes[0].rangeOffset;

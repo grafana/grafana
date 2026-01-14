@@ -70,7 +70,7 @@ export function useLayout(
   const currentSignature = createDataSignature(rawNodes, rawEdges);
 
   const isMounted = useMountedState();
-  const layoutWorkerCancelRef = useRef<(() => void) | undefined>();
+  const layoutWorkerCancelRef = useRef<(() => void) | null>(null);
 
   useUnmount(() => {
     if (layoutWorkerCancelRef.current) {

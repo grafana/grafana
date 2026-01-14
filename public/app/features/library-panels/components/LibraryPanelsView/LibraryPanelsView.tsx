@@ -43,7 +43,7 @@ export const LibraryPanelsView = ({
     }
   );
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
-  const abortControllerRef = useRef<AbortController>();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useDebounce(
     () => {

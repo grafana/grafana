@@ -94,7 +94,7 @@ const EDITOR_HEIGHT_OFFSET = 2;
  * Hook that returns function that will set up monaco autocomplete for the label selector
  */
 function useAutocomplete(getLabelValues: (label: string) => Promise<string[]>, labels?: string[]) {
-  const providerRef = useRef<CompletionProvider>();
+  const providerRef = useRef<CompletionProvider | null>(null);
   if (providerRef.current === undefined) {
     providerRef.current = new CompletionProvider();
   }

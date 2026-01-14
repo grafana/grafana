@@ -126,7 +126,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
     window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true'
   );
 
-  const timerHandle = useRef<number>();
+  const timerHandle = useRef<number | null>(null);
   const previousInitialized = useRef<boolean>(false);
   const previousContextFilters = useRef<ContextFilter[]>([]);
 
@@ -191,14 +191,18 @@ export function LokiContextUi(props: LokiContextUiProps) {
     }, 1500);
 
     return () => {
-      clearTimeout(timerHandle.current);
+      if (timerHandle.current) {
+        clearTimeout(timerHandle.current);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextFilters, initialized]);
 
   useEffect(() => {
     return () => {
-      clearTimeout(timerHandle.current);
+      if (timerHandle.current) {
+        clearTimeout(timerHandle.current);
+      }
       onClose();
     };
   }, [onClose]);

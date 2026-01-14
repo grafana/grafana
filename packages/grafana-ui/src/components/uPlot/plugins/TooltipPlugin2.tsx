@@ -140,7 +140,7 @@ export const TooltipPlugin2 = ({
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
 
-  const sizeRef = useRef<TooltipContainerSize>();
+  const sizeRef = useRef<TooltipContainerSize | null>(null);
   const styles = useStyles2(getStyles, maxWidth);
 
   const renderRef = useRef(render);

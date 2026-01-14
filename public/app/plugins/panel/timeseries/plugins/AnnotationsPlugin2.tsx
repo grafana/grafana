@@ -133,7 +133,7 @@ export const AnnotationsPlugin2 = ({
   const newRangeRef = useRef(newRange);
   newRangeRef.current = newRange;
 
-  const xAxisRef = useRef<HTMLDivElement>();
+  const xAxisRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {

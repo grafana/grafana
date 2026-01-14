@@ -23,7 +23,7 @@ export const ExemplarsPlugin = ({
   maxHeight,
   maxWidth,
 }: ExemplarsPluginProps) => {
-  const plotInstance = useRef<uPlot>();
+  const plotInstance = useRef<uPlot | null>(null);
 
   const [lockedExemplarRowIndex, setLockedExemplarRowIndex] = useState<number | undefined>();
 

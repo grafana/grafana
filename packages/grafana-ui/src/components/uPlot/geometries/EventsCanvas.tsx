@@ -19,7 +19,7 @@ interface EventsCanvasProps {
 }
 
 export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords, config }: EventsCanvasProps) {
-  const plotInstance = useRef<uPlot>();
+  const plotInstance = useRef<uPlot | null>(null);
   // render token required to re-render annotation markers. Rendering lines happens in uPlot and the props do not change
   // so we need to force the re-render when the draw hook was performed by uPlot
   const [renderToken, setRenderToken] = useState(0);

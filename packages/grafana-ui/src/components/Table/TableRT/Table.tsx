@@ -135,7 +135,7 @@ export const Table = memo((props: Props) => {
   // `useTableStateReducer`, which is needed to construct options for `useTable` (the hook that returns
   // `toggleAllRowsExpanded`), and if we used a variable, that variable would be undefined at the time
   // we initialize `useTableStateReducer`.
-  const toggleAllRowsExpandedRef = useRef<(value?: boolean) => void>();
+  const toggleAllRowsExpandedRef = useRef<((value?: boolean) => void) | null>(null);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer({

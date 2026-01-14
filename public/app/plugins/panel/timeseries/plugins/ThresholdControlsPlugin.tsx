@@ -16,7 +16,7 @@ interface ThresholdControlsPluginProps {
 }
 
 export const ThresholdControlsPlugin = ({ config, fieldConfig, onThresholdsChange }: ThresholdControlsPluginProps) => {
-  const plotInstance = useRef<uPlot>();
+  const plotInstance = useRef<uPlot | null>(null);
   const [renderToken, setRenderToken] = useState(0);
 
   useLayoutEffect(() => {

@@ -77,7 +77,7 @@ export const SuggestionsInput = ({
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>();
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollTop);

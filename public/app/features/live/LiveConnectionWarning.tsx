@@ -12,7 +12,7 @@ export interface Props {}
 
 export const LiveConnectionWarning = memo(function LiveConnectionWarning() {
   const [show, setShow] = useState<boolean | undefined>(undefined);
-  const subscriptionRef = useRef<Unsubscribable>();
+  const subscriptionRef = useRef<Unsubscribable | null>(null);
   const styles = useStyles2(getStyle);
 
   useEffect(() => {

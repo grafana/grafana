@@ -42,8 +42,8 @@ interface LogsCodeEditorProps {
 export const PPLQueryEditor = (props: LogsCodeEditorProps) => {
   const { query, datasource, onChange } = props;
 
-  const monacoRef = useRef<Monaco>();
-  const disposalRef = useRef<monacoType.IDisposable>();
+  const monacoRef = useRef<Monaco | null>(null);
+  const disposalRef = useRef<monacoType.IDisposable | undefined>(undefined);
 
   const onFocus = useCallback(async () => {
     disposalRef.current = await reRegisterCompletionProvider(

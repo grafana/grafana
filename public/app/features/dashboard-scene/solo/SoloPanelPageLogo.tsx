@@ -8,7 +8,7 @@ import grafanaTextLogoDarkSvg from 'img/grafana_text_logo_dark.svg';
 import grafanaTextLogoLightSvg from 'img/grafana_text_logo_light.svg';
 
 interface SoloPanelPageLogoProps {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   isHovered: boolean;
   hideLogo?: UrlQueryValue;
 }

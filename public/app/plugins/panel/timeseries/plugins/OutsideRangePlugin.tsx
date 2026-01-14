@@ -11,7 +11,7 @@ interface ThresholdControlsPluginProps {
 }
 
 export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
-  const plotInstance = useRef<uPlot>();
+  const plotInstance = useRef<uPlot | null>(null);
   const [timevalues, setTimeValues] = useState<number[] | TypedArray>([]);
   const [timeRange, setTimeRange] = useState<Scale | undefined>();
 
