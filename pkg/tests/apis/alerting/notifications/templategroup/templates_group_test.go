@@ -537,7 +537,6 @@ func TestIntegrationPatch(t *testing.T) {
 	require.NotEmpty(t, current.ResourceVersion)
 
 	t.Run("should patch with merge patch", func(t *testing.T) {
-
 		patch := `{
              "spec": {
                  "content" : "{{ define \"test-another\" }} test {{ end }}"
