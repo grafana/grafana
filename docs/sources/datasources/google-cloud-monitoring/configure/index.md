@@ -48,6 +48,36 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-gce-default-service-account
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-gce-default-service-account
+  query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/
+  template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/
+  annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  gcm-index:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/
 ---
 
 # Configure the Google Cloud Monitoring data source
@@ -313,3 +343,14 @@ resource "grafana_data_source" "google_cloud_monitoring" {
 ```
 
 For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
+
+## Next steps
+
+After you configure the Google Cloud Monitoring data source, you can:
+
+- [Query GCP metrics](ref:query-editor) using the visual Builder, MQL, SLO, or PromQL query types.
+- [Create template variables](ref:template-variables) for dynamic, reusable dashboards.
+- [Add annotations](ref:annotations) to overlay GCP events on your graphs.
+- [Set up alerting](ref:alerting) to receive notifications based on GCP metrics and SLOs.
+- [Explore your data](ref:explore) to investigate metrics without building a dashboard.
+- [Import pre-configured dashboards](ref:gcm-index) for popular GCP services.
