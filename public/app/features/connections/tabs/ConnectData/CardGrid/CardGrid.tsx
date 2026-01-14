@@ -81,7 +81,6 @@ export interface CardGridProps {
 export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
   const styles = useStyles2(getStyles);
 
-  console.log('items', items);
   return (
     <Grid gap={1.5} minColumnWidth={44}>
       {items.map((item) => (
