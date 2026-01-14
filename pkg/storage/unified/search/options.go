@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
