@@ -191,12 +191,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 		httpReq, err := CreateRequest(ctx, logger, dsInfo, tsdbQuery)
 		if err != nil {
-			var urlErr *url.Error
-			if errors.As(err, &urlErr) {
-				result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
-			} else {
-				result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.PluginError(err))
-			}
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
 		}
 

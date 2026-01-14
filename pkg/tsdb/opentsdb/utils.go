@@ -132,7 +132,7 @@ func BuildMetric(query backend.DataQuery) (map[string]any, error) {
 func CreateRequest(ctx context.Context, logger log.Logger, dsInfo *datasourceInfo, data OpenTsdbQuery) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("failed to parse OpenTSDB URL %q: %w", dsInfo.URL, err))
 	}
 	u.Path = path.Join(u.Path, "api/query")
 	if dsInfo.TSDBVersion == 4 {
@@ -143,14 +143,12 @@ func CreateRequest(ctx context.Context, logger log.Logger, dsInfo *datasourceInf
 
 	postData, err := json.Marshal(data)
 	if err != nil {
-		logger.Info("Failed marshaling data", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, backend.DownstreamError(fmt.Errorf("failed to marshal OpenTSDB request body: %w", err))
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(string(postData)))
 	if err != nil {
-		logger.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, backend.DownstreamError(fmt.Errorf("failed to create OpenTSDB request: %w", err))
 	}
 
 	req.Header.Set("Content-Type", "application/json")
