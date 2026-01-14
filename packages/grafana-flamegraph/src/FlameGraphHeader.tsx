@@ -130,7 +130,6 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
-        {extraHeaderElements && <div className={styles.extraElements}>{extraHeaderElements}</div>}
         {selectedView === SelectedView.Multi ? (
           <>
             {viewMode === ViewMode.Single && (
@@ -147,6 +146,7 @@ const FlameGraphHeader = ({
               options={viewModeOptions}
               value={viewMode}
               onChange={setViewMode}
+              className={styles.buttonSpacing}
             />
           </>
         ) : (
@@ -155,8 +155,10 @@ const FlameGraphHeader = ({
             options={getViewOptions(containerWidth, vertical)}
             value={selectedView}
             onChange={setSelectedView}
+            className={styles.buttonSpacing}
           />
         )}
+        {extraHeaderElements && <div className={styles.extraElements}>{extraHeaderElements}</div>}
       </div>
     </div>
   );
