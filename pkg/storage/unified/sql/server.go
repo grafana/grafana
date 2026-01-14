@@ -159,6 +159,13 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, resource.Se
 		}
 	}
 
+	// Initialize the backend before creating search server (it needs the DB connection)
+	if serverOptions.Lifecycle != nil {
+		if err := serverOptions.Lifecycle.Init(context.Background()); err != nil {
+			return nil, nil, fmt.Errorf("failed to initialize backend: %w", err)
+		}
+	}
+
 	search, err := resource.NewSearchServer(opts.SearchOptions, serverOptions.Backend, opts.AccessClient, nil, opts.IndexMetrics, opts.OwnsIndexFn)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize search: %w", err)
