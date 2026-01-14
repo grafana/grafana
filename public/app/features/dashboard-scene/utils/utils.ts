@@ -279,11 +279,14 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
+export function getDefaultPluginId(): string {
+  return config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
+    ? UNCONFIGURED_PANEL_PLUGIN_ID
+    : 'timeseries';
+}
+
 export function getDefaultVizPanel(): VizPanel {
-  const defaultPluginId =
-    config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
-      ? UNCONFIGURED_PANEL_PLUGIN_ID
-      : 'timeseries';
+  const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle =
     config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID

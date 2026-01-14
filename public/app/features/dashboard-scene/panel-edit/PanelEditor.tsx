@@ -34,6 +34,7 @@ import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
   activateSceneObjectAndParentTree,
   getDashboardSceneFor,
+  getDefaultVizPanel,
   getLibraryPanelBehavior,
   getPanelIdForVizPanel,
 } from '../utils/utils';
@@ -91,12 +92,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
     dashboard.state.editPane.clearSelection();
 
-    if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-      if (config.featureToggles.newVizSuggestions) {
-        this._autoSelectVisualization(panel);
-      } else {
-        panel.changePluginType('timeseries');
-      }
+    // this will be deleted when suggestions is fully rolled out.
+    if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID && !config.featureToggles.newVizSuggestions) {
+      panel.changePluginType('timeseries');
     }
 
     this._subs.add(
@@ -242,7 +240,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // First time initialization
     if (this.state.isInitializing) {
       this.setOriginalState(this.state.panelRef);
-
       this._setupChangeDetection();
       this._updateDataPane(plugin);
 
@@ -255,21 +252,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         })
       );
 
-      const isUnconfigured = Boolean(
-        config.featureToggles.newVizSuggestions && panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID
-      );
-
-      if (isUnconfigured) {
-        this._setupEditPreview();
-      }
-
       // Setup options pane
       const optionsPane = new PanelOptionsPane({
         panelRef: this.state.panelRef,
         editPreviewRef: this.state.editPreview?.getRef(),
         searchQuery: '',
         listMode: OptionFilter.All,
-        isVizPickerOpen: isUnconfigured,
+        isVizPickerOpen: this.state.isNewPanel,
         isNewPanel: this.state.isNewPanel,
       });
 
@@ -279,10 +268,19 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       });
 
       this._subs.add(
+        this.subscribeToState((newState, oldState) => {
+          if (newState.editPreview !== oldState.editPreview) {
+            optionsPane.setState({ editPreviewRef: newState.editPreview?.getRef() });
+          }
+        })
+      );
+      this._subs.add(
         optionsPane.subscribeToState((newState, oldState) => {
           if (newState.isVizPickerOpen !== oldState.isVizPickerOpen) {
             if (newState.isVizPickerOpen) {
-              this._setupEditPreview();
+              const panel = this.state.panelRef.resolve();
+              const editPreview = PanelEditor.buildEditPreview(panel);
+              this.setState({ editPreview });
             } else {
               this.setState({ editPreview: undefined });
             }
@@ -294,21 +292,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       // Just update data pane
       this._updateDataPane(plugin);
     }
-  }
-
-  private _setupEditPreview() {
-    const panel = this.state.panelRef.resolve();
-
-    // we just "pick" timeseries, viz type will likely be overridden by Suggestions.
-    const editPreviewBuilder = PanelBuilders.timeseries()
-      .setTitle(panel.state.title)
-      .setDescription(panel.state.description);
-    if (panel.state.$data) {
-      editPreviewBuilder.setData(new DataProviderSharer({ source: panel.state.$data.getRef() }));
-    }
-    const editPreview = editPreviewBuilder.build();
-    this.setState({ editPreview });
-    this.state.optionsPane?.setState({ editPreviewRef: editPreview.getRef() });
   }
 
   private _updateDataPane(plugin: PanelPlugin) {
@@ -452,6 +435,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         .build(),
     });
   };
+
+  public static buildEditPreview(panel: VizPanel): VizPanel {
+    const editPreview = getDefaultVizPanel();
+    editPreview.setState({
+      title: panel.state.title,
+      description: panel.state.description,
+      $data: panel.state.$data ? new DataProviderSharer({ source: panel.state.$data.getRef() }) : undefined,
+    });
+    return editPreview;
+  }
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
@@ -459,5 +452,6 @@ export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelE
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,
+    editPreview: isNewPanel ? PanelEditor.buildEditPreview(panel) : undefined,
   });
 }
