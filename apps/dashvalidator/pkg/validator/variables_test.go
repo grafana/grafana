@@ -2,6 +2,8 @@ package validator
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsVariableReference(t *testing.T) {
@@ -33,9 +35,7 @@ func TestIsVariableReference(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := isVariableReference(tt.input)
-			if result != tt.expected {
-				t.Errorf("isVariableReference(%q) = %v, want %v", tt.input, result, tt.expected)
-			}
+			require.Equal(t, tt.expected, result, "isVariableReference(%q) returned unexpected result", tt.input)
 		})
 	}
 }
@@ -63,9 +63,7 @@ func TestExtractVariableName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractVariableName(tt.input)
-			if result != tt.expected {
-				t.Errorf("extractVariableName(%q) = %q, want %q", tt.input, result, tt.expected)
-			}
+			require.Equal(t, tt.expected, result, "extractVariableName(%q) returned unexpected result", tt.input)
 		})
 	}
 }
@@ -115,9 +113,7 @@ func TestIsPrometheusVariable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := isPrometheusVariable(tt.varRef, tt.dashboard)
-			if result != tt.expected {
-				t.Errorf("isPrometheusVariable(%q, dashboard) = %v, want %v", tt.varRef, result, tt.expected)
-			}
+			require.Equal(t, tt.expected, result, "isPrometheusVariable(%q, dashboard) returned unexpected result", tt.varRef)
 		})
 	}
 }
@@ -162,10 +158,7 @@ func TestResolveDatasourceUID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := resolveDatasourceUID(tt.uid, singleUID, tt.dashboard)
-			if result != tt.expectedUID {
-				t.Errorf("resolveDatasourceUID(%q, %q, dashboard) = %q, want %q (%s)",
-					tt.uid, singleUID, result, tt.expectedUID, tt.description)
-			}
+			require.Equal(t, tt.expectedUID, result, "resolveDatasourceUID(%q, %q, dashboard): %s", tt.uid, singleUID, tt.description)
 		})
 	}
 }
