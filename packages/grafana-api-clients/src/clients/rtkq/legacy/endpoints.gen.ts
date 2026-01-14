@@ -727,17 +727,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['dashboards', 'permissions'],
       }),
-      restoreDashboardVersionByUid: build.mutation<
-        RestoreDashboardVersionByUidApiResponse,
-        RestoreDashboardVersionByUidApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/dashboards/uid/${queryArg.uid}/restore`,
-          method: 'POST',
-          body: queryArg.restoreDashboardVersionCommand,
-        }),
-        invalidatesTags: ['dashboards', 'versions'],
-      }),
       getDashboardVersionsByUid: build.query<GetDashboardVersionsByUidApiResponse, GetDashboardVersionsByUidApiArg>({
         query: (queryArg) => ({
           url: `/dashboards/uid/${queryArg.uid}/versions`,
@@ -2627,26 +2616,6 @@ export type UpdateDashboardPermissionsByUidApiResponse =
 export type UpdateDashboardPermissionsByUidApiArg = {
   uid: string;
   updateDashboardAclCommand: UpdateDashboardAclCommand;
-};
-export type RestoreDashboardVersionByUidApiResponse = /** status 200 (empty) */ {
-  /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
-  folderUid?: string;
-  /** ID The unique identifier (id) of the created/updated dashboard. */
-  id: number;
-  /** Status status of the response. */
-  status: string;
-  /** Slug The slug of the dashboard. */
-  title: string;
-  /** UID The unique identifier (uid) of the created/updated dashboard. */
-  uid: string;
-  /** URL The relative URL for accessing the created/updated dashboard. */
-  url: string;
-  /** Version The version of the dashboard. */
-  version: number;
-};
-export type RestoreDashboardVersionByUidApiArg = {
-  uid: string;
-  restoreDashboardVersionCommand: RestoreDashboardVersionCommand;
 };
 export type GetDashboardVersionsByUidApiResponse = /** status 200 (empty) */ DashboardVersionResponseMeta;
 export type GetDashboardVersionsByUidApiArg = {
@@ -4567,9 +4536,6 @@ export type DashboardAclUpdateItem = {
 };
 export type UpdateDashboardAclCommand = {
   items?: DashboardAclUpdateItem[];
-};
-export type RestoreDashboardVersionCommand = {
-  version?: number;
 };
 export type DashboardVersionMeta = {
   created?: string;
@@ -6633,7 +6599,6 @@ export const {
   useGetDashboardPermissionsListByUidQuery,
   useLazyGetDashboardPermissionsListByUidQuery,
   useUpdateDashboardPermissionsByUidMutation,
-  useRestoreDashboardVersionByUidMutation,
   useGetDashboardVersionsByUidQuery,
   useLazyGetDashboardVersionsByUidQuery,
   useGetDashboardVersionByUidQuery,
