@@ -150,6 +150,36 @@ services:
       tempo-init:
         condition: service_completed_successfully
 
+  oauthkeycloakdb:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./oauth/cloak.sql:/docker-entrypoint-initdb.d/cloak.sql
+      - oauth-keycloak-data:/var/lib/postgresql/data
+    labels:
+      - 'alloy.logs=true'
+
+  oauthkeycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://oauthkeycloakdb/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      PROXY_ADDRESS_FORWARDING: "true"
+    ports:
+      - '8087:8080'
+    depends_on:
+      - oauthkeycloakdb
+    labels:
+      - 'alloy.logs=true'
+
 volumes:
   backend-data:
   postgres-data:
@@ -157,3 +187,4 @@ volumes:
   loki-data:
   tempo-data:
   prometheus-data:
+  oauth-keycloak-data:
