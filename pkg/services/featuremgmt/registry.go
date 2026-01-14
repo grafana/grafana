@@ -2047,6 +2047,7 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+			HideFromDocs: true,
 		},
 		{
 			Name:         "multiPropsVariables",
@@ -2084,6 +2085,15 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			HideFromDocs:    true,
+		},
+		{
+			Name:         "useMTAppsLoading",
+			Description:  "Enables new loading of app plugins",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 	}
 )

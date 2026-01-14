@@ -20,6 +20,7 @@ import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
+import { useLoadAppPluginsWithPredicate } from './useLoadAppPluginsWithPredicate';
 import { usePluginFunctions } from './usePluginFunctions';
 import { isGrafanaDevMode } from './utils';
 
@@ -62,6 +63,7 @@ describe('usePluginFunctions()', () => {
 
   beforeEach(() => {
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
+    jest.mocked(useLoadAppPluginsWithPredicate).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     registries = {
       addedComponentsRegistry: new AddedComponentsRegistry(),
@@ -265,6 +267,7 @@ describe('usePluginFunctions()', () => {
   });
 
   it('should return isLoading: true when app plugins are loading', () => {
+    jest.mocked(useLoadAppPluginsWithPredicate).mockReturnValue({ isLoading: true });
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: true });
 
     const { result } = renderHook(() => usePluginFunctions({ extensionPointId }), { wrapper });

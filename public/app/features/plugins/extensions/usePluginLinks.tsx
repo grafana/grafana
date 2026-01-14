@@ -3,9 +3,11 @@ import { useMemo } from 'react';
 
 import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@grafana/data';
 import { UsePluginLinksOptions, UsePluginLinksResult } from '@grafana/runtime';
+import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 
+import { getExtensionPointPluginDependencies as getExtensionPointPluginDependenciesFromApps } from './appUtils';
 import { useAddedLinksRegistrySlice } from './registry/useRegistrySlice';
-import { useLoadAppPlugins } from './useLoadAppPlugins';
+import { useLoadAppPluginsWithPredicate } from './useLoadAppPluginsWithPredicate';
 import {
   generateExtensionId,
   getExtensionPointPluginDependencies,
@@ -24,14 +26,13 @@ export function usePluginLinks({
 }: UsePluginLinksOptions): UsePluginLinksResult {
   const registryItems = useAddedLinksRegistrySlice(extensionPointId);
   const pluginContext = usePluginContext();
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
+  const predicate = evaluateBooleanFlag('useMTAppsLoading', false)
+    ? getExtensionPointPluginDependenciesFromApps
+    : getExtensionPointPluginDependencies;
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPluginsWithPredicate(extensionPointId, predicate);
 
   return useMemo(() => {
-    const { result, pointLog } = validateExtensionPoint({
-      extensionPointId,
-      pluginContext,
-      isLoadingAppPlugins,
-    });
+    const { result, pointLog } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });
 
     if (result) {
       return {

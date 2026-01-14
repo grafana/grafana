@@ -1259,4 +1259,9 @@ export interface FeatureToggles {
   * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
   */
   alertingSyncDispatchTimer?: boolean;
+  /**
+  * Enables new loading of app plugins
+  * @default false
+  */
+  useMTAppsLoading?: boolean;
 }

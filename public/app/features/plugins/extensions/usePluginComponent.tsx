@@ -2,11 +2,13 @@ import { useMemo } from 'react';
 
 import { usePluginContext } from '@grafana/data';
 import { UsePluginComponentResult } from '@grafana/runtime';
+import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 
+import { getExposedComponentPluginDependencies as getExposedComponentPluginDependenciesFromApps } from './appUtils';
 import * as errors from './errors';
 import { log } from './logs/log';
 import { useExposedComponentRegistrySlice } from './registry/useRegistrySlice';
-import { useLoadAppPlugins } from './useLoadAppPlugins';
+import { useLoadAppPluginsWithPredicate } from './useLoadAppPluginsWithPredicate';
 import { getExposedComponentPluginDependencies, isGrafanaDevMode, wrapWithPluginContext } from './utils';
 import { isExposedComponentDependencyMissing } from './validators';
 
@@ -15,7 +17,10 @@ import { isExposedComponentDependencyMissing } from './validators';
 export function usePluginComponent<Props extends object = {}>(id: string): UsePluginComponentResult<Props> {
   const registryItem = useExposedComponentRegistrySlice<Props>(id);
   const pluginContext = usePluginContext();
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExposedComponentPluginDependencies(id));
+  const predicate = evaluateBooleanFlag('useMTAppsLoading', false)
+    ? getExposedComponentPluginDependenciesFromApps
+    : getExposedComponentPluginDependencies;
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPluginsWithPredicate(id, predicate);
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.

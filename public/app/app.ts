@@ -43,6 +43,7 @@ import {
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
+  evaluateBooleanFlag,
   initOpenFeature,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
@@ -102,7 +103,11 @@ import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
+import {
+  preloadAppPluginsToAwait,
+  preloadAppPluginsToPreload,
+  preloadPlugins,
+} from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -257,11 +262,16 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const appPluginsToAwait = getAppPluginsToAwait();
-        const appPluginsToPreload = getAppPluginsToPreload();
+        if (!evaluateBooleanFlag('useMTAppsLoading', false)) {
+          const appPluginsToAwait = getAppPluginsToAwait();
+          const appPluginsToPreload = getAppPluginsToPreload();
 
-        preloadPlugins(appPluginsToPreload);
-        await preloadPlugins(appPluginsToAwait);
+          preloadPlugins(appPluginsToPreload);
+          await preloadPlugins(appPluginsToAwait);
+        } else {
+          preloadAppPluginsToPreload();
+          await preloadAppPluginsToAwait();
+        }
       }
 
       setHelpNavItemHook(useHelpNode);

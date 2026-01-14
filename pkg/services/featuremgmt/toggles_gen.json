@@ -3825,15 +3825,37 @@
     },
     {
       "metadata": {
+        "name": "useMTAppsLoading",
+        "resourceVersion": "1768461562946",
+        "creationTimestamp": "2026-01-14T08:24:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-15 07:19:22.94622 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables new loading of app plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "useMTPlugins",
-        "resourceVersion": "1764913709691",
-        "creationTimestamp": "2025-12-05T05:48:29Z"
+        "resourceVersion": "1768461562946",
+        "creationTimestamp": "2025-12-05T05:48:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-15 07:19:22.94622 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
