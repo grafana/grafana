@@ -68,6 +68,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingTeamRef":                                                schema_pkg_apis_iam_v0alpha1_TeamBindingTeamRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecSubject":                                            schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingstatusOperatorState":                                    schema_pkg_apis_iam_v0alpha1_TeamBindingstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRule":                                                      schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleList":                                                  schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleSpec":                                                  schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamList":                                                          schema_pkg_apis_iam_v0alpha1_TeamList(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamSpec":                                                          schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamStatus":                                                        schema_pkg_apis_iam_v0alpha1_TeamStatus(ref),
@@ -2668,6 +2671,140 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingstatusOperatorState(ref common.Refe
 					},
 				},
 				Required: []string{"lastEvaluation", "state"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the spec of the TeamLBACRule",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleSpec"),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRuleSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRule"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamLBACRule", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"datasource_uid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Data source UID that this TeamLBAC Rule applies to",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"team_uid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Team UID that this TeamLBAC Rule applies to",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"filter": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Filters for the TeamLBAC Rule",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"datasource_uid", "team_uid", "filter"},
 			},
 		},
 	}

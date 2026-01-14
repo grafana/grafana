@@ -1732,6 +1732,13 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthzTeamLBACRuleApi",
+			Description:  "Registers AuthZ TeamLBACRule /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "kubernetesAuthzRoleBindingsApi",
 			Description:  "Registers AuthZ Role Bindings /apis endpoint",
 			Stage:        FeatureStageExperimental,

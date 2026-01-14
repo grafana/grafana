@@ -1106,6 +1106,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRolesApi?: boolean;
   /**
+  * Registers AuthZ TeamLBACRule /apis endpoint
+  */
+  kubernetesAuthzTeamLBACRuleApi?: boolean;
+  /**
   * Registers AuthZ Role Bindings /apis endpoint
   * @default false
   */

@@ -76,6 +76,7 @@ func RegisterAPIService(
 	coreRolesStorage CoreRoleStorageBackend,
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
+	teamLBACApiInstaller TeamLBACApiInstaller,
 	tracing *tracing.TracingService,
 	roleBindingsStorage RoleBindingStorageBackend,
 	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
@@ -111,6 +112,7 @@ func RegisterAPIService(
 		coreRolesStorage:            coreRolesStorage,
 		roleApiInstaller:            roleApiInstaller,
 		globalRoleApiInstaller:      globalRoleApiInstaller,
+		teamLBACApiInstaller:        teamLBACApiInstaller,
 		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
 		roleBindingsStorage:         roleBindingsStorage,
 		externalGroupMappingStorage: externalGroupMappingStorageBackend,
@@ -144,6 +146,7 @@ func NewAPIService(
 	dbProvider legacysql.LegacyDatabaseProvider,
 	coreRoleStorage CoreRoleStorageBackend,
 	roleApiInstaller RoleApiInstaller,
+	teamLBACApiInstaller TeamLBACApiInstaller,
 	features featuremgmt.FeatureToggles,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
@@ -177,6 +180,7 @@ func NewAPIService(
 		reg:                        reg,
 		roleApiInstaller:           roleApiInstaller,
 		globalRoleApiInstaller:     ProvideNoopGlobalRoleApiInstaller(), // TODO: add a proper global role installer
+		teamLBACApiInstaller:       teamLBACApiInstaller,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -223,6 +227,7 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
 	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
+	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
 
 	if enableCoreRolesApi || enableRolesApi || enableRoleBindingsApi {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
@@ -232,6 +237,12 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 
 	if enableGlobalRolesApi {
 		if err := iamv0.AddGlobalRoleKnownTypes(scheme); err != nil {
+			return err
+		}
+	}
+
+	if enableTeamLBACRuleApi {
+		if err := iamv0.AddTeamLBACRuleTypes(scheme); err != nil {
 			return err
 		}
 	}
@@ -276,6 +287,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
 	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
+	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -327,6 +339,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	if enableGlobalRolesApi {
 		if err := b.globalRoleApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
+			return err
+		}
+	}
+
+	if enableTeamLBACRuleApi {
+		// TeamLBACRule registration is delegated to the TeamLBACApiInstaller
+		if err := b.teamLBACApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
 			return err
 		}
 	}
@@ -686,6 +705,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
 		case *iamv0.GlobalRole:
 			return b.globalRoleApiInstaller.ValidateOnCreate(ctx, typedObj)
+		case *iamv0.TeamLBACRule:
+			return b.teamLBACApiInstaller.ValidateOnCreate(ctx, typedObj)
 		}
 		return nil
 	case admission.Update:
@@ -722,6 +743,12 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 				return fmt.Errorf("expected old object to be a GlobalRole, got %T", oldGlobalRoleObj)
 			}
 			return b.globalRoleApiInstaller.ValidateOnUpdate(ctx, oldGlobalRoleObj, typedObj)
+		case *iamv0.TeamLBACRule:
+			oldTeamLBACRuleObj, ok := a.GetOldObject().(*iamv0.TeamLBACRule)
+			if !ok {
+				return fmt.Errorf("expected old object to be a TeamLBACRule, got %T", oldTeamLBACRuleObj)
+			}
+			return b.teamLBACApiInstaller.ValidateOnUpdate(ctx, oldTeamLBACRuleObj, typedObj)
 		}
 		return nil
 	case admission.Delete:
@@ -730,6 +757,11 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return b.roleApiInstaller.ValidateOnDelete(ctx, oldObj)
 		case *iamv0.GlobalRole:
 			return b.globalRoleApiInstaller.ValidateOnDelete(ctx, oldObj)
+		case *iamv0.TeamLBACRule:
+			if b.teamLBACApiInstaller != nil {
+				return b.teamLBACApiInstaller.ValidateOnDelete(ctx, oldObj)
+			}
+			return nil
 		}
 		return nil
 	case admission.Connect:

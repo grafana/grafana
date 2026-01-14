@@ -216,6 +216,7 @@ kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,fals
 kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthzTeamLBACRuleApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 kubernetesExternalGroupMapping,experimental,@grafana/identity-access-team,false,false,false

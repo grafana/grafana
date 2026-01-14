@@ -642,6 +642,10 @@ const (
 	// Registers AuthZ Roles /apis endpoint
 	FlagKubernetesAuthzRolesApi = "kubernetesAuthzRolesApi"
 
+	// FlagKubernetesAuthzTeamLBACRuleApi
+	// Registers AuthZ TeamLBACRule /apis endpoint
+	FlagKubernetesAuthzTeamLBACRuleApi = "kubernetesAuthzTeamLBACRuleApi"
+
 	// FlagKubernetesAuthzRoleBindingsApi
 	// Registers AuthZ Role Bindings /apis endpoint
 	FlagKubernetesAuthzRoleBindingsApi = "kubernetesAuthzRoleBindingsApi"

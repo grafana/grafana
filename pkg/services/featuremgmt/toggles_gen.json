@@ -2420,6 +2420,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzTeamLBACRuleApi",
+        "resourceVersion": "1768432340081",
+        "creationTimestamp": "2026-01-14T23:12:20Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ TeamLBACRule /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzZanzanaSync",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-10-13T19:37:13Z",
