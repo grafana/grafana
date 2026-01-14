@@ -133,7 +133,3 @@ test.describe(
     });
   }
 );
-
-// utils
-
-// add new panel through sidebar
