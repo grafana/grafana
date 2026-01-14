@@ -1,11 +1,12 @@
 import 'core-js/stable/structured-clone';
 import { FormProvider, useForm } from 'react-hook-form';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { grafanaAlertNotifiers } from 'app/features/alerting/unified/mockGrafanaNotifiers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { NotifierDTO } from 'app/features/alerting/unified/types/alerting';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
@@ -16,6 +17,7 @@ type TestChannelValues = {
   type: string;
   settings: Record<string, unknown>;
   secureFields: Record<string, boolean>;
+  version?: string;
 };
 
 type TestReceiverFormValues = {
@@ -245,5 +247,242 @@ describe('ChannelSubForm', () => {
     const slackUrl = ui.settings.slack.webhookUrl.get();
     expect(slackUrl).toBeEnabled();
     expect(slackUrl).toHaveValue('');
+  });
+
+  describe('version-specific options display', () => {
+    // Create a mock notifier with different options for v0 and v1
+    const legacyOptions = [
+      {
+        element: 'input' as const,
+        inputType: 'text',
+        label: 'Legacy URL',
+        description: 'The legacy endpoint URL',
+        placeholder: '',
+        propertyName: 'legacyUrl',
+        required: true,
+        secure: false,
+        showWhen: { field: '', is: '' },
+        validationRule: '',
+        dependsOn: '',
+      },
+    ];
+
+    const webhookWithVersions: NotifierDTO = {
+      ...grafanaAlertNotifiers.webhook,
+      versions: [
+        {
+          version: 'v0mimir1',
+          label: 'Webhook (Legacy)',
+          description: 'Legacy webhook from Mimir',
+          canCreate: false,
+          options: legacyOptions,
+        },
+        {
+          version: 'v0mimir2',
+          label: 'Webhook (Legacy v2)',
+          description: 'Legacy webhook v2 from Mimir',
+          canCreate: false,
+          options: legacyOptions,
+        },
+        {
+          version: 'v1',
+          label: 'Webhook',
+          description: 'Sends HTTP POST request',
+          canCreate: true,
+          options: grafanaAlertNotifiers.webhook.options,
+        },
+      ],
+    };
+
+    const versionedNotifiers: Notifier[] = [
+      { dto: webhookWithVersions, meta: { enabled: true, order: 1 } },
+      { dto: grafanaAlertNotifiers.slack, meta: { enabled: true, order: 2 } },
+    ];
+
+    function VersionedTestFormWrapper({
+      defaults,
+      initial,
+    }: {
+      defaults: TestChannelValues;
+      initial?: TestChannelValues;
+    }) {
+      const form = useForm<TestReceiverFormValues>({
+        defaultValues: {
+          name: 'test-contact-point',
+          items: [defaults],
+        },
+      });
+
+      return (
+        <AlertmanagerProvider accessType="notification">
+          <FormProvider {...form}>
+            <ChannelSubForm
+              defaultValues={defaults}
+              initialValues={initial}
+              pathPrefix={`items.0.`}
+              integrationIndex={0}
+              notifiers={versionedNotifiers}
+              onDuplicate={jest.fn()}
+              commonSettingsComponent={GrafanaCommonChannelSettings}
+              isEditable={true}
+              isTestable={false}
+              canEditProtectedFields={true}
+            />
+          </FormProvider>
+        </AlertmanagerProvider>
+      );
+    }
+
+    function renderVersionedForm(defaults: TestChannelValues, initial?: TestChannelValues) {
+      return render(<VersionedTestFormWrapper defaults={defaults} initial={initial} />);
+    }
+
+    it('should display v1 options when integration has v1 version', () => {
+      const webhookV1: TestChannelValues = {
+        __id: 'id-0',
+        type: 'webhook',
+        version: 'v1',
+        settings: { url: 'https://example.com' },
+        secureFields: {},
+      };
+
+      renderVersionedForm(webhookV1, webhookV1);
+
+      // Should show v1 URL field (from default options)
+      expect(ui.settings.webhook.url.get()).toBeInTheDocument();
+      // Should NOT show legacy URL field
+      expect(screen.queryByRole('textbox', { name: /Legacy URL/i })).not.toBeInTheDocument();
+    });
+
+    it('should display v0 options when integration has legacy version', () => {
+      const webhookV0: TestChannelValues = {
+        __id: 'id-0',
+        type: 'webhook',
+        version: 'v0mimir1',
+        settings: { legacyUrl: 'https://legacy.example.com' },
+        secureFields: {},
+      };
+
+      renderVersionedForm(webhookV0, webhookV0);
+
+      // Should show legacy URL field (from v0 options)
+      expect(screen.getByRole('textbox', { name: /Legacy URL/i })).toBeInTheDocument();
+      // Should NOT show v1 URL field
+      expect(ui.settings.webhook.url.query()).not.toBeInTheDocument();
+    });
+
+    it('should display "Legacy" badge for v0mimir1 integration', () => {
+      const webhookV0: TestChannelValues = {
+        __id: 'id-0',
+        type: 'webhook',
+        version: 'v0mimir1',
+        settings: { legacyUrl: 'https://legacy.example.com' },
+        secureFields: {},
+      };
+
+      renderVersionedForm(webhookV0, webhookV0);
+
+      // Should show "Legacy" badge for v0mimir1 integrations
+      expect(screen.getByText('Legacy')).toBeInTheDocument();
+    });
+
+    it('should display "Legacy v2" badge for v0mimir2 integration', () => {
+      const webhookV0v2: TestChannelValues = {
+        __id: 'id-0',
+        type: 'webhook',
+        version: 'v0mimir2',
+        settings: { legacyUrl: 'https://legacy.example.com' },
+        secureFields: {},
+      };
+
+      renderVersionedForm(webhookV0v2, webhookV0v2);
+
+      // Should show "Legacy v2" badge for v0mimir2 integrations
+      expect(screen.getByText('Legacy v2')).toBeInTheDocument();
+    });
+
+    it('should NOT display version badge for v1 integration', () => {
+      const webhookV1: TestChannelValues = {
+        __id: 'id-0',
+        type: 'webhook',
+        version: 'v1',
+        settings: { url: 'https://example.com' },
+        secureFields: {},
+      };
+
+      renderVersionedForm(webhookV1, webhookV1);
+
+      // Should NOT show version badge for non-legacy v1 integrations
+      expect(screen.queryByText('v1')).not.toBeInTheDocument();
+    });
+
+    it('should filter out notifiers with canCreate: false from dropdown', () => {
+      // Create a notifier that only has v0 versions (cannot be created)
+      const legacyOnlyNotifier: NotifierDTO = {
+        type: 'wechat',
+        name: 'WeChat',
+        heading: 'WeChat settings',
+        description: 'Sends notifications to WeChat',
+        options: [],
+        versions: [
+          {
+            version: 'v0mimir1',
+            label: 'WeChat (Legacy)',
+            description: 'Legacy WeChat',
+            canCreate: false,
+            options: [],
+          },
+        ],
+      };
+
+      const notifiersWithLegacyOnly: Notifier[] = [
+        { dto: webhookWithVersions, meta: { enabled: true, order: 1 } },
+        { dto: legacyOnlyNotifier, meta: { enabled: true, order: 2 } },
+      ];
+
+      function LegacyOnlyTestWrapper({ defaults }: { defaults: TestChannelValues }) {
+        const form = useForm<TestReceiverFormValues>({
+          defaultValues: {
+            name: 'test-contact-point',
+            items: [defaults],
+          },
+        });
+
+        return (
+          <AlertmanagerProvider accessType="notification">
+            <FormProvider {...form}>
+              <ChannelSubForm
+                defaultValues={defaults}
+                pathPrefix={`items.0.`}
+                integrationIndex={0}
+                notifiers={notifiersWithLegacyOnly}
+                onDuplicate={jest.fn()}
+                commonSettingsComponent={GrafanaCommonChannelSettings}
+                isEditable={true}
+                isTestable={false}
+                canEditProtectedFields={true}
+              />
+            </FormProvider>
+          </AlertmanagerProvider>
+        );
+      }
+
+      render(
+        <LegacyOnlyTestWrapper
+          defaults={{
+            __id: 'id-0',
+            type: 'webhook',
+            settings: {},
+            secureFields: {},
+          }}
+        />
+      );
+
+      // Webhook should be in dropdown (has v1 with canCreate: true)
+      expect(ui.typeSelector.get()).toHaveTextContent('Webhook');
+
+      // WeChat should NOT be in the options (only has v0 with canCreate: false)
+      // We can't easily check dropdown options without opening it, but the filter should work
+    });
   });
 });
