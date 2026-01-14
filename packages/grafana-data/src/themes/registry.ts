@@ -1,6 +1,6 @@
 import { Registry, RegistryItem } from '../utils/Registry';
 
-import { createTheme } from './createTheme';
+import { createTheme, NewThemeOptionsSchema } from './createTheme';
 import * as extraThemes from './themeDefinitions';
 import { GrafanaTheme2 } from './types';
 
@@ -42,9 +42,6 @@ export function getBuiltInThemes(allowedExtras: string[]) {
   return sortedThemes;
 }
 
-/**
- * There is also a backend list at pkg/services/preference/themes.go
- */
 const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   return [
     { id: 'system', name: 'System preference', build: getSystemPreferenceTheme },
@@ -53,13 +50,19 @@ const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   ];
 });
 
-for (const [id, theme] of Object.entries(extraThemes)) {
-  themeRegistry.register({
-    id,
-    name: theme.name ?? '',
-    build: () => createTheme(theme),
-    isExtra: true,
-  });
+for (const [name, json] of Object.entries(extraThemes)) {
+  const result = NewThemeOptionsSchema.safeParse(json);
+  if (!result.success) {
+    console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);
+  } else {
+    const theme = result.data;
+    themeRegistry.register({
+      id: theme.id,
+      name: theme.name,
+      build: () => createTheme(theme),
+      isExtra: true,
+    });
+  }
 }
 
 function getSystemPreferenceTheme() {

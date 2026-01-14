@@ -1,3 +1,4 @@
+import json from '@rollup/plugin-json';
 import { createRequire } from 'node:module';
 
 import { entryPoint, plugins, esmOutput, cjsOutput } from '../rollup.config.parts';
@@ -8,13 +9,13 @@ const pkg = rq('./package.json');
 export default [
   {
     input: entryPoint,
-    plugins,
+    plugins: [...plugins, json()],
     output: [cjsOutput(pkg, 'grafana-data'), esmOutput(pkg, 'grafana-data')],
     treeshake: false,
   },
   {
     input: 'src/unstable.ts',
-    plugins,
+    plugins: [...plugins, json()],
     output: [cjsOutput(pkg, 'grafana-data'), esmOutput(pkg, 'grafana-data')],
     treeshake: false,
   },

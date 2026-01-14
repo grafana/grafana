@@ -81,6 +81,11 @@ type BleveOptions struct {
 	// Indexes that are not owned by current instance are eligible for cleanup.
 	// If nil, all indexes are owned by the current instance.
 	OwnsIndex func(key resource.NamespacedResource) (bool, error)
+
+	// ScoringModel defines the scoring model used for the bleve indexes
+	// Default: index.TFIDFScoring
+	// Supported values: index.TFIDFScoring and index.BM25Scoring
+	ScoringModel string
 }
 
 type bleveBackend struct {
@@ -368,7 +373,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(fields)
+	mapper, err := GetBleveMappings(b.opts.ScoringModel, fields)
 	if err != nil {
 		return nil, err
 	}
@@ -1253,21 +1258,23 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		queryExact.SetField(resource.SEARCH_FIELD_TITLE)
 		queryExact.Analyzer = keyword.Name                // don't analyze the query input - treat it as a single token
 		queryExact.Operator = query.MatchQueryOperatorAnd // This doesn't make a difference for keyword analyzer, we add it just to be explicit.
+		searchQuery := bleve.NewDisjunctionQuery(queryExact)
 
 		// Query 2: Phrase query with standard analyzer
 		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
 		queryPhrase.SetBoost(5.0)
 		queryPhrase.SetField(resource.SEARCH_FIELD_TITLE)
 		queryPhrase.Analyzer = standard.Name
+		searchQuery.AddQuery(queryPhrase)
 
 		// Query 3: Match query with standard analyzer
 		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
 		queryAnalyzed.SetField(resource.SEARCH_FIELD_TITLE)
+		queryAnalyzed.SetBoost(2.0)
 		queryAnalyzed.Analyzer = standard.Name
 		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
+		searchQuery.AddQuery(queryAnalyzed)
 
-		// At least one of the queries must match
-		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
 		queries = append(queries, searchQuery)
 	}
 
