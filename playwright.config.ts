@@ -158,7 +158,6 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'various',
       testDir: path.join(testDirRoot, '/various-suite'),
-      testIgnore: ['**/*'], // Skip all tests in various-suite
     }),
     withAuth({
       name: 'panels',
@@ -167,7 +166,6 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'smoke',
       testDir: path.join(testDirRoot, '/smoke-tests-suite'),
-      testIgnore: ['**/*'], // Skip all tests in smoke-tests-suite
     }),
     withAuth({
       name: 'dashboards',
