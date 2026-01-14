@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestBadgerKVStorageBackend(t *testing.T) {
@@ -36,7 +37,9 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 	})
 }
 
-func TestSQLKVStorageBackend(t *testing.T) {
+func TestIntegrationSQLKVStorageBackend(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	skipTests := map[string]bool{
 		TestWatchWriteEvents:          true,
 		TestList:                      true,
