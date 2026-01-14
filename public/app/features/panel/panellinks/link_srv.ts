@@ -85,6 +85,7 @@ const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
     return [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function collectFieldPaths(properties: Record<string, any>, currentPath: string) {
     let paths: string[] = [];
     for (const field in properties) {

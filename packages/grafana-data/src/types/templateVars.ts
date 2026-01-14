@@ -91,6 +91,7 @@ export interface VariableOption {
   text: string | string[];
   value: string | string[];
   isNone?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   properties?: Record<string, any>;
 }
 
@@ -119,6 +120,7 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
   definition: string;
   sort: VariableSort;
   queryValue?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   query: any;
   regex: string;
   regexApplyTo?: VariableRegexApplyTo;
@@ -194,6 +196,7 @@ export interface BaseVariableModel {
   skipUrlSync: boolean;
   index: number;
   state: LoadingState;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
