@@ -874,13 +874,17 @@
     {
       "metadata": {
         "name": "cloudWatchBatchQueries",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-10-20T19:09:41Z"
+        "resourceVersion": "1767124751522",
+        "creationTimestamp": "2023-10-20T19:09:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-12-30 19:59:11.522773 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Runs CloudWatch metrics queries as separate batches",
-        "stage": "preview",
-        "codeowner": "@grafana/aws-datasources"
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources",
+        "expression": "true"
       }
     },
     {
