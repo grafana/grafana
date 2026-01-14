@@ -486,7 +486,6 @@ export function getLinkExtensionOverrides(
       icon = config.icon,
       category = config.category,
       openInNewTab = config.openInNewTab,
-      suffix = config.suffix,
       prefix = config.prefix,
       ...rest
     } = overrides;
@@ -513,7 +512,6 @@ export function getLinkExtensionOverrides(
       icon,
       category,
       openInNewTab,
-      suffix,
       prefix,
     };
   } catch (error) {

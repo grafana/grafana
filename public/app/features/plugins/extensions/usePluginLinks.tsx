@@ -73,6 +73,8 @@ export function usePluginLinks({
       }
 
       const path = overrides?.path || addedLink.path;
+      // For backwards compatibility: if prefix is not set, fall back to icon
+      const prefix = overrides?.prefix || addedLink.prefix || overrides?.icon || addedLink.icon;
       const extension: PluginExtensionLink = {
         id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
         type: PluginExtensionTypes.link,
@@ -86,8 +88,7 @@ export function usePluginLinks({
         path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
         category: overrides?.category || addedLink.category,
         openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
-        suffix: overrides?.suffix || addedLink.suffix,
-        prefix: overrides?.prefix || addedLink.prefix,
+        prefix,
       };
 
       extensions.push(extension);

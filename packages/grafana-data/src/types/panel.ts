@@ -188,7 +188,11 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
 export interface PanelMenuItem {
   type?: 'submenu' | 'divider' | 'group';
   text: string;
-  prefix?: React.ReactElement;
+  /** A React element or IconName that will be displayed before the title */
+  prefix?: React.ReactElement | IconName;
+  /**
+   * @deprecated Use `prefix` instead. This property will be removed in a future release.
+   */
   iconClassName?: IconName;
   onClick?: (event: React.MouseEvent) => void;
   shortcut?: string;

@@ -28,9 +28,12 @@ export type PluginExtensionLink = PluginExtensionBase & {
   type: PluginExtensionTypes.link;
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
+  /**
+   * @deprecated Use `prefix` instead. This property will be removed in a future release.
+   */
   icon?: IconName;
-  suffix?: React.ReactElement;
-  prefix?: React.ReactElement;
+  /** A React element or IconName that will be displayed before the title */
+  prefix?: React.ReactElement | IconName;
   category?: string;
   openInNewTab?: boolean;
 };
@@ -108,9 +111,12 @@ export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Re
       description: string;
       path: string;
       onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+      /**
+       * @deprecated Use `prefix` instead. This property will be removed in a future release.
+       */
       icon: IconName;
-      suffix: React.ReactElement;
-      prefix: React.ReactElement;
+      /** A React element or IconName that will be displayed before the title */
+      prefix: React.ReactElement | IconName;
       category: string;
       openInNewTab: boolean;
     }>
@@ -139,7 +145,9 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
   configure?: PluginAddedLinksConfigureFunc<Context>;
 
-  // (Optional) A icon that can be displayed in the ui for the extension option.
+  /**
+   * @deprecated Use `prefix` instead. This property will be removed in a future release.
+   */
   icon?: IconName;
 
   // (Optional) A category to be used when grouping the options in the ui
@@ -149,11 +157,8 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   // (Important: this is not guaranteed, depends on the extension point if it implements it.)
   openInNewTab?: boolean;
 
-  // (Optional) A React element that will be displayed after the title
-  suffix?: React.ReactElement;
-
-  // (Optional) A React element that will be displayed before the title
-  prefix?: React.ReactElement;
+  // (Optional) A React element or IconName that will be displayed before the title
+  prefix?: React.ReactElement | IconName;
 };
 
 export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionConfigBase & {

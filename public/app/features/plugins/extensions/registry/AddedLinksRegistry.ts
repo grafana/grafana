@@ -19,9 +19,12 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
   path?: string;
   onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   configure?: PluginAddedLinksConfigureFunc<Context>;
+  /**
+   * @deprecated Use `prefix` instead. This property will be removed in a future release.
+   */
   icon?: IconName;
-  suffix?: React.ReactElement;
-  prefix?: React.ReactElement;
+  /** A React element or IconName that will be displayed before the title */
+  prefix?: React.ReactElement | IconName;
   category?: string;
   openInNewTab?: boolean;
 };

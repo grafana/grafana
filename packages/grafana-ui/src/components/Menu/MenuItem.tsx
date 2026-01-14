@@ -2,12 +2,11 @@ import { css, cx } from '@emotion/css';
 import { ReactElement, useCallback, useState, useRef, useImperativeHandle, CSSProperties, AriaRole } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, LinkTarget } from '@grafana/data';
+import { GrafanaTheme2, IconName, isIconName, LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -29,10 +28,12 @@ export interface MenuItemProps<T = unknown> {
   ariaChecked?: boolean;
   /** Target of the menu item (i.e. new window)  */
   target?: LinkTarget;
-  /** Icon of the menu item */
+  /**
+   * @deprecated Use `prefix` instead. This property will be removed in a future release.
+   */
   icon?: IconName;
-  /** Prefix of the menu item if icon is specified prefix will be ignored */
-  prefix?: React.ReactElement;
+  /** A React element or IconName that will be displayed before the title */
+  prefix?: React.ReactElement | IconName;
   /** Role of the menu item */
   role?: AriaRole;
   /** Url of the menu item */
@@ -180,7 +181,7 @@ export const MenuItem = React.memo(
         {...disabledProps}
       >
         <Stack direction="row" justifyContent="flex-start" alignItems="center">
-          <MenuItemPrefix icon={icon} prefix={prefix} />
+          <MenuItemPrefix prefix={isIconName(icon) ? icon : prefix} />
           <span className={cx(styles.ellipsis, styles.label)}>{label}</span>
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
