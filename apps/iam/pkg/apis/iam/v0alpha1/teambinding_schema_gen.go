@@ -13,7 +13,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaTeamBinding = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", NewTeamBinding(), &TeamBindingList{}, resource.WithKind("TeamBinding"),
-		resource.WithPlural("teambindings"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
+		resource.WithPlural("teambindings"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
 			FieldSelector: "spec.teamRef.name",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*TeamBinding)
@@ -24,7 +24,7 @@ var (
 				return cast.Spec.TeamRef.Name, nil
 			},
 		},
-			resource.SelectableField{
+			{
 				FieldSelector: "spec.subject.name",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*TeamBinding)

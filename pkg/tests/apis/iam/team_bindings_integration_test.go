@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -108,7 +109,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.NotNil(t, response)
 
 		var actual iamv0alpha1.TeamBinding
-		require.NoError(t, helper.Scheme.Convert(response, &actual, nil))
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(response.Object, &actual))
 		require.Equal(t, user.GetName(), actual.Spec.Subject.Name)
 		require.Equal(t, team.GetName(), actual.Spec.TeamRef.Name)
 		require.Equal(t, iamv0alpha1.TeamBindingTeamPermissionAdmin, actual.Spec.Permission)
@@ -134,7 +135,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.NoError(t, err)
 		require.NotNil(t, response)
 
-		require.NoError(t, helper.Scheme.Convert(response, &actual, nil))
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(response.Object, &actual))
 		require.Equal(t, user.GetName(), actual.Spec.Subject.Name)
 		require.Equal(t, team.GetName(), actual.Spec.TeamRef.Name)
 		require.Equal(t, iamv0alpha1.TeamBindingTeamPermissionMember, actual.Spec.Permission)
@@ -496,7 +497,7 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 		require.NotNil(t, response)
 
 		var actual iamv0alpha1.TeamBinding
-		require.NoError(t, helper.Scheme.Convert(response, &actual, nil))
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(response.Object, &actual))
 		require.Equal(t, iamv0alpha1.TeamBindingTeamPermissionMember, actual.Spec.Permission)
 		require.Equal(t, userRsp.Result.UID, actual.Spec.Subject.Name)
 		require.Equal(t, teamRsp.Result.UID, actual.Spec.TeamRef.Name)
@@ -584,13 +585,13 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			cleanupCtx := context.Background()
 
 			for _, name := range bindingNames {
-				_, _ = teamBindingClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+				_ = teamBindingClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
 			}
 			for _, name := range teamNames {
-				_, _ = teamClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+				_ = teamClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
 			}
 			for _, name := range userNames {
-				_, _ = userClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+				_ = userClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
 			}
 		})
 
@@ -607,7 +608,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 		require.Len(t, listByTeam.Items, 2)
 		for _, item := range listByTeam.Items {
 			var actual iamv0alpha1.TeamBinding
-			require.NoError(t, helper.Scheme.Convert(&item, &actual, nil))
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &actual))
 			require.Equal(t, teamA.GetName(), actual.Spec.TeamRef.Name)
 		}
 
@@ -619,7 +620,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 		require.Len(t, listByUser.Items, 2)
 		for _, item := range listByUser.Items {
 			var actual iamv0alpha1.TeamBinding
-			require.NoError(t, helper.Scheme.Convert(&item, &actual, nil))
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &actual))
 			require.Equal(t, user1.GetName(), actual.Spec.Subject.Name)
 		}
 	})
