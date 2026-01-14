@@ -121,6 +121,7 @@ dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
+alertingNavigationV2,experimental,@grafana/alerting-squad,false,false,false
 alertingSavedSearches,experimental,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false

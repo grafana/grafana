@@ -781,6 +781,10 @@ export function tabItemToSaveModel(
     panels: [],
   };
 
+  if (tab.state.repeatByVariable) {
+    rowPanel.repeat = tab.state.repeatByVariable;
+  }
+
   panelsArray.push(rowPanel);
 
   // The base Y position for panels in this tab (after the row panel)
@@ -912,6 +916,15 @@ function autoGridLayoutToPanels(layout: AutoGridLayoutManager, isSnapshot = fals
         },
         isSnapshot
       );
+
+      // Handle repeat properties for AutoGridItem
+      // AutoGrid always uses horizontal direction, and maxPerRow is derived from maxColumnCount
+      if (item.state.variableName) {
+        panel.repeat = item.state.variableName;
+        panel.repeatDirection = 'h';
+        panel.maxPerRow = maxColumnCount;
+      }
+
       panels.push(panel);
 
       // Move to next position
