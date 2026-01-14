@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/Masterminds/semver"
-	index "github.com/blevesearch/bleve_index_api"
-
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -40,12 +38,6 @@ func NewSearchOptions(
 			}
 		}
 
-		scoringModel := index.TFIDFScoring // default
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBM25Scoring) {
-			scoringModel = index.BM25Scoring
-		}
-
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                   root,
 			FileThreshold:          int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
@@ -53,7 +45,7 @@ func NewSearchOptions(
 			BuildVersion:           cfg.BuildVersion,
 			OwnsIndex:              ownsIndexFn,
 			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
-			ScoringModel:           scoringModel,
+			ScoringModel:           cfg.IndexScoringModel,
 		}, indexMetrics)
 
 		if err != nil {

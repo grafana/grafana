@@ -50,10 +50,6 @@ export interface FeatureToggles {
   */
   storage?: boolean;
   /**
-  * Use BM25 scoring model for unified storage search indexing (instead of TF-IDF)
-  */
-  unifiedStorageBM25Scoring?: boolean;
-  /**
   * Allow elements nesting
   */
   canvasPanelNesting?: boolean;

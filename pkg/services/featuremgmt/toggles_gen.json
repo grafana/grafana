@@ -3718,19 +3718,6 @@
     },
     {
       "metadata": {
-        "name": "unifiedStorageBM25Scoring",
-        "resourceVersion": "1768379405498",
-        "creationTimestamp": "2026-01-14T08:30:05Z"
-      },
-      "spec": {
-        "description": "Use BM25 scoring model for unified storage search indexing (instead of TF-IDF)",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "unifiedStorageBigObjectsSupport",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2024-10-17T10:18:29Z"
