@@ -3,9 +3,19 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 )
+
+// parserLike and fetcherLike define minimal interfaces for dependency injection
+type parserLike interface {
+	ExtractMetrics(queryText string) ([]string, error)
+}
+
+type fetcherLike interface {
+	FetchMetrics(ctx context.Context, datasourceURL string, client *http.Client) ([]string, error)
+}
 
 // Register Prometheus validator on package import
 func init() {
@@ -16,8 +26,8 @@ func init() {
 
 // Validator implements validator.DatasourceValidator for Prometheus datasources
 type Validator struct {
-	parser  *Parser
-	fetcher *Fetcher
+	parser  parserLike
+	fetcher fetcherLike
 }
 
 // NewValidator creates a new Prometheus validator
@@ -25,6 +35,14 @@ func NewValidator() validator.DatasourceValidator {
 	return &Validator{
 		parser:  NewParser(),
 		fetcher: NewFetcher(),
+	}
+}
+
+// newValidatorForTest creates a validator with injectable dependencies (for testing only)
+func newValidatorForTest(parser parserLike, fetcher fetcherLike) *Validator {
+	return &Validator{
+		parser:  parser,
+		fetcher: fetcher,
 	}
 }
 
