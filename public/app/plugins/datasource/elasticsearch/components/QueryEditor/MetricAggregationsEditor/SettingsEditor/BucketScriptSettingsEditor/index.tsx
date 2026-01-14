@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { Fragment, useEffect } from 'react';
 
-import { Input, InlineLabel } from '@grafana/ui';
-import { BucketScript, MetricAggregation } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+import { InlineLabel, Input } from '@grafana/ui';
 
-import { useStatelessReducer, useDispatch } from '../../../../../hooks/useStatelessReducer';
+import { BucketScript, MetricAggregation } from '../../../../../dataquery.gen';
+import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
 import { AddRemove } from '../../../../AddRemove';
 import { MetricPicker } from '../../../../MetricPicker';
 import { changeMetricAttribute } from '../../state/actions';
@@ -13,9 +13,9 @@ import { SettingField } from '../SettingField';
 
 import {
   addPipelineVariable,
+  changePipelineVariableMetric,
   removePipelineVariable,
   renamePipelineVariable,
-  changePipelineVariableMetric,
 } from './state/actions';
 import { reducer } from './state/reducer';
 

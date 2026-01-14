@@ -1,6 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
 
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { MOCK_SUB_SCOPE_MIMIR_ITEMS } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesService } from '../ScopesService';
@@ -26,7 +29,6 @@ import {
   expectNoDashboardsForFilter,
   expectNoDashboardsForScope,
   expectNoDashboardsNoScopes,
-  expectNoDashboardsSearch,
 } from './utils/assertions';
 import {
   alternativeDashboardWithRootFolder,
@@ -36,25 +38,24 @@ import {
   dashboardWithRootFolder,
   dashboardWithRootFolderAndOtherFolder,
   dashboardWithTwoFolders,
-  getDatasource,
-  getInstanceSettings,
-  getMock,
   navigationWithSubScope,
   navigationWithSubScope2,
   navigationWithSubScopeDifferent,
   navigationWithSubScopeAndGroups,
-  subScopeMimirItems,
-} from './utils/mocks';
+} from './utils/mockData';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('Dashboards list', () => {
   let fetchDashboardsSpy: jest.SpyInstance;
@@ -304,14 +305,12 @@ describe('Dashboards list', () => {
   it('Shows a proper message when no scopes are selected', async () => {
     await toggleDashboards();
     expectNoDashboardsNoScopes();
-    expectNoDashboardsSearch();
   });
 
   it('Does not show the input when there are no dashboards found for scope', async () => {
     await updateScopes(scopesService, ['cloud']);
     await toggleDashboards();
     expectNoDashboardsForScope();
-    expectNoDashboardsSearch();
   });
 
   it('Shows the input and a message when there are no dashboards found for filter', async () => {
@@ -542,7 +541,7 @@ describe('Dashboards list', () => {
 
     it('Loads subScope items when folder is expanded', async () => {
       const mockNavigations = [navigationWithSubScope];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);
@@ -574,7 +573,7 @@ describe('Dashboards list', () => {
 
     it('Shows loading state while fetching subScope items', async () => {
       const mockNavigations = [navigationWithSubScope];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);
@@ -594,7 +593,7 @@ describe('Dashboards list', () => {
 
     it('Multiple subScope folders with same subScope load same content', async () => {
       const mockNavigations = [navigationWithSubScope, navigationWithSubScope2];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValue(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValue(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);
@@ -679,7 +678,7 @@ describe('Dashboards list', () => {
 
     it('Filters search works with loaded subScope content', async () => {
       const mockNavigations = [navigationWithSubScope];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);
@@ -718,7 +717,7 @@ describe('Dashboards list', () => {
 
     it('Does not fetch subScope items if folder is already loaded', async () => {
       const mockNavigations = [navigationWithSubScope];
-      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(subScopeMimirItems);
+      fetchScopeNavigationsSpy.mockResolvedValueOnce(mockNavigations).mockResolvedValueOnce(MOCK_SUB_SCOPE_MIMIR_ITEMS);
 
       await toggleDashboards();
       await updateScopes(scopesService, ['grafana']);

@@ -9,7 +9,15 @@ export * from './analytics/types';
 export { loadPluginCss, type PluginCssOptions, setPluginImportUtils, getPluginImportUtils } from './utils/plugin';
 export { reportMetaAnalytics, reportInteraction, reportPageview, reportExperimentView } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
-export { logInfo, logDebug, logWarning, logError, createMonitoringLogger, logMeasurement } from './utils/logging';
+export {
+  logInfo,
+  logDebug,
+  logWarning,
+  logError,
+  createMonitoringLogger,
+  logMeasurement,
+  type MonitoringLogger,
+} from './utils/logging';
 export {
   DataSourceWithBackend,
   HealthCheckError,
@@ -69,3 +77,5 @@ export {
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';
+export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
+export { useAppPluginInstalled, useAppPluginVersion } from './services/pluginMeta/hooks';

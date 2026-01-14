@@ -3364,12 +3364,6 @@
       },
       "BacktestConfig": {
         "properties": {
-          "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
           "condition": {
             "type": "string"
           },
@@ -3379,8 +3373,16 @@
             },
             "type": "array"
           },
+          "exec_err_state": {
+            "enum": [
+              "OK",
+              "Alerting",
+              "Error"
+            ],
+            "type": "string"
+          },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "from": {
             "format": "date-time",
@@ -3389,11 +3391,21 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "keep_firing_for": {
+            "type": "string"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
+          },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "namespace_uid": {
+            "type": "string"
           },
           "no_data_state": {
             "enum": [
@@ -3403,11 +3415,17 @@
             ],
             "type": "string"
           },
+          "rule_group": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
           "to": {
             "format": "date-time",
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           }
         },
@@ -6313,6 +6331,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -6322,6 +6346,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -7988,6 +8018,10 @@
           "avatarUrl": {
             "type": "string"
           },
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
           "email": {
             "type": "string"
           },
@@ -8234,10 +8268,7 @@
             "type": "string"
           },
           "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
+            "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
             "type": "string"
           },
           "weekStart": {
@@ -8798,6 +8829,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -8807,6 +8844,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -9846,6 +9889,14 @@
         },
         "type": "object"
       },
+      "RemoteWriteConfig": {
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "Report": {
         "properties": {
           "created": {
@@ -9989,6 +10040,9 @@
       },
       "ReportOptions": {
         "properties": {
+          "csvEncoding": {
+            "type": "string"
+          },
           "layout": {
             "type": "string"
           },
@@ -10544,6 +10598,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -10553,6 +10613,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -12589,10 +12655,7 @@
             "type": "string"
           },
           "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
+            "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
             "type": "string"
           },
           "weekStart": {
@@ -12877,6 +12940,10 @@
             "type": "array"
           },
           "avatarUrl": {
+            "type": "string"
+          },
+          "created": {
+            "format": "date-time",
             "type": "string"
           },
           "email": {
@@ -17651,6 +17718,8 @@
     },
     "/dashboards/home": {
       "get": {
+        "deprecated": true,
+        "description": "NOTE: the home dashboard is configured in preferences.  This API will be removed in G13",
         "operationId": "getHomeDashboard",
         "responses": {
           "200": {
@@ -17663,7 +17732,6 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get home dashboard.",
         "tags": [
           "dashboards"
         ]
@@ -18309,6 +18377,8 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
+        "deprecated": true,
+        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "operationId": "restoreDashboardVersionByUID",
         "parameters": [
           {
@@ -20661,9 +20731,17 @@
             }
           },
           {
-            "description": "A comma separated list of folder ID(s) to filter the elements by.",
+            "description": "A comma separated list of folder ID(s) to filter the elements by.\nDeprecated: Use FolderFilterUIDs instead.",
             "in": "query",
             "name": "folderFilter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A comma separated list of folder UID(s) to filter the elements by.",
+            "in": "query",
+            "name": "folderFilterUIDs",
             "schema": {
               "type": "string"
             }
@@ -24690,8 +24768,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24729,8 +24806,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24768,8 +24844,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],

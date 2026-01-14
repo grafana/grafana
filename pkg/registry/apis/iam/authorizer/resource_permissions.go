@@ -40,7 +40,7 @@ func NewResourcePermissionsAuthorizer(
 	return &ResourcePermissionsAuthorizer{
 		accessClient:   accessClient,
 		parentProvider: parentProvider,
-		logger:         log.New("iam.resource-permissions-authorizer"),
+		logger:         log.New("iam.authorizer.resource-permissions"),
 	}
 }
 
@@ -179,19 +179,17 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 			canViewFuncs  = map[schema.GroupResource]types.ItemChecker{}
 		)
 		for _, item := range l.Items {
-			gr := schema.GroupResource{
-				Group:    item.Spec.Resource.ApiGroup,
-				Resource: item.Spec.Resource.Resource,
-			}
+			target := item.Spec.Resource
+			targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
 
 			// Reuse the same canView for items with the same resource
-			canView, found := canViewFuncs[gr]
+			canView, found := canViewFuncs[targetGR]
 
 			if !found {
 				listReq := types.ListRequest{
 					Namespace: item.Namespace,
-					Group:     item.Spec.Resource.ApiGroup,
-					Resource:  item.Spec.Resource.Resource,
+					Group:     target.ApiGroup,
+					Resource:  target.Resource,
 					Verb:      utils.VerbGetPermissions,
 				}
 
@@ -200,11 +198,8 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 					return nil, err
 				}
 
-				canViewFuncs[gr] = canView
+				canViewFuncs[targetGR] = canView
 			}
-
-			target := item.Spec.Resource
-			targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
 
 			parent := ""
 			// Fetch the parent of the resource
@@ -216,8 +211,7 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 					// Skip item on error fetching parent
 					r.logger.Warn("filter list: error fetching parent, skipping item",
 						"error", err.Error(),
-						"namespace",
-						item.Namespace,
+						"namespace", item.Namespace,
 						"group", target.ApiGroup,
 						"resource", target.Resource,
 						"name", target.Name,

@@ -27,6 +27,10 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,
@@ -56,6 +60,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,
@@ -85,6 +93,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,
@@ -107,6 +119,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,
@@ -136,6 +152,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,
@@ -159,6 +179,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PD8C576611E62080A"
+        },
         "gridPos": {
           "h": 8,
           "w": 8,
@@ -182,6 +206,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PD8C576611E62080A"
+        },
         "fieldConfig": {
           "defaults": {
             "mappings": [
@@ -249,6 +277,10 @@
         "type": "stat"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PD8C576611E62080A"
+        },
         "gridPos": {
           "h": 8,
           "w": 8,

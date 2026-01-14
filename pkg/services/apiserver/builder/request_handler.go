@@ -3,146 +3,306 @@ package builder
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/emicklei/go-restful/v3"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	restclient "k8s.io/client-go/rest"
 	klog "k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/spec3"
 )
 
-type requestHandler struct {
-	router *mux.Router
+// convertHandlerToRouteFunction converts an http.HandlerFunc to a restful.RouteFunction
+// It extracts path parameters from restful.Request and populates them in the request context
+// so that mux.Vars can read them (for backward compatibility with handlers that use mux.Vars)
+func convertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFunction {
+	return func(req *restful.Request, resp *restful.Response) {
+		// Extract path parameters from restful.Request and populate mux.Vars
+		// This is needed for backward compatibility with handlers that use mux.Vars(r)
+		vars := make(map[string]string)
+
+		// Get all path parameters from the restful.Request
+		// The restful.Request has PathParameters() method that returns a map
+		pathParams := req.PathParameters()
+		for key, value := range pathParams {
+			vars[key] = value
+		}
+
+		// Set the vars in the request context using mux.SetURLVars
+		// This makes mux.Vars(r) work correctly
+		if len(vars) > 0 {
+			req.Request = mux.SetURLVars(req.Request, vars)
+		}
+
+		handler(resp.ResponseWriter, req.Request)
+	}
 }
 
-func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient.Config, builders []APIGroupBuilder, metricsRegistry prometheus.Registerer, apiResourceConfig *serverstorage.ResourceConfig) (http.Handler, error) {
-	useful := false // only true if any routes exist anywhere
-	router := mux.NewRouter()
+// AugmentWebServicesWithCustomRoutes adds custom routes from builders to existing WebServices
+// in the container.
+func AugmentWebServicesWithCustomRoutes(
+	container *restful.Container,
+	builders []APIGroupBuilder,
+	metricsRegistry prometheus.Registerer,
+	apiResourceConfig *serverstorage.ResourceConfig,
+) error {
+	if container == nil {
+		return fmt.Errorf("container cannot be nil")
+	}
 
 	metrics := NewCustomRouteMetrics(metricsRegistry)
 
-	for _, builder := range builders {
-		provider, ok := builder.(APIGroupRouteProvider)
+	// Build a map of existing WebServices by root path
+	existingWebServices := make(map[string]*restful.WebService)
+	for _, ws := range container.RegisteredWebServices() {
+		existingWebServices[ws.RootPath()] = ws
+	}
+
+	for _, b := range builders {
+		provider, ok := b.(APIGroupRouteProvider)
 		if !ok || provider == nil {
 			continue
 		}
 
-		for _, gv := range GetGroupVersions(builder) {
-			// filter out api groups that are disabled in APIEnablementOptions
+		for _, gv := range GetGroupVersions(b) {
+			// Filter out disabled API groups
 			gvr := gv.WithResource("")
 			if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gvr) {
-				klog.InfoS("Skipping custom route handler for disabled group version", "gv", gv.String())
+				klog.InfoS("Skipping custom routes for disabled group version", "gv", gv.String())
 				continue
 			}
+
 			routes := provider.GetAPIRoutes(gv)
 			if routes == nil {
 				continue
 			}
 
-			prefix := "/apis/" + gv.String()
-
-			// Root handlers
-			var sub *mux.Router
-			for _, route := range routes.Root {
-				if sub == nil {
-					sub = router.PathPrefix(prefix).Subrouter()
-					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
-				}
-
-				useful = true
-				methods, err := methodsFromSpec(route.Path, route.Spec)
-				if err != nil {
-					return nil, err
-				}
-
-				instrumentedHandler := metrics.InstrumentHandler(
-					gv.Group,
-					gv.Version,
-					route.Path, // Use path as resource identifier
-					route.Handler,
-				)
-
-				sub.HandleFunc("/"+route.Path, instrumentedHandler).
-					Methods(methods...)
+			// Find or create WebService for this group version
+			rootPath := "/apis/" + gv.String()
+			ws, exists := existingWebServices[rootPath]
+			if !exists {
+				// Create a new WebService if one doesn't exist
+				ws = new(restful.WebService)
+				ws.Path(rootPath)
+				container.Add(ws)
+				existingWebServices[rootPath] = ws
 			}
 
-			// Namespace handlers
-			sub = nil
-			prefix += "/namespaces/{namespace}"
-			for _, route := range routes.Namespace {
-				if sub == nil {
-					sub = router.PathPrefix(prefix).Subrouter()
-					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
-				}
-
-				useful = true
-				methods, err := methodsFromSpec(route.Path, route.Spec)
-				if err != nil {
-					return nil, err
-				}
-
+			// Add root handlers using OpenAPI specs
+			for _, route := range routes.Root {
 				instrumentedHandler := metrics.InstrumentHandler(
 					gv.Group,
 					gv.Version,
-					route.Path, // Use path as resource identifier
+					route.Path,
 					route.Handler,
 				)
+				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
 
-				sub.HandleFunc("/"+route.Path, instrumentedHandler).
-					Methods(methods...)
+				// Use OpenAPI spec to configure routes properly
+				if err := addRouteFromSpec(ws, route.Path, route.Spec, routeFunction, false); err != nil {
+					return fmt.Errorf("failed to add root route %s: %w", route.Path, err)
+				}
+			}
+
+			// Add namespace handlers using OpenAPI specs
+			for _, route := range routes.Namespace {
+				instrumentedHandler := metrics.InstrumentHandler(
+					gv.Group,
+					gv.Version,
+					route.Path,
+					route.Handler,
+				)
+				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
+
+				// Use OpenAPI spec to configure routes properly
+				if err := addRouteFromSpec(ws, route.Path, route.Spec, routeFunction, true); err != nil {
+					return fmt.Errorf("failed to add namespace route %s: %w", route.Path, err)
+				}
 			}
 		}
 	}
 
-	if !useful {
-		return delegateHandler, nil
-	}
-
-	// Per Gorilla Mux issue here: https://github.com/gorilla/mux/issues/616#issuecomment-798807509
-	// default handler must come last
-	router.PathPrefix("/").Handler(delegateHandler)
-
-	return &requestHandler{
-		router: router,
-	}, nil
+	return nil
 }
 
-func (h *requestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	h.router.ServeHTTP(w, req)
+// addRouteFromSpec adds routes to a WebService using OpenAPI specs
+func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3.PathProps, handler restful.RouteFunction, isNamespaced bool) error {
+	if pathProps == nil {
+		return fmt.Errorf("pathProps cannot be nil for route %s", routePath)
+	}
+
+	// Build the full path (relative to WebService root)
+	var fullPath string
+	if isNamespaced {
+		fullPath = "/namespaces/{namespace}/" + routePath
+	} else {
+		fullPath = "/" + routePath
+	}
+
+	// Add routes for each HTTP method defined in the OpenAPI spec
+	operations := map[string]*spec3.Operation{
+		"GET":    pathProps.Get,
+		"POST":   pathProps.Post,
+		"PUT":    pathProps.Put,
+		"PATCH":  pathProps.Patch,
+		"DELETE": pathProps.Delete,
+	}
+
+	for method, operation := range operations {
+		if operation == nil {
+			continue
+		}
+
+		// Create route builder for this method
+		var routeBuilder *restful.RouteBuilder
+		switch method {
+		case "GET":
+			routeBuilder = ws.GET(fullPath)
+		case "POST":
+			routeBuilder = ws.POST(fullPath)
+		case "PUT":
+			routeBuilder = ws.PUT(fullPath)
+		case "PATCH":
+			routeBuilder = ws.PATCH(fullPath)
+		case "DELETE":
+			routeBuilder = ws.DELETE(fullPath)
+		}
+
+		// Set operation ID from OpenAPI spec (with K8s verb prefix if needed)
+		operationID := operation.OperationId
+		if operationID == "" {
+			// Generate from path if not specified
+			operationID = generateOperationNameFromPath(routePath)
+		}
+		operationID = prefixRouteIDWithK8sVerbIfNotPresent(operationID, method)
+		routeBuilder = routeBuilder.Operation(operationID)
+
+		// Add description from OpenAPI spec
+		if operation.Description != "" {
+			routeBuilder = routeBuilder.Doc(operation.Description)
+		}
+
+		// Check if namespace parameter is already in the OpenAPI spec
+		hasNamespaceParam := false
+		if operation.Parameters != nil {
+			for _, param := range operation.Parameters {
+				if param.Name == "namespace" && param.In == "path" {
+					hasNamespaceParam = true
+					break
+				}
+			}
+		}
+
+		// Add namespace parameter for namespaced routes if not already in spec
+		if isNamespaced && !hasNamespaceParam {
+			routeBuilder = routeBuilder.Param(restful.PathParameter("namespace", "object name and auth scope, such as for teams and projects"))
+		}
+
+		// Add parameters from OpenAPI spec
+		if operation.Parameters != nil {
+			for _, param := range operation.Parameters {
+				switch param.In {
+				case "path":
+					routeBuilder = routeBuilder.Param(restful.PathParameter(param.Name, param.Description))
+				case "query":
+					routeBuilder = routeBuilder.Param(restful.QueryParameter(param.Name, param.Description))
+				case "header":
+					routeBuilder = routeBuilder.Param(restful.HeaderParameter(param.Name, param.Description))
+				}
+			}
+		}
+
+		// Note: Request/response schemas are already defined in the OpenAPI spec from builders
+		// and will be added to the OpenAPI document via addBuilderRoutes in openapi.go.
+		// We don't duplicate that information here since restful uses the route metadata
+		// for OpenAPI generation, which is handled separately in this codebase.
+
+		// Register the route with handler
+		ws.Route(routeBuilder.To(handler))
+	}
+
+	return nil
 }
 
-func methodsFromSpec(slug string, props *spec3.PathProps) ([]string, error) {
-	if props == nil {
-		return []string{"GET", "POST", "PUT", "PATCH", "DELETE"}, nil
+func prefixRouteIDWithK8sVerbIfNotPresent(operationID string, method string) string {
+	for _, verb := range allowedK8sVerbs {
+		if len(operationID) > len(verb) && operationID[:len(verb)] == verb {
+			return operationID
+		}
 	}
-
-	methods := make([]string, 0)
-	if props.Get != nil {
-		methods = append(methods, "GET")
-	}
-	if props.Post != nil {
-		methods = append(methods, "POST")
-	}
-	if props.Put != nil {
-		methods = append(methods, "PUT")
-	}
-	if props.Patch != nil {
-		methods = append(methods, "PATCH")
-	}
-	if props.Delete != nil {
-		methods = append(methods, "DELETE")
-	}
-
-	if len(methods) == 0 {
-		return nil, fmt.Errorf("invalid OpenAPI Spec for slug=%s without any methods in PathProps", slug)
-	}
-
-	return methods, nil
+	return fmt.Sprintf("%s%s", httpMethodToK8sVerb[strings.ToUpper(method)], operationID)
 }
 
-type methodNotAllowedHandler struct{}
+var allowedK8sVerbs = []string{
+	"get", "log", "read", "replace", "patch", "delete", "deletecollection", "watch", "connect", "proxy", "list", "create", "patch",
+}
 
-func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	w.WriteHeader(405) // method not allowed
+var httpMethodToK8sVerb = map[string]string{
+	http.MethodGet:     "get",
+	http.MethodPost:    "create",
+	http.MethodPut:     "replace",
+	http.MethodPatch:   "patch",
+	http.MethodDelete:  "delete",
+	http.MethodConnect: "connect",
+	http.MethodOptions: "connect", // No real equivalent to options and head
+	http.MethodHead:    "connect",
+}
+
+// generateOperationNameFromPath creates an operation name from a route path.
+// The operation name is used by the OpenAPI generator and should be descriptive.
+// It uses meaningful path segments to create readable yet unique operation names.
+// Examples:
+//   - "/search" -> "Search"
+//   - "/snapshots/create" -> "SnapshotsCreate"
+//   - "ofrep/v1/evaluate/flags" -> "OfrepEvaluateFlags"
+//   - "ofrep/v1/evaluate/flags/{flagKey}" -> "OfrepEvaluateFlagsFlagKey"
+func generateOperationNameFromPath(routePath string) string {
+	// Remove leading slash and split by path segments
+	parts := strings.Split(strings.TrimPrefix(routePath, "/"), "/")
+
+	// Filter to keep meaningful segments and path parameters
+	var nameParts []string
+	skipPrefixes := map[string]bool{
+		"namespaces": true,
+		"apis":       true,
+	}
+
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+
+		// Extract parameter name from {paramName} format
+		if strings.HasPrefix(part, "{") && strings.HasSuffix(part, "}") {
+			paramName := part[1 : len(part)-1]
+			// Skip generic parameters like {namespace}, but keep specific ones like {flagKey}
+			if paramName != "namespace" && paramName != "name" {
+				nameParts = append(nameParts, strings.ToUpper(paramName[:1])+paramName[1:])
+			}
+			continue
+		}
+
+		// Skip common prefixes
+		if skipPrefixes[strings.ToLower(part)] {
+			continue
+		}
+
+		// Skip version segments like v1, v0alpha1, v2beta1, etc.
+		if strings.HasPrefix(strings.ToLower(part), "v") &&
+			(len(part) <= 3 || strings.Contains(strings.ToLower(part), "alpha") || strings.Contains(strings.ToLower(part), "beta")) {
+			continue
+		}
+
+		// Capitalize first letter and add to parts
+		if len(part) > 0 {
+			nameParts = append(nameParts, strings.ToUpper(part[:1])+part[1:])
+		}
+	}
+
+	if len(nameParts) == 0 {
+		return "Route"
+	}
+
+	return strings.Join(nameParts, "")
 }

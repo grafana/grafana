@@ -16,36 +16,38 @@ export interface GaugePanelEffects {
   barGlow?: boolean;
   centerGlow?: boolean;
   gradient?: boolean;
-  rounded?: boolean;
-  spotlight?: boolean;
 }
 
 export const defaultGaugePanelEffects: Partial<GaugePanelEffects> = {
   barGlow: false,
   centerGlow: false,
   gradient: true,
-  rounded: false,
-  spotlight: false,
 };
 
 export interface Options extends common.SingleStatBaseOptions {
+  barShape: ('flat' | 'rounded');
   barWidthFactor: number;
   effects: GaugePanelEffects;
+  endpointMarker?: ('point' | 'glow' | 'none');
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
   sparkline?: boolean;
+  textMode?: ('auto' | 'value_and_name' | 'value' | 'name' | 'none');
 }
 
 export const defaultOptions: Partial<Options> = {
+  barShape: 'flat',
   barWidthFactor: 0.5,
   effects: {},
+  endpointMarker: 'point',
   segmentCount: 1,
   segmentSpacing: 0.3,
   shape: 'gauge',
   showThresholdLabels: false,
   showThresholdMarkers: true,
   sparkline: true,
+  textMode: 'auto',
 };

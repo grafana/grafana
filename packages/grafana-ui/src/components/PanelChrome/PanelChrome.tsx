@@ -248,15 +248,17 @@ export function PanelChrome({
 
   const onContentPointerDown = React.useCallback(
     (evt: React.PointerEvent) => {
-      // Ignore clicks inside buttons, links, canvas and svg elments
+      // When selected, ignore clicks inside buttons, links, canvas and svg elments
       // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
-      if (evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
+      if (isSelected && evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
+        // Stop propagation otherwise row config editor will get selected
+        evt.stopPropagation();
         return;
       }
 
       onSelect?.(evt);
     },
-    [onSelect]
+    [isSelected, onSelect]
   );
 
   const headerContent = (
@@ -384,6 +386,7 @@ export function PanelChrome({
                 menu={menu}
                 title={typeof title === 'string' ? title : undefined}
                 dragClass={dragClass}
+                onDragStart={onDragStart}
                 offset={hoverHeaderOffset}
                 onOpenMenu={onOpenMenu}
               >

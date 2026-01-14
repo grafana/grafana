@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useLayoutEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom-v5-compat';
+import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
@@ -63,10 +63,14 @@ export function GrafanaRoute(props: Props) {
 
 export function GrafanaRouteWrapper({ route }: Pick<Props, 'route'>) {
   const location = useLocation();
+  const params = useParams();
+
+  const allowAnonymous =
+    typeof route.allowAnonymous === 'function' ? route.allowAnonymous(params) : route.allowAnonymous;
 
   // Perform login check in the frontend now
   if (isFrontendService()) {
-    const routeRequiresSignin = !route.allowAnonymous && !config.anonymousEnabled;
+    const routeRequiresSignin = !allowAnonymous && !config.anonymousEnabled;
     if (routeRequiresSignin && !contextSrv.isSignedIn) {
       contextSrv.setRedirectToUrl();
 

@@ -29,6 +29,7 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -75,19 +76,7 @@ var PathRewriters = []filters.PathRewriter{
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		requestHandler, err := GetCustomRoutesHandler(
-			delegateHandler,
-			c.LoopbackClientConfig,
-			builders,
-			reg,
-			c.MergedResourceConfig,
-		)
-		if err != nil {
-			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
-		}
-
-		// Needs to run last in request chain to function as expected, hence we register it first.
-		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
 
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
@@ -495,6 +484,32 @@ func AddPostStartHooks(
 		}
 	}
 	return nil
+}
+
+func EvaluatorPolicyRuleFromBuilders(builders []APIGroupBuilder) auditing.PolicyRuleEvaluators {
+	policyRuleEvaluators := make(auditing.PolicyRuleEvaluators, 0)
+
+	for _, b := range builders {
+		auditor, ok := b.(APIGroupAuditor)
+		if !ok {
+			continue
+		}
+
+		policyRuleEvaluator := auditor.GetPolicyRuleEvaluator()
+		if policyRuleEvaluator == nil {
+			continue
+		}
+
+		for _, gv := range GetGroupVersions(b) {
+			if gv.Empty() {
+				continue
+			}
+
+			policyRuleEvaluators[gv] = policyRuleEvaluator
+		}
+	}
+
+	return policyRuleEvaluators
 }
 
 func allowRegisteringResourceByInfo(allowedResources []string, name string) bool {

@@ -3,7 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.describe(
   'Visualization suggestions',
   {
-    tag: ['@various'],
+    tag: ['@various', '@suggestions'],
   },
   () => {
     test('Should be shown and clickable', async ({ page, selectors, gotoPanelEditPage }) => {
