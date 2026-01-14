@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
+import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
@@ -44,6 +45,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderUID });
+  const isRecentlyViewedEnabled = !folderUID && evaluateBooleanFlag('recentlyViewedDashboards', false);
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -72,6 +74,23 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       reportInteraction('grafana_empty_state_shown', { source: 'browse_dashboards' });
     }
   }, [isSearching, searchState.result, stateManager]);
+
+  // Emit exposure event for A/A test once when page loads
+  const hasEmittedExposureEvent = useRef(false);
+
+  useEffect(() => {
+    if (!isRecentlyViewedEnabled || hasEmittedExposureEvent.current) {
+      return;
+    }
+
+    hasEmittedExposureEvent.current = true;
+    const isExperimentTreatment = evaluateBooleanFlag('experimentRecentlyViewedDashboards', false);
+
+    reportInteraction('dashboards_browse_list_viewed', {
+      experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
+      has_recently_viewed_component: isExperimentTreatment,
+    });
+  }, [isRecentlyViewedEnabled]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useUpdateFolder();
@@ -179,8 +198,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
-        {/* only show recently viewed dashboards when in root */}
-        {!folderUID && <RecentlyViewedDashboards />}
+        {/* only show recently viewed dashboards when in root and flag is enabled */}
+        {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}

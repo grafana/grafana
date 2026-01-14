@@ -86,3 +86,5 @@ export {
   type MutationRequest,
   type MCPToolDefinition,
 } from './services/dashboardMutationAPI';
+export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
+export { useAppPluginInstalled, useAppPluginVersion } from './services/pluginMeta/hooks';

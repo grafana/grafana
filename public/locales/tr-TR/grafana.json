@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Panel ekle",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Satır olarak grupla",
@@ -5695,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Geçerli bir Grafana.com kimliği bulunamadı",
       "invalid-json": "Geçerli JSON değil",
+      "tag-too-long": "",
       "tags-expected-array": "etiketler dizi olmalı",
       "tags-expected-strings": "etiklet dizi hâlinde metinlerden oluşmalı"
     },
@@ -9253,7 +9255,8 @@
     "tags-input": {
       "add": "Ekle",
       "placeholder-new-tag": "Yeni etiket (eklemek için anahtarı girin)",
-      "remove": "Etiketi kaldır: {{name}}"
+      "remove": "Etiketi kaldır: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Zamanları senkronize et",
@@ -10720,18 +10723,6 @@
     "help/documentation": "Belgeler",
     "help/keyboard-shortcuts": "Klavye kısayolları",
     "help/support": "Destek",
-    "history-container": {
-      "drawer-tittle": "Geçmiş"
-    },
-    "history-wrapper": {
-      "collapse": "Daralt",
-      "expand": "Genişlet",
-      "icon-selected": "Seçili giriş",
-      "icon-unselected": "Normal Giriş",
-      "show-more": "Daha fazla göster",
-      "today": "Bugün",
-      "yesterday": "Dün"
-    },
     "home": {
       "title": "Ana sayfa"
     },
@@ -11815,7 +11806,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Sil",
       "confirm-delete-keep-resources": "",
       "confirm-delete-with-resources": "",
@@ -12079,6 +12116,7 @@
       "jobs": "İşler"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Ayarlar",
       "source-code": "Kaynak kodu"
     },

@@ -4595,6 +4595,7 @@
     },
     "canvas-actions": {
       "add-panel": "添加面板",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "分组成行",
@@ -5675,6 +5676,7 @@
     "validation": {
       "invalid-dashboard-id": "找不到有效的 Grafana.com ID",
       "invalid-json": "无有效的 JSON",
+      "tag-too-long": "",
       "tags-expected-array": "标签预期数组",
       "tags-expected-strings": "标签预期字符串数组"
     },
@@ -9217,7 +9219,8 @@
     "tags-input": {
       "add": "添加",
       "placeholder-new-tag": "新标签（按 Enter 键以添加）",
-      "remove": "移除标记：{{name}}"
+      "remove": "移除标记：{{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "同步次数",
@@ -10676,18 +10679,6 @@
     "help/documentation": "文档",
     "help/keyboard-shortcuts": "快捷键",
     "help/support": "支持",
-    "history-container": {
-      "drawer-tittle": "历史记录"
-    },
-    "history-wrapper": {
-      "collapse": "收起",
-      "expand": "展开",
-      "icon-selected": "所选条目",
-      "icon-unselected": "正常条目",
-      "show-more": "显示更多",
-      "today": "今天",
-      "yesterday": "昨天"
-    },
     "home": {
       "title": "首页"
     },
@@ -11765,7 +11756,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "删除",
       "confirm-delete-keep-resources": "您确定要删除存储库配置但保留其资源吗？",
       "confirm-delete-with-resources": "您确定要删除存储库配置及其所有资源吗？",
@@ -12027,6 +12064,7 @@
       "jobs": "作业"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "设置",
       "source-code": "源代码"
     },

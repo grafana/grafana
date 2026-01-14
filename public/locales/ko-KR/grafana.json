@@ -4595,6 +4595,7 @@
     },
     "canvas-actions": {
       "add-panel": "패널 추가",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "행으로 그룹화",
@@ -5675,6 +5676,7 @@
     "validation": {
       "invalid-dashboard-id": "유효한 Grafana.com ID를 찾지 못했습니다.",
       "invalid-json": "유효하지 않은 JSON",
+      "tag-too-long": "",
       "tags-expected-array": "태그로 배열을 입력해야 합니다.",
       "tags-expected-strings": "태그로 문자열 배열을 입력해야 합니다."
     },
@@ -9217,7 +9219,8 @@
     "tags-input": {
       "add": "추가",
       "placeholder-new-tag": "새 태그(엔터 키를 눌러 추가하세요)",
-      "remove": "태그 제거: {{name}}"
+      "remove": "태그 제거: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "동기화 시간",
@@ -10676,18 +10679,6 @@
     "help/documentation": "문서",
     "help/keyboard-shortcuts": "키보드 단축키",
     "help/support": "지원",
-    "history-container": {
-      "drawer-tittle": "이력"
-    },
-    "history-wrapper": {
-      "collapse": "접기",
-      "expand": "펼치기",
-      "icon-selected": "선택된 항목",
-      "icon-unselected": "일반 항목",
-      "show-more": "더 보기",
-      "today": "오늘",
-      "yesterday": "어제"
-    },
     "home": {
       "title": "홈"
     },
@@ -11765,7 +11756,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "삭제",
       "confirm-delete-keep-resources": "정말 리포지토리 구성만 삭제하고 해당 리소스는 그대로 유지하시겠어요?",
       "confirm-delete-with-resources": "정말 리포지토리 구성과 해당하는 모든 리소스를 삭제하시겠어요?",
@@ -12027,6 +12064,7 @@
       "jobs": "작업"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "설정",
       "source-code": "소스 코드"
     },
