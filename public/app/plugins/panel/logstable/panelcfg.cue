@@ -26,40 +26,41 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				Options: {
-//					showLabels:               bool
-//					showCommonLabels:         bool
-//					showFieldSelector?:       bool
-//					showTime:                 bool
-//					showLogContextToggle:     bool
-					showControls?:            bool
-					controlsStorageKey?:      string
-//					wrapLogMessage:           bool
-//					prettifyLogMessage:       bool
-//					enableLogDetails:         bool
-//					syntaxHighlighting?:      bool
-//					sortOrder:                common.LogsSortOrder
-//					dedupStrategy:            common.LogsDedupStrategy
-//					enableInfiniteScrolling?: bool
-//					noInteractions?:          bool
-//					showLogAttributes?:       bool
-//					fontSize?:                "default" | "small"                  @cuetsy(kind="enum", memberNames="default|small")
-//					detailsMode?:             "inline" | "sidebar"                  @cuetsy(kind="enum", memberNames="inline|sidebar")
-//					timestampResolution?:     "ms" | "ns"                  @cuetsy(kind="enum", memberNames="ms|ns")
-					// TODO: figure out how to define callbacks
-					onClickFilterLabel?:     _
-					onClickFilterOutLabel?:  _
-//					isFilterLabelActive?:    _
-//					onClickFilterString?:    _
-//					onClickFilterOutString?: _
-//					onClickShowField?:       _
-//					onClickHideField?:       _
-//					onLogOptionsChange?:     _
-//					logRowMenuIconsBefore?:  _
-//					logRowMenuIconsAfter?:   _
-//					logLineMenuCustomItems?: _
-//					onNewLogsReceived?:      _
+					//					showLabels:               bool
+					//					showCommonLabels:         bool
+					//					showFieldSelector?:       bool
+					//					showTime:                 bool
+					//					showLogContextToggle:     bool
+					showControls?:       bool
+					controlsStorageKey?: string
+					//					wrapLogMessage:           bool
+					//					prettifyLogMessage:       bool
+					//					enableLogDetails:         bool
+					//					syntaxHighlighting?:      bool
+					//					sortOrder:                common.LogsSortOrder
+					//					dedupStrategy:            common.LogsDedupStrategy
+					//					enableInfiniteScrolling?: bool
+					//					noInteractions?:          bool
+					//					showLogAttributes?:       bool
+					//					fontSize?:                "default" | "small"                  @cuetsy(kind="enum", memberNames="default|small")
+					//					detailsMode?:             "inline" | "sidebar"                  @cuetsy(kind="enum", memberNames="inline|sidebar")
+					//					timestampResolution?:     "ms" | "ns"                  @cuetsy(kind="enum", memberNames="ms|ns")
+					// @todo filter methods no longer needed as props since these are defined by context?
+					//					onClickFilterLabel?:    _
+					//					onClickFilterOutLabel?: _
+					//					isFilterLabelActive?:    _
+					//					onClickFilterString?:    _
+					//					onClickFilterOutString?: _
+					//					onClickShowField?:       _
+					//					onClickHideField?:       _
+					//					onLogOptionsChange?:     _
+					//					logRowMenuIconsBefore?:  _
+					//					logRowMenuIconsAfter?:   _
+					//					logLineMenuCustomItems?: _
+					//					onNewLogsReceived?:      _
 					displayedFields?: [...string]
-					setDisplayedFields?:     _
+					setDisplayedFields?: _
+					buildLinkToLogLine?: _
 				} @cuetsy(kind="interface")
 			}
 		}]

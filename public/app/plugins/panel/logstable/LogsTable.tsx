@@ -13,7 +13,7 @@ import {
   useDataLinksContext,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { CustomCellRendererProps, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { config } from '../../../core/config';
 import { getLogsExtractFields } from '../../../features/explore/Logs/LogsTable';
@@ -29,20 +29,17 @@ import { isSetDisplayedFields } from '../logs/types';
 import { TablePanel } from '../table/TablePanel';
 import type { Options as TableOptions } from '../table/panelcfg.gen';
 
+import { LogsTableCustomCellRenderer } from './CustomCellRenderer';
 import type { Options as LogsTableOptions } from './panelcfg.gen';
-import { isOnLogsTableOptionsChange, onLogsTableOptionsChangeType } from './types';
+import { isBuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
 
 interface LogsTablePanelProps extends PanelProps<LogsTableOptions> {
   frameIndex?: number;
   showHeader?: boolean;
 }
 
-// keeping alias @todo remove
-//@ts-expect-error
-const a: TableOptions = {};
-console.log('a', a);
-
-const sidebarWidth = 200;
+// Defaults
+const DEFAULT_SIDEBAR_WIDTH = 200;
 
 export const LogsTable = ({
   data,
@@ -53,7 +50,7 @@ export const LogsTable = ({
   options,
   eventBus,
   frameIndex = 0,
-  showHeader = true,
+  showHeader = true, // @todo not pulling from panel settings
   onOptionsChange,
   onFieldConfigChange,
   replaceVariables,
@@ -65,10 +62,10 @@ export const LogsTable = ({
   renderCounter,
 }: LogsTablePanelProps) => {
   // Variables
-  const dataFrame = data.series[frameIndex];
+  const unTransformedDataFrame = data.series[frameIndex];
 
   // Hooks
-  const logsFrame: LogsFrame | null = useMemo(() => parseLogsFrame(dataFrame), [dataFrame]);
+  const logsFrame: LogsFrame | null = useMemo(() => parseLogsFrame(unTransformedDataFrame), [unTransformedDataFrame]);
   const defaultDisplayedFields = useMemo(
     () => [
       logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME,
@@ -81,12 +78,12 @@ export const LogsTable = ({
   const [extractedFrame, setExtractedFrame] = useState<DataFrame[] | null>(null);
   const [organizedFrame, setOrganizedFrame] = useState<DataFrame[] | null>(null);
   const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? defaultDisplayedFields);
-  const styles = useStyles2(getStyles, sidebarWidth, height, width);
+  const styles = useStyles2(getStyles, DEFAULT_SIDEBAR_WIDTH, height, width);
   const dataLinksContext = useDataLinksContext();
-  const unTransformedDataFrame = data.series[frameIndex];
+  const dataLinkPostProcessor = dataLinksContext.dataLinkPostProcessor;
 
   // Methods
-  const onLogsTableOptionsChange: onLogsTableOptionsChangeType | undefined = isOnLogsTableOptionsChange(onOptionsChange)
+  const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
     ? onOptionsChange
     : undefined;
 
@@ -97,7 +94,6 @@ export const LogsTable = ({
   // Callbacks
   const onTableOptionsChange = useCallback(
     (options: TableOptions) => {
-      console.log('onTableOptionsChange', options);
       onLogsTableOptionsChange?.(options);
     },
     [onLogsTableOptionsChange]
@@ -135,33 +131,18 @@ export const LogsTable = ({
       );
     };
 
-    extractFields().then((frame) => {
+    extractFields().then((data) => {
       const extractedFrames = applyFieldOverrides({
-        data: frame,
-        fieldConfig: fieldConfig,
+        data,
+        fieldConfig,
         replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
         theme: config.theme2,
         timeZone: timeZone,
-        dataLinkPostProcessor: dataLinksContext.dataLinkPostProcessor,
+        dataLinkPostProcessor,
       });
-
-      for (let frameIndex = 0; frameIndex < extractedFrames.length; frameIndex++) {
-        const frame = extractedFrames[frameIndex];
-        for (const [, field] of frame.fields.entries()) {
-          field.config = {
-            ...field.config,
-            filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field),
-            custom: {
-              ...field.config.custom,
-              inspect: field.config?.custom?.inspect ?? true,
-            },
-          };
-        }
-      }
-
       setExtractedFrame(extractedFrames);
     });
-  }, [dataLinksContext.dataLinkPostProcessor, fieldConfig, replaceVariables, timeZone, unTransformedDataFrame]);
+  }, [dataLinkPostProcessor, fieldConfig, replaceVariables, timeZone, unTransformedDataFrame]);
 
   /**
    * Organize fields transform
@@ -181,7 +162,7 @@ export const LogsTable = ({
         }
       }
 
-      return await lastValueFrom(
+      const organizedFrame = await lastValueFrom(
         transformDataFrame(
           [
             {
@@ -195,6 +176,44 @@ export const LogsTable = ({
           extractedFrame
         )
       );
+
+      if (!logsFrame) {
+        throw new Error('missing logsFrame');
+      }
+
+      for (let frameIndex = 0; frameIndex < organizedFrame.length; frameIndex++) {
+        const frame = organizedFrame[frameIndex];
+        for (const [fieldIndex, field] of frame.fields.entries()) {
+          const isFirstField = fieldIndex === 0;
+
+          field.config = {
+            ...field.config,
+            filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field, logsFrame),
+            custom: {
+              ...field.config.custom,
+              inspect: field.config?.custom?.inspect ?? doesFieldSupportInspector(field, logsFrame),
+              // @todo add row actions panel option
+              cellOptions:
+                isFirstField && logsFrame
+                  ? {
+                      type: TableCellDisplayMode.Custom,
+                      cellComponent: (cellProps: CustomCellRendererProps) => (
+                        <LogsTableCustomCellRenderer
+                          cellProps={cellProps}
+                          logsFrame={logsFrame}
+                          buildLinkToLog={
+                            isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : undefined
+                          }
+                        />
+                      ),
+                    }
+                  : field.config.custom?.cellOptions,
+            },
+          };
+        }
+      }
+
+      return organizedFrame;
     };
 
     organizeFields(displayedFields).then((frame) => {
@@ -202,13 +221,13 @@ export const LogsTable = ({
         setOrganizedFrame(frame);
       }
     });
-  }, [extractedFrame, displayedFields]);
+  }, [extractedFrame, displayedFields, logsFrame, options.buildLinkToLogLine]);
 
   if (extractedFrame === null || organizedFrame === null || logsFrame === null) {
     return;
   }
 
-  console.log('render::LogsTable', { extractedFrame });
+  console.log('render::LogsTable', { extractedFrame, organizedFrame });
 
   return (
     <div className={styles.wrapper}>
@@ -220,7 +239,7 @@ export const LogsTable = ({
           logs={[]}
           reorder={(columns: string[]) => {}}
           setSidebarWidth={(width) => {}}
-          sidebarWidth={sidebarWidth}
+          sidebarWidth={DEFAULT_SIDEBAR_WIDTH}
           toggle={(key: string) => {
             if (displayedFields.includes(key)) {
               handleSetDisplayedFields(displayedFields.filter((f) => f !== key));
@@ -233,7 +252,7 @@ export const LogsTable = ({
       <div className={styles.tableWrapper}>
         <TablePanel
           data={{ ...data, series: organizedFrame }}
-          width={width - sidebarWidth}
+          width={width - DEFAULT_SIDEBAR_WIDTH}
           height={height}
           id={id}
           timeRange={timeRange}
@@ -273,8 +292,15 @@ function displayedFieldsToColumns(displayedFields: string[], logsFrame: LogsFram
   return columns;
 }
 
-function doesFieldSupportAdHocFiltering(field: Field): boolean {
-  return true;
+function doesFieldSupportInspector(field: Field, logsFrame: LogsFrame) {
+  // const unsupportedFields = [logsFrame.bodyField.name]
+  // return !unsupportedFields.includes(field.name);
+  return false;
+}
+
+function doesFieldSupportAdHocFiltering(field: Field, logsFrame: LogsFrame): boolean {
+  const unsupportedFields = [logsFrame.timeField.name, logsFrame.bodyField.name];
+  return !unsupportedFields.includes(field.name);
 }
 
 const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, width: number) => {

@@ -11,6 +11,7 @@
 export const pluginVersion = "12.4.0-pre";
 
 export interface Options {
+  buildLinkToLogLine?: unknown;
   controlsStorageKey?: string;
   /**
    * 					isFilterLabelActive?:    _

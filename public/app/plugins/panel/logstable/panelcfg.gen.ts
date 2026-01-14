@@ -9,6 +9,7 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 export interface Options {
+  buildLinkToLogLine?: unknown;
   controlsStorageKey?: string;
   /**
    * 					isFilterLabelActive?:    _

@@ -28,6 +28,11 @@ interface Props extends CustomCellRendererProps {
   index?: number;
 }
 
+/**
+ * @deprecated
+ * @param props
+ * @constructor
+ */
 export function LogsTableActionButtons(props: Props) {
   const { exploreId, absoluteRange, logRows, rowIndex, panelState, displayedFields, logsFrame, frame } = props;
 
