@@ -290,7 +290,7 @@
         ],
         "legend": {
           "displayMode": "table",
-          "placement": "right",
+          "placement": "bottom",
           "showLegend": true,
           "values": [
             "percent"
@@ -304,7 +304,7 @@
           "fields": "",
           "values": false
         },
-        "showLegend": true,
+        "showLegend": false,
         "strokeWidth": 1,
         "text": {}
       },
@@ -323,15 +323,6 @@
         }
       ],
       "title": "Percent",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "^Backend-(.*)$",
-            "renamePattern": "b-$1"
-          }
-        }
-      ],
       "type": "piechart"
     },
     {
@@ -375,7 +366,7 @@
         ],
         "legend": {
           "displayMode": "table",
-          "placement": "right",
+          "placement": "bottom",
           "showLegend": true,
           "values": [
             "value"
@@ -389,7 +380,7 @@
           "fields": "",
           "values": false
         },
-        "showLegend": true,
+        "showLegend": false,
         "strokeWidth": 1,
         "text": {}
       },
@@ -408,15 +399,6 @@
         }
       ],
       "title": "Value",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "(.*)",
-            "renamePattern": "$1-how-much-wood-could-a-woodchuck-chuck-if-a-woodchuck-could-chuck-wood"
-          }
-        }
-      ],
       "type": "piechart"
     },
     {

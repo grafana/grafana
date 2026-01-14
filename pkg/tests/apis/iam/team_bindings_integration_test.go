@@ -70,7 +70,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 			doTeamBindingFieldSelectionTests(t, helper)
 
 			if mode < 3 {
-				doTeamBindingCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
+				doTeamBindingCRUDTestsUsingTheLegacyAPIs(t, helper)
 			}
 		})
 	}
@@ -87,12 +87,14 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		})
 
 		// Create the team binding
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		toCreate := createTeamBindingObject(helper, user.GetName(), team.GetName())
 		created, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
+
+		defer func() {
+			_ = teamBindingClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		}()
 
 		createdSpec := created.Object["spec"].(map[string]interface{})
 		require.Equal(t, user.GetName(), createdSpec["subject"].(map[string]interface{})["name"])
@@ -119,6 +121,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		// Update the team binding
 		toUpdate := toCreate.DeepCopy()
 		toUpdate.Object["spec"].(map[string]interface{})["permission"] = "member"
+		toUpdate.Object["metadata"].(map[string]interface{})["name"] = createdUID
 		updated, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, updated)
@@ -168,9 +171,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 					GVR:       gvrTeamBindings,
 				})
 
-				toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-				toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-				toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+				toCreate := createTeamBindingObject(helper, user.GetName(), team.GetName())
 				_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 				require.Error(t, err)
 
@@ -189,9 +190,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 			GVR:       gvrTeamBindings,
 		})
 
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = ""
-		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		toCreate := createTeamBindingObject(helper, "", team.GetName())
 
 		_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -209,9 +208,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 			GVR:       gvrTeamBindings,
 		})
 
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = ""
+		toCreate := createTeamBindingObject(helper, user.GetName(), "")
 
 		_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -229,9 +226,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 			GVR:       gvrTeamBindings,
 		})
 
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		toCreate := createTeamBindingObject(helper, user.GetName(), team.GetName())
 		toCreate.Object["spec"].(map[string]interface{})["permission"] = "invalid"
 
 		_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
@@ -249,17 +244,31 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		} {
 			t.Run(fmt.Sprintf("with basic role_%s", u.Identity.GetOrgRole()), func(t *testing.T) {
 				ctx := context.Background()
+
+				// Create the team binding using admin
+				adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+					User:      helper.Org1.Admin,
+					Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+					GVR:       gvrTeamBindings,
+				})
+
+				toCreate := createTeamBindingObject(helper, user.GetName(), team.GetName())
+				created, err := adminClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+				require.NoError(t, err)
+
+				defer func() {
+					_ = adminClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+				}()
+
 				teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
 					User:      u,
 					Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
 					GVR:       gvrTeamBindings,
 				})
 
-				toUpdate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-				toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-				toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+				toUpdate := created.DeepCopy()
 				toUpdate.Object["spec"].(map[string]interface{})["permission"] = "member"
-				_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+				_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 				require.Error(t, err)
 
 				var statusErr *errors.StatusError
@@ -277,10 +286,8 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 			GVR:       gvrTeamBindings,
 		})
 
-		toUpdate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+		toUpdate := createTeamBindingObject(helper, user.GetName(), team.GetName())
 		toUpdate.Object["metadata"].(map[string]interface{})["name"] = "invalid-team-binding-name"
-		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-		toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
 		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
@@ -297,15 +304,18 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 			GVR:       gvrTeamBindings,
 		})
 
-		// Create the team binding if it doesn't already exist
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
-		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createTeamBindingObject(helper, user.GetName(), team.GetName())
+		created, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		defer func() {
+			_ = teamBindingClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		}()
 
 		toUpdate := toCreate.DeepCopy()
 		toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = "test-team-2"
-		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		toUpdate.Object["metadata"].(map[string]interface{})["name"] = created.GetName()
+		_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -321,16 +331,19 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 			GVR:       gvrTeamBindings,
 		})
 
-		// Create the team binding if it doesn't already exist
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
-		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createTeamBindingObject(helper, user.GetName(), team.GetName())
+		created, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		defer func() {
+			_ = teamBindingClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		}()
 
 		toUpdate := toCreate.DeepCopy()
+		toUpdate.Object["metadata"].(map[string]interface{})["name"] = created.GetName()
 		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = "test-user-2"
 
-		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -346,15 +359,18 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 			GVR:       gvrTeamBindings,
 		})
 
-		// Create the team binding if it doesn't already exist
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
-		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createTeamBindingObject(helper, user.GetName(), team.GetName())
+		created, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		defer func() {
+			_ = teamBindingClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		}()
 
 		toUpdate := toCreate.DeepCopy()
 		toUpdate.Object["spec"].(map[string]interface{})["external"] = true
-		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		toUpdate.Object["metadata"].(map[string]interface{})["name"] = created.GetName()
+		_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -370,17 +386,18 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 			GVR:       gvrTeamBindings,
 		})
 
-		// Create the team binding if it doesn't already exist
-		toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-		toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-		toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
-		_, _ = teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		toCreate := createTeamBindingObject(helper, user.GetName(), team.GetName())
+		created, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
 
-		toUpdate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
-		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-		toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+		defer func() {
+			_ = teamBindingClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		}()
+
+		toUpdate := createTeamBindingObject(helper, user.GetName(), team.GetName())
 		toUpdate.Object["spec"].(map[string]interface{})["permission"] = "invalid"
-		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		toUpdate.Object["metadata"].(map[string]interface{})["name"] = created.GetName()
+		_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -389,7 +406,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 	})
 }
 
-func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
+func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("should create team binding using legacy APIs and get it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -624,4 +641,11 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			require.Equal(t, user1.GetName(), actual.Spec.Subject.Name)
 		}
 	})
+}
+
+func createTeamBindingObject(helper *apis.K8sTestHelper, userName, teamName string) *unstructured.Unstructured {
+	obj := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+	obj.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = userName
+	obj.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = teamName
+	return obj
 }
