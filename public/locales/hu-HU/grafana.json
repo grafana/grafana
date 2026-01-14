@@ -3759,7 +3759,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4416,6 +4415,7 @@
       },
       "no-properties-changed": "Nem változtak meg a releváns tulajdonságok",
       "table": {
+        "notes": "",
         "updated": "Dátum",
         "updatedBy": "Frissítette:",
         "version": "Verzió"
@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Panel hozzáadása",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Csoportosítás sorba",
@@ -4874,7 +4875,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Értékek vesszővel elválasztva"
         },
         "datasource-options": {
           "name-filter": "Névszűrő",
@@ -5694,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Nem található érvényes Grafana.com-azonosító",
       "invalid-json": "Érvénytelen JSON",
+      "tag-too-long": "",
       "tags-expected-array": "címke tömböt várt",
       "tags-expected-strings": "címke karakterláncok tömbjét várta"
     },
@@ -5799,6 +5802,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5967,6 +5971,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Egyéni opciók",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Értékek vesszővel elválasztva",
       "selection-options": "Kijelölés beállításai"
     },
@@ -6554,6 +6561,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Irányítópult elmentve"
     },
@@ -6577,6 +6589,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6636,8 +6649,9 @@
       "tooltip-show-usages": "Használatok megjelenítése"
     },
     "variable-values-preview": {
-      "preview-of-values": "Értékek előnézete",
-      "show-more": "Több megjelenítése"
+      "show-more": "Több megjelenítése",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9241,7 +9255,8 @@
     "tags-input": {
       "add": "Hozzáadás",
       "placeholder-new-tag": "Új címke (nyomja le az Enter billentyűt a hozzáadáshoz)",
-      "remove": "Címke eltávolítása: {{name}}"
+      "remove": "Címke eltávolítása: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Időpontok szinkronizálása",
@@ -10708,18 +10723,6 @@
     "help/documentation": "Dokumentáció",
     "help/keyboard-shortcuts": "Gyorsbillentyűk",
     "help/support": "Ügyfélszolgálat",
-    "history-container": {
-      "drawer-tittle": "Előzmények"
-    },
-    "history-wrapper": {
-      "collapse": "Összecsukás",
-      "expand": "Kibontás",
-      "icon-selected": "Kijelölt bejegyzés",
-      "icon-unselected": "Normál bejegyzés",
-      "show-more": "Több megjelenítése",
-      "today": "Ma",
-      "yesterday": "Tegnap"
-    },
     "home": {
       "title": "Kezdőlap"
     },
@@ -11803,7 +11806,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Törlés",
       "confirm-delete-keep-resources": "Biztosan törli az adattár konfigurációját, és megtartja az erőforrásait?",
       "confirm-delete-with-resources": "Biztosan törli az adattár konfigurációját és az összes erőforrását?",
@@ -12067,6 +12116,7 @@
       "jobs": "Feladatok"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Beállítások",
       "source-code": "Forráskód"
     },

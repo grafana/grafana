@@ -135,6 +135,10 @@ const (
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
 
+	// FlagReportingCsvEncodingOptions
+	// Enables CSV encoding options in the reporting feature
+	FlagReportingCsvEncodingOptions = "reportingCsvEncodingOptions"
+
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
@@ -256,7 +260,7 @@ const (
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
 	// FlagDashboardNewLayouts
-	// Enables experimental new dashboard layouts
+	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
 	// FlagPdfTables
@@ -367,6 +371,10 @@ const (
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
 
+	// FlagAlertingNavigationV2
+	// Enables the new Alerting navigation structure with improved menu grouping
+	FlagAlertingNavigationV2 = "alertingNavigationV2"
+
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
@@ -451,14 +459,6 @@ const (
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
 
-	// FlagUnifiedStorageSearch
-	// Enable unified storage search
-	FlagUnifiedStorageSearch = "unifiedStorageSearch"
-
-	// FlagUnifiedStorageSearchSprinkles
-	// Enable sprinkles on unified storage search
-	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
-
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"
@@ -538,10 +538,6 @@ const (
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
-
-	// FlagInvestigationsBackend
-	// Enable the investigations backend API
-	FlagInvestigationsBackend = "investigationsBackend"
 
 	// FlagK8SFolderCounts
 	// Enable folder&#39;s api server counts
@@ -631,7 +627,7 @@ const (
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
 
 	// FlagKubernetesAuthzApis
-	// Registers AuthZ /apis endpoint
+	// Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
 	// FlagKubernetesAuthZHandlerRedirect
@@ -645,6 +641,18 @@ const (
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
+
+	// FlagKubernetesAuthzCoreRolesApi
+	// Registers AuthZ Core Roles /apis endpoint
+	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
+
+	// FlagKubernetesAuthzRolesApi
+	// Registers AuthZ Roles /apis endpoint
+	FlagKubernetesAuthzRolesApi = "kubernetesAuthzRolesApi"
+
+	// FlagKubernetesAuthzRoleBindingsApi
+	// Registers AuthZ Role Bindings /apis endpoint
+	FlagKubernetesAuthzRoleBindingsApi = "kubernetesAuthzRoleBindingsApi"
 
 	// FlagKubernetesAuthnMutation
 	// Enables create, delete, and update mutations for resources owned by IAM identity
@@ -730,10 +738,6 @@ const (
 	// Enables running plugins in containers
 	FlagPluginContainers = "pluginContainers"
 
-	// FlagTempoSearchBackendMigration
-	// Run search queries through the tempo backend
-	FlagTempoSearchBackendMigration = "tempoSearchBackendMigration"
-
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
@@ -785,4 +789,12 @@ const (
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
+
+	// FlagProfilesExemplars
+	// Enables profiles exemplars support in profiles drilldown
+	FlagProfilesExemplars = "profilesExemplars"
+
+	// FlagAlertingSyncDispatchTimer
+	// Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+	FlagAlertingSyncDispatchTimer = "alertingSyncDispatchTimer"
 )

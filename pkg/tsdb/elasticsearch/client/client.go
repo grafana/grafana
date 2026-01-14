@@ -35,6 +35,7 @@ type DatasourceInfo struct {
 	Interval                   string
 	MaxConcurrentShardRequests int64
 	IncludeFrozen              bool
+	ClusterInfo                ClusterInfo
 }
 
 type ConfiguredFields struct {
@@ -197,7 +198,11 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 	var qs []string
-	qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", c.ds.MaxConcurrentShardRequests))
+	// if the build flavor is not serverless, we can use the max concurrent shard requests
+	// this is because serverless clusters do not support max concurrent shard requests
+	if !c.ds.ClusterInfo.IsServerless() && c.ds.MaxConcurrentShardRequests > 0 {
+		qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", c.ds.MaxConcurrentShardRequests))
+	}
 
 	if c.ds.IncludeFrozen {
 		qs = append(qs, "ignore_throttled=false")

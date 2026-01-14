@@ -367,7 +367,8 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 
 	// Map Extensions
 	if len(jsonData.Extensions.AddedLinks) > 0 || len(jsonData.Extensions.AddedComponents) > 0 ||
-		len(jsonData.Extensions.ExposedComponents) > 0 || len(jsonData.Extensions.ExtensionPoints) > 0 {
+		len(jsonData.Extensions.ExposedComponents) > 0 || len(jsonData.Extensions.ExtensionPoints) > 0 ||
+		len(jsonData.Extensions.AddedFunctions) > 0 {
 		extensions := &pluginsv0alpha1.MetaExtensions{}
 
 		if len(jsonData.Extensions.AddedLinks) > 0 {
@@ -395,6 +396,20 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 					v0Comp.Description = &comp.Description
 				}
 				extensions.AddedComponents = append(extensions.AddedComponents, v0Comp)
+			}
+		}
+
+		if len(jsonData.Extensions.AddedFunctions) > 0 {
+			extensions.AddedFunctions = make([]pluginsv0alpha1.MetaV0alpha1ExtensionsAddedFunctions, 0, len(jsonData.Extensions.AddedFunctions))
+			for _, comp := range jsonData.Extensions.AddedFunctions {
+				v0Comp := pluginsv0alpha1.MetaV0alpha1ExtensionsAddedFunctions{
+					Targets: comp.Targets,
+					Title:   comp.Title,
+				}
+				if comp.Description != "" {
+					v0Comp.Description = &comp.Description
+				}
+				extensions.AddedFunctions = append(extensions.AddedFunctions, v0Comp)
 			}
 		}
 
@@ -550,10 +565,6 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.
 		metaSpec.Children = plugin.Children
 	}
 
-	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
-		Detected: plugin.Angular.Detected,
-	}
-
 	if len(plugin.Translations) > 0 {
 		metaSpec.Translations = plugin.Translations
 	}
@@ -653,10 +664,6 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 		metaSpec.Children = children
 	}
 
-	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
-		Detected: plugin.Angular.Detected,
-	}
-
 	if len(plugin.Translations) > 0 {
 		metaSpec.Translations = plugin.Translations
 	}
@@ -697,8 +704,7 @@ type grafanaComPluginVersionMeta struct {
 		Rel  string `json:"rel"`
 		Href string `json:"href"`
 	} `json:"links"`
-	AngularDetected bool     `json:"angularDetected"`
-	Scopes          []string `json:"scopes"`
+	Scopes []string `json:"scopes"`
 }
 
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
@@ -736,11 +742,6 @@ func grafanaComPluginVersionMetaToMetaSpec(gcomMeta grafanaComPluginVersionMeta)
 		}
 
 		metaSpec.Signature = signature
-	}
-
-	// Set angular info
-	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
-		Detected: gcomMeta.AngularDetected,
 	}
 
 	return metaSpec

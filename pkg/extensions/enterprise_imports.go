@@ -11,6 +11,7 @@ import (
 	_ "github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
 	_ "github.com/Azure/go-autorest/autorest"
 	_ "github.com/Azure/go-autorest/autorest/adal"
+	_ "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	_ "github.com/beevik/etree"
 	_ "github.com/blugelabs/bluge"
 	_ "github.com/blugelabs/bluge_segment_api"
@@ -46,7 +47,6 @@ import (
 	_ "sigs.k8s.io/randfill"
 	_ "xorm.io/builder"
 
-	_ "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	_ "github.com/grafana/authlib/authn"
 	_ "github.com/grafana/authlib/authz"
 	_ "github.com/grafana/authlib/cache"

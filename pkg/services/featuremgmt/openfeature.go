@@ -8,6 +8,7 @@ import (
 
 	clientauthmiddleware "github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -19,14 +20,14 @@ const (
 
 // OpenFeatureConfig holds configuration for initializing OpenFeature
 type OpenFeatureConfig struct {
-	// ProviderType is either "static", "goff", or "ofrep"
+	// ProviderType is either "static", "features-service", or "ofrep"
 	ProviderType string
-	// URL is the GOFF or OFREP service URL (required for GOFF + OFREP providers)
+	// URL is the remote provider's URL (required for features-service + OFREP providers)
 	URL *url.URL
-	// HTTPClient is a pre-configured HTTP client (optional, used for GOFF + OFREP providers)
+	// HTTPClient is a pre-configured HTTP client (optional, used by features-service + OFREP providers)
 	HTTPClient *http.Client
 	// StaticFlags are the feature flags to use with static provider
-	StaticFlags map[string]bool
+	StaticFlags map[string]memprovider.InMemoryFlag
 	// TargetingKey is used for evaluation context
 	TargetingKey string
 	// ContextAttrs are additional attributes for evaluation context
@@ -35,9 +36,9 @@ type OpenFeatureConfig struct {
 
 // InitOpenFeature initializes OpenFeature with the provided configuration
 func InitOpenFeature(config OpenFeatureConfig) error {
-	// For GOFF + OFREP providers, ensure we have a URL
-	if (config.ProviderType == setting.GOFFProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
-		return fmt.Errorf("URL is required for GOFF + OFREP providers")
+	// For remote providers, ensure we have a URL
+	if (config.ProviderType == setting.FeaturesServiceProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
+		return fmt.Errorf("URL is required for remote providers")
 	}
 
 	p, err := createProvider(config.ProviderType, config.URL, config.StaticFlags, config.HTTPClient)
@@ -66,10 +67,10 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	}
 
 	var httpcli *http.Client
-	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType || cfg.OpenFeature.ProviderType == setting.OFREPProviderType {
+	if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType || cfg.OpenFeature.ProviderType == setting.OFREPProviderType {
 		var m *clientauthmiddleware.TokenExchangeMiddleware
 
-		if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
+		if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType {
 			m, err = clientauthmiddleware.NewTokenExchangeMiddleware(cfg)
 			if err != nil {
 				return fmt.Errorf("failed to create token exchange middleware: %w", err)
@@ -100,16 +101,16 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 func createProvider(
 	providerType string,
 	u *url.URL,
-	staticFlags map[string]bool,
+	staticFlags map[string]memprovider.InMemoryFlag,
 	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
-	if providerType == setting.GOFFProviderType || providerType == setting.OFREPProviderType {
+	if providerType == setting.FeaturesServiceProviderType || providerType == setting.OFREPProviderType {
 		if u == nil || u.String() == "" {
-			return nil, fmt.Errorf("feature provider url is required for GOFFProviderType + OFREPProviderType")
+			return nil, fmt.Errorf("feature provider url is required for FeaturesServiceProviderType + OFREPProviderType")
 		}
 
-		if providerType == setting.GOFFProviderType {
-			return newGOFFProvider(u.String(), httpClient)
+		if providerType == setting.FeaturesServiceProviderType {
+			return newFeaturesServiceProvider(u.String(), httpClient)
 		}
 
 		if providerType == setting.OFREPProviderType {
@@ -117,7 +118,7 @@ func createProvider(
 		}
 	}
 
-	return newStaticProvider(staticFlags)
+	return newStaticProvider(staticFlags, standardFeatureFlags)
 }
 
 func createHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {

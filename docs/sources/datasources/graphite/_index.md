@@ -111,3 +111,4 @@ After installing and configuring the Graphite data source you can:
 - Add [transformations](ref:transformations)
 - Add [annotations](ref:annotate-visualizations)
 - Set up [alerting](ref:alerting)
+- [Troubleshoot](troubleshooting/) common issues with the Graphite data source

@@ -193,6 +193,8 @@ type MetaExtensions struct {
 	AddedComponents []MetaV0alpha1ExtensionsAddedComponents `json:"addedComponents,omitempty"`
 	// +listType=atomic
 	AddedLinks []MetaV0alpha1ExtensionsAddedLinks `json:"addedLinks,omitempty"`
+	// +listType=atomic
+	AddedFunctions []MetaV0alpha1ExtensionsAddedFunctions `json:"addedFunctions,omitempty"`
 	// +listType=set
 	// +listMapKey=id
 	ExposedComponents []MetaV0alpha1ExtensionsExposedComponents `json:"exposedComponents,omitempty"`
@@ -213,7 +215,6 @@ type MetaSpec struct {
 	Module       *MetaV0alpha1SpecModule    `json:"module,omitempty"`
 	BaseURL      *string                    `json:"baseURL,omitempty"`
 	Signature    *MetaV0alpha1SpecSignature `json:"signature,omitempty"`
-	Angular      *MetaV0alpha1SpecAngular   `json:"angular,omitempty"`
 	Translations map[string]string          `json:"translations,omitempty"`
 	// +listType=atomic
 	Children []string `json:"children,omitempty"`
@@ -397,6 +398,21 @@ func NewMetaV0alpha1ExtensionsAddedLinks() *MetaV0alpha1ExtensionsAddedLinks {
 }
 
 // +k8s:openapi-gen=true
+type MetaV0alpha1ExtensionsAddedFunctions struct {
+	// +listType=set
+	Targets     []string `json:"targets"`
+	Title       string   `json:"title"`
+	Description *string  `json:"description,omitempty"`
+}
+
+// NewMetaV0alpha1ExtensionsAddedFunctions creates a new MetaV0alpha1ExtensionsAddedFunctions object.
+func NewMetaV0alpha1ExtensionsAddedFunctions() *MetaV0alpha1ExtensionsAddedFunctions {
+	return &MetaV0alpha1ExtensionsAddedFunctions{
+		Targets: []string{},
+	}
+}
+
+// +k8s:openapi-gen=true
 type MetaV0alpha1ExtensionsExposedComponents struct {
 	Id          string  `json:"id"`
 	Title       *string `json:"title,omitempty"`
@@ -442,16 +458,6 @@ type MetaV0alpha1SpecSignature struct {
 // NewMetaV0alpha1SpecSignature creates a new MetaV0alpha1SpecSignature object.
 func NewMetaV0alpha1SpecSignature() *MetaV0alpha1SpecSignature {
 	return &MetaV0alpha1SpecSignature{}
-}
-
-// +k8s:openapi-gen=true
-type MetaV0alpha1SpecAngular struct {
-	Detected bool `json:"detected"`
-}
-
-// NewMetaV0alpha1SpecAngular creates a new MetaV0alpha1SpecAngular object.
-func NewMetaV0alpha1SpecAngular() *MetaV0alpha1SpecAngular {
-	return &MetaV0alpha1SpecAngular{}
 }
 
 // +k8s:openapi-gen=true

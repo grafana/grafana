@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 import { Props, UsersActionBarUnconnected } from './UsersActionBar';
 import { searchQueryChanged } from './state/reducers';
