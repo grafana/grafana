@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Sidebar, Text, useStyles2 } from '@grafana/ui';
@@ -30,6 +31,7 @@ export function DashboardSidePaneNew({ onAddPanel, dashboard }: { onAddPanel: ()
                     return (
                       <div
                         role="button"
+                        data-testid={selectors.components.Sidebar.newPanelButton}
                         tabIndex={0}
                         ref={dragProvided.innerRef}
                         {...dragProvided.draggableProps}

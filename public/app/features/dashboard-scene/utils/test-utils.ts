@@ -23,11 +23,17 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/co
 import { DashboardDTO } from 'app/types/dashboard';
 
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { DashboardLayoutGrid } from '../scene/types/DashboardLayoutGrid';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+
+import { getRowOrTabForSceneObject } from './utils';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
@@ -310,4 +316,13 @@ export function getTestDashboardSceneFromSaveModel(spec?: Partial<DashboardV2Spe
   dashboard.setInitialSaveModel(initialSaveModel);
 
   return dashboard;
+}
+
+// returns e.g. data-testid Layout container row Row title 
+export function getTestIdForLayout(model: AutoGridLayout | DashboardLayoutGrid) {
+  const parentRowOrTab = getRowOrTabForSceneObject(model);
+  const parentType = parentRowOrTab instanceof TabItem ? 'tab' : parentRowOrTab instanceof RowItem ? 'row' : '';
+  const parentTitle =
+    parentRowOrTab instanceof TabItem || parentRowOrTab instanceof RowItem ? parentRowOrTab.state.title : '';
+  return `${parentType} ${parentTitle}`;
 }

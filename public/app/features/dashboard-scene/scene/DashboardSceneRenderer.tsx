@@ -9,12 +9,10 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types/store';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
-import { isEmptyDashboard } from '../saving/DashboardPrompt';
 
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
-import { getDashboardSceneFor } from '../utils/utils';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {

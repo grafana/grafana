@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -31,6 +32,7 @@ import {
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
@@ -657,7 +659,10 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   }
 
   return (
-    <div className={cx(styles.container, isEditing && styles.containerEditing)}>
+    <div
+      className={cx(styles.container, isEditing && styles.containerEditing)}
+      data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
+    >
       {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
       {showCanvasActions && (
         <div className={styles.actionsWrapper}>
