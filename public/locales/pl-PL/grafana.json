@@ -813,7 +813,8 @@
       "label-integration": "Integracja",
       "label-notification-settings": "Ustawienia powiadomień",
       "label-section": "Ustawienia opcjonalne: {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "OF",
@@ -2192,11 +2193,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Ten zasób został skonfigurowany za pośrednictwem {{provenance}} i nie można go edytować z poziomu interfejsu użytkownika",
       "badge-tooltip-standard": "Ten zasób został skonfigurowany i nie można go edytować z poziomu interfejsu użytkownika",
+      "body-imported": "",
       "body-provisioned": "Zasób {{resource}} został aprowizowany, co oznacza, że został utworzony przez konfigurację. Skontaktuj się z administratorem serwera, aby zaktualizować zasób {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Tego zasobu {{resource}} nie można edytować z poziomu interfejsu użytkownika"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Po aprowizacji"
       }
     },
@@ -2699,7 +2703,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6424,12 +6427,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasyczny",
         "json": "JSON",
         "v1-resource": "Zasób V1",
         "v2-resource": "Zasób V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Czy na pewno chcesz przywrócić pulpit w wersji {{version}}? Wszystkie niezapisane zmiany zostaną utracone.",
@@ -7028,6 +7034,7 @@
         "drone-datasource": "Źródło danych Drone",
         "git-lab-integration-and-datasource": "Integracja i źródło danych GitLab",
         "honeycomb-integration-and-datasource": "Integracja i źródło danych Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integracja i źródło danych Jira",
         "logic-monitor-devices-datasource": "Źródło danych urządzeń LogicMonitor",
         "mongo-db-integration-and-data-source": "Integracja i źródło danych MongoDB",
@@ -7890,7 +7897,6 @@
       "export-externally-label": "Eksportuj pulpit, aby użyć go w innej instancji",
       "export-format": "Format",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Usuń szczegóły wdrożenia",
       "info-text": "Skopiuj lub pobierz plik zawierający definicję pulpitu",
       "title": "Eksportuj pulpit"
     },

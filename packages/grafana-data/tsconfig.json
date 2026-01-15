@@ -8,7 +8,8 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true
   },
   "exclude": ["dist/**/*"],
   "include": [
