@@ -8,13 +8,19 @@ export async function setVisualization(page: PanelEditPage, visualization: strin
   if (showPanelEditElementCount > 0) {
     await showPanelEditElement.click();
   }
-  await page.getByGrafanaSelector(page.ctx.selectors.components.PanelEditor.toggleVizPicker).click();
+
+  // with suggestions changes, the vizpicker may be open by default, which would mean we
+  // want to skip this click.
+  const vizPicker = page.getByGrafanaSelector(page.ctx.selectors.components.PanelEditor.toggleVizPicker);
+  if ((await vizPicker.filter({ hasText: 'Back' }).count()) === 0) {
+    await vizPicker.click();
+  }
+
   await page.getByGrafanaSelector(page.ctx.selectors.components.Tab.title('All visualizations')).click();
   await page.getByGrafanaSelector(page.ctx.selectors.components.PluginVisualization.item(visualization)).click();
 
-  const vizSelector = page.ctx.selectors.components.PanelEditor.toggleVizPicker;
   await expect(
-    page.getByGrafanaSelector(vizSelector),
+    page.getByGrafanaSelector(page.ctx.selectors.components.PanelEditor.OptionsPane.header),
     `Could not set visualization to ${visualization}. Ensure the panel is installed.`
   ).toHaveText(visualization);
 }
