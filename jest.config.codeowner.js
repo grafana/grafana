@@ -3,6 +3,26 @@ const open = require('open').default;
 const path = require('path');
 
 const baseConfig = require('./jest.config.js');
+const { CODEOWNER_KIND, getCodeownerKind, createCodeownerSlug } = require('./scripts/codeowners-manifest/utils.js');
+
+const CODEOWNER_KIND_DIRECTORY_MAPPINGS = {
+  [CODEOWNER_KIND.TEAM]: 'teams',
+  [CODEOWNER_KIND.USER]: 'users',
+  [CODEOWNER_KIND.EMAIL]: 'emails',
+};
+
+/**
+ * Creates a directory path for coverage reports
+ * Groups by plural kind directory (teams/, users/, emails/)
+ * @param {string} codeowner - CODEOWNERS codeowner (username, team, or email)
+ * @returns {string} Directory path relative to coverage/by-team/
+ */
+function createCodeownerDirectory(codeowner) {
+  const kind = getCodeownerKind(codeowner);
+  const pluralKind = CODEOWNER_KIND_DIRECTORY_MAPPINGS[kind];
+  const slug = createCodeownerSlug(codeowner);
+  return `${pluralKind}/${slug}`;
+}
 
 const CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH = 'codeowners-manifest/filenames-by-team.json';
 
@@ -12,7 +32,8 @@ if (!codeownerName) {
   process.exit(1);
 }
 
-const outputDir = `./coverage/by-team/${createOwnerDirectory(codeownerName)}`;
+const outputDir = `./coverage/by-team/${createCodeownerDirectory(codeownerName)}`;
+const COVERAGE_SUMMARY_OUTPUT_PATH = './coverage-summary.json';
 
 const codeownersFilePath = path.join(__dirname, CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH);
 
@@ -100,6 +121,8 @@ module.exports = {
             openCoverageReport(reportURL);
           }
 
+          writeCoverageSummaryArtifact(coverageResults);
+
           // TODO: Emit coverage metrics https://github.com/grafana/grafana/issues/111208
         },
       },
@@ -111,30 +134,31 @@ module.exports = {
   testMatch: testFiles.map((file) => `<rootDir>/${file}`),
 };
 
-/**
- * Create a filesystem-safe directory structure for different owner types
- * @param {string} owner - CODEOWNERS owner (username, team, or email)
- * @returns {string} Directory path relative to coverage/by-team/
- */
-function createOwnerDirectory(owner) {
-  if (owner.includes('@') && owner.includes('/')) {
-    // Example: @grafana/dataviz-squad
-    const [org, team] = owner.substring(1).split('/');
-    return `teams/${org}/${team}`;
-  } else if (owner.startsWith('@')) {
-    // Example: @jesdavpet
-    return `users/${owner.substring(1)}`;
-  } else {
-    // Example: user@domain.tld
-    const [user, domain] = owner.split('@');
-    return `emails/${user}-at-${domain}`;
+function writeCoverageSummaryArtifact(coverageResults) {
+  if (!coverageResults || !coverageResults.summary) {
+    return;
+  }
+
+  const summary = {
+    team: codeownerName,
+    commit: process.env.GITHUB_SHA || 'unknown',
+    timestamp: new Date().toISOString(),
+    summary: {
+      lines: { pct: coverageResults.summary.lines.pct },
+      statements: { pct: coverageResults.summary.statements.pct },
+      functions: { pct: coverageResults.summary.functions.pct },
+      branches: { pct: coverageResults.summary.branches.pct },
+    },
+  };
+
+  try {
+    fs.writeFileSync(COVERAGE_SUMMARY_OUTPUT_PATH, JSON.stringify(summary, null, 2));
+    console.log(`📊 Coverage summary written to ${COVERAGE_SUMMARY_OUTPUT_PATH}`);
+  } catch (err) {
+    console.error(`Failed to write coverage summary: ${err}`);
   }
 }
 
-/**
- * Open the given file URL in the default browser safely, without shell injection risk.
- * @param {string} reportURL
- */
 async function openCoverageReport(reportURL) {
   try {
     await open(reportURL);

@@ -2,6 +2,7 @@
 
 const { AutoComplete } = require('enquirer');
 const cp = require('node:child_process');
+const path = require('node:path');
 const { hideBin } = require('yargs/helpers');
 const yargs = require('yargs/yargs');
 
@@ -35,9 +36,9 @@ async function runTestCoverageByCodeowner(codeownerName, noOpen = process.env.CI
   process.env.SHOULD_OPEN_COVERAGE_REPORT = String(!noOpen);
 
   return new Promise((resolve, reject) => {
-    const child = cp.spawn('jest', [`--config=${JEST_CONFIG_PATH}`], {
+    const jestBin = path.join(__dirname, '..', 'node_modules', '.bin', 'jest');
+    const child = cp.spawn(jestBin, [`--config=${JEST_CONFIG_PATH}`], {
       stdio: 'inherit',
-      shell: true,
     });
 
     child.on('error', (error) => {

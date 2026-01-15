@@ -1,0 +1,207 @@
+name: PR Coverage by Team
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - 'package.json'
+      - '.github/CODEOWNERS'
+
+permissions: {}
+
+jobs:
+  setup:
+    name: Generate team slugs
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    outputs:
+      team-slugs: ${{ steps.generate-slugs.outputs.team-slugs }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Generate team slugs
+        id: generate-slugs
+        run: |
+          # Generate slugs using pure bash (no Node.js dependencies)
+          # Transform: @grafana/dataviz-squad -> team-grafana-dataviz-squad
+          TEAMS=("@grafana/dataviz-squad" "@grafana/datapro")
+          
+          JSON="{"
+          for TEAM in "${TEAMS[@]}"; do
+            # Remove @ and replace / with -
+            SLUG="${TEAM/@/team-}"
+            SLUG="${SLUG//\//-}"
+            JSON+="\"$TEAM\":\"$SLUG\","
+          done
+          JSON="${JSON%,}}"
+          
+          echo "team-slugs=$JSON" >> "$GITHUB_OUTPUT"
+
+  coverage:
+    name: Coverage ${{ matrix.branch }} - ${{ matrix.team }}
+    needs: [setup]
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # Opted-in teams for coverage tracking
+        team: &teams
+          - '@grafana/dataviz-squad'
+        branch: [pr, main]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ matrix.branch == 'main' && 'main' || github.ref }}
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Get team slug
+        id: team-slug
+        run: |
+          TEAM_SLUG=$(node -e '
+            const slugs = JSON.parse(${{ toJSON(needs.setup.outputs.team-slugs) }});
+            const team = "${{ matrix.team }}";
+            const result = slugs[team];
+            if (!result) {
+              console.error("ERROR: Team not found in slugs!");
+              process.exit(1);
+            }
+            process.stdout.write(result);
+          ')
+          echo "team-slug=$TEAM_SLUG" >> "$GITHUB_OUTPUT"
+
+      - name: Run coverage for ${{ matrix.team }}
+        run: yarn test:coverage:by-codeowner ${{ matrix.team }}
+        env:
+          SHOULD_OPEN_COVERAGE_REPORT: 'false'
+          CI: 'true'
+
+      - name: Create fallback coverage summary (bootstrapping)
+        if: matrix.branch == 'main'
+        run: |
+          cat > coverage-summary.json <<'EOF'
+          {
+            "team": "${{ matrix.team }}",
+            "commit": "${{ github.event.pull_request.base.sha }}",
+            "timestamp": "${{ github.event.pull_request.updated_at }}",
+            "summary": {
+              "lines": { "pct": 99 },
+              "statements": { "pct": 99 },
+              "functions": { "pct": 99 },
+              "branches": { "pct": 99 }
+            }
+          }
+          EOF
+          echo "⚠️ Created fallback coverage summary with 99% coverage (bootstrapping mode)"
+
+      - name: Upload coverage summary
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-${{ matrix.branch }}-${{ steps.team-slug.outputs.team-slug }}
+          path: coverage-summary.json
+          retention-days: 1
+
+  compare-and-report:
+    name: Compare & Report - ${{ matrix.team }}
+    needs: [setup, coverage]
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        team: *teams
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Get team slug
+        id: team-slug
+        run: |
+          TEAM_SLUG=$(node -e '
+            const slugs = JSON.parse(${{ toJSON(needs.setup.outputs.team-slugs) }});
+            const team = "${{ matrix.team }}";
+            const result = slugs[team];
+            if (!result) {
+              console.error("ERROR: Team not found in slugs!");
+              process.exit(1);
+            }
+            process.stdout.write(result);
+          ')
+          echo "team-slug=$TEAM_SLUG" >> "$GITHUB_OUTPUT"
+
+      - name: Download PR coverage
+        uses: actions/download-artifact@v6
+        with:
+          name: coverage-pr-${{ steps.team-slug.outputs.team-slug }}
+          path: ./coverage-pr
+
+      - name: Download Main coverage
+        uses: actions/download-artifact@v6
+        with:
+          name: coverage-main-${{ steps.team-slug.outputs.team-slug }}
+          path: ./coverage-main
+
+      - name: Install dependencies for comparison script
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Compare coverage
+        id: compare
+        run: |
+          node scripts/compare-coverage-by-codeowner.js
+          {
+            echo "markdown<<EOF"
+            cat ./coverage-comparison.md
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Get Vault secrets
+        id: get-secrets
+        if: github.event.pull_request.head.repo.fork == false
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GITHUB_APP_ID=grafana_pr_automation_app:app_id
+            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
+
+      - name: Generate GitHub App token
+        id: generate_token
+        if: github.event.pull_request.head.repo.fork == false
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ env.GITHUB_APP_ID }}
+          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Post PR comment
+        if: github.event.pull_request.head.repo.fork == false
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: coverage-report-${{ matrix.team }}
+          message: ${{ steps.compare.outputs.markdown }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
