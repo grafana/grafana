@@ -50,8 +50,6 @@ replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
 
-replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
-
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.48.7
