@@ -4,6 +4,8 @@ import { getRestoreNotificationData } from './notifications';
 
 describe('notifications', () => {
   describe('getRestoreNotificationData', () => {
+    // note: pluralisation is handled as part of the i18n framework
+    // in tests, only the fallback singular message is used
     it('returns null when both arrays are empty', () => {
       const result = getRestoreNotificationData([], []);
       expect(result).toBeNull();
@@ -13,7 +15,7 @@ describe('notifications', () => {
       const result = getRestoreNotificationData(['uid1'], []);
       expect(result).toEqual({
         alertType: AppEvents.alertSuccess.name,
-        message: 'Dashboards restored successfully',
+        message: '1 dashboard restored successfully',
       });
     });
 
@@ -21,7 +23,7 @@ describe('notifications', () => {
       const result = getRestoreNotificationData(['uid1', 'uid2', 'uid3'], []);
       expect(result).toEqual({
         alertType: AppEvents.alertSuccess.name,
-        message: 'Dashboards restored successfully',
+        message: '3 dashboard restored successfully',
       });
     });
 

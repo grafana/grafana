@@ -19,36 +19,41 @@ export function getRestoreNotificationData(successful: string[], failed: Restore
     return null;
   }
 
-  let alertType = AppEvents.alertSuccess.name;
-  let message = t('browse-dashboards.restore.success', 'Dashboards restored successfully');
+  // Generate count-aware success message (reused in multiple cases)
+  const successMessage = t('browse-dashboards.restore.success-count', '{{count}} dashboard restored successfully', {
+    count: successCount,
+  });
 
-  if (failedCount > 0) {
-    const firstError = failed[0]?.error;
-
-    if (successCount > 0) {
-      // Partial success
-      alertType = AppEvents.alertWarning.name;
-      const successMessage = t('browse-dashboards.restore.success-count', '{{count}} dashboard restored successfully', {
-        count: successCount,
-      });
-      const failedMessage = t('browse-dashboards.restore.failed-count', '{{count}} dashboard failed', {
-        count: failedCount,
-      });
-      message = `${successMessage}. ${failedMessage}.`;
-      if (firstError) {
-        message += `. ${firstError}`;
-      }
-    } else {
-      // All failed
-      alertType = AppEvents.alertError.name;
-      message = t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard.', {
-        count: failedCount,
-      });
-      if (firstError) {
-        message += `. ${firstError}`;
-      }
-    }
+  // All success case
+  if (failedCount === 0) {
+    return {
+      alertType: AppEvents.alertSuccess.name,
+      message: successMessage,
+    };
   }
 
-  return { alertType, message };
+  // Helper to append first error message if present
+  const firstError = failed[0]?.error;
+  const appendError = (msg: string) => (firstError ? `${msg}. ${firstError}` : msg);
+
+  // Partial success case
+  if (successCount > 0) {
+    const failedMessage = t('browse-dashboards.restore.failed-count', '{{count}} dashboard failed', {
+      count: failedCount,
+    });
+    return {
+      alertType: AppEvents.alertWarning.name,
+      message: appendError(`${successMessage}. ${failedMessage}.`),
+    };
+  }
+
+  // All failed case
+  return {
+    alertType: AppEvents.alertError.name,
+    message: appendError(
+      t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard.', {
+        count: failedCount,
+      })
+    ),
+  };
 }
