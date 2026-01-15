@@ -807,7 +807,8 @@
       "label-integration": "Integration",
       "label-notification-settings": "Benachrichtigungseinstellungen",
       "label-section": "Optionale {{name}}-Einstellungen",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "VON",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Diese Ressource wurde über {{provenance}} bereitgestellt und kann nicht über die Benutzeroberfläche bearbeitet werden",
       "badge-tooltip-standard": "Diese Ressource wurde bereitgestellt und kann nicht über die Benutzeroberfläche bearbeitet werden",
+      "body-imported": "",
       "body-provisioned": "Die Ressource {{resource}} wurde bereitgestellt, d. h. es wurde von config erstellt. Bitte kontaktieren Sie Ihren Serveradministrator für die Aktualisierung von {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Die Ressource {{resource}} kann nicht über die Benutzeroberfläche bearbeitet werden"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Bereitgestellt"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6380,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klassisch",
         "json": "JSON",
         "v1-resource": "V1-Ressource",
         "v2-resource": "V2-Ressource",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Sind Sie sicher, dass Sie das Dashboard auf die Version {{version}} zurücksetzen möchten? Alle nicht gespeicherten Änderungen gehen verloren.",
@@ -6980,6 +6986,7 @@
         "drone-datasource": "Drone-Datenquelle",
         "git-lab-integration-and-datasource": "GitLab-Integration und -Datenquelle",
         "honeycomb-integration-and-datasource": "Honeycomb-Integration und -Datenquelle",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira-Integration und -Datenquelle",
         "logic-monitor-devices-datasource": "LogicMonitor Devices-Datenquelle",
         "mongo-db-integration-and-data-source": "MongoDB-Integration und -Datenquelle",
@@ -7838,7 +7845,6 @@
       "export-externally-label": "Exportieren Sie das Dashboard, um es in einer anderen Instanz zu verwenden",
       "export-format": "Format",
       "export-mode": "Modell",
-      "export-remove-ds-refs": "Bereitstellungsdetails entfernen",
       "info-text": "Kopieren oder downloaden Sie eine Datei, die die Definition Ihres Dashboards enthält",
       "title": "Dashboard exportieren"
     },

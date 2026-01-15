@@ -807,7 +807,8 @@
       "label-integration": "Entegrasyon",
       "label-notification-settings": "Bildirim ayarları",
       "label-section": "İsteğe bağlı {{name}} ayarları",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "-",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Bu kaynak {{provenance}} aracılığıyla sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
       "badge-tooltip-standard": "Bu kaynak sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
+      "body-imported": "",
       "body-provisioned": "Bu {{resource}} sağlanmış; yani yapılandırma tarafından oluşturulmuş. Bu {{resource}} ögesini güncellemek için sunucu yöneticinize başvurun.",
+      "title-imported": "",
       "title-provisioned": "Bu {{resource}} kullanıcı arayüzü üzerinden düzenlenemez"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Sağlanan"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6380,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasik",
         "json": "JSON",
         "v1-resource": "V1 Kaynağı",
         "v2-resource": "V2 Kaynağı",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Panoyu {{version}} sürümüne geri yüklemek istediğinize emin misiniz? Kaydedilmemiş tüm değişiklikler kaybolacaktır.",
@@ -6980,6 +6986,7 @@
         "drone-datasource": "Drone veri kaynağı",
         "git-lab-integration-and-datasource": "GitLab entegrasyonu ve veri kaynağı",
         "honeycomb-integration-and-datasource": "Honeycomb entegrasyonu ve veri kaynağı",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira entegrasyonu ve veri kaynağı",
         "logic-monitor-devices-datasource": "LogicMonitor Devices veri kaynağı",
         "mongo-db-integration-and-data-source": "MongoDB entegrasyonu ve veri kaynağı",
@@ -7838,7 +7845,6 @@
       "export-externally-label": "Başka bir oturumda kullanmak için panoyu dışa aktarın",
       "export-format": "Biçim",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Dağıtım ayrıntılarını kaldır",
       "info-text": "Panonuzun tanımını içeren bir dosyayı kopyalayın veya indirin",
       "title": "Panoyu dışa aktar"
     },

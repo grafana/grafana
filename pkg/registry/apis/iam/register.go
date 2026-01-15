@@ -75,6 +75,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	coreRolesStorage CoreRoleStorageBackend,
 	roleApiInstaller RoleApiInstaller,
+	globalRoleApiInstaller GlobalRoleApiInstaller,
 	tracing *tracing.TracingService,
 	roleBindingsStorage RoleBindingStorageBackend,
 	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
@@ -90,7 +91,7 @@ func RegisterAPIService(
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
-	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller)
+	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller)
 	registerMetrics(reg)
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -110,6 +111,7 @@ func RegisterAPIService(
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		coreRolesStorage:                  coreRolesStorage,
 		roleApiInstaller:                  roleApiInstaller,
+		globalRoleApiInstaller:            globalRoleApiInstaller,
 		resourcePermissionsStorage:        resourcepermission.ProvideStorageBackend(dbProvider),
 		roleBindingsStorage:               roleBindingsStorage,
 		externalGroupMappingStorage:       externalGroupMappingStorageBackend,
@@ -176,6 +178,7 @@ func NewAPIService(
 		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
 		reg:                        reg,
 		roleApiInstaller:           roleApiInstaller,
+		globalRoleApiInstaller:     ProvideNoopGlobalRoleApiInstaller(), // TODO: add a proper global role installer
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -221,12 +224,20 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	enableCoreRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzCoreRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
+	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
 
 	if enableCoreRolesApi || enableRolesApi || enableRoleBindingsApi {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
 			return err
 		}
 	}
+
+	if enableGlobalRolesApi {
+		if err := iamv0.AddGlobalRoleKnownTypes(scheme); err != nil {
+			return err
+		}
+	}
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
 		if err := iamv0.AddResourcePermissionKnownTypes(scheme, iamv0.SchemeGroupVersion); err != nil {
@@ -266,6 +277,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableCoreRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzCoreRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
+	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -315,6 +327,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 	}
 
+	if enableGlobalRolesApi {
+		if err := b.globalRoleApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
+			return err
+		}
+	}
+
 	if enableRoleBindingsApi {
 		if err := b.UpdateRoleBindingsAPIGroup(apiGroupInfo, opts, storage, enableZanzanaSync); err != nil {
 			return err
@@ -359,7 +377,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 
 func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	teamBindingUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamBindingResource, opts.OptsGetter)
+	teamBindingUniStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, teamBindingResource, opts.OptsGetter, grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: teambinding.GetAttrs,
+	})
 	if err != nil {
 		return err
 	}
@@ -670,6 +690,8 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 			return externalgroupmapping.ValidateOnCreate(typedObj)
 		case *iamv0.Role:
 			return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.ValidateOnCreate(ctx, typedObj)
 		}
 		return nil
 	case admission.Update:
@@ -700,12 +722,20 @@ func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a adm
 				return fmt.Errorf("expected old object to be a Role, got %T", oldRoleObj)
 			}
 			return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
+		case *iamv0.GlobalRole:
+			oldGlobalRoleObj, ok := a.GetOldObject().(*iamv0.GlobalRole)
+			if !ok {
+				return fmt.Errorf("expected old object to be a GlobalRole, got %T", oldGlobalRoleObj)
+			}
+			return b.globalRoleApiInstaller.ValidateOnUpdate(ctx, oldGlobalRoleObj, typedObj)
 		}
 		return nil
 	case admission.Delete:
-		switch oldRoleObj := a.GetOldObject().(type) {
+		switch oldObj := a.GetOldObject().(type) {
 		case *iamv0.Role:
-			return b.roleApiInstaller.ValidateOnDelete(ctx, oldRoleObj)
+			return b.roleApiInstaller.ValidateOnDelete(ctx, oldObj)
+		case *iamv0.GlobalRole:
+			return b.globalRoleApiInstaller.ValidateOnDelete(ctx, oldObj)
 		}
 		return nil
 	case admission.Connect:

@@ -962,6 +962,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzCoreRolesApi?: boolean;
   /**
+  * Registers AuthZ Global Roles /apis endpoint
+  */
+  kubernetesAuthzGlobalRolesApi?: boolean;
+  /**
   * Registers AuthZ Roles /apis endpoint
   */
   kubernetesAuthzRolesApi?: boolean;

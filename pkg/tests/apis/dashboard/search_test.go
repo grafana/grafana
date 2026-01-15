@@ -127,9 +127,15 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		sr.MaxScore = roundTo(sr.MaxScore, 3)
 		for i := range sr.Hits {
 			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
+			if sr.Hits[i].Explain != nil {
+				roundExplainValues(sr.Hits[i].Explain.Object, 3)
+			}
 		}
 		return sr
 	}
+
+	// debug helper
+	testCase := ""
 
 	// Compare a results to snapshots
 	testCases := []struct {
@@ -177,8 +183,20 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 				"query": "decim", // should match "Zero Decimals Y Ticks"
 			},
 		},
+		{
+			name: "panel-title-orange",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query":            "orange",
+				"panelTitleSearch": "true",
+				"explain":          "true",
+			},
+		},
 	}
 	for i, tc := range testCases {
+		if testCase != "" && testCase != tc.name {
+			continue
+		}
 		t.Run(tc.name, func(t *testing.T) {
 			res := callSearch(tc.user, tc.params)
 			jj, err := json.MarshalIndent(res, "", "  ")
@@ -464,6 +482,27 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	}, &struct{}{})
 
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
+}
+
+func roundExplainValues(obj map[string]any, decimals uint32) {
+	for k, val := range obj {
+		switch k {
+		case "value":
+			v, ok := val.(float64)
+			if ok {
+				obj[k] = roundTo(v, decimals)
+			}
+		case "children":
+			children, ok := val.([]any)
+			if ok {
+				for _, child := range children {
+					if v, ok := child.(map[string]any); ok {
+						roundExplainValues(v, decimals)
+					}
+				}
+			}
+		}
+	}
 }
 
 // roundTo rounds a float64 to a specified number of decimal places.

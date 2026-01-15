@@ -4024,12 +4024,14 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
+        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "tags": [
           "dashboards",
           "versions"
         ],
         "summary": "Restore a dashboard to a given dashboard version using UID.",
         "operationId": "restoreDashboardVersionByUID",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",

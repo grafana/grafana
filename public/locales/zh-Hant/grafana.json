@@ -804,7 +804,8 @@
       "label-integration": "整合",
       "label-notification-settings": "通知設定",
       "label-section": "可選{{name}}設定",
-      "test": "測試"
+      "test": "測試",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "的",
@@ -2168,11 +2169,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "此資源已透過 {{provenance}} 設定，無法透過使用者介面編輯",
       "badge-tooltip-standard": "此資源已設定，無法透過使用者介面編輯",
+      "body-imported": "",
       "body-provisioned": "此{{resource}}已佈建，這表示其是透過設定所建立。請聯絡您的伺服器管理員以更新此{{resource}}。",
+      "title-imported": "",
       "title-provisioned": "此{{resource}}無法透過使用者介面編輯"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "已佈建"
       }
     },
@@ -2666,7 +2670,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6358,12 +6361,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "經典",
         "json": "JSON",
         "v1-resource": "V1 資源",
         "v2-resource": "V2 資源",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "確定要將儀表板還原到版本{{version}}嗎？所有未儲存變更將會遺失。",
@@ -6956,6 +6962,7 @@
         "drone-datasource": "Drone 資料來源",
         "git-lab-integration-and-datasource": "GitLab 整合與資料來源",
         "honeycomb-integration-and-datasource": "Honeycomb 整合與資料來源",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira 整合與資料來源",
         "logic-monitor-devices-datasource": "LogicMonitor 裝置資料來源",
         "mongo-db-integration-and-data-source": "MongoDB 整合與資料來源",
@@ -7812,7 +7819,6 @@
       "export-externally-label": "匯出儀表板以便在另一個執行個體中使用",
       "export-format": "格式",
       "export-mode": "模式",
-      "export-remove-ds-refs": "移除部署詳細資料",
       "info-text": "複製或下載包含儀表板定義的檔案",
       "title": "匯出儀表板"
     },

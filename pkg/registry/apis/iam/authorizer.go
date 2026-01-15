@@ -24,6 +24,7 @@ func newIAMAuthorizer(
 	accessClient authlib.AccessClient,
 	legacyAccessClient authlib.AccessClient,
 	roleApiInstaller RoleApiInstaller,
+	globalRoleApiInstaller GlobalRoleApiInstaller,
 ) authorizer.Authorizer {
 	resourceAuthorizer := make(map[string]authorizer.Authorizer)
 
@@ -76,6 +77,8 @@ func newIAMAuthorizer(
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
 	// TODO: Implement fine-grained authorization for external group mapping search on the search level
 	resourceAuthorizer["searchExternalGroupMappings"] = serviceIdentityAuthorizer
+
+	resourceAuthorizer[iamv0.GlobalRoleInfo.GetName()] = globalRoleApiInstaller.GetAuthorizer()
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }
