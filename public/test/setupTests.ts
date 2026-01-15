@@ -46,6 +46,17 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
   usePluginComponents: jest.fn().mockReturnValue({ components: [], isLoading: false }),
 }));
 
+// Mock @grafana/assistant to prevent initialization errors in tests
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: false,
+    openAssistant: undefined,
+    closeAssistant: jest.fn(),
+    toggleAssistant: jest.fn(),
+  }),
+  createAssistantContextItem: jest.fn(),
+}));
+
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness
 configure({ asyncUtilTimeout: 2000 });

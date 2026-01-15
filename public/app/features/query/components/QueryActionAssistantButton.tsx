@@ -34,7 +34,7 @@ interface QueryActionAssistantButtonProps<TQuery extends DataQuery = DataQuery> 
     }
   
     // Only show for Explore and Dashboard apps
-    if (app !== CoreApp.Explore && app !== CoreApp.Dashboard) {
+    if (app !== CoreApp.Explore && app !== CoreApp.Dashboard && app !== CoreApp.PanelEditor) {
       return null;
     }
   

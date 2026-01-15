@@ -6,10 +6,8 @@ import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema';
 
 import { QueryActionAssistantButton } from './QueryActionAssistantButton';
-
 // Mock the assistant hook
 jest.mock('@grafana/assistant', () => ({
-  ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn(),
   createAssistantContextItem: jest.fn(),
 }));
@@ -20,6 +18,11 @@ jest.mock('@grafana/runtime/internal', () => ({
   evaluateBooleanFlag: jest.fn(),
 }));
 
+// Mock the runtime services that assistant depends on
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [], isLoading: false }),
+}));
 
 const useAssistantMock = jest.mocked(useAssistant);
 const evaluateBooleanFlagMock = jest.mocked(evaluateBooleanFlag);
@@ -66,6 +69,11 @@ describe('QueryActionAssistantButton', () => {
 
     expect(container.firstChild).toBeNull();
     expect(evaluateBooleanFlagMock).toHaveBeenCalledWith('queryWithAssistant', false);
+  });
+  
+    it('should render nothing when app is not Explore, Dashboard, or PanelEditor', () => {
+    const { container } = render(<QueryActionAssistantButton {...defaultProps} app={CoreApp.Unknown} />);
+    expect(container.firstChild).toBeNull();
   });
 
   it('should render nothing when Assistant is not available', () => {
