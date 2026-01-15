@@ -11,7 +11,8 @@ func Test_StaticProviderIntegration(t *testing.T) {
 	provider, err := newStaticProvider(nil, standardFeatureFlags)
 	assert.NoError(t, err)
 
-	openfeature.SetProviderAndWait(provider)
+	err = openfeature.SetProviderAndWait(provider)
+	assert.NoError(t, err)
 
 	for _, flag := range standardFeatureFlags {
 		result, err := openfeature.NewDefaultClient().BooleanValueDetails(t.Context(), flag.Name, false, openfeature.TransactionContext(t.Context()))
