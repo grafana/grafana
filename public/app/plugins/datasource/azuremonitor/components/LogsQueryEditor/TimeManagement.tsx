@@ -88,34 +88,32 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
 
   return (
     <>
-      <InlineField
-        label={t('components.time-management.label-time-range', 'Time-range')}
-        tooltip={
-          <Trans i18nKey="components.time-management.tooltip-time-range">
-            <span>
-              Specifies the time-range used to query. The <code>Query</code> option will only use time-ranges specified
-              in the query. <code>Dashboard</code> will only use the Grafana time-range. In Logs Builder mode, only
-              Dashboard time will be used.
-            </span>
-          </Trans>
-        }
-      >
-        <RadioButtonGroup
-          options={[
-            { label: 'Query', value: 'query', disabled: query.azureLogAnalytics?.mode === 'builder' },
-            { label: 'Dashboard', value: 'dashboard' },
-          ]}
-          value={
-            query.azureLogAnalytics?.dashboardTime || query.azureLogAnalytics?.mode === 'builder'
-              ? 'dashboard'
-              : 'query'
+      {query.azureLogAnalytics?.mode !== 'builder' && (
+        <InlineField
+          label={t('components.time-management.label-time-range', 'Time-range')}
+          tooltip={
+            <Trans i18nKey="components.time-management.tooltip-time-range">
+              <span>
+                Specifies the time-range used to query. The <code>Query</code> option will only use time-ranges
+                specified in the query. <code>Dashboard</code> will only use the Grafana time-range. In Logs Builder
+                mode, only Dashboard time will be used.
+              </span>
+            </Trans>
           }
-          size={'md'}
-          onChange={(val) => onChange(setDashboardTime(query, val))}
-          disabled={disabledTimePicker}
-          disabledOptions={disabledTimePicker ? ['query'] : []}
-        />
-      </InlineField>
+        >
+          <RadioButtonGroup
+            options={[
+              { label: 'Query', value: 'query' },
+              { label: 'Dashboard', value: 'dashboard' },
+            ]}
+            value={query.azureLogAnalytics?.dashboardTime ? 'dashboard' : 'query'}
+            size={'md'}
+            onChange={(val) => onChange(setDashboardTime(query, val))}
+            disabled={disabledTimePicker}
+            disabledOptions={disabledTimePicker ? ['query'] : []}
+          />
+        </InlineField>
+      )}
       {(query.azureLogAnalytics?.dashboardTime || query.azureLogAnalytics?.mode === 'builder') && (
         <InlineField
           label={t('components.time-management.label-time-column', 'Time Column')}
