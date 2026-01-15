@@ -569,9 +569,11 @@ func asResourceKey(ns string, k string) (*resourcepb.ResourceKey, error) {
 	return key, nil
 }
 
+// getDashboardsUIDsSharedWithUser gets dashboards/folders that the user was granted access to, but does not have access
+// to their parent folder. This powers the virtual "Shared with me" folder.
+// With the requestedPermission argument you can define what "access" means. So, for example, you can still get all the
+// folders that user would not be able to get to from the root if they were filtered by edit permissions.
 func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester, requestedPermission dashboardaccess.PermissionType) ([]string, error) {
-	// Gets dashboards/folders that the user was granted access to, but does not have access to their parent folder.
-	// This powers the virtual "Shared with me" folder.
 	dashboardAction, folderAction := permissionToActions(requestedPermission)
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboardAction]
