@@ -807,7 +807,8 @@
       "label-integration": "Integrazione",
       "label-notification-settings": "Impostazioni delle notifiche",
       "label-section": "Impostazioni {{name}} facoltative",
-      "test": "Prova"
+      "test": "Prova",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DI",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Questa risorsa è stata sottoposta a provisioning tramite {{provenance}} e non può essere modificata tramite l'interfaccia utente",
       "badge-tooltip-standard": "Questa risorsa è stata sottoposta a provisioning e non può essere modificata tramite l'interfaccia utente",
+      "body-imported": "",
       "body-provisioned": "Questa {{resource}} è stata sottoposta a provisioning, il che significa che è stata creata tramite configurazione. Contatta l'amministratore del server per aggiornare questa {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Questa {{resource}} non può essere modificata tramite l'interfaccia utente"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Fornito"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3135,9 +3138,12 @@
       "table": "Tabella"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Definisci la condizione che deve essere soddisfatta prima che venga attivata una regola di avviso",
       "description-configure-firing-alert-instances-routed-contact": "Configura il modo in cui le istanze di avviso attivate vengono instradate ai punti di contatto",
       "description-configure-receives-notifications": "Configura chi riceve le notifiche e come vengono inviate",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Regole di avviso",
       "title-contact-points": "Punti di contatto",
       "title-notification-policies": "Politiche di notifica"
@@ -3756,7 +3762,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4413,6 +4418,7 @@
       },
       "no-properties-changed": "Nessuna proprietà rilevante modificata",
       "table": {
+        "notes": "",
         "updated": "Data",
         "updatedBy": "Aggiornato da",
         "version": "Versione"
@@ -4611,6 +4617,7 @@
     },
     "canvas-actions": {
       "add-panel": "Aggiungi pannello",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Raggruppa in riga",
@@ -4871,7 +4878,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Valori separati da virgola"
         },
         "datasource-options": {
           "name-filter": "Filtro nome",
@@ -5691,6 +5699,7 @@
     "validation": {
       "invalid-dashboard-id": "Impossibile trovare un ID Grafana.com valido",
       "invalid-json": "JSON non valido",
+      "tag-too-long": "",
       "tags-expected-array": "array con tag previsti",
       "tags-expected-strings": "array di stringhe con tag previsti"
     },
@@ -5796,6 +5805,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5964,6 +5974,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Opzioni personalizzate",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Valori separati da virgola",
       "selection-options": "Seleziona opzioni"
     },
@@ -6370,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Classico",
         "json": "JSON",
         "v1-resource": "Risorsa V1",
         "v2-resource": "Risorsa V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Desideri davvero ripristinare la dashboard alla versione {{version}}? Tutte le modifiche non salvate andranno perse.",
@@ -6551,6 +6567,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
     },
@@ -6574,6 +6595,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6633,8 +6655,9 @@
       "tooltip-show-usages": "Mostra utilizzi"
     },
     "variable-values-preview": {
-      "preview-of-values": "Anteprima dei valori",
-      "show-more": "Mostra di più"
+      "show-more": "Mostra di più",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -6963,6 +6986,7 @@
         "drone-datasource": "Origine dati Drone",
         "git-lab-integration-and-datasource": "Integrazione e origine dati GitLab",
         "honeycomb-integration-and-datasource": "Integrazione e origine dati Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integrazione e origine dati Jira",
         "logic-monitor-devices-datasource": "Origine dati dispositivi LogicMonitor",
         "mongo-db-integration-and-data-source": "Integrazione e origine dati MongoDB",
@@ -7821,7 +7845,6 @@
       "export-externally-label": "Esporta il dashboard da utilizzare in un'altra istanza",
       "export-format": "Formato",
       "export-mode": "Modello",
-      "export-remove-ds-refs": "Rimuovi i dettagli della distribuzione",
       "info-text": "Copia o scarica un file contenente la definizione della tua dashboard",
       "title": "Esporta dashboard"
     },
@@ -9238,7 +9261,8 @@
     "tags-input": {
       "add": "Aggiungi",
       "placeholder-new-tag": "Nuovo tag (inserisci chiave da aggiungere)",
-      "remove": "Rimuovi tag: {{name}}"
+      "remove": "Rimuovi tag: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Sincronizza orari",
@@ -10705,18 +10729,6 @@
     "help/documentation": "Documentazione",
     "help/keyboard-shortcuts": "Scelte rapide da tastiera",
     "help/support": "Servizio Clienti",
-    "history-container": {
-      "drawer-tittle": "Cronologia"
-    },
-    "history-wrapper": {
-      "collapse": "Riduci",
-      "expand": "Espandi",
-      "icon-selected": "Voce selezionata",
-      "icon-unselected": "Ingresso normale",
-      "show-more": "Mostra di più",
-      "today": "Oggi",
-      "yesterday": "Ieri"
-    },
     "home": {
       "title": "Home"
     },
@@ -11800,7 +11812,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Elimina",
       "confirm-delete-keep-resources": "Vuoi davvero eliminare la configurazione del repository ma conservarne le risorse?",
       "confirm-delete-with-resources": "Vuoi davvero eliminare la configurazione del repository e tutte le sue risorse?",
@@ -12064,6 +12122,7 @@
       "jobs": "Attività"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Impostazioni",
       "source-code": "Codice sorgente"
     },
@@ -14394,6 +14453,17 @@
       },
       "name": {
         "series-to-rows": "Serie a righe"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

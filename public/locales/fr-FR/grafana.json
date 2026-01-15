@@ -807,7 +807,8 @@
       "label-integration": "Intégration",
       "label-notification-settings": "Paramètres de notification",
       "label-section": "Paramètres facultatifs : {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DE",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Cette ressource a été mise en service via {{provenance}} et ne peut pas être modifiée via l'interface utilisateur",
       "badge-tooltip-standard": "Cette ressource a été mise en service et ne peut pas être modifiée via l'interface utilisateur",
+      "body-imported": "",
       "body-provisioned": "Cette {{resource}} a été mise en service, cela signifie qu’elle a été créée par configuration. Veuillez contacter votre administrateur de serveur pour mettre à jour cette {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Cette {{resource}} ne peut pas être modifiée via l’interface utilisateur"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Mis en service"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3135,9 +3138,12 @@
       "table": "Tableau"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Définir la condition qui doit être remplie avant qu’une règle d’alerte ne se déclenche",
       "description-configure-firing-alert-instances-routed-contact": "Configurer la façon dont les instances d’alerte de déclenchement sont acheminées vers les points de contact",
       "description-configure-receives-notifications": "Configurer les destinataires des notifications et la manière dont elles sont envoyées",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Règles d'alerte",
       "title-contact-points": "Points de contact",
       "title-notification-policies": "Règles de notification"
@@ -3756,7 +3762,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4413,6 +4418,7 @@
       },
       "no-properties-changed": "Aucune propriété pertinente n’a été modifiée",
       "table": {
+        "notes": "",
         "updated": "Date",
         "updatedBy": "Mis à jour par",
         "version": "Version"
@@ -4611,6 +4617,7 @@
     },
     "canvas-actions": {
       "add-panel": "Ajouter un panneau",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Grouper en ligne",
@@ -4871,7 +4878,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Valeurs séparées par une virgule"
         },
         "datasource-options": {
           "name-filter": "Nom du filtre",
@@ -5691,6 +5699,7 @@
     "validation": {
       "invalid-dashboard-id": "Impossible de trouver un ID Grafana.com valide",
       "invalid-json": "JSON non valide",
+      "tag-too-long": "",
       "tags-expected-array": "balises attendues tableau",
       "tags-expected-strings": "balises attendues tableau de chaînes"
     },
@@ -5796,6 +5805,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5964,6 +5974,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Personnaliser les options",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Valeurs séparées par des virgules",
       "selection-options": "Options de sélection"
     },
@@ -6370,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Classique",
         "json": "JSON",
         "v1-resource": "Ressource V1",
         "v2-resource": "Ressource V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Voulez-vous vraiment restaurer le tableau de bord dans sa version {{version}} ? Toutes les modifications non enregistrées seront perdues.",
@@ -6551,6 +6567,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Tableau de bord enregistré"
     },
@@ -6574,6 +6595,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6633,8 +6655,9 @@
       "tooltip-show-usages": "Afficher les usages"
     },
     "variable-values-preview": {
-      "preview-of-values": "Aperçu des valeurs",
-      "show-more": "Afficher plus"
+      "show-more": "Afficher plus",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -6963,6 +6986,7 @@
         "drone-datasource": "Source de données Drone",
         "git-lab-integration-and-datasource": "Intégration et source de données GitLab",
         "honeycomb-integration-and-datasource": "Intégration et source de données Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Intégration et source de données Jira",
         "logic-monitor-devices-datasource": "Source de données LogicMonitor Devices",
         "mongo-db-integration-and-data-source": "Intégration et source de données MongoDB",
@@ -7821,7 +7845,6 @@
       "export-externally-label": "Exporter le tableau de bord pour l'utiliser dans une autre instance",
       "export-format": "Format",
       "export-mode": "Modèle",
-      "export-remove-ds-refs": "Supprimer les détails du déploiement",
       "info-text": "Copier ou télécharger un fichier contenant la définition de votre tableau de bord",
       "title": "Exporter le tableau de bord"
     },
@@ -9238,7 +9261,8 @@
     "tags-input": {
       "add": "Ajouter",
       "placeholder-new-tag": "Nouvelle étiquette (appuyez sur Entrée pour ajouter)",
-      "remove": "Supprimer la balise : {{name}}"
+      "remove": "Supprimer la balise : {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Synchroniser les horaires",
@@ -10705,18 +10729,6 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Raccourcis clavier",
     "help/support": "Assistance",
-    "history-container": {
-      "drawer-tittle": "Historique"
-    },
-    "history-wrapper": {
-      "collapse": "Réduire",
-      "expand": "Développer",
-      "icon-selected": "Entrée sélectionnée",
-      "icon-unselected": "Entrée normale",
-      "show-more": "Afficher plus",
-      "today": "Aujourd'hui",
-      "yesterday": "Hier"
-    },
     "home": {
       "title": "Accueil"
     },
@@ -11800,7 +11812,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Supprimer",
       "confirm-delete-keep-resources": "Voulez-vous vraiment supprimer la configuration du référentiel tout en conservant ses ressources ?",
       "confirm-delete-with-resources": "Voulez-vous vraiment supprimer la configuration du référentiel ainsi que toutes ses ressources ?",
@@ -12064,6 +12122,7 @@
       "jobs": "Missions"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Paramètres",
       "source-code": "Code source"
     },
@@ -14394,6 +14453,17 @@
       },
       "name": {
         "series-to-rows": "Convertir la série en lignes"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

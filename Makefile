@@ -135,7 +135,7 @@ i18n-extract-enterprise:
 	@echo "Skipping i18n extract for Enterprise: not enabled"
 else
 i18n-extract-enterprise:
-	@echo "Extracting i18n strings for Enterprise"	
+	@echo "Extracting i18n strings for Enterprise"
 	cd public/locales/enterprise && yarn run i18next-cli extract --sync-primary
 endif
 
@@ -227,6 +227,10 @@ fix-cue:
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
+.PHONY: gen-themes
+gen-themes:
+	go generate ./pkg/services/preference
+
 .PHONY: update-workspace
 update-workspace: gen-go
 	@echo "updating workspace"
@@ -244,6 +248,7 @@ build-go-fast: ## Build all Go binaries without updating workspace.
 .PHONY: build-backend
 build-backend: ## Build Grafana backend.
 	@echo "build backend"
+	$(MAKE) gen-themes
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-backend
 
 .PHONY: build-air

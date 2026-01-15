@@ -19,13 +19,18 @@ const (
 	defaultBufferSize     = 10000
 )
 
-type notifier struct {
+type notifier interface {
+	Watch(context.Context, watchOptions) <-chan Event
+}
+
+type pollingNotifier struct {
 	eventStore *eventStore
 	log        logging.Logger
 }
 
 type notifierOptions struct {
-	log logging.Logger
+	log                logging.Logger
+	useChannelNotifier bool
 }
 
 type watchOptions struct {
@@ -44,15 +49,26 @@ func defaultWatchOptions() watchOptions {
 	}
 }
 
-func newNotifier(eventStore *eventStore, opts notifierOptions) *notifier {
+func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	if opts.log == nil {
 		opts.log = &logging.NoOpLogger{}
 	}
-	return &notifier{eventStore: eventStore, log: opts.log}
+
+	if opts.useChannelNotifier {
+		return &channelNotifier{}
+	}
+
+	return &pollingNotifier{eventStore: eventStore, log: opts.log}
+}
+
+type channelNotifier struct{}
+
+func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
+	return nil
 }
 
 // Return the last resource version from the event store
-func (n *notifier) lastEventResourceVersion(ctx context.Context) (int64, error) {
+func (n *pollingNotifier) lastEventResourceVersion(ctx context.Context) (int64, error) {
 	e, err := n.eventStore.LastEventKey(ctx)
 	if err != nil {
 		return 0, err
@@ -60,11 +76,11 @@ func (n *notifier) lastEventResourceVersion(ctx context.Context) (int64, error) 
 	return e.ResourceVersion, nil
 }
 
-func (n *notifier) cacheKey(evt Event) string {
+func (n *pollingNotifier) cacheKey(evt Event) string {
 	return fmt.Sprintf("%s~%s~%s~%s~%d", evt.Namespace, evt.Group, evt.Resource, evt.Name, evt.ResourceVersion)
 }
 
-func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
+func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 	if opts.MinBackoff <= 0 {
 		opts.MinBackoff = defaultMinBackoff
 	}
@@ -78,13 +94,13 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 	cache := gocache.New(cacheTTL, cacheCleanupInterval)
 	events := make(chan Event, opts.BufferSize)
 
-	initialRV, err := n.lastEventResourceVersion(ctx)
+	lastRV, err := n.lastEventResourceVersion(ctx)
 	if errors.Is(err, ErrNotFound) {
-		initialRV = snowflakeFromTime(time.Now()) // No events yet, start from the beginning
+		lastRV = 0 // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
 	}
-	lastRV := initialRV + 1 // We want to start watching from the next event
+	lastRV = lastRV + 1 // We want to start watching from the next event
 
 	go func() {
 		defer close(events)
@@ -110,7 +126,7 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 					}
 
 					// Skip old events lower than the requested resource version
-					if evt.ResourceVersion <= initialRV {
+					if evt.ResourceVersion < lastRV {
 						continue
 					}
 

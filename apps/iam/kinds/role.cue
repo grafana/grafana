@@ -25,6 +25,7 @@ coreroleKind: {
 globalroleKind: {
 	kind:       "GlobalRole"
 	pluralName: "GlobalRoles"
+	scope:      "Cluster"
 	codegen: {
 		ts: { enabled: false }
 		go: { enabled: true }

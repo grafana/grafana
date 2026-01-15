@@ -2,6 +2,7 @@ import { SceneObject } from '@grafana/scenes';
 import { VariableModel } from '@grafana/schema/dist/esm/index';
 import {
   AdhocVariableKind,
+  CustomVariableKind,
   DatasourceVariableKind,
   QueryVariableKind,
   VariableKind,
@@ -52,6 +53,11 @@ export function getV1SchemaVariables(variableList: VariableModel[]) {
   return {
     // Count variable types
     ...variableList.reduce<Record<string, number>>((variables, current) => {
+      // track how many custom CSV and custom JSON variables are used in a dashboard
+      if (current.type === 'custom') {
+        const name = variableName(`custom_${current.valuesFormat || 'csv'}`);
+        variables[name] = 1 + (variables[name] || 0);
+      }
       variables[variableName(current.type)] = 1 + (variables[variableName(current.type)] || 0);
       return variables;
     }, {}),
@@ -97,6 +103,11 @@ export function getV2SchemaVariables(variableList: VariableKind[]) {
     ...variableList.reduce<Record<string, number>>((variables, current) => {
       const type = mapNewToOldTypes(current.kind);
       if (type) {
+        // track how many custom CSV and custom JSON variables are used in a dashboard
+        if (isCustomVariable(current)) {
+          const name = variableName(`custom_${current.spec.valuesFormat || 'csv'}`);
+          variables[name] = 1 + (variables[name] || 0);
+        }
         variables[variableName(type)] = 1 + (variables[variableName(type)] || 0);
       }
       return variables;
@@ -132,3 +143,7 @@ const isQueryVar: (v: VariableKind) => v is QueryVariableKind = (v) => v.kind ==
 
 const getDatasourceFromVar = (v: VariableKind) =>
   isAdhocVar(v) ? v.group : isDatasourceVar(v) ? v.spec.pluginId : isQueryVar(v) ? v.spec?.query.group : '';
+
+export function isCustomVariable(variable: VariableKind): variable is CustomVariableKind {
+  return variable.kind === 'CustomVariable';
+}

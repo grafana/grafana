@@ -10,9 +10,9 @@ import { useSelectionRepoValidation } from 'app/features/provisioning/hooks/useS
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { useSelector } from 'app/types/store';
 
+import { canEditItemType } from '../permissions';
 import { DashboardsTreeCellProps, SelectionState } from '../types';
-
-import { isSharedWithMe, canEditItemType } from './utils';
+import { isSharedWithMe } from '../utils/dashboards';
 
 export default function CheckboxCell({
   row: { original: row },
