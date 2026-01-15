@@ -34,11 +34,15 @@ export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistI
   }
 
   const searcher = getGrafanaSearcher();
+  const results = await Promise.allSettled(targets.map((target) => searcher.search(target)));
+
   const res: PlaylistItemUI[] = [];
-  for (let i = 0; i < targets.length; i++) {
-    const view = (await searcher.search(targets[i])).view;
-    res.push({ ...items[i], dashboards: view.map((v) => ({ ...v })) });
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const dashboards = result.status === 'fulfilled' ? result.value.view.map((v) => ({ ...v })) : [];
+    res.push({ ...items[i], dashboards });
   }
+
   return res;
 }
 
