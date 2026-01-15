@@ -205,8 +205,8 @@ test.describe(
         .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
         .click();
       await expect(
-        page.locator('[data-viz-panel-key="panel-1"]').locator('.uplot'),
-        'time series to be rendered inside the panel'
+        page.locator('[data-viz-panel-key="panel-1"]').getByText('Configure'),
+        'configure button is visible in the panel'
       ).toBeVisible();
     });
   }
