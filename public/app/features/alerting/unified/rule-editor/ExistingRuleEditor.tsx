@@ -1,5 +1,6 @@
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Stack } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
@@ -34,6 +35,7 @@ export function ExistingRuleEditor({
   isManualRestore = false,
   clone = false,
 }: ExistingRuleEditorProps) {
+  const navId = config.featureToggles.alertingNavigationV2 ? 'alert-rules' : 'alert-list';
   const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
   const {
     loading: loadingAlertRule,
@@ -48,7 +50,7 @@ export function ExistingRuleEditor({
 
   if (fetchRuleError || errorEditable) {
     return (
-      <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()}>
+      <AlertingPageWrapper navId={navId} pageNav={getPageNav()}>
         <Alert
           severity="error"
           title={t('alerting.existing-rule-editor.title-failed-to-load-rule', 'Failed to load rule')}
@@ -62,7 +64,7 @@ export function ExistingRuleEditor({
   const loading = loadingAlertRule || loadingEditable;
   if (loading) {
     return (
-      <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()} isLoading={true}>
+      <AlertingPageWrapper navId={navId} pageNav={getPageNav()} isLoading={true}>
         {null}
       </AlertingPageWrapper>
     );
@@ -70,7 +72,7 @@ export function ExistingRuleEditor({
 
   if (!ruleWithLocation && !loading) {
     return (
-      <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()}>
+      <AlertingPageWrapper navId={navId} pageNav={getPageNav()}>
         <AlertWarning title={t('alerting.existing-rule-editor.title-rule-not-found', 'Rule not found')}>
           <Trans i18nKey="alerting.existing-rule-editor.sorry-this-rule-does-not-exist">
             Sorry! This rule does not exist.
@@ -82,7 +84,7 @@ export function ExistingRuleEditor({
 
   if (isEditable === false) {
     return (
-      <AlertingPageWrapper navId="alert-list" pageNav={getPageNav()}>
+      <AlertingPageWrapper navId={navId} pageNav={getPageNav()}>
         <AlertWarning title={t('alerting.existing-rule-editor.title-cannot-edit-rule', 'Cannot edit rule')}>
           <Trans i18nKey="alerting.existing-rule-editor.sorry-permission">
             Sorry! You do not have permission to edit this rule.
@@ -109,7 +111,7 @@ export function ExistingRuleEditor({
 
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={navId}
       subTitle={
         <Stack direction="column">
           {summary}
