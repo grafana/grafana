@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, usePrevious } from 'react-use';
 
@@ -121,6 +121,32 @@ const FlameGraphContainer = ({
   // Shared sandwich state for cross-pane synchronization (flame graph sandwich view triggers callers mode in call tree)
   const [sharedSandwichItem, setSharedSandwichItem] = useState<string | undefined>(undefined);
 
+  // Create stable callback wrappers using refs to prevent child re-renders on resize
+  // The refs always hold the latest callback, while the wrapper functions are stable
+  const onTableSymbolClickRef = useRef(onTableSymbolClick);
+  const onTextAlignSelectedRef = useRef(onTextAlignSelected);
+  const onTableSortRef = useRef(onTableSort);
+
+  // Keep refs in sync with latest props
+  useEffect(() => {
+    onTableSymbolClickRef.current = onTableSymbolClick;
+    onTextAlignSelectedRef.current = onTextAlignSelected;
+    onTableSortRef.current = onTableSort;
+  });
+
+  // Stable callback wrappers that call through the refs
+  const stableOnTableSymbolClick = useCallback((symbol: string) => {
+    onTableSymbolClickRef.current?.(symbol);
+  }, []);
+
+  const stableOnTextAlignSelected = useCallback((align: string) => {
+    onTextAlignSelectedRef.current?.(align);
+  }, []);
+
+  const stableOnTableSort = useCallback((sort: string) => {
+    onTableSortRef.current?.(sort);
+  }, []);
+
   const theme = useMemo(() => getTheme(), [getTheme]);
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!data) {
@@ -185,9 +211,9 @@ const FlameGraphContainer = ({
         dataContainer={dataContainer}
         search={search}
         matchedLabels={matchedLabels}
-        onTableSymbolClick={onTableSymbolClick}
-        onTextAlignSelected={onTextAlignSelected}
-        onTableSort={onTableSort}
+        onTableSymbolClick={stableOnTableSymbolClick}
+        onTextAlignSelected={stableOnTextAlignSelected}
+        onTableSort={stableOnTableSort}
         showFlameGraphOnly={showFlameGraphOnly}
         disableCollapsing={disableCollapsing}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
@@ -210,9 +236,9 @@ const FlameGraphContainer = ({
         dataContainer={dataContainer}
         search={search}
         matchedLabels={matchedLabels}
-        onTableSymbolClick={onTableSymbolClick}
-        onTextAlignSelected={onTextAlignSelected}
-        onTableSort={onTableSort}
+        onTableSymbolClick={stableOnTableSymbolClick}
+        onTextAlignSelected={stableOnTextAlignSelected}
+        onTableSort={stableOnTableSort}
         showFlameGraphOnly={showFlameGraphOnly}
         disableCollapsing={disableCollapsing}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
@@ -235,9 +261,9 @@ const FlameGraphContainer = ({
         dataContainer={dataContainer}
         search={search}
         matchedLabels={matchedLabels}
-        onTableSymbolClick={onTableSymbolClick}
-        onTextAlignSelected={onTextAlignSelected}
-        onTableSort={onTableSort}
+        onTableSymbolClick={stableOnTableSymbolClick}
+        onTextAlignSelected={stableOnTextAlignSelected}
+        onTableSort={stableOnTableSort}
         showFlameGraphOnly={showFlameGraphOnly}
         disableCollapsing={disableCollapsing}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
@@ -267,9 +293,9 @@ const FlameGraphContainer = ({
         dataContainer={dataContainer}
         search={search}
         matchedLabels={matchedLabels}
-        onTableSymbolClick={onTableSymbolClick}
-        onTextAlignSelected={onTextAlignSelected}
-        onTableSort={onTableSort}
+        onTableSymbolClick={stableOnTableSymbolClick}
+        onTextAlignSelected={stableOnTextAlignSelected}
+        onTableSort={stableOnTableSort}
         showFlameGraphOnly={showFlameGraphOnly}
         disableCollapsing={disableCollapsing}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
@@ -293,9 +319,9 @@ const FlameGraphContainer = ({
         dataContainer={dataContainer}
         search={search}
         matchedLabels={matchedLabels}
-        onTableSymbolClick={onTableSymbolClick}
-        onTextAlignSelected={onTextAlignSelected}
-        onTableSort={onTableSort}
+        onTableSymbolClick={stableOnTableSymbolClick}
+        onTextAlignSelected={stableOnTextAlignSelected}
+        onTableSort={stableOnTableSort}
         showFlameGraphOnly={showFlameGraphOnly}
         disableCollapsing={disableCollapsing}
         getExtraContextMenuButtons={getExtraContextMenuButtons}

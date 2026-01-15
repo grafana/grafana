@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, useMemo, useState, useRef, useEffect } from 'react';
+import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } from 'react-table';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -32,8 +32,10 @@ type Props = {
 
 const FlameGraphCallTreeContainer = memo(
   ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme, search, compact: compactProp, onSearch, highlightedItemIndexes }: Props) => {
-    // Track the available width from AutoSizer for dynamic compact mode detection
-    const [availableWidth, setAvailableWidth] = useState(0);
+    // Track compact mode state - only triggers re-render when compact mode changes
+    const [isCompact, setIsCompact] = useState(false);
+    // Use ref for width to avoid re-renders on every resize
+    const widthRef = useRef(0);
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
@@ -71,8 +73,8 @@ const FlameGraphCallTreeContainer = memo(
     const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(0);
     const [searchError, setSearchError] = useState<string | undefined>(undefined);
 
-    // Wrapper functions for mutual exclusivity
-    const handleSetFocusMode = (nodeIdOrLabel: string | undefined, isLabel: boolean = false) => {
+    // Wrapper functions for mutual exclusivity - memoized to prevent unnecessary re-renders
+    const handleSetFocusMode = useCallback((nodeIdOrLabel: string | undefined, isLabel: boolean = false) => {
       if (nodeIdOrLabel === undefined) {
         setFocusedNodeId(undefined);
       } else if (isLabel) {
@@ -86,14 +88,14 @@ const FlameGraphCallTreeContainer = memo(
       if (nodeIdOrLabel !== undefined) {
         setCallersNodeLabel(undefined);
       }
-    };
+    }, []);
 
-    const handleSetCallersMode = (label: string | undefined) => {
+    const handleSetCallersMode = useCallback((label: string | undefined) => {
       setCallersNodeLabel(label);
       if (label !== undefined) {
         setFocusedNodeId(undefined);
       }
-    };
+    }, []);
 
     // Build nodes - dependencies include currentSearchMatchId to force rebuild when search match changes
     const { nodes, focusedNode, callersNode } = useMemo(() => {
@@ -439,62 +441,40 @@ const FlameGraphCallTreeContainer = memo(
     // Actual minimum width for function column (used in column definition)
     const FUNCTION_MIN_WIDTH = 100;
 
-    // Calculate if compact mode is needed based on available width and column requirements
-    // This dynamically detects when columns would overflow
-    const compact = useMemo(() => {
-      // If explicitly set via prop, use that
-      if (compactProp !== undefined) {
-        return compactProp;
-      }
-
-      // Calculate minimum width needed for non-compact mode
-      // We need at least FUNCTION_COMPACT_THRESHOLD for the function column to be readable
+    // Calculate minimum width threshold for compact mode
+    const minNonCompactWidth = useMemo(() => {
       let fixedColumnsWidth: number;
-
       if (data.isDiffFlamegraph()) {
-        // Diff mode: actions + colorBar + baseline + comparison + diff
         fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
       } else {
-        // Normal mode: actions + colorBar + self + total
         fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
       }
+      return fixedColumnsWidth + FUNCTION_COMPACT_THRESHOLD;
+    }, [data, ACTIONS_WIDTH]);
 
-      const minNonCompactWidth = fixedColumnsWidth + FUNCTION_COMPACT_THRESHOLD;
+    // Use prop if provided, otherwise use state
+    const compact = compactProp !== undefined ? compactProp : isCompact;
 
-      return availableWidth > 0 && availableWidth < minNonCompactWidth;
-    }, [compactProp, availableWidth, data, ACTIONS_WIDTH]);
-
-    // Calculate the Function column width dynamically
-    // It takes remaining space after fixed-width columns
-    const functionColumnWidth = useMemo(() => {
-      if (availableWidth <= 0) {
-        return undefined; // Let it be flexible initially
-      }
+    // Helper to calculate function column width for a given width and compact mode
+    const calculateFunctionColumnWidth = useCallback((width: number, compactMode: boolean) => {
+      if (width <= 0) return undefined;
 
       let fixedColumnsWidth: number;
-
-      if (compact) {
+      if (compactMode) {
         if (data.isDiffFlamegraph()) {
-          // Compact diff mode: actions + baseline + comparison + diff
           fixedColumnsWidth = ACTIONS_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
         } else {
-          // Compact normal mode: actions + total
           fixedColumnsWidth = ACTIONS_WIDTH + TOTAL_WIDTH;
         }
       } else {
         if (data.isDiffFlamegraph()) {
-          // Non-compact diff mode: actions + colorBar + baseline + comparison + diff
           fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
         } else {
-          // Non-compact normal mode: actions + colorBar + self + total
           fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
         }
       }
-
-      // Calculate remaining width for Function column
-      const remainingWidth = availableWidth - fixedColumnsWidth;
-      return Math.max(remainingWidth, FUNCTION_MIN_WIDTH);
-    }, [availableWidth, compact, data, ACTIONS_WIDTH]);
+      return Math.max(width - fixedColumnsWidth, FUNCTION_MIN_WIDTH);
+    }, [data, ACTIONS_WIDTH]);
 
     // Define columns
     const columns = useMemo<Column<CallTreeNode>[]>(() => {
@@ -505,14 +485,21 @@ const FlameGraphCallTreeContainer = memo(
             id: 'actions',
             Cell: ({ row }: any) => (
               <ActionsCell
-                row={row}
+                nodeId={row.original.id}
+                label={row.original.label}
+                hasChildren={row.original.hasChildren}
+                depth={row.original.depth}
+                parentId={row.original.parentId}
                 onFocus={handleSetFocusMode}
                 onShowCallers={handleSetCallersMode}
                 onSearch={onSearch}
                 focusedNodeId={focusedNodeId}
                 callersNodeLabel={callersNodeLabel}
-                styles={styles}
-                searchNodes={searchNodes}
+                isSearchMatch={searchNodes?.includes(row.original.id) ?? false}
+                actionsCellClass={styles.actionsCell}
+                actionButtonSlotClass={styles.actionButtonSlot}
+                actionButtonClass={styles.actionButton}
+                actionButtonPlaceholderClass={styles.actionButtonPlaceholder}
               />
             ),
             width: ACTIONS_WIDTH,
@@ -538,7 +525,7 @@ const FlameGraphCallTreeContainer = memo(
               />
             ),
             minWidth: FUNCTION_MIN_WIDTH,
-            width: functionColumnWidth,
+            // width is applied dynamically in render to avoid re-creating columns on resize
           },
         ];
 
@@ -592,14 +579,21 @@ const FlameGraphCallTreeContainer = memo(
             id: 'actions',
             Cell: ({ row }: any) => (
               <ActionsCell
-                row={row}
+                nodeId={row.original.id}
+                label={row.original.label}
+                hasChildren={row.original.hasChildren}
+                depth={row.original.depth}
+                parentId={row.original.parentId}
                 onFocus={handleSetFocusMode}
                 onShowCallers={handleSetCallersMode}
                 onSearch={onSearch}
                 focusedNodeId={focusedNodeId}
                 callersNodeLabel={callersNodeLabel}
-                styles={styles}
-                searchNodes={searchNodes}
+                isSearchMatch={searchNodes?.includes(row.original.id) ?? false}
+                actionsCellClass={styles.actionsCell}
+                actionButtonSlotClass={styles.actionButtonSlot}
+                actionButtonClass={styles.actionButton}
+                actionButtonPlaceholderClass={styles.actionButtonPlaceholder}
               />
             ),
             width: ACTIONS_WIDTH,
@@ -625,7 +619,7 @@ const FlameGraphCallTreeContainer = memo(
               />
             ),
             minWidth: FUNCTION_MIN_WIDTH,
-            width: functionColumnWidth,
+            // width is applied dynamically in render to avoid re-creating columns on resize
           },
         ];
 
@@ -681,7 +675,7 @@ const FlameGraphCallTreeContainer = memo(
 
         return cols;
       }
-    }, [data, onSymbolClick, colorScheme, theme, styles, focusedNode, callersNode, callersNodeLabel, compact, functionColumnWidth, ACTIONS_WIDTH]);
+    }, [data, onSymbolClick, colorScheme, theme, styles, focusedNode, callersNode, focusedNodeId, callersNodeLabel, searchNodes, onSearch, compact, ACTIONS_WIDTH, handleSetFocusMode, handleSetCallersMode]);
 
     // toggleRowExpanded is used in the Cell renderers but doesn't need to be in the dependencies
     // because it's accessed at render time, not definition time
@@ -796,11 +790,18 @@ const FlameGraphCallTreeContainer = memo(
 
         <AutoSizer style={{ width: '100%', height: 'calc(100% - 50px)' }}>
           {({ width, height }) => {
-            // Update available width for compact mode detection
-            // Using a microtask to avoid state update during render
-            if (width !== availableWidth) {
-              queueMicrotask(() => setAvailableWidth(width));
+            // Update compact mode only when crossing the threshold
+            // This avoids re-renders on every resize
+            if (compactProp === undefined) {
+              const shouldBeCompact = width > 0 && width < minNonCompactWidth;
+              if (shouldBeCompact !== isCompact) {
+                queueMicrotask(() => setIsCompact(shouldBeCompact));
+              }
             }
+            widthRef.current = width;
+
+            // Calculate function column width for this render
+            const functionColumnWidth = calculateFunctionColumnWidth(width, compact);
 
             if (width < 3 || height < 3) {
               return null;
@@ -818,13 +819,15 @@ const FlameGraphCallTreeContainer = memo(
                             const { key: headerKey, ...headerProps } = column.getHeaderProps(
                               column.getSortByToggleProps()
                             );
+                            // Apply functionColumnWidth for the label column, otherwise use column.width
+                            const columnWidth = column.id === 'label' ? functionColumnWidth : column.width;
                             return (
                               <th
                                 key={headerKey}
                                 {...headerProps}
                                 className={styles.th}
                                 style={{
-                                  ...(column.width !== undefined && { width: column.width }),
+                                  ...(columnWidth !== undefined && { width: columnWidth }),
                                   textAlign: column.id === 'self' || column.id === 'total' ? 'right' : undefined,
                                   ...(column.minWidth !== undefined && { minWidth: column.minWidth })
                                 }}
@@ -937,33 +940,50 @@ function getRowBackgroundColor(
 
 // Cell Components
 
-function ActionsCell({
-  row,
-  onFocus,
-  onShowCallers,
-  onSearch,
-  focusedNodeId,
-  callersNodeLabel,
-  styles,
-  searchNodes,
-}: {
-  row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>;
+type ActionsCellProps = {
+  // Primitive values from row.original - stable across renders
+  nodeId: string;
+  label: string;
+  hasChildren: boolean;
+  depth: number;
+  parentId: string | undefined;
+  // Callbacks and state
   onFocus: (nodeIdOrLabel: string, isLabel?: boolean) => void;
   onShowCallers: (label: string) => void;
   onSearch?: (symbol: string) => void;
   focusedNodeId: string | undefined;
   callersNodeLabel: string | undefined;
-  styles: any;
-  searchNodes?: string[];
-}) {
-  const hasChildren = row.original.hasChildren;
-  const isTheFocusedNode = row.original.id === focusedNodeId ||
-                           (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label);
-  const isTheCallersTarget = row.original.label === callersNodeLabel;
+  isSearchMatch: boolean;
+  // Individual class names as strings (primitives for memo comparison)
+  actionsCellClass: string;
+  actionButtonSlotClass: string;
+  actionButtonClass: string;
+  actionButtonPlaceholderClass: string;
+};
+
+const ActionsCell = memo(function ActionsCell({
+  nodeId,
+  label,
+  hasChildren,
+  depth,
+  parentId,
+  onFocus,
+  onShowCallers,
+  onSearch,
+  focusedNodeId,
+  callersNodeLabel,
+  isSearchMatch,
+  actionsCellClass,
+  actionButtonSlotClass,
+  actionButtonClass,
+  actionButtonPlaceholderClass,
+}: ActionsCellProps) {
+  const isTheFocusedNode = nodeId === focusedNodeId ||
+                           (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === label);
+  const isTheCallersTarget = label === callersNodeLabel;
   const inCallersMode = callersNodeLabel !== undefined;
   const inFocusMode = focusedNodeId !== undefined;
-  const isRootNode = row.original.depth === 0 && !row.original.parentId;
-  const isSearchMatch = searchNodes?.includes(row.original.id) ?? false;
+  const isRootNode = depth === 0 && !parentId;
 
   // Show focus button if:
   // - Node has children AND
@@ -979,8 +999,8 @@ function ActionsCell({
   const shouldShowCallersButton = !isTheCallersTarget && !isRootNode;
 
   return (
-    <div className={styles.actionsCell}>
-      <div className={styles.actionButtonSlot}>
+    <div className={actionsCellClass}>
+      <div className={actionButtonSlotClass}>
         {shouldShowFocusButton ? (
           <Button
             icon="compress-arrows"
@@ -990,20 +1010,20 @@ function ActionsCell({
               e.stopPropagation();
               // When in callers mode, switch by label; otherwise use ID
               if (inCallersMode) {
-                onFocus(row.original.label, true);
+                onFocus(label, true);
               } else {
-                onFocus(row.original.id, false);
+                onFocus(nodeId, false);
               }
             }}
             tooltip="Show callees of this function"
             aria-label="Show callees"
-            className={styles.actionButton}
+            className={actionButtonClass}
           />
         ) : (
-          <div className={styles.actionButtonPlaceholder} />
+          <div className={actionButtonPlaceholderClass} />
         )}
       </div>
-      <div className={styles.actionButtonSlot}>
+      <div className={actionButtonSlotClass}>
         {shouldShowCallersButton ? (
           <Button
             icon="expand-arrows-alt"
@@ -1011,35 +1031,35 @@ function ActionsCell({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              onShowCallers(row.original.label);
+              onShowCallers(label);
             }}
             tooltip="Show callers of this function"
             aria-label="Show callers"
-            className={styles.actionButton}
+            className={actionButtonClass}
           />
         ) : (
-          <div className={styles.actionButtonPlaceholder} />
+          <div className={actionButtonPlaceholderClass} />
         )}
       </div>
       {onSearch && !isSearchMatch && (
-        <div className={styles.actionButtonSlot}>
+        <div className={actionButtonSlotClass}>
           <Button
             icon="search"
             fill="text"
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              onSearch(row.original.label);
+              onSearch(label);
             }}
             tooltip="Search for this function"
             aria-label="Search"
-            className={styles.actionButton}
+            className={actionButtonClass}
           />
         </div>
       )}
     </div>
   );
-}
+});
 
 function FunctionCellWithExpander({
   row,

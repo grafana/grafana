@@ -189,6 +189,18 @@ const FlameGraphPane = ({
     [search, setSearch, resetFocus, onTableSymbolClick]
   );
 
+  // Search callback for TopTable search button - stable because setSearch is stable
+  const onTopTableSearch = useCallback(
+    (str: string) => {
+      if (!str) {
+        setSearch('');
+        return;
+      }
+      setSearch(`^${escapeStringForRegex(str)}$`);
+    },
+    [setSearch]
+  );
+
   let content;
   switch (paneView) {
     case PaneView.TopTable:
@@ -201,13 +213,7 @@ const FlameGraphPane = ({
             matchedLabels={matchedLabels}
             sandwichItem={sandwichItem}
             onSandwich={setSandwichItem}
-            onSearch={(str) => {
-              if (!str) {
-                setSearch('');
-                return;
-              }
-              setSearch(`^${escapeStringForRegex(str)}$`);
-            }}
+            onSearch={onTopTableSearch}
             onTableSort={onTableSort}
             colorScheme={colorScheme}
           />

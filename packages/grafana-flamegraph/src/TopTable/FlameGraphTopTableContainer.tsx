@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
@@ -61,6 +61,37 @@ const FlameGraphTopTableContainer = memo(
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
+    // Track width in a ref to use in memoization without causing re-renders
+    const widthRef = useRef(0);
+
+    // Stable callback for sort changes - uses ref for onTableSort to avoid dependency
+    const onTableSortRef = useRef(onTableSort);
+    onTableSortRef.current = onTableSort;
+
+    const handleSortByChange = useCallback((s: TableSortByFieldState[]) => {
+      if (s && s.length) {
+        onTableSortRef.current?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+      }
+      setSort(s);
+    }, []);
+
+    // Memoize frame building - only rebuild when data actually changes, not on resize
+    // Width is handled separately via column config adjustment in render
+    const baseFrame = useMemo(() => {
+      return buildTableDataFrame(
+        data,
+        table,
+        0, // placeholder width - will be adjusted in render
+        onSymbolClick,
+        onSearch,
+        onSandwich,
+        theme,
+        colorScheme,
+        search,
+        sandwichItem
+      );
+    }, [data, table, onSymbolClick, onSearch, onSandwich, theme, colorScheme, search, sandwichItem]);
+
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
         <AutoSizer style={{ width: '100%' }}>
@@ -69,28 +100,22 @@ const FlameGraphTopTableContainer = memo(
               return null;
             }
 
-            const frame = buildTableDataFrame(
-              data,
-              table,
-              width,
-              onSymbolClick,
-              onSearch,
-              onSandwich,
-              theme,
-              colorScheme,
-              search,
-              sandwichItem
-            );
+            // Update width ref for potential future use
+            widthRef.current = width;
+
+            // Adjust symbol field width based on current container width
+            // This modifies the frame's field config without creating a new frame object
+            const symbolField = baseFrame.fields.find(f => f.name === 'Symbol');
+            if (symbolField?.config?.custom) {
+              const newWidth = width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * (data.isDiffFlamegraph() ? 3 : 2);
+              symbolField.config.custom.width = newWidth;
+            }
+
             return (
               <Table
                 initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
+                onSortByChange={handleSortByChange}
+                data={baseFrame}
                 width={width}
                 height={height}
               />
