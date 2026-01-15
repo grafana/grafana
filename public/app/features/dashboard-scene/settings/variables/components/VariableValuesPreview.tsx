@@ -79,7 +79,7 @@ function flattenProperties(properties?: VariableValueOptionProperties, path = ''
   for (const [key, value] of Object.entries(properties)) {
     const newPath = path ? `${path}.${key}` : key;
 
-    if (typeof value === 'object') {
+    if (typeof value === 'object' && value !== null) {
       Object.assign(result, flattenProperties(value, newPath));
     } else {
       // see https://github.com/TanStack/table/issues/1671
