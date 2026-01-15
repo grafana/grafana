@@ -95,8 +95,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
             <Trans i18nKey="components.time-management.tooltip-time-range">
               <span>
                 Specifies the time-range used to query. The <code>Query</code> option will only use time-ranges
-                specified in the query. <code>Dashboard</code> will only use the Grafana time-range. In Logs Builder
-                mode, only Dashboard time will be used.
+                specified in the query. <code>Dashboard</code> will only use the Grafana time-range.
               </span>
             </Trans>
           }
