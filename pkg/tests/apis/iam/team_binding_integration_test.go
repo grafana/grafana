@@ -9,7 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -65,6 +67,7 @@ func TestIntegrationTeamBindings(t *testing.T) {
 			require.NotNil(t, user)
 
 			doTeamBindingCRUDTestsUsingTheNewAPIs(t, helper, team, user)
+			doTeamBindingFieldSelectionTests(t, helper)
 
 			if mode < 3 {
 				doTeamBindingCRUDTestsUsingTheLegacyAPIs(t, helper)
@@ -103,16 +106,17 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.NotEmpty(t, createdUID)
 
 		// Get the team binding
-		fetched, err := teamBindingClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		response, err := teamBindingClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
-		require.NotNil(t, fetched)
+		require.NotNil(t, response)
 
-		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
-		require.Equal(t, user.GetName(), fetchedSpec["subject"].(map[string]interface{})["name"])
-		require.Equal(t, team.GetName(), fetchedSpec["teamRef"].(map[string]interface{})["name"])
-		require.Equal(t, "admin", fetchedSpec["permission"])
-		require.Equal(t, false, fetchedSpec["external"])
-		require.Equal(t, createdUID, fetched.GetName())
+		var actual iamv0alpha1.TeamBinding
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(response.Object, &actual))
+		require.Equal(t, user.GetName(), actual.Spec.Subject.Name)
+		require.Equal(t, team.GetName(), actual.Spec.TeamRef.Name)
+		require.Equal(t, iamv0alpha1.TeamBindingTeamPermissionAdmin, actual.Spec.Permission)
+		require.False(t, actual.Spec.External)
+		require.Equal(t, createdUID, actual.Name)
 
 		// Update the team binding
 		toUpdate := toCreate.DeepCopy()
@@ -130,16 +134,16 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		require.Equal(t, false, updatedSpec["external"])
 
 		// Get the team binding
-		fetched, err = teamBindingClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		response, err = teamBindingClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
-		require.NotNil(t, fetched)
+		require.NotNil(t, response)
 
-		fetchedSpec = fetched.Object["spec"].(map[string]interface{})
-		require.Equal(t, user.GetName(), fetchedSpec["subject"].(map[string]interface{})["name"])
-		require.Equal(t, team.GetName(), fetchedSpec["teamRef"].(map[string]interface{})["name"])
-		require.Equal(t, "member", fetchedSpec["permission"])
-		require.Equal(t, false, fetchedSpec["external"])
-		require.Equal(t, createdUID, fetched.GetName())
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(response.Object, &actual))
+		require.Equal(t, user.GetName(), actual.Spec.Subject.Name)
+		require.Equal(t, team.GetName(), actual.Spec.TeamRef.Name)
+		require.Equal(t, iamv0alpha1.TeamBindingTeamPermissionMember, actual.Spec.Permission)
+		require.False(t, actual.Spec.External)
+		require.Equal(t, createdUID, actual.Name)
 
 		// Delete the team binding
 		err = teamBindingClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
@@ -498,22 +502,137 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 		}
 		require.NotEmpty(t, teamBindingName)
 
-		// Get team binding using new API
 		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Admin,
 			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
 			GVR:       gvrTeamBindings,
 		})
 
-		teamBinding, err := teamBindingClient.Resource.Get(ctx, teamBindingName, metav1.GetOptions{})
+		response, err := teamBindingClient.Resource.Get(ctx, teamBindingName, metav1.GetOptions{})
 		require.NoError(t, err)
-		require.NotNil(t, teamBinding)
+		require.NotNil(t, response)
 
-		teamBindingSpec := teamBinding.Object["spec"].(map[string]interface{})
-		require.Equal(t, "member", teamBindingSpec["permission"])
-		require.Equal(t, userRsp.Result.UID, teamBindingSpec["subject"].(map[string]interface{})["name"])
-		require.Equal(t, teamRsp.Result.UID, teamBindingSpec["teamRef"].(map[string]interface{})["name"])
-		require.Equal(t, teamBindingName, teamBinding.GetName())
+		var actual iamv0alpha1.TeamBinding
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(response.Object, &actual))
+		require.Equal(t, iamv0alpha1.TeamBindingTeamPermissionMember, actual.Spec.Permission)
+		require.Equal(t, userRsp.Result.UID, actual.Spec.Subject.Name)
+		require.Equal(t, teamRsp.Result.UID, actual.Spec.TeamRef.Name)
+		require.Equal(t, teamBindingName, actual.Name)
+	})
+}
+
+func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should list team bindings using field selectors", func(t *testing.T) {
+		ctx := context.Background()
+
+		var teamNames []string
+		var userNames []string
+		var bindingNames []string
+
+		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeamBindings,
+		})
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+
+		createTeam := func(name string, email string) *unstructured.Unstructured {
+			obj := helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml")
+			obj.SetName(name)
+
+			spec := obj.Object["spec"].(map[string]interface{})
+			spec["title"] = name
+			spec["email"] = email
+
+			created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+			require.NoError(t, err)
+			teamNames = append(teamNames, created.GetName())
+			return created
+		}
+
+		createUser := func(name string, email string, login string) *unstructured.Unstructured {
+			obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
+			obj.SetName(name)
+
+			spec := obj.Object["spec"].(map[string]interface{})
+			spec["email"] = email
+			spec["login"] = login
+
+			created, err := userClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+			require.NoError(t, err)
+			userNames = append(userNames, created.GetName())
+			return created
+		}
+
+		teamA := createTeam("tb-team-a", "tb-teama@example.com")
+		teamB := createTeam("tb-team-b", "tb-teamb@example.com")
+		user1 := createUser("tb-user-1", "tb-user1@example.com", "tb-user1")
+		user2 := createUser("tb-user-2", "tb-user2@example.com", "tb-user2")
+
+		createBinding := func(user *unstructured.Unstructured, team *unstructured.Unstructured) {
+			toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
+			toCreate.SetName("")
+			toCreate.SetGenerateName("binding-")
+			toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
+			toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
+
+			created, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+			require.NoError(t, err)
+			bindingNames = append(bindingNames, created.GetName())
+		}
+
+		// Create 4 bindings
+		createBinding(user1, teamA)
+		createBinding(user2, teamA)
+		createBinding(user1, teamB)
+		createBinding(user2, teamB)
+
+		t.Cleanup(func() {
+			cleanupCtx := context.Background()
+
+			for _, name := range bindingNames {
+				_ = teamBindingClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+			}
+			for _, name := range teamNames {
+				_ = teamClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+			}
+			for _, name := range userNames {
+				_ = userClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+			}
+		})
+
+		// Select by teamRef.name, should return 2 of the 4
+		listByTeam, err := teamBindingClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.teamRef.name=%s", teamA.GetName()),
+		})
+		require.NoError(t, err)
+		require.Len(t, listByTeam.Items, 2)
+		for _, item := range listByTeam.Items {
+			var actual iamv0alpha1.TeamBinding
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &actual))
+			require.Equal(t, teamA.GetName(), actual.Spec.TeamRef.Name)
+		}
+
+		// Select by subject.name, should return 2 of the 4
+		listByUser, err := teamBindingClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.subject.name=%s", user1.GetName()),
+		})
+		require.NoError(t, err)
+		require.Len(t, listByUser.Items, 2)
+		for _, item := range listByUser.Items {
+			var actual iamv0alpha1.TeamBinding
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &actual))
+			require.Equal(t, user1.GetName(), actual.Spec.Subject.Name)
+		}
 	})
 }
 

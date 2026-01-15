@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Tombol kueri untuk memulai menggunakan log Azure",
       "body-switching-to-builder": "Beralih ke Builder akan membuang kueri KQL Anda saat ini dan menghapus editor KQL. Anda yakin?",
-      "body-switching-to-kql": "Beralih ke KQL akan membuang pengaturan pembangun Anda saat ini. Anda yakin?",
       "button-kick-start-your-query": "Mulai kueri Anda",
       "button-run-query": "Jalankan kueri",
       "confirmText-switch-to": "Beralih ke {{newMode}}",
