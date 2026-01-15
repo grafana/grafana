@@ -217,6 +217,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Schema:      spec.BoolProperty(),
 									},
 								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "panelTitleSearch",
+										In:          "query",
+										Description: "optionally include matches from panel titles",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
+									},
+								},
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
@@ -493,6 +502,31 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
 			Values:   v,
+		})
+	}
+
+	// Configure
+	searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+		{
+			Name:  resource.SEARCH_FIELD_TITLE,
+			Type:  resourcepb.QueryFieldType_KEYWORD,
+			Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
+		}, {
+			Name:  resource.SEARCH_FIELD_TITLE,
+			Type:  resourcepb.QueryFieldType_TEXT,
+			Boost: 2, // standard analyzer (with ngrams!)
+		}, {
+			Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+			Type:  resourcepb.QueryFieldType_TEXT,
+			Boost: 5, // standard analyzer
+		},
+	}
+
+	if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
+		searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
+			Name:  resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE, // fields.panel_title
+			Type:  resourcepb.QueryFieldType_TEXT,
+			Boost: 5,
 		})
 	}
 
