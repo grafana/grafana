@@ -31,7 +31,9 @@ type Props = {
 };
 
 const FlameGraphCallTreeContainer = memo(
-  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme, search, compact = false, onSearch, highlightedItemIndexes }: Props) => {
+  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme, search, compact: compactProp, onSearch, highlightedItemIndexes }: Props) => {
+    // Track the available width from AutoSizer for dynamic compact mode detection
+    const [availableWidth, setAvailableWidth] = useState(0);
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
@@ -423,6 +425,75 @@ const FlameGraphCallTreeContainer = memo(
       return baseExpanded;
     }, [nodes, focusedNodeId, callersNodeLabel, callersNode, currentSearchMatchId, highlightedNodeId]);
 
+    // Column width constants
+    const ACTIONS_WIDTH = onSearch ? 75 : 50;
+    const COLOR_BAR_WIDTH = 200;
+    const SELF_WIDTH = 150;
+    const TOTAL_WIDTH = 150;
+    const BASELINE_WIDTH = 100;
+    const COMPARISON_WIDTH = 100;
+    const DIFF_WIDTH = 100;
+    // Minimum width for function column before switching to compact mode
+    // Set high enough to ensure function names are readable
+    const FUNCTION_MIN_WIDTH = 550;
+
+    // Calculate if compact mode is needed based on available width and column requirements
+    // This dynamically detects when columns would overflow
+    const compact = useMemo(() => {
+      // If explicitly set via prop, use that
+      if (compactProp !== undefined) {
+        return compactProp;
+      }
+
+      // Calculate minimum width needed for non-compact mode
+      // We need at least FUNCTION_MIN_WIDTH for the function column to be readable
+      let fixedColumnsWidth: number;
+
+      if (data.isDiffFlamegraph()) {
+        // Diff mode: actions + colorBar + baseline + comparison + diff
+        fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
+      } else {
+        // Normal mode: actions + colorBar + self + total
+        fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
+      }
+
+      const minNonCompactWidth = fixedColumnsWidth + FUNCTION_MIN_WIDTH;
+
+      return availableWidth > 0 && availableWidth < minNonCompactWidth;
+    }, [compactProp, availableWidth, data, ACTIONS_WIDTH]);
+
+    // Calculate the Function column width dynamically
+    // It takes remaining space after fixed-width columns
+    const functionColumnWidth = useMemo(() => {
+      if (availableWidth <= 0) {
+        return undefined; // Let it be flexible initially
+      }
+
+      let fixedColumnsWidth: number;
+
+      if (compact) {
+        if (data.isDiffFlamegraph()) {
+          // Compact diff mode: actions + baseline + comparison + diff
+          fixedColumnsWidth = ACTIONS_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
+        } else {
+          // Compact normal mode: actions + total
+          fixedColumnsWidth = ACTIONS_WIDTH + TOTAL_WIDTH;
+        }
+      } else {
+        if (data.isDiffFlamegraph()) {
+          // Non-compact diff mode: actions + colorBar + baseline + comparison + diff
+          fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
+        } else {
+          // Non-compact normal mode: actions + colorBar + self + total
+          fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
+        }
+      }
+
+      // Calculate remaining width for Function column
+      const remainingWidth = availableWidth - fixedColumnsWidth;
+      return Math.max(remainingWidth, FUNCTION_MIN_WIDTH);
+    }, [availableWidth, compact, data, ACTIONS_WIDTH]);
+
     // Define columns
     const columns = useMemo<Column<CallTreeNode>[]>(() => {
       if (data.isDiffFlamegraph()) {
@@ -442,8 +513,8 @@ const FlameGraphCallTreeContainer = memo(
                 searchNodes={searchNodes}
               />
             ),
-            width: onSearch ? 75 : 50,
-            minWidth: onSearch ? 75 : 50,
+            width: ACTIONS_WIDTH,
+            minWidth: ACTIONS_WIDTH,
             disableSortBy: true,
           },
           {
@@ -464,8 +535,8 @@ const FlameGraphCallTreeContainer = memo(
                 toggleRowExpanded={tableInstance.toggleRowExpanded}
               />
             ),
-            minWidth: 200,
-            width: undefined,
+            minWidth: FUNCTION_MIN_WIDTH,
+            width: functionColumnWidth,
           },
         ];
 
@@ -476,8 +547,8 @@ const FlameGraphCallTreeContainer = memo(
             Cell: ({ row }: { row: Row<CallTreeNode> }) => (
               <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} focusedNode={focusedNode} callersNode={callersNode} />
             ),
-            minWidth: 200,
-            width: 200,
+            minWidth: COLOR_BAR_WIDTH,
+            width: COLOR_BAR_WIDTH,
             disableSortBy: true,
           });
         }
@@ -488,14 +559,16 @@ const FlameGraphCallTreeContainer = memo(
             accessor: 'selfPercent',
             Cell: ({ value }: { value: number }) => `${value.toFixed(2)}%`,
             sortType: 'basic',
-            width: 100,
+            width: BASELINE_WIDTH,
+            minWidth: BASELINE_WIDTH,
           },
           {
             Header: 'Comparison %',
             accessor: 'selfPercentRight',
             Cell: ({ value }: { value: number | undefined }) => (value !== undefined ? `${value.toFixed(2)}%` : '-'),
             sortType: 'basic',
-            width: 100,
+            width: COMPARISON_WIDTH,
+            minWidth: COMPARISON_WIDTH,
           },
           {
             Header: 'Diff %',
@@ -504,7 +577,8 @@ const FlameGraphCallTreeContainer = memo(
               <DiffCell value={value} colorScheme={colorScheme} theme={theme} styles={styles} />
             ),
             sortType: 'basic',
-            width: 100,
+            width: DIFF_WIDTH,
+            minWidth: DIFF_WIDTH,
           }
         );
 
@@ -526,8 +600,8 @@ const FlameGraphCallTreeContainer = memo(
                 searchNodes={searchNodes}
               />
             ),
-            width: onSearch ? 75 : 50,
-            minWidth: onSearch ? 75 : 50,
+            width: ACTIONS_WIDTH,
+            minWidth: ACTIONS_WIDTH,
             disableSortBy: true,
           },
           {
@@ -548,8 +622,8 @@ const FlameGraphCallTreeContainer = memo(
                 toggleRowExpanded={tableInstance.toggleRowExpanded}
               />
             ),
-            minWidth: 200,
-            width: undefined,
+            minWidth: FUNCTION_MIN_WIDTH,
+            width: functionColumnWidth,
           },
         ];
 
@@ -561,8 +635,8 @@ const FlameGraphCallTreeContainer = memo(
               Cell: ({ row }: { row: Row<CallTreeNode> }) => (
                 <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} focusedNode={focusedNode} callersNode={callersNode} />
               ),
-              minWidth: 200,
-              width: 200,
+              minWidth: COLOR_BAR_WIDTH,
+              width: COLOR_BAR_WIDTH,
               disableSortBy: true,
             },
             {
@@ -579,8 +653,8 @@ const FlameGraphCallTreeContainer = memo(
                 );
               },
               sortType: 'basic',
-              minWidth: 120,
-              width: 120,
+              minWidth: SELF_WIDTH,
+              width: SELF_WIDTH,
             }
           );
         }
@@ -599,13 +673,13 @@ const FlameGraphCallTreeContainer = memo(
             );
           },
           sortType: 'basic',
-          minWidth: 120,
-          width: 120,
+          minWidth: TOTAL_WIDTH,
+          width: TOTAL_WIDTH,
         });
 
         return cols;
       }
-    }, [data, onSymbolClick, colorScheme, theme, styles, focusedNode, callersNode, callersNodeLabel, compact]);
+    }, [data, onSymbolClick, colorScheme, theme, styles, focusedNode, callersNode, callersNodeLabel, compact, functionColumnWidth, ACTIONS_WIDTH]);
 
     // toggleRowExpanded is used in the Cell renderers but doesn't need to be in the dependencies
     // because it's accessed at render time, not definition time
@@ -720,6 +794,12 @@ const FlameGraphCallTreeContainer = memo(
 
         <AutoSizer style={{ width: '100%', height: 'calc(100% - 50px)' }}>
           {({ width, height }) => {
+            // Update available width for compact mode detection
+            // Using a microtask to avoid state update during render
+            if (width !== availableWidth) {
+              queueMicrotask(() => setAvailableWidth(width));
+            }
+
             if (width < 3 || height < 3) {
               return null;
             }
@@ -791,8 +871,11 @@ const FlameGraphCallTreeContainer = memo(
                               <td
                                 key={cellKey}
                                 {...cellProps}
-                                className={cx(styles.td, isActionsColumn && styles.actionsColumnCell)}
-                                style={isValueColumn ? { textAlign: 'right' } : undefined}
+                                className={cx(
+                                  styles.td,
+                                  isActionsColumn && styles.actionsColumnCell,
+                                  isValueColumn && styles.valueColumnCell
+                                )}
                               >
                                 {cell.render('Cell', { rowIndex })}
                               </td>
@@ -1101,14 +1184,16 @@ function FunctionCellWithExpander({
   return (
     <div className={styles.functionCellContainer}>
       {connector && <span className={styles.treeConnector}>{connector} </span>}
-      <Button fill="text" size="sm" onClick={handleClick} className={styles.functionButton}>
-        {value}
-      </Button>
-      {!compact && row.original.childCount > 0 && (
-        <span className={styles.nodeBadge}>
-          {row.original.childCount} {row.original.childCount === 1 ? 'child' : 'children'}, {row.original.subtreeSize} {row.original.subtreeSize === 1 ? 'node' : 'nodes'}
-        </span>
-      )}
+      <span className={styles.functionNameWrapper}>
+        <Button fill="text" size="sm" onClick={handleClick} className={styles.functionButton}>
+          {value}
+        </Button>
+        {!compact && row.original.childCount > 0 && (
+          <span className={styles.nodeBadge}>
+            {row.original.childCount} {row.original.childCount === 1 ? 'child' : 'children'}, {row.original.subtreeSize} {row.original.subtreeSize === 1 ? 'node' : 'nodes'}
+          </span>
+        )}
+      </span>
     </div>
   );
 }
@@ -1251,6 +1336,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     table: css({
       width: '100%',
+      tableLayout: 'fixed',
       borderCollapse: 'collapse',
       fontSize: theme.typography.fontSize,
       color: theme.colors.text.primary,
@@ -1317,6 +1403,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderBottom: 'none',
       height: '20px',
       verticalAlign: 'middle',
+      overflow: 'hidden',
     }),
     valueCell: css({
       display: 'flex',
@@ -1329,13 +1416,15 @@ function getStyles(theme: GrafanaTheme2) {
     valueNumber: css({
       flex: '1 1 auto',
       textAlign: 'right',
-      minWidth: '80px',
+      whiteSpace: 'nowrap',
+      minWidth: '60px',
     }),
     percentNumber: css({
-      flex: '0 0 70px',
+      flex: '0 0 60px',
+      width: '60px',
       textAlign: 'right',
-      width: '70px',
       color: theme.colors.text.secondary,
+      whiteSpace: 'nowrap',
     }),
     functionCellContainer: css({
       display: 'flex',
@@ -1343,6 +1432,8 @@ function getStyles(theme: GrafanaTheme2) {
       gap: '2px',
       height: '20px',
       lineHeight: '1',
+      overflow: 'hidden',
+      minWidth: 0, // Allow flex items to shrink below content size
     }),
     treeConnector: css({
       color: theme.colors.text.secondary,
@@ -1352,17 +1443,30 @@ function getStyles(theme: GrafanaTheme2) {
       whiteSpace: 'pre',
       display: 'inline-block',
       verticalAlign: 'middle',
+      flexShrink: 0,
+    }),
+    functionNameWrapper: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      minWidth: 0,
     }),
     functionButton: css({
       padding: 0,
       fontSize: theme.typography.fontSize,
       textAlign: 'left',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      minWidth: 0,
+      flexShrink: 1,
     }),
     nodeBadge: css({
-      marginLeft: theme.spacing(1),
+      marginLeft: theme.spacing(0.5),
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
       whiteSpace: 'nowrap',
+      flexShrink: 0,
     }),
     sortIndicator: css({
       marginLeft: '4px',
@@ -1403,6 +1507,10 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         backgroundColor: theme.colors.background.secondary,
       },
+    }),
+    valueColumnCell: css({
+      overflow: 'visible',
+      textAlign: 'right',
     }),
     actionButton: css({
       padding: 0,

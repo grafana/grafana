@@ -189,12 +189,10 @@ const FlameGraphPane = ({
     [search, setSearch, resetFocus, onTableSymbolClick]
   );
 
-  const isInSplitView = selectedView === SelectedView.Multi && viewMode === ViewMode.Split;
-  const isCallTreeInSplitView = isInSplitView && paneView === PaneView.CallTree;
-
+  let content;
   switch (paneView) {
     case PaneView.TopTable:
-      return (
+      content = (
         <div className={styles.tableContainer}>
           <FlameGraphTopTableContainer
             data={dataContainer}
@@ -215,9 +213,10 @@ const FlameGraphPane = ({
           />
         </div>
       );
+      break;
     case PaneView.FlameGraph:
     default:
-      return (
+      content = (
         <FlameGraph
           data={dataContainer}
           rangeMin={rangeMin}
@@ -254,8 +253,9 @@ const FlameGraphPane = ({
           setCollapsedMap={setCollapsedMap}
         />
       );
+      break;
     case PaneView.CallTree:
-      return (
+      content = (
         <div className={styles.tableContainer}>
           <FlameGraphCallTreeContainer
             data={dataContainer}
@@ -265,13 +265,19 @@ const FlameGraphPane = ({
             onTableSort={onTableSort}
             colorScheme={colorScheme}
             search={search}
-            compact={isCallTreeInSplitView}
             onSearch={onCallTreeSearch}
             highlightedItemIndexes={highlightedItemIndexes}
           />
         </div>
       );
+      break;
   }
+
+  return (
+    <div className={styles.paneWrapper}>
+      {content}
+    </div>
+  );
 };
 
 function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
@@ -288,6 +294,10 @@ function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    paneWrapper: css({
+      width: '100%',
+      height: '100%',
+    }),
     tableContainer: css({
       // This is not ideal for dashboard panel where it creates a double scroll. In a panel it should be 100% but then
       // in explore we need a specific height.
