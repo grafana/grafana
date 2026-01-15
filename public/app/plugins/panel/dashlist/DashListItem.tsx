@@ -32,7 +32,7 @@ export function DashListItem({
   const onCardLinkClick = () => {
     reportInteraction('grafana_browse_dashboards_page_click_list_item', {
       itemKind: dashboard.kind,
-      source: 'browseDashboardsPage_BrowseView',
+      source: 'browseDashboardsPage_RecentlyViewed',
       uid: dashboard.uid,
       cardOrder: order,
     });
