@@ -31,9 +31,8 @@ type Plugin struct {
 
 	// SystemJS fields
 	Module          string
-	LoadingStrategy plugins.LoadingStrategy
 	BaseURL         string
-	ModuleHash      string
+	LoadingStrategy plugins.LoadingStrategy
 
 	Angular plugins.AngularMeta
 
@@ -83,7 +82,6 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		ExternalService:   p.ExternalService,
 		Angular:           p.Angular,
 		Translations:      p.Translations,
-		ModuleHash:        p.ModuleHash,
 	}
 
 	if p.Parent != nil {

@@ -28,6 +28,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -41,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -844,6 +848,11 @@ func Test_PluginsSettings(t *testing.T) {
 						ErrorCode: tc.errCode,
 					})
 				}
+				pCfg := &config.PluginManagementCfg{}
+				pluginCDN := pluginscdn.ProvideService(pCfg)
+				sig := signature.ProvideService(pCfg, statickey.New())
+				calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), pluginCDN, sig)
+				hs.pluginAssets = pluginassets.ProvideService(calc)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,

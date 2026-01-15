@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -130,6 +131,8 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideBaseService,
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
 	plugininstaller.ProvideService,
+	pluginassets.ProvideModuleHashCalculator,
+	pluginassets.ProvideService,
 	pluginchecker.ProvidePreinstall,
 	wire.Bind(new(pluginchecker.Preinstall), new(*pluginchecker.PreinstallImpl)),
 	advisor.ProvideService,

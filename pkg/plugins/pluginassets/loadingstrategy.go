@@ -65,3 +65,7 @@ func compatibleCreatePluginVersion(ps map[string]string) bool {
 	}
 	return false
 }
+
+func cdnEnabled(p *plugins.Plugin, cdn *pluginscdn.Service) bool {
+	return cdn.PluginSupported(p.ID) || p.FS.Type().CDN()
+}

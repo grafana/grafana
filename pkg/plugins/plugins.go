@@ -40,7 +40,6 @@ type Plugin struct {
 	Pinned          bool
 
 	// Signature fields
-	Manifest      *PluginManifest
 	Signature     SignatureStatus
 	SignatureType SignatureType
 	SignatureOrg  string
@@ -50,9 +49,8 @@ type Plugin struct {
 
 	// SystemJS fields
 	Module          string
-	ModuleHash      string
-	LoadingStrategy LoadingStrategy
 	BaseURL         string
+	LoadingStrategy LoadingStrategy
 
 	Angular AngularMeta
 
@@ -534,25 +532,4 @@ func (pt Type) IsValid() bool {
 		return true
 	}
 	return false
-}
-
-// PluginManifest holds details for the file manifest
-type PluginManifest struct {
-	Plugin  string            `json:"plugin"`
-	Version string            `json:"version"`
-	KeyID   string            `json:"keyId"`
-	Time    int64             `json:"time"`
-	Files   map[string]string `json:"files"`
-
-	// V2 supported fields
-	ManifestVersion string        `json:"manifestVersion"`
-	SignatureType   SignatureType `json:"signatureType"`
-	SignedByOrg     string        `json:"signedByOrg"`
-	SignedByOrgName string        `json:"signedByOrgName"`
-	RootURLs        []string      `json:"rootUrls"`
-}
-
-// IsV2 returns true if the manifest is version 2.x
-func (m *PluginManifest) IsV2() bool {
-	return strings.HasPrefix(m.ManifestVersion, "2.")
 }
