@@ -807,7 +807,8 @@
       "label-integration": "Integráció",
       "label-notification-settings": "Értesítési beállítások",
       "label-section": "Opcionális {{name}}-beállítások",
-      "test": "Teszt"
+      "test": "Teszt",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "OF",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Ez az erőforrás ki van építve ({{provenance}}), és nem szerkeszthető a felhasználói felületen keresztül",
       "badge-tooltip-standard": "Ez az erőforrás ki van építve, és nem szerkeszthető a felhasználói felületen keresztül",
+      "body-imported": "",
       "body-provisioned": "Ez a(z) {{resource}} ki van építve, ami azt jelenti, hogy konfiguráció hozta létre. Ezen {{resource}} frissítéshez forduljon a kiszolgáló rendszergazdájához.",
+      "title-imported": "",
       "title-provisioned": "Ez a(z) {{resource}} nem szerkeszthető a felhasználói felületen keresztül"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Kiépítve"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6380,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasszikus",
         "json": "JSON",
         "v1-resource": "V1 erőforrás",
         "v2-resource": "V2 erőforrás",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Biztosan visszaállítja az irányítópultot a(z) {{version}} verzióra? Az összes nem mentett módosítás elveszik.",
@@ -6980,6 +6986,7 @@
         "drone-datasource": "Drone-adatforrás",
         "git-lab-integration-and-datasource": "GitLab-integráció és -adatforrás",
         "honeycomb-integration-and-datasource": "Honeycomb-integráció és -adatforrás",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira-integráció és -adatforrás",
         "logic-monitor-devices-datasource": "LogicMonitor Devices-adatforrás",
         "mongo-db-integration-and-data-source": "MongoDB-integráció és -adatforrás",
@@ -7838,7 +7845,6 @@
       "export-externally-label": "Exportálja az irányítópultot egy másik példányban való használathoz",
       "export-format": "Formátum",
       "export-mode": "Modell",
-      "export-remove-ds-refs": "Üzembehelyezési részletek eltávolítása",
       "info-text": "Másolja vagy töltse le az irányítópult definícióját tartalmazó fájlt",
       "title": "Irányítópult exportálása"
     },
