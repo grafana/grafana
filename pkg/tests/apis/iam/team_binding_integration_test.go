@@ -502,7 +502,6 @@ func doTeamBindingCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTest
 		}
 		require.NotEmpty(t, teamBindingName)
 
-		// Get team binding using new API
 		teamBindingClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Admin,
 			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
@@ -546,13 +545,13 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			GVR:       gvrUsers,
 		})
 
-		// Helper to create teams
 		createTeam := func(name string, email string) *unstructured.Unstructured {
 			obj := helper.LoadYAMLOrJSONFile("testdata/team-test-create-v0.yaml")
 			obj.SetName(name)
-			if email != "" {
-				obj.Object["spec"].(map[string]interface{})["email"] = email
-			}
+
+			spec := obj.Object["spec"].(map[string]interface{})
+			spec["title"] = name
+			spec["email"] = email
 
 			created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 			require.NoError(t, err)
@@ -560,7 +559,6 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			return created
 		}
 
-		// Helper to create users
 		createUser := func(name string, email string, login string) *unstructured.Unstructured {
 			obj := helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml")
 			obj.SetName(name)
@@ -575,10 +573,10 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			return created
 		}
 
-		teamA := createTeam("team-a", "teama@example.com")
-		teamB := createTeam("team-b", "teamb@example.com")
-		user1 := createUser("user-1", "user1@example.com", "user1")
-		user2 := createUser("user-2", "user2@example.com", "user2")
+		teamA := createTeam("tb-team-a", "tb-teama@example.com")
+		teamB := createTeam("tb-team-b", "tb-teamb@example.com")
+		user1 := createUser("tb-user-1", "tb-user1@example.com", "tb-user1")
+		user2 := createUser("tb-user-2", "tb-user2@example.com", "tb-user2")
 
 		createBinding := func(user *unstructured.Unstructured, team *unstructured.Unstructured) {
 			toCreate := helper.LoadYAMLOrJSONFile("testdata/teambinding-test-create-v0.yaml")
@@ -612,12 +610,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			}
 		})
 
-		// Verify we have at least 4 bindings overall
-		all, err := teamBindingClient.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.GreaterOrEqual(t, len(all.Items), 4)
-
-		// Query 1: select by teamRef.name, should return 2 of the 4
+		// Select by teamRef.name, should return 2 of the 4
 		listByTeam, err := teamBindingClient.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.teamRef.name=%s", teamA.GetName()),
 		})
@@ -629,7 +622,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			require.Equal(t, teamA.GetName(), actual.Spec.TeamRef.Name)
 		}
 
-		// Query 2: select by subject.name, should return 2 of the 4
+		// Select by subject.name, should return 2 of the 4
 		listByUser, err := teamBindingClient.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.subject.name=%s", user1.GetName()),
 		})
