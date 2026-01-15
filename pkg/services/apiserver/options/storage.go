@@ -4,16 +4,24 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
 
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+
+	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
@@ -87,6 +95,58 @@ type StorageOptions struct {
 	ConfigProvider RestConfigProvider
 }
 
+// unifiedStorageConfigValue implements pflag.Value for parsing unified storage config
+type unifiedStorageConfigValue struct {
+	config *map[string]setting.UnifiedStorageConfig
+}
+
+func (v *unifiedStorageConfigValue) String() string {
+	if v.config == nil || len(*v.config) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(*v.config))
+	for key, cfg := range *v.config {
+		parts = append(parts, fmt.Sprintf("%s=%d", key, cfg.DualWriterMode))
+	}
+	return strings.Join(parts, ",")
+}
+
+func (v *unifiedStorageConfigValue) Set(val string) error {
+	if val == "" {
+		return nil
+	}
+
+	// Parse comma-separated key=value pairs
+	pairs := strings.Split(val, ",")
+	for _, pair := range pairs {
+		kv := strings.SplitN(pair, "=", 2)
+		if len(kv) != 2 {
+			return fmt.Errorf("invalid format: %s (expected key=value)", pair)
+		}
+
+		key := strings.TrimSpace(kv[0])
+		mode, err := strconv.Atoi(strings.TrimSpace(kv[1]))
+		if err != nil {
+			return fmt.Errorf("invalid mode value for %s: %w", key, err)
+		}
+
+		if mode < 0 || mode > 5 {
+			return fmt.Errorf("mode must be between 0 and 5, got %d for %s", mode, key)
+		}
+
+		(*v.config)[key] = setting.UnifiedStorageConfig{
+			DualWriterMode:                      apiserverrest.DualWriterMode(mode),
+			DualWriterMigrationDataSyncDisabled: true,
+		}
+	}
+
+	return nil
+}
+
+func (v *unifiedStorageConfigValue) Type() string {
+	return "stringToUnifiedStorageConfig"
+}
+
 func NewStorageOptions() *StorageOptions {
 	return &StorageOptions{
 		StorageType:                            StorageTypeUnified,
@@ -95,6 +155,7 @@ func NewStorageOptions() *StorageOptions {
 		GrpcClientAuthenticationAllowInsecure:  false,
 		GrpcClientKeepaliveTime:                0,
 		BlobThresholdBytes:                     BlobThresholdDefault,
+		UnifiedStorageConfig:                   make(map[string]setting.UnifiedStorageConfig),
 	}
 }
 
@@ -108,6 +169,11 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.GrpcClientAuthenticationTokenNamespace, "grpc-client-authentication-token-namespace", o.GrpcClientAuthenticationTokenNamespace, "Token namespace for grpc client authentication")
 	fs.BoolVar(&o.GrpcClientAuthenticationAllowInsecure, "grpc-client-authentication-allow-insecure", o.GrpcClientAuthenticationAllowInsecure, "Allow insecure grpc client authentication")
 	fs.DurationVar(&o.GrpcClientKeepaliveTime, "grpc-client-keepalive-time", o.GrpcClientKeepaliveTime, "gRPC client keep-alive ping interval (e.g., 6m).")
+
+	// Use custom flag value for unified storage config
+	fs.Var(&unifiedStorageConfigValue{config: &o.UnifiedStorageConfig},
+		"grafana-apiserver-unified-storage-config",
+		"Unified storage configuration per resource.group in the format resource.group=mode,... where mode is 0-5")
 
 	// Secrets Manager Configuration flags
 	fs.BoolVar(&o.SecretsManagerGrpcClientEnable, "grafana.secrets-manager.grpc-client-enable", false, "Enable gRPC client for secrets manager")
@@ -171,19 +237,16 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if o.StorageType != StorageTypeUnifiedGrpc {
 		return nil
 	}
-	conn, err := grpc.NewClient(o.Address,
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+
+	grpcOpts := o.buildGrpcDialOptions()
+
+	conn, err := grpc.NewClient(o.Address, grpcOpts...)
 	if err != nil {
 		return err
 	}
 	var indexConn *grpc.ClientConn
 	if o.SearchServerAddress != "" {
-		indexConn, err = grpc.NewClient(o.SearchServerAddress,
-			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-		)
+		indexConn, err = grpc.NewClient(o.SearchServerAddress, grpcOpts...)
 		if err != nil {
 			return err
 		}
@@ -231,4 +294,43 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter
 	return nil
+}
+
+// buildGrpcDialOptions creates gRPC dial options with resilience mechanisms:
+// - Round-robin load balancing with client-side health checking
+// - Retry interceptor for transient connection issues
+// - Keepalive for long-lived connections
+func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
+	// Retry interceptor for transient connection issues (codes.Unavailable includes connection refused)
+	retryInterceptor := grpc_retry.UnaryClientInterceptor(
+		grpc_retry.WithMax(3),
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
+	)
+
+	opts := []grpc.DialOption{
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(retryInterceptor),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoff.Config{
+				BaseDelay:  100 * time.Millisecond,
+				Multiplier: 1.6,
+				Jitter:     0.2,
+				MaxDelay:   10 * time.Second,
+			},
+			MinConnectTimeout: 5 * time.Second,
+		}),
+	}
+
+	if o.GrpcClientKeepaliveTime > 0 {
+		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                o.GrpcClientKeepaliveTime,
+			Timeout:             10 * time.Second,
+			PermitWithoutStream: true,
+		}))
+	}
+
+	return opts
 }

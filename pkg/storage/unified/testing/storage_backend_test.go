@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestBadgerKVStorageBackend(t *testing.T) {
@@ -25,7 +26,7 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		require.NoError(t, err)
 		return backend
 	}, &TestOptions{
-		NSPrefix: "kvstorage-test",
+		NSPrefix: "badgerkvstorage-test",
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
 			TestBlobSupport:       true,
@@ -33,5 +34,35 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 			// Badger does not support bulk import yet.
 			TestGetResourceLastImportTime: true,
 		},
+	})
+}
+
+func TestIntegrationSQLKVStorageBackend(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	skipTests := map[string]bool{
+		TestBlobSupport:               true,
+		TestListModifiedSince:         true,
+		TestGetResourceLastImportTime: true,
+	}
+
+	t.Run("Without RvManager", func(t *testing.T) {
+		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			backend, _ := NewTestSqlKvBackend(t, ctx, false)
+			return backend
+		}, &TestOptions{
+			NSPrefix:  "sqlkvstoragetest",
+			SkipTests: skipTests,
+		})
+	})
+
+	t.Run("With RvManager", func(t *testing.T) {
+		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			backend, _ := NewTestSqlKvBackend(t, ctx, true)
+			return backend
+		}, &TestOptions{
+			NSPrefix:  "sqlkvstoragetest-rvmanager",
+			SkipTests: skipTests,
+		})
 	})
 }

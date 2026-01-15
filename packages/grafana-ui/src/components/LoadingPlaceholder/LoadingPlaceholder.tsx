@@ -15,6 +15,9 @@ export interface LoadingPlaceholderProps extends HTMLAttributes<HTMLDivElement> 
 }
 
 /**
+ * Loading indicator with a text. Used to alert a user to wait for an activity to complete.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-loadingplaceholder--docs
  * @public
  */
 export const LoadingPlaceholder = ({ text, className, ...rest }: LoadingPlaceholderProps) => {

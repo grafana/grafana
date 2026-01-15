@@ -14,10 +14,10 @@ import {
   ActionType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { ConfirmModal, VariablesInputModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
-import { config } from 'app/core/config';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions/context';
 import {
@@ -1090,7 +1090,7 @@ export class ElementState implements LayerElement {
     );
   };
 
-  render() {
+  renderElement() {
     const { item, div } = this;
     const scene = this.getScene();
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
@@ -1108,12 +1108,7 @@ export class ElementState implements LayerElement {
           tabIndex={0}
           style={{ userSelect: 'none' }}
         >
-          <item.display
-            key={`${this.UID}/${this.revId}`}
-            config={this.options.config}
-            data={this.data}
-            isSelected={isSelected}
-          />
+          <item.display key={this.UID} config={this.options.config} data={this.data} isSelected={isSelected} />
         </div>
         {this.showActionConfirmation && this.renderActionsConfirmModal(this.getPrimaryAction())}
         {this.showActionVarsModal && this.renderVariablesInputModal(this.getPrimaryAction())}

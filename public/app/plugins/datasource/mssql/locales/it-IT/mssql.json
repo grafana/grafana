@@ -69,7 +69,7 @@
       "description-encrypt-false": "",
       "description-encrypt-older-version": "Se utilizzi una versione precedente di Microsoft SQL Server come 2008 e 2008R2, potrebbe essere necessario disabilitare la crittografia per potersi connettere.",
       "description-encrypt-true": "",
-      "description-min-interval": "",
+      "description-min-interval": "Un limite inferiore per il raggruppamento automatico per intervallo di tempo. Si consiglia di impostare la frequenza di scrittura, ad esempio <1>{{exampleInterval}}</1> se i dati vengono scritti ogni minuto.",
       "description-tls-cert": "Percorso al file contenente il certificato di chiave pubblica della CA che ha firmato il certificato di SQL Server. Necessario quando il certificato del server è autofirmato.",
       "label-auth-settings": "Impostazioni di autenticazione di Azure",
       "label-auth-type": "Tipo di autenticazione",
@@ -104,7 +104,7 @@
     },
     "kerberos-advanced-settings": {
       "description-dns-lookup-kdc": "Indica se i record DNS \"SRV\" devono essere utilizzati per individuare i KDC e altri server per un'area di autenticazione. Il valore predefinito è <1>{{default}}</1>.",
-      "description-krb5-config-file-path": "",
+      "description-krb5-config-file-path": "Il percorso al file di configurazione per il <2>pacchetto MIT krb5</2>. Il valore predefinito è <4>{{default}}</4>.",
       "description-udp-preference-limit": "Il valore predefinito è <1>{{default}}</1> e significa che si utilizza sempre TCP ed è facoltativo.",
       "label-dns-lookup-kdc": "KDC di ricerca DNS",
       "label-krb5-config-file-path": "percorso del file di configurazione krb5",

@@ -4,7 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Stack, Button } from '@grafana/ui';
-import { appEvents } from 'app/core/core';
+import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -21,6 +21,7 @@ import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
@@ -95,6 +96,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public useEditPaneOptions = useEditPaneOptions.bind(this);
 
   public onDelete() {
+    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
   }
@@ -116,11 +118,13 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate() {
+    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.duplicatePanel?.(this.panel);
   }
 
   public onCopy() {
+    DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), 'edit_pane');
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
   }
@@ -147,7 +151,9 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
     <Stack alignItems="center" width="100%">
       <Button
         onClick={() => {
-          locationService.partial({ editPanel: getPanelIdForVizPanel(panel) });
+          const panelId = getPanelIdForVizPanel(panel);
+          locationService.partial({ editPanel: panelId });
+          DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
         }}
         icon="sliders-v-alt"
         fullWidth

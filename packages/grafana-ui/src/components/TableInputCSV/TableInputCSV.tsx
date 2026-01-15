@@ -102,7 +102,11 @@ export class UnThemedTableInputCSV extends PureComponent<Props, State> {
   }
 }
 
-/** @deprecated */
+/**
+ * @deprecated
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-tableinputcsv--docs
+ */
 export const TableInputCSV = withTheme2(UnThemedTableInputCSV);
 TableInputCSV.displayName = 'TableInputCSV';
 

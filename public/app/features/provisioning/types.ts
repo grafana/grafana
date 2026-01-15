@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 
 import {
   BitbucketRepositoryConfig,
+  ConnectionSpec,
   GitHubRepositoryConfig,
   GitLabRepositoryConfig,
   GitRepositoryConfig,
@@ -44,11 +45,22 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
   LocalRepositoryConfig & {
     readOnly: boolean;
     prWorkflow: boolean;
+    enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
   };
 
 export type RepositorySettingsField = Path<RepositoryFormData>;
+
+// Connection type definition - extracted from API client
+export type ConnectionType = ConnectionSpec['type'];
+
+export type ConnectionFormData = {
+  type: ConnectionSpec['type'];
+  appID: string;
+  installationID: string;
+  privateKey?: string;
+};
 
 // Section configuration
 export interface RepositorySection {
@@ -82,7 +94,7 @@ export type AuthorInfo = {
 
 export type FileDetails = {
   path: string;
-  size: string;
+  size?: string;
   hash: string;
 };
 
@@ -96,4 +108,25 @@ export type HistoryListResponse = {
 export interface StatusInfo {
   title?: string;
   message?: string | string[];
+}
+
+// Tree view types for combined Resources/Files view
+export type ItemType = 'Folder' | 'File' | 'Dashboard';
+export type SyncStatus = 'synced' | 'pending';
+
+export interface TreeItem {
+  title: string;
+  type: ItemType;
+  path: string;
+  level: number;
+  children: TreeItem[];
+  resourceName?: string;
+  hash?: string;
+  status?: SyncStatus;
+  hasFile?: boolean;
+}
+
+export interface FlatTreeItem {
+  item: TreeItem;
+  level: number;
 }

@@ -32,14 +32,16 @@ type FSFrontendSettings struct {
 	RudderstackWriteKey        string `json:"rudderstackWriteKey,omitempty"`
 	RudderstackDataPlaneUrl    string `json:"rudderstackDataPlaneUrl,omitempty"`
 	RudderstackSdkUrl          string `json:"rudderstackSdkUrl,omitempty"`
+	RudderstackV3SdkUrl        string `json:"rudderstackV3SdkUrl,omitempty"`
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl,omitempty"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl,omitempty"`
 
 	AnalyticsConsoleReporting bool                           `json:"analyticsConsoleReporting,omitempty"`
 	GrafanaJavascriptAgent    setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent,omitempty"`
 
-	ApplicationInsightsConnectionString string `json:"applicationInsightsConnectionString,omitempty"`
-	ApplicationInsightsEndpointUrl      string `json:"applicationInsightsEndpointUrl,omitempty"`
+	ApplicationInsightsConnectionString  string `json:"applicationInsightsConnectionString,omitempty"`
+	ApplicationInsightsEndpointUrl       string `json:"applicationInsightsEndpointUrl,omitempty"`
+	ApplicationInsightsAutoRouteTracking bool   `json:"applicationInsightsAutoRouteTracking,omitempty"`
 
 	TrustedTypesDefaultPolicyEnabled bool              `json:"trustedTypesDefaultPolicyEnabled,omitempty"`
 	CSPReportOnlyEnabled             bool              `json:"cspReportOnlyEnabled,omitempty"`

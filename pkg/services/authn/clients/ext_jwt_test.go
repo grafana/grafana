@@ -53,6 +53,17 @@ var (
 			Namespace:       "default", // org ID of 1 is special and translates to default
 		},
 	}
+	validIDTokenClaimsWithServiceAccount = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "service-account:3",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: "extended_jwt",
+			Namespace:       "default", // org ID of 1 is special and translates to default
+		},
+	}
 	validIDTokenClaimsWithStackSet = idTokenClaims{
 		Claims: jwt.Claims{
 			Subject:  "user:2",
@@ -118,7 +129,7 @@ var (
 	}
 	invalidSubjectIDTokenClaims = idTokenClaims{
 		Claims: jwt.Claims{
-			Subject:  "service-account:2",
+			Subject:  "anonymous:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
@@ -287,6 +298,29 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 		},
 		{
+			name:        "should authenticate as service account",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithServiceAccount,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "3",
+				Type:              claims.TypeServiceAccount,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithServiceAccount,
+				Namespace:         "default",
+				AuthenticatedBy:   "extendedjwt",
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+					},
+				},
+			},
+		},
+		{
 			name:        "should authenticate as user in the user namespace",
 			accessToken: &validAccessTokenClaimsWildcard,
 			idToken:     &validIDTokenClaims,
@@ -373,23 +407,10 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					ExpectIssuer: "http://localhost:3000",
 				},
 			},
-			want: &authn.Identity{
-				ID:                "this-uid",
-				UID:               "this-uid",
-				Name:              "this-uid",
-				Type:              claims.TypeAccessPolicy,
-				OrgID:             1,
-				AccessTokenClaims: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
-				Namespace:         "stack-1234",
-				AuthenticatedBy:   "extendedjwt",
-				AuthID:            "access-policy:this-uid",
-				ClientParams: authn.ClientParams{
-					SyncPermissions: true,
-				},
-			},
+			wantErr: errExtJWTDisallowedNamespaceClaim,
 		},
 		{
-			name:        "should authenticate as user using specific deprecated namespace claim in access and id tokens",
+			name:        "should NOT authenticate as user using specific deprecated namespace claim in access and id tokens",
 			accessToken: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
 			idToken:     &validIDTokenClaimsWithDeprecatedStackClaimSet,
 			orgID:       1,
@@ -401,20 +422,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					ExpectIssuer: "http://localhost:3000",
 				},
 			},
-			want: &authn.Identity{
-				ID:                "2",
-				Type:              claims.TypeUser,
-				OrgID:             1,
-				AccessTokenClaims: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
-				IDTokenClaims:     &validIDTokenClaimsWithDeprecatedStackClaimSet,
-				Namespace:         "stack-1234",
-				AuthenticatedBy:   "extendedjwt",
-				AuthID:            "access-policy:this-uid",
-				ClientParams: authn.ClientParams{
-					SyncPermissions: true,
-					FetchSyncedUser: true,
-				},
-			},
+			wantErr: errExtJWTDisallowedNamespaceClaim,
 		},
 		{
 			name:        "should authenticate as user using wildcard namespace for access token, setting allowed namespace to specific",

@@ -64,7 +64,7 @@ jobs:
         run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: buildPr
           path: './pr/pr_built_packages.zip'
@@ -116,7 +116,7 @@ jobs:
         run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: buildBase
           path: './base/base_built_packages.zip'
@@ -141,12 +141,12 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: buildBase
 
@@ -189,7 +189,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
       - name: Upload check output as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: levitate
           path: levitate/
@@ -225,7 +225,7 @@ jobs:
           persist-credentials: false
 
       - name: 'Download artifact'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: levitate
 

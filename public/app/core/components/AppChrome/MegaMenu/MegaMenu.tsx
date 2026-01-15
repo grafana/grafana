@@ -7,12 +7,13 @@ import { usePatchUserPreferencesMutation } from '@grafana/api-clients/rtkq/legac
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
 
+import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
@@ -40,32 +41,26 @@ export const MegaMenu = memo(
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
-    if (config.featureToggles.pinNavItems) {
-      const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
-      if (bookmarksItem) {
-        // Add children to the bookmarks section
-        bookmarksItem.children = pinnedItems.reduce((acc: NavModelItem[], url) => {
-          const item = findByUrl(navItems, url);
-          if (!item) {
-            return acc;
-          }
-          const newItem = {
-            id: item.id,
-            text: item.text,
-            url: item.url,
-            parentItem: { id: 'bookmarks', text: 'Bookmarks' },
-          };
-          acc.push(enrichWithInteractionTracking(newItem, state.megaMenuDocked));
+    const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
+    if (bookmarksItem) {
+      // Add children to the bookmarks section
+      bookmarksItem.children = pinnedItems.reduce((acc: NavModelItem[], url) => {
+        const item = findByUrl(navItems, url);
+        if (!item) {
           return acc;
-        }, []);
-      }
+        }
+        const newItem = {
+          id: item.id,
+          text: item.text,
+          url: item.url,
+          parentItem: { id: 'bookmarks', text: 'Bookmarks' },
+        };
+        acc.push(enrichWithInteractionTracking(newItem, state.megaMenuDocked));
+        return acc;
+      }, []);
     }
 
     const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
-
-    const handleMegaMenu = () => {
-      chrome.setMegaMenuOpen(!state.megaMenuOpen);
-    };
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -85,8 +80,8 @@ export const MegaMenu = memo(
     );
 
     const onPinItem = (item: NavModelItem) => {
-      const url = item.url;
-      if (url && config.featureToggles.pinNavItems) {
+      const { url } = item;
+      if (url) {
         const isSaved = isPinned(url);
         const newItems = isSaved ? pinnedItems.filter((i) => url !== i) : [...pinnedItems, url];
         const interactionName = isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
@@ -109,21 +104,24 @@ export const MegaMenu = memo(
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
-        <MegaMenuHeader handleDockedMenu={handleDockedMenu} handleMegaMenu={handleMegaMenu} onClose={onClose} />
+        <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
-            <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-              {navItems.map((link, index) => (
-                <MegaMenuItem
-                  key={link.text}
-                  link={link}
-                  isPinned={isPinned}
-                  onClick={state.megaMenuDocked ? undefined : onClose}
-                  activeItem={activeItem}
-                  onPin={onPinItem}
-                />
-              ))}
-            </ul>
+            <>
+              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
+                {navItems.map((link, index) => (
+                  <MegaMenuItem
+                    key={link.text}
+                    link={link}
+                    isPinned={isPinned}
+                    onClick={state.megaMenuDocked ? undefined : onClose}
+                    activeItem={activeItem}
+                    onPin={onPinItem}
+                  />
+                ))}
+              </ul>
+              <MegaMenuExtensionPoint />
+            </>
           </ScrollContainer>
         </nav>
       </div>
@@ -157,7 +155,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       listStyleType: 'none',
-      padding: theme.spacing(1, 1, 2, 1),
+      padding: theme.spacing(1, 1, 2, 0.5),
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },

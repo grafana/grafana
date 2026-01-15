@@ -4,14 +4,9 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -30,25 +25,16 @@ type ResourceStore interface {
 }
 
 type ResourceListerFromSearch struct {
-	store          ResourceStore
-	legacyMigrator legacy.LegacyMigrator
-	storageStatus  dualwrite.Service
+	store ResourceStore
 }
 
 func NewResourceLister(store ResourceStore) ResourceLister {
 	return &ResourceListerFromSearch{store: store}
 }
 
-// FIXME: the logic about migration and storage should probably be separated from this
-func NewResourceListerForMigrations(
-	store ResourceStore,
-	legacyMigrator legacy.LegacyMigrator,
-	storageStatus dualwrite.Service,
-) ResourceLister {
+func NewResourceListerForMigrations(store ResourceStore) ResourceLister {
 	return &ResourceListerFromSearch{
-		store:          store,
-		legacyMigrator: legacyMigrator,
-		storageStatus:  storageStatus,
+		store: store,
 	}
 }
 
@@ -129,37 +115,6 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 
 	// When selecting an explicit repository, do not fetch global stats
 	if repository != "" {
-		return stats, nil
-	}
-
-	// Get the stats based on what a migration could support
-	if o.storageStatus != nil && o.legacyMigrator != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, o.storageStatus) {
-		rsp, err := o.legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
-			Namespace: namespace,
-			Resources: []schema.GroupResource{{
-				Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,
-			}, {
-				Group: folders.GROUP, Resource: folders.RESOURCE,
-			}},
-			WithHistory: false,
-			OnlyCount:   true,
-		})
-		if err != nil {
-			return nil, err
-		}
-		for _, v := range rsp.Summary {
-			stats.Instance = append(stats.Instance, provisioning.ResourceCount{
-				Group:    v.Group,
-				Resource: v.Resource,
-				Count:    v.Count,
-			})
-			// Everything is unmanaged in legacy storage
-			stats.Unmanaged = append(stats.Unmanaged, provisioning.ResourceCount{
-				Group:    v.Group,
-				Resource: v.Resource,
-				Count:    v.Count,
-			})
-		}
 		return stats, nil
 	}
 

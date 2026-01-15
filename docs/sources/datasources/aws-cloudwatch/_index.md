@@ -105,6 +105,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
+  cloudwatch-troubleshooting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/troubleshooting/
 ---
 
 # Amazon CloudWatch data source
@@ -119,6 +124,7 @@ The following documents will help you get started working with the CloudWatch da
 - [CloudWatch query editor](ref:cloudwatch-query-editor)
 - [Templates and variables](ref:cloudwatch-template-variables)
 - [Configure AWS authentication](ref:cloudwatch-aws-authentication)
+- [Troubleshoot CloudWatch issues](ref:cloudwatch-troubleshooting)
 
 ## Import pre-configured dashboards
 

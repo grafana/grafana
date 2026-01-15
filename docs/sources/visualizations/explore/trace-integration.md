@@ -42,7 +42,7 @@ For information on how to use the query editor to create queries for tracing dat
 
 ## Trace view
 
-Grafana's trace view provides an overview of a request as it travels through your system. The following sections provide detail on various elements of the trace view.
+The trace view provides an overview of a request as it travels through your system. The following sections provide detail on various elements of the trace view.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace view" >}}
 
@@ -75,6 +75,14 @@ Timeline shows list of spans within the trace. Each span row consists of the fol
 Click anywhere on the span row to reveal span details.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view timeline" >}}
+
+The **Span duration bar** highlights the trace’s critical path with a darker segment. This darker segment means the span lies on the trace’s critical path, following the CRISP (Critical Path for Service Performance) algorithm.
+
+Use the highlight to focus on spans that drive end‑to‑end latency. Spans outside the critical path do not increase the trace duration.
+
+{{< figure src="/media/docs/grafana/explore/traces-panel-critical-path.png" class="docs-image--no-shadow" max-width= "900px"  caption="Critical path span" >}}
+
+You can also focus on this path by clicking the **Show critical path only** button in the **Span filters** options.
 
 ### Span details
 
@@ -129,9 +137,6 @@ You can add one or more of the following filters:
 To only show the spans you have matched, toggle **Show matches only**.
 
 Refer to [Span filters](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/span-filters/) for more in depth information.
-
-Watch the following video to learn more about filtering trace spans in Grafana:
-{{< youtube id="VP2XV3IIc80" >}}
 
 ### Trace to logs
 

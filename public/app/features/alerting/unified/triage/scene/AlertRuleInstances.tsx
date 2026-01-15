@@ -12,7 +12,7 @@ import { METRIC_NAME } from '../constants';
 import { GenericRow } from '../rows/GenericRow';
 import { InstanceRow } from '../rows/InstanceRow';
 
-import { getDataQuery } from './utils';
+import { getDataQuery, useQueryFilter } from './utils';
 
 function extractInstancesFromData(series: DataFrame[] | undefined) {
   if (!series) {
@@ -47,9 +47,11 @@ type AlertRuleInstancesProps = {
 export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesProps) {
   const { leftColumnWidth } = useWorkbenchContext();
   const [timeRange] = useTimeRange();
+  const queryFilter = useQueryFilter();
 
+  const filters = queryFilter ? `grafana_rule_uid="${ruleUID}",${queryFilter}` : `grafana_rule_uid="${ruleUID}"`;
   const query = getDataQuery(
-    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${METRIC_NAME}{grafana_rule_uid="${ruleUID}"})`,
+    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${METRIC_NAME}{${filters}})`,
     { format: 'timeseries', legendFormat: '{{alertstate}}' }
   );
 

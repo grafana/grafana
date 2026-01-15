@@ -24,9 +24,9 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
-    ...jest.requireActual('app/core/core').contextSrv,
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasPermission: () => true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },

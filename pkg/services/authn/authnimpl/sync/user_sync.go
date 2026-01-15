@@ -77,6 +77,10 @@ var (
 		"user.sync.user-externalUID-mismatch",
 		errutil.WithPublicMessage("User externalUID mismatch"),
 	)
+	errSCIMAuthModuleMismatch = errutil.Unauthorized(
+		"user.sync.scim-auth-module-mismatch",
+		errutil.WithPublicMessage("User was provisioned via SCIM and must login via SAML"),
+	)
 )
 
 var (
@@ -308,6 +312,21 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		// just try to fetch the user one more to make the other request work.
 		if errors.Is(err, user.ErrUserAlreadyExists) {
 			usr, _, err = s.getUser(ctx, id)
+
+			// Check if this is a SCIM-provisioned user trying to login via an auth module that is not SAML or GCOM
+			if err == nil && usr != nil && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
+				_, authErr := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+					UserId:     usr.ID,
+					AuthModule: id.AuthenticatedBy,
+				})
+				if errors.Is(authErr, user.ErrUserNotFound) {
+					s.log.FromContext(ctx).Error("SCIM-provisioned user attempted login via non-SAML auth module",
+						"user_id", usr.ID,
+						"attempted_module", id.AuthenticatedBy,
+					)
+					return errSCIMAuthModuleMismatch.Errorf("user was provisioned via SCIM but attempted login via %s", id.AuthenticatedBy)
+				}
+			}
 		}
 
 		if err != nil {

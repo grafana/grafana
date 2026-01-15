@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
-	shorturlv1alpha1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
+	shorturlv1beta1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -30,11 +30,12 @@ var (
 
 func New(cfg app.Config) (app.App, error) {
 	cfg.KubeConfig.APIPath = "apis"
-	client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
-		ClientFor(shorturlv1alpha1.ShortURLKind())
+	tmp, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).
+		ClientFor(shorturlv1beta1.ShortURLKind())
 	if err != nil {
 		return nil, fmt.Errorf("unable to create client")
 	}
+	client := shorturlv1beta1.NewShortURLClient(tmp)
 
 	simpleConfig := simple.AppConfig{
 		Name:       "shorturl",
@@ -48,11 +49,11 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: shorturlv1alpha1.ShortURLKind(),
+				Kind: shorturlv1beta1.ShortURLKind(),
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 						// Cast the incoming object to ShortURL for validation
-						shortURL, ok := req.Object.(*shorturlv1alpha1.ShortURL)
+						shortURL, ok := req.Object.(*shorturlv1beta1.ShortURL)
 						if !ok {
 							return fmt.Errorf("expected ShortURL object, got %T", req.Object)
 						}
@@ -81,8 +82,8 @@ func New(cfg app.Config) (app.App, error) {
 							Name:      req.ResourceIdentifier.Name,
 						}
 
-						info := &shorturlv1alpha1.ShortURL{}
-						if err := client.GetInto(ctx, id, info); err != nil {
+						info, err := client.Get(ctx, id)
+						if err != nil {
 							return err
 						}
 
@@ -93,13 +94,18 @@ func New(cfg app.Config) (app.App, error) {
 							if err != nil {
 								logging.FromContext(ctx).Warn("unable to create background identity", "err", err)
 							} else {
-								_, _ = client.Update(ctx, id, info, resource.UpdateOptions{})
+								_, err = client.UpdateStatus(ctx, id, info.Status, resource.UpdateOptions{
+									ResourceVersion: info.ResourceVersion,
+								})
+								if err != nil {
+									logging.FromContext(ctx).Warn("unable to update status", "err", err)
+								}
 							}
 						}()
 
 						url = url + "/" + info.Spec.Path
 						if req.URL.Query().Get("redirect") == "false" { // helpful for testing
-							return json.NewEncoder(w).Encode(shorturlv1alpha1.GetGoto{
+							return json.NewEncoder(w).Encode(shorturlv1beta1.GetGoto{
 								Url: url,
 							})
 						}
@@ -127,10 +133,10 @@ func New(cfg app.Config) (app.App, error) {
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := schema.GroupVersion{
-		Group:   shorturlv1alpha1.ShortURLKind().Group(),
-		Version: shorturlv1alpha1.ShortURLKind().Version(),
+		Group:   shorturlv1beta1.ShortURLKind().Group(),
+		Version: shorturlv1beta1.ShortURLKind().Version(),
 	}
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {shorturlv1alpha1.ShortURLKind()},
+		gv: {shorturlv1beta1.ShortURLKind()},
 	}
 }

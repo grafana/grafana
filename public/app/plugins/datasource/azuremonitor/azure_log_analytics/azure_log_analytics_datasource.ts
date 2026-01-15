@@ -6,7 +6,8 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import ResponseParser from '../azure_monitor/response_parser';
 import { getCredentials } from '../credentials';
-import { AzureMonitorQuery, AzureQueryType } from '../types/query';
+import { AzureQueryType } from '../dataquery.gen';
+import { AzureMonitorQuery } from '../types/query';
 import {
   AzureMonitorDataSourceJsonData,
   AzureMonitorDataSourceInstanceSettings,

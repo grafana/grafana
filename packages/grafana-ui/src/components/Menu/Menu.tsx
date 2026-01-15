@@ -22,6 +22,9 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   onKeyDown?: React.KeyboardEventHandler;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-menu--docs
+ */
 const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
   ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);

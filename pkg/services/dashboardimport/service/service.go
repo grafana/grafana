@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -60,8 +61,10 @@ func (s *ImportDashboardService) InterpolateDashboard(ctx context.Context, req *
 		} else {
 			draftDashboard = resp.Dashboard
 		}
-	} else {
+	} else if req.Dashboard != nil {
 		draftDashboard = dashboards.NewDashboardFromJson(req.Dashboard)
+	} else {
+		return nil, fmt.Errorf("either PluginId or Dashboard must be provided")
 	}
 
 	evaluator := utils.NewDashTemplateEvaluator(draftDashboard.Data, req.Inputs)

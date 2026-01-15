@@ -33,6 +33,7 @@ export const getMultiComboboxStyles = (
       inputStyles.input,
       css({
         display: 'flex',
+        alignItems: 'center',
         width: '100%',
         gap: theme.spacing(0.5),
         padding: theme.spacing(0.5),

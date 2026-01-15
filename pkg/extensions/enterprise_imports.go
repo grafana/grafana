@@ -11,10 +11,12 @@ import (
 	_ "github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
 	_ "github.com/Azure/go-autorest/autorest"
 	_ "github.com/Azure/go-autorest/autorest/adal"
+	_ "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	_ "github.com/beevik/etree"
 	_ "github.com/blugelabs/bluge"
 	_ "github.com/blugelabs/bluge_segment_api"
 	_ "github.com/crewjam/saml"
+	_ "github.com/docker/go-connections/nat"
 	_ "github.com/go-jose/go-jose/v4"
 	_ "github.com/gobwas/glob"
 	_ "github.com/googleapis/gax-go/v2"
@@ -30,6 +32,7 @@ import (
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli
 	_ "github.com/spyzhov/ajson"
 	_ "github.com/stretchr/testify/require"
+	_ "github.com/testcontainers/testcontainers-go"
 	_ "gocloud.dev/secrets/awskms"
 	_ "gocloud.dev/secrets/azurekeyvault"
 	_ "gocloud.dev/secrets/gcpkms"
@@ -54,8 +57,7 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
-	_ "github.com/grafana/tempo/pkg/traceql"
-
 	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
 	_ "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
+	_ "github.com/grafana/tempo/pkg/traceql"
 )

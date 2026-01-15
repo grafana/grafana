@@ -27,7 +27,12 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'value' | 'on
   placeholder?: string;
 }
 
-/** @public */
+/**
+ * An input with a calendar view, used to select a date.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-datepickerwithinput--docs
+ * @public
+ */
 export const DatePickerWithInput = forwardRef<HTMLInputElement, DatePickerWithInputProps>(
   ({ value, minDate, maxDate, onChange, closeOnSelect, placeholder = 'Date', ...rest }, ref) => {
     const [open, setOpen] = useState(false);

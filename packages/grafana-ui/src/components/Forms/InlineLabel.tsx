@@ -25,6 +25,11 @@ export interface Props extends Omit<LabelProps, 'css' | 'description' | 'categor
   as?: React.ElementType;
 }
 
+/**
+ * A horizontal variant of Label, primarily used in query editors. Can be combined with form components that expect a label, eg. `Input`, `Checkbox`, `Combobox`.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-inlinelabel--docs
+ */
 export const InlineLabel = ({
   children,
   className,

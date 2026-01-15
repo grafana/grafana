@@ -30,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
+	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -40,12 +42,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync/installsyncfakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
@@ -528,7 +528,7 @@ func callGetPluginAsset(sc *scenarioContext) {
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
 	cfg *setting.Cfg, pluginRegistry registry.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+		store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 		require.NoError(t, err)
 
 		hs := HTTPServer{
@@ -643,7 +643,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 				require.NoError(t, err)
 
 				hs.Cfg = setting.NewCfg()
@@ -833,7 +833,7 @@ func Test_PluginsSettings(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 				require.NoError(t, err)
 
 				hs.Cfg = setting.NewCfg()
@@ -850,7 +850,8 @@ func Test_PluginsSettings(t *testing.T) {
 				pCfg := &config.PluginManagementCfg{}
 				pluginCDN := pluginscdn.ProvideService(pCfg)
 				sig := signature.ProvideService(pCfg, statickey.New())
-				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
+				calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), pluginCDN, sig)
+				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, calc)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,
@@ -903,7 +904,7 @@ func Test_UpdatePluginSetting(t *testing.T) {
 
 	t.Run("should return an error when trying to disable an auto-enabled plugin", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{}, installsyncfakes.NewFakeSyncer())
+			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
 			require.NoError(t, err)
 
 			hs.Cfg = setting.NewCfg()

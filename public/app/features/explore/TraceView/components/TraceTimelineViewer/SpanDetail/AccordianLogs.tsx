@@ -38,9 +38,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: 'inherit',
       display: 'flex',
       alignItems: 'center',
-      '&:hover': {
-        background: autoColor(theme, '#e8e8e8'),
-      },
     }),
     AccordianLogsContent: css({
       label: 'AccordianLogsContent',

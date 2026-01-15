@@ -34,11 +34,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
@@ -183,7 +178,7 @@ If you use the expression field to reference another query, such as `queryA * 2`
 When you select `Builder` mode within the Metric search editor, a new Account field is displayed. Use the `Account` field to specify which of the linked monitoring accounts to target for the given query. By default, the `All` option is specified, which will target all linked accounts.
 
 While in `Code` mode, you can specify any math expression. If the Monitoring account badge displays in the query editor header, all `SEARCH` expressions entered in this field will be cross-account by default and can query metrics from linked accounts. Note that while queries run cross-account, the autocomplete feature currently doesn't fetch cross-account resources, so you'll need to manually specify resource names when writing cross-account queries.
-You can limit the search to one or a set of accounts, as documented in the [AWS documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
+You can limit the search to one or a set of accounts, as documented in the [AWS documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
 
 ### Period macro
 
@@ -198,7 +193,7 @@ The link provided is valid for any account but displays the expected metrics onl
 
 {{< figure src="/media/docs/cloudwatch/cloudwatch-deep-link-v12.1.png" caption="CloudWatch deep linking" >}}
 
-This feature is not available for metrics based on [metric math expressions](#metric-math-expressions).
+This feature is not available for metrics based on [metric math expressions](#use-metric-math-expressions).
 
 ### Use Metric Insights syntax
 
@@ -250,6 +245,19 @@ You can query CloudWatch Logs using three supported query language options:
 
 1. Select a region.
 1. Select **CloudWatch Logs** from the query type drop-down.
+1. Select the Logs Mode depending on whether you would like to query CloudWatch Logs Insights or Log Anomalies
+
+**Log Anomalies**
+
+[Anomaly detection](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection.html) uses machine-learning and pattern recognition to establish baselines of typical log content.  
+The Log Anomalies query editor fetches the list of anomalies detected in your CloudWatch service. In order to query log anomalies in the editor, a log anomaly detector must be created in the AWS CloudWatch console first.
+The log trend cell shows the number of occurrences of the pattern over the selected query time range.
+The table shows 50 log anomalies at a time. If you would like to narrow down the list, you can filter anomalies by their ARN and suppressed state.
+
+In addition to this, you can use the Logs Insights QL editor and the `anomaly` command together with the `patterns` command to define and display log anomalies in real time. See the [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/LogsAnomalyDetection-Insights.html) documentation for more info.
+
+**Logs Insights**
+
 1. Select the query language you would like to use in the **Query Language** drop-down.
 1. Click **Select log groups** and choose up to 20 log groups to query.
 1. Use the main input area to write your logs query. Amazon CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
@@ -258,7 +266,7 @@ You can query CloudWatch Logs using three supported query language options:
    You must specify the region and log groups when querying with **Logs Insights QL** and **OpenSearch PPL**. **OpenSearch SQL** doesn't require log group selection. However, selecting log groups simplifies query writing by populating syntax suggestions with discovered log group fields.
    {{< /admonition >}}
 
-Click **CloudWatch Logs Insights** to interactively view, search, and analyze your log data in the CloudWatch Logs Insights console. If you're not logged in to the CloudWatch console, the link forwards you to the login page.
+Click **View in CloudWatch console** to interactively view, search, and analyze your log data in the CloudWatch Logs Insights console. If you're not logged in to the CloudWatch console, the link forwards you to the login page.
 
 ### Query Log groups with OpenSearch SQL
 
@@ -306,9 +314,9 @@ The CloudWatch plugin monitors and troubleshoots applications that span multiple
 
 To enable cross-account observability, complete the following steps:
 
-1. Go to the [Amazon CloudWatch documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions for enabling cross-account observability.
+1. Go to the [Amazon CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions for enabling cross-account observability.
 
-1. Add [two API actions](https://grafana.com//docs/grafana/latest/datasources/aws-cloudwatch/configure/#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
+1. Add [two API actions](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/configure/#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
 
 Cross-account querying is available in the plugin through the **Logs**, **Metric search**, and **Metric Insights** modes.
 After you have configured it, you'll see a **Monitoring account** badge in the query editor header.

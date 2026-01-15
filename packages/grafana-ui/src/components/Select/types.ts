@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { JSX } from 'react';
 import {
   ActionMeta as SelectActionMeta,
   CommonProps as ReactSelectCommonProps,

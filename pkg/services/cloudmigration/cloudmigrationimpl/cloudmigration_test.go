@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -790,7 +791,15 @@ func TestGetPlugins(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	user := &user.SignedInUser{OrgID: 1}
+	user := &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {
+				pluginaccesscontrol.ActionInstall: {pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
+				pluginaccesscontrol.ActionWrite:   {pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
+			},
+		},
+	}
 
 	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
 		{
@@ -898,6 +907,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 	_, err = section.NewKey("domain", "localhost:1234")
 	require.NoError(t, err)
 
+	cfg.CloudMigration.Enabled = true
 	cfg.CloudMigration.IsDeveloperMode = true // ensure local implementations are used
 	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewString())
 
@@ -910,15 +920,11 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 		},
 	}
 
-	featureToggles := featuremgmt.WithFeatures(
-		featuremgmt.FlagOnPremToCloudMigrations,
-	)
+	featureToggles := featuremgmt.WithFeatures()
 
 	sqlStore := sqlstore.NewTestStore(t,
 		sqlstore.WithCfg(cfg),
-		sqlstore.WithFeatureFlags(
-			featuremgmt.FlagOnPremToCloudMigrations,
-		),
+		sqlstore.WithFeatureFlags(),
 	)
 
 	kvStore := kvstore.ProvideService(sqlStore)
@@ -1001,7 +1007,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 		mockFolder,
 		&pluginstore.FakePluginStore{},
 		&pluginsettings.FakePluginSettings{},
-		actest.FakeAccessControl{ExpectedEvaluate: true},
+		accessControl,
 		fakeAccessControlService,
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},

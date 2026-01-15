@@ -86,6 +86,7 @@ export class GrafanaBootConfig {
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  /** @deprecated it will be removed in a future release, use isAppPluginInstalled or getAppPluginVersion instead */
   apps: Record<string, AppPluginConfigGrafanaData> = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';
@@ -169,6 +170,7 @@ export class GrafanaBootConfig {
   pluginCatalogHiddenPlugins: string[] = [];
   pluginCatalogManagedPlugins: string[] = [];
   pluginCatalogPreinstalledPlugins: PreinstalledPluginGrafanaData[] = [];
+  pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   awsAllowedAuthProviders: string[] = [];
@@ -182,6 +184,7 @@ export class GrafanaBootConfig {
   };
   caching = {
     enabled: false,
+    cleanCacheEnabled: true,
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
@@ -203,6 +206,7 @@ export class GrafanaBootConfig {
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
+  applicationInsightsAutoRouteTracking?: boolean;
   recordedQueries = {
     enabled: true,
   };
@@ -221,6 +225,7 @@ export class GrafanaBootConfig {
   rudderstackWriteKey?: string;
   rudderstackDataPlaneUrl?: string;
   rudderstackSdkUrl?: string;
+  rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
   analyticsConsoleReporting = false;
@@ -238,6 +243,7 @@ export class GrafanaBootConfig {
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
+  cloudMigrationEnabled?: boolean;
   cloudMigrationIsTarget?: boolean;
   cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
@@ -278,6 +284,8 @@ export class GrafanaBootConfig {
 
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
+
+    this.bootData.settings.featureToggles = this.featureToggles;
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = getThemeById(this.bootData.user.theme);

@@ -5,7 +5,7 @@ import { SkeletonTheme } from 'react-loading-skeleton';
 import { GrafanaTheme2, ThemeContext } from '@grafana/data';
 import { ThemeChangedEvent, config } from '@grafana/runtime';
 
-import { appEvents } from '../core';
+import { appEvents } from '../app_events';
 
 import 'react-loading-skeleton/dist/skeleton.css';
 

@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -27,11 +29,16 @@ func FullSync(
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
+	metrics jobs.JobMetrics,
 ) error {
+	syncStart := time.Now()
 	cfg := repo.Config()
 
 	ctx, span := tracer.Start(ctx, "provisioning.sync.full")
 	defer span.End()
+	defer func() {
+		metrics.RecordSyncDuration(jobs.SyncTypeFull, time.Since(syncStart))
+	}()
 
 	ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.ensure_folder_exists")
 	// Ensure the configured folder exists and is managed by the repository
@@ -49,23 +56,63 @@ func FullSync(
 	ensureFolderSpan.End()
 
 	compareCtx, compareSpan := tracer.Start(ctx, "provisioning.sync.full.compare")
-	changes, err := compare(compareCtx, repo, repositoryResources, currentRef)
+	var changes []ResourceFileChange
+	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
+		changes, err = compare(compareCtx, repo, repositoryResources, currentRef)
+		return
+	}, metrics)
+	compareSpan.End()
+
 	if err != nil {
-		compareSpan.End()
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
 	}
-	compareSpan.End()
 
 	if len(changes) == 0 {
 		progress.SetFinalMessage(ctx, "no changes to sync")
 		return nil
 	}
 
-	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics)
+}
+
+// shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
+// If there is a previous failure on the path, we don't need to process the change as it will fail anyway.
+func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress jobs.JobProgressRecorder, tracer tracing.Tracer) bool {
+	if change.Action != repository.FileActionDeleted && progress.HasDirPathFailedCreation(change.Path) {
+		skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_nested_resource")
+		skipSpan.SetAttributes(attribute.String("path", change.Path))
+		progress.Record(skipCtx, jobs.JobResourceResult{
+			Path:    change.Path,
+			Action:  repository.FileActionIgnored,
+			Warning: fmt.Errorf("resource was not processed because the parent folder could not be created"),
+		})
+		skipSpan.End()
+		return true
+	}
+
+	if change.Action == repository.FileActionDeleted && safepath.IsDir(change.Path) && progress.HasDirPathFailedDeletion(change.Path) {
+		skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_folder_with_failed_deletions")
+		skipSpan.SetAttributes(attribute.String("path", change.Path))
+		progress.Record(skipCtx, jobs.JobResourceResult{
+			Path:    change.Path,
+			Action:  repository.FileActionIgnored,
+			Group:   resources.FolderKind.Group,
+			Kind:    resources.FolderKind.Kind,
+			Warning: fmt.Errorf("folder was not processed because children resources in its path could not be deleted"),
+		})
+		skipSpan.End()
+		return true
+	}
+
+	return false
 }
 
 func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) {
 	if ctx.Err() != nil {
+		return
+	}
+
+	if shouldSkipChange(ctx, change, progress, tracer) {
 		return
 	}
 
@@ -127,6 +174,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 			ensureFolderSpan.RecordError(err)
 			ensureFolderSpan.End()
 			progress.Record(ctx, result)
+
 			return
 		}
 
@@ -145,16 +193,24 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 		Group:  gvk.Group,
 		Kind:   gvk.Kind,
 	}
-
 	if err != nil {
 		writeSpan.RecordError(err)
 		result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
 	}
+
 	progress.Record(writeCtx, result)
 	writeSpan.End()
 }
 
-func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
+// instrument a function with a phase and metrics
+func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metrics jobs.JobMetrics) error {
+	phaseStart := time.Now()
+	err := fn()
+	metrics.RecordFullSyncPhase(phase, time.Since(phaseStart))
+	return err
+}
+
+func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics) error {
 	progress.SetTotal(ctx, len(changes))
 
 	_, applyChangesSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes",
@@ -199,97 +255,96 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 	)
 
 	if len(fileDeletions) > 0 {
-		if err := applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers); err != nil {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
+			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+		}, metrics); err != nil {
 			return err
 		}
 	}
 
 	if len(folderDeletions) > 0 {
-		if err := applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer); err != nil {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
+			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer)
+		}, metrics); err != nil {
 			return err
 		}
 	}
 
 	if len(folderCreations) > 0 {
-		if err := applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer); err != nil {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
+			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer)
+		}, metrics); err != nil {
 			return err
 		}
 	}
 
 	if len(fileCreations) > 0 {
-		return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileCreations, func() error {
+			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers)
+		}, metrics); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer) error {
-	folderCtx, folderCancel := context.WithCancel(ctx)
-	defer folderCancel()
-
 	for _, folder := range folders {
-		if folderCtx.Err() != nil {
-			return folderCtx.Err()
+		if ctx.Err() != nil {
+			return ctx.Err()
 		}
 
 		if err := progress.TooManyErrors(); err != nil {
 			return err
 		}
 
-		applyChange(folderCtx, folder, clients, repositoryResources, progress, tracer)
+		wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
+			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer)
+		})
 	}
 
 	return nil
 }
 
 func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("applying resources in parallel test changes 1")
+
 	if len(resources) == 0 {
 		return nil
 	}
 
-	workerCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	changeChan := make(chan ResourceFileChange, len(resources))
+	sem := make(chan struct{}, maxSyncWorkers)
 	var wg sync.WaitGroup
 
-	for i := 0; i < maxSyncWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for {
-				select {
-				case change, ok := <-changeChan:
-					if !ok {
-						return
-					}
-
-					if err := progress.TooManyErrors(); err != nil {
-						cancel()
-						return
-					}
-					if workerCtx.Err() != nil {
-						return
-					}
-
-					applyChange(workerCtx, change, clients, repositoryResources, progress, tracer)
-
-				case <-workerCtx.Done():
-					return
-				}
-			}
-		}()
-	}
-
+loop:
 	for _, change := range resources {
-		select {
-		case changeChan <- change:
-		case <-workerCtx.Done():
-			goto done
+		if err := progress.TooManyErrors(); err != nil {
+			break
 		}
+		if ctx.Err() != nil {
+			break
+		}
+
+		// Acquire semaphore slot (blocks if max workers reached)
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			break loop
+		}
+
+		wg.Add(1)
+		go func(change ResourceFileChange) {
+			defer wg.Done()
+			defer func() { <-sem }()
+
+			wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
+				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer)
+			})
+		}(change)
 	}
-done:
-	close(changeChan)
+
 	wg.Wait()
 
 	if err := progress.TooManyErrors(); err != nil {
@@ -297,4 +352,12 @@ done:
 	}
 
 	return ctx.Err()
+}
+
+// wrapWithTimeout wraps a function call with a timeout context
+func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context)) {
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	fn(timeoutCtx)
 }

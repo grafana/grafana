@@ -7,6 +7,7 @@ import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import {
   Alert,
   Button,
@@ -18,11 +19,13 @@ import {
   clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
+import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardDTO } from 'app/types/dashboard';
 
-import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
-
-import { useDashboardQuery } from './useDashboardQuery';
+import { DashboardResponse, useDashboardQuery } from './useDashboardQuery';
 
 export interface PanelDTO {
   id?: number;
@@ -74,7 +77,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const [debouncedDashboardFilter, setDebouncedDashboardFilter] = useState('');
   const [panelFilter, setPanelFilter] = useState('');
   const { value, loading: isDashSearchFetching } = useFilteredDashboards(debouncedDashboardFilter);
-  const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
+  const { dashboard, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
   const handleDashboardChange = useCallback((dashboardUid: string) => {
     setSelectedDashboardUid(dashboardUid);
     setSelectedPanelId(undefined);
@@ -82,7 +85,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
   const { dashboards: filteredDashboards = [], locationInfo: locationInfo = {} } = value || {};
 
-  const allDashboardPanels = getVisualPanels(dashboardModel);
+  const allDashboardPanels = getVisualPanels(dashboard);
 
   const filteredPanels =
     allDashboardPanels
@@ -197,7 +200,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       contentClassName={styles.modalContent}
     >
       {/* This alert shows if the selected dashboard is not found in the first page of dashboards */}
-      {!selectedDashboardIsInPageResult && dashboardUid && dashboardModel && (
+      {!selectedDashboardIsInPageResult && dashboardUid && dashboard && (
         <Alert
           title={t('alerting.dashboard-picker.title-current-selection', 'Current selection')}
           severity="info"
@@ -209,9 +212,9 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
             <Trans
               i18nKey="alerting.dashboard-picker.current-selection-dashboard"
               values={{
-                dashboardTitle: dashboardModel.title,
-                dashboardUid: dashboardModel.uid,
-                folderTitle: dashboardModel.meta?.folderTitle ?? fallbackDashboardsString,
+                dashboardTitle: getDashboardTitle(dashboard),
+                dashboardUid: getDashboardUid(dashboard),
+                folderTitle: getDashboardFolderTitle(dashboard) ?? fallbackDashboardsString,
               }}
             >
               Dashboard: {'{{dashboardTitle}}'} ({'{{ dashboardUid }}'}) in folder {'{{ folderTitle }}'}
@@ -318,18 +321,80 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   );
 };
 
-export function getVisualPanels(dashboardModel: DashboardModel | undefined) {
-  if (!dashboardModel) {
+export function getVisualPanels(dashboardDTO: DashboardResponse | undefined) {
+  if (!dashboardDTO) {
     return [];
   }
 
-  const panelsWithoutRows = dashboardModel.panels.filter((panel) => panel.type !== 'row');
-  const panelsNestedInRows = dashboardModel.panels
+  // process v2 dashboard
+  if (isDashboardV2Resource(dashboardDTO)) {
+    return Object.values(dashboardDTO.spec.elements).map((element) => ({
+      id: element.spec.id,
+      title: element.spec.title,
+      type: element.kind === 'Panel' ? element.spec.vizConfig.group : 'LibraryPanel',
+      ...(element.kind === 'LibraryPanel' && {
+        libraryPanel: {
+          uid: element.spec.libraryPanel.uid,
+          name: element.spec.libraryPanel.name,
+        },
+      }),
+    }));
+  }
+
+  // process v1 dashboard
+  const { dashboard } = dashboardDTO;
+
+  if (!dashboard || !dashboard.panels) {
+    return [];
+  }
+
+  const panelsWithoutRows = dashboard.panels.filter((panel) => panel.type !== 'row');
+  const panelsNestedInRows = dashboard.panels
     .filter((rowPanel) => rowPanel.collapsed)
     .flatMap((collapsedRow) => collapsedRow.panels ?? []);
 
   const allDashboardPanels = [...panelsWithoutRows, ...panelsNestedInRows];
   return allDashboardPanels;
+}
+
+export function getDashboardTitle(dashboardDTO: DashboardResponse | undefined) {
+  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
+    return '';
+  }
+
+  if (isDashboardV2Resource(dashboardDTO)) {
+    return dashboardDTO.spec.title;
+  }
+
+  return dashboardDTO.dashboard.title;
+}
+
+export function getDashboardUid(dashboardDTO: DashboardResponse | undefined) {
+  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
+    return '';
+  }
+
+  if (isDashboardV2Resource(dashboardDTO)) {
+    return dashboardDTO.metadata.name;
+  }
+
+  return dashboardDTO.dashboard.uid;
+}
+
+export function getDashboardFolderTitle(
+  dashboardDTO: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | undefined
+) {
+  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
+    return undefined;
+  }
+
+  if (isDashboardV2Resource(dashboardDTO)) {
+    return dashboardDTO.metadata.annotations?.[AnnoKeyFolderTitle];
+  }
+
+  const { meta } = dashboardDTO;
+
+  return meta.folderTitle;
 }
 
 const isValidPanel = (panel: PanelDTO): boolean => {

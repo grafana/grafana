@@ -175,6 +175,66 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 - `pl`: Hide or show legend
 - `pr`: Remove Panel
 
+## Pan and zoom panel time range
+
+You can pan the panel time range left and right, and zoom it and in and out.
+This, in turn, changes the dashboard time range.
+
+This feature is supported for the following visualizations:
+
+- Candlestick
+- Heatmap
+- State timeline
+- Status history
+- Time series
+
+### Zoom in
+
+Click and drag on the panel to zoom in on a particular time range.
+
+The following screen recordings show this interaction in the time series and candlestick visualizations:
+
+Time series
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-ts-time-zoom-in-mouse.mp4" >}}
+
+Candlestick
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-candle-panel-time-zoom-in-mouse.mp4" >}}
+
+### Zoom out
+
+Double-click anywhere on the panel to zoom out the time range.
+
+The range doubles with each double-click, adding equal time to each side of the range.
+For example, if the original time range is from 9:00 to 9:59, the time range changes as follows with each double-click:
+
+- Next range: 8:30 - 10:29
+- Next range: 7:30 - 11:29
+
+The following screen recordings demonstrate the preceding example in the time series and heatmap visualizations:
+
+Time series
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-ts-time-zoom-out-mouse.mp4" >}}
+
+Heatmap
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-heatmap-panel-time-zoom-out-mouse.mp4" >}}
+
+### Pan
+
+Click and drag the x-axis area of the panel to pan the time range.
+
+The time range shifts by the distance you drag.
+For example, if the original time range is from 9:00 to 9:59 and you drag 30 minutes to the right, the time range changes to 9:30 to 10:29.
+
+The following screen recordings show this interaction in the time series visualization:
+
+Time series
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/recording-ts-time-pan-mouse.mp4" >}}
+
 ## Add a panel
 
 To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard:

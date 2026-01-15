@@ -40,6 +40,9 @@ const esModules = [
 module.exports = {
   verbose: false,
   testEnvironment: 'jsdom',
+  testEnvironmentOptions: {
+    customExportConditions: ['@grafana-app/source', 'browser'],
+  },
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
   },
@@ -79,6 +82,7 @@ module.exports = {
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
     '<rootDir>/public/app/plugins/datasource/cloud-monitoring',
+    '<rootDir>/public/app/plugins/datasource/elasticsearch',
     '<rootDir>/public/app/plugins/datasource/grafana-postgresql-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-pyroscope-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',

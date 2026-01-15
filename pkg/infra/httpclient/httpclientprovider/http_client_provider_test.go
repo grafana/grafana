@@ -3,13 +3,14 @@ package httpclientprovider
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/validations"
-
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestHTTPClientProvider(t *testing.T) {
@@ -77,7 +78,7 @@ func TestHTTPClientProvider(t *testing.T) {
 			newProviderFunc = origNewProviderFunc
 		})
 		tracer := tracing.InitializeTracerForTest()
-		_ = New(&setting.Cfg{PluginSettings: setting.PluginSettings{"example": {"har_log_enabled": "true"}}}, &validations.OSSDataSourceRequestURLValidator{}, tracer)
+		_ = New(&setting.Cfg{PluginSettings: config.PluginSettings{"example": {"har_log_enabled": "true"}}}, &validations.OSSDataSourceRequestURLValidator{}, tracer)
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
 		require.Len(t, o.Middlewares, 10)

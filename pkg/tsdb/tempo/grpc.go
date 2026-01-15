@@ -148,7 +148,8 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 
 	var dialOps []grpc.DialOption
 
-	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(
+	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)))
+  dialOps = append(dialOps, grpc.WithChainStreamInterceptor(
 		MetricsStreamInterceptor(),
 		TracingStreamInterceptor(),
 		CustomHeadersStreamInterceptor(opts),

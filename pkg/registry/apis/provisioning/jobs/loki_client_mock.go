@@ -134,8 +134,7 @@ func (_c *MockLokiClient_RangeQuery_Call) RunAndReturn(run func(context.Context,
 func NewMockLokiClient(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockLokiClient {
+}) *MockLokiClient {
 	mock := &MockLokiClient{}
 	mock.Mock.Test(t)
 

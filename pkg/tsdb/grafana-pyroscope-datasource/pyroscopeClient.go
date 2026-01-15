@@ -8,14 +8,16 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 
 	"connectrpc.com/connect"
-	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
-	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
+	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 )
 
 type ProfileType struct {
@@ -49,6 +51,13 @@ type Point struct {
 	// Milliseconds unix timestamp
 	Timestamp   int64
 	Annotations []*typesv1.ProfileAnnotation
+	Exemplars   []*Exemplar
+}
+
+type Exemplar struct {
+	Id        string
+	Value     uint64
+	Timestamp int64
 }
 
 type ProfileResponse struct {
@@ -80,7 +89,6 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int
 		End:   end,
 	}))
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting profile types: %w", err))
@@ -100,7 +108,7 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int
 	}
 }
 
-func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, error) {
+func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64, exemplarType typesv1.ExemplarType) (*SeriesResponse, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetSeries", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
 	defer span.End()
 	req := connect.NewRequest(&querierv1.SelectSeriesRequest{
@@ -111,14 +119,14 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 		Step:          step,
 		GroupBy:       groupBy,
 		Limit:         limit,
+		ExemplarType:  exemplarType,
 	})
 
 	resp, err := c.connectClient.SelectSeries(ctx, req)
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting series: %w", err))
+		return nil, backend.DownstreamErrorf("received error from client while getting series: %w", err)
 	}
 
 	series := make([]*Series, len(resp.Msg.Series))
@@ -138,6 +146,16 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 				Value:       p.Value,
 				Timestamp:   p.Timestamp,
 				Annotations: p.Annotations,
+			}
+			if len(p.Exemplars) > 0 {
+				points[i].Exemplars = make([]*Exemplar, len(p.Exemplars))
+				for j, e := range p.Exemplars {
+					points[i].Exemplars[j] = &Exemplar{
+						Id:        e.ProfileId,
+						Value:     e.Value,
+						Timestamp: e.Timestamp,
+					}
+				}
 			}
 		}
 
@@ -171,7 +189,6 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 
 	resp, err := c.connectClient.SelectMergeStacktraces(ctx, req)
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting profile: %w", err))
@@ -207,7 +224,7 @@ func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, lab
 	}
 
 	if resp.Msg.Flamegraph == nil {
-		// Not an error, can happen when querying data oout of range.
+		// Not an error, can happen when querying data out of range.
 		return nil, nil
 	}
 
@@ -254,7 +271,6 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, 
 		End:      end,
 	}))
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, backend.DownstreamError(fmt.Errorf("error sending LabelNames request %v", err))
@@ -284,7 +300,6 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 		End:      end,
 	}))
 	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, backend.DownstreamError(fmt.Errorf("received error from client while getting label values: %w", err))

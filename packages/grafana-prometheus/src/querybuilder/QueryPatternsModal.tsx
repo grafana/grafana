@@ -111,7 +111,6 @@ export const QueryPatternsModal = (props: Props) => {
               }
             )}
             isOpen={isOpen}
-            collapsible={true}
             onToggle={() => {
               const action = isOpen ? 'close' : 'open';
               reportInteraction(`grafana_prom_kickstart_toggle_pattern_card`, {

@@ -7,16 +7,53 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/stretchr/testify/require"
+
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/stretchr/testify/require"
 )
+
+func requireTuplesMatch(t *testing.T, actual []*v1.TupleKey, expected []*v1.TupleKey, msgAndArgs ...interface{}) {
+	t.Helper()
+	for _, exp := range expected {
+		found := false
+		for _, act := range actual {
+			if act.User == exp.User &&
+				act.Relation == exp.Relation &&
+				act.Object == exp.Object {
+				found = true
+				break
+			}
+		}
+		if !found {
+			require.Fail(t, "Expected tuple not found", "Tuple: %+v\n%v", exp, msgAndArgs)
+		}
+	}
+}
+
+func requireDeleteTuplesMatch(t *testing.T, actual []*v1.TupleKeyWithoutCondition, expected []*v1.TupleKeyWithoutCondition, msgAndArgs ...interface{}) {
+	t.Helper()
+	for _, exp := range expected {
+		found := false
+		for _, act := range actual {
+			if act.User == exp.User &&
+				act.Relation == exp.Relation &&
+				act.Object == exp.Object {
+				found = true
+				break
+			}
+		}
+		if !found {
+			require.Fail(t, "Expected delete tuple not found", "Tuple: %+v\n%v", exp, msgAndArgs)
+		}
+	}
+}
 
 func TestAfterCoreRoleCreate(t *testing.T) {
 	var wg sync.WaitGroup
 
-	b := &IdentityAccessManagementAPIBuilder{
+	h := &RoleHooks{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
@@ -53,8 +90,8 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleEntries}
-		b.AfterRoleCreate(&coreRole, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleEntries}
+		h.AfterRoleCreate(&coreRole, nil)
 		wg.Wait()
 	})
 
@@ -92,8 +129,8 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleEntries}
-		b.AfterRoleCreate(&coreRole, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleEntries}
+		h.AfterRoleCreate(&coreRole, nil)
 		wg.Wait()
 	})
 
@@ -126,8 +163,8 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardEntries}
-		b.AfterRoleCreate(&coreRole, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testWildcardEntries}
+		h.AfterRoleCreate(&coreRole, nil)
 		wg.Wait()
 	})
 
@@ -161,15 +198,15 @@ func TestAfterCoreRoleCreate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testMixedEntries}
-		b.AfterRoleCreate(&coreRole, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testMixedEntries}
+		h.AfterRoleCreate(&coreRole, nil)
 		wg.Wait()
 	})
 }
 
 func TestAfterRoleCreate(t *testing.T) {
 	var wg sync.WaitGroup
-	b := &IdentityAccessManagementAPIBuilder{
+	h := &RoleHooks{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
@@ -206,8 +243,8 @@ func TestAfterRoleCreate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testRoleEntries}
-		b.AfterRoleCreate(&role, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testRoleEntries}
+		h.AfterRoleCreate(&role, nil)
 		wg.Wait()
 	})
 
@@ -244,8 +281,8 @@ func TestAfterRoleCreate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashRoleEntries}
-		b.AfterRoleCreate(&role, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testDashRoleEntries}
+		h.AfterRoleCreate(&role, nil)
 		wg.Wait()
 	})
 
@@ -280,15 +317,15 @@ func TestAfterRoleCreate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testMergedEntries}
-		b.AfterRoleCreate(&role, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testMergedEntries}
+		h.AfterRoleCreate(&role, nil)
 		wg.Wait()
 	})
 }
 
 func TestBeginCoreRoleUpdate(t *testing.T) {
 	var wg sync.WaitGroup
-	b := &IdentityAccessManagementAPIBuilder{
+	h := &RoleHooks{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
@@ -350,10 +387,10 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testUpdate}
+		h.zClient = &FakeZanzanaClient{writeCallback: testUpdate}
 
 		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
+		finishFunc, err := h.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
@@ -408,10 +445,10 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testExpand}
+		h.zClient = &FakeZanzanaClient{writeCallback: testExpand}
 
 		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
+		finishFunc, err := h.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
@@ -462,10 +499,10 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testClear}
+		h.zClient = &FakeZanzanaClient{writeCallback: testClear}
 
 		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
+		finishFunc, err := h.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
@@ -477,7 +514,7 @@ func TestBeginCoreRoleUpdate(t *testing.T) {
 
 func TestBeginRoleUpdate(t *testing.T) {
 	var wg sync.WaitGroup
-	b := &IdentityAccessManagementAPIBuilder{
+	h := &RoleHooks{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
@@ -540,10 +577,10 @@ func TestBeginRoleUpdate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testUpdate}
+		h.zClient = &FakeZanzanaClient{writeCallback: testUpdate}
 
 		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
+		finishFunc, err := h.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
@@ -603,10 +640,10 @@ func TestBeginRoleUpdate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testSwap}
+		h.zClient = &FakeZanzanaClient{writeCallback: testSwap}
 
 		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
+		finishFunc, err := h.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
@@ -658,10 +695,10 @@ func TestBeginRoleUpdate(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testAddToEmpty}
+		h.zClient = &FakeZanzanaClient{writeCallback: testAddToEmpty}
 
 		// Call BeginUpdate which does all the work
-		finishFunc, err := b.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
+		finishFunc, err := h.BeginRoleUpdate(context.Background(), &newRole, &oldRole, nil)
 		require.NoError(t, err)
 		require.NotNil(t, finishFunc)
 
@@ -673,7 +710,7 @@ func TestBeginRoleUpdate(t *testing.T) {
 
 func TestAfterCoreRoleDelete(t *testing.T) {
 	var wg sync.WaitGroup
-	b := &IdentityAccessManagementAPIBuilder{
+	h := &RoleHooks{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
@@ -710,8 +747,8 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleDeletes}
-		b.AfterRoleDelete(&coreRole, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testCoreRoleDeletes}
+		h.AfterRoleDelete(&coreRole, nil)
 		wg.Wait()
 	})
 
@@ -748,8 +785,8 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleDeletes}
-		b.AfterRoleDelete(&coreRole, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testDashboardRoleDeletes}
+		h.AfterRoleDelete(&coreRole, nil)
 		wg.Wait()
 	})
 
@@ -781,8 +818,8 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testWildcardDeletes}
-		b.AfterRoleDelete(&coreRole, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testWildcardDeletes}
+		h.AfterRoleDelete(&coreRole, nil)
 		wg.Wait()
 	})
 
@@ -816,15 +853,15 @@ func TestAfterCoreRoleDelete(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testMixedDeletes}
-		b.AfterRoleDelete(&coreRole, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testMixedDeletes}
+		h.AfterRoleDelete(&coreRole, nil)
 		wg.Wait()
 	})
 }
 
 func TestAfterRoleDelete(t *testing.T) {
 	var wg sync.WaitGroup
-	b := &IdentityAccessManagementAPIBuilder{
+	h := &RoleHooks{
 		logger:   log.NewNopLogger(),
 		zTickets: make(chan bool, 1),
 	}
@@ -861,8 +898,8 @@ func TestAfterRoleDelete(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testRoleDeletes}
-		b.AfterRoleDelete(&role, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testRoleDeletes}
+		h.AfterRoleDelete(&role, nil)
 		wg.Wait()
 	})
 
@@ -899,8 +936,8 @@ func TestAfterRoleDelete(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testDashRoleDeletes}
-		b.AfterRoleDelete(&role, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testDashRoleDeletes}
+		h.AfterRoleDelete(&role, nil)
 		wg.Wait()
 	})
 
@@ -945,8 +982,8 @@ func TestAfterRoleDelete(t *testing.T) {
 			return nil
 		}
 
-		b.zClient = &FakeZanzanaClient{writeCallback: testMultiDeletes}
-		b.AfterRoleDelete(&role, nil)
+		h.zClient = &FakeZanzanaClient{writeCallback: testMultiDeletes}
+		h.AfterRoleDelete(&role, nil)
 		wg.Wait()
 	})
 }

@@ -1,7 +1,9 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { ScopesService } from '../ScopesService';
 
@@ -21,6 +23,9 @@ import {
   selectResultCloud,
   selectResultCloudDev,
   selectResultCloudOps,
+  expandResultEnvironments,
+  selectResultEnvironmentsDev,
+  selectResultEnvironmentsProd,
   updateScopes,
 } from './utils/actions';
 import {
@@ -33,24 +38,26 @@ import {
   expectResultApplicationsMimirNotPresent,
   expectResultApplicationsMimirPresent,
   expectResultApplicationsMimirSelected,
-  expectResultCloudDevNotSelected,
-  expectResultCloudDevSelected,
-  expectResultCloudOpsNotSelected,
-  expectResultCloudOpsSelected,
+  expectResultEnvironmentsDevNotSelected,
+  expectResultEnvironmentsDevSelected,
+  expectResultEnvironmentsProdNotSelected,
+  expectResultEnvironmentsProdSelected,
   expectScopesHeadline,
   expectScopesSelectorValue,
 } from './utils/assertions';
-import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('Tree', () => {
   let fetchNodesSpy: jest.SpyInstance;
@@ -133,12 +140,33 @@ describe('Tree', () => {
     await openSelector();
     await expandResultCloud();
     await selectResultCloudDev();
-    expectResultCloudDevSelected();
-    expectResultCloudOpsNotSelected();
 
+    // Verify the content of the scopes selector input
+    expectScopesSelectorValue('Dev');
+
+    // Single leaf node links always apply the scope, hence we need to open the selector again
+    await openSelector();
     await selectResultCloudOps();
-    expectResultCloudDevNotSelected();
-    expectResultCloudOpsSelected();
+    expectScopesSelectorValue('Ops');
+  });
+
+  it('Can only select one selectable container at a time', async () => {
+    await openSelector();
+    await expandResultEnvironments();
+
+    // Select the Development environment container
+    await selectResultEnvironmentsDev();
+    expectResultEnvironmentsDevSelected(); // Check selection state before applying
+    expectResultEnvironmentsProdNotSelected(); // Production should not be selected
+
+    // Select the Production environment container - should replace Development
+    await selectResultEnvironmentsProd();
+    expectResultEnvironmentsProdSelected(); // Check selection state before applying
+    expectResultEnvironmentsDevNotSelected(); // Development should no longer be selected
+
+    // Apply scopes and verify final state
+    await applyScopes();
+    expectScopesSelectorValue('Production');
   });
 
   it('Search works', async () => {
@@ -168,6 +196,45 @@ describe('Tree', () => {
     await applyScopes();
     await openSelector();
     expectResultApplicationsMimirPresent();
+  });
+
+  it('Opens to a selected scope and shows all sibling nodes', async () => {
+    // Select a scope and apply
+    await openSelector();
+    await expandResultApplications();
+    await selectResultApplicationsMimir();
+    await applyScopes();
+
+    // Reopen selector - should show the selected scope AND all its siblings
+    await openSelector();
+
+    // Verify all sibling nodes (Grafana, Mimir, Cloud) are visible
+    expectResultApplicationsGrafanaPresent();
+    expectResultApplicationsMimirPresent();
+    expectResultApplicationsCloudPresent();
+
+    // Verify the Applications container is expanded
+    expect(screen.getByRole('button', { name: 'Applications' })).toBeInTheDocument();
+  });
+
+  it('Opens to a nested selected scope and shows all siblings at that level', async () => {
+    // Select a nested scope
+    await openSelector();
+    await expandResultApplications();
+    await expandResultApplicationsCloud();
+    await selectResultApplicationsCloudDev();
+    await applyScopes();
+
+    // Reopen selector - should expand to Cloud and show all its children
+    await openSelector();
+
+    // Verify the full path is expanded
+    expect(screen.getByRole('button', { name: 'Cloud' })).toBeInTheDocument();
+
+    // Verify all siblings at the Cloud level are visible
+    // The test should verify that when Cloud is expanded, we see all its children
+    // (This depends on what siblings Dev has - at minimum, we should see Dev itself)
+    expect(screen.getByRole('treeitem', { name: 'Dev' })).toBeInTheDocument();
   });
 
   it('Persists a scope', async () => {
@@ -267,7 +334,7 @@ describe('Tree', () => {
     expectScopesHeadline('Recommended');
   });
 
-  it('Should open to a specific path when scopes and scope_parent are provided', async () => {
+  it('Should open to a specific path when scopes and scope_node are applied', async () => {
     await openSelector();
     await expandResultApplications();
     await expandResultApplicationsCloud();
@@ -276,7 +343,7 @@ describe('Tree', () => {
     await openSelector();
 
     // Verify that Cloud is expanded
-    expect(screen.getByRole('button', { name: 'Collapse Cloud' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cloud' })).toBeInTheDocument();
   });
 
   describe('Keyboard Navigation', () => {
