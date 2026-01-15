@@ -16,7 +16,7 @@ func Test_StaticProviderIntegration(t *testing.T) {
 
 	for _, flag := range standardFeatureFlags {
 		result, err := openfeature.NewDefaultClient().BooleanValueDetails(t.Context(), flag.Name, false, openfeature.TransactionContext(t.Context()))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		expected := flag.Expression == "true"
 
