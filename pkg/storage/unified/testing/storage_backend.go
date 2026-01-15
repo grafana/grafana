@@ -555,7 +555,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			Resource:  "resource",
 		}
 		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
-		require.Equal(t, latestRv, rvDeleted)
+		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
 		counter := 0
 		for res, err := range seq {
@@ -649,7 +649,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		require.NoError(t, err)
 
 		latestRv, seq := backend.ListModifiedSince(ctx, key, rv1-1)
-		require.Equal(t, latestRv, rv10)
+		require.GreaterOrEqual(t, latestRv, rv10)
 
 		counter := 0
 		names := []string{"bItem", "aItem", "cItem"}

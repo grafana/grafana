@@ -660,11 +660,6 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 			yield(nil, err)
 		}
 	}
-	// this fixes an off-by-one error that could cause this method to miss a single object
-	// the RV in resource_version table = max(resource_version)+1 in resource_history
-	// since this query assumes the client has already seen the object at "sinceRv", we need to consider
-	// latestRv as the max(resource_version) in resource_history
-	latestRv--
 
 	// If latest RV equal or older than request RV, there's nothing to report, and we can avoid running another query.
 	if latestRv <= sinceRv {
