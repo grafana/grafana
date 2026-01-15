@@ -31,7 +31,6 @@ import {
   AlertmanagerGroup,
   MatcherOperator,
   ObjectMatcher,
-  ROUTES_META_SYMBOL,
   Receiver,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
