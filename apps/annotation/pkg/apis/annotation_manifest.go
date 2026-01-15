@@ -40,6 +40,12 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaAnnotationv0alpha1,
+					SelectableFields: []string{
+						"spec.time",
+						"spec.timeEnd",
+						"spec.dashboardUID",
+						"spec.panelID",
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -77,6 +83,28 @@ var appManifestData = app.ManifestData{
 																		"tags": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"object"},
+																							Properties: map[string]spec.Schema{
+																								"count": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"number"},
+																									},
+																								},
+																								"tag": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																							},
+																							Required: []string{
+																								"tag",
+																								"count",
+																							},
+																						}},
+																				},
 																			},
 																		},
 																	},

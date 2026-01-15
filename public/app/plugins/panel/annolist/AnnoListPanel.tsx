@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { annotationServer } from 'app/features/annotations/api';
 import { Button, ScrollContainer, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/internal';
 import { appEvents } from 'app/core/app_events';
@@ -28,7 +29,7 @@ interface UserInfo {
   email?: string;
 }
 
-export interface Props extends PanelProps<Options> {}
+export interface Props extends PanelProps<Options> { }
 interface State {
   annotations: AnnotationEvent[];
   timeInfo: string;
@@ -128,7 +129,22 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       params.tags = params.tags ? [...params.tags, ...queryTags] : queryTags;
     }
 
-    const annotations = await getBackendSrv().get('/api/annotations', params, this.state.requestId);
+    // Use annotationServer() to support both legacy and k8s APIs
+    const df = await annotationServer().query(params, this.state.requestId);
+
+    // Convert DataFrame to array of annotations
+    // The DataFrame will have fields that correspond to annotation properties
+    const annotations: AnnotationEvent[] = [];
+    if (df.length > 0) {
+      const length = df.fields[0]?.values.length || 0;
+      for (let i = 0; i < length; i++) {
+        const annotation: any = {};
+        df.fields.forEach((field) => {
+          annotation[field.name] = field.values[i];
+        });
+        annotations.push(annotation as AnnotationEvent);
+      }
+    }
 
     this.setState({
       annotations,
