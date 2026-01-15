@@ -8186,21 +8186,21 @@
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam": {
         "type": "object",
         "required": [
-          "title",
           "teamRef",
-          "permission"
+          "permission",
+          "external"
         ],
         "properties": {
+          "external": {
+            "type": "boolean",
+            "default": false
+          },
           "permission": {
             "type": "string",
             "default": ""
           },
           "teamRef": {
             "default": {}
-          },
-          "title": {
-            "type": "string",
-            "default": ""
           }
         }
       },

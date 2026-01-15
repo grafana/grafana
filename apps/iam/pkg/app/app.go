@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -13,13 +12,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/authz"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var appManifestData = app.ManifestData{
@@ -32,15 +26,10 @@ type InformerConfig struct {
 }
 
 type AppConfig struct {
-	Tracer            trace.Tracer
 	ZanzanaClientCfg  authz.ZanzanaClientConfig
 	InformerConfig    InformerConfig
 	Namespace         string
 	MetricsRegisterer prometheus.Registerer
-	LegacyStore       legacy.LegacyIdentityStore
-	Dual              dualwrite.Service
-	Features          featuremgmt.FeatureToggles
-	Unified           res.ResourceClient
 }
 
 func Provider(appCfg app.SpecificConfig) app.Provider {
@@ -97,8 +86,6 @@ func New(cfg app.Config) (app.App, error) {
 
 	logging.DefaultLogger.Info("FolderReconciler created")
 
-	userTeamsHandler := NewGetTeamsHandler(appSpecificConfig.Tracer, appSpecificConfig.Dual, nil, appSpecificConfig.Unified, appSpecificConfig.Features)
-
 	config := simple.AppConfig{
 		Name:       cfg.ManifestData.AppName,
 		KubeConfig: cfg.KubeConfig,
@@ -111,17 +98,6 @@ func New(cfg app.Config) (app.App, error) {
 						// Use "unknown" for action since top-level informer errors don't have specific actions
 						metrics.RecordReconcileFailure("unknown", "informer")
 					}
-				},
-			},
-		},
-		ManagedKinds: []simple.AppManagedKind{
-			{
-				Kind: v0alpha1.UserKind(),
-				CustomRoutes: simple.AppCustomRouteHandlers{
-					{
-						Path:   "teams",
-						Method: "GET",
-					}: userTeamsHandler.Handle,
 				},
 			},
 		},
