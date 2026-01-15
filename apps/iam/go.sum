@@ -869,8 +869,8 @@ github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b h1:6B
 github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b/go.mod h1:6+wASOCN8LWt6FJ8dc0oODUBIEY5XHaE6ABi8g0mR+k=
 github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2 h1:rDPMdshj3QMvpXn+wK4T8awF9n2sd8i4YRiGqX2xTvg=
 github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2/go.mod h1:M7bV60iRB61y0ISPG1HX/oNLZtlh0ZF22rUYwNkAKjo=
-github.com/grafana/grafana/pkg/plugins v0.0.0-20260109132829-9cd811b9e64c h1:BBEquSCiTGt5AAOomTQBMTCCZBnhrdfzS2pUtfhhtWE=
-github.com/grafana/grafana/pkg/plugins v0.0.0-20260109132829-9cd811b9e64c/go.mod h1:b9WxBFbMdf6pDxy90WRFHMyBl1/o8xY86SqnLLLN/yQ=
+github.com/grafana/grafana/pkg/plugins v0.0.0-20260113153209-1d3f09d5193a h1:UmIA+Amg0Kgm56vSyqCUQQ5MBD4svQ+smCzIbAXYzyo=
+github.com/grafana/grafana/pkg/plugins v0.0.0-20260113153209-1d3f09d5193a/go.mod h1:b9WxBFbMdf6pDxy90WRFHMyBl1/o8xY86SqnLLLN/yQ=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 h1:NznuPwItog+rwdVg8hAuGKP29ndRSzJAwhxKldkP8oQ=

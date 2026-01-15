@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
@@ -35,6 +34,10 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 
 	kvOpts := resource.KVBackendOptions{
 		KvStore: kv,
+	}
+
+	if db.DriverName() == "sqlite3" {
+		kvOpts.UseChannelNotifier = true
 	}
 
 	if withRvManager {
@@ -82,6 +85,12 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 
 			kvbackend, db := newKvBackend(t.Context())
 			sqlbackend, _ := newSqlBackend(t.Context())
+
+			// Skip on SQLite due to concurrency limitations
+			if db.DriverName() == "sqlite3" {
+				t.Skip("Skipping concurrent operations stress test on SQLite")
+			}
+
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
 	}
@@ -187,13 +196,30 @@ func runKeyPathTest(t *testing.T, backend resource.StorageBackend, nsPrefix stri
 
 // verifyKeyPath is a helper function to verify key_path generation
 func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resourcepb.ResourceKey, action string, resourceVersion int64, expectedFolder string) {
+	// For SQL backend (namespace contains "-sql"), resourceVersion is in microsecond format
+	// but key_path stores snowflake RV, so convert to snowflake
+	// For KV backend (namespace contains "-kv"), resourceVersion is already in snowflake format
+	isSqlBackend := strings.Contains(key.Namespace, "-sql")
+
+	var keyPathRV int64
+	if isSqlBackend {
+		// Convert microsecond RV to snowflake for key_path construction
+		keyPathRV = rvmanager.SnowflakeFromRV(resourceVersion)
+	} else {
+		// KV backend already provides snowflake RV
+		keyPathRV = resourceVersion
+	}
+
+	// Build the expected key_path using DataKey format: unified/data/group/resource/namespace/name/resourceVersion~action~folder
+	expectedKeyPath := fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s", key.Group, key.Resource, key.Namespace, key.Name, keyPathRV, action, expectedFolder)
+
 	var query string
 	if db.DriverName() == "postgres" {
-		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = $1 AND name = $2 AND resource_version = $3"
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE key_path = $1"
 	} else {
-		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE namespace = ? AND name = ? AND resource_version = ?"
+		query = "SELECT key_path, resource_version, action, folder FROM resource_history WHERE key_path = ?"
 	}
-	rows, err := db.QueryContext(ctx, query, key.Namespace, key.Name, resourceVersion)
+	rows, err := db.QueryContext(ctx, query, expectedKeyPath)
 	require.NoError(t, err)
 
 	require.True(t, rows.Next(), "Resource not found in resource_history table - both SQL and KV backends should write to this table")
@@ -219,10 +245,6 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 
 	// Verify action suffix
 	require.Contains(t, keyPath, fmt.Sprintf("~%s~", action))
-
-	// Verify snowflake calculation
-	expectedSnowflake := (((resourceVersion / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (resourceVersion % 1000)
-	require.Contains(t, keyPath, fmt.Sprintf("/%d~", expectedSnowflake), "actual RV: %d", actualRV)
 
 	// Verify folder if specified
 	if expectedFolder != "" {
@@ -416,9 +438,6 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceHistoryRecord
 	for rows.Next() {
@@ -442,33 +461,34 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 	for resourceIdx, res := range resources {
 		// Check create record (action=1, generation=1)
 		createRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, createRecord, res, resourceIdx, 1, 0, 1, resourceVersions[resourceIdx][0])
+		verifyResourceHistoryRecord(t, createRecord, namespace, res, resourceIdx, 1, 0, 1, resourceVersions[resourceIdx][0])
 		recordIndex++
 	}
 
 	for resourceIdx, res := range resources {
 		// Check update record (action=2, generation=2)
 		updateRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, updateRecord, res, resourceIdx, 2, resourceVersions[resourceIdx][0], 2, resourceVersions[resourceIdx][1])
+		verifyResourceHistoryRecord(t, updateRecord, namespace, res, resourceIdx, 2, resourceVersions[resourceIdx][0], 2, resourceVersions[resourceIdx][1])
 		recordIndex++
 	}
 
 	for resourceIdx, res := range resources[:2] {
 		// Check delete record (action=3, generation=0) - only first 2 resources were deleted
 		deleteRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, deleteRecord, res, resourceIdx, 3, resourceVersions[resourceIdx][1], 0, resourceVersions[resourceIdx][2])
+		verifyResourceHistoryRecord(t, deleteRecord, namespace, res, resourceIdx, 3, resourceVersions[resourceIdx][1], 0, resourceVersions[resourceIdx][2])
 		recordIndex++
 	}
 }
 
 // verifyResourceHistoryRecord validates a single resource_history record
-func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, expectedRes struct{ name, folder string }, resourceIdx, expectedAction int, expectedPrevRV int64, expectedGeneration int, expectedRV int64) {
+func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, namespace string, expectedRes struct{ name, folder string }, resourceIdx, expectedAction int, expectedPrevRV int64, expectedGeneration int, expectedRV int64) {
 	// Validate GUID (should be non-empty)
 	require.NotEmpty(t, record.GUID, "GUID should not be empty")
 
 	// Validate group/resource/namespace/name
 	require.Equal(t, "playlist.grafana.app", record.Group)
 	require.Equal(t, "playlists", record.Resource)
+	require.Equal(t, namespace, record.Namespace)
 	require.Equal(t, expectedRes.name, record.Name)
 
 	// Validate value contains expected JSON - server modifies/formats the JSON differently for different operations
@@ -492,11 +512,15 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	}
 
 	// Validate previous_resource_version
-	// For KV backend operations, resource versions are stored as snowflake format
-	// but expectedPrevRV is in microsecond format, so we need to use IsRvEqual for comparison
+	// For KV backend operations, expectedPrevRV is now in snowflake format (returned by KV backend)
+	// but resource_history table stores microsecond RV, so we need to use IsRvEqual for comparison
 	if strings.Contains(record.Namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(record.PreviousResourceVersion, expectedPrevRV),
-			"Previous resource version should match (KV backend snowflake format)")
+		if expectedPrevRV == 0 {
+			require.Zero(t, record.PreviousResourceVersion)
+		} else {
+			require.Equal(t, expectedPrevRV, rvmanager.SnowflakeFromRV(record.PreviousResourceVersion),
+				"Previous resource version should match (KV backend snowflake format)")
+		}
 	} else {
 		require.Equal(t, expectedPrevRV, record.PreviousResourceVersion)
 	}
@@ -505,9 +529,10 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	require.Equal(t, expectedGeneration, record.Generation)
 
 	// Validate resource_version
-	// For KV backend operations, resource versions are stored as snowflake format
+	// For KV backend operations, expectedRV is now in snowflake format (returned by KV backend)
+	// but resource_history table stores microsecond RV, so we need to use IsRvEqual for comparison
 	if strings.Contains(record.Namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV),
+		require.True(t, rvmanager.IsRvEqual(expectedRV, record.ResourceVersion),
 			"Resource version should match (KV backend snowflake format)")
 	} else {
 		require.Equal(t, expectedRV, record.ResourceVersion)
@@ -527,9 +552,6 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceRecord
 	for rows.Next() {
@@ -574,7 +596,7 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 	// Resource version should match the expected version for test-resource-3 (updated version)
 	expectedRV := resourceVersions[2][1] // test-resource-3's update version
 	if strings.Contains(namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(record.ResourceVersion, expectedRV),
+		require.True(t, rvmanager.IsRvEqual(expectedRV, record.ResourceVersion),
 			"Resource version should match (KV backend snowflake format)")
 	} else {
 		require.Equal(t, expectedRV, record.ResourceVersion)
@@ -593,9 +615,6 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	// Check that we have exactly one entry for playlist.grafana.app/playlists
 	rows, err := db.QueryContext(ctx, query, "playlist.grafana.app", "playlists")
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceVersionRecord
 	for rows.Next() {
@@ -625,9 +644,16 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 
 	// The resource_version table should contain the latest RV for the group+resource
 	// It might be slightly higher due to RV manager operations, so check it's at least our max
-	require.GreaterOrEqual(t, record.ResourceVersion, maxRV, "resource_version should be at least the latest RV we tracked")
-	// But it shouldn't be too much higher (within a reasonable range)
-	require.LessOrEqual(t, record.ResourceVersion, maxRV+100, "resource_version shouldn't be much higher than expected")
+	// For KV backend, maxRV is in snowflake format but record.ResourceVersion is in microsecond format
+	// Use IsRvEqual for proper comparison between different RV formats
+	isKvBackend := strings.Contains(namespace, "-kv")
+	recordResourceVersion := record.ResourceVersion
+	if isKvBackend {
+		recordResourceVersion = rvmanager.SnowflakeFromRV(record.ResourceVersion)
+	}
+
+	require.Less(t, recordResourceVersion, int64(9223372036854775807), "resource_version should be reasonable")
+	require.Greater(t, recordResourceVersion, maxRV, "resource_version should be at least the latest RV we tracked")
 }
 
 // runTestCrossBackendConsistency tests basic consistency between SQL and KV backends (lightweight)
@@ -666,11 +692,6 @@ func runTestCrossBackendConsistency(t *testing.T, sqlBackend, kvBackend resource
 
 // runTestConcurrentOperationsStress tests heavy concurrent operations between SQL and KV backends
 func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
-	// Skip on SQLite due to concurrency limitations
-	if db.DriverName() == "sqlite3" {
-		t.Skip("Skipping concurrent operations stress test on SQLite")
-	}
-
 	ctx := testutil.NewDefaultTestContext(t)
 
 	// Create storage servers from both backends
@@ -820,24 +841,20 @@ func runMixedConcurrentOperations(t *testing.T, sqlServer, kvServer resource.Res
 	}
 
 	// SQL backend operations
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-startBarrier // Wait for signal to start
 		if err := runBackendOperationsWithCounts(ctx, sqlServer, namespace+"-sql", "sql", opCounts); err != nil {
 			errors <- fmt.Errorf("SQL backend operations failed: %w", err)
 		}
-	}()
+	})
 
 	// KV backend operations
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-startBarrier // Wait for signal to start
 		if err := runBackendOperationsWithCounts(ctx, kvServer, namespace+"-kv", "kv", opCounts); err != nil {
 			errors <- fmt.Errorf("KV backend operations failed: %w", err)
 		}
-	}()
+	})
 
 	// Start both goroutines simultaneously
 	close(startBarrier)

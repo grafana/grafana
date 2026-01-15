@@ -30,7 +30,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "GlobalRole",
 					Plural:     "GlobalRoles",
-					Scope:      "Namespaced",
+					Scope:      "Cluster",
 					Conversion: false,
 				},
 
@@ -206,6 +206,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "TeamBindings",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.teamRef.name",
+						"spec.subject.name",
+					},
 				},
 
 				{

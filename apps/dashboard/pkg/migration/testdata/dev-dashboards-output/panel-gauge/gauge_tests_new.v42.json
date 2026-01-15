@@ -2117,7 +2117,7 @@
         }
       ],
       "title": "Numeric, no series",
-      "type": "gauge"
+      "type": "radialbar"
     },
     {
       "datasource": {
@@ -2183,7 +2183,7 @@
         }
       ],
       "title": "Non-numeric",
-      "type": "gauge"
+      "type": "radialbar"
     }
   ],
   "preload": false,
