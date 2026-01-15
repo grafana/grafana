@@ -1591,6 +1591,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "kubernetesAuthzGlobalRolesApi",
+			Description:  "Registers AuthZ Global Roles /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
 			Name:         "kubernetesAuthzRolesApi",
 			Description:  "Registers AuthZ Roles /apis endpoint",
 			Stage:        FeatureStageExperimental,

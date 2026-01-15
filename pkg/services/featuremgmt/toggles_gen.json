@@ -2026,6 +2026,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzGlobalRolesApi",
+        "resourceVersion": "1768463213468",
+        "creationTimestamp": "2026-01-15T07:46:53Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ Global Roles /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzResourcePermissionApis",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-31T22:56:50Z",
