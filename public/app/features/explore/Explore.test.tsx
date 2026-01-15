@@ -112,7 +112,6 @@ const dummyProps: Props = {
   compact: false,
   changeCompactMode: jest.fn(),
   queryLibraryRef: undefined,
-  queriesChangedIndex: 0,
   queriesChangedIndexAtRun: 0,
 };
 jest.mock('@grafana/runtime', () => ({
