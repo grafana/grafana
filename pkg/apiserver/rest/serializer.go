@@ -12,16 +12,16 @@ type noProtobufNegotiatedSerializer struct {
 
 func (s noProtobufNegotiatedSerializer) SupportedMediaTypes() []runtime.SerializerInfo {
 	base := s.NegotiatedSerializer.SupportedMediaTypes()
-	var suppported []runtime.SerializerInfo
+	var supported []runtime.SerializerInfo
 	for _, info := range base {
 		for _, accept := range s.accepts {
 			if accept(info) {
-				suppported = append(suppported, info)
+				supported = append(supported, info)
 				break
 			}
 		}
 	}
-	return suppported
+	return supported
 }
 
 // NoProtobuf is a function that omits the support for protobuf.
