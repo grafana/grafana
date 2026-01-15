@@ -8236,12 +8236,6 @@
       },
       "PatchPrefsCmd": {
         "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
@@ -12622,12 +12616,6 @@
       },
       "UpdatePrefsCmd": {
         "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
