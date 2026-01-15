@@ -19387,9 +19387,6 @@
       "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/PreferencesCookiePreferences"
-        },
         "homeDashboardUID": {
           "description": "UID for the home dashboard",
           "type": "string"

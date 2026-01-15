@@ -8917,9 +8917,6 @@
       "PreferencesSpec": {
         "description": "+k8s:openapi-gen=true",
         "properties": {
-          "cookiePreferences": {
-            "$ref": "#/components/schemas/PreferencesCookiePreferences"
-          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"
