@@ -408,7 +408,7 @@ func InstallAPIs(
 		}
 
 		// overrride the negotiated serializer to exclude protobuf, after the NewDefaultAPIGroupInfo, since it otherwise replaces the codecs
-		// g.NegotiatedSerializer = grafanarest.DefaultNoProtobufNegotiatedSerializer(ProvideCodecFactory(scheme))
+		g.NegotiatedSerializer = grafanarest.DefaultNoProtobufNegotiatedSerializer(ProvideCodecFactory(scheme))
 
 		return server.InstallAPIGroup(&g)
 	}

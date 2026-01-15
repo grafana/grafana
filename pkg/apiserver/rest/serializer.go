@@ -29,10 +29,9 @@ func NoProtobuf(info runtime.SerializerInfo) bool {
 	return info.MediaType != runtime.ContentTypeProtobuf
 }
 
-// SubsetNegotiatedSerializer is a runtime.NegotiatedSerializer that provides a whitelisted subset of the
-// content types the provided serializer.CodecFactory supports.
+// NoProtobufNegotiatedSerializer is a runtime.NegotiatedSerializer that omits the support for protobuf.
 func NoProtobufNegotiatedSerializer(codecs serializer.CodecFactory, accepts ...func(info runtime.SerializerInfo) bool) runtime.NegotiatedSerializer {
-	return noProtobufNegotiatedSerializer{accepts, codecs}
+	return noProtobufNegotiatedSerializer{accepts, codecs.WithoutConversion()}
 }
 
 // DefaultNoProtobufNegotiatedSerializer is the default serializer that does not use protobuf.
