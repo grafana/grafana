@@ -2,9 +2,13 @@ import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alph
 
 import { StatusInfo, RepositoryFormData } from '../types';
 
-export type WizardStep = 'connection' | 'bootstrap' | 'finish' | 'synchronize';
+export type WizardStep = 'authType' | 'githubApp' | 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 
 export type RepoType = RepositorySpec['type'];
+
+export type GitHubAuthType = 'pat' | 'github-app';
+
+export type GitHubAppMode = 'existing' | 'new';
 
 export interface MigrateFormData {
   history: boolean;
@@ -16,6 +20,14 @@ export interface WizardFormData {
   repository: RepositoryFormData;
   migrate?: MigrateFormData;
   repositoryName?: string;
+  githubAuthType?: GitHubAuthType;
+  githubAppMode?: GitHubAppMode;
+  githubApp?: {
+    connectionName?: string;
+    appID?: string;
+    installationID?: string;
+    privateKey?: string;
+  };
 }
 
 export type Target = SyncOptions['target'];

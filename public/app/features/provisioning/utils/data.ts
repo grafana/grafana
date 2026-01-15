@@ -15,7 +15,7 @@ export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflow
   return [...workflows, 'branch'];
 };
 
-export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
+export const dataToSpec = (data: RepositoryFormData, connectionName?: string): RepositorySpec => {
   const spec: RepositorySpec = {
     type: data.type,
     sync: data.sync,
@@ -31,10 +31,13 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
 
   switch (data.type) {
     case 'github':
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       spec.github = {
         ...baseConfig,
         generateDashboardPreviews: data.generateDashboardPreviews,
-      };
+        // Add connection reference if using GitHub App
+        ...(connectionName && { connection: { name: connectionName } }),
+      } as RepositorySpec['github'];
       break;
     case 'gitlab':
       spec.gitlab = baseConfig;
