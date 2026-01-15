@@ -168,8 +168,21 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 		return err
 	case <-ctx.Done():
 	}
-	s.logger.Warn("GRPC server: shutting down")
-	s.server.Stop()
+
+	s.logger.Warn("GRPC server: initiating graceful shutdown")
+	gracefulStopDone := make(chan struct{})
+	go func() {
+		s.server.GracefulStop()
+		close(gracefulStopDone)
+	}()
+
+	select {
+	case <-gracefulStopDone:
+		s.logger.Info("GRPC server: graceful shutdown complete")
+	case <-time.After(s.cfg.GracefulShutdownTimeout):
+		s.logger.Warn("GRPC server: graceful shutdown timed out, forcing stop")
+		s.server.Stop()
+	}
 	return ctx.Err()
 }
 

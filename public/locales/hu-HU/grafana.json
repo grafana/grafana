@@ -807,7 +807,8 @@
       "label-integration": "Integráció",
       "label-notification-settings": "Értesítési beállítások",
       "label-section": "Opcionális {{name}}-beállítások",
-      "test": "Teszt"
+      "test": "Teszt",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "OF",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Ez az erőforrás ki van építve ({{provenance}}), és nem szerkeszthető a felhasználói felületen keresztül",
       "badge-tooltip-standard": "Ez az erőforrás ki van építve, és nem szerkeszthető a felhasználói felületen keresztül",
+      "body-imported": "",
       "body-provisioned": "Ez a(z) {{resource}} ki van építve, ami azt jelenti, hogy konfiguráció hozta létre. Ezen {{resource}} frissítéshez forduljon a kiszolgáló rendszergazdájához.",
+      "title-imported": "",
       "title-provisioned": "Ez a(z) {{resource}} nem szerkeszthető a felhasználói felületen keresztül"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Kiépítve"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3135,9 +3138,12 @@
       "table": "Táblázat"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Határozza meg azt a feltételt, amelynek teljesülnie kell, mielőtt egy riasztási szabály aktiválódik",
       "description-configure-firing-alert-instances-routed-contact": "Konfigurálja, hogyan történjen az aktív riasztáspéldányok továbbítása a kapcsolattartási pontokhoz",
       "description-configure-receives-notifications": "Állítsa be, hogy ki kapjon értesítéseket, és hogyan legyenek elküldve",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Riasztási szabályok",
       "title-contact-points": "Kapcsolattartási pontok",
       "title-notification-policies": "Értesítési irányelvek"
@@ -3756,7 +3762,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4413,6 +4418,7 @@
       },
       "no-properties-changed": "Nem változtak meg a releváns tulajdonságok",
       "table": {
+        "notes": "",
         "updated": "Dátum",
         "updatedBy": "Frissítette:",
         "version": "Verzió"
@@ -4611,6 +4617,7 @@
     },
     "canvas-actions": {
       "add-panel": "Panel hozzáadása",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Csoportosítás sorba",
@@ -4871,7 +4878,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Értékek vesszővel elválasztva"
         },
         "datasource-options": {
           "name-filter": "Névszűrő",
@@ -5691,6 +5699,7 @@
     "validation": {
       "invalid-dashboard-id": "Nem található érvényes Grafana.com-azonosító",
       "invalid-json": "Érvénytelen JSON",
+      "tag-too-long": "",
       "tags-expected-array": "címke tömböt várt",
       "tags-expected-strings": "címke karakterláncok tömbjét várta"
     },
@@ -5796,6 +5805,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5964,8 +5974,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Egyéni opciók",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Értékek vesszővel elválasztva",
       "selection-options": "Kijelölés beállításai"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Vissza a listához",
@@ -6367,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasszikus",
         "json": "JSON",
         "v1-resource": "V1 erőforrás",
         "v2-resource": "V2 erőforrás",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Biztosan visszaállítja az irányítópultot a(z) {{version}} verzióra? Az összes nem mentett módosítás elveszik.",
@@ -6548,6 +6567,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Irányítópult elmentve"
     },
@@ -6571,6 +6595,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6630,8 +6655,9 @@
       "tooltip-show-usages": "Használatok megjelenítése"
     },
     "variable-values-preview": {
-      "preview-of-values": "Értékek előnézete",
-      "show-more": "Több megjelenítése"
+      "show-more": "Több megjelenítése",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -6960,6 +6986,7 @@
         "drone-datasource": "Drone-adatforrás",
         "git-lab-integration-and-datasource": "GitLab-integráció és -adatforrás",
         "honeycomb-integration-and-datasource": "Honeycomb-integráció és -adatforrás",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira-integráció és -adatforrás",
         "logic-monitor-devices-datasource": "LogicMonitor Devices-adatforrás",
         "mongo-db-integration-and-data-source": "MongoDB-integráció és -adatforrás",
@@ -7818,7 +7845,6 @@
       "export-externally-label": "Exportálja az irányítópultot egy másik példányban való használathoz",
       "export-format": "Formátum",
       "export-mode": "Modell",
-      "export-remove-ds-refs": "Üzembehelyezési részletek eltávolítása",
       "info-text": "Másolja vagy töltse le az irányítópult definícióját tartalmazó fájlt",
       "title": "Irányítópult exportálása"
     },
@@ -9235,7 +9261,8 @@
     "tags-input": {
       "add": "Hozzáadás",
       "placeholder-new-tag": "Új címke (nyomja le az Enter billentyűt a hozzáadáshoz)",
-      "remove": "Címke eltávolítása: {{name}}"
+      "remove": "Címke eltávolítása: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Időpontok szinkronizálása",
@@ -10702,18 +10729,6 @@
     "help/documentation": "Dokumentáció",
     "help/keyboard-shortcuts": "Gyorsbillentyűk",
     "help/support": "Ügyfélszolgálat",
-    "history-container": {
-      "drawer-tittle": "Előzmények"
-    },
-    "history-wrapper": {
-      "collapse": "Összecsukás",
-      "expand": "Kibontás",
-      "icon-selected": "Kijelölt bejegyzés",
-      "icon-unselected": "Normál bejegyzés",
-      "show-more": "Több megjelenítése",
-      "today": "Ma",
-      "yesterday": "Tegnap"
-    },
     "home": {
       "title": "Kezdőlap"
     },
@@ -11797,7 +11812,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Törlés",
       "confirm-delete-keep-resources": "Biztosan törli az adattár konfigurációját, és megtartja az erőforrásait?",
       "confirm-delete-with-resources": "Biztosan törli az adattár konfigurációját és az összes erőforrását?",
@@ -12061,6 +12122,7 @@
       "jobs": "Feladatok"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Beállítások",
       "source-code": "Forráskód"
     },
@@ -12516,6 +12578,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14385,6 +14453,17 @@
       },
       "name": {
         "series-to-rows": "Sorozatok sorokká alakítása"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

@@ -807,7 +807,8 @@
       "label-integration": "Integração",
       "label-notification-settings": "Definições de notificação",
       "label-section": "Definições de {{name}} opcionais",
-      "test": "Teste"
+      "test": "Teste",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DE",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Este recurso foi provisionado através de {{provenance}} e não pode ser editado através da interface do utilizador",
       "badge-tooltip-standard": "Este recurso foi provisionado e não pode ser editado através da interface do utilizador",
+      "body-imported": "",
       "body-provisioned": "Este {{resource}} foi aprovisionado, o que significa que foi criado por configuração. Entre em contacto com o seu administrador do servidor para atualizar este {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Este {{resource}} não pode ser editado através da interface do utilizador"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Aprovisionado"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3135,9 +3138,12 @@
       "table": "Tabela"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Definir a condição que deve ser cumprida antes de uma regra de alerta ser acionada",
       "description-configure-firing-alert-instances-routed-contact": "Configurar como as instâncias de alerta de ativação são encaminhadas para os pontos de contacto",
       "description-configure-receives-notifications": "Configurar quem recebe notificações e como são enviadas",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Regras de alerta",
       "title-contact-points": "Pontos de contacto",
       "title-notification-policies": "Políticas de notificação"
@@ -3756,7 +3762,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4413,6 +4418,7 @@
       },
       "no-properties-changed": "Nenhuma propriedade relevante alterada",
       "table": {
+        "notes": "",
         "updated": "Data",
         "updatedBy": "Atualizado por",
         "version": "Versão"
@@ -4611,6 +4617,7 @@
     },
     "canvas-actions": {
       "add-panel": "Adicionar painel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Agrupar em linha",
@@ -4871,7 +4878,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Valores separados por vírgulas"
         },
         "datasource-options": {
           "name-filter": "Filtro de nome",
@@ -5691,6 +5699,7 @@
     "validation": {
       "invalid-dashboard-id": "Não foi possível encontrar uma ID válida de Grafana.com",
       "invalid-json": "JSON inválido",
+      "tag-too-long": "",
       "tags-expected-array": "matriz de etiquetas esperada",
       "tags-expected-strings": "matriz de strings de etiquetas esperada"
     },
@@ -5796,6 +5805,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5964,8 +5974,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Opções personalizadas",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Valores separados por vírgulas",
       "selection-options": "Opções de seleção"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Voltar à lista",
@@ -6367,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Clássico",
         "json": "JSON",
         "v1-resource": "Recurso V1",
         "v2-resource": "Recurso V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Tem a certeza de que pretende restaurar o painel de controlo para a versão {{version}}? Todas as alterações não guardadas serão perdidas.",
@@ -6548,6 +6567,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Painel de controlo guardado"
     },
@@ -6571,6 +6595,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6630,8 +6655,9 @@
       "tooltip-show-usages": "Mostrar utilizações"
     },
     "variable-values-preview": {
-      "preview-of-values": "Pré-visualização de valores",
-      "show-more": "Mostrar mais"
+      "show-more": "Mostrar mais",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -6960,6 +6986,7 @@
         "drone-datasource": "Origem de dados do Drone",
         "git-lab-integration-and-datasource": "Integração e origem de dados do GitLab",
         "honeycomb-integration-and-datasource": "Integração e origem de dados do Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integração e origem de dados do Jira",
         "logic-monitor-devices-datasource": "Origem de dados de dispositivos do LogicMonitor",
         "mongo-db-integration-and-data-source": "Integração e origem de dados do MongoDB",
@@ -7818,7 +7845,6 @@
       "export-externally-label": "Exportar o painel de controlo para utilizar noutra instância",
       "export-format": "Formato",
       "export-mode": "Modelo",
-      "export-remove-ds-refs": "Remover detalhes de implementação",
       "info-text": "Copiar ou descarregar um ficheiro que contém a definição do seu painel de controlo",
       "title": "Exportar painel de controlo"
     },
@@ -9235,7 +9261,8 @@
     "tags-input": {
       "add": "Adicionar",
       "placeholder-new-tag": "Nova etiqueta (introduzir chave para adicionar)",
-      "remove": "Remover etiqueta: {{name}}"
+      "remove": "Remover etiqueta: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Horas sincronizadas",
@@ -10702,18 +10729,6 @@
     "help/documentation": "Documentação",
     "help/keyboard-shortcuts": "Atalhos de teclado",
     "help/support": "Apoio",
-    "history-container": {
-      "drawer-tittle": "Histórico"
-    },
-    "history-wrapper": {
-      "collapse": "Recolher",
-      "expand": "Expandir",
-      "icon-selected": "Entrada selecionada",
-      "icon-unselected": "Entrada normal",
-      "show-more": "Mostrar mais",
-      "today": "Hoje",
-      "yesterday": "Ontem"
-    },
     "home": {
       "title": "Início"
     },
@@ -11797,7 +11812,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Eliminar",
       "confirm-delete-keep-resources": "Tem a certeza de que pretende eliminar a configuração do repositório, mas manter os seus recursos?",
       "confirm-delete-with-resources": "Tem a certeza de que pretende eliminar a configuração do repositório e todos os seus recursos?",
@@ -12061,6 +12122,7 @@
       "jobs": "Trabalhos"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Definições",
       "source-code": "Código-fonte"
     },
@@ -12516,6 +12578,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14385,6 +14453,17 @@
       },
       "name": {
         "series-to-rows": "Série para linhas"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

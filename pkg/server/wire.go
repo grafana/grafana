@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
@@ -294,6 +295,7 @@ var wireBasicSet = wire.NewSet(
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,
+	ghconnection.ProvideFactory,
 	tracing.ProvideService,
 	tracing.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
@@ -327,6 +329,7 @@ var wireBasicSet = wire.NewSet(
 	dashsnapstore.ProvideStore,
 	wire.Bind(new(dashboardsnapshots.Service), new(*dashsnapsvc.ServiceImpl)),
 	dashsnapsvc.ProvideService,
+	datasourceservice.ProvideDataSourceRetriever,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	datasourceservice.ProvideLegacyDataSourceLookup,

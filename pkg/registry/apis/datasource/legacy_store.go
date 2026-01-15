@@ -57,6 +57,12 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	if s.dsConfigHandlerRequestsDuration != nil {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.List"), time.Since(start).Seconds())
+		}()
+	}
 	return s.datasources.ListDataSources(ctx)
 }
 
@@ -64,7 +70,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	if s.dsConfigHandlerRequestsDuration != nil {
 		start := time.Now()
 		defer func() {
-			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Get"), time.Since(start).Seconds())
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Get"), time.Since(start).Seconds())
 		}()
 	}
 
@@ -76,7 +82,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if s.dsConfigHandlerRequestsDuration != nil {
 		start := time.Now()
 		defer func() {
-			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Create"), time.Since(start).Seconds())
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Create"), time.Since(start).Seconds())
 		}()
 	}
 
@@ -92,7 +98,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 	if s.dsConfigHandlerRequestsDuration != nil {
 		start := time.Now()
 		defer func() {
-			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Create"), time.Since(start).Seconds())
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Update"), time.Since(start).Seconds())
 		}()
 	}
 
@@ -135,7 +141,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if s.dsConfigHandlerRequestsDuration != nil {
 		start := time.Now()
 		defer func() {
-			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("new", "Create"), time.Since(start).Seconds())
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Delete"), time.Since(start).Seconds())
 		}()
 	}
 
@@ -145,6 +151,13 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // DeleteCollection implements rest.CollectionDeleter.
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	if s.dsConfigHandlerRequestsDuration != nil {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.DeleteCollection"), time.Since(start).Seconds())
+		}()
+	}
+
 	dss, err := s.datasources.ListDataSources(ctx)
 	if err != nil {
 		return nil, err

@@ -804,7 +804,8 @@
       "label-integration": "整合",
       "label-notification-settings": "通知設定",
       "label-section": "可選{{name}}設定",
-      "test": "測試"
+      "test": "測試",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "的",
@@ -2168,11 +2169,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "此資源已透過 {{provenance}} 設定，無法透過使用者介面編輯",
       "badge-tooltip-standard": "此資源已設定，無法透過使用者介面編輯",
+      "body-imported": "",
       "body-provisioned": "此{{resource}}已佈建，這表示其是透過設定所建立。請聯絡您的伺服器管理員以更新此{{resource}}。",
+      "title-imported": "",
       "title-provisioned": "此{{resource}}無法透過使用者介面編輯"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "已佈建"
       }
     },
@@ -2666,7 +2670,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3124,9 +3127,12 @@
       "table": "表格"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "定義警報規則觸發前必須滿足的條件",
       "description-configure-firing-alert-instances-routed-contact": "設定如何將觸發的警報執行個體傳送至聯絡點",
       "description-configure-receives-notifications": "設定接收通知的對象以及傳送方式",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "警報規則",
       "title-contact-points": "聯絡點",
       "title-notification-policies": "通知政策"
@@ -3740,7 +3746,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4394,6 +4399,7 @@
       },
       "no-properties-changed": "沒有相關的屬性變更",
       "table": {
+        "notes": "",
         "updated": "日期",
         "updatedBy": "更新者",
         "version": "版本"
@@ -4592,6 +4598,7 @@
     },
     "canvas-actions": {
       "add-panel": "新增面板",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "將群組分成列",
@@ -4852,7 +4859,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "以逗號分隔的值"
         },
         "datasource-options": {
           "name-filter": "名稱篩選",
@@ -5671,6 +5679,7 @@
     "validation": {
       "invalid-dashboard-id": "沒有找到有效的 Grafana.com ID",
       "invalid-json": "無效的 JSON",
+      "tag-too-long": "",
       "tags-expected-array": "標籤預期陣列",
       "tags-expected-strings": "標籤預期字串陣列"
     },
@@ -5776,6 +5785,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5943,8 +5953,14 @@
     },
     "custom-variable-form": {
       "custom-options": "自訂選項",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "以逗號分隔的值",
       "selection-options": "選擇選項"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "返回清單",
@@ -6345,12 +6361,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "經典",
         "json": "JSON",
         "v1-resource": "V1 資源",
         "v2-resource": "V2 資源",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "確定要將儀表板還原到版本{{version}}嗎？所有未儲存變更將會遺失。",
@@ -6525,6 +6544,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
     },
@@ -6548,6 +6572,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6607,8 +6632,8 @@
       "tooltip-show-usages": "顯示使用情況"
     },
     "variable-values-preview": {
-      "preview-of-values": "數值預覽",
-      "show-more": "顯示更多"
+      "show-more": "顯示更多",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -6937,6 +6962,7 @@
         "drone-datasource": "Drone 資料來源",
         "git-lab-integration-and-datasource": "GitLab 整合與資料來源",
         "honeycomb-integration-and-datasource": "Honeycomb 整合與資料來源",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira 整合與資料來源",
         "logic-monitor-devices-datasource": "LogicMonitor 裝置資料來源",
         "mongo-db-integration-and-data-source": "MongoDB 整合與資料來源",
@@ -7793,7 +7819,6 @@
       "export-externally-label": "匯出儀表板以便在另一個執行個體中使用",
       "export-format": "格式",
       "export-mode": "模式",
-      "export-remove-ds-refs": "移除部署詳細資料",
       "info-text": "複製或下載包含儀表板定義的檔案",
       "title": "匯出儀表板"
     },
@@ -9200,7 +9225,8 @@
     "tags-input": {
       "add": "新增",
       "placeholder-new-tag": "新標記（輸入金鑰以新增）",
-      "remove": "移除標籤：{{name}}"
+      "remove": "移除標籤：{{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "同步次數",
@@ -10659,18 +10685,6 @@
     "help/documentation": "文件",
     "help/keyboard-shortcuts": "鍵盤捷徑",
     "help/support": "支援",
-    "history-container": {
-      "drawer-tittle": "歷史紀錄"
-    },
-    "history-wrapper": {
-      "collapse": "收闔",
-      "expand": "展開",
-      "icon-selected": "已選取條目",
-      "icon-unselected": "一般條目",
-      "show-more": "顯示更多",
-      "today": "今天",
-      "yesterday": "昨天"
-    },
     "home": {
       "title": "首頁"
     },
@@ -11748,7 +11762,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "刪除",
       "confirm-delete-keep-resources": "確定要刪除儲存庫設定，但保留其資源嗎？",
       "confirm-delete-with-resources": "確定要刪除儲存庫設定及其所有資源嗎？",
@@ -12010,6 +12070,7 @@
       "jobs": "作業"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "設定",
       "source-code": "原始碼"
     },
@@ -12464,6 +12525,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14329,6 +14396,17 @@
       },
       "name": {
         "series-to-rows": "將序列轉為列"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

@@ -813,7 +813,8 @@
       "label-integration": "Integracja",
       "label-notification-settings": "Ustawienia powiadomień",
       "label-section": "Ustawienia opcjonalne: {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "OF",
@@ -2192,11 +2193,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Ten zasób został skonfigurowany za pośrednictwem {{provenance}} i nie można go edytować z poziomu interfejsu użytkownika",
       "badge-tooltip-standard": "Ten zasób został skonfigurowany i nie można go edytować z poziomu interfejsu użytkownika",
+      "body-imported": "",
       "body-provisioned": "Zasób {{resource}} został aprowizowany, co oznacza, że został utworzony przez konfigurację. Skontaktuj się z administratorem serwera, aby zaktualizować zasób {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Tego zasobu {{resource}} nie można edytować z poziomu interfejsu użytkownika"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Po aprowizacji"
       }
     },
@@ -2699,7 +2703,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3157,9 +3160,12 @@
       "table": "Tabela"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Zdefiniuj warunek, który musi zostać spełniony przed uruchomieniem reguły alertu",
       "description-configure-firing-alert-instances-routed-contact": "Skonfiguruj, w jaki sposób uruchamiane instancje alertów są kierowane do punktów kontaktu",
       "description-configure-receives-notifications": "Skonfiguruj, kto otrzymuje powiadomienia i jak są one wysyłane",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Reguły alertu",
       "title-contact-points": "Punkty kontaktowe",
       "title-notification-policies": "Zasady powiadamiania"
@@ -3788,7 +3794,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4451,6 +4456,7 @@
       },
       "no-properties-changed": "Nie zmieniono istotnych właściwości",
       "table": {
+        "notes": "",
         "updated": "Data",
         "updatedBy": "Zaktualizowane przez",
         "version": "Wersja"
@@ -4649,6 +4655,7 @@
     },
     "canvas-actions": {
       "add-panel": "Dodaj panel",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Grupuj w wierszu",
@@ -4909,7 +4916,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Wartości rozdzielone przecinkami"
         },
         "datasource-options": {
           "name-filter": "Filtr nazwy",
@@ -5731,6 +5739,7 @@
     "validation": {
       "invalid-dashboard-id": "Nie można znaleźć prawidłowego identyfikatora Grafana.com",
       "invalid-json": "Nieprawidłowy plik JSON",
+      "tag-too-long": "",
       "tags-expected-array": "znaczniki oczekiwały tablicy",
       "tags-expected-strings": "znaczniki oczekiwały tablicy łańcuchów"
     },
@@ -5836,6 +5845,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -6006,8 +6016,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Opcje niestandardowe",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Wartości rozdzielone przecinkami",
       "selection-options": "Opcje wyboru"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Powrót do listy",
@@ -6411,12 +6427,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasyczny",
         "json": "JSON",
         "v1-resource": "Zasób V1",
         "v2-resource": "Zasób V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Czy na pewno chcesz przywrócić pulpit w wersji {{version}}? Wszystkie niezapisane zmiany zostaną utracone.",
@@ -6594,6 +6613,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Pulpit został zapisany"
     },
@@ -6617,6 +6641,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6676,8 +6701,11 @@
       "tooltip-show-usages": "Wyświetl użycie"
     },
     "variable-values-preview": {
-      "preview-of-values": "Podgląd wartości",
-      "show-more": "Pokaż więcej"
+      "show-more": "Pokaż więcej",
+      "preview-of-values_one": "",
+      "preview-of-values_few": "",
+      "preview-of-values_many": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -7006,6 +7034,7 @@
         "drone-datasource": "Źródło danych Drone",
         "git-lab-integration-and-datasource": "Integracja i źródło danych GitLab",
         "honeycomb-integration-and-datasource": "Integracja i źródło danych Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integracja i źródło danych Jira",
         "logic-monitor-devices-datasource": "Źródło danych urządzeń LogicMonitor",
         "mongo-db-integration-and-data-source": "Integracja i źródło danych MongoDB",
@@ -7868,7 +7897,6 @@
       "export-externally-label": "Eksportuj pulpit, aby użyć go w innej instancji",
       "export-format": "Format",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Usuń szczegóły wdrożenia",
       "info-text": "Skopiuj lub pobierz plik zawierający definicję pulpitu",
       "title": "Eksportuj pulpit"
     },
@@ -9305,7 +9333,8 @@
     "tags-input": {
       "add": "Dodaj",
       "placeholder-new-tag": "Nowy tag (wprowadź klucz, aby dodać)",
-      "remove": "Usuń znacznik: {{name}}"
+      "remove": "Usuń znacznik: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Synchronizuj czas",
@@ -10788,18 +10817,6 @@
     "help/documentation": "Dokumentacja",
     "help/keyboard-shortcuts": "Skróty klawiaturowe",
     "help/support": "Wsparcie",
-    "history-container": {
-      "drawer-tittle": "Historia"
-    },
-    "history-wrapper": {
-      "collapse": "Zwiń",
-      "expand": "Rozwiń",
-      "icon-selected": "Zaznaczony wpis",
-      "icon-unselected": "Normalny wpis",
-      "show-more": "Pokaż więcej",
-      "today": "Dzisiaj",
-      "yesterday": "Wczoraj"
-    },
     "home": {
       "title": "Strona główna"
     },
@@ -11895,7 +11912,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Usuń",
       "confirm-delete-keep-resources": "Na pewno chcesz usunąć konfigurację repozytorium, ale zachować jego zasoby?",
       "confirm-delete-with-resources": "Na pewno chcesz usunąć konfigurację repozytorium i wszystkie jego zasoby?",
@@ -12163,6 +12226,7 @@
       "jobs": "Zadania"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Ustawienia",
       "source-code": "Kod źródłowy"
     },
@@ -12620,6 +12684,12 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
       "threshold-markers": ""
     }
@@ -14497,6 +14567,17 @@
       },
       "name": {
         "series-to-rows": "Szeregi do wierszy"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

@@ -144,6 +144,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "panelType",
+										In:          "query",
+										Description: "find dashboards using panels of a given plugin type",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "dataSourceType",
+										In:          "query",
+										Description: "find dashboards using datasources of a given plugin type",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "permission",
 										In:          "query",
 										Description: "permission needed for the resource (view, edit, admin)",
@@ -195,6 +213,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Name:        "explain",
 										In:          "query",
 										Description: "add debugging info that may help explain why the result matched",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "panelTitleSearch",
+										In:          "query",
+										Description: "[experimental] optionally include matches from panel titles",
 										Required:    false,
 										Schema:      spec.BoolProperty(),
 									},
@@ -430,14 +457,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 
-	// The facet term fields
+	// Apply facet terms
 	if facets, ok := queryParams["facet"]; ok {
 		if queryParams.Has("facetLimit") {
 			if parsed, err := strconv.Atoi(queryParams.Get("facetLimit")); err == nil && parsed > 0 {
-				facetLimit = parsed
-				if facetLimit > 1000 {
-					facetLimit = 1000
-				}
+				facetLimit = min(parsed, 1000)
 			}
 		}
 		searchRequest.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
@@ -449,22 +473,65 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 
-	// The tags filter
-	if tags, ok := queryParams["tag"]; ok {
+	if v, ok := queryParams["tag"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "tags",
 			Operator: "=",
-			Values:   tags,
+			Values:   v,
 		})
 	}
 
-	// The libraryPanel filter
-	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
+	if v, ok := queryParams["panelType"]; ok {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TYPES,
+			Operator: "=",
+			Values:   v,
+		})
+	}
+
+	if v, ok := queryParams["dataSourceType"]; ok {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_DS_TYPES,
+			Operator: "=",
+			Values:   v,
+		})
+	}
+
+	if v, ok := queryParams["libraryPanel"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
-			Values:   libraryPanel,
+			Values:   v,
 		})
+	}
+
+	if searchRequest.Query == "*" {
+		searchRequest.Query = "" // will match everything
+	} else if searchRequest.Query != "" {
+		// Explicitly configure the query for dashboard+folder matching.
+		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+			{
+				Name:  resource.SEARCH_FIELD_TITLE,
+				Type:  resourcepb.QueryFieldType_KEYWORD,
+				Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE,
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 2, // standard analyzer (with ngrams!)
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 5, // standard analyzer
+			},
+		}
+
+		if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
+			searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
+				Name:  resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE, // fields.panel_title
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 5,
+			})
+		}
 	}
 
 	// The names filter
@@ -523,6 +590,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// gets dashboards that the user was granted read access to
 	permissions := user.GetPermissions()
 	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
+	folderPermissions := permissions[dashboards.ActionFoldersRead]
 	dashboardUids := make([]string, 0)
 	sharedDashboards := make([]string, 0)
 
@@ -530,6 +598,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		if dashboardUid, found := strings.CutPrefix(dashboardPermission, dashboards.ScopeDashboardsPrefix); found {
 			if !slices.Contains(dashboardUids, dashboardUid) {
 				dashboardUids = append(dashboardUids, dashboardUid)
+			}
+		}
+	}
+	for _, folderPermission := range folderPermissions {
+		if folderUid, found := strings.CutPrefix(folderPermission, dashboards.ScopeFoldersPrefix); found {
+			if !slices.Contains(dashboardUids, folderUid) && folderUid != foldermodel.SharedWithMeFolderUID && folderUid != foldermodel.GeneralFolderUID {
+				dashboardUids = append(dashboardUids, folderUid)
 			}
 		}
 	}
@@ -543,9 +618,15 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
+	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
+	if err != nil {
+		return sharedDashboards, err
+	}
+
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields: []string{"folder"},
-		Limit:  int64(len(dashboardUids)),
+		Federated: []*resourcepb.ResourceKey{folderKey},
+		Fields:    []string{"folder"},
+		Limit:     int64(len(dashboardUids)),
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{{
@@ -581,12 +662,6 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 
-	// only folders the user has access to will be returned here
-	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
-	if err != nil {
-		return sharedDashboards, err
-	}
-
 	folderSearchRequest := &resourcepb.ResourceSearchRequest{
 		Fields: []string{"folder"},
 		Limit:  int64(len(allFolders)),
@@ -599,6 +674,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
+	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
 	if err != nil {
 		return sharedDashboards, err

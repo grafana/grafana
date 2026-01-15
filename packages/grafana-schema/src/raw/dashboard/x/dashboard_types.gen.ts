@@ -211,6 +211,10 @@ export interface VariableModel {
    * Type of variable
    */
   type: VariableType;
+  /**
+   * Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+   */
+  valuesFormat?: ('csv' | 'json');
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
@@ -220,6 +224,7 @@ export const defaultVariableModel: Partial<VariableModel> = {
   options: [],
   skipUrlSync: false,
   staticOptions: [],
+  valuesFormat: 'csv',
 };
 
 /**
