@@ -1,7 +1,9 @@
+import { cloneDeep } from 'lodash';
 import { memo, useMemo } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataFrame, SplitOpen } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, SplitOpen } from '@grafana/data';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { AdHocFilterItem } from '@grafana/ui';
 import { ExploreItemState } from 'app/types/explore';
@@ -9,7 +11,7 @@ import { StoreState } from 'app/types/store';
 
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
-import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';
+import { RawPrometheusContainerPure } from './RawPrometheusContainerPure';
 
 // ============================================================================
 // Redux-connected Component - Used by Explore
@@ -41,7 +43,7 @@ type ExploreProps = ExploreRawPrometheusContainerProps & ConnectedProps<typeof c
 
 /**
  * Redux-connected wrapper for Explore.
- * Gets data from Redux and passes to PrometheusQueryResultsContainer for processing and display.
+ * Gets data from Redux, processes it with field overrides, and passes to RawPrometheusContainerPure for display.
  */
 const ExploreRawPrometheusContainer = memo(
   ({
@@ -60,16 +62,31 @@ const ExploreRawPrometheusContainer = memo(
       [splitOpenFn, range]
     );
 
+    // Process data with field overrides (memoized)
+    const processedData = useMemo(() => {
+      if (!tableResult?.length) {
+        return tableResult;
+      }
+      // Clone to avoid mutating frozen Redux state
+      const cloned = cloneDeep(tableResult);
+      return applyFieldOverrides({
+        data: cloned,
+        timeZone: timeZone ?? 'browser',
+        theme: config.theme2,
+        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+        fieldConfig: { defaults: {}, overrides: [] },
+        dataLinkPostProcessor,
+      });
+    }, [tableResult, timeZone, dataLinkPostProcessor]);
+
     return (
-      <PrometheusQueryResultsContainer
-        tableResult={tableResult}
+      <RawPrometheusContainerPure
+        tableResult={processedData}
         width={width}
-        timeZone={timeZone}
         loading={loading}
         ariaLabel={ariaLabel}
         showRawPrometheus={showRawPrometheus}
         onCellFilterAdded={onCellFilterAdded}
-        dataLinkPostProcessor={dataLinkPostProcessor}
       />
     );
   }

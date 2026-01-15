@@ -1,0 +1,24 @@
+{
+  "type": "panel",
+  "name": "Instant Query Results",
+  "id": "instant-query-results",
+  "suggestions": true,
+  "info": {
+    "description": "Display instant query results with Table/Raw toggle",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-instant-query-results.svg",
+      "large": "img/icn-instant-query-results.svg"
+    },
+    "links": [
+      { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
+      {
+        "name": "Documentation",
+        "url": "https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/"
+      }
+    ]
+  }
+}

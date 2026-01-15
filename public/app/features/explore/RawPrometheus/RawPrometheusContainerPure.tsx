@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import { memo, useState } from 'react';
 
 import { DataFrame, GrafanaTheme2, LoadingState, SelectableValue } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 

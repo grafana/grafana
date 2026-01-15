@@ -24,6 +24,8 @@ export type instantQueryRawVirtualizedListData = {
 
 export interface RawListContainerProps {
   tableResult: DataFrame;
+  /** Optional default expanded state. If undefined, uses responsive default based on screen width and column count. */
+  defaultExpanded?: boolean;
 }
 
 const styles = {
@@ -65,7 +67,7 @@ const numberOfColumnsBeforeExpandedViewIsDefault = 2;
  * @constructor
  */
 const RawListContainer = (props: RawListContainerProps) => {
-  const { tableResult } = props;
+  const { tableResult, defaultExpanded } = props;
   const dataFrame = cloneDeep(tableResult);
   const listRef = useRef<List | null>(null);
 
@@ -73,7 +75,8 @@ const RawListContainer = (props: RawListContainerProps) => {
   const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
   const { width } = useWindowSize();
   const [isExpandedView, setIsExpandedView] = useState(
-    width <= mobileWidthThreshold || valueLabels.length > numberOfColumnsBeforeExpandedViewIsDefault
+    defaultExpanded ??
+      (width <= mobileWidthThreshold || valueLabels.length > numberOfColumnsBeforeExpandedViewIsDefault)
   );
 
   const onContentClick = () => {
