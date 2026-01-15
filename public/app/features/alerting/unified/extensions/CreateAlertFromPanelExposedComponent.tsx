@@ -1,20 +1,69 @@
 import { useAsync } from 'react-use';
 
-import { locationUtil, urlUtil } from '@grafana/data';
+import { RawTimeRange, getNextRefId, locationUtil, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { vizPanelToRuleFormValues } from '../utils/rule-form';
+import { RuleFormType } from '../types/rule-form';
+import {
+  dataQueriesToGrafanaQueries,
+  getDefaultReduceExpression,
+  getDefaultThresholdExpression,
+} from '../utils/rule-form';
 
 export interface CreateAlertFromPanelProps {
-  panel: VizPanel;
+  panel: {
+    title?: string;
+    targets: DataQuery[];
+    datasource?: DataSourceRef;
+    maxDataPoints?: number;
+  };
+  range?: { raw: RawTimeRange };
   onDismiss: () => void;
 }
 
-export function CreateAlertFromPanelExposedComponent({ panel, onDismiss }: CreateAlertFromPanelProps) {
-  const { loading, value: formValues } = useAsync(() => vizPanelToRuleFormValues(panel), [panel]);
+export function CreateAlertFromPanelExposedComponent({ panel, range, onDismiss }: CreateAlertFromPanelProps) {
+  const { loading, value: formValues } = useAsync(async () => {
+    const relativeTimeRange = range?.raw ? { from: 600, to: 0 } : { from: 600, to: 0 };
+
+    const grafanaQueries = await dataQueriesToGrafanaQueries(
+      panel.targets,
+      relativeTimeRange,
+      {},
+      panel.datasource,
+      panel.maxDataPoints
+    );
+
+    if (!grafanaQueries.length) {
+      return undefined;
+    }
+
+    // Add reduce + threshold if no expressions exist
+    if (!grafanaQueries.find((q) => q.datasourceUid === ExpressionDatasourceUID)) {
+      const lastQuery = grafanaQueries.at(-1)!;
+      const reduceExpr = getDefaultReduceExpression({
+        inputRefId: lastQuery.refId,
+        reduceRefId: getNextRefId(grafanaQueries),
+      });
+      grafanaQueries.push(reduceExpr);
+
+      const thresholdExpr = getDefaultThresholdExpression({
+        inputRefId: reduceExpr.refId,
+        thresholdRefId: getNextRefId(grafanaQueries),
+      });
+      grafanaQueries.push(thresholdExpr);
+    }
+
+    return {
+      type: RuleFormType.grafana,
+      queries: grafanaQueries,
+      name: panel.title || '',
+      condition: grafanaQueries.at(-1)!.refId,
+    };
+  }, [panel, range]);
 
   const buildUrl = () => urlUtil.renderUrl('/alerting/new', { defaults: JSON.stringify(formValues) });
 
