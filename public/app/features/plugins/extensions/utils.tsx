@@ -420,6 +420,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
         href: extension.path,
         onClick: extension.onClick,
         iconClassName: extension.icon,
+        target: extension.openInNewTab ? '_blank' : undefined,
       });
       continue;
     }
@@ -433,6 +434,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
       href: extension.path,
       onClick: extension.onClick,
       iconClassName: extension.icon,
+      target: extension.openInNewTab ? '_blank' : undefined,
     });
   }
 

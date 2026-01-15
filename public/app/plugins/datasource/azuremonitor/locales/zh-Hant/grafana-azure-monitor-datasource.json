@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure 紀錄會啟動您的查詢按鈕",
       "body-switching-to-builder": "切換到建立器將捨棄您目前的 KQL 查詢並清除 KQL 編輯器。您確定嗎？",
-      "body-switching-to-kql": "切換到 KQL 將捨棄您目前的建立器設定。您確定嗎？",
       "button-kick-start-your-query": "啟動您的查詢",
       "button-run-query": "執行查詢",
       "confirmText-switch-to": "切換到 {{newMode}}",

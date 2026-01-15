@@ -804,7 +804,8 @@
       "label-integration": "統合",
       "label-notification-settings": "通知設定",
       "label-section": "{{name}}のオプション設定",
-      "test": "テスト"
+      "test": "テスト",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "の",
@@ -2168,11 +2169,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "このリソースは{{provenance}}を介してプロビジョニングされており、UIから編集することはできません",
       "badge-tooltip-standard": "このリソースはプロビジョニングされており、UIから編集することはできません",
+      "body-imported": "",
       "body-provisioned": "この{{resource}}はプロビジョニングされたものです。つまり、設定によって作成されました。この{{resource}}を更新するには、サーバー管理者にお問い合わせください。",
+      "title-imported": "",
       "title-provisioned": "この{{resource}}はUI上で編集できません"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "プロビジョニング済み"
       }
     },
@@ -2666,7 +2670,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6358,12 +6361,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "クラシック",
         "json": "JSON",
         "v1-resource": "V1リソース",
         "v2-resource": "V2リソース",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "ダッシュボードをバージョン{{version}}に復元してもよろしいですか？未保存の変更はすべて失われます。",
@@ -6956,6 +6962,7 @@
         "drone-datasource": "Droneデータソース",
         "git-lab-integration-and-datasource": "GitLab統合・データソース",
         "honeycomb-integration-and-datasource": "Honeycomb統合・データソース",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira統合・データソース",
         "logic-monitor-devices-datasource": "LogicMonitorデバイスデータソース",
         "mongo-db-integration-and-data-source": "MongoDB統合・データソース",
@@ -7812,7 +7819,6 @@
       "export-externally-label": "ダッシュボードをエクスポートして別のインスタンスで使用する",
       "export-format": "形式",
       "export-mode": "モデル",
-      "export-remove-ds-refs": "デプロイの詳細を削除",
       "info-text": "ダッシュボードの定義を含むファイルをコピーまたはダウンロード",
       "title": "ダッシュボードをエクスポート"
     },
@@ -11756,7 +11762,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "削除",
       "confirm-delete-keep-resources": "リポジトリ設定を削除するものの、そのリソースを保持してもよろしいですか？",
       "confirm-delete-with-resources": "リポジトリ設定とそのすべてのリソースを削除してもよろしいですか？",
@@ -12018,6 +12070,7 @@
       "jobs": "ジョブ"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "設定",
       "source-code": "ソースコード"
     },

@@ -3,7 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.use({
   featureToggles: {
     newVizSuggestions: true,
-    externalVizSuggestions: false,
+    externalVizSuggestions: true,
   },
   viewport: {
     width: 800,
@@ -172,6 +172,41 @@ test.describe(
       await expect(
         page.locator('[data-viz-panel-key="panel-9"]').locator('.uplot'),
         'time series to be rendered inside the panel'
+      ).toBeVisible();
+    });
+
+    test('should not apply suggestion if you navigate back to the dashboard for a new panel', async ({
+      page,
+      selectors,
+      gotoDashboardPage,
+    }) => {
+      // New dashboard
+      const dashboardPage = await gotoDashboardPage({});
+
+      // Press the empty-state Create new panel button
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.AddDashboard.itemButton('Create new panel button'))
+        .click();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();
+
+      // Verify we see suggestions on load (after closing the data source picker)
+      await page.getByRole('button', { name: 'Close', exact: true }).click({ force: true });
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Line chart')),
+        'line chart suggestion to be rendered'
+      ).toBeVisible();
+
+      // Select a visualization
+      await dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Table')).click();
+      await expect(page.getByRole('grid').getByRole('row').first(), 'table row to be rendered').toBeVisible();
+
+      // Verify that navigating back to the dashboard cancels the suggestion and restores the line chart.
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+        .click();
+      await expect(
+        page.locator('[data-viz-panel-key="panel-1"]').getByText('Configure'),
+        'configure button is visible in the panel'
       ).toBeVisible();
     });
   }

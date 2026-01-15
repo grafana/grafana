@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Botão de início de consulta de registos do Azure",
       "body-switching-to-builder": "Mudar para o Construtor descartará a sua consulta KQL atual e limpará o editor KQL. Tem a certeza?",
-      "body-switching-to-kql": "Mudar para KQL descartará as suas definições atuais do construtor. Tem a certeza?",
       "button-kick-start-your-query": "Dê início à sua consulta",
       "button-run-query": "Executar consulta",
       "confirmText-switch-to": "Mudar para {{newMode}}",

@@ -1,5 +1,6 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
+import { setVisualization } from '../../../utils/panel-helpers';
 import { formatExpectError } from '../errors';
 import { successfulDataQuery } from '../mocks/queries';
 
@@ -27,7 +28,7 @@ test.describe(
       test('table panel data assertions', async ({ panelEditPage }) => {
         await panelEditPage.mockQueryDataResponse(successfulDataQuery, 200);
         await panelEditPage.datasource.set('gdev-testdata');
-        await panelEditPage.setVisualization('Table');
+        await setVisualization(panelEditPage, 'Table');
         await panelEditPage.refreshPanel();
         await expect(
           panelEditPage.panel.locator,
@@ -46,7 +47,7 @@ test.describe(
       test('timeseries panel - table view assertions', async ({ panelEditPage }) => {
         await panelEditPage.mockQueryDataResponse(successfulDataQuery, 200);
         await panelEditPage.datasource.set('gdev-testdata');
-        await panelEditPage.setVisualization('Time series');
+        await setVisualization(panelEditPage, 'Time series');
         await panelEditPage.refreshPanel();
         await panelEditPage.toggleTableView();
         await expect(

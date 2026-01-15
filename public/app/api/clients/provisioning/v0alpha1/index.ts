@@ -11,6 +11,7 @@ import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { clearFolders } from 'app/features/browse-dashboards/state/slice';
 import { getState } from 'app/store/store';
+import { ThunkDispatch } from 'app/types/store';
 
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
@@ -18,6 +19,26 @@ import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { handleError } from '../../../utils';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
+
+const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
+  if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
+    if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
+      const statusError: Status = e.error.data;
+      dispatch(notifyApp(createErrorNotification(title, new Error(statusError.message || 'Unknown error'))));
+      return;
+    }
+
+    if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
+      const nonFieldErrors = e.error.data.errors.filter((err: ErrorDetails) => !err.field);
+      if (nonFieldErrors.length > 0) {
+        dispatch(notifyApp(createErrorNotification(title)));
+      }
+      return;
+    }
+  }
+
+  handleError(e, dispatch, title);
+};
 
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -36,6 +57,17 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         params: queryArg,
       }),
       onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories'),
+    },
+    listConnection: {
+      providesTags: (result) =>
+        result
+          ? [
+              { type: 'Connection', id: 'LIST' },
+              ...result.items
+                .map((connection) => ({ type: 'Connection' as const, id: connection.metadata?.name }))
+                .filter(Boolean),
+            ]
+          : [{ type: 'Connection', id: 'LIST' }],
     },
     deleteRepository: {
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
@@ -104,34 +136,7 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         try {
           await queryFulfilled;
         } catch (e) {
-          // Handle special cases first
-          if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
-            // Handle Status error responses (Kubernetes style)
-            if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
-              const statusError: Status = e.error.data;
-              dispatch(
-                notifyApp(
-                  createErrorNotification(
-                    'Error validating repository',
-                    new Error(statusError.message || 'Unknown error')
-                  )
-                )
-              );
-              return;
-            }
-            // Handle TestResults error responses with field errors
-            if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
-              const nonFieldErrors = e.error.data.errors.filter((err: ErrorDetails) => !err.field);
-              // Only show notification if there are errors that don't have a field, field errors are handled by the form
-              if (nonFieldErrors.length > 0) {
-                dispatch(notifyApp(createErrorNotification('Error validating repository')));
-              }
-              return;
-            }
-          }
-
-          // For all other cases, use handleError
-          handleError(e, dispatch, 'Error validating repository');
+          handleProvisioningFormError(e, dispatch, 'Error validating repository');
         }
       },
     },
@@ -237,6 +242,70 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
           }
         } catch (e) {
           console.error('Error in getRepositoryJobsWithPath:', e);
+        }
+      },
+    },
+    createConnection: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            notifyApp(
+              createSuccessNotification(t('provisioning.connection-form.alert-connection-saved', 'Connection saved'))
+            )
+          );
+        } catch (e) {
+          handleProvisioningFormError(
+            e,
+            dispatch,
+            t('provisioning.connection-form.error-save-connection', 'Failed to save connection')
+          );
+        }
+      },
+    },
+    replaceConnection: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            notifyApp(
+              createSuccessNotification(
+                t('provisioning.connection-form.alert-connection-updated', 'Connection updated')
+              )
+            )
+          );
+        } catch (e) {
+          handleProvisioningFormError(
+            e,
+            dispatch,
+            t('provisioning.connection-form.error-save-connection', 'Failed to save connection')
+          );
+        }
+      },
+    },
+    deleteConnection: {
+      invalidatesTags: (result, error) => (error ? [] : [{ type: 'Connection', id: 'LIST' }]),
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            notifyApp(
+              createSuccessNotification(
+                t('provisioning.connection-form.alert-connection-deleted', 'Connection deleted')
+              )
+            )
+          );
+        } catch (e) {
+          if (e instanceof Error) {
+            dispatch(
+              notifyApp(
+                createErrorNotification(
+                  t('provisioning.connection-form.error-delete-connection', 'Failed to delete connection'),
+                  e
+                )
+              )
+            );
+          }
         }
       },
     },
