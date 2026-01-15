@@ -91,38 +91,39 @@ You can configure additional settings to customize your Slack notifications beyo
 
 You can customize how the bot appears in Slack channels:
 
-- **Username**: Override the default bot username that appears in Slack. Set the `username` field to customize the display name.
-- **Icon emoji**: Provide an emoji to use as the icon for the message. Set the `icon_emoji` field (for example, `:rocket:`). This overrides the icon URL.
-- **Icon URL**: Provide a URL to an image to use as the icon for the message. Set the `icon_url` field with the image URL.
+| Option     | Description                                                                                                                             |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Username   | Override the default bot username that appears in Slack. Set the `username` field to customize the display name.                        |
+| Icon emoji | Provide an emoji to use as the icon for the message. Set the `icon_emoji` field (for example, `:rocket:`). This overrides the icon URL. |
+| Icon URL   | Provide a URL to an image to use as the icon for the message. Set the `icon_url` field with the image URL.                              |
 
 ### Configure mentions
 
 You can automatically mention users, groups, or the entire channel when notifications are sent:
 
-- **Mention users**: Mention one or more specific users in the notification. Set the `mentionUsers` field with a comma-separated list of user IDs (for example, `U024BE7LH,U024BE7LJ`). To find a user's ID, refer to [Slack's documentation on finding member IDs](https://api.slack.com/methods/users.list).
-
-- **Mention groups**: Mention one or more user groups in the notification. Set the `mentionGroups` field with a comma-separated list of group IDs. You can copy group IDs from the group's Slack profile URL.
-
-- **Mention channel**: Mention the entire channel or active members. Set the `mentionChannel` field to one of the following:
-  - Empty or omit the field to disable channel mentions
-  - `here` to mention every active channel member
-  - `channel` to mention every channel member
+| Option          | Description                                                                                                                                                                                                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mention users   | Mention one or more specific users in the notification. Set the `mentionUsers` field with a comma-separated list of user IDs (for example, `U024BE7LH,U024BE7LJ`). To find a user's ID, refer to [Slack's documentation on finding member IDs](https://api.slack.com/methods/users.list). |
+| Mention groups  | Mention one or more user groups in the notification. Set the `mentionGroups` field with a comma-separated list of group IDs. You can copy group IDs from the group's Slack profile URL.                                                                                                   |
+| Mention channel | Mention the entire channel or active members. Set the `mentionChannel` field to one of the following:<br>- Empty or omit the field to disable channel mentions<br>- `here` to mention every active channel member<br>- `channel` to mention every channel member                          |
 
 ### Customize message content
 
 You can customize the notification message using [notification templates](ref:notification-templates):
 
-- **Title**: Set a custom title for the Slack message. Use the `title` field with template variables (for example, `{{ template "slack.default.title" . }}`).
-
-- **Text body**: Set a custom body text for the Slack message. Use the `text` field with template variables (for example, `{{ template "slack.default.text" . }}`).
-
-- **Color**: Set the color of the vertical bar on the left side of the message attachment. Use the `color` field with either:
+| Option    | Description                                                                                                                                        |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title     | Set a custom title for the Slack message. Use the `title` field with template variables (for example, `{{ template "slack.default.title" . }}`).   |
+| Text body | Set a custom body text for the Slack message. Use the `text` field with template variables (for example, `{{ template "slack.default.text" . }}`). |
+| Color     | Set the color of the vertical bar on the left side of the message attachment. Use the `color` field.                                               |
 
 ### Advanced configuration
 
 For specialized environments, you can override the default Slack API endpoint:
 
-- **Endpoint URL**: Specify a custom Slack API endpoint for non-webhook requests. Set the `endpointUrl` field to your custom endpoint. The default is `https://slack.com/api/chat.postMessage`.
+| Option       | Description                                                                                                                                                                 |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Endpoint URL | Specify a custom Slack API endpoint for non-webhook requests. Set the `endpointUrl` field to your custom endpoint. The default is `https://slack.com/api/chat.postMessage`. |
 
 ## Next steps
 
