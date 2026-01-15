@@ -9,8 +9,8 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { dispatch } from 'app/store/store';
 
 import { ShareExportTab } from '../ShareExportTab';
@@ -24,6 +24,10 @@ export class ExportAsCode extends ShareExportTab {
 
   public getTabLabel(): string {
     return t('export.json.title', 'Export dashboard');
+  }
+
+  public getSubtitle(): string | undefined {
+    return t('export.json.info-text', 'Copy or download a file containing the definition of your dashboard');
   }
 }
 
@@ -53,12 +57,6 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
 
   return (
     <div data-testid={selector.container} className={styles.container}>
-      <p>
-        <Trans i18nKey="export.json.info-text">
-          Copy or download a file containing the definition of your dashboard
-        </Trans>
-      </p>
-
       {config.featureToggles.kubernetesDashboards ? (
         <ResourceExport
           dashboardJson={dashboardJson}

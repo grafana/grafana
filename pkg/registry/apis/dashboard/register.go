@@ -390,6 +390,11 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
+	// Validate tags
+	if err := validateDashboardTags(dashObj); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting requester: %w", err)
@@ -457,6 +462,11 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 
 	// Basic validations
 	if err := b.dashboardService.ValidateBasicDashboardProperties(title, newAccessor.GetName(), newAccessor.GetMessage()); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	// Validate tags
+	if err := validateDashboardTags(newDashObj); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -555,6 +565,32 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	}
 
 	return title, refresh, nil
+}
+
+// validateDashboardTags validates that all dashboard tags are within the maximum length
+func validateDashboardTags(obj runtime.Object) error {
+	var tags []string
+
+	switch d := obj.(type) {
+	case *dashv0.Dashboard:
+		tags = d.Spec.GetNestedStringSlice("tags")
+	case *dashv1.Dashboard:
+		tags = d.Spec.GetNestedStringSlice("tags")
+	case *dashv2alpha1.Dashboard:
+		tags = d.Spec.Tags
+	case *dashv2beta1.Dashboard:
+		tags = d.Spec.Tags
+	default:
+		return fmt.Errorf("unsupported dashboard version: %T", obj)
+	}
+
+	for _, tag := range tags {
+		if len(tag) > 50 {
+			return dashboards.ErrDashboardTagTooLong
+		}
+	}
+
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {

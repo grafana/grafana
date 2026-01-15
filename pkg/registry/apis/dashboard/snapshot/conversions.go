@@ -60,10 +60,7 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 			Namespace:         namespacer(v.OrgID),
 		},
 		Spec: dashV0.SnapshotSpec{
-			Title:       &v.Name,
-			Expires:     &expires,
-			External:    &v.External,
-			ExternalUrl: &v.ExternalURL,
+			Title: &v.Name,
 		},
 	}
 

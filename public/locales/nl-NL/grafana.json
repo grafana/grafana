@@ -3759,7 +3759,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4416,6 +4415,7 @@
       },
       "no-properties-changed": "Geen relevante eigenschappen gewijzigd",
       "table": {
+        "notes": "",
         "updated": "Datum",
         "updatedBy": "Bijgewerkt door",
         "version": "Versie"
@@ -4614,6 +4614,7 @@
     },
     "canvas-actions": {
       "add-panel": "Paneel toevoegen",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Groeperen in rij",
@@ -4874,7 +4875,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Waarden gescheiden door komma"
         },
         "datasource-options": {
           "name-filter": "Filter een naam geven",
@@ -5694,6 +5696,7 @@
     "validation": {
       "invalid-dashboard-id": "Kon geen geldige Grafana.com-ID vinden",
       "invalid-json": "Ongeldige JSON",
+      "tag-too-long": "",
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array van strings"
     },
@@ -5968,6 +5971,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Aangepaste opties",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Waarden gescheiden door komma",
       "selection-options": "Selectiemogelijkheden"
     },
@@ -6555,6 +6561,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard opgeslagen"
     },
@@ -6578,6 +6589,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6637,8 +6649,9 @@
       "tooltip-show-usages": "Gebruik weergeven"
     },
     "variable-values-preview": {
-      "preview-of-values": "Voorbeeldweergave van waarden",
-      "show-more": "Meer weergeven"
+      "show-more": "Meer weergeven",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -9242,7 +9255,8 @@
     "tags-input": {
       "add": "Toevoegen",
       "placeholder-new-tag": "Nieuw label (enter-toets om toe te voegen)",
-      "remove": "Label verwijderen: {{name}}"
+      "remove": "Label verwijderen: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Tijden synchroniseren",
@@ -10709,18 +10723,6 @@
     "help/documentation": "Documentatie",
     "help/keyboard-shortcuts": "Sneltoetsen",
     "help/support": "Ondersteuning",
-    "history-container": {
-      "drawer-tittle": "Geschiedenis"
-    },
-    "history-wrapper": {
-      "collapse": "Samenvouwen",
-      "expand": "Uitvouwen",
-      "icon-selected": "Geselecteerde invoer",
-      "icon-unselected": "Gewone invoer",
-      "show-more": "Meer weergeven",
-      "today": "Vandaag",
-      "yesterday": "Gisteren"
-    },
     "home": {
       "title": "Startpagina"
     },
@@ -11804,7 +11806,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Verwijderen",
       "confirm-delete-keep-resources": "Weet je zeker dat je de repository-configuratie wilt verwijderen, maar de bronnen wilt behouden?",
       "confirm-delete-with-resources": "Weet je zeker dat je de repository-configuratie en alle bronnen wilt verwijderen?",
@@ -12068,6 +12116,7 @@
       "jobs": "Taken"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Instellingen",
       "source-code": "Broncode"
     },

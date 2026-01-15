@@ -7,7 +7,7 @@ require (
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1 // @grafana/observability-traces-and-profiling
 	cloud.google.com/go/kms v1.22.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.55.0 // @grafana/grafana-backend-group
-	connectrpc.com/connect v1.18.1 // @grafana/observability-traces-and-profiling
+	connectrpc.com/connect v1.19.1 // @grafana/observability-traces-and-profiling
 	cuelang.org/go v0.11.1 // @grafana/grafana-as-code
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
 	filippo.io/age v1.2.1 // @grafana/identity-access-team
@@ -25,7 +25,6 @@ require (
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.4.0 // @grafana/grafana-developer-enablement-squad
 	github.com/Masterminds/sprig/v3 v3.3.0 // @grafana/grafana-backend-group
-	github.com/ProtonMail/go-crypto v1.1.6 // @grafana/plugins-platform-backend
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.34.0 // @grafana/alerting-backend
 	github.com/andybalholm/brotli v1.2.0 // @grafana/partner-datasources
@@ -33,18 +32,20 @@ require (
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/aws/aws-sdk-go v1.55.7 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2 v1.40.0 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.21 // indirect; @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.51.0 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.225.2 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/aws-datasources
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.1 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/service/sts v1.39.1 // indirect; @grafana/grafana-operator-experience-squad
 	github.com/aws/smithy-go v1.23.2 // @grafana/aws-datasources
 	github.com/beevik/etree v1.4.1 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blang/semver/v4 v4.0.0 // indirect; @grafana/grafana-developer-enablement-squad
-	github.com/blevesearch/bleve/v2 v2.5.0 // @grafana/grafana-search-and-storage
-	github.com/blevesearch/bleve_index_api v1.2.7 // @grafana/grafana-search-and-storage
+	github.com/blevesearch/bleve/v2 v2.5.7 // @grafana/grafana-search-and-storage
+	github.com/blevesearch/bleve_index_api v1.3.0 // @grafana/grafana-search-and-storage
 	github.com/blugelabs/bluge v0.2.2 // @grafana/grafana-backend-group
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/grafana-backend-group
 	github.com/bradfitz/gomemcache v0.0.0-20250403215159-8d39553ac7cf // @grafana/grafana-backend-group
@@ -81,14 +82,14 @@ require (
 	github.com/golang/protobuf v1.5.4 // @grafana/grafana-backend-group
 	github.com/golang/snappy v1.0.0 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
-	github.com/google/go-github/v70 v70.0.0 // indirect; @grafana/grafana-git-ui-sync-team
+	github.com/google/go-github/v70 v70.0.0 // @grafana/grafana-git-ui-sync-team
 	github.com/google/go-querystring v1.1.0 // indirect; @grafana/oss-big-tent
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.15.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20251231150637-b7821017d69f // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20260112172717-98a49ed9557f // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -111,15 +112,15 @@ require (
 	github.com/grafana/nanogit v0.3.0 // indirect; @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/observability-traces-and-profiling
-	github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae // @grafana/observability-traces-and-profiling
+	github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f // @grafana/observability-traces-and-profiling
+	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // @grafana/grafana-backend-group
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // @grafana/identity-access-team
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
-	github.com/hashicorp/go-plugin v1.7.0 // @grafana/plugins-platform-backend
-	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.4.2 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-plugin v1.7.0 // indirect; @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.7.0 // @grafana/grafana-backend-group
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-backend
 	github.com/hashicorp/hcl/v2 v2.24.0 // @grafana/alerting-backend
@@ -248,7 +249,6 @@ require (
 	github.com/grafana/grafana/apps/example v0.0.0-20251027162426-edef69fdc82b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/identity-access-team
-	github.com/grafana/grafana/apps/investigations v0.0.0 // @fcjack @matryer
 	github.com/grafana/grafana/apps/logsdrilldown v0.0.0 // @grafana/observability-logs
 	github.com/grafana/grafana/apps/playlist v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/plugins v0.0.0 // @grafana/plugins-platform-backend
@@ -261,12 +261,13 @@ require (
 	github.com/grafana/grafana/pkg/aggregator v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/plugins v0.0.0 // @grafana/plugins-platform-backend
 
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250804150913-990f1c69ecc2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/semconv v0.0.0 // @grafana/grafana-app-platform-squad
 )
 
 // Replace the workspace versions
@@ -282,7 +283,6 @@ replace (
 	github.com/grafana/grafana/apps/dashboard => ./apps/dashboard
 	github.com/grafana/grafana/apps/folder => ./apps/folder
 	github.com/grafana/grafana/apps/iam => ./apps/iam
-	github.com/grafana/grafana/apps/investigations => ./apps/investigations
 	github.com/grafana/grafana/apps/logsdrilldown => ./apps/logsdrilldown
 	github.com/grafana/grafana/apps/playlist => ./apps/playlist
 	github.com/grafana/grafana/apps/plugins => ./apps/plugins
@@ -296,6 +296,8 @@ replace (
 	github.com/grafana/grafana/pkg/aggregator => ./pkg/aggregator
 	github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
+	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
+	github.com/grafana/grafana/pkg/semconv => ./pkg/semconv
 )
 
 require (
@@ -343,7 +345,6 @@ require (
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.11 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.31.17 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.21 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.13 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.84 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.14 // indirect
@@ -358,29 +359,28 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.84.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.39.1 // indirect
 	github.com/axiomhq/hyperloglog v0.0.0-20240507144631-af9851f82b27 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.22.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/blevesearch/geo v0.1.20 // indirect
-	github.com/blevesearch/go-faiss v1.0.25 // indirect
+	github.com/blevesearch/geo v0.2.4 // indirect
+	github.com/blevesearch/go-faiss v1.0.26 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
 	github.com/blevesearch/gtreap v0.1.1 // indirect
 	github.com/blevesearch/mmap-go v1.0.4 // indirect
-	github.com/blevesearch/scorch_segment_api/v2 v2.3.9 // indirect
+	github.com/blevesearch/scorch_segment_api/v2 v2.3.13 // indirect
 	github.com/blevesearch/segment v0.9.1 // indirect
 	github.com/blevesearch/snowballstem v0.9.0 // indirect
 	github.com/blevesearch/upsidedown_store_api v1.0.2 // indirect
 	github.com/blevesearch/vellum v1.1.0 // indirect
-	github.com/blevesearch/zapx/v11 v11.4.1 // indirect
-	github.com/blevesearch/zapx/v12 v12.4.1 // indirect
-	github.com/blevesearch/zapx/v13 v13.4.1 // indirect
-	github.com/blevesearch/zapx/v14 v14.4.1 // indirect
-	github.com/blevesearch/zapx/v15 v15.4.1 // indirect
-	github.com/blevesearch/zapx/v16 v16.2.2 // indirect
+	github.com/blevesearch/zapx/v11 v11.4.2 // indirect
+	github.com/blevesearch/zapx/v12 v12.4.2 // indirect
+	github.com/blevesearch/zapx/v13 v13.4.2 // indirect
+	github.com/blevesearch/zapx/v14 v14.4.2 // indirect
+	github.com/blevesearch/zapx/v15 v15.4.2 // indirect
+	github.com/blevesearch/zapx/v16 v16.2.8 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/blugelabs/ice v1.0.0 // indirect
 	github.com/blugelabs/ice/v2 v2.0.1 // indirect
@@ -395,7 +395,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d // indirect
-	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20251022180443-0feb69152e9f // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
@@ -444,7 +443,6 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
-	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/cel-go v0.26.1 // indirect
@@ -492,7 +490,6 @@ require (
 	github.com/jhump/protoreflect v1.17.0 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
@@ -658,13 +655,12 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-require github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
-
-require github.com/Machiel/slugify v1.0.1 // @grafana/plugins-platform-backend
-
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/IBM/pgxpoolprometheus v1.1.2 // indirect
+	github.com/Machiel/slugify v1.0.1 // indirect
+	github.com/ProtonMail/go-crypto v1.3.0 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
@@ -681,8 +677,11 @@ require (
 	github.com/go-openapi/swag/stringutils v0.25.4 // indirect
 	github.com/go-openapi/swag/typeutils v0.25.4 // indirect
 	github.com/go-openapi/swag/yamlutils v0.25.4 // indirect
+	github.com/google/gnostic v0.7.1 // indirect
 	github.com/gophercloud/gophercloud/v2 v2.9.0 // indirect
 	github.com/grafana/sqlds/v5 v5.0.3 // indirect
+	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.4.2 // indirect
+	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531 // indirect
 	github.com/lufia/plan9stats v0.0.0-20240909124753-873cd0166683 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/moby/go-archive v0.1.0 // indirect
@@ -704,7 +703,7 @@ require (
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
 // Use our fork of the upstream Alertmanager.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 

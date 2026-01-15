@@ -73,7 +73,7 @@ import {
   contentOutlineTrackUnpinClicked,
 } from '../ContentOutline/ContentOutlineAnalyticEvents';
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
-import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
@@ -148,9 +148,6 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   }
   if (visualisationType === 'logs') {
     return 'logs';
-  }
-  if (config.featureToggles.logsExploreTableDefaultVisualization) {
-    return 'table';
   }
   return 'logs';
 };
@@ -447,7 +444,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       reportInteraction('grafana_explore_logs_visualisation_changed', {
         newVisualizationType: visualisation,
         datasourceType: props.datasourceType ?? 'unknown',
-        defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
       });
     },
     [panelState?.logs, props.datasourceType, updatePanelState]

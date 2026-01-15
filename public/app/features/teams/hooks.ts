@@ -12,8 +12,8 @@ import {
   useUpdateTeamMutation,
   UpdateTeamCommand,
 } from 'app/api/clients/legacy';
-import { updateNavIndex } from 'app/core/actions';
 import { addFilteredDisplayName } from 'app/core/components/RolePicker/utils';
+import { updateNavIndex } from 'app/core/reducers/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 import { useDispatch } from 'app/types/store';

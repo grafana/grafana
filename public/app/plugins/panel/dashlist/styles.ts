@@ -32,6 +32,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
         textDecoration: 'underline',
       },
       height: '100%',
+      paddingTop: theme.spacing(1.5),
 
       '&:hover': {
         backgroundImage: gradient,
@@ -40,6 +41,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     dashlistCardIcon: css({
       marginRight: theme.spacing(0.5),
+    }),
+    dashlistCardLink: css({
+      paddingTop: theme.spacing(0.5),
     }),
   };
 };
