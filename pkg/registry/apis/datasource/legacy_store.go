@@ -96,7 +96,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	// Verify the secure value commands. While we're using dual writer, we can only support raw secret values and not references to secrets that already exist. This is because we need the raw values to write to the legacy store.
 	for _, v := range ds.Secure {
 		if v.Create.IsZero() {
-			return nil, fmt.Errorf("secure values must use create when creating a new datasource")
+			return nil, fmt.Errorf("a raw secure value is required until datasources have been fully migrated to unified storage")
 		}
 		if v.Remove {
 			return nil, fmt.Errorf("secure values can not use remove when creating a new datasource")
@@ -146,6 +146,10 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 				secureChanges = make(common.InlineSecureValues)
 			}
 			secureChanges[k] = v
+
+			// Attach any changes the the context so the DualWrite wrapper can apply
+			// the same changes in unified storage further down the request pipeline.
+			// See: https://github.com/grafana/grafana/blob/dual-write-inline-secure-values/pkg/storage/legacysql/dualwrite/dualwriter.go
 			dualwrite.SetUpdatedSecureValues(ctx, ds.Secure)
 			continue
 		}
