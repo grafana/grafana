@@ -256,23 +256,24 @@ export const PromSettings = (props: Props) => {
         title={t('grafana-prometheus.configuration.prom-settings.title-performance', 'Performance')}
         className={styles.container}
       >
-        {!hidePrometheusTypeVersion && (
-          <>
-            {!optionsWithDefaults.jsonData.prometheusType &&
-              !optionsWithDefaults.jsonData.prometheusVersion &&
-              optionsWithDefaults.readOnly && (
-                <div className={styles.versionMargin}>
-                  <Trans i18nKey="grafana-prometheus.configuration.prom-settings.more-info">
-                    For more information on configuring prometheus type and version in data sources, see the{' '}
-                    <TextLink external href="https://grafana.com/docs/grafana/latest/administration/provisioning/">
-                      provisioning documentation
-                    </TextLink>
-                    .
-                  </Trans>
-                </div>
-              )}
-            <Box marginBottom={5}>
-              <Stack direction="column" gap={0.5}>
+        {!hidePrometheusTypeVersion &&
+          !optionsWithDefaults.jsonData.prometheusType &&
+          !optionsWithDefaults.jsonData.prometheusVersion &&
+          optionsWithDefaults.readOnly && (
+            <div className={styles.versionMargin}>
+              <Trans i18nKey="grafana-prometheus.configuration.prom-settings.more-info">
+                For more information on configuring prometheus type and version in data sources, see the{' '}
+                <TextLink external href="https://grafana.com/docs/grafana/latest/administration/provisioning/">
+                  provisioning documentation
+                </TextLink>
+                .
+              </Trans>
+            </div>
+          )}
+        <Box marginBottom={5}>
+          <Stack direction="column" gap={0.5}>
+            {!hidePrometheusTypeVersion && (
+              <>
                 <InlineField
                   label={t('grafana-prometheus.configuration.prom-settings.label-prometheus-type', 'Prometheus type')}
                   labelWidth={PROM_CONFIG_LABEL_WIDTH}
@@ -350,12 +351,8 @@ export const PromSettings = (props: Props) => {
                     />
                   </InlineField>
                 )}
-              </Stack>
-            </Box>
-          </>
-        )}
-        <Box marginBottom={5}>
-          <Stack direction="column" gap={0.5}>
+              </>
+            )}
             <InlineField
               label={t('grafana-prometheus.configuration.prom-settings.label-cache-level', 'Cache level')}
               labelWidth={PROM_CONFIG_LABEL_WIDTH}
