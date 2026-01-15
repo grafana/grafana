@@ -805,7 +805,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		}
 
 		return 0, func(yield func(*ModifiedResource, error) bool) {
-			yield(nil, fmt.Errorf("error trying to retrieve last event key: %s", err))
+			yield(nil, fmt.Errorf("error trying to retrieve last event key: %w", err))
 		}
 	}
 
