@@ -25,37 +25,6 @@ menuTitle: Panel editor
 title: Panel editor
 description: Learn about the features of the panel editor
 weight: 20
-refs:
-  transform-data:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
-  the-overview-of-grafana-alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
-  table:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/table/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/
-  add-a-query:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#add-a-query
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#add-a-query
-  saved-queries:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#saved-queries
-  save-query:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#save-a-query
 ---
 
 # Panel editor
@@ -78,7 +47,7 @@ The header section lists the dashboard in which the panel appears and the follow
 
 The visualization preview section contains the following options:
 
-- **Table view** - Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It doesn't include transformations you might have applied to the data or the formatting options available in the [Table](ref:table) visualization.
+- **Table view** - Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It doesn't include transformations you might have applied to the data or the formatting options available in the [table](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/table/) visualization.
 - **Time range controls** - **Default** is either the browser local timezone or the timezone selected at a higher level.
 - **Refresh** - Query the data source.
 
@@ -89,17 +58,17 @@ The data section contains tabs where you enter queries, transform your data, and
 - **Queries**
   - Select your data source. You can also set or update the data source in existing dashboards using the drop-down menu in the **Queries** tab.
   - **Saved queries**:
-    - **Save query** - To [save the query](ref:save-query) for reuse, click the **Save query** button (or icon).
+    - **Save query** - To [save the query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query) for reuse, click the **Save query** button (or icon).
     - **Replace query** - Reuse a saved query.
   - **+ Add query** - Add an additional query.
   - **+ Add from saved queries** - Add an additional query by reusing a saved query.
 
   {{< admonition type="note" >}}
-  [Saved queries](ref:saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+  [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
   {{< /admonition >}}
 
-- **Transformations** - Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
-- **Alert** - Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
+- **Transformations** - Apply data transformations. For more information, refer to [Transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/).
+- **Alert** - Write alert rules. For more information, refer to [the overview of Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/).
 
 ## Panel display options
 
