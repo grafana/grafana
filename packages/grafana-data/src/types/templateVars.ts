@@ -61,6 +61,8 @@ export interface AdHocVariableFilter {
   origin?: 'dashboard' | string;
   /** @deprecated  */
   condition?: string;
+  // Required to differentiate loki fields
+  lokiType?: 'Indexed' | 'StructuredMetadata' | 'Parsed';
 }
 
 export interface AdHocVariableModel extends BaseVariableModel {

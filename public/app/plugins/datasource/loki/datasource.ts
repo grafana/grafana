@@ -1096,7 +1096,7 @@ export class LokiDatasource
 
     let expr = replaceVariables(queryExpr);
 
-    expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
+    expr = adhocFilters.reduce((acc: string, filter: AdHocVariableFilter) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (!isRegexSelector(operator)) {
@@ -1104,8 +1104,8 @@ export class LokiDatasource
         value = escapeLabelValueInSelector(value, operator);
       }
 
-      let labelType: LabelType | null = null;
-      if (dataFrame) {
+      let labelType: LabelType | null = (filter.lokiType && LabelType[filter.lokiType]) ?? null;
+      if (!labelType && dataFrame) {
         labelType = getLabelTypeFromFrame(key, dataFrame, 0);
       }
       return addLabelToQuery(acc, key, operator, value, labelType);
