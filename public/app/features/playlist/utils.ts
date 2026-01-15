@@ -1,24 +1,16 @@
-import { lastValueFrom } from 'rxjs';
-
-import { DataQueryRequest, DataFrameView } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
-
 import { Playlist } from '../../api/clients/playlist/v0alpha1';
 import { getGrafanaSearcher } from '../search/service/searcher';
-import { DashboardQueryResult, SearchQuery } from '../search/service/types';
+import { SearchQuery } from '../search/service/types';
 
 import { PlaylistItemUI } from './types';
 
 /** Returns a copy with the dashboards loaded */
 export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistItemUI[]> {
-  let idx = 0;
   if (!items?.length) {
     return [];
   }
 
-  const targets: GrafanaQuery[] = [];
+  const targets: SearchQuery[] = [];
   for (const item of items) {
     const query: SearchQuery = {
       query: '*',
@@ -38,35 +30,16 @@ export async function loadDashboards(items: PlaylistItemUI[]): Promise<PlaylistI
         query.tags = [item.value];
         break;
     }
-    targets.push({
-      refId: `${idx++}`,
-      queryType: GrafanaQueryType.Search,
-      search: query,
-    });
+    targets.push(query);
   }
 
-  // The SQL based store can only execute individual queries
-  if (!config.featureToggles.panelTitleSearch) {
-    const searcher = getGrafanaSearcher();
-    const res: PlaylistItemUI[] = [];
-    for (let i = 0; i < targets.length; i++) {
-      const view = (await searcher.search(targets[i].search!)).view;
-      res.push({ ...items[i], dashboards: view.map((v) => ({ ...v })) });
-    }
-    return res;
+  const searcher = getGrafanaSearcher();
+  const res: PlaylistItemUI[] = [];
+  for (let i = 0; i < targets.length; i++) {
+    const view = (await searcher.search(targets[i])).view;
+    res.push({ ...items[i], dashboards: view.map((v) => ({ ...v })) });
   }
-
-  // The bluge backend can execute multiple queries in a single request
-  const ds = await getGrafanaDatasource();
-  // eslint-disable-next-line
-  const rsp = await lastValueFrom(ds.query({ targets } as unknown as DataQueryRequest<GrafanaQuery>));
-  if (rsp.data.length !== items.length) {
-    throw new Error('unexpected result size');
-  }
-  return items.map((item, idx) => {
-    const view = new DataFrameView<DashboardQueryResult>(rsp.data[idx]);
-    return { ...item, dashboards: view.map((v) => ({ ...v })) };
-  });
+  return res;
 }
 
 export function getDefaultPlaylist(): Playlist {
