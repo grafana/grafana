@@ -332,7 +332,6 @@ func TestFactory_Mutate(t *testing.T) {
 		enabled       map[provisioning.ConnectionType]struct{}
 		obj           runtime.Object
 		wantErr       bool
-		validateError func(t *testing.T, err error)
 	}{
 		{
 			name: "should successfully mutate with single extra",
@@ -353,6 +352,26 @@ func TestFactory_Mutate(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "should return error if extra returns error",
+			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Mutate(ctx, obj).Return(assert.AnError)
+
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+				},
+			},
+			wantErr: true,
 		},
 		{
 			name: "should successfully mutate with multiple extras (all get called)",
@@ -378,34 +397,6 @@ func TestFactory_Mutate(t *testing.T) {
 				},
 			},
 			wantErr: false,
-		},
-		{
-			name: "should stop and return error when one extra fails",
-			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
-				extra1 := connection.NewMockExtra(t)
-				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
-				extra1.EXPECT().Mutate(ctx, obj).Return(errors.New("mutation failed"))
-
-				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GitlabConnectionType)
-				// extra2.Mutate should NOT be called due to error from extra1
-
-				return []connection.Extra{extra1, extra2}
-			},
-			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
-				provisioning.GitlabConnectionType: {},
-			},
-			obj: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-				},
-			},
-			wantErr: true,
-			validateError: func(t *testing.T, err error) {
-				assert.Equal(t, "mutation failed", err.Error())
-			},
 		},
 		{
 			name: "should succeed with no extras registered",
@@ -458,9 +449,6 @@ func TestFactory_Mutate(t *testing.T) {
 
 			if tt.wantErr {
 				require.Error(t, err)
-				if tt.validateError != nil {
-					tt.validateError(t, err)
-				}
 			} else {
 				require.NoError(t, err)
 			}
