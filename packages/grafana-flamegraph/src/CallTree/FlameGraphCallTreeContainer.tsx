@@ -26,15 +26,20 @@ type Props = {
   search: string;
   compact?: boolean;
   onSearch?: (symbol: string) => void;
+  /** Item indexes of the focused item in the flame graph, to highlight the exact node in the call tree */
+  highlightedItemIndexes?: number[];
 };
 
 const FlameGraphCallTreeContainer = memo(
-  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme, search, compact = false, onSearch }: Props) => {
+  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme, search, compact = false, onSearch, highlightedItemIndexes }: Props) => {
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
     // Ref for the matched search row to enable auto-scrolling
     const searchMatchRowRef = useRef<HTMLTableRowElement | null>(null);
+
+    // Ref for the highlighted row (from flame graph focus) to enable auto-scrolling
+    const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
 
     // Use package-based color scheme by default
     const colorScheme = data.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.PackageBased;
@@ -218,6 +223,46 @@ const FlameGraphCallTreeContainer = memo(
       return matchIds;
     }, [searchQuery, nodes]);
 
+    // Find the node matching the highlighted item indexes (from flame graph focus)
+    // This finds the exact node in the call tree by matching the LevelItem's itemIndexes
+    const highlightedNodeId = useMemo(() => {
+      if (!highlightedItemIndexes || highlightedItemIndexes.length === 0) {
+        return undefined;
+      }
+
+      // Helper to check if two itemIndexes arrays match
+      const itemIndexesMatch = (a: number[], b: number[]): boolean => {
+        if (a.length !== b.length) return false;
+        return a.every((val, idx) => val === b[idx]);
+      };
+
+      // Find the exact node by matching itemIndexes
+      const findExactMatch = (nodesToSearch: CallTreeNode[]): string | undefined => {
+        for (const node of nodesToSearch) {
+          if (itemIndexesMatch(node.levelItem.itemIndexes, highlightedItemIndexes)) {
+            return node.id;
+          }
+          if (node.subRows) {
+            const found = findExactMatch(node.subRows);
+            if (found) return found;
+          }
+        }
+        return undefined;
+      };
+
+      return findExactMatch(nodes);
+    }, [highlightedItemIndexes, nodes]);
+
+    // Auto-scroll to the highlighted row when it changes
+    useEffect(() => {
+      if (highlightedRowRef.current) {
+        highlightedRowRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }
+    }, [highlightedNodeId]);
+
     // Reset current match index when search results change
     const searchResultKey = searchNodes.join(',');
     useEffect(() => {
@@ -340,8 +385,29 @@ const FlameGraphCallTreeContainer = memo(
         }
       }
 
+      // If there's a highlighted node (from flame graph focus), expand path to show it
+      if (highlightedNodeId) {
+        const expandPathToHighlightedNode = (nodes: CallTreeNode[], targetId: string): boolean => {
+          for (const node of nodes) {
+            if (node.id === targetId) {
+              return true;
+            }
+            if (node.subRows && node.hasChildren) {
+              const foundInSubtree = expandPathToHighlightedNode(node.subRows, targetId);
+              if (foundInSubtree) {
+                baseExpanded[node.id] = true;
+                return true;
+              }
+            }
+          }
+          return false;
+        };
+
+        expandPathToHighlightedNode(nodes, highlightedNodeId);
+      }
+
       return baseExpanded;
-    }, [nodes, focusedNodeId, callersNodeLabel, callersNode, currentSearchMatchId]);
+    }, [nodes, focusedNodeId, callersNodeLabel, callersNode, currentSearchMatchId, highlightedNodeId]);
 
     // Define columns
     const columns = useMemo<Column<CallTreeNode>[]>(() => {
@@ -535,7 +601,7 @@ const FlameGraphCallTreeContainer = memo(
     const tableNodes = useMemo(() => {
       // Return a shallow copy to force reference change
       return [...nodes];
-    }, [nodes, currentSearchMatchId]);
+    }, [nodes, currentSearchMatchId, highlightedNodeId]);
 
     // Setup table instance with expand and sort
     // Using autoResetExpanded: true so expansion resets when data changes
@@ -677,16 +743,22 @@ const FlameGraphCallTreeContainer = memo(
                       const isFocusedRow = row.original.id === focusedNodeId;
                       const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
                       const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
+                      const isHighlightedRow = highlightedNodeId && row.original.id === highlightedNodeId;
+
+                      // Determine which ref to use - prioritize search match, then highlighted
+                      const rowRef = isSearchMatchRow ? searchMatchRowRef : isHighlightedRow ? highlightedRowRef : null;
+
                       return (
                         <tr
                           key={key}
                           {...rowProps}
-                          ref={isSearchMatchRow ? searchMatchRowRef : null}
+                          ref={rowRef}
                           className={cx(
                             styles.tr,
                             (isFocusedRow || (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label)) && styles.focusedRow,
                             isCallersTargetRow && styles.callersTargetRow,
-                            isSearchMatchRow && styles.searchMatchRow
+                            isSearchMatchRow && styles.searchMatchRow,
+                            isHighlightedRow && !isSearchMatchRow && styles.highlightedRow
                           )}
                         >
                           {row.cells.map((cell) => {
@@ -1208,6 +1280,14 @@ function getStyles(theme: GrafanaTheme2) {
       fontWeight: theme.typography.fontWeightMedium,
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.warning.transparent, 0.1),
+      },
+    }),
+    highlightedRow: css({
+      backgroundColor: theme.colors.primary.transparent,
+      borderLeft: `3px solid ${theme.colors.primary.main}`,
+      fontWeight: theme.typography.fontWeightMedium,
+      '&:hover': {
+        backgroundColor: theme.colors.emphasize(theme.colors.primary.transparent, 0.1),
       },
     }),
     td: css({

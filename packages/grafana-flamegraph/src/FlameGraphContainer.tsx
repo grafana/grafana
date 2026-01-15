@@ -115,6 +115,9 @@ const FlameGraphContainer = ({
   const [resetKey, setResetKey] = useState(0);
   // Track if we temporarily switched away from Both view due to narrow width
   const [viewBeforeNarrow, setViewBeforeNarrow] = useState<SelectedView | null>(null);
+  // Track the item indexes of the focused item in the flame graph, for cross-pane highlighting (e.g., in CallTree)
+  // Using itemIndexes (from LevelItem) allows us to find the exact node in the call tree, not just by label
+  const [highlightedItemIndexes, setHighlightedItemIndexes] = useState<number[] | undefined>(undefined);
 
   const theme = useMemo(() => getTheme(), [getTheme]);
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
@@ -171,6 +174,8 @@ const FlameGraphContainer = ({
         setSearch={setSearch}
         resetKey={resetKey}
         keepFocusOnDataChange={keepFocusOnDataChange}
+        highlightedItemIndexes={highlightedItemIndexes}
+        setHighlightedItemIndexes={setHighlightedItemIndexes}
       />
     );
   } else if (selectedView === SelectedView.TopTable) {
@@ -192,6 +197,8 @@ const FlameGraphContainer = ({
         setSearch={setSearch}
         resetKey={resetKey}
         keepFocusOnDataChange={keepFocusOnDataChange}
+        highlightedItemIndexes={highlightedItemIndexes}
+        setHighlightedItemIndexes={setHighlightedItemIndexes}
       />
     );
   } else if (selectedView === SelectedView.CallTree) {
@@ -213,6 +220,8 @@ const FlameGraphContainer = ({
         setSearch={setSearch}
         resetKey={resetKey}
         keepFocusOnDataChange={keepFocusOnDataChange}
+        highlightedItemIndexes={highlightedItemIndexes}
+        setHighlightedItemIndexes={setHighlightedItemIndexes}
       />
     );
   } else if (selectedView === SelectedView.Multi) {
@@ -240,6 +249,8 @@ const FlameGraphContainer = ({
                 setSearch={setSearch}
                 resetKey={resetKey}
                 keepFocusOnDataChange={keepFocusOnDataChange}
+                highlightedItemIndexes={highlightedItemIndexes}
+                setHighlightedItemIndexes={setHighlightedItemIndexes}
               />
             </div>
             <div className={styles.verticalPaneContainer}>
@@ -261,6 +272,8 @@ const FlameGraphContainer = ({
                 setSearch={setSearch}
                 resetKey={resetKey}
                 keepFocusOnDataChange={keepFocusOnDataChange}
+                highlightedItemIndexes={highlightedItemIndexes}
+                setHighlightedItemIndexes={setHighlightedItemIndexes}
               />
             </div>
           </div>
@@ -287,6 +300,8 @@ const FlameGraphContainer = ({
                 setSearch={setSearch}
                 resetKey={resetKey}
                 keepFocusOnDataChange={keepFocusOnDataChange}
+                highlightedItemIndexes={highlightedItemIndexes}
+                setHighlightedItemIndexes={setHighlightedItemIndexes}
               />
             </div>
             <div className={styles.horizontalPaneContainer}>
@@ -308,6 +323,8 @@ const FlameGraphContainer = ({
                 setSearch={setSearch}
                 resetKey={resetKey}
                 keepFocusOnDataChange={keepFocusOnDataChange}
+                highlightedItemIndexes={highlightedItemIndexes}
+                setHighlightedItemIndexes={setHighlightedItemIndexes}
               />
             </div>
           </div>
@@ -335,6 +352,8 @@ const FlameGraphContainer = ({
             setSearch={setSearch}
             resetKey={resetKey}
             keepFocusOnDataChange={keepFocusOnDataChange}
+            highlightedItemIndexes={highlightedItemIndexes}
+            setHighlightedItemIndexes={setHighlightedItemIndexes}
           />
         </div>
       );
@@ -367,6 +386,7 @@ const FlameGraphContainer = ({
             onReset={() => {
               // Reset search and pane states when user clicks reset button
               setSearch('');
+              setHighlightedItemIndexes(undefined);
               setResetKey((k) => k + 1);
             }}
             showResetButton={Boolean(search)}

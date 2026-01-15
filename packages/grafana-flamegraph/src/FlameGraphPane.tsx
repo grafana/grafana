@@ -29,6 +29,10 @@ export type FlameGraphPaneProps = {
   resetKey?: number;
   /** Whether to preserve focus when the data changes */
   keepFocusOnDataChange?: boolean;
+  /** Item indexes of the focused item in the flame graph, for cross-pane highlighting (e.g., in CallTree) */
+  highlightedItemIndexes?: number[];
+  /** Callback to set the highlighted item indexes when a node is focused in the flame graph */
+  setHighlightedItemIndexes?: (itemIndexes: number[] | undefined) => void;
 };
 
 const FlameGraphPane = ({
@@ -48,6 +52,8 @@ const FlameGraphPane = ({
   setSearch,
   resetKey,
   keepFocusOnDataChange,
+  highlightedItemIndexes,
+  setHighlightedItemIndexes,
 }: FlameGraphPaneProps) => {
   // Pane-specific state - each instance maintains its own
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
@@ -120,7 +126,8 @@ const FlameGraphPane = ({
     setFocusedItemData(undefined);
     setRangeMin(0);
     setRangeMax(1);
-  }, []);
+    setHighlightedItemIndexes?.(undefined);
+  }, [setHighlightedItemIndexes]);
 
   const resetSandwich = useCallback(() => {
     setSandwichItem(undefined);
@@ -199,7 +206,10 @@ const FlameGraphPane = ({
           matchedLabels={matchedLabels}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
-          onItemFocused={(data) => setFocusedItemData(data)}
+          onItemFocused={(data) => {
+            setFocusedItemData(data);
+            setHighlightedItemIndexes?.(data.item.itemIndexes);
+          }}
           focusedItemData={focusedItemData}
           textAlign={textAlign}
           onTextAlignChange={(align) => {
@@ -238,6 +248,7 @@ const FlameGraphPane = ({
             search={search}
             compact={isCallTreeInSplitView}
             onSearch={onCallTreeSearch}
+            highlightedItemIndexes={highlightedItemIndexes}
           />
         </div>
       );
