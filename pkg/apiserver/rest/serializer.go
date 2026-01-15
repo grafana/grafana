@@ -35,9 +35,9 @@ func NoProtobufNegotiatedSerializer(codecs serializer.CodecFactory, accepts ...f
 	return noProtobufNegotiatedSerializer{accepts, codecs}
 }
 
-// DefaultSubsetNegotiatedSerializer is the default serializer that does not use protobuf.
+// DefaultNoProtobufNegotiatedSerializer is the default serializer that does not use protobuf.
 // Our types do not implement protobuf encoding, so we exclude protobuf support to prevent
 // namespace deletion failures (see issue https://github.com/kubernetes/kubernetes/issues/86666).
-func DefaultSubsetNegotiatedSerializer(codecs serializer.CodecFactory) runtime.NegotiatedSerializer {
+func DefaultNoProtobufNegotiatedSerializer(codecs serializer.CodecFactory) runtime.NegotiatedSerializer {
 	return NoProtobufNegotiatedSerializer(codecs, NoProtobuf)
 }
