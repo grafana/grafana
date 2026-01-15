@@ -145,7 +145,7 @@ const FlameGraphPane = ({
 
   const resetSandwich = useCallback(() => {
     setSandwichItem(undefined);
-  }, []);
+  }, [setSandwichItem]);
 
   const onSymbolClick = useCallback(
     (symbol: string) => {

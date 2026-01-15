@@ -26,7 +26,7 @@ const ThemeableStory = ({ children, themeId }: React.PropsWithChildren<Themeable
 
   // Apply theme to document root for Portals
   useEffect(() => {
-    if (!theme) return;
+    if (!theme) {return;}
 
     document.body.style.setProperty('--theme-background', theme.colors.background.primary);
   }, [theme]);

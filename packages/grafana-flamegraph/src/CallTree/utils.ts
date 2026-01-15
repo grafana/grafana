@@ -33,8 +33,8 @@ export function buildCallTreeNode(
   rootItem: LevelItem,
   rootTotal: number,
   parentId?: string,
-  parentDepth: number = -1,
-  childIndex: number = 0
+  parentDepth = -1,
+  childIndex = 0
 ): CallTreeNode {
   const nodeId = parentId ? `${parentId}.${childIndex}` : `${childIndex}`;
   const depth = parentDepth + 1;
@@ -268,7 +268,7 @@ function collectExpandedByDepth(node: CallTreeNode, levelsToExpand: number, expa
  * Get initial expanded state for the tree.
  * Auto-expands first N levels.
  */
-export function getInitialExpandedState(nodes: CallTreeNode[], levelsToExpand: number = 2): Record<string, boolean> {
+export function getInitialExpandedState(nodes: CallTreeNode[], levelsToExpand = 2): Record<string, boolean> {
   const expanded: Record<string, boolean> = {};
 
   nodes.forEach((node) => {
@@ -426,7 +426,7 @@ export function buildCallersTreeFromLevels(
         break;
       }
     }
-    if (targetItem) break;
+    if (targetItem) {break;}
   }
 
   if (!targetItem || targetLevelIndex === -1) {

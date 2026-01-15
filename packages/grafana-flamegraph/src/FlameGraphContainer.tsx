@@ -7,8 +7,8 @@ import { useMeasure, usePrevious } from 'react-use';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
+import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';

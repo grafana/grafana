@@ -9,7 +9,10 @@ import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafa
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { ColorScheme, ColorSchemeDiff } from '../types';
+
 import { buildAllCallTreeNodes, buildCallersTreeFromLevels, CallTreeNode, getInitialExpandedState } from './utils';
+
+type Styles = ReturnType<typeof getStyles>;
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -64,7 +67,7 @@ const FlameGraphCallTreeContainer = memo(
     const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(0);
     const [searchError, setSearchError] = useState<string | undefined>(undefined);
 
-    const handleSetFocusMode = useCallback((nodeIdOrLabel: string | undefined, isLabel: boolean = false) => {
+    const handleSetFocusMode = useCallback((nodeIdOrLabel: string | undefined, isLabel = false) => {
       if (nodeIdOrLabel === undefined) {
         setFocusedNodeId(undefined);
       } else if (isLabel) {
@@ -104,7 +107,7 @@ const FlameGraphCallTreeContainer = memo(
             }
             if (node.subRows) {
               const found = findNode(node.subRows, searchKey, byLabel);
-              if (found) return found;
+              if (found) {return found;}
             }
           }
           return undefined;
@@ -218,7 +221,7 @@ const FlameGraphCallTreeContainer = memo(
       }
 
       const itemIndexesMatch = (a: number[], b: number[]): boolean => {
-        if (a.length !== b.length) return false;
+        if (a.length !== b.length) {return false;}
         return a.every((val, idx) => val === b[idx]);
       };
 
@@ -229,7 +232,7 @@ const FlameGraphCallTreeContainer = memo(
           }
           if (node.subRows) {
             const found = findExactMatch(node.subRows);
-            if (found) return found;
+            if (found) {return found;}
           }
         }
         return undefined;
@@ -393,7 +396,7 @@ const FlameGraphCallTreeContainer = memo(
 
     const calculateFunctionColumnWidth = useCallback(
       (width: number, compactMode: boolean) => {
-        if (width <= 0) return undefined;
+        if (width <= 0) {return undefined;}
 
         let fixedColumnsWidth: number;
         if (compactMode) {
@@ -414,13 +417,13 @@ const FlameGraphCallTreeContainer = memo(
       [data, ACTIONS_WIDTH]
     );
 
-    const columns = useMemo<Column<CallTreeNode>[]>(() => {
+    const columns = useMemo<Array<Column<CallTreeNode>>>(() => {
       if (data.isDiffFlamegraph()) {
-        const cols: Column<CallTreeNode>[] = [
+        const cols: Array<Column<CallTreeNode>> = [
           {
             Header: '',
             id: 'actions',
-            Cell: ({ row }: any) => (
+            Cell: ({ row }: { row: Row<CallTreeNode> }) => (
               <ActionsCell
                 nodeId={row.original.id}
                 label={row.original.label}
@@ -448,6 +451,7 @@ const FlameGraphCallTreeContainer = memo(
             accessor: 'label',
             Cell: ({ row, value, rowIndex }: { row: Row<CallTreeNode>; value: string; rowIndex?: number }) => (
               <FunctionCellWithExpander
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
                 value={value}
                 depth={row.original.depth}
@@ -518,11 +522,11 @@ const FlameGraphCallTreeContainer = memo(
 
         return cols;
       } else {
-        const cols: Column<CallTreeNode>[] = [
+        const cols: Array<Column<CallTreeNode>> = [
           {
             Header: '',
             id: 'actions',
-            Cell: ({ row }: any) => (
+            Cell: ({ row }: { row: Row<CallTreeNode> }) => (
               <ActionsCell
                 nodeId={row.original.id}
                 label={row.original.label}
@@ -550,6 +554,7 @@ const FlameGraphCallTreeContainer = memo(
             accessor: 'label',
             Cell: ({ row, value, rowIndex }: { row: Row<CallTreeNode>; value: string; rowIndex?: number }) => (
               <FunctionCellWithExpander
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
                 value={value}
                 depth={row.original.depth}
@@ -628,6 +633,7 @@ const FlameGraphCallTreeContainer = memo(
 
         return cols;
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
       data,
       onSymbolClick,
@@ -645,13 +651,15 @@ const FlameGraphCallTreeContainer = memo(
       handleSetFocusMode,
       handleSetCallersMode,
     ]);
-
-    // toggleRowExpanded is accessed at render time, not definition time, so it's not in the dependencies
+    // Note: nodes, tableInstance.rows, tableInstance.toggleRowExpanded are intentionally excluded
+    // as toggleRowExpanded is accessed at render time, not definition time
 
     // tableNodes changes reference when search/highlight changes to trigger autoResetExpanded
     const tableNodes = useMemo(() => {
       return [...nodes];
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [nodes, currentSearchMatchId, highlightedNodeId]);
+    // Note: currentSearchMatchId and highlightedNodeId are intentionally included to force re-render
 
     const tableInstance = useTable<CallTreeNode>(
       {
@@ -880,6 +888,7 @@ function getRowBackgroundColor(
       node.totalRight || 0,
       rootTotal,
       rootTotalRight,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       colorScheme as ColorSchemeDiff
     );
     return barColor.setAlpha(1.0).toString();
@@ -1023,7 +1032,7 @@ function FunctionCellWithExpander({
   rowIndex?: number;
   rows: Array<Row<CallTreeNode>>;
   onSymbolClick: (symbol: string) => void;
-  styles: any;
+  styles: Styles;
   allNodes: CallTreeNode[];
   compact?: boolean;
   toggleRowExpanded: (id: string[], value?: boolean) => void;
@@ -1050,7 +1059,7 @@ function FunctionCellWithExpander({
   };
 
   const isLastVisibleChildAtIndex = (index: number): boolean => {
-    if (index === undefined) return false;
+    if (index === undefined) {return false;}
 
     const currentRow = rows[index];
     const parentId = currentRow.original.parentId;
@@ -1157,7 +1166,7 @@ function ColorBarCell({
   data: FlameGraphDataContainer;
   colorScheme: ColorScheme | ColorSchemeDiff;
   theme: GrafanaTheme2;
-  styles: any;
+  styles: Styles;
   focusedNode?: CallTreeNode;
   callersNode?: CallTreeNode;
 }) {
@@ -1192,7 +1201,7 @@ function DiffCell({
   value: number | undefined;
   colorScheme: ColorScheme | ColorSchemeDiff;
   theme: GrafanaTheme2;
-  styles: any;
+  styles: Styles;
 }) {
   if (value === undefined) {
     return <span>-</span>;
@@ -1418,7 +1427,7 @@ function getStyles(theme: GrafanaTheme2) {
     colorBar: css({
       height: '16px',
       minWidth: '2px',
-      borderRadius: '2px',
+      borderRadius: theme.shape.radius.default,
     }),
     actionsCell: css({
       display: 'flex',

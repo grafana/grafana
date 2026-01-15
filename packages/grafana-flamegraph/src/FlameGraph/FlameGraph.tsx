@@ -22,13 +22,13 @@ import { useEffect, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, Icon, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './colors';
 import { PIXELS_PER_LEVEL } from '../constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
 
 import FlameGraphCanvas from './FlameGraphCanvas';
 import { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
+import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './colors';
 import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
