@@ -206,10 +206,7 @@ func TestConnection_Mutate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := github.NewMockGithubFactory(t)
-			conn := github.NewConnection(tt.connection, mockFactory, tt.secrets)
-
-			err := conn.Mutate(context.Background())
+			err := github.Mutate(context.Background(), tt.connection)
 
 			if tt.wantErr {
 				require.Error(t, err)

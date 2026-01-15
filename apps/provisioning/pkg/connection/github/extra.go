@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -50,6 +52,10 @@ func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (conne
 		Token:      t,
 	})
 	return &c, nil
+}
+
+func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
+	return Mutate(ctx, obj)
 }
 
 func Extra(decrypter connection.Decrypter, factory GithubFactory) connection.Extra {

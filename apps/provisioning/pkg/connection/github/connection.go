@@ -2,12 +2,9 @@ package github
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
@@ -49,61 +46,6 @@ const (
 	githubInstallationURL = "https://github.com/settings/installations"
 	jwtExpirationMinutes  = 10 // GitHub Apps JWT tokens expire in 10 minutes maximum
 )
-
-// Mutate performs in place mutation of the underneath resource.
-func (c *Connection) Mutate(_ context.Context) error {
-	// Do nothing in case spec.Github is nil.
-	// If this field is required, we should fail at validation time.
-	if c.obj.Spec.GitHub == nil {
-		return nil
-	}
-
-	c.obj.Spec.URL = fmt.Sprintf("%s/%s", githubInstallationURL, c.obj.Spec.GitHub.InstallationID)
-
-	// Generate JWT token if a new private key is being provided.
-	// Same as for the spec.Github, if such a field is required, Validation will take care of that.
-	if !c.obj.Secure.PrivateKey.Create.IsZero() {
-		token, err := generateToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
-		if err != nil {
-			return fmt.Errorf("failed to generate JWT token: %w", err)
-		}
-		// Store the generated token
-		c.obj.Secure.Token = common.InlineSecureValue{Create: token}
-	}
-
-	return nil
-}
-
-// Token generates and returns the Connection token.
-func generateToken(appID string, privateKey common.RawSecureValue) (common.RawSecureValue, error) {
-	// Decode base64-encoded private key
-	privateKeyPEM, err := base64.StdEncoding.DecodeString(string(privateKey))
-	if err != nil {
-		return "", fmt.Errorf("failed to decode base64 private key: %w", err)
-	}
-
-	// Parse the private key
-	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse private key: %w", err)
-	}
-
-	// Create the JWT token
-	now := time.Now()
-	claims := jwt.RegisteredClaims{
-		IssuedAt:  jwt.NewNumericDate(now),
-		ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(jwtExpirationMinutes) * time.Minute)),
-		Issuer:    appID,
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	signedToken, err := token.SignedString(key)
-	if err != nil {
-		return "", fmt.Errorf("failed to sign JWT token: %w", err)
-	}
-
-	return common.RawSecureValue(signedToken), nil
-}
 
 // Validate ensures the resource _looks_ correct.
 func (c *Connection) Validate(ctx context.Context) error {

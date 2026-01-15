@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/stretchr/testify/assert"
@@ -318,6 +320,149 @@ func TestFactory_Build(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, expectedConnection, result)
+			}
+		})
+	}
+}
+
+func TestFactory_Mutate(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupExtras   func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra
+		enabled       map[provisioning.ConnectionType]struct{}
+		obj           runtime.Object
+		wantErr       bool
+		validateError func(t *testing.T, err error)
+	}{
+		{
+			name: "should successfully mutate with single extra",
+			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Mutate(ctx, obj).Return(nil)
+
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should successfully mutate with multiple extras (all get called)",
+			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
+				extra1 := connection.NewMockExtra(t)
+				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra1.EXPECT().Mutate(ctx, obj).Return(nil)
+
+				extra2 := connection.NewMockExtra(t)
+				extra2.EXPECT().Type().Return(provisioning.GitlabConnectionType)
+				extra2.EXPECT().Mutate(ctx, obj).Return(nil)
+
+				return []connection.Extra{extra1, extra2}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+				provisioning.GitlabConnectionType: {},
+			},
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should stop and return error when one extra fails",
+			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
+				extra1 := connection.NewMockExtra(t)
+				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra1.EXPECT().Mutate(ctx, obj).Return(errors.New("mutation failed"))
+
+				extra2 := connection.NewMockExtra(t)
+				extra2.EXPECT().Type().Return(provisioning.GitlabConnectionType)
+				// extra2.Mutate should NOT be called due to error from extra1
+
+				return []connection.Extra{extra1, extra2}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+				provisioning.GitlabConnectionType: {},
+			},
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				assert.Equal(t, "mutation failed", err.Error())
+			},
+		},
+		{
+			name: "should succeed with no extras registered",
+			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
+				return []connection.Extra{}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should handle wrong object type (non-Connection)",
+			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				// Mutate should be called but handle non-Connection object gracefully
+				extra.EXPECT().Mutate(ctx, obj).Return(nil)
+
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			}, // This will be replaced with a Repository object in the test
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			var extras []connection.Extra
+			if tt.setupExtras != nil {
+				extras = append(extras, tt.setupExtras(t, ctx, tt.obj)...)
+			}
+
+			factory, err := connection.ProvideFactory(tt.enabled, extras)
+			require.NoError(t, err)
+
+			err = factory.Mutate(ctx, tt.obj)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.validateError != nil {
+					tt.validateError(t, err)
+				}
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}

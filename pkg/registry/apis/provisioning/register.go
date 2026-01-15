@@ -692,12 +692,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		conn, err := b.asConnection(ctx, c, nil)
-		if err != nil {
-			return err
-		}
-
-		return conn.Mutate(ctx)
+		return b.connectionFactory.Mutate(ctx, c)
 	}
 
 	r, ok := obj.(*provisioning.Repository)

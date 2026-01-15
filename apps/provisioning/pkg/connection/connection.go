@@ -14,9 +14,6 @@ type Connection interface {
 	// This is not an indication that the connection information works, just that they are reasonably configured.
 	Validate(ctx context.Context) error
 
-	// Mutate performs in place mutation of the underneath resource.
-	Mutate(context.Context) error
-
 	// GenerateRepositoryToken generates a repository-scoped access token.
 	// For GitHub connections, this creates an installation token using the GitHub App credentials.
 	// The repo parameter specifies the repository name the token should be scoped to.
