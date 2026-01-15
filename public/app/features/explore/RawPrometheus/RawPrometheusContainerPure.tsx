@@ -10,6 +10,12 @@ import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, TableResultsStyle } from 'ap
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';
 
+const ALL_GRAPH_STYLE_OPTIONS: Array<SelectableValue<TableResultsStyle>> = TABLE_RESULTS_STYLES.map((style) => ({
+  value: style,
+  // capital-case it and switch `_` to ` `
+  label: style[0].toUpperCase() + style.slice(1).replace(/_/, ' '),
+}));
+
 const getStyles = (_theme: GrafanaTheme2) => ({
   spacing: css({
     display: 'flex',
@@ -71,12 +77,6 @@ export const RawPrometheusContainerPure = memo(
     };
 
     const renderLabel = () => {
-      const ALL_GRAPH_STYLE_OPTIONS: Array<SelectableValue<TableResultsStyle>> = TABLE_RESULTS_STYLES.map((style) => ({
-        value: style,
-        // capital-case it and switch `_` to ` `
-        label: style[0].toUpperCase() + style.slice(1).replace(/_/, ' '),
-      }));
-
       return (
         <div className={styles.spacing}>
           <RadioButtonGroup
@@ -121,7 +121,9 @@ export const RawPrometheusContainerPure = memo(
                 onCellFilterAdded={onCellFilterAdded}
               />
             )}
-            {resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={frames[0]} />}
+            {resultsStyle === TABLE_RESULTS_STYLE.raw && (
+              <RawListContainer tableResult={frames[0]} ariaLabel={ariaLabel} />
+            )}
           </>
         )}
         {!frames?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}

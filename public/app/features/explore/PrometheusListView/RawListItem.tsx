@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { memo } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
@@ -134,7 +135,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
           <IconButton
             tooltip={t('explore.raw-list-item.tooltip-copy-to-clipboard', 'Copy to clipboard')}
             onClick={() => {
-              reportInteraction('grafana_explore_prometheus_instant_query_ui_raw_toggle_expand');
+              reportInteraction('grafana_explore_prometheus_instant_query_ui_copy_to_clipboard');
               copyToClipboard(stringRep);
             }}
             name="copy"
@@ -174,4 +175,5 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
     </>
   );
 };
-export default RawListItem;
+
+export default memo(RawListItem);

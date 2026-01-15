@@ -1,17 +1,17 @@
 {
   "type": "panel",
-  "name": "Instant Query Results",
-  "id": "instant-query-results",
+  "name": "Prometheus Instant Results",
+  "id": "prometheus-instant-results",
   "suggestions": true,
   "info": {
-    "description": "Display instant query results with Table/Raw toggle",
+    "description": "Display Prometheus instant query results in a virtualized list view",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-instant-query-results.svg",
-      "large": "img/icn-instant-query-results.svg"
+      "small": "img/icn-prometheus-instant-results.svg",
+      "large": "img/icn-prometheus-instant-results.svg"
     },
     "links": [
       { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },

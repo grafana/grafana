@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
-import { DataFrame, Field as DataFrameField } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Field, Switch } from '@grafana/ui';
@@ -26,6 +26,8 @@ export interface RawListContainerProps {
   tableResult: DataFrame;
   /** Optional default expanded state. If undefined, uses responsive default based on screen width and column count. */
   defaultExpanded?: boolean;
+  /** Aria label for accessibility */
+  ariaLabel?: string;
 }
 
 const styles = {
@@ -67,12 +69,27 @@ const numberOfColumnsBeforeExpandedViewIsDefault = 2;
  * @constructor
  */
 const RawListContainer = (props: RawListContainerProps) => {
-  const { tableResult, defaultExpanded } = props;
-  const dataFrame = cloneDeep(tableResult);
+  const { tableResult, defaultExpanded, ariaLabel } = props;
   const listRef = useRef<List | null>(null);
 
-  const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));
-  const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
+  // Memoize expensive data processing to avoid cloneDeep on every render
+  const { valueLabels, items } = useMemo(() => {
+    const dataFrame = cloneDeep(tableResult);
+    const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));
+    const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
+    return { valueLabels, items };
+  }, [tableResult]);
+
+  // Pre-compute filtered value labels for each item to avoid creating new arrays in render
+  const filteredValueLabelsPerItem = useMemo(() => {
+    return items.map((item) =>
+      valueLabels.filter((valueLabel) => {
+        const itemWithValue = item[valueLabel.name];
+        return itemWithValue && itemWithValue !== RawPrometheusListItemEmptyValue;
+      })
+    );
+  }, [items, valueLabels]);
+
   const { width } = useWindowSize();
   const [isExpandedView, setIsExpandedView] = useState(
     defaultExpanded ??
@@ -123,7 +140,7 @@ const RawListContainer = (props: RawListContainerProps) => {
   const switchId = `isExpandedView ${useId()}`;
 
   return (
-    <section>
+    <section aria-label={ariaLabel}>
       <header className={styles.header}>
         <Field
           className={styles.switchWrapper}
@@ -163,27 +180,17 @@ const RawListContainer = (props: RawListContainerProps) => {
               height={calculateInitialHeight(items.length)}
               width="100%"
             >
-              {({ index, style }) => {
-                let filteredValueLabels: DataFrameField[] | undefined;
-                if (isExpandedView) {
-                  filteredValueLabels = valueLabels.filter((valueLabel) => {
-                    const itemWithValue = items[index][valueLabel.name];
-                    return itemWithValue && itemWithValue !== RawPrometheusListItemEmptyValue;
-                  });
-                }
-
-                return (
-                  <div role="row" style={{ ...style, overflow: 'hidden' }}>
-                    <RawListItem
-                      isExpandedView={isExpandedView}
-                      valueLabels={filteredValueLabels}
-                      totalNumberOfValues={valueLabels.length}
-                      listKey={items[index].__name__ || `item-${index}`}
-                      listItemData={items[index]}
-                    />
-                  </div>
-                );
-              }}
+              {({ index, style }) => (
+                <div role="row" style={{ ...style, overflow: 'hidden' }}>
+                  <RawListItem
+                    isExpandedView={isExpandedView}
+                    valueLabels={isExpandedView ? filteredValueLabelsPerItem[index] : undefined}
+                    totalNumberOfValues={valueLabels.length}
+                    listKey={items[index].__name__ || `item-${index}`}
+                    listItemData={items[index]}
+                  />
+                </div>
+              )}
             </List>
           </>
         }

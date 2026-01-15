@@ -20,15 +20,9 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				// Display mode for the panel: table or raw view
-				DisplayMode: "table" | "raw" @cuetsy(kind="type")
 				Options: {
-					// Controls which view to display (table or raw)
-					displayMode: DisplayMode | *"table"
-					// Whether to show the Table/Raw toggle
-					showToggle: bool | *true
-					// Whether to expand results in raw view by default
-					expandedRawView: bool | *false
+					// Whether to expand results by default
+					expandedView: bool | *false
 				} @cuetsy(kind="interface")
 			}
 		}]

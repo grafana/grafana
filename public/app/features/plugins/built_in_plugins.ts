@@ -45,8 +45,10 @@ const logsPanel = async () => await import(/* webpackChunkName: "logsPanel" */ '
 const newsPanel = async () => await import(/* webpackChunkName: "newsPanel" */ 'app/plugins/panel/news/module');
 const pieChartPanel = async () =>
   await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');
-const instantQueryResultsPanel = async () =>
-  await import(/* webpackChunkName: "instantQueryResultsPanel" */ 'app/plugins/panel/instant-query-results/module');
+const prometheusInstantResultsPanel = async () =>
+  await import(
+    /* webpackChunkName: "prometheusInstantResultsPanel" */ 'app/plugins/panel/prometheus-instant-results/module'
+  );
 const statPanel = async () => await import(/* webpackChunkName: "statPanel" */ 'app/plugins/panel/stat/module');
 const stateTimelinePanel = async () =>
   await import(/* webpackChunkName: "stateTimelinePanel" */ 'app/plugins/panel/state-timeline/module');
@@ -107,7 +109,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/gettingstarted': gettingStartedPanel,
   'core:plugin/gauge': config.featureToggles.newGauge ? radialBar : gaugePanel,
   'core:plugin/piechart': pieChartPanel,
-  'core:plugin/instant-query-results': instantQueryResultsPanel,
+  'core:plugin/prometheus-instant-results': prometheusInstantResultsPanel,
   'core:plugin/bargauge': barGaugePanel,
   'core:plugin/barchart': barChartPanel,
   'core:plugin/logs': logsPanel,
