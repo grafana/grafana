@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure-Logs starten Ihre Abfrage-Schaltfläche",
       "body-switching-to-builder": "Wenn Sie zum Builder wechseln, wird Ihre aktuelle KQL-Abfrage verworfen und der KQL-Editor gelöscht. Sind Sie sicher?",
-      "body-switching-to-kql": "Wenn Sie zu KQL wechseln, werden Ihre aktuellen Builder-Einstellungen verworfen. Sind Sie sicher?",
       "button-kick-start-your-query": "Starten Sie Ihre Abfrage",
       "button-run-query": "Abfrage ausführen",
       "confirmText-switch-to": "Wechseln zu {{newMode}}",

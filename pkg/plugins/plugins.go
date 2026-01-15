@@ -48,8 +48,9 @@ type Plugin struct {
 	Error         *Error
 
 	// SystemJS fields
-	Module  string
-	BaseURL string
+	Module          string
+	BaseURL         string
+	LoadingStrategy LoadingStrategy
 
 	Angular AngularMeta
 

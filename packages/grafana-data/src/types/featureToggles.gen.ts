@@ -356,7 +356,7 @@ export interface FeatureToggles {
   */
   dashboardScene?: boolean;
   /**
-  * Enables experimental new dashboard layouts
+  * Enables new dashboard layouts
   */
   dashboardNewLayouts?: boolean;
   /**
@@ -531,6 +531,10 @@ export interface FeatureToggles {
   */
   alertingListViewV2?: boolean;
   /**
+  * Enables the new Alerting navigation structure with improved menu grouping
+  */
+  alertingNavigationV2?: boolean;
+  /**
   * Enables saved searches for alert rules list
   */
   alertingSavedSearches?: boolean;
@@ -622,10 +626,6 @@ export interface FeatureToggles {
   */
   exploreLogsAggregatedMetrics?: boolean;
   /**
-  * Used in Logs Drilldown to limit the time range
-  */
-  exploreLogsLimitedTimeRange?: boolean;
-  /**
   * Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
   */
   appPlatformGrpcClientAuth?: boolean;
@@ -652,10 +652,6 @@ export interface FeatureToggles {
   * Enables the new role picker drawer design
   */
   rolePickerDrawer?: boolean;
-  /**
-  * Enable sprinkles on unified storage search
-  */
-  unifiedStorageSearchSprinkles?: boolean;
   /**
   * Pick the dual write mode from database configs
   */
@@ -966,6 +962,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzCoreRolesApi?: boolean;
   /**
+  * Registers AuthZ Global Roles /apis endpoint
+  */
+  kubernetesAuthzGlobalRolesApi?: boolean;
+  /**
   * Registers AuthZ Roles /apis endpoint
   */
   kubernetesAuthzRolesApi?: boolean;
@@ -991,6 +991,11 @@ export interface FeatureToggles {
   * @default false
   */
   recentlyViewedDashboards?: boolean;
+  /**
+  * A/A test for recently viewed dashboards feature
+  * @default false
+  */
+  experimentRecentlyViewedDashboards?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
@@ -1254,4 +1259,8 @@ export interface FeatureToggles {
   * Enables profiles exemplars support in profiles drilldown
   */
   profilesExemplars?: boolean;
+  /**
+  * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+  */
+  alertingSyncDispatchTimer?: boolean;
 }

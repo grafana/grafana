@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Knop Start query met Azure-logboeken",
       "body-switching-to-builder": "Als je overschakelt naar Bouwer, wordt je huidige KQL-query verwijderd en wordt de KQL-editor gewist. Weet je het zeker?",
-      "body-switching-to-kql": "Als je overschakelt naar KQL, worden je huidige bouwerinstellingen verwijderd. Weet je het zeker?",
       "button-kick-start-your-query": "Start je query",
       "button-run-query": "Query uitvoeren",
       "confirmText-switch-to": "Overschakelen naar {{newMode}}",
