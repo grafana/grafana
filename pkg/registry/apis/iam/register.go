@@ -245,6 +245,23 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 		if err := iamv0.AddTeamLBACRuleTypes(scheme); err != nil {
 			return err
 		}
+		// Register field label conversion for field selectors
+		if err := scheme.AddFieldLabelConversionFunc(
+			iamv0.TeamLBACRuleInfo.GroupVersionKind(),
+			func(label, value string) (string, string, error) {
+				// Allow spec.datasource_uid field selector
+				if label == "spec.datasource_uid" {
+					return label, value, nil
+				}
+				// Allow standard metadata fields
+				if label == "metadata.name" || label == "metadata.namespace" {
+					return label, value, nil
+				}
+				return "", "", fmt.Errorf("field label not supported for %s: %s", iamv0.TeamLBACRuleInfo.GroupVersionKind(), label)
+			},
+		); err != nil {
+			return err
+		}
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
