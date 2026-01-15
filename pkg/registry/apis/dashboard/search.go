@@ -221,7 +221,7 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "panelTitleSearch",
 										In:          "query",
-										Description: "optionally include matches from panel titles",
+										Description: "[experimental] optionally include matches from panel titles",
 										Required:    false,
 										Schema:      spec.BoolProperty(),
 									},
