@@ -5,6 +5,7 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_StaticProviderIntegration(t *testing.T) {
