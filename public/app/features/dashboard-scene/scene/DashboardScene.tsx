@@ -110,6 +110,8 @@ export interface DashboardSceneState extends SceneObjectState {
   editable?: boolean;
   /** Allows disabling grid lazy loading */
   preload?: boolean;
+  /** When enabled, live panels will not stream data if auto refresh is set to Off */
+  connectLiveToAutoRefresh?: boolean;
   /** A uid when saved */
   uid?: string;
   /** @experimental */

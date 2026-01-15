@@ -6754,6 +6754,8 @@
       "title": "Settings"
     },
     "time-picker": {
+      "connect-live-to-auto-refresh-description": "When enabled, live panels will not stream data if auto refresh is set to Off",
+      "connect-live-to-auto-refresh-label": "Connect live panels to auto refresh",
       "hide-time-picker": "Hide time picker",
       "now-delay-description": "Exclude recent data that may be incomplete.",
       "now-delay-label": "Now delay",

@@ -161,6 +161,10 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ preload });
   };
 
+  public onConnectLiveToAutoRefreshChange = (connectLiveToAutoRefresh: boolean) => {
+    this._dashboard.setState({ connectLiveToAutoRefresh });
+  };
+
   public onDeleteDashboard = () => {};
 
   public onProvisionedFolderChange = async (newUID?: string, newTitle?: string) => {
@@ -198,7 +202,7 @@ export class GeneralSettingsEditView
 function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<GeneralSettingsEditView>) {
   const dashboard = model.getDashboard();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-  const { title, description, tags, meta, editable } = dashboard.useState();
+  const { title, description, tags, meta, editable, connectLiveToAutoRefresh } = dashboard.useState();
   const { showMoveModal, moveModalProps } = model.useState();
   const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
   const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
@@ -313,10 +317,12 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
           onNowDelayChange={model.onNowDelayChange}
           onHideTimePickerChange={model.onHideTimePickerChange}
           onLiveNowChange={model.onLiveNowChange}
+          onConnectLiveToAutoRefreshChange={model.onConnectLiveToAutoRefreshChange}
           refreshIntervals={intervals}
           timePickerHidden={hideTimeControls}
           nowDelay={nowDelay || ''}
           liveNow={liveNow}
+          connectLiveToAutoRefresh={connectLiveToAutoRefresh}
           timezone={timeZone || ''}
           weekStart={weekStart}
         />

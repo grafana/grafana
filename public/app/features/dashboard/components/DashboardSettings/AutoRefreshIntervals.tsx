@@ -67,6 +67,7 @@ export const AutoRefreshIntervals = ({
       )}
       error={invalidIntervalsMessage}
       invalid={!!invalidIntervalsMessage}
+      noMargin
     >
       <Input
         id="auto-refresh-input"
