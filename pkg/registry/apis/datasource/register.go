@@ -107,7 +107,7 @@ func RegisterAPIService(
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			DataSourceAPIBuilderConfig{
 				LoadQueryTypes: features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-				UseDualWriter:  features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+				UseDualWriter:  features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs),
 			},
 		)
 		if err != nil {
@@ -226,15 +226,17 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
-		EnableFolderSupport: false,
+	if opts.StorageOptsRegister != nil {
+		opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport: false,
 
-		// Setting the schema explicitly will force the apistore to explicitly marshal with a matching Group+version
-		// This is required because we map the same go type (DataSourceConfig) across multiple api groups
-		// and the default k8s codec will pick the first one registered, regardless which group is set
-		// See: https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
-		Scheme: opts.Scheme,
-	})
+			// Setting the schema explicitly will force the apistore to explicitly marshal with a matching Group+version
+			// This is required because we map the same go type (DataSourceConfig) across multiple api groups
+			// and the default k8s codec will pick the first one registered, regardless which group is set
+			// See: https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
+			Scheme: opts.Scheme,
+		})
+	}
 
 	storage := map[string]rest.Storage{}
 
