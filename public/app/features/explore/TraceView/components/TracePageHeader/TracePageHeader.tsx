@@ -81,6 +81,7 @@ export type TracePageHeaderProps = {
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
+  hideHeaderDetails?: boolean;
 };
 
 export const TracePageHeader = memo((props: TracePageHeaderProps) => {
@@ -101,6 +102,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     updateNextViewRangeTime,
     updateViewRangeTime,
     viewRange,
+    hideHeaderDetails = false,
   } = props;
 
   const styles = useStyles2(getStyles);
@@ -215,178 +217,184 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         </div>
 
         {/* Action buttons */}
-        <div className={styles.actions}>
-          {/* Plugin extension actions */}
-          {extensionLinks.length > 0 && (
-            <div className={styles.actions}>
-              {extensionLinks.map((link) => (
-                <Tooltip key={link.id} content={link.description || link.title}>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    fill="outline"
-                    icon={link.icon}
-                    onClick={(event) => {
-                      if (link.path) {
-                        window.open(link.path, '_blank');
-                      }
-                      link.onClick?.(event);
-                    }}
-                  >
-                    {link.title}
-                  </Button>
-                </Tooltip>
-              ))}
-            </div>
-          )}
-
+        {!hideHeaderDetails && (
           <div className={styles.actions}>
-            {traceContext
-              ? renderLimitedComponents<TraceViewPluginExtensionContext>({
-                  props: traceContext,
-                  components: extensionComponents,
-                  limit: 2,
-                })
-              : null}
-          </div>
-
-          {config.feedbackLinksEnabled && (
-            <Tooltip
-              content={t(
-                'explore.trace-page-header.title-share-thoughts-about-tracing-grafana',
-                'Share your thoughts about tracing in Grafana.'
-              )}
-            >
-              <LinkButton
-                size="sm"
-                variant="secondary"
-                fill="outline"
-                icon="comment-alt-message"
-                href="https://forms.gle/RZDEx8ScyZNguDoC8"
-                target="_blank"
-              >
-                <Trans i18nKey="explore.trace-page-header.give-feedback">Feedback</Trans>
-              </LinkButton>
-            </Tooltip>
-          )}
-
-          <ButtonGroup>
-            <Tooltip content={t('explore.trace-page-header.share-tooltip', 'Share trace')}>
-              <Button
-                size="sm"
-                variant="secondary"
-                fill="outline"
-                icon="share-alt"
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
-                }}
-              >
-                {t('explore.trace-page-header.share', 'Share')}
-              </Button>
-            </Tooltip>
-
-            <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
-              <Button
-                aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share trace options menu')}
-                size="sm"
-                variant="secondary"
-                fill="outline"
-                icon="angle-down"
-              />
-            </Dropdown>
-          </ButtonGroup>
-        </div>
-      </div>
-
-      {/* Metadata row */}
-      <div className={styles.metadataRow}>
-        <div className={styles.metadataItem}>
-          <span className={styles.metadataLabel}>{t('explore.trace-page-header.trace-id', 'Trace ID')}</span>
-          <span className={styles.metadataValue}>
-            <button className={styles.traceIdButton} onClick={copyTraceId}>
-              {trace.traceID}
-              <Icon name={copyTraceIdClicked ? 'check' : 'copy'} size="sm" className={styles.copyIcon} />
-            </button>
-          </span>
-        </div>
-
-        <div className={styles.metadataItem}>
-          <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
-          <span
-            className={cx(
-              styles.metadataValue,
-              css({
-                gap: theme.spacing(0.5),
-              })
+            {/* Plugin extension actions */}
+            {extensionLinks.length > 0 && (
+              <div className={styles.actions}>
+                {extensionLinks.map((link) => (
+                  <Tooltip key={link.id} content={link.description || link.title}>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      fill="outline"
+                      icon={link.icon}
+                      onClick={(event) => {
+                        if (link.path) {
+                          window.open(link.path, '_blank');
+                        }
+                        link.onClick?.(event);
+                      }}
+                    >
+                      {link.title}
+                    </Button>
+                  </Tooltip>
+                ))}
+              </div>
             )}
-          >
-            <span>{formattedTimestamp}</span>
-            <span className={styles.timestampDetail}>({dateTimeFormatTimeAgo(trace.startTime / 1000)})</span>
-          </span>
-        </div>
 
-        <div className={styles.metadataItem}>
-          <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
-          <span className={styles.metadataValue}>{formatDuration(trace.duration)}</span>
-        </div>
+            <div className={styles.actions}>
+              {traceContext
+                ? renderLimitedComponents<TraceViewPluginExtensionContext>({
+                    props: traceContext,
+                    components: extensionComponents,
+                    limit: 2,
+                  })
+                : null}
+            </div>
 
-        <div className={styles.metadataItem}>
-          <span className={styles.metadataLabel}>{t('explore.trace-page-header.services', 'Services')}</span>
-          <span className={styles.metadataValue}>{serviceCount}</span>
-        </div>
-
-        {url && url.length > 0 && (
-          <div className={styles.metadataItem}>
-            <span className={styles.metadataLabel}>
-              {url[0].key === 'http.route' && t('explore.trace-page-header.route', 'Route')}
-              {url[0].key === 'http.url' && t('explore.trace-page-header.url', 'URL')}
-              {url[0].key === 'http.target' && t('explore.trace-page-header.target', 'Target')}
-              {url[0].key === 'http.path' && t('explore.trace-page-header.path', 'Path')}
-            </span>
-            <span className={styles.metadataValue}>
+            {config.feedbackLinksEnabled && (
               <Tooltip
-                content={
-                  <div>
-                    <div>
-                      <Trans
-                        i18nKey="explore.trace-page-header.tooltip-url"
-                        values={{
-                          route: 'http.route',
-                          url: 'http.url',
-                          target: 'http.target',
-                          path: 'http.path',
-                        }}
-                      >
-                        {'{{route}}'} or {'{{url}}'} or {'{{target}}'} or {'{{path}}'}
-                      </Trans>
-                    </div>
-                    <div>({url[0].value})</div>
-                  </div>
-                }
-                interactive={true}
+                content={t(
+                  'explore.trace-page-header.title-share-thoughts-about-tracing-grafana',
+                  'Share your thoughts about tracing in Grafana.'
+                )}
               >
-                <span className={styles.url}>{url[0].value}</span>
+                <LinkButton
+                  size="sm"
+                  variant="secondary"
+                  fill="outline"
+                  icon="comment-alt-message"
+                  href="https://forms.gle/RZDEx8ScyZNguDoC8"
+                  target="_blank"
+                >
+                  <Trans i18nKey="explore.trace-page-header.give-feedback">Feedback</Trans>
+                </LinkButton>
               </Tooltip>
-            </span>
+            )}
+
+            <ButtonGroup>
+              <Tooltip content={t('explore.trace-page-header.share-tooltip', 'Share trace')}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  fill="outline"
+                  icon="share-alt"
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+                  }}
+                >
+                  {t('explore.trace-page-header.share', 'Share')}
+                </Button>
+              </Tooltip>
+
+              <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
+                <Button
+                  aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share trace options menu')}
+                  size="sm"
+                  variant="secondary"
+                  fill="outline"
+                  icon="angle-down"
+                />
+              </Dropdown>
+            </ButtonGroup>
           </div>
         )}
       </div>
 
-      <CollapsableSection
-        label={<span className={styles.overviewLabel}>{t('explore.trace-page-header.overview', 'Overview')}</span>}
-        isOpen={isOverviewOpen}
-        onToggle={setIsOverviewOpen}
-        className={styles.overviewCollapsableSection}
-        contentClassName={styles.overviewCollapsableSectionContent}
-      >
-        <SpanGraph
-          trace={trace}
-          viewRange={viewRange}
-          updateNextViewRangeTime={updateNextViewRangeTime}
-          updateViewRangeTime={updateViewRangeTime}
-        />
-      </CollapsableSection>
+      {/* Metadata row */}
+      {!hideHeaderDetails && (
+        <>
+          <div className={styles.metadataRow}>
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.trace-id', 'Trace ID')}</span>
+              <span className={styles.metadataValue}>
+                <button className={styles.traceIdButton} onClick={copyTraceId}>
+                  {trace.traceID}
+                  <Icon name={copyTraceIdClicked ? 'check' : 'copy'} size="sm" className={styles.copyIcon} />
+                </button>
+              </span>
+            </div>
+
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+              <span
+                className={cx(
+                  styles.metadataValue,
+                  css({
+                    gap: theme.spacing(0.5),
+                  })
+                )}
+              >
+                <span>{formattedTimestamp}</span>
+                <span className={styles.timestampDetail}>({dateTimeFormatTimeAgo(trace.startTime / 1000)})</span>
+              </span>
+            </div>
+
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
+              <span className={styles.metadataValue}>{formatDuration(trace.duration)}</span>
+            </div>
+
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.services', 'Services')}</span>
+              <span className={styles.metadataValue}>{serviceCount}</span>
+            </div>
+
+            {url && url.length > 0 && (
+              <div className={styles.metadataItem}>
+                <span className={styles.metadataLabel}>
+                  {url[0].key === 'http.route' && t('explore.trace-page-header.route', 'Route')}
+                  {url[0].key === 'http.url' && t('explore.trace-page-header.url', 'URL')}
+                  {url[0].key === 'http.target' && t('explore.trace-page-header.target', 'Target')}
+                  {url[0].key === 'http.path' && t('explore.trace-page-header.path', 'Path')}
+                </span>
+                <span className={styles.metadataValue}>
+                  <Tooltip
+                    content={
+                      <div>
+                        <div>
+                          <Trans
+                            i18nKey="explore.trace-page-header.tooltip-url"
+                            values={{
+                              route: 'http.route',
+                              url: 'http.url',
+                              target: 'http.target',
+                              path: 'http.path',
+                            }}
+                          >
+                            {'{{route}}'} or {'{{url}}'} or {'{{target}}'} or {'{{path}}'}
+                          </Trans>
+                        </div>
+                        <div>({url[0].value})</div>
+                      </div>
+                    }
+                    interactive={true}
+                  >
+                    <span className={styles.url}>{url[0].value}</span>
+                  </Tooltip>
+                </span>
+              </div>
+            )}
+          </div>
+
+          <CollapsableSection
+            label={<span className={styles.overviewLabel}>{t('explore.trace-page-header.overview', 'Overview')}</span>}
+            isOpen={isOverviewOpen}
+            onToggle={setIsOverviewOpen}
+            className={styles.overviewCollapsableSection}
+            contentClassName={styles.overviewCollapsableSectionContent}
+          >
+            <SpanGraph
+              trace={trace}
+              viewRange={viewRange}
+              updateNextViewRangeTime={updateNextViewRangeTime}
+              updateViewRangeTime={updateViewRangeTime}
+            />
+          </CollapsableSection>
+        </>
+      )}
 
       <div className={styles.filtersContainer}>
         <Label>{t('explore.trace-page-header.filters', 'Filters')}</Label>

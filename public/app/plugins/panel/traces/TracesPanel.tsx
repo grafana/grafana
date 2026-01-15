@@ -23,6 +23,7 @@ export interface TracesPanelOptions {
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   spanFilters?: TraceSearchProps;
+  hideHeaderDetails?: boolean;
 }
 
 export const TracesPanel = ({ data, options, replaceVariables }: PanelProps<TracesPanelOptions>) => {
@@ -56,6 +57,7 @@ export const TracesPanel = ({ data, options, replaceVariables }: PanelProps<Trac
         createFocusSpanLink={options.createFocusSpanLink}
         spanFilters={replaceSearchVariables(replaceVariables, options.spanFilters)}
         timeRange={data.timeRange}
+        hideHeaderDetails={options.hideHeaderDetails}
       />
     </div>
   );
