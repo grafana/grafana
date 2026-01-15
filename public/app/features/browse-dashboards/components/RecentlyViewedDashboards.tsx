@@ -5,7 +5,6 @@ import { useAsyncRetry } from 'react-use';
 import { GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 import { Button, CollapsableSection, Grid, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
@@ -28,9 +27,6 @@ export function RecentlyViewedDashboards() {
     retry,
     error,
   } = useAsyncRetry(async () => {
-    if (!evaluateBooleanFlag('recentlyViewedDashboards', false)) {
-      return [];
-    }
     return getRecentlyViewedDashboards(MAX_RECENT);
   }, []);
   const { foldersByUid } = useDashboardLocationInfo(recentDashboards.length > 0);
@@ -48,7 +44,7 @@ export function RecentlyViewedDashboards() {
     setIsOpen(!isOpen);
   };
 
-  if (!evaluateBooleanFlag('recentlyViewedDashboards', false) || recentDashboards.length === 0) {
+  if (recentDashboards.length === 0) {
     return null;
   }
 
@@ -123,6 +119,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: 'transparent',
         cursor: 'pointer',
       },
+      padding: 0,
     }),
     content: css({
       paddingTop: theme.spacing(0),
