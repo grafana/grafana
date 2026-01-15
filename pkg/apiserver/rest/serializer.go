@@ -5,41 +5,39 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
-type subsetNegotiatedSerializer struct {
+type noProtobufNegotiatedSerializer struct {
 	accepts []func(info runtime.SerializerInfo) bool
 	runtime.NegotiatedSerializer
 }
 
-func (s subsetNegotiatedSerializer) SupportedMediaTypes() []runtime.SerializerInfo {
+func (s noProtobufNegotiatedSerializer) SupportedMediaTypes() []runtime.SerializerInfo {
 	base := s.NegotiatedSerializer.SupportedMediaTypes()
-	var filtered []runtime.SerializerInfo
+	var suppported []runtime.SerializerInfo
 	for _, info := range base {
 		for _, accept := range s.accepts {
 			if accept(info) {
-				filtered = append(filtered, info)
+				suppported = append(suppported, info)
 				break
 			}
 		}
 	}
-	return filtered
+	return suppported
 }
 
-// NoProtobuf is a function that disallows the use of protobuf.
+// NoProtobuf is a function that omits the support for protobuf.
 func NoProtobuf(info runtime.SerializerInfo) bool {
 	return info.MediaType != runtime.ContentTypeProtobuf
 }
 
 // SubsetNegotiatedSerializer is a runtime.NegotiatedSerializer that provides a whitelisted subset of the
-// media types the provided serializer.CodecFactory provides.
-func SubsetNegotiatedSerializer(codecs serializer.CodecFactory, accepts ...func(info runtime.SerializerInfo) bool) runtime.NegotiatedSerializer {
-	return subsetNegotiatedSerializer{accepts, codecs}
+// content types the provided serializer.CodecFactory supports.
+func NoProtobufNegotiatedSerializer(codecs serializer.CodecFactory, accepts ...func(info runtime.SerializerInfo) bool) runtime.NegotiatedSerializer {
+	return noProtobufNegotiatedSerializer{accepts, codecs}
 }
 
-// DefaultSubsetNegotiatedSerializer is the default onmetal serializer that does not use protobuf.
-// Since our types *don't* implement protobuf encoding, and without removing the protobuf support,
-// namespace deletion would fail (see issue https://github.com/kubernetes/kubernetes/issues/86666). As such,
-// until we either enhance content type negotiation or implement protobuf for our types, we have to make
-// use of this for our api group negotiated serializers.
+// DefaultSubsetNegotiatedSerializer is the default serializer that does not use protobuf.
+// Our types do not implement protobuf encoding, so we exclude protobuf support to prevent
+// namespace deletion failures (see issue https://github.com/kubernetes/kubernetes/issues/86666).
 func DefaultSubsetNegotiatedSerializer(codecs serializer.CodecFactory) runtime.NegotiatedSerializer {
-	return SubsetNegotiatedSerializer(codecs, NoProtobuf)
+	return NoProtobufNegotiatedSerializer(codecs, NoProtobuf)
 }

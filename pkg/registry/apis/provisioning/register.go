@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -669,7 +668,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 
 	// testing whether this fixes the issue with namespace deletion issue
-	apiGroupInfo.NegotiatedSerializer = grafanarest.DefaultSubsetNegotiatedSerializer(serializer.NewCodecFactory(opts.Scheme))
+	apiGroupInfo.NegotiatedSerializer = grafanarest.DefaultSubsetNegotiatedSerializer(builder.ProvideCodecFactory(opts.Scheme))
 
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
