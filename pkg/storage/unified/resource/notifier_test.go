@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +37,9 @@ func setupTestNotifierSqlKv(t *testing.T) (*pollingNotifier, *eventStore) {
 	return notifier.(*pollingNotifier), eventStore
 }
 
-func TestNewNotifier(t *testing.T) {
+func TestIntegrationNewNotifier(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	notifier, _ := setupTestNotifier(t)
 
 	assert.NotNil(t, notifier.eventStore)
@@ -57,7 +60,9 @@ func runNotifierTestWith(t *testing.T, storeName string, newStoreFn func(*testin
 	})
 }
 
-func TestNotifier_lastEventResourceVersion(t *testing.T) {
+func TestIntegrationNotifier_lastEventResourceVersion(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierLastEventResourceVersion)
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierLastEventResourceVersion)
 }
@@ -108,7 +113,9 @@ func testNotifierLastEventResourceVersion(t *testing.T, ctx context.Context, not
 	assert.Equal(t, int64(2000), rv)
 }
 
-func TestNotifier_cachekey(t *testing.T) {
+func TestIntegrationNotifier_cachekey(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierCachekey)
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierCachekey)
 }
@@ -162,7 +169,9 @@ func testNotifierCachekey(t *testing.T, ctx context.Context, notifier *pollingNo
 	}
 }
 
-func TestNotifier_Watch_NoEvents(t *testing.T) {
+func TestIntegrationNotifier_Watch_NoEvents(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchNoEvents)
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchNoEvents)
 }
@@ -203,7 +212,9 @@ func testNotifierWatchNoEvents(t *testing.T, ctx context.Context, notifier *poll
 	}
 }
 
-func TestNotifier_Watch_WithExistingEvents(t *testing.T) {
+func TestIntegrationNotifier_Watch_WithExistingEvents(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchWithExistingEvents)
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchWithExistingEvents)
 }
@@ -277,7 +288,9 @@ func testNotifierWatchWithExistingEvents(t *testing.T, ctx context.Context, noti
 	}
 }
 
-func TestNotifier_Watch_EventDeduplication(t *testing.T) {
+func TestIntegrationNotifier_Watch_EventDeduplication(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchEventDeduplication)
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchEventDeduplication)
 }
@@ -343,7 +356,9 @@ func testNotifierWatchEventDeduplication(t *testing.T, ctx context.Context, noti
 	}
 }
 
-func TestNotifier_Watch_ContextCancellation(t *testing.T) {
+func TestIntegrationNotifier_Watch_ContextCancellation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchContextCancellation)
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchContextCancellation)
 }
@@ -389,7 +404,9 @@ func testNotifierWatchContextCancellation(t *testing.T, ctx context.Context, not
 	}
 }
 
-func TestNotifier_Watch_MultipleEvents(t *testing.T) {
+func TestIntegrationNotifier_Watch_MultipleEvents(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	runNotifierTestWith(t, "badger", setupTestNotifier, testNotifierWatchMultipleEvents)
 	runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, testNotifierWatchMultipleEvents)
 }
