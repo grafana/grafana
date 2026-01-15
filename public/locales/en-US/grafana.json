@@ -12541,13 +12541,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "Dashboard",
+      "app-explore": "Explore",
+      "app-label": "App:",
+      "assistant-actionable-create": "Please describe what you want to query and what insights you're looking for.",
+      "assistant-actionable-update": "Please describe what you want to change or improve in this query.",
+      "assistant-prompt-create": "Help me create a new query to answer my questions and provide the insights I need.",
+      "assistant-prompt-update": "Help me update the current query to answer my questions and provide the insights I need.",
       "collapse-row": "Collapse query row",
+      "current-query": "Current query",
+      "current-query-label": "Current query:",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
+      "other-queries": "Other queries",
+      "query-with-assistant": "Query with Assistant",
       "remove-query": "Remove query",
+      "selected-datasource-label": "Selected data source:",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"

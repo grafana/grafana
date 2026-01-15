@@ -70,8 +70,8 @@ describe('QueryActionAssistantButton', () => {
     expect(container.firstChild).toBeNull();
     expect(evaluateBooleanFlagMock).toHaveBeenCalledWith('queryWithAssistant', false);
   });
-  
-    it('should render nothing when app is not Explore, Dashboard, or PanelEditor', () => {
+
+  it('should render nothing when app is not Explore, Dashboard, or PanelEditor', () => {
     const { container } = render(<QueryActionAssistantButton {...defaultProps} app={CoreApp.Unknown} />);
     expect(container.firstChild).toBeNull();
   });
