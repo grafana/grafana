@@ -22,10 +22,10 @@
   },
   "secure": {
     "extra": {
-      "name": "ds-6ed1b76e5d"
+      "name": "lds-sv-6ed1b76e5d"
     },
     "password": {
-      "name": "ds-edc8fde0ac"
+      "name": "lds-sv-edc8fde0ac"
     }
   }
 }

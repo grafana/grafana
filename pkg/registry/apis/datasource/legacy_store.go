@@ -150,7 +150,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 			// Attach any changes the the context so the DualWrite wrapper can apply
 			// the same changes in unified storage further down the request pipeline.
 			// See: https://github.com/grafana/grafana/blob/dual-write-inline-secure-values/pkg/storage/legacysql/dualwrite/dualwriter.go
-			dualwrite.SetUpdatedSecureValues(ctx, ds.Secure)
+			dualwrite.SetUpdatedSecureValues(ctx, secureChanges)
 			continue
 		}
 

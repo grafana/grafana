@@ -228,7 +228,11 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
 		EnableFolderSupport: false,
 
-		Scheme: opts.Scheme, // allows for generic Type applied to multiple groups
+		// Setting the schema explicitly will force the apistore to explicitly marshal with a matching Group+version
+		// This is required because we map the same go type (DataSourceConfig) across multiple api groups
+		// and the default k8s codec will pick the first one registered, regardless which group is set
+		// See: https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
+		Scheme: opts.Scheme,
 	})
 
 	storage := map[string]rest.Storage{}
