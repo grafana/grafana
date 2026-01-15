@@ -505,29 +505,38 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		})
 	}
 
-	// Configure
-	searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
-		{
-			Name:  resource.SEARCH_FIELD_TITLE,
-			Type:  resourcepb.QueryFieldType_KEYWORD,
-			Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
-		}, {
-			Name:  resource.SEARCH_FIELD_TITLE,
-			Type:  resourcepb.QueryFieldType_TEXT,
-			Boost: 2, // standard analyzer (with ngrams!)
-		}, {
-			Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
-			Type:  resourcepb.QueryFieldType_TEXT,
-			Boost: 5, // standard analyzer
-		},
-	}
+	if searchRequest.Query == "*" {
+		searchRequest.Query = "" // will match everything
+	} else if searchRequest.Query != "" {
+		// Explicitly configure the query for dashboard+folder matching.
+		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+			{
+				Name:  resource.SEARCH_FIELD_TITLE,
+				Type:  resourcepb.QueryFieldType_KEYWORD,
+				Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE,
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 2, // standard analyzer (with ngrams!)
+			},
+		}
 
-	if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
-		searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
-			Name:  resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE, // fields.panel_title
-			Type:  resourcepb.QueryFieldType_TEXT,
-			Boost: 5,
-		})
+		// Only include the phrase field when multiple terms exist
+		if strings.ContainsAny(searchRequest.Query, " ") {
+			searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
+				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 5, // standard analyzer
+			})
+		}
+
+		if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
+			searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
+				Name:  resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE, // fields.panel_title
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 5,
+			})
+		}
 	}
 
 	// The names filter

@@ -10,7 +10,7 @@
         "panel-tests",
         "graph-ng"
       ],
-      "score": 0.073,
+      "score": 0.107,
       "explain": {
         "children": [
           {
@@ -31,11 +31,11 @@
                           },
                           {
                             "message": "queryNorm",
-                            "value": 0.022
+                            "value": 0.024
                           }
                         ],
                         "message": "queryWeight(fields.panel_title:orange^5.000000), product of:",
-                        "value": 0.338
+                        "value": 0.372
                       },
                       {
                         "children": [
@@ -57,26 +57,26 @@
                       }
                     ],
                     "message": "weight(fields.panel_title:orange^5.000000 in \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001), product of:",
-                    "value": 0.293
+                    "value": 0.321
                   }
                 ],
                 "message": "sum of:",
-                "value": 0.293
+                "value": 0.321
               }
             ],
             "message": "sum of:",
-            "value": 0.293
+            "value": 0.321
           },
           {
-            "message": "coord(1/4)",
-            "value": 0.25
+            "message": "coord(1/3)",
+            "value": 0.333
           }
         ],
         "message": "product of:",
         "partial_match": true,
-        "value": 0.073
+        "value": 0.107
       }
     }
   ],
-  "maxScore": 0.073
+  "maxScore": 0.107
 }
