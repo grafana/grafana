@@ -79,7 +79,7 @@ annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
-dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,false
+dashboardNewLayouts,preview,@grafana/dashboards-squad,false,false,false
 dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
@@ -121,6 +121,7 @@ dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
 alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
+alertingNavigationV2,experimental,@grafana/alerting-squad,false,false,false
 alertingSavedSearches,experimental,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
@@ -217,6 +218,7 @@ kubernetesAuthZHandlerRedirect,experimental,@grafana/identity-access-team,false,
 kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
@@ -280,3 +282,4 @@ multiPropsVariables,experimental,@grafana/dashboards-squad,false,false,true
 smoothingTransformation,experimental,@grafana/datapro,false,false,true
 secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false
+alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false

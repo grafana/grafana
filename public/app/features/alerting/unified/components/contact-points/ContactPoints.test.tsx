@@ -13,6 +13,7 @@ import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { ContactPoint } from './ContactPoint';
@@ -305,7 +306,9 @@ describe('contact points', () => {
     });
 
     it('should disable buttons when provisioned', async () => {
-      const { user } = renderWithProvider(<ContactPoint contactPoint={{ ...basicContactPoint, provisioned: true }} />);
+      const { user } = renderWithProvider(
+        <ContactPoint contactPoint={{ ...basicContactPoint, provenance: KnownProvenance.File }} />
+      );
 
       expect(screen.getByText(/provisioned/i)).toBeInTheDocument();
 

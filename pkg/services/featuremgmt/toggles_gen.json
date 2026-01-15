@@ -350,6 +350,18 @@
     },
     {
       "metadata": {
+        "name": "alertingNavigationV2",
+        "resourceVersion": "1768320918269",
+        "creationTimestamp": "2026-01-13T16:15:18Z"
+      },
+      "spec": {
+        "description": "Enables the new Alerting navigation structure with improved menu grouping",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationHistory",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-17T13:26:26Z"
@@ -513,6 +525,20 @@
     },
     {
       "metadata": {
+        "name": "alertingSyncDispatchTimer",
+        "resourceVersion": "1766161788928",
+        "creationTimestamp": "2025-12-19T16:29:48Z"
+      },
+      "spec": {
+        "description": "Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingTriage",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-31T22:56:50Z",
@@ -662,7 +688,8 @@
       "metadata": {
         "name": "auditLoggingAppPlatform",
         "resourceVersion": "1767013056996",
-        "creationTimestamp": "2025-12-29T12:57:36Z"
+        "creationTimestamp": "2025-12-29T12:57:36Z",
+        "deletionTimestamp": "2026-01-06T09:18:36Z"
       },
       "spec": {
         "description": "Enable audit logging with Kubernetes under app platform",
@@ -1015,12 +1042,15 @@
     {
       "metadata": {
         "name": "dashboardNewLayouts",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-10-23T08:55:45Z"
+        "resourceVersion": "1768382835527",
+        "creationTimestamp": "2024-10-23T08:55:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-14 09:27:15.527103 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables experimental new dashboard layouts",
-        "stage": "experimental",
+        "description": "Enables new dashboard layouts",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad"
       }
     },
@@ -1989,6 +2019,19 @@
       },
       "spec": {
         "description": "Registers AuthZ Core Roles /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzGlobalRolesApi",
+        "resourceVersion": "1768463213468",
+        "creationTimestamp": "2026-01-15T07:46:53Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ Global Roles /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
