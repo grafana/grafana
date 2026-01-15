@@ -1073,6 +1073,14 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			}, nil
 		}
 
+		// TODO should make it clear that listing with field selectors utilizes search and only the current data is available
+		// Should we return an error when version match is specified?
+		if req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("version_match_v2 is not supported for list when using field selectors since it utilizes search"),
+			}, nil
+		}
+
 		srq := &resourcepb.ResourceSearchRequest{
 			Options: req.Options,
 			//Federated: nil,
