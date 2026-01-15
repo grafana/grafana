@@ -341,7 +341,7 @@ func TestCache_GetAlertInstances(t *testing.T) {
 		},
 		{
 			name:   "returns alert instances",
-			states: []*State{util.Pointer(randomSate(ruleKey)), util.Pointer(randomSate(ruleKey))},
+			states: []*State{util.Pointer(randomState(ruleKey)), util.Pointer(randomState(ruleKey))},
 		},
 	}
 
@@ -360,6 +360,10 @@ func TestCache_GetAlertInstances(t *testing.T) {
 			for _, state := range tc.states {
 				key, err := state.GetAlertInstanceKey()
 				require.NoError(t, err)
+				var lastError string
+				if state.Error != nil {
+					lastError = state.Error.Error()
+				}
 				expected = append(expected, models.AlertInstance{
 					AlertInstanceKey:   key,
 					Labels:             models.InstanceLabels(state.Labels),
@@ -374,6 +378,7 @@ func TestCache_GetAlertInstances(t *testing.T) {
 					LastSentAt:         state.LastSentAt,
 					ResultFingerprint:  state.ResultFingerprint.String(),
 					EvaluationDuration: state.EvaluationDuration,
+					LastError:          lastError,
 				})
 			}
 
@@ -382,7 +387,7 @@ func TestCache_GetAlertInstances(t *testing.T) {
 	}
 }
 
-func randomSate(ruleKey models.AlertRuleKey) State {
+func randomState(ruleKey models.AlertRuleKey) State {
 	return State{
 		OrgID:             ruleKey.OrgID,
 		AlertRuleUID:      ruleKey.UID,

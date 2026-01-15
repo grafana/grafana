@@ -172,4 +172,5 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddReceiverProtectedFieldsEditor(mg)
 
 	ualert.AddStateEvaluationDurationColumn(mg)
+	ualert.AddStateLastErrorColumn(mg)
 }
