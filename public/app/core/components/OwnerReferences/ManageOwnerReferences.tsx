@@ -9,7 +9,7 @@ import { useDispatch } from 'app/types/store';
 import { TeamOwnerReference } from './OwnerReference';
 import { SupportedResource, useAddOwnerReference, useGetOwnerReferences } from './hooks';
 
-const TeamSelector = ({ onChange }: { onChange: (ownerRef: OwnerReference) => void }) => {
+export const TeamSelector = ({ onChange }: { onChange: (ownerRef: OwnerReference) => void }) => {
   const { data: teams } = useListTeamQuery({});
   const teamsOptions = teams?.items.map((team) => ({
     label: team.spec.title,

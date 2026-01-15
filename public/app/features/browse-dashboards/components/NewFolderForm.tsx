@@ -2,9 +2,10 @@ import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Input, Field, Stack } from '@grafana/ui';
+import { Button, Input, Field, Stack, Checkbox, Text, Space } from '@grafana/ui';
 import { FolderDTO } from 'app/types/folders';
 
+import { TeamSelector } from '../../../core/components/OwnerReferences/ManageOwnerReferences';
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 
 interface Props {
@@ -25,6 +26,14 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
     register,
     formState: { errors, isSubmitting },
   } = useForm<FormModel>({ defaultValues: initialFormModel });
+
+  const handleTeamFolderToggle = () => {
+    console.log('Team folder toggle clicked');
+  };
+
+  const handleTeamSelectorChange = () => {
+    console.log('Team selector changed');
+  };
 
   const translatedFolderNameRequiredPhrase = t(
     'browse-dashboards.action.new-folder-name-required-phrase',
@@ -54,6 +63,16 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
           })}
         />
       </Field>
+      <Space v={2} />
+      <Checkbox
+        label={t('browse-dashboards.action.new-folder-as-team-folder-checkbox', 'Create as a team folder')}
+        onChange={handleTeamFolderToggle}
+      />
+      <Text element="p">
+        <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team:</Trans>
+      </Text>
+      <TeamSelector onChange={handleTeamSelectorChange} />
+      <Space v={2} />
       <Stack>
         <Button variant="secondary" fill="outline" onClick={onCancel}>
           <Trans i18nKey="browse-dashboards.new-folder-form.cancel-label">Cancel</Trans>
