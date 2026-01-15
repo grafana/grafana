@@ -252,6 +252,7 @@ const injectedRtkApi = api
             sort: queryArg.sort,
             limit: queryArg.limit,
             explain: queryArg.explain,
+            panelTitleSearch: queryArg.panelTitleSearch,
           },
         }),
         providesTags: ['Search'],
@@ -688,6 +689,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   limit?: number;
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
+  /** [experimental] optionally include matches from panel titles */
+  panelTitleSearch?: boolean;
 };
 export type GetSortableFieldsApiResponse = /** status 200 undefined */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

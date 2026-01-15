@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure logs kick start your query button",
       "body-switching-to-builder": "Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?",
-      "body-switching-to-kql": "Switching to KQL will discard your current builder settings. Are you sure?",
       "button-kick-start-your-query": "Kick start your query",
       "button-run-query": "Run query",
       "confirmText-switch-to": "Switch to {{newMode}}",

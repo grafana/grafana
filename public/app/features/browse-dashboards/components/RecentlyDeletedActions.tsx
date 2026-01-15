@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -16,6 +15,7 @@ import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { useActionSelectionState } from '../state/hooks';
 import { clearFolders, setAllSelection } from '../state/slice';
+import { getRestoreNotificationData } from '../utils/notifications';
 
 import { RestoreModal } from './RestoreModal';
 
@@ -26,82 +26,6 @@ export function RecentlyDeletedActions() {
   const [restoreDashboard] = useRestoreDashboardMutation();
   const [isBulkRestoreLoading, setIsBulkRestoreLoading] = useState(false);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
-
-  const showRestoreNotifications = (
-    successful: string[],
-    failed: Array<{ uid: string; error: string }>,
-    restoreTarget: string
-  ) => {
-    const successCount = successful.length;
-    const failedCount = failed.length;
-
-    if (successCount === 0 && failedCount === 0) {
-      return;
-    }
-
-    if (failedCount > 0) {
-      const firstError = failed[0]?.error;
-
-      if (successCount > 0) {
-        // Partial success - no link
-        const successMessage = t(
-          'browse-dashboards.restore.success-count',
-          '{{count}} dashboard restored successfully',
-          { count: successCount }
-        );
-        const failedMessage = t('browse-dashboards.restore.failed-count', '{{count}} dashboard failed', {
-          count: failedCount,
-        });
-        let message = `${successMessage}. ${failedMessage}.`;
-        if (firstError) {
-          message += `. ${firstError}`;
-        }
-        dispatch(notifyApp(createWarningNotification('', message)));
-      } else {
-        // All failed
-        let message = t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard.', {
-          count: failedCount,
-        });
-        if (firstError) {
-          message += `. ${firstError}`;
-        }
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: [message],
-        });
-      }
-    } else {
-      // All successful - show button
-      if (successCount === 1) {
-        // Single dashboard - button to the dashboard
-        const dashboardUid = successful[0];
-        const title = t('browse-dashboards.restore.success', 'Dashboard restored successfully');
-        const component = (
-          <>
-            {title}.{' '}
-            <Button size="sm" variant="primary" fill="text" onClick={() => locationService.push(`/d/${dashboardUid}`)}>
-              {t('browse-dashboards.restore.view-dashboard', 'View dashboard')}
-            </Button>
-          </>
-        );
-        dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
-      } else {
-        // Multiple dashboards - button to folder
-        const title = t('browse-dashboards.restore.success', 'Dashboards restored successfully');
-        const folderUrl =
-          !restoreTarget || restoreTarget === GENERAL_FOLDER_UID ? '/dashboards' : `/dashboards/f/${restoreTarget}`;
-        const component = (
-          <>
-            {title}.{' '}
-            <Button size="sm" variant="primary" fill="text" onClick={() => locationService.push(folderUrl)}>
-              {t('browse-dashboards.restore.view-folder', 'View folder')}
-            </Button>
-          </>
-        );
-        dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
-      }
-    }
-  };
 
   const selectedDashboards = useMemo(() => {
     return Object.entries(selectedItemsState.dashboard)
@@ -210,7 +134,13 @@ export function RecentlyDeletedActions() {
     deletedDashboardsCache.clear();
     await stateManager.doSearch();
 
-    showRestoreNotifications(successful, failed, restoreTarget);
+    const notificationData = getRestoreNotificationData(successful, failed, restoreTarget);
+    if (notificationData) {
+      appEvents.publish({
+        type: notificationData.alertType,
+        payload: [notificationData.message],
+      });
+    }
     setIsBulkRestoreLoading(false);
     setIsRestoreModalOpen(false);
   };

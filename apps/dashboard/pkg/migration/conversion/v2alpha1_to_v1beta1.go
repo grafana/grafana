@@ -71,11 +71,6 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert panels: %w", err)
 	}
-	// Count total panels including those in collapsed rows
-	totalPanelsConverted := countTotalPanels(panels)
-	if totalPanelsConverted < len(in.Elements) {
-		return nil, fmt.Errorf("some panels were not converted from v2alpha1 to v1beta1")
-	}
 
 	if len(panels) > 0 {
 		dashboard["panels"] = panels
@@ -196,29 +191,6 @@ func convertLinksToV1(links []dashv2alpha1.DashboardDashboardLink) []map[string]
 		result = append(result, linkMap)
 	}
 	return result
-}
-
-// countTotalPanels counts all panels including those nested in collapsed row panels.
-func countTotalPanels(panels []interface{}) int {
-	count := 0
-	for _, p := range panels {
-		panel, ok := p.(map[string]interface{})
-		if !ok {
-			count++
-			continue
-		}
-
-		// Check if this is a row panel with nested panels
-		if panelType, ok := panel["type"].(string); ok && panelType == "row" {
-			if nestedPanels, ok := panel["panels"].([]interface{}); ok {
-				count += len(nestedPanels)
-			}
-			// Don't count the row itself as a panel element
-		} else {
-			count++
-		}
-	}
-	return count
 }
 
 // convertPanelsFromElementsAndLayout converts V2 layout structures to V1 panel arrays.
@@ -465,6 +437,11 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 
 	if tab.Spec.Title != nil {
 		rowPanel["title"] = *tab.Spec.Title
+	}
+
+	if tab.Spec.Repeat != nil && tab.Spec.Repeat.Value != "" {
+		// We only use value here as V1 doesn't support mode
+		rowPanel["repeat"] = tab.Spec.Repeat.Value
 	}
 
 	rowPanel["gridPos"] = map[string]interface{}{
@@ -847,6 +824,21 @@ func convertAutoGridLayoutToPanelsWithOffset(elements map[string]dashv2alpha1.Da
 			},
 		}
 
+		// Convert AutoGridRepeatOptions to RepeatOptions if present
+		// AutoGridRepeatOptions only has mode and value; infer direction and maxPerRow from AutoGrid settings:
+		// - direction: always "h" (AutoGrid flows horizontally, left-to-right then wraps)
+		// - maxPerRow: from AutoGrid's maxColumnCount
+		if item.Spec.Repeat != nil {
+			directionH := dashv2alpha1.DashboardRepeatOptionsDirectionH
+			maxPerRow := int64(maxColumnCount)
+			gridItem.Spec.Repeat = &dashv2alpha1.DashboardRepeatOptions{
+				Mode:      item.Spec.Repeat.Mode,
+				Value:     item.Spec.Repeat.Value,
+				Direction: &directionH,
+				MaxPerRow: &maxPerRow,
+			}
+		}
+
 		panel, err := convertPanelFromElement(&element, &gridItem)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert panel %s: %w", item.Spec.Element.Name, err)
@@ -1089,6 +1081,17 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 			transformation := map[string]interface{}{
 				"id":      t.Spec.Id,
 				"options": t.Spec.Options,
+			}
+			// Add disabled if set
+			if t.Spec.Disabled != nil {
+				transformation["disabled"] = *t.Spec.Disabled
+			}
+			// Add filter if set
+			if t.Spec.Filter != nil {
+				transformation["filter"] = map[string]interface{}{
+					"id":      t.Spec.Filter.Id,
+					"options": t.Spec.Filter.Options,
+				}
 			}
 			transformations = append(transformations, transformation)
 		}
@@ -1985,8 +1988,17 @@ func convertFieldConfigDefaultsToV1(defaults *dashv2alpha1.DashboardFieldConfig)
 	if defaults.Writeable != nil {
 		result["writeable"] = *defaults.Writeable
 	}
+	if defaults.FieldMinMax != nil {
+		result["fieldMinMax"] = *defaults.FieldMinMax
+	}
+	if defaults.NullValueMode != nil {
+		result["nullValueMode"] = string(*defaults.NullValueMode)
+	}
 	if defaults.Links != nil {
 		result["links"] = defaults.Links
+	}
+	if len(defaults.Actions) > 0 {
+		result["actions"] = convertActionsToV1(defaults.Actions)
 	}
 	if defaults.Color != nil {
 		result["color"] = convertFieldColorToV1(defaults.Color)
@@ -2192,4 +2204,116 @@ func convertThresholdsToV1(thresholds *dashv2alpha1.DashboardThresholdsConfig) m
 	}
 
 	return thresholdsMap
+}
+
+func convertActionsToV1(actions []dashv2alpha1.DashboardAction) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(actions))
+
+	for _, action := range actions {
+		actionMap := map[string]interface{}{
+			"type":  string(action.Type),
+			"title": action.Title,
+		}
+
+		if action.Confirmation != nil {
+			actionMap["confirmation"] = *action.Confirmation
+		}
+
+		if action.OneClick != nil {
+			actionMap["oneClick"] = *action.OneClick
+		}
+
+		if action.Fetch != nil {
+			actionMap["fetch"] = convertFetchOptionsToV1(action.Fetch)
+		}
+
+		if action.Infinity != nil {
+			actionMap["infinity"] = convertInfinityOptionsToV1(action.Infinity)
+		}
+
+		if len(action.Variables) > 0 {
+			actionMap["variables"] = convertActionVariablesToV1(action.Variables)
+		}
+
+		if action.Style != nil {
+			styleMap := map[string]interface{}{}
+			if action.Style.BackgroundColor != nil {
+				styleMap["backgroundColor"] = *action.Style.BackgroundColor
+			}
+			if len(styleMap) > 0 {
+				actionMap["style"] = styleMap
+			}
+		}
+
+		result = append(result, actionMap)
+	}
+
+	return result
+}
+
+func convertFetchOptionsToV1(fetch *dashv2alpha1.DashboardFetchOptions) map[string]interface{} {
+	result := map[string]interface{}{
+		"method": string(fetch.Method),
+		"url":    fetch.Url,
+	}
+
+	if fetch.Body != nil {
+		result["body"] = *fetch.Body
+	}
+
+	if len(fetch.QueryParams) > 0 {
+		result["queryParams"] = convert2DStringArrayToInterface(fetch.QueryParams)
+	}
+
+	if len(fetch.Headers) > 0 {
+		result["headers"] = convert2DStringArrayToInterface(fetch.Headers)
+	}
+
+	return result
+}
+
+func convertInfinityOptionsToV1(infinity *dashv2alpha1.DashboardInfinityOptions) map[string]interface{} {
+	result := map[string]interface{}{
+		"method":        string(infinity.Method),
+		"url":           infinity.Url,
+		"datasourceUid": infinity.DatasourceUid,
+	}
+
+	if infinity.Body != nil {
+		result["body"] = *infinity.Body
+	}
+
+	if len(infinity.QueryParams) > 0 {
+		result["queryParams"] = convert2DStringArrayToInterface(infinity.QueryParams)
+	}
+
+	if len(infinity.Headers) > 0 {
+		result["headers"] = convert2DStringArrayToInterface(infinity.Headers)
+	}
+
+	return result
+}
+
+func convertActionVariablesToV1(variables []dashv2alpha1.DashboardActionVariable) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(variables))
+	for _, v := range variables {
+		result = append(result, map[string]interface{}{
+			"key":  v.Key,
+			"name": v.Name,
+			"type": v.Type,
+		})
+	}
+	return result
+}
+
+func convert2DStringArrayToInterface(arr [][]string) []interface{} {
+	result := make([]interface{}, 0, len(arr))
+	for _, innerArr := range arr {
+		interfaceArr := make([]interface{}, 0, len(innerArr))
+		for _, s := range innerArr {
+			interfaceArr = append(interfaceArr, s)
+		}
+		result = append(result, interfaceArr)
+	}
+	return result
 }

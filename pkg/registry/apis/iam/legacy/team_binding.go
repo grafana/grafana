@@ -17,6 +17,8 @@ import (
 type ListTeamBindingsQuery struct {
 	UID        string
 	OrgID      int64
+	TeamUID    string
+	UserUID    string
 	Pagination common.Pagination
 }
 
