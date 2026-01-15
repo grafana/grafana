@@ -81,7 +81,7 @@ func (p *CoreProvider) GetMeta(ctx context.Context, pluginID, _ string) (*Result
 
 	if !p.initialized {
 		if err := p.loadPlugins(ctx); err != nil {
-			logging.DefaultLogger.Warn("CoreProvider: could not load core plugins, will return ErrMetaNotFound for all lookups", "error", err)
+			logging.FromContext(ctx).Warn("CoreProvider: could not load core plugins, will return ErrMetaNotFound for all lookups", "error", err)
 			// Mark as initialized even on failure so we don't keep trying
 			p.initialized = true
 			return nil, ErrMetaNotFound
@@ -105,15 +105,19 @@ func (p *CoreProvider) GetMeta(ctx context.Context, pluginID, _ string) (*Result
 // to allow other providers to handle the request.
 func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 	var staticRootPath string
-	if wd, err := os.Getwd(); err == nil {
-		// Check if we're in the Grafana root
-		publicPath := filepath.Join(wd, "public", "app", "plugins")
-		if _, err = os.Stat(publicPath); err == nil {
-			staticRootPath = filepath.Join(wd, "public")
-		}
+	wd, err := os.Getwd()
+	if err != nil {
+		logging.FromContext(ctx).Warn("CoreProvider: could not determine current working directory", "error", err)
+		return errors.New("could not find Grafana static root path from current working directory")
+	}
+	// Check if we're in the Grafana root
+	publicPath := filepath.Join(wd, "public", "app", "plugins")
+	if _, err = os.Stat(publicPath); err == nil {
+		staticRootPath = filepath.Join(wd, "public")
 	}
 
 	if staticRootPath == "" {
+		logging.FromContext(ctx).Warn("CoreProvider: could not determine current working directory", "wd", wd, "error", err)
 		return errors.New("could not find Grafana static root path")
 	}
 
@@ -127,7 +131,7 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 	}
 
 	if len(loadedPlugins) == 0 {
-		logging.DefaultLogger.Warn("CoreProvider: no core plugins found during loading")
+		logging.FromContext(ctx).Warn("CoreProvider: no core plugins found during loading")
 		return nil
 	}
 
