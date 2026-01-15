@@ -14489,9 +14489,6 @@
         }
       }
     },
-    "CookieType": {
-      "type": "string"
-    },
     "Correlation": {
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
@@ -19350,15 +19347,6 @@
             "type": "string"
           }
         }
-      }
-    },
-    "PreferencesCookiePreferences": {
-      "description": "+k8s:openapi-gen=true",
-      "type": "object",
-      "properties": {
-        "analytics": {},
-        "functional": {},
-        "performance": {}
       }
     },
     "PreferencesNavbarPreference": {

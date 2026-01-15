@@ -4020,9 +4020,6 @@
         },
         "type": "object"
       },
-      "CookieType": {
-        "type": "string"
-      },
       "Correlation": {
         "description": "Correlation is the model for correlations definitions",
         "properties": {
@@ -8880,15 +8877,6 @@
             },
             "type": "object"
           }
-        },
-        "type": "object"
-      },
-      "PreferencesCookiePreferences": {
-        "description": "+k8s:openapi-gen=true",
-        "properties": {
-          "analytics": {},
-          "functional": {},
-          "performance": {}
         },
         "type": "object"
       },
