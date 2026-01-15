@@ -433,9 +433,11 @@ const FlameGraphCallTreeContainer = memo(
     const BASELINE_WIDTH = 100;
     const COMPARISON_WIDTH = 100;
     const DIFF_WIDTH = 100;
-    // Minimum width for function column before switching to compact mode
-    // Set high enough to ensure function names are readable
-    const FUNCTION_MIN_WIDTH = 550;
+    // Threshold for function column width before switching to compact mode
+    // Set high enough to ensure function names are readable in non-compact mode
+    const FUNCTION_COMPACT_THRESHOLD = 550;
+    // Actual minimum width for function column (used in column definition)
+    const FUNCTION_MIN_WIDTH = 100;
 
     // Calculate if compact mode is needed based on available width and column requirements
     // This dynamically detects when columns would overflow
@@ -446,7 +448,7 @@ const FlameGraphCallTreeContainer = memo(
       }
 
       // Calculate minimum width needed for non-compact mode
-      // We need at least FUNCTION_MIN_WIDTH for the function column to be readable
+      // We need at least FUNCTION_COMPACT_THRESHOLD for the function column to be readable
       let fixedColumnsWidth: number;
 
       if (data.isDiffFlamegraph()) {
@@ -457,7 +459,7 @@ const FlameGraphCallTreeContainer = memo(
         fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
       }
 
-      const minNonCompactWidth = fixedColumnsWidth + FUNCTION_MIN_WIDTH;
+      const minNonCompactWidth = fixedColumnsWidth + FUNCTION_COMPACT_THRESHOLD;
 
       return availableWidth > 0 && availableWidth < minNonCompactWidth;
     }, [compactProp, availableWidth, data, ACTIONS_WIDTH]);
