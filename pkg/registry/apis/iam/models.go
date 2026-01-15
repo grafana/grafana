@@ -57,6 +57,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	ssoLegacyStore              *sso.LegacyStore
 	coreRolesStorage            CoreRoleStorageBackend
 	roleApiInstaller            RoleApiInstaller
+	globalRoleApiInstaller      GlobalRoleApiInstaller
 	resourcePermissionsStorage  resource.StorageBackend
 	roleBindingsStorage         RoleBindingStorageBackend
 	externalGroupMappingStorage ExternalGroupMappingStorageBackend

@@ -9,12 +9,12 @@ import (
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -34,8 +34,7 @@ type AppInstaller struct {
 func ProvideAppInstaller(
 	cfgProvider configprovider.ConfigProvider,
 	restConfigProvider apiserver.RestConfigProvider,
-	pluginStore pluginstore.Store,
-	pluginAssetsService *pluginassets.Service,
+	pluginStore pluginstore.Store, moduleHashCalc *modulehash.Calculator,
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
 	features featuremgmt.FeatureToggles,
 ) (*AppInstaller, error) {
@@ -46,7 +45,7 @@ func ProvideAppInstaller(
 		}
 	}
 
-	localProvider := meta.NewLocalProvider(pluginStore, pluginAssetsService)
+	localProvider := meta.NewLocalProvider(pluginStore, moduleHashCalc)
 	metaProviderManager := meta.NewProviderManager(localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
 	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager)

@@ -1,10 +1,14 @@
 {
+  "kind": "ReceiverList",
   "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "metadata": {},
   "items": [
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
+        "namespace": "default",
+        "uid": "zyXFk301pvwNz4HRPrTMKPMFO2934cPB7H1ZXmyM1TUX",
+        "resourceVersion": "a82b34036bdabbc4",
         "annotations": {
           "grafana.com/access/canAdmin": "true",
           "grafana.com/access/canDelete": "true",
@@ -15,53 +19,29 @@
           "grafana.com/inUse/routes": "1",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "none"
-        },
-        "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
-        "namespace": "default",
-        "resourceVersion": "a82b34036bdabbc4",
-        "uid": "zyXFk301pvwNz4HRPrTMKPMFO2934cPB7H1ZXmyM1TUX"
+        }
       },
       "spec": {
+        "title": "grafana-default-email",
         "integrations": [
           {
+            "uid": "",
+            "type": "email",
+            "version": "v1",
             "disableResolveMessage": false,
             "settings": {
               "addresses": "\u003cexample@email.com\u003e"
-            },
-            "type": "email",
-            "uid": "",
-            "version": "v1"
+            }
           }
-        ],
-        "title": "grafana-default-email"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
-        "annotations": {
-          "grafana.com/access/canModifyProtected": "true",
-          "grafana.com/access/canReadSecrets": "true",
-          "grafana.com/canUse": "false",
-          "grafana.com/inUse/routes": "0",
-          "grafana.com/inUse/rules": "0",
-          "grafana.com/provenance": "converted_prometheus"
-        },
         "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWlsdGVzdC1jcmVhdGUtZ2V0LWNvbmZpZw",
         "namespace": "default",
+        "uid": "JzW6DIlcxj4sRN8A2ULcwTXAmm0Vs0Z68aEBqXSvxK0X",
         "resourceVersion": "b2823b50ffa1eff6",
-        "uid": "JzW6DIlcxj4sRN8A2ULcwTXAmm0Vs0Z68aEBqXSvxK0X"
-      },
-      "spec": {
-        "integrations": [],
-        "title": "grafana-default-emailtest-create-get-config"
-      }
-    },
-    {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
-      "metadata": {
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -69,19 +49,36 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "ZGlzY29yZA",
-        "namespace": "default",
-        "resourceVersion": "06e437697f62ac59",
-        "uid": "8cH8Ql2S6VhPEVUhwlQEKYWyPbRJS7YKj2lEXdrehH8X"
+        }
       },
       "spec": {
+        "title": "grafana-default-emailtest-create-get-config",
+        "integrations": []
+      }
+    },
+    {
+      "metadata": {
+        "name": "ZGlzY29yZA",
+        "namespace": "default",
+        "uid": "8cH8Ql2S6VhPEVUhwlQEKYWyPbRJS7YKj2lEXdrehH8X",
+        "resourceVersion": "06e437697f62ac59",
+        "annotations": {
+          "grafana.com/access/canModifyProtected": "true",
+          "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/canUse": "false",
+          "grafana.com/inUse/routes": "0",
+          "grafana.com/inUse/rules": "0",
+          "grafana.com/provenance": "converted_prometheus"
+        }
+      },
+      "spec": {
+        "title": "discord",
         "integrations": [
           {
+            "uid": "",
+            "type": "discord",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "webhook_url": true
-            },
             "settings": {
               "http_config": {
                 "enable_http2": true,
@@ -95,18 +92,19 @@
               "send_resolved": true,
               "title": "{{ template \"discord.default.title\" . }}"
             },
-            "type": "discord",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "webhook_url": true
+            }
           }
-        ],
-        "title": "discord"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "ZW1haWw",
+        "namespace": "default",
+        "uid": "bhlvlN758xmnwVrHVPX0c5XvFHepenUbOXP0fuE6eUMX",
+        "resourceVersion": "9b3ffed277cee189",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -114,19 +112,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "ZW1haWw",
-        "namespace": "default",
-        "resourceVersion": "9b3ffed277cee189",
-        "uid": "bhlvlN758xmnwVrHVPX0c5XvFHepenUbOXP0fuE6eUMX"
+        }
       },
       "spec": {
+        "title": "email",
         "integrations": [
           {
+            "uid": "",
+            "type": "email",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "auth_password": true
-            },
             "settings": {
               "auth_username": "alertmanager",
               "from": "alertmanager@example.com",
@@ -144,18 +139,19 @@
               },
               "to": "team@example.com"
             },
-            "type": "email",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "auth_password": true
+            }
           }
-        ],
-        "title": "email"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "amlyYQ",
+        "namespace": "default",
+        "uid": "7Pu4xcRXbvw4XEX279SoqyO8Ibo8cMl0vAJyYTsJ0NEX",
+        "resourceVersion": "deae9d34f8554205",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -163,19 +159,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "amlyYQ",
-        "namespace": "default",
-        "resourceVersion": "deae9d34f8554205",
-        "uid": "7Pu4xcRXbvw4XEX279SoqyO8Ibo8cMl0vAJyYTsJ0NEX"
+        }
       },
       "spec": {
+        "title": "jira",
         "integrations": [
           {
+            "uid": "",
+            "type": "jira",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "http_config.basic_auth.password": true
-            },
             "settings": {
               "api_url": "http://localhost/jira",
               "custom_fields": {
@@ -203,18 +196,19 @@
               "send_resolved": true,
               "summary": "{{ template \"jira.default.summary\" . }}"
             },
-            "type": "jira",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "http_config.basic_auth.password": true
+            }
           }
-        ],
-        "title": "jira"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "bXN0ZWFtcw",
+        "namespace": "default",
+        "uid": "z7xTMDjrk1HAHXPEx78tQb63LXYA6ivXLOtz2Z09ucIX",
+        "resourceVersion": "95c8d082d65466a3",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -222,19 +216,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "bXN0ZWFtcw",
-        "namespace": "default",
-        "resourceVersion": "95c8d082d65466a3",
-        "uid": "z7xTMDjrk1HAHXPEx78tQb63LXYA6ivXLOtz2Z09ucIX"
+        }
       },
       "spec": {
+        "title": "msteams",
         "integrations": [
           {
+            "uid": "",
+            "type": "teams",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "webhook_url": true
-            },
             "settings": {
               "http_config": {
                 "enable_http2": true,
@@ -249,18 +240,19 @@
               "text": "{{ template \"msteams.default.text\" . }}",
               "title": "{{ template \"msteams.default.title\" . }}"
             },
-            "type": "teams",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "webhook_url": true
+            }
           }
-        ],
-        "title": "msteams"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "b3BzZ2VuaWU",
+        "namespace": "default",
+        "uid": "XmkZ214Dj030hvynYiwNLq8i6uRCjUYXMXjE5m19OKAX",
+        "resourceVersion": "8ee2957ba150ba16",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -268,19 +260,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "b3BzZ2VuaWU",
-        "namespace": "default",
-        "resourceVersion": "8ee2957ba150ba16",
-        "uid": "XmkZ214Dj030hvynYiwNLq8i6uRCjUYXMXjE5m19OKAX"
+        }
       },
       "spec": {
+        "title": "opsgenie",
         "integrations": [
           {
+            "uid": "",
+            "type": "opsgenie",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "api_key": true
-            },
             "settings": {
               "actions": "test actions",
               "api_url": "http://localhost/opsgenie/",
@@ -311,18 +300,19 @@
               "tags": "test-tags",
               "update_alerts": true
             },
-            "type": "opsgenie",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "api_key": true
+            }
           }
-        ],
-        "title": "opsgenie"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "cGFnZXJkdXR5",
+        "namespace": "default",
+        "uid": "QNitkUCkwzrIc7WVCCJGGDyvXLyo9csSUVqfyStyctQX",
+        "resourceVersion": "fe673d5dcd67ccf0",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -330,20 +320,16 @@
           "grafana.com/inUse/routes": "1",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "cGFnZXJkdXR5",
-        "namespace": "default",
-        "resourceVersion": "fe673d5dcd67ccf0",
-        "uid": "QNitkUCkwzrIc7WVCCJGGDyvXLyo9csSUVqfyStyctQX"
+        }
       },
       "spec": {
+        "title": "pagerduty",
         "integrations": [
           {
+            "uid": "",
+            "type": "pagerduty",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "routing_key": true,
-              "service_key": true
-            },
             "settings": {
               "class": "test class",
               "client": "Alertmanager",
@@ -383,18 +369,20 @@
               "source": "test source",
               "url": "http://localhost/pagerduty"
             },
-            "type": "pagerduty",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "routing_key": true,
+              "service_key": true
+            }
           }
-        ],
-        "title": "pagerduty"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "cHVzaG92ZXI",
+        "namespace": "default",
+        "uid": "t2TJSktI6vyGfdbLOKmxH4eBqgcIGsAuW8Qm9m0HRycX",
+        "resourceVersion": "6ae076725ab463e0",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -402,21 +390,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "cHVzaG92ZXI",
-        "namespace": "default",
-        "resourceVersion": "6ae076725ab463e0",
-        "uid": "t2TJSktI6vyGfdbLOKmxH4eBqgcIGsAuW8Qm9m0HRycX"
+        }
       },
       "spec": {
+        "title": "pushover",
         "integrations": [
           {
+            "uid": "",
+            "type": "pushover",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "http_config.authorization.credentials": true,
-              "token": true,
-              "user_key": true
-            },
             "settings": {
               "expire": "1h0m0s",
               "http_config": {
@@ -437,18 +420,21 @@
               "title": "{{ template \"pushover.default.title\" . }}",
               "url": "http://localhost/pushover"
             },
-            "type": "pushover",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "http_config.authorization.credentials": true,
+              "token": true,
+              "user_key": true
+            }
           }
-        ],
-        "title": "pushover"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "c2xhY2s",
+        "namespace": "default",
+        "uid": "xSB0hnoc9j1CnLCHR3VgeVGXdVXILM0p2dM64bbHN9oX",
+        "resourceVersion": "ec0e343029ff5d8b",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -456,19 +442,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "c2xhY2s",
-        "namespace": "default",
-        "resourceVersion": "ec0e343029ff5d8b",
-        "uid": "xSB0hnoc9j1CnLCHR3VgeVGXdVXILM0p2dM64bbHN9oX"
+        }
       },
       "spec": {
+        "title": "slack",
         "integrations": [
           {
+            "uid": "",
+            "type": "slack",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "api_url": true
-            },
             "settings": {
               "actions": [
                 {
@@ -522,18 +505,19 @@
               "title_link": "http://localhost",
               "username": "Alerting Team"
             },
-            "type": "slack",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "api_url": true
+            }
           }
-        ],
-        "title": "slack"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "c25z",
+        "namespace": "default",
+        "uid": "vSP8NtFr23hnqZqLxRgzUKfr1wOemOvZm1S6MYkfRI4X",
+        "resourceVersion": "77d734ad4c196d36",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -541,19 +525,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "c25z",
-        "namespace": "default",
-        "resourceVersion": "77d734ad4c196d36",
-        "uid": "vSP8NtFr23hnqZqLxRgzUKfr1wOemOvZm1S6MYkfRI4X"
+        }
       },
       "spec": {
+        "title": "sns",
         "integrations": [
           {
+            "uid": "",
+            "type": "sns",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "sigv4.SecretKey": true
-            },
             "settings": {
               "attributes": {
                 "key1": "value1"
@@ -577,18 +558,19 @@
               "subject": "{{ template \"sns.default.subject\" . }}",
               "topic_arn": "arn:aws:sns:us-east-1:123456789012:alerts"
             },
-            "type": "sns",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "sigv4.SecretKey": true
+            }
           }
-        ],
-        "title": "sns"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "dGVsZWdyYW0",
+        "namespace": "default",
+        "uid": "XLWjtmYcjP5PiqBCwZXX3YKHV1G8niRtpCakIpcHqoYX",
+        "resourceVersion": "d9850878a33e302e",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -596,19 +578,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "dGVsZWdyYW0",
-        "namespace": "default",
-        "resourceVersion": "d9850878a33e302e",
-        "uid": "XLWjtmYcjP5PiqBCwZXX3YKHV1G8niRtpCakIpcHqoYX"
+        }
       },
       "spec": {
+        "title": "telegram",
         "integrations": [
           {
+            "uid": "",
+            "type": "telegram",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "token": true
-            },
             "settings": {
               "api_url": "http://localhost/telegram-default",
               "chat": -1001234567890,
@@ -624,18 +603,19 @@
               "parse_mode": "MarkdownV2",
               "send_resolved": true
             },
-            "type": "telegram",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "token": true
+            }
           }
-        ],
-        "title": "telegram"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "dmljdG9yb3Bz",
+        "namespace": "default",
+        "uid": "EWiwQ6TIW0GpEo46WusW7Nvg0HuD4QAbHf0JZ2OSOhEX",
+        "resourceVersion": "1e6886531440afc2",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -643,19 +623,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "dmljdG9yb3Bz",
-        "namespace": "default",
-        "resourceVersion": "1e6886531440afc2",
-        "uid": "EWiwQ6TIW0GpEo46WusW7Nvg0HuD4QAbHf0JZ2OSOhEX"
+        }
       },
       "spec": {
+        "title": "victorops",
         "integrations": [
           {
+            "uid": "",
+            "type": "victorops",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "api_key": true
-            },
             "settings": {
               "api_url": "http://localhost/victorops-default/",
               "entity_display_name": "{{ template \"victorops.default.entity_display_name\" . }}",
@@ -674,18 +651,19 @@
               "send_resolved": true,
               "state_message": "{{ template \"victorops.default.state_message\" . }}"
             },
-            "type": "victorops",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "api_key": true
+            }
           }
-        ],
-        "title": "victorops"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "d2ViZXg",
+        "namespace": "default",
+        "uid": "wDNufI44UXHWq4ERRYenZ7XgXVV3Tjxaokz9IjMRZ54X",
+        "resourceVersion": "08fc955a08dfe9c0",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -693,19 +671,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "d2ViZXg",
-        "namespace": "default",
-        "resourceVersion": "08fc955a08dfe9c0",
-        "uid": "wDNufI44UXHWq4ERRYenZ7XgXVV3Tjxaokz9IjMRZ54X"
+        }
       },
       "spec": {
+        "title": "webex",
         "integrations": [
           {
+            "uid": "",
+            "type": "webex",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "http_config.authorization.credentials": true
-            },
             "settings": {
               "api_url": "http://localhost/webes-default",
               "http_config": {
@@ -723,18 +698,19 @@
               "room_id": "Y2lzY29zcGFyazovL3VzL1JPT00v12345678",
               "send_resolved": true
             },
-            "type": "webex",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "http_config.authorization.credentials": true
+            }
           }
-        ],
-        "title": "webex"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "d2ViaG9vaw",
+        "namespace": "default",
+        "uid": "aKzigXATPp6HOh20yTrlTcuF2Y9IrPHridGIcWrJygsX",
+        "resourceVersion": "494392f899a7b410",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -742,19 +718,16 @@
           "grafana.com/inUse/routes": "1",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "d2ViaG9vaw",
-        "namespace": "default",
-        "resourceVersion": "494392f899a7b410",
-        "uid": "aKzigXATPp6HOh20yTrlTcuF2Y9IrPHridGIcWrJygsX"
+        }
       },
       "spec": {
+        "title": "webhook",
         "integrations": [
           {
+            "uid": "",
+            "type": "webhook",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "url": true
-            },
             "settings": {
               "http_config": {
                 "enable_http2": true,
@@ -769,18 +742,19 @@
               "timeout": "0s",
               "url_file": ""
             },
-            "type": "webhook",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "url": true
+            }
           }
-        ],
-        "title": "webhook"
+        ]
       }
     },
     {
-      "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
-      "kind": "Receiver",
       "metadata": {
+        "name": "d2VjaGF0",
+        "namespace": "default",
+        "uid": "jkXCvNrNVw7XX5nmYFyrGiA4ckAvJ282u2scW8KZq7IX",
+        "resourceVersion": "135913515cbc156b",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -788,19 +762,16 @@
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
           "grafana.com/provenance": "converted_prometheus"
-        },
-        "name": "d2VjaGF0",
-        "namespace": "default",
-        "resourceVersion": "135913515cbc156b",
-        "uid": "jkXCvNrNVw7XX5nmYFyrGiA4ckAvJ282u2scW8KZq7IX"
+        }
       },
       "spec": {
+        "title": "wechat",
         "integrations": [
           {
+            "uid": "",
+            "type": "wechat",
+            "version": "v0mimir1",
             "disableResolveMessage": false,
-            "secureFields": {
-              "api_secret": true
-            },
             "settings": {
               "agent_id": "1000002",
               "api_url": "http://localhost/wechat/",
@@ -820,15 +791,12 @@
               "to_tag": "tag1",
               "to_user": "user1"
             },
-            "type": "wechat",
-            "uid": "",
-            "version": "v0mimir1"
+            "secureFields": {
+              "api_secret": true
+            }
           }
-        ],
-        "title": "wechat"
+        ]
       }
     }
-  ],
-  "kind": "ReceiverList",
-  "metadata": {}
+  ]
 }

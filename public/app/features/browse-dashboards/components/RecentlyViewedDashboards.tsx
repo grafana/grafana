@@ -5,12 +5,12 @@ import { useAsyncRetry } from 'react-use';
 import { GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, CollapsableSection, Spinner, Stack, Text, useStyles2, Grid } from '@grafana/ui';
+import { Button, CollapsableSection, Grid, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
-import { getRecentlyViewedDashboards } from './utils';
+import { getRecentlyViewedDashboards } from '../api/recentlyViewed';
 
 const MAX_RECENT = 5;
 
