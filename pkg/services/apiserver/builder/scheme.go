@@ -5,11 +5,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-
-	"k8s.io/apimachinery/pkg/runtime/serializer/cbor"
+	/* "k8s.io/apimachinery/pkg/runtime/serializer/cbor"
 	"k8s.io/apiserver/pkg/features"
-	utilfeature "k8s.io/apiserver/pkg/util/feature"
-)
+	utilfeature "k8s.io/apiserver/pkg/util/feature" */)
 
 func ProvideScheme() *runtime.Scheme {
 	unversionedVersion := schema.GroupVersion{Group: "", Version: "v1"}
@@ -37,7 +35,7 @@ func ProvideScheme() *runtime.Scheme {
 func ProvideCodecFactory(scheme *runtime.Scheme) serializer.CodecFactory {
 	codecs := serializer.NewCodecFactory(scheme)
 
-	opts := []serializer.CodecFactoryOptionsMutator{}
+	/* opts := []serializer.CodecFactoryOptionsMutator{}
 	if utilfeature.DefaultFeatureGate.Enabled(features.CBORServingAndStorage) {
 		opts = append(opts, serializer.WithSerializer(cbor.NewSerializerInfo))
 	}
@@ -49,6 +47,6 @@ func ProvideCodecFactory(scheme *runtime.Scheme) serializer.CodecFactory {
 	}
 	if len(opts) != 0 {
 		codecs = serializer.NewCodecFactory(scheme, opts...)
-	}
+	} */
 	return codecs
 }
