@@ -318,7 +318,7 @@ export function getTestDashboardSceneFromSaveModel(spec?: Partial<DashboardV2Spe
   return dashboard;
 }
 
-// returns e.g. data-testid Layout container row Row title 
+// returns e.g. data-testid Layout container row Row title
 export function getTestIdForLayout(model: AutoGridLayout | DashboardLayoutGrid) {
   const parentRowOrTab = getRowOrTabForSceneObject(model);
   const parentType = parentRowOrTab instanceof TabItem ? 'tab' : parentRowOrTab instanceof RowItem ? 'row' : '';

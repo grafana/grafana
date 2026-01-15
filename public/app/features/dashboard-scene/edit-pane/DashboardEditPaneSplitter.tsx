@@ -29,7 +29,13 @@ interface Props {
   isNewEmptyDashboard?: boolean;
 }
 
-export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls, isNewEmptyDashboard = false }: Props) {
+export function DashboardEditPaneSplitter({
+  dashboard,
+  isEditing,
+  body,
+  controls,
+  isNewEmptyDashboard = false,
+}: Props) {
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);

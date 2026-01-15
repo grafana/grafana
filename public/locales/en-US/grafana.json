@@ -4538,6 +4538,13 @@
     "actions": {
       "open-settings": "Settings"
     },
+    "add": {
+      "new-panel": {
+        "description": "Drag or click to add a panel",
+        "title": "Panel"
+      },
+      "pane-header": "Add"
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Close 'Add Panel' widget",
       "tooltip-close-widget": "Close widget"
@@ -4918,12 +4925,14 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "description": "Add a panel to visualize your data",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
       "show-less-dashboards": "Show less",
       "show-more-dashboards": "Show more",
       "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
+      "title": "New dashboard",
       "use-template-button": "Use this dashboard"
     },
     "errors": {
@@ -5216,13 +5225,6 @@
       "title-matched_one": "Matched {{count}}/{{totalCount}} options",
       "title-matched_other": "Matched {{count}}/{{totalCount}} options"
     },
-    "add": {
-      "pane-header": "Add",
-      "new-panel": {
-        "title": "Panel",
-        "description": "Drag or click to add a panel"
-      }
-    },
     "outline": {
       "pane-header": "Content outline",
       "repeated-item": "Repeat",
@@ -5436,13 +5438,13 @@
       "loading-configuration": "Loading configuration"
     },
     "sidebar": {
+      "add": {
+        "title": "Add",
+        "tooltip": "Add new element"
+      },
       "dashboard-options": {
         "title": "Options",
         "tooltip": "Dashboard options"
-      },
-      "add": {
-        "title": "Add",
-        "tooltip": "Add a new element"
       },
       "edit-schema": {
         "title": "Code",
