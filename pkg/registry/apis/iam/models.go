@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -98,4 +99,6 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Toggle for enabling authz management apis
 	features featuremgmt.FeatureToggles
+
+	tracing *tracing.TracingService
 }
