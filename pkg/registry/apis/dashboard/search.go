@@ -518,16 +518,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 				Name:  resource.SEARCH_FIELD_TITLE,
 				Type:  resourcepb.QueryFieldType_TEXT,
 				Boost: 2, // standard analyzer (with ngrams!)
-			},
-		}
-
-		// Only include the phrase field when multiple terms exist
-		if strings.ContainsAny(searchRequest.Query, " ") {
-			searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
+			}, {
 				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
 				Type:  resourcepb.QueryFieldType_TEXT,
 				Boost: 5, // standard analyzer
-			})
+			},
 		}
 
 		if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
