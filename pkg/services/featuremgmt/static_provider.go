@@ -38,13 +38,7 @@ func newStaticProvider(confFlags map[string]memprovider.InMemoryFlag, standardFl
 
 	// Parse and add standard flags
 	for _, flag := range standardFlags {
-		// Backwards support for Standard Flags with no Expressions
-		expression := flag.Expression
-		if flag.Expression == "" {
-			expression = "false"
-		}
-
-		inMemFlag, err := setting.ParseFlag(flag.Name, expression)
+		inMemFlag, err := setting.ParseFlag(flag.Name, flag.Expression)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse flag %s: %w", flag.Name, err)
 		}

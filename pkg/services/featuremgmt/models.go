@@ -136,8 +136,8 @@ type FeatureFlag struct {
 	// Expression defined by the feature_toggles configuration.
 	// Supports multiple types including boolean, string, integer, float,
 	// and structured values following the OpenFeature specification.
-	// Using the values "t", "T", "true", "TRUE", "True" means the feature flag is enabled by default,
-	// Using the values "", "f", "F", "FALSE", "false", "False" means the feature flag is disabled by default,
+	// Using the value "true" means the feature flag is enabled by default,
+	// Using the value "true" means the feature flag is enabled by default,
 	// Using the value "1.0" means the default value of the feature flag is 1.0
 	Expression string `json:"expression,omitempty"`
 
