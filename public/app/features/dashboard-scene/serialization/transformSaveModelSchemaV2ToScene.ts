@@ -65,6 +65,7 @@ import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { livePanelAutoRefreshBehavior } from '../behaviors/LivePanelAutoRefreshBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -206,6 +207,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
+      connectLiveToAutoRefresh: true,
       id: dashboardId,
       isDirty: false,
       links: dashboard.links,
@@ -239,6 +241,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
         }),
+        livePanelAutoRefreshBehavior,
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
       ],
       $data: new DashboardDataLayerSet({
