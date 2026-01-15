@@ -780,7 +780,7 @@ func TestSnowflakeFromTime(t *testing.T) {
 	assert.Equal(t, expectedMillis, resultMillis, "Snowflake timestamp should match original time at millisecond precision")
 }
 
-func TestListKeysSince_WithSnowflakeTime(t *testing.T) {
+func TestIntegrationListKeysSince_WithSnowflakeTime(t *testing.T) {
 	runEventStoreTestWith(t, "badger", setupTestEventStore, testListKeysSinceWithSnowflakeTime)
 	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testListKeysSinceWithSnowflakeTime)
 }
