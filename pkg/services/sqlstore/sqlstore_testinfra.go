@@ -195,7 +195,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 			tb.Fatalf("failed to truncate DB tables after migrations: %v", err)
 			panic("unreachable")
 		}
-		testSQLStore.engine.ResetSequenceGenerator()
+		store.engine.ResetSequenceGenerator()
 	}
 
 	return store
@@ -226,6 +226,7 @@ func newTestCfg(
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	sec, err := cfg.Raw.NewSection("database")

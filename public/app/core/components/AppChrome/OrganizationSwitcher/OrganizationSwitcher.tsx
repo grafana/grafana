@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Space, Text } from '@grafana/ui';
+import { Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -33,12 +33,7 @@ export function OrganizationSwitcher() {
   }, [dispatch]);
 
   if (orgs?.length <= 1) {
-    return (
-      <>
-        <Space h={1} />
-        <Text truncate>{Branding.AppTitle}</Text>
-      </>
-    );
+    return <Text truncate>{Branding.AppTitle}</Text>;
   }
 
   return <OrganizationSelect orgs={orgs} onSelectChange={onSelectChange} />;

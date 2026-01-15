@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
@@ -14,6 +13,7 @@ import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { useActionSelectionState } from '../state/hooks';
 import { clearFolders, setAllSelection } from '../state/slice';
+import { getRestoreNotificationData } from '../utils/notifications';
 
 import { RestoreModal } from './RestoreModal';
 
@@ -24,53 +24,6 @@ export function RecentlyDeletedActions() {
   const [restoreDashboard] = useRestoreDashboardMutation();
   const [isBulkRestoreLoading, setIsBulkRestoreLoading] = useState(false);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
-
-  const showRestoreNotifications = (successful: string[], failed: Array<{ uid: string; error: string }>) => {
-    const successCount = successful.length;
-    const failedCount = failed.length;
-
-    if (successCount === 0 && failedCount === 0) {
-      return;
-    }
-
-    let alertType = AppEvents.alertSuccess.name;
-    let message = t('browse-dashboards.restore.success', 'Dashboards restored successfully');
-
-    if (failedCount > 0) {
-      const firstError = failed[0]?.error;
-
-      if (successCount > 0) {
-        // Partial success
-        alertType = AppEvents.alertWarning.name;
-        const successMessage = t(
-          'browse-dashboards.restore.success-count',
-          '{{count}} dashboard restored successfully',
-          { count: successCount }
-        );
-        const failedMessage = t('browse-dashboards.restore.failed-count', '{{count}} dashboard failed', {
-          count: failedCount,
-        });
-        message = `${successMessage}. ${failedMessage}.`;
-        if (firstError) {
-          message += `. ${firstError}`;
-        }
-      } else {
-        // All failed
-        alertType = AppEvents.alertError.name;
-        message = t('browse-dashboards.restore.all-failed', 'Failed to restore {{count}} dashboard.', {
-          count: failedCount,
-        });
-        if (firstError) {
-          message += `. ${firstError}`;
-        }
-      }
-    }
-
-    appEvents.publish({
-      type: alertType,
-      payload: [message],
-    });
-  };
 
   const selectedDashboards = useMemo(() => {
     return Object.entries(selectedItemsState.dashboard)
@@ -96,13 +49,6 @@ export function RecentlyDeletedActions() {
     }
     return origins;
   }, [selectedDashboards, searchState.result]);
-
-  const onActionComplete = () => {
-    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
-
-    deletedDashboardsCache.clear();
-    stateManager.doSearchWithDebounce();
-  };
 
   const getErrorMessage = (error: unknown) => {
     if (error instanceof Error) {
@@ -168,9 +114,6 @@ export function RecentlyDeletedActions() {
       }
     });
 
-    // Show consolidated notification
-    showRestoreNotifications(successful, failed);
-
     const parentUIDs = new Set<string | undefined>();
     for (const uid of selectedDashboards) {
       const foundItem = resultsView.find((v) => v.uid === uid);
@@ -183,8 +126,18 @@ export function RecentlyDeletedActions() {
       parentUIDs.add(folderUID);
     }
     dispatch(clearFolders(Array.from(parentUIDs)));
+    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-    onActionComplete();
+    deletedDashboardsCache.clear();
+    await stateManager.doSearch();
+
+    const notificationData = getRestoreNotificationData(successful, failed);
+    if (notificationData) {
+      appEvents.publish({
+        type: notificationData.alertType,
+        payload: [notificationData.message],
+      });
+    }
     setIsBulkRestoreLoading(false);
     setIsRestoreModalOpen(false);
   };

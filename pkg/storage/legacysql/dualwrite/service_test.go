@@ -17,7 +17,7 @@ import (
 func TestService(t *testing.T) {
 	t.Run("dynamic", func(t *testing.T) {
 		ctx := context.Background()
-		mode, err := ProvideService(featuremgmt.WithFeatures(), kvstore.NewFakeKVStore(), nil)
+		mode, err := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagProvisioning), kvstore.NewFakeKVStore(), NewFakeConfig(), NewFakeMigrator())
 		require.NoError(t, err)
 
 		gr := schema.GroupResource{Group: "ggg", Resource: "rrr"}
@@ -122,7 +122,7 @@ func TestService(t *testing.T) {
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				ctx := context.Background()
-				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg)
+				svc, err := ProvideService(tc.flags, kvstore.NewFakeKVStore(), &tc.cfg, NewFakeMigrator())
 				if tc.error != "" {
 					require.ErrorContains(t, err, tc.error)
 					require.Nil(t, svc, "expect a nil service when an error exts")

@@ -8,6 +8,7 @@ import (
 
 	clientauthmiddleware "github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -17,6 +18,48 @@ const (
 	featuresProviderAudience = "features.grafana.app"
 )
 
+// OpenFeatureConfig holds configuration for initializing OpenFeature
+type OpenFeatureConfig struct {
+	// ProviderType is either "static", "features-service", or "ofrep"
+	ProviderType string
+	// URL is the remote provider's URL (required for features-service + OFREP providers)
+	URL *url.URL
+	// HTTPClient is a pre-configured HTTP client (optional, used by features-service + OFREP providers)
+	HTTPClient *http.Client
+	// StaticFlags are the feature flags to use with static provider
+	StaticFlags map[string]memprovider.InMemoryFlag
+	// TargetingKey is used for evaluation context
+	TargetingKey string
+	// ContextAttrs are additional attributes for evaluation context
+	ContextAttrs map[string]any
+}
+
+// InitOpenFeature initializes OpenFeature with the provided configuration
+func InitOpenFeature(config OpenFeatureConfig) error {
+	// For remote providers, ensure we have a URL
+	if (config.ProviderType == setting.FeaturesServiceProviderType || config.ProviderType == setting.OFREPProviderType) && (config.URL == nil || config.URL.String() == "") {
+		return fmt.Errorf("URL is required for remote providers")
+	}
+
+	p, err := createProvider(config.ProviderType, config.URL, config.StaticFlags, config.HTTPClient)
+	if err != nil {
+		return err
+	}
+
+	if err = openfeature.SetProviderAndWait(p); err != nil {
+		return fmt.Errorf("failed to set global feature provider: %s, %w", config.ProviderType, err)
+	}
+
+	contextAttrs := make(map[string]any)
+	for k, v := range config.ContextAttrs {
+		contextAttrs[k] = v
+	}
+	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(config.TargetingKey, contextAttrs))
+
+	return nil
+}
+
+// InitOpenFeatureWithCfg initializes OpenFeature from setting.Cfg
 func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
@@ -24,77 +67,72 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	}
 
 	var httpcli *http.Client
-	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
-		m, err := clientauthmiddleware.NewTokenExchangeMiddleware(cfg)
-		if err != nil {
-			return fmt.Errorf("failed to create token exchange middleware: %w", err)
+	if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType || cfg.OpenFeature.ProviderType == setting.OFREPProviderType {
+		var m *clientauthmiddleware.TokenExchangeMiddleware
+
+		if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType {
+			m, err = clientauthmiddleware.NewTokenExchangeMiddleware(cfg)
+			if err != nil {
+				return fmt.Errorf("failed to create token exchange middleware: %w", err)
+			}
 		}
 
-		httpcli, err = goffHTTPClient(m)
+		httpcli, err = createHTTPClient(m)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = initOpenFeature(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags, httpcli)
-	if err != nil {
-		return fmt.Errorf("failed to initialize OpenFeature: %w", err)
-	}
 	contextAttrs := make(map[string]any)
 	for k, v := range cfg.OpenFeature.ContextAttrs {
 		contextAttrs[k] = v
 	}
-	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, contextAttrs))
 
-	return nil
-}
-
-func initOpenFeature(
-	providerType string,
-	u *url.URL,
-	staticFlags map[string]bool,
-	httpClient *http.Client,
-) error {
-	p, err := createProvider(providerType, u, staticFlags, httpClient)
-	if err != nil {
-		return err
-	}
-
-	if err := openfeature.SetProviderAndWait(p); err != nil {
-		return fmt.Errorf("failed to set global feature provider: %s, %w", providerType, err)
-	}
-
-	return nil
+	return InitOpenFeature(OpenFeatureConfig{
+		ProviderType: cfg.OpenFeature.ProviderType,
+		URL:          cfg.OpenFeature.URL,
+		HTTPClient:   httpcli,
+		StaticFlags:  confFlags,
+		TargetingKey: cfg.OpenFeature.TargetingKey,
+		ContextAttrs: contextAttrs,
+	})
 }
 
 func createProvider(
 	providerType string,
 	u *url.URL,
-	staticFlags map[string]bool,
+	staticFlags map[string]memprovider.InMemoryFlag,
 	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
-	if providerType != setting.GOFFProviderType {
-		return newStaticProvider(staticFlags)
+	if providerType == setting.FeaturesServiceProviderType || providerType == setting.OFREPProviderType {
+		if u == nil || u.String() == "" {
+			return nil, fmt.Errorf("feature provider url is required for FeaturesServiceProviderType + OFREPProviderType")
+		}
+
+		if providerType == setting.FeaturesServiceProviderType {
+			return newFeaturesServiceProvider(u.String(), httpClient)
+		}
+
+		if providerType == setting.OFREPProviderType {
+			return newOFREPProvider(u.String(), httpClient)
+		}
 	}
 
-	if u.String() == "" {
-		return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
-	}
-
-	return newGOFFProvider(u.String(), httpClient)
+	return newStaticProvider(staticFlags, standardFeatureFlags)
 }
 
-func goffHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {
-	httpcli, err := sdkhttpclient.NewProvider().New(sdkhttpclient.Options{
+func createHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {
+	options := sdkhttpclient.Options{
 		TLS: &sdkhttpclient.TLSOptions{InsecureSkipVerify: true},
 		Timeouts: &sdkhttpclient.TimeoutOptions{
 			Timeout: 10 * time.Second,
 		},
-		Middlewares: []sdkhttpclient.Middleware{
-			m.New([]string{featuresProviderAudience}),
-		},
-	})
+	}
+	if m != nil {
+		options.Middlewares = append(options.Middlewares, m.New([]string{featuresProviderAudience}))
+	}
 
+	httpcli, err := sdkhttpclient.NewProvider().New(options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create http client for openfeature: %w", err)
 	}

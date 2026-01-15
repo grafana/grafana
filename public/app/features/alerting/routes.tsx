@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom-v5-compat';
 
+import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -335,7 +335,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
 
   if (cfg.featureToggles.alertingTriage) {
     routes.push({
-      path: '/alerting/triage',
+      path: '/alerting/alerts',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingTriage" */ 'app/features/alerting/unified/triage/Triage')

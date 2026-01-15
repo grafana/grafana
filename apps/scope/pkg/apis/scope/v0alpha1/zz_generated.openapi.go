@@ -635,6 +635,34 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"subScope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Used to navigate to a sub-scope of the main scope. URL will not be used if this is set.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"preLoadSubScopeChildren": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Preload the subscope children, as soon as the ScopeNavigation is loaded.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"expandOnLoad": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Expands to display the subscope children when the ScopeNavigation is loaded.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"disableSubScopeSelection": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Makes the subscope not selectable, only serving as a way to build the tree.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"url", "scope"},
 			},
@@ -838,6 +866,13 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 							Format:  "",
 						},
 					},
+					"subTitle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Displays next to the title to provide more context.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -862,6 +897,13 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 					"linkId": {
 						SchemaProps: spec.SchemaProps{
 							Description: "scope (later more things)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"redirectPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Redirect to a specific path when this node is selected.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

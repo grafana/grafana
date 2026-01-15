@@ -15,22 +15,30 @@ import {
   DataFrame,
   ScopedVars,
   dateTime,
-  getDefaultTimeRange,
 } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { getFieldSelectorWidth } from '../fieldSelector/FieldSelector';
 import { createLogLine } from '../mocks/logRow';
 
+import { emptyContextData, LogDetailsContext, LogDetailsContextData } from './LogDetailsContext';
 import { LogLineDetails, Props } from './LogLineDetails';
 import { LogListContext, LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 
+jest.mock('../fieldSelector/FieldSelector');
+
+jest.mocked(getFieldSelectorWidth).mockReturnValue(220);
+
 jest.mock('@grafana/assistant', () => {
   return {
     ...jest.requireActual('@grafana/assistant'),
-    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+    useAssistant: jest.fn().mockReturnValue({
+      isAvailable: true,
+      openAssistant: jest.fn(),
+    }),
   };
 });
 
@@ -57,7 +65,8 @@ afterAll(() => {
 const setup = (
   propOverrides?: Partial<Props>,
   rowOverrides?: Partial<LogRowModel>,
-  contextOverrides?: Partial<LogListContextData>
+  logListcontextOverrides?: Partial<LogListContextData>,
+  logDetailsContextOverrides?: Partial<LogDetailsContextData>
 ) => {
   const logs = [createLogLine({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides })];
 
@@ -75,18 +84,28 @@ const setup = (
     },
     timeZone: 'browser',
     showControls: true,
+    showFieldSelector: true,
     ...(propOverrides || {}),
   };
 
   const contextData: LogListContextData = {
     ...defaultValue,
+    ...logListcontextOverrides,
+  };
+
+  const detailsData: LogDetailsContextData = {
+    ...emptyContextData,
+    enableLogDetails: true,
     showDetails: logs,
-    ...contextOverrides,
+    currentLog: logs[0],
+    ...logDetailsContextOverrides,
   };
 
   return render(
     <LogListContext.Provider value={contextData}>
-      <LogLineDetails {...props} />
+      <LogDetailsContext.Provider value={detailsData}>
+        <LogLineDetails {...props} />
+      </LogDetailsContext.Provider>
     </LogListContext.Provider>
   );
 };
@@ -172,7 +191,10 @@ describe('LogLineDetails', () => {
             onClickFilterLabel: onClickFilterLabelMock,
             onClickFilterOutLabel: onClickFilterOutLabelMock,
             isLabelFilterActive: isLabelFilterActiveMock,
+          },
+          {
             showDetails: [log],
+            currentLog: log,
           }
         );
 
@@ -275,7 +297,7 @@ describe('LogLineDetails', () => {
       }
     );
 
-    setup({ logs: [log] }, undefined, { showDetails: [log] });
+    setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Fields')).toBeInTheDocument();
     expect(screen.getByText('Links')).toBeInTheDocument();
@@ -344,7 +366,7 @@ describe('LogLineDetails', () => {
       }
     );
 
-    setup({ logs: [log] }, undefined, { showDetails: [log] });
+    setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Log line')).toBeInTheDocument();
     expect(screen.getByText('Fields')).toBeInTheDocument();
@@ -596,7 +618,7 @@ describe('LogLineDetails', () => {
         createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
         createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
       ];
-      setup({ logs }, undefined, { showDetails: logs });
+      setup({ logs }, undefined, undefined, { showDetails: logs, currentLog: logs[1] });
 
       expect(screen.queryAllByRole('tab')).toHaveLength(2);
 
@@ -604,70 +626,6 @@ describe('LogLineDetails', () => {
 
       expect(screen.getAllByText('First log')).toHaveLength(1);
       expect(screen.getAllByText('Second log')).toHaveLength(2);
-
-      await userEvent.click(screen.queryAllByRole('tab')[0]);
-
-      expect(screen.getAllByText('First log')).toHaveLength(2);
-      expect(screen.getAllByText('Second log')).toHaveLength(1);
-    });
-
-    test('Changes details focus when logs are added and removed', async () => {
-      const logs = [
-        createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
-        createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
-      ];
-
-      const props: Props = {
-        containerElement: document.createElement('div'),
-        focusLogLine: jest.fn(),
-        logs: [logs[0]],
-        timeRange: getDefaultTimeRange(),
-        timeZone: 'browser',
-        showControls: true,
-      };
-
-      const contextData: LogListContextData = {
-        ...defaultValue,
-        showDetails: [logs[0]],
-      };
-
-      const { rerender } = render(
-        <LogListContext.Provider value={contextData}>
-          <LogLineDetails {...props} />
-        </LogListContext.Provider>
-      );
-
-      expect(screen.queryAllByRole('tab')).toHaveLength(0);
-
-      await userEvent.click(screen.getByText('Log line'));
-      // Tab not displayed, only line body
-      expect(screen.getAllByText('First log')).toHaveLength(1);
-
-      contextData.showDetails = logs;
-      props.logs = logs;
-
-      rerender(
-        <LogListContext.Provider value={contextData}>
-          <LogLineDetails {...props} />
-        </LogListContext.Provider>
-      );
-
-      expect(screen.queryAllByRole('tab')).toHaveLength(2);
-      // Tab and log line body
-      expect(screen.getAllByText('Second log')).toHaveLength(2);
-
-      contextData.showDetails = [logs[1]];
-      props.logs = [logs[1]];
-
-      rerender(
-        <LogListContext.Provider value={contextData}>
-          <LogLineDetails {...props} />
-        </LogListContext.Provider>
-      );
-
-      expect(screen.queryAllByRole('tab')).toHaveLength(0);
-      // Tab not displayed, only line body
-      expect(screen.getAllByText('Second log')).toHaveLength(1);
     });
   });
 
@@ -730,7 +688,7 @@ describe('LogLineDetails', () => {
       })
     );
 
-    setup({ logs: [log] }, undefined, { showDetails: [log] });
+    setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Links')).toBeInTheDocument();
     expect(screen.getByText('Trace')).toBeInTheDocument();
@@ -792,7 +750,7 @@ describe('LogLineDetails', () => {
       })
     );
 
-    setup({ logs: [log] }, undefined, { showDetails: [log] });
+    setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Links')).toBeInTheDocument();
     expect(screen.getByText('Trace')).toBeInTheDocument();
@@ -822,5 +780,25 @@ describe('LogLineDetails', () => {
     expect(screen.getByText('label')).toBeInTheDocument();
     expect(screen.getByText('value')).toBeInTheDocument();
     expect(screen.getByText('Open service overview for label')).toBeInTheDocument();
+  });
+
+  describe('Width regressions', () => {
+    test('should consider Fields Selector width when enabled', () => {
+      jest.mocked(getFieldSelectorWidth).mockClear();
+
+      setup({ showFieldSelector: true }, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+      expect(screen.getByText('Fields')).toBeInTheDocument();
+      expect(getFieldSelectorWidth).toHaveBeenCalled();
+    });
+
+    test('should not consider Fields Selector width when disabled', () => {
+      jest.mocked(getFieldSelectorWidth).mockClear();
+
+      setup({ showFieldSelector: false }, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+      expect(screen.getByText('Fields')).toBeInTheDocument();
+      expect(getFieldSelectorWidth).not.toHaveBeenCalled();
+    });
   });
 });

@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { t, Trans } from '@grafana/i18n';
+import { config, reportInteraction } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import {
   Stack,
@@ -21,6 +21,8 @@ import {
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { CatalogPlugin } from '../types';
+
+import { PluginInsights } from './PluginInsights';
 
 type Props = { pluginExtentionsInfo: PageInfoItem[]; plugin: CatalogPlugin; width?: string };
 
@@ -69,6 +71,11 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   return (
     <>
       <Stack direction="column" gap={3} shrink={0} grow={0} width={width} data-testid="plugin-details-panel">
+        {config.featureToggles.pluginInsights && plugin.insights && plugin.insights?.insights?.length > 0 && (
+          <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
+            <PluginInsights pluginInsights={plugin.insights} />
+          </Box>
+        )}
         <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column" gap={2}>
             {pluginExtentionsInfo.map((infoItem, index) => {
@@ -242,7 +249,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
       </Stack>
       {reportAbuseModalOpen && (
         <Modal
-          title={<Trans i18nKey="plugins.details.modal.title">Report a plugin concern</Trans>}
+          title={t('plugins.details.modal.title', 'Report a plugin concern')}
           isOpen
           onDismiss={() => setReportAbuseModalOpen(false)}
         >

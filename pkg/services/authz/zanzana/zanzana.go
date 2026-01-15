@@ -1,12 +1,6 @@
 package zanzana
 
 import (
-	"fmt"
-	"strings"
-
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -21,6 +15,9 @@ const (
 	TypeResource       = common.TypeResource
 	TypeNamespace      = common.TypeGroupResouce
 )
+
+// TokenPermissionUpdate is required for callers to perform write operations against Zanzana (Mutate/Write).
+const TokenPermissionUpdate = "zanzana:update" //nolint:gosec // G101: permission identifier, not a credential.
 
 const (
 	RelationTeamMember = common.RelationTeamMember
@@ -48,14 +45,22 @@ const (
 )
 
 var (
-	RelationsFolder      = common.RelationsTyped
-	RelationsResouce     = common.RelationsResource
+	// RelationsFolder is used by reconciliation to list tuples for folder objects.
+	// It must include both verb relations (get/update/delete/...) and the permission-set relations (view/edit/admin)
+	RelationsFolder = append(append([]string{}, common.RelationsTyped...),
+		common.RelationSetView, common.RelationSetEdit, common.RelationSetAdmin,
+	)
+	// RelationsResouce is used by reconciliation to list tuples for resource objects.
+	// Include permission-set relations for the same reason as RelationsFolder.
+	RelationsResouce = append(append([]string{}, common.RelationsResource...),
+		common.RelationSetView, common.RelationSetEdit, common.RelationSetAdmin,
+	)
 	RelationsSubresource = common.RelationsSubresource
 )
 
 const (
-	KindDashboards string = "dashboards"
-	KindFolders    string = "folders"
+	KindDashboards = common.KindDashboards
+	KindFolders    = common.KindFolders
 )
 
 var (
@@ -68,128 +73,15 @@ var (
 	ToOpenFGATuples                   = common.ToOpenFGATuples
 	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
 	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
+
+	NewTupleEntry             = common.NewTupleEntry
+	NewObjectEntry            = common.NewObjectEntry
+	TranslateToResourceTuple  = common.TranslateToResourceTuple
+	IsFolderResourceTuple     = common.IsFolderResourceTuple
+	MergeFolderResourceTuples = common.MergeFolderResourceTuples
+
+	TranslateToCheckRequest  = common.TranslateToCheckRequest
+	TranslateToListRequest   = common.TranslateToListRequest
+	TranslateToGroupResource = common.TranslateToGroupResource
+	TranslateBasicRole       = common.TranslateBasicRole
 )
-
-// NewTupleEntry constructs new openfga entry type:name[#relation].
-// Relation allows to specify group of users (subjects) related to type:name
-// (for example, team:devs#member refers to users which are members of team devs)
-func NewTupleEntry(objectType, name, relation string) string {
-	obj := fmt.Sprintf("%s:%s", objectType, name)
-	if relation != "" {
-		obj = fmt.Sprintf("%s#%s", obj, relation)
-	}
-	return obj
-}
-
-func NewObjectEntry(objectType, group, resource, subresource, name string) string {
-	if objectType == TypeFolder {
-		return TypeFolder + ":" + name
-	}
-
-	obj := fmt.Sprintf("%s:%s/%s", objectType, group, resource)
-	if subresource != "" {
-		obj = fmt.Sprintf("%s/%s", obj, subresource)
-	}
-	if name != "" {
-		obj = fmt.Sprintf("%s/%s", obj, name)
-	}
-	return obj
-}
-
-func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
-	translation, ok := resourceTranslations[kind]
-
-	if !ok {
-		return nil, false
-	}
-
-	m, ok := translation.mapping[action]
-	if !ok {
-		return nil, false
-	}
-
-	if name == "*" {
-		return common.NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
-	}
-
-	if translation.typ == TypeResource {
-		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name), true
-	}
-
-	if translation.typ == TypeFolder {
-		if m.group != "" && m.resource != "" {
-			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name), true
-		}
-
-		return common.NewFolderTuple(subject, m.relation, name), true
-	}
-
-	return common.NewTypedTuple(translation.typ, subject, m.relation, name), true
-}
-
-func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {
-	return strings.HasPrefix(t.Object, TypeFolder) && strings.HasPrefix(t.Relation, "resource_")
-}
-
-func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
-	va := a.Condition.Context.Fields["subresources"]
-	vb := b.Condition.Context.Fields["subresources"]
-	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
-}
-
-func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.CheckRequest, bool) {
-	translation, ok := resourceTranslations[kind]
-
-	if !ok {
-		return nil, false
-	}
-
-	m, ok := translation.mapping[action]
-	if !ok {
-		return nil, false
-	}
-
-	verb, ok := common.RelationToVerbMapping[m.relation]
-	if !ok {
-		return nil, false
-	}
-
-	req := &authlib.CheckRequest{
-		Namespace: namespace,
-		Verb:      verb,
-		Group:     translation.group,
-		Resource:  translation.resource,
-		Name:      name,
-	}
-
-	return req, true
-}
-
-func TranslateToListRequest(namespace, action, kind string) (*authlib.ListRequest, bool) {
-	translation, ok := resourceTranslations[kind]
-
-	if !ok {
-		return nil, false
-	}
-
-	// FIXME: support different verbs
-	req := &authlib.ListRequest{
-		Namespace: namespace,
-		Group:     translation.group,
-		Resource:  translation.resource,
-	}
-
-	return req, true
-}
-
-func TranslateToGroupResource(kind string) string {
-	translation, ok := resourceTranslations[kind]
-	if !ok {
-		return ""
-	}
-	return common.FormatGroupResource(translation.group, translation.resource, "")
-}
-
-func TranslateBasicRole(name string) string {
-	return basicRolesTranslations[name]
-}

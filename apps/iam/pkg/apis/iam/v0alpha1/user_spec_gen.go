@@ -9,7 +9,7 @@ type UserSpec struct {
 	EmailVerified bool   `json:"emailVerified"`
 	GrafanaAdmin  bool   `json:"grafanaAdmin"`
 	Login         string `json:"login"`
-	Name          string `json:"name"`
+	Title         string `json:"title"`
 	Provisioned   bool   `json:"provisioned"`
 	Role          string `json:"role"`
 }

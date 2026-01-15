@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -83,6 +83,7 @@ export function useSaveDashboard(isCopy = false) {
           trackDashboardSceneCreatedOrSaved(!!options.isNew, scene, {
             name: saveModel.title || '',
             url: resultData.url || '',
+            expression_types: scene.getExpressionTypes(saveModel),
           });
         }
 

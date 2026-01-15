@@ -4,7 +4,7 @@ import { OrgRole } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
 import { RepoType } from '../Wizard/types';
@@ -34,9 +34,10 @@ export const useGetResourceRepositoryView = ({
   const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
 
   const provisioningEnabled = config.featureToggles.provisioning;
-  const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(
-    !provisioningEnabled || skipQuery || hasNoRole ? skipToken : undefined
-  );
+  const shouldSkipSettings = !provisioningEnabled || skipQuery || hasNoRole || (!name && !folderName);
+  const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
+
+  const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(settingsQueryArg);
 
   const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery || hasNoRole;
   const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(

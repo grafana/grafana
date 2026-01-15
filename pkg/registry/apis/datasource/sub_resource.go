@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -46,7 +47,21 @@ func (r *subResourceREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, ""
 }
 
+// FIXME: this endpoint has not been tested yet, so it is not enabled by default.
+// It is especially important to make sure the `ClearAuthHeadersMiddleware` is active,
+// when using this endpoint.
+var resourceEnabled = false
+
 func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	if !resourceEnabled {
+		return nil, &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status: metav1.StatusFailure,
+				Code:   http.StatusNotImplemented,
+			},
+		}
+	}
+
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		return nil, err

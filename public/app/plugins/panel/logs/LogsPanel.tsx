@@ -149,6 +149,7 @@ export const LogsPanel = ({
   fieldConfig,
   options: {
     showControls,
+    showFieldSelector,
     controlsStorageKey,
     showLabels,
     showTime,
@@ -463,7 +464,7 @@ export const LogsPanel = ({
 
   const loadMoreLogs = useCallback(
     async (scrollRange: AbsoluteTimeRange) => {
-      if (!data.request || !config.featureToggles.logsInfiniteScrolling || loadingRef.current) {
+      if (!data.request || loadingRef.current) {
         return;
       }
 
@@ -562,6 +563,7 @@ export const LogsPanel = ({
           getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
           getLogRowContextUi={getLogRowContextUi}
           logOptionsStorageKey={controlsStorageKey}
+          logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
           timeZone={timeZone}
           displayedFields={displayedFields}
           onClickShowField={showField}
@@ -573,12 +575,15 @@ export const LogsPanel = ({
           onMouseLeave={onLogContainerMouseLeave}
           className={style.logListContainer}
           style={height ? { minHeight: height } : undefined}
-          ref={(element: HTMLDivElement) => setScrollElement(element)}
+          ref={(element: HTMLDivElement) => {
+            setScrollElement(element);
+          }}
         >
           {deduplicatedRows.length > 0 && scrollElement && (
             <LogList
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
+              dataFrames={panelData.series}
               dedupStrategy={dedupStrategy}
               detailsMode={detailsMode}
               displayedFields={displayedFields}
@@ -615,6 +620,7 @@ export const LogsPanel = ({
               prettifyJSON={prettifyLogMessage}
               setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
+              showFieldSelector={showFieldSelector}
               showLogAttributes={showLogAttributes}
               showTime={showTime}
               showUniqueLabels={showLabels}
@@ -630,7 +636,11 @@ export const LogsPanel = ({
         </div>
       )}
       {!config.featureToggles.newLogsPanel && !showControls && (
-        <ScrollContainer ref={(scrollElement) => setScrollElement(scrollElement)}>
+        <ScrollContainer
+          ref={(scrollElement) => {
+            setScrollElement(scrollElement);
+          }}
+        >
           <div onMouseLeave={onLogContainerMouseLeave} className={style.container} ref={logsContainerRef}>
             {showCommonLabels && !isAscending && renderCommonLabels()}
             <InfiniteScroll
@@ -692,7 +702,9 @@ export const LogsPanel = ({
         <div onMouseLeave={onLogContainerMouseLeave} className={style.controlledLogsContainer}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <ControlledLogRows
-            ref={(scrollElement: HTMLDivElement | null) => setScrollElement(scrollElement)}
+            ref={(scrollElement: HTMLDivElement | null) => {
+              setScrollElement(scrollElement);
+            }}
             visualisationType="logs"
             loading={infiniteScrolling}
             loadMoreLogs={enableInfiniteScrolling ? loadMoreLogs : undefined}

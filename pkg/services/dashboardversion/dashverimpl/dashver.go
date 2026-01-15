@@ -129,7 +129,7 @@ func (s *Service) List(
 		query.DashboardUID = u
 	}
 
-	if query.Limit == 0 {
+	if query.Limit <= 0 {
 		query.Limit = 1000
 	}
 
@@ -169,9 +169,9 @@ func (s *Service) RestoreVersion(ctx context.Context, cmd *dashver.RestoreVersio
 		}
 		cmd.DashboardUID = u
 	}
-
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) ||
-		s.features.IsEnabledGlobally(featuremgmt.FlagDashboardNewLayouts) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesDashboards) ||
+		s.features.IsEnabled(ctx, featuremgmt.FlagDashboardNewLayouts) {
 		s.log.Debug("restoring dashboard version through k8s")
 		res, err := s.restoreVersionThroughK8s(ctx, cmd)
 		if err != nil {
@@ -273,6 +273,11 @@ func (s *Service) listDashboardVersionsThroughK8s(
 		out.Items = append(out.Items, tempOut.Items...)
 		continueToken = tempOut.GetContinue()
 	}
+
+	// Update the continue token on the response to reflect the actual position after all fetched items.
+	// Without this, the response would return the token from the first fetch, causing duplicate items
+	// on subsequent pages when multiple fetches were needed to fill the requested limit.
+	out.SetContinue(continueToken)
 
 	return out, nil
 }

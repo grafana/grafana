@@ -81,6 +81,26 @@ func K8sDataplaneserviceName(val string) attribute.KeyValue {
 	return k8sDataplaneserviceNameKey.String(val)
 }
 
+// Describes Grafana app platform namespace attributes.
+const (
+	// GrafanaNamespaceNameKey is the attribute Key conforming to the
+	// "grafana.namespace.name" semantic conventions. It represents the
+	// namespace name.
+	//
+	// Type: string
+	// RequirementLevel: Optional
+	// Stability: stable
+	// Examples: 'stacks-99999'
+	grafanaNamespaceNameKey = attribute.Key("grafana.namespace.name")
+)
+
+// GrafanaNamespaceName returns an attribute KeyValue conforming to the
+// "grafana.namespace.name" semantic conventions. It represents the namespace
+// name.
+func GrafanaNamespaceName(val string) attribute.KeyValue {
+	return grafanaNamespaceNameKey.String(val)
+}
+
 // Describes Grafana plugin attributes.
 const (
 	// GrafanaPluginIdKey is the attribute Key conforming to the
@@ -119,6 +139,27 @@ var (
 func GrafanaPluginId(val string) attribute.KeyValue {
 	return grafanaPluginIdKey.String(val)
 }
+
+// Describes Grafana plugin source attributes.
+const (
+	// GrafanaPluginSourceClassKey is the attribute Key conforming to the
+	// "grafana.plugin.source.class" semantic conventions. It represents the
+	// plugin source class.
+	//
+	// Type: Enum
+	// RequirementLevel: Optional
+	// Stability: stable
+	grafanaPluginSourceClassKey = attribute.Key("grafana.plugin.source.class")
+)
+
+var (
+	// Core Plugin
+	GrafanaPluginSourceClassCore = grafanaPluginSourceClassKey.String("core")
+	// External Plugin
+	GrafanaPluginSourceClassExternal = grafanaPluginSourceClassKey.String("external")
+	// Unknown Plugin Source
+	GrafanaPluginSourceClassUnknown = grafanaPluginSourceClassKey.String("unknown")
+)
 
 // Describes Grafana service attributes.
 const (

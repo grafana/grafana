@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store, TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -18,6 +18,7 @@ import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
 import { useLogListContext } from './LogListContext';
+import { reportInteractionOnce } from './analytics';
 import { getTempoTraceFromLinks } from './links';
 import { LogListModel } from './processing';
 
@@ -124,6 +125,21 @@ export const LogLineDetailsComponent = memo(
       [fieldsWithLinks.links, fieldsWithLinks.linksFromVariableMap]
     );
 
+    useEffect(() => {
+      if (noInteractions) {
+        return;
+      }
+      reportInteractionOnce('logs_log_line_details_fields_displayed', {
+        links: allLinks.length,
+        trace: trace !== undefined,
+        fields: fieldsWithoutLinks.length,
+        labels: labelsWithLinks.length,
+        labelGroups: labelGroups.join(', '),
+      });
+      // Once
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     return (
       <>
         <LogLineDetailsHeader focusLogLine={focusLogLine} log={log} search={search} onSearch={handleSearch} />
@@ -131,7 +147,6 @@ export const LogLineDetailsComponent = memo(
           <ControlledCollapse
             className={styles.collapsable}
             label={t('logs.log-line-details.log-line-section', 'Log line')}
-            collapsible
             isOpen={logLineOpen}
             onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
           >
@@ -140,7 +155,6 @@ export const LogLineDetailsComponent = memo(
           {displayedFields.length > 0 && setDisplayedFields && (
             <ControlledCollapse
               label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
-              collapsible
               isOpen={displayedFieldsOpen}
               onToggle={(isOpen: boolean) => handleToggle('displayedFieldsOpen', isOpen)}
             >
@@ -151,7 +165,6 @@ export const LogLineDetailsComponent = memo(
             <ControlledCollapse
               className={styles.collapsable}
               label={t('logs.log-line-details.links-section', 'Links')}
-              collapsible
               isOpen={linksOpen}
               onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
             >
@@ -161,7 +174,6 @@ export const LogLineDetailsComponent = memo(
           {trace && (
             <ControlledCollapse
               label={t('logs.log-line-details.trace-section', 'Trace')}
-              collapsible
               isOpen={traceOpen}
               onToggle={(isOpen: boolean) => handleToggle('traceOpen', isOpen)}
             >
@@ -174,7 +186,6 @@ export const LogLineDetailsComponent = memo(
                 className={styles.collapsable}
                 key={'fields'}
                 label={t('logs.log-line-details.fields-section', 'Fields')}
-                collapsible
                 isOpen={fieldsOpen}
                 onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
               >
@@ -186,7 +197,6 @@ export const LogLineDetailsComponent = memo(
                 className={styles.collapsable}
                 key={group}
                 label={group}
-                collapsible
                 isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName(group)}`, true)}
                 onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
               >
@@ -199,7 +209,6 @@ export const LogLineDetailsComponent = memo(
               className={styles.collapsable}
               key={'fields'}
               label={t('logs.log-line-details.fields-section', 'Fields')}
-              collapsible
               isOpen={fieldsOpen}
               onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
             >

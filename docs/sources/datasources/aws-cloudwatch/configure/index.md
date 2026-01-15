@@ -1,11 +1,12 @@
 ---
 aliases:
-  - ../data-sources/aws-CloudWatch/
-  - ../data-sources/aws-CloudWatch/preconfig-CloudWatch-dashboards/
-  - ../data-sources/aws-CloudWatch/provision-CloudWatch/
-  - CloudWatch/
-  - preconfig-CloudWatch-dashboards/
-  - provision-CloudWatch/
+  - ../../data-sources/aws-cloudwatch/configure/
+  - ../../data-sources/aws-cloudwatch/
+  - ../../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - ../../data-sources/aws-cloudwatch/provision-cloudwatch/
+  - ../cloudwatch/
+  - ../preconfig-cloudwatch-dashboards/
+  - ../provision-cloudwatch/
 description: This document provides configuration instructions for the CloudWatch data source.
 keywords:
   - grafana
@@ -25,11 +26,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   provisioning-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
@@ -40,31 +36,21 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#aws
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#aws
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
   data-source-management:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  CloudWatch-aws-authentication:
+  cloudwatch-aws-authentication:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-CloudWatch/aws-authentication/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-CloudWatch/aws-authentication/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/
   private-data-source-connect:
     - pattern: /docs/grafana/
-      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
     - pattern: /docs/grafana-cloud/
-      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
   configure-pdc:
     - pattern: /docs/grafana/
       destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
@@ -108,7 +94,7 @@ The following are configuration options for the CloudWatch data source.
 Grafana plugin requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
 The IAM user or IAM role must have the associated policies to perform certain API actions.
 
-For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
+For authentication options and configuration details, refer to [AWS authentication](ref:cloudwatch-aws-authentication).
 
 | Setting            | Description                                                                                                                                                                                                                  |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -153,7 +139,7 @@ You must use both an access key ID and a secret access key to authenticate.
 
 Grafana automatically creates a link to a trace in X-Ray data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an X-Ray data source configured. For details, see the [X-Ray data source docs](/grafana/plugins/grafana-X-Ray-datasource/). To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
 
-To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
+To log the `@xrayTraceId`, refer to the [AWS X-Ray documentation](https://docs.aws.amazon.com/xray/latest/devguide/xray-services.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
 
 **Private data source connect** - _Only for Grafana Cloud users._
 
@@ -172,7 +158,7 @@ To troubleshoot issues while setting up the CloudWatch data source, check the `/
 ### IAM policy examples
 
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
-You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](aws-authentication/).
+You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication](ref:cloudwatch-aws-authentication).
 
 **Metrics-only permissions:**
 
@@ -323,7 +309,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 Cross-account observability lets you retrieve metrics and logs across different accounts in a single region, but you can't query EC2 Instance Attributes across accounts because those come from the EC2 API and not the CloudWatch API.
 {{< /admonition >}}
 
-For more information on configuring authentication, refer to [Configure AWS authentication](ref:CloudWatch-aws-authentication).
+For more information on configuring authentication, refer to [Configure AWS authentication](ref:cloudwatch-aws-authentication).
 
 ### CloudWatch Logs data protection
 

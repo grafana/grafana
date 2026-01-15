@@ -225,7 +225,7 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     maxWidth: '100%',
     alignItems: 'start',
     justifyContent: justify,
-    columnGap: '6px',
+    columnGap: theme.spacing(0.75),
   }),
   label: css({ display: 'inline' }),
   value: css({
@@ -235,10 +235,7 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   }),
   colorWrapper: css({
     alignSelf: 'center',
-    position: 'relative',
     flexShrink: 0,
-    top: -2, // half the height of the color indicator, since the top is aligned with flex center.
-    marginRight: '-6px', // account for the built-in column-gap in relation to the color indicator's margin
   }),
   labelWrapper: css({
     flexGrow: 1,
@@ -248,6 +245,8 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     fontWeight: 400,
   }),
   valueWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
     flexShrink: 0,
     alignSelf: 'center',
     marginRight,

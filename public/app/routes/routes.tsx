@@ -9,9 +9,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
-import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
+import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
+import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
@@ -29,7 +30,7 @@ const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
-  return [
+  const routes: Array<RouteDescriptor | undefined | false> = [
     // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
     // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
     ...getAppPluginRoutes(),
@@ -65,8 +66,18 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
       ),
     },
+    (config.featureToggles.suggestedDashboards || config.featureToggles.dashboardLibrary) && {
+      path: DASHBOARD_LIBRARY_ROUTES.Template,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Template,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
+      ),
+    },
     {
       path: '/dashboard/:type/:slug',
+      allowAnonymous: (params) => params.type === 'snapshot',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
@@ -128,12 +139,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/datasources/correlations',
-      component: SafeDynamicImport(() =>
-        config.featureToggles.correlations
-          ? import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
-          : import(
-              /* webpackChunkName: "CorrelationsFeatureToggle" */ 'app/features/correlations/CorrelationsFeatureToggle'
-            )
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
       ),
     },
     {
@@ -217,7 +224,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/extensions',
-      navId: 'extensions',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite]),
       component:
@@ -370,7 +376,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
     },
-    config.featureToggles.onPremToCloudMigrations && {
+    config.cloudMigrationEnabled && {
       path: '/admin/migrate-to-cloud',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.MigrationAssistantMigrate]),
       component: SafeDynamicImport(
@@ -554,7 +560,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/*',
       component: PageNotFound,
     },
-  ].filter(isTruthy);
+  ];
+
+  return routes.filter(isTruthy);
 }
 
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {

@@ -6,9 +6,10 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { DashboardQueryResult } from 'app/features/search/service/types';
 
 import { getBackendSrv } from '../../../core/services/backend_srv';
-import { DashboardSearchItem } from '../../search/types';
 import {
   LibraryElementConnectionDTO,
   LibraryElementDTO,
@@ -25,6 +26,7 @@ export interface GetLibraryPanelsOptions {
   sortDirection?: string;
   typeFilter?: string[];
   folderFilterUIDs?: string[];
+  signal?: AbortSignal;
 }
 
 export async function getLibraryPanels({
@@ -35,6 +37,7 @@ export async function getLibraryPanels({
   sortDirection = '',
   typeFilter = [],
   folderFilterUIDs = [],
+  signal,
 }: GetLibraryPanelsOptions = {}): Promise<LibraryElementsSearchResult> {
   const params = new URLSearchParams();
   params.append('searchString', searchString);
@@ -46,10 +49,15 @@ export async function getLibraryPanels({
   params.append('page', page.toString(10));
   params.append('kind', LibraryElementKind.Panel.toString(10));
 
-  const { result } = await getBackendSrv().get<{ result: LibraryElementsSearchResult }>(
-    `/api/library-elements?${params.toString()}`
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<{ result: LibraryElementsSearchResult }>({
+      method: 'GET',
+      url: `/api/library-elements?${params.toString()}`,
+      abortSignal: signal,
+      showErrorAlert: false,
+    })
   );
-  return result;
+  return response.data.result;
 }
 
 export async function getLibraryPanel(uid: string, isHandled = false): Promise<LibraryElementDTO> {
@@ -134,15 +142,14 @@ export async function getLibraryPanelConnectedDashboards(
   return result;
 }
 
-export async function getConnectedDashboards(uid: string): Promise<DashboardSearchItem[]> {
+export async function getConnectedDashboards(uid: string): Promise<DashboardQueryResult[] | null> {
   const connections = await getLibraryPanelConnectedDashboards(uid);
   if (connections.length === 0) {
-    return [];
+    return null;
   }
 
-  const searchHits = await getBackendSrv().search({ dashboardUIDs: connections.map((c) => c.connectionUid) });
-
-  return searchHits;
+  const result = await getGrafanaSearcher().search({ uid: connections.map((c) => c.connectionUid) });
+  return result.view.toArray();
 }
 
 export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {

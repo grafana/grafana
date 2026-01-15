@@ -1,0 +1,17 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "users",
+    "name": "example"
+  },
+  "name": "example",
+  "rv": 1234,
+  "title": "example",
+  "title_ngram": "example",
+  "title_phrase": "example",
+  "fields": {
+    "email": "example@example.com",
+    "login": "example"
+  }
+}

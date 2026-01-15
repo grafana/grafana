@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,6 +12,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -31,7 +33,7 @@ type DualReadWriter struct {
 	repo    repository.ReaderWriter
 	parser  Parser
 	folders *FolderManager
-	access  authlib.AccessChecker
+	access  auth.AccessChecker
 }
 
 type DualWriteOptions struct {
@@ -47,7 +49,7 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access auth.AccessChecker) *DualReadWriter {
 	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
 }
 
@@ -100,7 +102,7 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	}
 
 	// HACK: manual set to the provided branch so that the parser can possible read the file
-	if r.shouldUpdateGrafanaDB(opts, nil) {
+	if !r.shouldUpdateGrafanaDB(opts, nil) {
 		file.Ref = opts.Ref
 	}
 
@@ -276,6 +278,16 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	// FIXME: to make sure if behaves in the same way as in sync, we should
 	// we should refactor the code to use the same function.
 	if r.shouldUpdateGrafanaDB(opts, parsed) {
+		// HACK: Get the has from repository -- this will avoid an additional RV increment
+		// we should change the signature of Create and Update to return FileInfo instead
+		info, _ = r.repo.Read(ctx, opts.Path, opts.Ref)
+		if info != nil {
+			parsed.Meta.SetSourceProperties(utils.SourceProperties{
+				Path:     opts.Path,
+				Checksum: info.Hash,
+			})
+		}
+
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
@@ -315,7 +327,19 @@ func (r *DualReadWriter) MoveResource(ctx context.Context, opts DualWriteOptions
 }
 
 func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	// For directory moves, we just perform the repository move without parsing
+	// Reject directory move operations for configured branch - use bulk operations instead
+	if r.isConfiguredBranch(opts) {
+		return nil, &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusMethodNotAllowed,
+				Reason:  metav1.StatusReasonMethodNotAllowed,
+				Message: "directory move operations are not available for configured branch. Use bulk move operations via the jobs API instead",
+			},
+		}
+	}
+
+	// For branch operations, we just perform the repository move without updating Grafana DB
 	// Always use the provisioning identity when writing
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
 	if err != nil {
@@ -347,35 +371,6 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 			Name:      cfg.Name,
 			Title:     cfg.Spec.Title,
 		},
-	}
-
-	// Handle folder management for main branch
-	if r.shouldUpdateGrafanaDB(opts, nil) {
-		// Ensure destination folder path exists
-		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
-			return nil, fmt.Errorf("ensure destination folder path exists: %w", err)
-		}
-
-		// Try to delete the old folder structure from grafana (if it exists)
-		// This handles cleanup when folders are moved to new locations
-		oldFolderName, err := r.folders.EnsureFolderPathExist(ctx, opts.OriginalPath)
-		if err != nil {
-			return nil, fmt.Errorf("ensure original folder path exists: %w", err)
-		}
-
-		if oldFolderName != "" {
-			oldFolder, err := r.folders.GetFolder(ctx, oldFolderName)
-			if err != nil && !apierrors.IsNotFound(err) {
-				return nil, fmt.Errorf("get old folder for cleanup: %w", err)
-			}
-
-			if err == nil {
-				err = r.folders.Client().Delete(ctx, oldFolder.GetName(), metav1.DeleteOptions{})
-				if err != nil && !apierrors.IsNotFound(err) {
-					return nil, fmt.Errorf("delete old folder from storage: %w", err)
-				}
-			}
-		}
 	}
 
 	return parsed, nil
@@ -498,11 +493,6 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 }
 
 func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		return apierrors.NewUnauthorized(err.Error())
-	}
-
 	var name string
 	if parsed.Existing != nil {
 		name = parsed.Existing.GetName()
@@ -510,82 +500,52 @@ func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, 
 		name = parsed.Obj.GetName()
 	}
 
-	rsp, err := r.access.Check(ctx, id, authlib.CheckRequest{
-		Group:     parsed.GVR.Group,
-		Resource:  parsed.GVR.Resource,
-		Namespace: id.GetNamespace(),
-		Name:      name,
-		Verb:      verb,
+	return r.access.Check(ctx, authlib.CheckRequest{
+		Group:    parsed.GVR.Group,
+		Resource: parsed.GVR.Resource,
+		Name:     name,
+		Verb:     verb,
 	}, parsed.Meta.GetFolder())
-	if err != nil || !rsp.Allowed {
-		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-			fmt.Errorf("no access to read the embedded file"))
-	}
-
-	idType, _, err := authlib.ParseTypeID(id.GetID())
-	if err != nil {
-		return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(), fmt.Errorf("could not determine identity type to check access"))
-	}
-	// only apply role based access if identity is not of type access policy
-	if idType == authlib.TypeAccessPolicy || id.GetOrgRole().Includes(identity.RoleEditor) {
-		return nil
-	}
-
-	return apierrors.NewForbidden(parsed.GVR.GroupResource(), parsed.Obj.GetName(),
-		fmt.Errorf("must be admin or editor to access files from provisioning"))
 }
 
-func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) error {
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		return apierrors.NewUnauthorized(err.Error())
+func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, path string) error {
+	// Determine parent folder from path
+	parentFolder := ""
+	if path != "" {
+		parentPath := safepath.Dir(path)
+		if parentPath != "" {
+			parentFolder = ParseFolder(parentPath, r.repo.Config().Name).ID
+		} else {
+			parentFolder = RootFolder(r.repo.Config())
+		}
 	}
 
-	// Simple role based access for now
-	if id.GetOrgRole().Includes(identity.RoleEditor) {
-		return nil
-	}
-
-	return apierrors.NewForbidden(FolderResource.GroupResource(), "",
-		fmt.Errorf("must be admin or editor to access folders with provisioning"))
+	// For folder create operations, use empty name to check parent folder permissions
+	return r.access.Check(ctx, authlib.CheckRequest{
+		Group:    FolderResource.Group,
+		Resource: FolderResource.Resource,
+		Name:     "", // Empty name for create operations
+		Verb:     utils.VerbCreate,
+	}, parentFolder)
 }
 
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	// if the ref is set, it is not the active branch, so just delete the files from the branch
-	// and do not delete the items from grafana itself
-	if !r.shouldUpdateGrafanaDB(opts, nil) {
-		err := r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
-		if err != nil {
-			return nil, fmt.Errorf("error deleting folder from repository: %w", err)
+	// Reject directory delete operations for configured branch - use bulk operations instead
+	if r.isConfiguredBranch(opts) {
+		return nil, &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusMethodNotAllowed,
+				Reason:  metav1.StatusReasonMethodNotAllowed,
+				Message: "directory delete operations are not available for configured branch. Use bulk delete operations via the jobs API instead",
+			},
 		}
-
-		return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo)
 	}
 
-	// before deleting from the repo, first get all children resources to delete from grafana afterwards
-	treeEntries, err := r.repo.ReadTree(ctx, "")
+	// For branch operations, just delete from the repository without updating Grafana DB
+	err := r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 	if err != nil {
-		return nil, fmt.Errorf("read repository tree: %w", err)
-	}
-	// note: parsedFolders will include the folder itself
-	parsedResources, parsedFolders, err := r.getChildren(ctx, opts.Path, treeEntries)
-	if err != nil {
-		return nil, fmt.Errorf("parse resources in folder: %w", err)
-	}
-
-	// delete from the repo
-	err = r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
-	if err != nil {
-		return nil, fmt.Errorf("delete folder from repository: %w", err)
-	}
-
-	// delete from grafana
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
-	if err != nil {
-		return nil, err
-	}
-	if err := r.deleteChildren(ctx, parsedResources, parsedFolders); err != nil {
-		return nil, fmt.Errorf("delete folder from grafana: %w", err)
+		return nil, fmt.Errorf("error deleting folder from repository: %w", err)
 	}
 
 	return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo)
@@ -640,60 +600,11 @@ func folderDeleteResponse(ctx context.Context, path, ref string, repo repository
 	return parsed, nil
 }
 
-func (r *DualReadWriter) getChildren(ctx context.Context, folderPath string, treeEntries []repository.FileTreeEntry) ([]*ParsedResource, []Folder, error) {
-	var resourcesInFolder []repository.FileTreeEntry
-	var foldersInFolder []Folder
-	for _, entry := range treeEntries {
-		// make sure the path is supported (i.e. not ignored by git sync) and that the path is the folder itself or a child of the folder
-		if IsPathSupported(entry.Path) != nil || !safepath.InDir(entry.Path, folderPath) {
-			continue
-		}
-		// folders cannot be parsed as resources, so handle them separately
-		if entry.Blob {
-			resourcesInFolder = append(resourcesInFolder, entry)
-		} else {
-			folder := ParseFolder(entry.Path, r.repo.Config().Name)
-			foldersInFolder = append(foldersInFolder, folder)
-		}
-	}
-
-	parsedResources := make([]*ParsedResource, len(resourcesInFolder))
-	for i, entry := range resourcesInFolder {
-		fileInfo, err := r.repo.Read(ctx, entry.Path, "")
-		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, nil, fmt.Errorf("could not find resource in repository: %w", err)
-		}
-
-		parsed, err := r.parser.Parse(ctx, fileInfo)
-		if err != nil {
-			return nil, nil, fmt.Errorf("could not parse resource: %w", err)
-		}
-
-		parsedResources[i] = parsed
-	}
-
-	return parsedResources, foldersInFolder, nil
-}
-
-func (r *DualReadWriter) deleteChildren(ctx context.Context, childrenResources []*ParsedResource, folders []Folder) error {
-	for _, parsed := range childrenResources {
-		err := parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("failed to delete nested resource from grafana: %w", err)
-		}
-	}
-
-	// we need to delete the folders furthest down in the tree first, as folder deletion will fail if there is anything inside of it
-	safepath.SortByDepth(folders, func(f Folder) string { return f.Path }, false)
-
-	for _, f := range folders {
-		err := r.folders.Client().Delete(ctx, f.ID, metav1.DeleteOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to delete folder from grafana: %w", err)
-		}
-	}
-
-	return nil
+// isConfiguredBranch returns true if the ref targets the configured branch
+// (empty ref means configured branch, or ref explicitly matches configured branch)
+func (r *DualReadWriter) isConfiguredBranch(opts DualWriteOptions) bool {
+	configuredBranch := r.repo.Config().Branch()
+	return opts.Ref == "" || opts.Ref == configuredBranch
 }
 
 // shouldUpdateGrafanaDB returns true if we have an empty ref (targeting the configured branch)
@@ -703,9 +614,5 @@ func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *Pa
 		return false
 	}
 
-	if opts.Ref != "" && opts.Ref != opts.Branch {
-		return false
-	}
-
-	return true
+	return r.isConfiguredBranch(opts)
 }

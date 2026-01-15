@@ -9,10 +9,13 @@ import { TriageScene, triageScene } from './scene/TriageScene';
 export const TriagePage = () => {
   return (
     <AlertingPageWrapper
-      navId="alerting"
-      subTitle={t('alerting.pages.triage.subtitle', 'Learn about problems in your systems moments after they occur')}
+      navId="alert-alerts"
+      subTitle={t(
+        'alerting.pages.triage.subtitle',
+        'See what is currently alerting and explore historical data to investigate current or past issues.'
+      )}
       pageNav={{
-        text: t('alerting.pages.triage.title', 'Triage'),
+        text: t('alerting.pages.triage.title', 'Alerts'),
       }}
     >
       <UrlSyncContextProvider scene={triageScene} updateUrlOnInit={true} createBrowserHistorySteps={true}>

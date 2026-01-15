@@ -1,5 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { StoryFn, Meta } from '@storybook/react';
+import type { JSX } from 'react';
 
 import { Button } from '../Button/Button';
 

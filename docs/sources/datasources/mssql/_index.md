@@ -99,12 +99,27 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
+  mssql-troubleshoot:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/troubleshooting/
+  postgres:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/
+  mysql:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mysql/
 ---
 
 # Microsoft SQL Server (MSSQL) data source
 
 Grafana ships with built-in support for Microsoft SQL Server (MSSQL).
-You can query and visualize data from any Microsoft SQL Server 2005 or newer, including the Microsoft Azure SQL Database.
+You can query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database.
 
 Use this data source to create dashboards, explore SQL data, and monitor MSSQL-based workloads in real time.
 
@@ -113,10 +128,33 @@ The following documentation helps you get started working with the Microsoft SQL
 - [Configure the Microsoft SQL Server data source](ref:configure-mssql-data-source)
 - [Microsoft SQL Server query editor](ref:mssql-query-editor)
 - [Microsoft SQL Server template variables](ref:mssql-template-variables)
+- [Troubleshoot Microsoft SQL Server data source issues](ref:mssql-troubleshoot)
 
-## Get the most out of the data source
+## Supported versions
 
-After installing and configuring the Microsoft SQL Server data source, you can:
+This data source supports the following Microsoft SQL Server versions:
+
+- Microsoft SQL Server 2005 and newer
+- Microsoft Azure SQL Database
+- Azure SQL Managed Instance
+
+Grafana recommends using the latest available service pack for your SQL Server version for optimal compatibility.
+
+## Key capabilities
+
+The Microsoft SQL Server data source supports:
+
+- **Time series queries:** Visualize metrics over time using the built-in time grouping macros.
+- **Table queries:** Display query results in table format for any valid SQL query.
+- **Template variables:** Create dynamic dashboards with variable-driven queries.
+- **Annotations:** Overlay events from SQL Server on your dashboard graphs.
+- **Alerting:** Create alerts based on SQL Server query results.
+- **Stored procedures:** Execute stored procedures and visualize results.
+- **Macros:** Simplify queries with built-in macros for time filtering and grouping.
+
+## Additional resources
+
+After configuring the Microsoft SQL Server data source, you can:
 
 - Create a wide variety of [visualizations](ref:visualizations)
 - Configure and use [templates and variables](ref:variables)
@@ -124,3 +162,8 @@ After installing and configuring the Microsoft SQL Server data source, you can:
 - Add [annotations](ref:annotate-visualizations)
 - Set up [alerting](ref:alerting)
 - Optimize performance with [query caching](ref:query-caching)
+
+## Related data sources
+
+- [PostgreSQL](ref:postgres) - For PostgreSQL databases.
+- [MySQL](ref:mysql) - For MySQL and MariaDB databases.

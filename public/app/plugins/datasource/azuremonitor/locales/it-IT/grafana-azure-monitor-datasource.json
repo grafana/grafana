@@ -13,7 +13,7 @@
       "label-resource-group": "Gruppi risorse",
       "label-resource-name": "Nome risorsa",
       "label-resource-number": "Risorsa {{resourceNum}}",
-      "label-resource-uri": "URI risorsa/e ",
+      "label-resource-uri": "",
       "label-subscription": "Abbonamento",
       "placeholder-resource-name": "nome",
       "tooltip-region": "La parte di codice della risorsa. Facoltativo per una risorsa ma obbligatorio quando se ne selezionano più di una.",
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "I registri di Azure avviano il pulsante della query",
       "body-switching-to-builder": "Il passaggio a Builder eliminerà la query KQL corrente e cancellerà l'editor KQL. Vuoi davvero continuare?",
-      "body-switching-to-kql": "Il passaggio a KQL annullerà le impostazioni correnti del generatore. Vuoi davvero continuare?",
       "button-kick-start-your-query": "Avvia la query",
       "button-run-query": "Esegui query",
       "confirmText-switch-to": "Passa a {{newMode}}",

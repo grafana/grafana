@@ -13,7 +13,7 @@
       "label-resource-group": "资源组",
       "label-resource-name": "资源名称",
       "label-resource-number": "资源 {{resourceNum}}",
-      "label-resource-uri": "资源 URI ",
+      "label-resource-uri": "",
       "label-subscription": "订阅",
       "placeholder-resource-name": "姓名",
       "tooltip-region": "资源的代码区域。对于一个资源来说是可选的，但在选择多个资源时则是必须的。",
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure 日志启动查询按钮",
       "body-switching-to-builder": "切换到构建器将丢弃当前的 KQL 查询并清除 KQL 编辑器。您确定吗？",
-      "body-switching-to-kql": "切换到 KQL 将丢弃当前的构建器设置。您确定吗？",
       "button-kick-start-your-query": "启动您的查询",
       "button-run-query": "运行查询",
       "confirmText-switch-to": "切换到 {{newMode}}",

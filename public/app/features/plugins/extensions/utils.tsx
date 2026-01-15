@@ -18,9 +18,14 @@ import {
 } from '@grafana/data';
 import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
-import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
+import {
+  CloseExtensionSidebarEvent,
+  OpenExtensionSidebarEvent,
+  ShowModalReactEvent,
+  ToggleExtensionSidebarEvent,
+} from 'app/types/events';
 
 import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
 
@@ -414,6 +419,8 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
         text: truncateTitle(extension.title, 25),
         href: extension.path,
         onClick: extension.onClick,
+        iconClassName: extension.icon,
+        target: extension.openInNewTab ? '_blank' : undefined,
       });
       continue;
     }
@@ -426,6 +433,8 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
       text: truncateTitle(extension.title, 25),
       href: extension.path,
       onClick: extension.onClick,
+      iconClassName: extension.icon,
+      target: extension.openInNewTab ? '_blank' : undefined,
     });
   }
 
@@ -467,12 +476,14 @@ export function getLinkExtensionOverrides(
       return undefined;
     }
 
+    // Only allowing to override the following properties
     let {
       title = config.title,
       description = config.description,
       path = config.path,
       icon = config.icon,
       category = config.category,
+      openInNewTab = config.openInNewTab,
       ...rest
     } = overrides;
 
@@ -497,6 +508,7 @@ export function getLinkExtensionOverrides(
       path,
       icon,
       category,
+      openInNewTab,
     };
   } catch (error) {
     if (error instanceof Error) {
@@ -549,6 +561,15 @@ export function getLinkExtensionOnClick(
         },
         closeSidebar: () => {
           appEvents.publish(new CloseExtensionSidebarEvent());
+        },
+        toggleSidebar: (componentTitle, context) => {
+          appEvents.publish(
+            new ToggleExtensionSidebarEvent({
+              props: context,
+              pluginId,
+              componentTitle,
+            })
+          );
         },
       };
 

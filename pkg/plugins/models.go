@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 const (
@@ -148,17 +148,17 @@ type ExtensionsDependencies struct {
 }
 
 type Includes struct {
-	Name       string       `json:"name"`
-	Path       string       `json:"path"`
-	Type       string       `json:"type"`
-	Component  string       `json:"component"`
-	Role       org.RoleType `json:"role"`
-	Action     string       `json:"action,omitempty"`
-	AddToNav   bool         `json:"addToNav"`
-	DefaultNav bool         `json:"defaultNav"`
-	Slug       string       `json:"slug"`
-	Icon       string       `json:"icon"`
-	UID        string       `json:"uid"`
+	Name       string            `json:"name"`
+	Path       string            `json:"path"`
+	Type       string            `json:"type"`
+	Component  string            `json:"component"`
+	Role       identity.RoleType `json:"role"`
+	Action     string            `json:"action,omitempty"`
+	AddToNav   bool              `json:"addToNav"`
+	DefaultNav bool              `json:"defaultNav"`
+	Slug       string            `json:"slug"`
+	Icon       string            `json:"icon"`
+	UID        string            `json:"uid"`
 
 	ID string `json:"-"`
 }
@@ -238,6 +238,7 @@ type ReleaseState string
 
 const (
 	ReleaseStateAlpha ReleaseState = "alpha"
+	ReleaseStateBeta  ReleaseState = "beta"
 )
 
 type SignatureType string
@@ -318,6 +319,7 @@ type PanelDTO struct {
 	HideFromList    bool              `json:"hideFromList"`
 	Sort            int               `json:"sort"`
 	SkipDataQuery   bool              `json:"skipDataQuery"`
+	Suggestions     bool              `json:"suggestions,omitempty"`
 	ReleaseState    string            `json:"state"`
 	BaseURL         string            `json:"baseUrl"`
 	Signature       string            `json:"signature"`
@@ -339,6 +341,7 @@ type AppDTO struct {
 	Dependencies    Dependencies      `json:"dependencies"`
 	ModuleHash      string            `json:"moduleHash,omitempty"`
 	Translations    map[string]string `json:"translations,omitempty"`
+	BuildMode       string            `json:"buildMode,omitempty"`
 }
 
 const (

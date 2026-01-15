@@ -70,6 +70,32 @@ const bar = {
 };
 ```
 
+#### `namespace`
+
+Allows specifying a namespace prefix that will be added to all auto-generated translation keys when using ESLint's auto-fix feature. The namespace is separated from the key with a colon (:).
+
+This is useful for organizing translation keys by feature area or preventing key collisions between different parts of the application.
+
+#### Example:
+
+```tsx
+// Configuration:
+{
+  '@grafana/i18n/no-untranslated-strings': ['error', { namespace: 'dashboard' }],
+}
+
+// For a file located at src/features/search/EmptyState.tsx
+
+// Without namespace, auto-fix generates:
+<Trans i18nKey="features.search.empty-state.no-results-found">No results found</Trans>
+
+// With namespace: 'dashboard', auto-fix generates:
+<Trans i18nKey="dashboard:features.search.empty-state.no-results-found">No results found</Trans>
+
+// For JSX attributes, auto-fix generates:
+<div title={t("dashboard:features.search.empty-state.title-no-results", "No results")} />
+```
+
 #### JSXText
 
 ```tsx

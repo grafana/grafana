@@ -121,11 +121,12 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/provisioning", reqOrgAdmin, hs.Index)
 	r.Get("/admin/provisioning/*", reqOrgAdmin, hs.Index)
 
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
+	if hs.Cfg.CloudMigration.Enabled {
 		r.Get("/admin/migrate-to-cloud", authorize(cloudmigration.MigrationAssistantAccess), hs.Index)
 	}
 
 	// secrets management page
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) && hs.Features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatformUI) {
 		r.Get("/admin/secrets", authorize(ac.EvalAny(
 			ac.EvalPermission(secret.ActionSecretSecureValuesCreate),
@@ -162,6 +163,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
 	r.Get("/dashboard/new", reqSignedIn, hs.Index)
+	if featuremgmt.AnyEnabled(hs.Features, featuremgmt.FlagDashboardLibrary, featuremgmt.FlagSuggestedDashboards, featuremgmt.FlagDashboardTemplates) {
+		r.Get("/dashboard/template", reqSignedIn, hs.Index)
+	}
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
 	r.Get("/dashboard/provisioning/*", reqSignedIn, hs.Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, hs.Index)
@@ -182,6 +186,15 @@ func (hs *HTTPServer) registerRoutes() {
 			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
 			publicdashboardsapi.CountPublicDashboardRequest(),
 			hs.Index,
+		)
+
+		r.Get("/bootdata/:accessToken",
+			reqNoAuth,
+			hs.PublicDashboardsApi.Middleware.HandleView,
+			publicdashboardsapi.SetPublicDashboardAccessToken,
+			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboardsapi.CountPublicDashboardRequest(),
+			hs.GetBootdata,
 		)
 	}
 
@@ -213,6 +226,7 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Post("/api/user/email/start-verify", reqSignedInNoAnonymous, routing.Wrap(hs.StartEmailVerificaton))
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
 		r.Post("/api/login/passwordless/start", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), hs.StartPasswordless)
 		r.Post("/api/login/passwordless/authenticate", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPasswordless))
@@ -307,13 +321,10 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/quotas", authorize(ac.EvalPermission(ac.ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagStorage) {
 			// Will eventually be replaced with the 'object' route
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
-		}
-
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch) {
-			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org
@@ -465,8 +476,6 @@ func (hs *HTTPServer) registerRoutes() {
 					dashboardPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
 				})
 			})
-
-			dashboardRoute.Post("/calculate-diff", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
 
 			dashboardRoute.Post("/db", authorize(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionDashboardsWrite))), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))

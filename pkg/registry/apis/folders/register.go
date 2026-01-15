@@ -205,11 +205,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 var defaultPermissions = []map[string]any{
 	{
 		"kind": "BasicRole",
-		"name": "Admin",
-		"verb": "admin",
-	},
-	{
-		"kind": "BasicRole",
 		"name": "Editor",
 		"verb": "edit",
 	},
@@ -288,6 +283,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 
 func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {
 	log := logging.FromContext(context.Background())
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		log.Info("Enabling Zanzana folder propagation hooks")
 		store.BeginCreate = b.beginCreate
@@ -360,7 +356,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		return validateOnUpdate(ctx, f, old, b.storage, b.parents, folder.MaxNestedFolderDepth)
+		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, folder.MaxNestedFolderDepth)
 	default:
 		return nil
 	}

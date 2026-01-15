@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
@@ -316,4 +317,13 @@ func waitForRetryAnnotation(ctx context.Context, log logging.Logger, client reso
 	}
 	log.Debug("Retry annotation persisted", "check", obj.GetName(), "item", itemToRetry)
 	return nil
+}
+
+// getOrgIDFromNamespace extracts the org ID from a namespace using the standard authlib parser.
+func getOrgIDFromNamespace(namespace string) (int64, error) {
+	info, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse namespace %s: %w", namespace, err)
+	}
+	return info.OrgID, nil
 }

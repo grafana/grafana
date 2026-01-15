@@ -2,14 +2,20 @@ package team
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -23,12 +29,13 @@ var (
 	_ rest.Connecter       = (*LegacyTeamMemberREST)(nil)
 )
 
-func NewLegacyTeamMemberREST(store legacy.LegacyIdentityStore) *LegacyTeamMemberREST {
-	return &LegacyTeamMemberREST{store}
+func NewLegacyTeamMemberREST(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyTeamMemberREST {
+	return &LegacyTeamMemberREST{store: store, ac: ac}
 }
 
 type LegacyTeamMemberREST struct {
 	store legacy.LegacyIdentityStore
+	ac    claims.AccessClient
 }
 
 // New implements rest.Storage.
@@ -62,6 +69,30 @@ func (s *LegacyTeamMemberREST) Connect(ctx context.Context, name string, options
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ident, err := identity.GetRequester(ctx)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		checkResp, err := s.ac.Check(ctx, ident, claims.CheckRequest{
+			Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
+			Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
+			Name:      name,
+			Namespace: ns.Value,
+			Verb:      utils.VerbGetPermissions,
+		}, "")
+
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		if !checkResp.Allowed {
+			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(), name, fmt.Errorf("permission denied")))
+			return
+		}
+
 		res, err := s.store.ListTeamMembers(ctx, ns, legacy.ListTeamMembersQuery{
 			UID:        name,
 			Pagination: common.PaginationFromListQuery(r.URL.Query()),
@@ -107,6 +138,6 @@ func mapToTeamMember(m legacy.TeamMember) iamv0.TeamMember {
 			InternalID:  m.UserID,
 		},
 		External:   m.External,
-		Permission: mapPermisson(m.Permission),
+		Permission: common.MapUserTeamPermission(m.Permission),
 	}
 }

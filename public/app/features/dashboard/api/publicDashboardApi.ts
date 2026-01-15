@@ -1,10 +1,10 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
+import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { t } from '@grafana/i18n';
 import { config, FetchError, isFetchError } from '@grafana/runtime';
-import { createBaseQuery } from 'app/api/createBaseQuery';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   PublicDashboard,
   PublicDashboardSettings,

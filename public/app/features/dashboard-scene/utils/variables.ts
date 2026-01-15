@@ -36,7 +36,8 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
-  if (config.featureToggles.scopeFilters) {
+  // Explicitly disable scopes for public dashboards
+  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
@@ -91,7 +92,17 @@ export function createSnapshotVariable(variable: TypedVariableModel): SceneVaria
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
+    // If query is missing, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.query) {
+      intervals = getIntervalsFromQueryString(variable.query);
+    } else if (variable.options && variable.options.length > 0) {
+      // Extract intervals from options when query is missing
+      intervals = variable.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     snapshotVariable = new SnapshotVariable({
       name: variable.name,
@@ -151,7 +162,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
       layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+      collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
       ),
@@ -163,8 +176,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-
-      query: variable.query,
+      query: variable.query || '',
       isMulti: variable.multi,
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
@@ -172,6 +184,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
       allowCustomValue: variable.allowCustomValue,
+      valuesFormat: variable.valuesFormat ?? 'csv',
     });
     // Query variable
   } else if (variable.type === 'query') {
@@ -179,12 +192,12 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-
-      query: variable.query,
+      query: variable.query ?? {},
       datasource: variable.datasource,
       sort: variable.sort,
       refresh: variable.refresh,
       regex: variable.regex,
+      ...(variable.regexApplyTo && { regexApplyTo: variable.regexApplyTo }),
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),
@@ -218,7 +231,17 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     });
     // Interval variable
   } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromQueryString(variable.query);
+    // If query is missing, extract intervals from options instead of using defaults
+    let intervals: string[];
+    if (variable.query) {
+      intervals = getIntervalsFromQueryString(variable.query);
+    } else if (variable.options && variable.options.length > 0) {
+      // Extract intervals from options when query is missing (matches backend behavior)
+      intervals = variable.options.map((opt) => String(opt.value || opt.text)).filter(Boolean);
+    } else {
+      // Fallback to default intervals only if both query and options are missing
+      intervals = getIntervalsFromQueryString('');
+    }
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,
@@ -267,10 +290,12 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       text: variable.current?.text || [],
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
+      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:

@@ -1,23 +1,17 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { TeamGroup } from 'app/types/teams';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { MOCK_TEAMS, MOCK_TEAM_GROUPS } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
-import { Props, TeamGroupSync } from './TeamGroupSync';
-import { getMockTeamGroups } from './mocks/teamMocks';
+import TeamGroupSync from './TeamGroupSync';
 
-const setup = (propOverrides?: object) => {
-  const props: Props = {
-    isReadOnly: false,
-    groups: [] as TeamGroup[],
-    loadTeamGroups: jest.fn(),
-    addTeamGroup: jest.fn(),
-    removeTeamGroup: jest.fn(),
-  };
+setBackendSrv(backendSrv);
+setupMockServer();
 
-  Object.assign(props, propOverrides);
-
-  return render(<TeamGroupSync {...props} />);
+const setup = () => {
+  return render(<TeamGroupSync teamUid={MOCK_TEAMS[0].metadata.name} isReadOnly={false} />);
 };
 
 describe('TeamGroupSync', () => {
@@ -26,32 +20,37 @@ describe('TeamGroupSync', () => {
     expect(screen.getByRole('heading', { name: /External group sync/i })).toBeInTheDocument();
   });
 
-  it('should render groups table', () => {
-    setup({ groups: getMockTeamGroups(3) });
-    expect(screen.getAllByRole('row')).toHaveLength(4); // 3 items plus table header
+  it('should render groups table', async () => {
+    setup();
+    expect(await screen.findAllByRole('row')).toHaveLength(MOCK_TEAM_GROUPS.length + 1); // items plus table header
   });
 
   it('should call add group', async () => {
-    const mockAddGroup = jest.fn();
-    setup({ addTeamGroup: mockAddGroup });
-    // Empty List CTA "Add group" button is second in the DOM order
-    await userEvent.click(screen.getAllByRole('button', { name: /add group/i })[1]);
+    const { user } = setup();
+    // Wait for the groups to load so the "Add group" button appears
+    await screen.findAllByRole('row');
+
+    await user.click(screen.getAllByRole('button', { name: /add group/i })[0]);
     expect(screen.getByRole('textbox', { name: /add external group/i })).toBeVisible();
 
-    await userEvent.type(screen.getByRole('textbox', { name: /add external group/i }), 'test/group');
-    await userEvent.click(screen.getAllByRole('button', { name: /add group/i })[0]);
-    await waitFor(() => {
-      expect(mockAddGroup).toHaveBeenCalledWith('test/group');
-    });
+    await user.type(screen.getByRole('textbox', { name: /add external group/i }), 'test/group');
+    await user.click(screen.getAllByRole('button', { name: /add group/i })[1]);
+
+    expect(await screen.findByRole('row', { name: /test\/group/i })).toBeInTheDocument();
   });
 
-  it('should call remove group', async () => {
-    const mockRemoveGroup = jest.fn();
-    const mockGroup: TeamGroup = { teamId: 1, groupId: 'someGroup' };
-    setup({ removeTeamGroup: mockRemoveGroup, groups: [mockGroup] });
-    await userEvent.click(screen.getByRole('button', { name: 'Remove group someGroup' }));
-    await waitFor(() => {
-      expect(mockRemoveGroup).toHaveBeenCalledWith('someGroup');
-    });
+  it('should remove group', async () => {
+    const { user } = setup();
+    const groupToRemove = MOCK_TEAM_GROUPS[0].groupId;
+
+    // Wait for group to be rendered
+    await screen.findByRole('row', { name: new RegExp(groupToRemove, 'i') });
+
+    // Remove group
+    await user.click(screen.getByRole('button', { name: `Remove group ${groupToRemove}` }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('row', { name: new RegExp(groupToRemove, 'i') })).not.toBeInTheDocument()
+    );
   });
 });

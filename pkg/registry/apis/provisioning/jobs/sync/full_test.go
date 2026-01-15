@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"testing"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +46,7 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil)
 	progress.On("SetTotal", mock.Anything, 1).Return()
 
-	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService())
+	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	require.EqualError(t, err, "context canceled")
 }
 
@@ -62,7 +65,7 @@ func TestFullSync_Error(t *testing.T) {
 
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("some error"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService())
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	require.EqualError(t, err, "compare changes: some error")
 }
 
@@ -82,7 +85,7 @@ func TestFullSync_NoChanges(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil)
 	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService())
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	require.NoError(t, err)
 }
 
@@ -113,7 +116,7 @@ func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
 		Path:  "",
 	}, "").Return(nil)
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService())
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	require.NoError(t, err)
 }
 
@@ -142,7 +145,7 @@ func TestFullSync_FolderCreationFailed(t *testing.T) {
 		Path:  "",
 	}, "").Return(fmt.Errorf("folder creation failed"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService())
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "create root folder: folder creation failed")
 }
@@ -171,7 +174,7 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, fmt.Errorf("compare error"))
 
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService())
+	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "compare changes: compare error")
 }
@@ -202,20 +205,26 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				// First call returns nil, second call returns error
-				progress.On("TooManyErrors").Return(nil).Once()
-				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors")).Once()
+				var callCount int64 = 0
+				progress.On("TooManyErrors").Return(func() error {
+					if atomic.AddInt64(&callCount, 1) > 1 {
+						return fmt.Errorf("too many errors")
+					}
+					return nil
+				})
 
-				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/one.json", "").
-					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+				progress.On("HasDirPathFailedCreation", mock.MatchedBy(func(path string) bool {
+					return path == "dashboards/one.json" || path == "dashboards/two.json" || path == "dashboards/three.json"
+				})).Return(false).Maybe()
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionCreated,
-					Path:   "dashboards/one.json",
-					Name:   "test-dashboard",
-					Kind:   "Dashboard",
-					Group:  "dashboards",
-				}).Return()
+				repoResources.On("WriteResourceFromFile", mock.Anything, mock.MatchedBy(func(path string) bool {
+					return path == "dashboards/one.json" || path == "dashboards/two.json" || path == "dashboards/three.json"
+				}), "").Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil).Maybe()
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionCreated &&
+						(result.Path == "dashboards/one.json" || result.Path == "dashboards/two.json" || result.Path == "dashboards/three.json")
+				})).Return().Maybe()
 			},
 			expectedError: "too many errors",
 		},
@@ -230,6 +239,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
@@ -254,6 +264,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
@@ -280,6 +291,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
@@ -304,6 +316,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
@@ -330,6 +343,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "one/two/three/").Return("some-folder", nil)
 				progress.On("Record", mock.Anything, jobs.JobResourceResult{
@@ -352,6 +366,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
 				repoResources.On(
 					"EnsureFolderPathExist",
@@ -576,6 +591,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
 
 				scheme := runtime.NewScheme()
 				require.NoError(t, metav1.AddMetaToScheme(scheme))
@@ -635,6 +651,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
 
 				scheme := runtime.NewScheme()
 				require.NoError(t, metav1.AddMetaToScheme(scheme))
@@ -679,6 +696,40 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				})).Return()
 			},
 		},
+		{
+			name:        "operation timeout after 15 seconds",
+			description: "Should record timeout error when operation takes longer than 15 seconds",
+			changes: []ResourceFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "dashboards/slow.json",
+				},
+			},
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+				progress.On("TooManyErrors").Return(nil)
+				progress.On("HasDirPathFailedCreation", "dashboards/slow.json").Return(false)
+
+				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/slow.json", "").
+					Run(func(args mock.Arguments) {
+						ctx := args.Get(0).(context.Context)
+						select {
+						case <-ctx.Done():
+							return
+						case <-time.After(20 * time.Second):
+							return
+						}
+					}).
+					Return("", schema.GroupVersionKind{}, context.DeadlineExceeded)
+
+				// applyChange records the error from WriteResourceFromFile
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action == repository.FileActionCreated &&
+						result.Path == "dashboards/slow.json" &&
+						result.Error != nil &&
+						result.Error.Error() == "writing resource from file dashboards/slow.json: context deadline exceeded"
+				})).Return().Once()
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -701,7 +752,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			})
 
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService())
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 			} else {

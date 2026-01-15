@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
+	"k8s.io/client-go/util/flowcontrol"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -35,7 +36,6 @@ import (
 type provisioningControllerConfig struct {
 	provisioningClient  *client.Clientset
 	resyncInterval      time.Duration
-	repoFactory         repository.Factory
 	unified             resources.ResourceStore
 	clients             resources.ClientFactory
 	tokenExchangeClient *authn.TokenExchangeClient
@@ -120,21 +120,12 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 			return authrt.NewRoundTripper(tokenExchangeClient, rt, provisioning.GROUP)
 		}),
 		TLSClientConfig: tlsConfig,
+		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
 
 	provisioningClient, err := client.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
-	}
-
-	decrypter, err := setupDecrypter(cfg, tracer, tokenExchangeClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
-	}
-
-	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient, registry)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
 	}
 
 	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
@@ -166,14 +157,25 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	}
 	configProviders := make(map[string]apiserver.RestConfigProvider)
 
+	tlsConfigForTransport, err := rest.TLSConfigFor(&rest.Config{TLSClientConfig: tlsConfig})
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert TLS config for transport: %w", err)
+	}
+
 	for group, url := range apiServerURLs {
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
 			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-				return authrt.NewRoundTripper(tokenExchangeClient, rt, group)
+				return authrt.NewRoundTripper(tokenExchangeClient, rt, group, authrt.ExtraAudience(provisioning.GROUP))
 			}),
-			TLSClientConfig: tlsConfig,
+			Transport: &http.Transport{
+				MaxConnsPerHost:     100,
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 100,
+				TLSClientConfig:     tlsConfigForTransport,
+			},
+			RateLimiter: flowcontrol.NewFakeAlwaysRateLimiter(),
 		}
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
@@ -182,7 +184,6 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 
 	return &provisioningControllerConfig{
 		provisioningClient:  provisioningClient,
-		repoFactory:         repoFactory,
 		unified:             unified,
 		clients:             clients,
 		resyncInterval:      operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
@@ -311,6 +312,7 @@ func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient
 		tracer,
 		address,
 		secretsTls,
+		secretsSec.Key("grpc_client_load_balancing").MustBool(false),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create decrypt service: %w", err)

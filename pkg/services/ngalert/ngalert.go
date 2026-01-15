@@ -10,10 +10,11 @@ import (
 	notificationHistorian "github.com/grafana/alerting/notify/historian"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/alerting/notify/nfstatus"
-	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -193,8 +194,11 @@ func (ng *AlertNG) init() error {
 	var opts []notifier.Option
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
 	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
@@ -209,6 +213,9 @@ func (ng *AlertNG) init() error {
 			SkipVerify:     ng.Cfg.Smtp.SkipVerify,
 			StaticHeaders:  ng.Cfg.Smtp.StaticHeaders,
 		}
+		runtimeConfig := remoteClient.RuntimeConfig{
+			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
+		}
 
 		cfg := remote.AlertmanagerConfig{
 			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
@@ -218,9 +225,10 @@ func (ng *AlertNG) init() error {
 			ExternalURL:       ng.Cfg.AppURL,
 			SmtpConfig:        smtpCfg,
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
+			RuntimeConfig:     runtimeConfig,
 		}
-		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
-			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid, ng.FeatureToggles)
+		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, invalidReceiverAction notifier.InvalidReceiversAction) error {
+			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, invalidReceiverAction, ng.FeatureToggles)
 		}
 
 		// This function will be used by the MOA to create new Alertmanagers.
@@ -407,6 +415,8 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
@@ -418,6 +428,7 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		false, // imported resources are not exposed via provisioning APIs
 	)
 
 	// Provisioning
@@ -499,16 +510,10 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 		SQLStore: sqlStore,
 		Logger:   logger,
 	}
-
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using protobuf-based alert instance store")
 		instanceStore = protoInstanceStore
-		// If FlagAlertingSaveStateCompressed is enabled, ProtoInstanceDBStore is used,
-		// which functions differently from InstanceDBStore. FlagAlertingSaveStatePeriodic is
-		// not applicable to ProtoInstanceDBStore, so a warning is logged if it is set.
-		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
-			logger.Warn("alertingSaveStatePeriodic is not used when alertingSaveStateCompressed feature flag enabled")
-		}
 	} else {
 		logger.Info("Using simple database alert instance store")
 		instanceStore = simpleInstanceStore
@@ -520,10 +525,18 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
 	logger := log.New("ngalert.state.manager.persist")
 	var statePersister state.StatePersister
-
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using rule state persister")
-		statePersister = state.NewSyncRuleStatePersisiter(logger, cfg)
+
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+			logger.Info("Compressed storage with periodic save enabled")
+			ticker := clock.New().Ticker(cfg.StatePeriodicSaveInterval)
+			statePersister = state.NewSyncRuleStatePersisiter(logger, ticker, cfg)
+		} else {
+			logger.Info("Compressed storage FullSync disabled")
+			statePersister = state.NewSyncRuleStatePersisiter(logger, nil, cfg)
+		}
 	} else if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
 		logger.Info("Using periodic state persister")
 		ticker := clock.New().Ticker(uaCfg.StatePeriodicSaveInterval)
@@ -666,6 +679,8 @@ func configureHistorianBackend(
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
+		// Use external labels from state history config
+		lcfg.ExternalLabels = cfg.ExternalLabels
 		req := lokiclient.NewRequester()
 		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "loki"})
 		lokiBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
@@ -709,6 +724,7 @@ func configureNotificationHistorian(
 	l log.Logger,
 	tracer tracing.Tracer,
 ) (nfstatus.NotificationHistorian, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNotificationHistory) || !cfg.Enabled {
 		met.Info.Set(0)
 		return nil, nil

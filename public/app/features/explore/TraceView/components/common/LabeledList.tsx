@@ -28,6 +28,7 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
       listStyle: 'none',
       margin: 0,
       padding: 0,
+      fontSize: theme.typography.size.sm,
       ...(divider
         ? {
             marginRight: '-8px',
@@ -49,12 +50,14 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
     }),
     LabeledListLabel: css({
       label: 'LabeledListLabel',
-      color: theme.isLight ? '#999' : '#666',
+      color: theme.colors.text.secondary,
       marginRight: '0.25rem',
     }),
     LabeledListValue: css({
       label: 'LabeledListValue',
       marginRight: divider ? undefined : '0.55rem',
+      wordWrap: 'break-word',
+      wordBreak: 'break-all',
     }),
     LabeledListIcon: css({
       label: 'LabeledListIcon',
@@ -64,7 +67,7 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
     LabeledListServiceLine: css({
       label: 'LabeledListServiceLine',
       display: 'inline-block',
-      width: '1.25rem',
+      width: '1rem',
       height: '0.35rem',
       marginRight: '0.5rem',
       verticalAlign: 'middle',
@@ -93,7 +96,7 @@ export default function LabeledList(props: LabeledListProps) {
             {label === 'Service:' && (
               <div className={styles.LabeledListServiceLine} style={{ backgroundColor: color }} />
             )}
-            {icon && <Icon name={icon} className={styles.LabeledListIcon} />}
+            {icon && <Icon name={icon} className={styles.LabeledListIcon} size="sm" />}
             <span className={styles.LabeledListLabel}>{label}</span>
             <strong className={styles.LabeledListValue}>{value}</strong>
           </li>

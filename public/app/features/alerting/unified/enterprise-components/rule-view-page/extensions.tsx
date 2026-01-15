@@ -4,6 +4,10 @@ import { FeatureState, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FeatureBadge, useStyles2 } from '@grafana/ui';
 
+import { useAlertRule } from '../../components/rule-viewer/RuleContext';
+import { EnrichmentAction, useEnrichmentAbility } from '../../hooks/useAbilities';
+import { rulerRuleType } from '../../utils/rules';
+
 type SetActiveTab = (tab: string) => void;
 
 type RuleViewTabBuilderArgs = {
@@ -11,20 +15,50 @@ type RuleViewTabBuilderArgs = {
   setActiveTab: SetActiveTab;
 };
 
-type RuleViewTabBuilder = (args: RuleViewTabBuilderArgs) => NavModelItem;
+type RuleViewTabBuilder = (args: RuleViewTabBuilderArgs) => NavModelItem | null;
+type RuleViewTabBuilderConfig = {
+  filterOnlyGrafanaAlertRules: boolean;
+  ruleViewTabBuilder: RuleViewTabBuilder;
+};
 
-const ruleViewTabBuilders: RuleViewTabBuilder[] = [];
+const ruleViewTabBuilders: RuleViewTabBuilderConfig[] = [];
 
-export function registerRuleViewTab(builder: RuleViewTabBuilder) {
-  ruleViewTabBuilders.push(builder);
+function registerRuleViewTab(builder: RuleViewTabBuilder) {
+  ruleViewTabBuilders.push({
+    filterOnlyGrafanaAlertRules: true,
+    ruleViewTabBuilder: builder,
+  });
 }
 
-export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModelItem[] {
-  return ruleViewTabBuilders.map((builder) => builder(args));
+export function getRuleViewExtensionTabs(args: RuleViewTabBuilderArgs, isGrafanaAlertRule: boolean): NavModelItem[] {
+  return ruleViewTabBuilders
+    .filter((config) => {
+      // Check if rule type matches requirement
+      if (config.filterOnlyGrafanaAlertRules && !isGrafanaAlertRule) {
+        return false;
+      }
+      return true;
+    })
+    .map((config) => config.ruleViewTabBuilder(args))
+    .filter((item): item is NavModelItem => item !== null);
+}
+
+export function useRuleViewExtensionTabs(args: RuleViewTabBuilderArgs): NavModelItem[] {
+  const { rule } = useAlertRule();
+  const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rule.rulerRule);
+
+  return getRuleViewExtensionTabs(args, isGrafanaAlertRule);
 }
 
 export function addEnrichmentSection() {
   registerRuleViewTab(({ activeTab, setActiveTab }) => {
+    const [, canReadEnrichments] = useEnrichmentAbility(EnrichmentAction.Read);
+
+    // Return null if user doesn't have permission (will be filtered out)
+    if (!canReadEnrichments) {
+      return null;
+    }
+
     const tabId = 'enrichment';
     return {
       text: t('alerting.use-page-nav.page-nav.text.enrichment', 'Alert enrichment'),

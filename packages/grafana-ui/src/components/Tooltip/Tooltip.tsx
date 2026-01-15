@@ -10,7 +10,7 @@ import {
   useInteractions,
   safePolygon,
 } from '@floating-ui/react';
-import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState } from 'react';
+import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState, type JSX } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,6 +34,9 @@ export interface TooltipProps {
   interactive?: boolean;
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-tooltip--docs
+ */
 export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
   ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);

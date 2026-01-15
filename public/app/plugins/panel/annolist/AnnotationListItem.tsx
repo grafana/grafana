@@ -3,7 +3,7 @@ import { MouseEvent } from 'react';
 
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
+import { Card, RenderUserContentAsHTML, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { Options } from './panelcfg.gen';
 
@@ -30,7 +30,7 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
   const showTimeStampEnd = timeEnd && timeEnd !== time && showTime;
 
   return (
-    <Card className={styles.card} onClick={onItemClick}>
+    <Card noMargin className={styles.card} onClick={onItemClick}>
       <Card.Heading>
         <RenderUserContentAsHTML
           className={styles.heading}

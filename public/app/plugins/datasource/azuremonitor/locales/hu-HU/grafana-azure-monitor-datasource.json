@@ -13,7 +13,7 @@
       "label-resource-group": "Erőforráscsoport",
       "label-resource-name": "Erőforrásnév",
       "label-resource-number": "Erőforrás {{resourceNum}}",
-      "label-resource-uri": "Erőforrás-URI-k ",
+      "label-resource-uri": "",
       "label-subscription": "Előfizetés",
       "placeholder-resource-name": "név",
       "tooltip-region": "Az erőforrás kódterülete. Egy erőforrás esetén nem kötelező, de több erőforrás kiválasztásakor kötelező.",
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure-naplók előbeállításos lekérdezése gomb",
       "body-switching-to-builder": "A szerkesztő módra váltás elveti az aktuális KQL-lekérdezést és törli a KQL-szerkesztőben lévő tartalmat. Biztosan folytatja?",
-      "body-switching-to-kql": "A KQL-re váltás elveti az aktuális szerkesztő beállításait. Biztosan folytatja?",
       "button-kick-start-your-query": "Előbeállításos lekérdezés",
       "button-run-query": "Lekérdezés futtatása",
       "confirmText-switch-to": "Váltás erre: {{newMode}}",

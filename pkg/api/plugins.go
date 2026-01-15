@@ -13,7 +13,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
@@ -22,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -144,6 +143,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			AngularDetected: pluginDef.Angular.Detected,
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 			listItem.IAM = pluginDef.IAM
 		}
@@ -209,7 +209,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		SignatureOrg:     plugin.SignatureOrg,
 		SecureJsonFields: map[string]bool{},
 		AngularDetected:  plugin.Angular.Detected,
-		LoadingStrategy:  hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+		LoadingStrategy:  plugin.LoadingStrategy,
 		Extensions:       plugin.Extensions,
 		Translations:     plugin.Translations,
 	}
@@ -354,7 +354,7 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 	}
 
 	// prepend slash for cleaning relative paths
-	requestedFile, err := util.CleanRelativePath(web.Params(c.Req)["*"])
+	requestedFile, err := plugins.CleanRelativePath(web.Params(c.Req)["*"])
 	if err != nil {
 		// slash is prepended above therefore this is not expected to fail
 		c.JsonApiErr(500, "Failed to clean relative file path", err)
@@ -490,6 +490,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 		// This is a non-blocking function that verifies that the installer has
 		// the permissions that the plugin requests to have on Grafana.
@@ -596,9 +597,9 @@ func mdFilepath(mdFilename string) (string, error) {
 	fileExt := filepath.Ext(mdFilename)
 	switch fileExt {
 	case "md":
-		return util.CleanRelativePath(mdFilename)
+		return plugins.CleanRelativePath(mdFilename)
 	case "":
-		return util.CleanRelativePath(fmt.Sprintf("%s.md", mdFilename))
+		return plugins.CleanRelativePath(fmt.Sprintf("%s.md", mdFilename))
 	default:
 		return "", ErrUnexpectedFileExtension
 	}

@@ -2,7 +2,6 @@ package models_test
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 	"github.com/grafana/grafana/pkg/promlib/models"
 )
@@ -48,95 +48,6 @@ func TestParse(t *testing.T) {
 		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, true)
 		require.NoError(t, err)
 		require.Equal(t, false, res.ExemplarQuery)
-	})
-
-	t.Run("parsing query model with step", func(t *testing.T) {
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(12 * time.Hour),
-		}
-
-		q := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"refId": "A"
-		}`, timeRange, time.Duration(1)*time.Minute)
-
-		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, time.Second*30, res.Step)
-	})
-
-	t.Run("parsing query model without step parameter", func(t *testing.T) {
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(1 * time.Hour),
-		}
-
-		q := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"intervalFactor": 1,
-			"refId": "A"
-		}`, timeRange, time.Duration(1)*time.Minute)
-
-		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, time.Second*15, res.Step)
-	})
-
-	t.Run("parsing query model with high intervalFactor", func(t *testing.T) {
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(48 * time.Hour),
-		}
-
-		q := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"intervalFactor": 10,
-			"refId": "A"
-		}`, timeRange, time.Duration(1)*time.Minute)
-
-		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, time.Minute*20, res.Step)
-	})
-
-	t.Run("parsing query model with low intervalFactor", func(t *testing.T) {
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(48 * time.Hour),
-		}
-
-		q := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"intervalFactor": 1,
-			"refId": "A"
-		}`, timeRange, time.Duration(1)*time.Minute)
-
-		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, time.Minute*2, res.Step)
-	})
-
-	t.Run("parsing query model specified scrape-interval in the data source", func(t *testing.T) {
-		timeRange := backend.TimeRange{
-			From: now,
-			To:   now.Add(48 * time.Hour),
-		}
-
-		q := queryContext(`{
-			"expr": "go_goroutines",
-			"format": "time_series",
-			"intervalFactor": 1,
-			"refId": "A"
-		}`, timeRange, time.Duration(1)*time.Minute)
-
-		res, err := models.Parse(context.Background(), log.New(), span, q, "240s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, time.Minute*4, res.Step)
 	})
 
 	t.Run("parsing query model with $__interval variable", func(t *testing.T) {
@@ -176,7 +87,7 @@ func TestParse(t *testing.T) {
 
 		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
-		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
+		require.Equal(t, "rate(ALERTS{job=\"test\" [1m]})", res.Expr)
 	})
 
 	t.Run("parsing query model with $__interval_ms variable", func(t *testing.T) {
@@ -533,232 +444,6 @@ func TestParse(t *testing.T) {
 	})
 }
 
-func TestRateInterval(t *testing.T) {
-	_, span := tracer.Start(context.Background(), "operation")
-	defer span.End()
-	type args struct {
-		expr             string
-		interval         string
-		intervalMs       int64
-		dsScrapeInterval string
-		timeRange        *backend.TimeRange
-	}
-	tests := []struct {
-		name string
-		args args
-		want *models.Query
-	}{
-		{
-			name: "intervalMs 100s, minStep override 150s and scrape interval 30s",
-			args: args{
-				expr:             "rate(rpc_durations_seconds_count[$__rate_interval])",
-				interval:         "150s",
-				intervalMs:       100000,
-				dsScrapeInterval: "30s",
-			},
-			want: &models.Query{
-				Expr: "rate(rpc_durations_seconds_count[10m0s])",
-				Step: time.Second * 150,
-			},
-		},
-		{
-			name: "intervalMs 120s, minStep override 150s and ds scrape interval 30s",
-			args: args{
-				expr:             "rate(rpc_durations_seconds_count[$__rate_interval])",
-				interval:         "150s",
-				intervalMs:       120000,
-				dsScrapeInterval: "30s",
-			},
-			want: &models.Query{
-				Expr: "rate(rpc_durations_seconds_count[10m0s])",
-				Step: time.Second * 150,
-			},
-		},
-		{
-			name: "intervalMs 120s, minStep auto (interval not overridden) and ds scrape interval 30s",
-			args: args{
-				expr:             "rate(rpc_durations_seconds_count[$__rate_interval])",
-				interval:         "120s",
-				intervalMs:       120000,
-				dsScrapeInterval: "30s",
-			},
-			want: &models.Query{
-				Expr: "rate(rpc_durations_seconds_count[8m0s])",
-				Step: time.Second * 120,
-			},
-		},
-		{
-			name: "interval and minStep are automatically calculated and ds scrape interval 30s and time range 1 hour",
-			args: args{
-				expr:             "rate(rpc_durations_seconds_count[$__rate_interval])",
-				interval:         "30s",
-				intervalMs:       30000,
-				dsScrapeInterval: "30s",
-				timeRange: &backend.TimeRange{
-					From: now,
-					To:   now.Add(1 * time.Hour),
-				},
-			},
-			want: &models.Query{
-				Expr: "rate(rpc_durations_seconds_count[2m0s])",
-				Step: time.Second * 30,
-			},
-		},
-		{
-			name: "minStep is $__rate_interval and ds scrape interval 30s and time range 1 hour",
-			args: args{
-				expr:             "rate(rpc_durations_seconds_count[$__rate_interval])",
-				interval:         "$__rate_interval",
-				intervalMs:       30000,
-				dsScrapeInterval: "30s",
-				timeRange: &backend.TimeRange{
-					From: now,
-					To:   now.Add(1 * time.Hour),
-				},
-			},
-			want: &models.Query{
-				Expr: "rate(rpc_durations_seconds_count[2m0s])",
-				Step: time.Minute * 2,
-			},
-		},
-		{
-			name: "minStep is $__rate_interval and ds scrape interval 30s and time range 2 days",
-			args: args{
-				expr:             "rate(rpc_durations_seconds_count[$__rate_interval])",
-				interval:         "$__rate_interval",
-				intervalMs:       120000,
-				dsScrapeInterval: "30s",
-				timeRange: &backend.TimeRange{
-					From: now,
-					To:   now.Add(2 * 24 * time.Hour),
-				},
-			},
-			want: &models.Query{
-				Expr: "rate(rpc_durations_seconds_count[2m30s])",
-				Step: time.Second * 150,
-			},
-		},
-		{
-			name: "minStep is $__rate_interval and ds scrape interval 15s and time range 2 days",
-			args: args{
-				expr:             "rate(rpc_durations_seconds_count[$__rate_interval])",
-				interval:         "$__interval",
-				intervalMs:       120000,
-				dsScrapeInterval: "15s",
-				timeRange: &backend.TimeRange{
-					From: now,
-					To:   now.Add(2 * 24 * time.Hour),
-				},
-			},
-			want: &models.Query{
-				Expr: "rate(rpc_durations_seconds_count[8m0s])",
-				Step: time.Second * 120,
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			q := mockQuery(tt.args.expr, tt.args.interval, tt.args.intervalMs, tt.args.timeRange)
-			q.MaxDataPoints = 12384
-			res, err := models.Parse(context.Background(), log.New(), span, q, tt.args.dsScrapeInterval, intervalCalculator, false)
-			require.NoError(t, err)
-			require.Equal(t, tt.want.Expr, res.Expr)
-			require.Equal(t, tt.want.Step, res.Step)
-		})
-	}
-
-	t.Run("minStep is auto and ds scrape interval 30s and time range 1 hour", func(t *testing.T) {
-		query := backend.DataQuery{
-			RefID:         "G",
-			QueryType:     "",
-			MaxDataPoints: 1613,
-			Interval:      30 * time.Second,
-			TimeRange: backend.TimeRange{
-				From: now,
-				To:   now.Add(1 * time.Hour),
-			},
-			JSON: []byte(`{
-			"datasource":{"type":"prometheus","uid":"zxS5e5W4k"},
-			"datasourceId":38,
-			"editorMode":"code",
-			"exemplar":false,
-			"expr":"sum(rate(process_cpu_seconds_total[$__rate_interval]))",
-			"instant":false,
-			"interval":"",
-			"intervalMs":30000,
-			"key":"Q-f96b6729-c47a-4ea8-8f71-a79774cf9bd5-0",
-			"legendFormat":"__auto",
-			"maxDataPoints":1613,
-			"range":true,
-			"refId":"G",
-			"requestId":"1G",
-			"utcOffsetSec":3600
-		}`),
-		}
-		res, err := models.Parse(context.Background(), log.New(), span, query, "30s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, "sum(rate(process_cpu_seconds_total[2m0s]))", res.Expr)
-		require.Equal(t, 30*time.Second, res.Step)
-	})
-
-	t.Run("minStep is auto and ds scrape interval 15s and time range 5 minutes", func(t *testing.T) {
-		query := backend.DataQuery{
-			RefID:         "A",
-			QueryType:     "",
-			MaxDataPoints: 1055,
-			Interval:      15 * time.Second,
-			TimeRange: backend.TimeRange{
-				From: now,
-				To:   now.Add(5 * time.Minute),
-			},
-			JSON: []byte(`{
-			"datasource": {
-		        "type": "prometheus",
-		        "uid": "2z9d6ElGk"
-		    },
-		    "editorMode": "code",
-		    "expr": "sum(rate(cache_requests_total[$__rate_interval]))",
-		    "legendFormat": "__auto",
-		    "range": true,
-		    "refId": "A",
-		    "exemplar": false,
-		    "requestId": "1A",
-		    "utcOffsetSec": 0,
-		    "interval": "",
-		    "datasourceId": 508,
-		    "intervalMs": 15000,
-		    "maxDataPoints": 1055
-		}`),
-		}
-		res, err := models.Parse(context.Background(), log.New(), span, query, "15s", intervalCalculator, false)
-		require.NoError(t, err)
-		require.Equal(t, "sum(rate(cache_requests_total[1m0s]))", res.Expr)
-		require.Equal(t, 15*time.Second, res.Step)
-	})
-}
-
-func mockQuery(expr string, interval string, intervalMs int64, timeRange *backend.TimeRange) backend.DataQuery {
-	if timeRange == nil {
-		timeRange = &backend.TimeRange{
-			From: now,
-			To:   now.Add(1 * time.Hour),
-		}
-	}
-	return backend.DataQuery{
-		Interval: time.Duration(intervalMs) * time.Millisecond,
-		JSON: []byte(fmt.Sprintf(`{
-			"expr": "%s",
-			"format": "time_series",
-			"interval": "%s",
-			"intervalMs": %v,
-			"intervalFactor": 1,
-			"refId": "A"
-		}`, expr, interval, intervalMs)),
-		TimeRange: *timeRange,
-		RefID:     "A",
-	}
-}
-
 func queryContext(json string, timeRange backend.TimeRange, queryInterval time.Duration) backend.DataQuery {
 	return backend.DataQuery{
 		Interval:  queryInterval,
@@ -768,11 +453,6 @@ func queryContext(json string, timeRange backend.TimeRange, queryInterval time.D
 	}
 }
 
-// AlignTimeRange aligns query range to step and handles the time offset.
-// It rounds start and end down to a multiple of step.
-// Prometheus caching is dependent on the range being aligned with the step.
-// Rounding to the step can significantly change the start and end of the range for larger steps, i.e. a week.
-// In rounding the range to a 1w step the range will always start on a Thursday.
 func TestAlignTimeRange(t *testing.T) {
 	type args struct {
 		t      time.Time
@@ -1305,6 +985,40 @@ func TestParseComplexScenariosWithFilters(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, `{__name__="http_requests_total",namespace="monitoring"}`, res.Expr)
 	})
+}
+
+func TestParseNumericFormatError(t *testing.T) {
+	_, span := tracer.Start(context.Background(), "operation")
+	defer span.End()
+
+	timeRange := backend.TimeRange{
+		From: now,
+		To:   now.Add(12 * time.Hour),
+	}
+
+	// Test case where format is sent as a number instead of string
+	queryJson := `{
+		"expr": "up",
+		"format": 0,
+		"refId": "A"
+	}`
+
+	q := backend.DataQuery{
+		JSON:      []byte(queryJson),
+		TimeRange: timeRange,
+		RefID:     "A",
+	}
+
+	res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+
+	require.Error(t, err)
+	require.Nil(t, res)
+
+	require.True(t, backend.IsDownstreamError(err))
+
+	// Error message should indicate unmarshaling issue
+	require.Contains(t, err.Error(), "error unmarshaling query")
+	require.Contains(t, err.Error(), "cannot unmarshal number")
 }
 
 func TestQueryTypeDefinitions(t *testing.T) {

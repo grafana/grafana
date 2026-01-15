@@ -29,6 +29,7 @@
   "unicons/bookmark",
   "unicons/book-open",
   "unicons/brackets-curly",
+  "unicons/brain",
   "unicons/bug",
   "unicons/building",
   "unicons/calculator-alt",
@@ -192,5 +193,7 @@
   "unicons/window-grid",
   "unicons/ban",
   "unicons/git",
-  "unicons/bitbucket"
+  "unicons/bitbucket",
+  "unicons/tachometer-fast",
+  "unicons/tachometer-empty"
 ]

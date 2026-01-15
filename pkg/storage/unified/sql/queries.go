@@ -38,10 +38,8 @@ var (
 	sqlResourceList                     = mustTemplate("resource_list.sql")
 	sqlResourceHistoryList              = mustTemplate("resource_history_list.sql")
 	sqlResourceHistoryListModifiedSince = mustTemplate("resource_history_list_since_modified.sql")
-	sqlResourceUpdateRV                 = mustTemplate("resource_update_rv.sql")
 	sqlResourceHistoryRead              = mustTemplate("resource_history_read.sql")
 	sqlResourceHistoryReadLatestRV      = mustTemplate("resource_history_read_latest_rv.sql")
-	sqlResourceHistoryUpdateRV          = mustTemplate("resource_history_update_rv.sql")
 	sqlResourceHistoryInsert            = mustTemplate("resource_history_insert.sql")
 	sqlResourceHistoryPoll              = mustTemplate("resource_history_poll.sql")
 	sqlResourceHistoryGet               = mustTemplate("resource_history_get.sql")
@@ -51,16 +49,14 @@ var (
 	sqlResourceInsertFromHistory        = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
-	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
-	sqlResourceVersionUpdate = mustTemplate("resource_version_update.sql")
-	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
-	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
+	sqlResourceVersionList = mustTemplate("resource_version_list.sql")
 
 	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
 	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
 
 	sqlResourceLastImportTimeInsert = mustTemplate("resource_last_import_time_insert.sql")
 	sqlResourceLastImportTimeQuery  = mustTemplate("resource_last_import_time_query.sql")
+	sqlResourceLastImportTimeDelete = mustTemplate("resource_last_import_time_delete.sql")
 )
 
 // TxOptions.
@@ -83,6 +79,7 @@ type sqlResourceRequest struct {
 	WriteEvent resource.WriteEvent
 	Generation int64
 	Folder     string
+	KeyPath    string
 
 	// Useful when batch writing
 	ResourceVersion int64
@@ -363,57 +360,9 @@ func (r sqlResourceBlobQueryRequest) Validate() error {
 	return nil
 }
 
-// update RV
-
-type sqlResourceUpdateRVRequest struct {
-	sqltemplate.SQLTemplate
-	GUIDToRV map[string]int64
-}
-
-func (r sqlResourceUpdateRVRequest) Validate() error {
-	return nil // TODO
-}
-
-// resource_version table requests.
-type resourceVersionResponse struct {
-	ResourceVersion int64
-	CurrentEpoch    int64
-}
-
-func (r *resourceVersionResponse) Results() (*resourceVersionResponse, error) {
-	return r, nil
-}
-
 type groupResourceVersion struct {
 	Group, Resource string
 	ResourceVersion int64
-}
-
-type sqlResourceVersionUpsertRequest struct {
-	sqltemplate.SQLTemplate
-	Group, Resource string
-	ResourceVersion int64
-}
-
-func (r sqlResourceVersionUpsertRequest) Validate() error {
-	return nil // TODO
-}
-
-type sqlResourceVersionGetRequest struct {
-	sqltemplate.SQLTemplate
-	Group, Resource string
-	ReadOnly        bool
-	Response        *resourceVersionResponse
-}
-
-func (r sqlResourceVersionGetRequest) Validate() error {
-	return nil // TODO
-}
-func (r sqlResourceVersionGetRequest) Results() (*resourceVersionResponse, error) {
-	return &resourceVersionResponse{
-		ResourceVersion: r.Response.ResourceVersion,
-		CurrentEpoch:    r.Response.CurrentEpoch,
-	}, nil
 }
 
 type sqlResourceVersionListRequest struct {
@@ -487,5 +436,14 @@ type sqlResourceLastImportTimeQueryRequest struct {
 }
 
 func (r *sqlResourceLastImportTimeQueryRequest) Validate() error {
+	return nil
+}
+
+type sqlResourceLastImportTimeDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	Threshold time.Time
+}
+
+func (r *sqlResourceLastImportTimeDeleteRequest) Validate() error {
 	return nil
 }

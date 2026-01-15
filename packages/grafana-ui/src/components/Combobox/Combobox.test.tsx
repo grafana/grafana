@@ -6,6 +6,7 @@ import { Field } from '../Forms/Field';
 
 import { Combobox } from './Combobox';
 import { ComboboxOption } from './types';
+import { DEBOUNCE_TIME_MS } from './useOptions';
 
 // Mock data for the Combobox options
 const options: ComboboxOption[] = [
@@ -529,8 +530,8 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await user.click(input);
 
+      await user.type(input, 'fir');
       await act(async () => {
-        await user.type(input, 'fir');
         jest.advanceTimersByTime(500); // Custom value while typing
       });
 
@@ -603,8 +604,8 @@ describe('Combobox', () => {
         const input = screen.getByRole('combobox');
         await user.click(input);
 
+        await user.type(input, 'Opt');
         await act(async () => {
-          await user.type(input, 'Opt');
           jest.advanceTimersByTime(500); // Custom value while typing
         });
 
@@ -612,6 +613,23 @@ describe('Combobox', () => {
 
         expect(onChangeHandler).not.toHaveBeenCalled();
         expect(input).toHaveValue('Option 1');
+      });
+
+      it('shows loading message', async () => {
+        const loadingMessage = 'Loading options...';
+        const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+        render(<Combobox options={asyncOptions} onChange={onChangeHandler} />);
+
+        const input = screen.getByRole('combobox');
+        await user.click(input);
+
+        await act(async () => jest.advanceTimersByTime(0));
+
+        expect(await screen.findByText(loadingMessage)).toBeInTheDocument();
+
+        await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+        expect(screen.queryByText(loadingMessage)).not.toBeInTheDocument();
       });
     });
   });

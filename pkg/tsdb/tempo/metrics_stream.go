@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
-	"google.golang.org/grpc/metadata"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/traceql"
+	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -36,7 +35,7 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 		response.Error = fmt.Errorf("error unmarshaling backend query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("error unmarshaling backend query model: %v", err)
 	}
 
 	tempoQuery := &PartialTempoQuery{}
@@ -45,7 +44,7 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	var qrr *tempopb.QueryRangeRequest
@@ -54,20 +53,17 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	if qrr.GetQuery() == "" {
-		return fmt.Errorf("query is empty")
+		return backend.DownstreamErrorf("tempo search query cannot be empty")
 	}
 
 	qrr.Start = uint64(backendQuery.TimeRange.From.UnixNano())
 	qrr.End = uint64(backendQuery.TimeRange.To.UnixNano())
 
-	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
-	// changes or updates, so we have to get it from context.
-	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
-	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
+	ctx = stream_utils.AppendHeadersToOutgoingContext(ctx, req)
 
 	if isInstantQuery(tempoQuery.MetricsQueryType) {
 		instantQuery := &tempopb.QueryInstantRequest{
@@ -81,6 +77,9 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			s.logger.Error("Error Search()", "err", err)
+			if backend.IsDownstreamHTTPError(err) {
+				return backend.DownstreamError(err)
+			}
 			return err
 		}
 
@@ -92,6 +91,9 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("Error Search()", "err", err)
+		if backend.IsDownstreamHTTPError(err) {
+			return backend.DownstreamError(err)
+		}
 		return err
 	}
 

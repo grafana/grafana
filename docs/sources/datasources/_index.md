@@ -71,9 +71,8 @@ After you add and configure a data source, you can use it as an input for many o
 
 This documentation describes how to manage data sources in general,
 and how to configure or query the built-in data sources.
-For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
 
-To develop a custom plugin, refer to [Create a data source plugin](#create-a-data-source-plugin).
+For other available plugins, refer to the list of [documented plugins](https://grafana.com/docs/plugins/) or browse the [Plugin catalog](/grafana/plugins/). To develop a custom plugin, refer to [Create a data source plugin](#create-a-data-source-plugin).
 
 ## Manage data sources
 
@@ -112,6 +111,12 @@ For example, this video demonstrates the visual Prometheus query builder:
 {{< vimeo 720004179 >}}
 
 For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data](ref:query-transform-data).
+
+## Build a dashboard from the data source
+
+After you've configured a data source, you can start creating a dashboard directly from it, by clicking the **Build a dashboard** button.
+
+For more information, refer to [Begin dashboard creation from data source configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#begin-dashboard-creation-from-connections).
 
 ## Special data sources
 

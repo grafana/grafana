@@ -20,20 +20,21 @@ import {
   RowPanel,
   VariableType,
 } from '@grafana/schema';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
+import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
@@ -810,41 +811,6 @@ describe('transformSaveModelToScene', () => {
       expect((libPanelBehavior as LibraryPanelBehavior).state.name).toEqual(panel.libraryPanel.name);
       expect(gridItem.state.body.state.title).toEqual(panel.title);
     });
-
-    describe('header actions', () => {
-      beforeEach(() => {
-        jest.clearAllMocks();
-      });
-
-      it('should include headerActions when timeComparison feature toggle is enabled', () => {
-        config.featureToggles.timeComparison = true;
-
-        const panel = {
-          title: 'Test Panel',
-          type: 'timeseries',
-          gridPos: { x: 0, y: 0, w: 12, h: 8 },
-        };
-
-        const { vizPanel } = buildGridItemForTest(panel);
-
-        expect(vizPanel.state.headerActions).toBeDefined();
-        expect(vizPanel.state.headerActions).toHaveLength(1);
-      });
-
-      it('should not include headerActions when timeComparison feature toggle is disabled', () => {
-        config.featureToggles.timeComparison = false;
-
-        const panel = {
-          title: 'Test Panel',
-          type: 'timeseries',
-          gridPos: { x: 0, y: 0, w: 12, h: 8 },
-        };
-
-        const { vizPanel } = buildGridItemForTest(panel);
-
-        expect(vizPanel.state.headerActions).toBeUndefined();
-      });
-    });
   });
 
   describe('Convert to new rows', () => {
@@ -857,10 +823,14 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('Should convert legacy rows to new rows', () => {
-      const scene = transformSaveModelToScene({
-        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
-        meta: {},
-      });
+      const scene = transformSaveModelToScene(
+        {
+          dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+          meta: {},
+        },
+        undefined,
+        getSceneCreationOptions()
+      );
 
       const layout = scene.state.body as RowsLayoutManager;
       const row1 = layout.state.rows[0];
@@ -892,10 +862,14 @@ describe('transformSaveModelToScene', () => {
     });
 
     it('Should convert legacy rows to new rows with free panels before first row', () => {
-      const scene = transformSaveModelToScene({
-        dashboard: rowsAfterFreePanels as DashboardDataDTO,
-        meta: {},
-      });
+      const scene = transformSaveModelToScene(
+        {
+          dashboard: rowsAfterFreePanels as DashboardDataDTO,
+          meta: {},
+        },
+        undefined,
+        getSceneCreationOptions()
+      );
 
       const layout = scene.state.body as RowsLayoutManager;
       const row1 = layout.state.rows[0];

@@ -185,7 +185,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Explore](/docs/grafana/<GRAFANA_VERSION>/explore/)
 - [Feature Toggles](/docs/grafana/<GRAFANA_VERSION>/administration/feature-toggles/)
 - [Folders](ref:dashboards-create-a-dashboard-folder)
-- [LDAP](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/ldap/)
+- [LDAP](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/ldap/)
 - [Library panels](ref:dashboards-manage-library-panels)
 - [Licenses](/docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license/)
 - [Organizations](/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/)

@@ -208,6 +208,11 @@ func (s *preferenceStorage) save(ctx context.Context, obj runtime.Object) (runti
 
 // Create implements rest.Creater.
 func (s *preferenceStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
 	return s.save(ctx, obj)
 }
 
@@ -221,6 +226,12 @@ func (s *preferenceStorage) Update(ctx context.Context, name string, objInfo res
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return nil, false, err
+	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, obj, old); err != nil {
+			return nil, false, err
+		}
 	}
 
 	obj, err = s.save(ctx, obj)

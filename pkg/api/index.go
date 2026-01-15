@@ -5,13 +5,16 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -59,6 +62,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
 		if !prefs.Cookies("analytics") {
 			settings.GoogleAnalytics4Id = ""
@@ -91,6 +95,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	var regionalFormat string
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
 		regionalFormat = "en"
 
@@ -184,12 +189,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                             setting.ApplicationName,
 		AppNameBodyClass:                    "app-grafana",
-		FavIcon:                             "public/img/fav32.png",
-		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
+		FavIcon:                             template.URL(assets.ContentDeliveryURL + "public/build/img/fav32.png"),            // #nosec G203
+		AppleTouchIcon:                      template.URL(assets.ContentDeliveryURL + "public/build/img/apple-touch-icon.png"), // #nosec G203
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		LoadingLogo:                         "public/img/grafana_icon.svg",
+		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
 	}
@@ -215,8 +220,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	data.NavTree.ApplyCostManagementIA()
-	data.NavTree.ApplyHelpVersion(data.Settings.BuildInfo.VersionString) // RunIndexDataHooks can modify the version string
 	data.NavTree.Sort()
 
 	return &data, nil
@@ -273,6 +276,11 @@ func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 	c, span := hs.injectSpan(c, "api.Index")
 	defer span.End()
 
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.htmlHandlerRequestsDuration.WithLabelValues("index"), time.Since(start).Seconds())
+	}()
+
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
@@ -286,6 +294,11 @@ func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusNotFound, "Not found", nil)
 		return
 	}
+
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.htmlHandlerRequestsDuration.WithLabelValues("not_found"), time.Since(start).Seconds())
+	}()
 
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
@@ -304,6 +317,7 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	if pref.IsValidThemeID(themePrefId) {
 		theme := pref.GetThemeByID(themePrefId)
 		// TODO refactor
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
 			return theme
 		}

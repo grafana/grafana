@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -23,6 +22,8 @@ import (
 	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/middleware"
+
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -32,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -53,18 +55,28 @@ func ProvideAuthZClient(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
+		return zanzanaClient, nil
 	}
 
 	// Provisioning uses mode 4 (read+write only to unified storage)
 	// For G12 launch, we can disable caching for this and find a more scalable solution soon
 	// most likely this would involve passing the RV (timestamp!) in each check method
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		authCfg.cacheTTL = 0
 	}
@@ -72,8 +84,8 @@ func ProvideAuthZClient(
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
+		if zanzanaEnabled {
+			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, err
 	default:
@@ -119,8 +131,8 @@ func ProvideAuthZClient(
 			authzlib.WithTracerClientOption(tracer),
 		)
 
-		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
+		if zanzanaEnabled {
+			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 		}
 
 		return rbacClient, nil
@@ -132,8 +144,22 @@ func ProvideAuthZClient(
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer, reg prometheus.Registerer,
 ) (authlib.AccessClient, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+
+	zanzanaClient, err := ProvideStandaloneZanzanaClient(cfg, features, reg)
+	if err != nil {
+		return nil, err
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
+		return zanzanaClient, nil
 	}
 
 	authCfg, err := readAuthzClientSettings(cfg)
@@ -141,7 +167,16 @@ func ProvideStandaloneAuthZClient(
 		return nil, err
 	}
 
-	return newRemoteRBACClient(authCfg, tracer, reg)
+	remoteRBACClient, err := newRemoteRBACClient(authCfg, tracer, reg)
+	if err != nil {
+		return nil, err
+	}
+
+	if zanzanaEnabled {
+		return zClient.WithShadowClient(remoteRBACClient, zanzanaClient, reg)
+	}
+
+	return remoteRBACClient, nil
 }
 
 func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (authlib.AccessClient, error) {
@@ -227,9 +262,11 @@ func RegisterRBACAuthZService(
 		folderStore = store.NewAPIFolderStore(tracer, reg, func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{
 				Host: cfg.Folder.Host,
-				WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
-					return &tokenExhangeRoundTripper{te: exchangeClient, rt: rt}
-				},
+				WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+					exchangeClient,
+					"folder.grafana.app",
+					clientauth.WildcardNamespace,
+				),
 				TLSClientConfig: rest.TLSClientConfig{
 					Insecure: cfg.Folder.Insecure,
 					CAFile:   cfg.Folder.CAFile,
@@ -254,27 +291,6 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
-}
-
-var _ http.RoundTripper = tokenExhangeRoundTripper{}
-
-type tokenExhangeRoundTripper struct {
-	te authnlib.TokenExchanger
-	rt http.RoundTripper
-}
-
-func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
-	res, err := t.te.Exchange(r.Context(), authnlib.TokenExchangeRequest{
-		Namespace: "*",
-		Audiences: []string{"folder.grafana.app"},
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("create access token: %w", err)
-	}
-
-	r.Header.Set("X-Access-Token", "Bearer "+res.Token)
-	return t.rt.RoundTrip(r)
 }
 
 type NoopCache struct{}

@@ -454,10 +454,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/DashboardVersionMeta"
-              },
-              "type": "array"
+              "$ref": "#/components/schemas/DashboardVersionResponseMeta"
             }
           }
         },
@@ -1405,6 +1402,14 @@
         },
         "description": "InternalServerPublicError is a general error indicating something went wrong internally."
       },
+      "interpolateDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {}
+          }
+        },
+        "description": "(empty)"
+      },
       "jwksResponse": {
         "content": {
           "application/json": {
@@ -1752,7 +1757,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/Receiver"
+                "$ref": "#/components/schemas/ReceiverStatus"
               },
               "type": "array"
             }
@@ -1900,7 +1905,10 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SearchTeamGroupsQueryResult"
+              "items": {
+                "$ref": "#/components/schemas/SearchTeamGroupsQueryResult"
+              },
+              "type": "array"
             }
           }
         },
@@ -2257,6 +2265,9 @@
             "type": "integer"
           }
         },
+        "required": [
+          "userId"
+        ],
         "type": "object"
       },
       "AddTeamRoleCommand": {
@@ -3236,6 +3247,10 @@
             "description": "Name of annotation.",
             "type": "string"
           },
+          "placement": {
+            "description": "Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.",
+            "type": "string"
+          },
           "target": {
             "$ref": "#/components/schemas/AnnotationTarget"
           },
@@ -3352,12 +3367,6 @@
       },
       "BacktestConfig": {
         "properties": {
-          "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
           "condition": {
             "type": "string"
           },
@@ -3367,8 +3376,16 @@
             },
             "type": "array"
           },
+          "exec_err_state": {
+            "enum": [
+              "OK",
+              "Alerting",
+              "Error"
+            ],
+            "type": "string"
+          },
           "for": {
-            "$ref": "#/components/schemas/Duration"
+            "type": "string"
           },
           "from": {
             "format": "date-time",
@@ -3377,11 +3394,21 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "keep_firing_for": {
+            "type": "string"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
+          },
+          "missing_series_evals_to_resolve": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "namespace_uid": {
+            "type": "string"
           },
           "no_data_state": {
             "enum": [
@@ -3391,11 +3418,17 @@
             ],
             "type": "string"
           },
+          "rule_group": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
           "to": {
             "format": "date-time",
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           }
         },
@@ -4451,6 +4484,9 @@
             "type": "string"
           }
         },
+        "required": [
+          "name"
+        ],
         "type": "object"
       },
       "DashboardACLInfoDTO": {
@@ -4794,6 +4830,20 @@
           "version": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "DashboardVersionResponseMeta": {
+        "properties": {
+          "continueToken": {
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardVersionMeta"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -6001,6 +6051,12 @@
             },
             "type": "array"
           },
+          "msteamsv2_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsV2Config"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -6172,6 +6228,10 @@
           "is_paused": {
             "type": "boolean"
           },
+          "message": {
+            "description": "Field is only populated when listing alert rule versions.",
+            "type": "string"
+          },
           "metadata": {
             "$ref": "#/components/schemas/AlertRuleMetadata"
           },
@@ -6274,6 +6334,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -6283,6 +6349,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -6811,6 +6883,32 @@
         "title": "InspectType is a type for the Inspect property of a Notice.",
         "type": "integer"
       },
+      "IntegrationStatus": {
+        "properties": {
+          "lastNotifyAttempt": {
+            "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastNotifyAttemptDuration": {
+            "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+            "type": "string"
+          },
+          "lastNotifyAttemptError": {
+            "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the integration.",
+            "type": "string"
+          },
+          "sendResolved": {
+            "description": "Whether the integration is configured to send resolved notifications.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "InternalDataLink": {
         "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
         "properties": {
@@ -7208,6 +7306,29 @@
         },
         "type": "object"
       },
+      "MSTeamsV2Config": {
+        "properties": {
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "webhook_url": {
+            "$ref": "#/components/schemas/SecretURL"
+          },
+          "webhook_url_file": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ManagerKind": {
         "description": "It can be a user or a tool or a generic API client.\n+enum",
         "title": "ManagerKind is the type of manager, which is responsible for managing the resource.",
@@ -7524,7 +7645,7 @@
             "type": "integer"
           },
           "key": {
-            "example": "glsa_yscW25imSKJIuav8zF37RZmnbiDvB05G_fcaaf58a",
+            "example": "glsa_iNValIdinValiDinvalidinvalidinva_5b582697",
             "type": "string"
           },
           "name": {
@@ -7675,6 +7796,28 @@
           "TLSConfig": {
             "$ref": "#/components/schemas/TLSConfig"
           },
+          "audience": {
+            "description": "Audience optionally specifies the intended audience of the\nrequest.  If empty, the value of TokenURL is used as the\nintended audience. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
+            "type": "string"
+          },
+          "claims": {
+            "additionalProperties": {},
+            "description": "Claims is a map of claims to be added to the JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
+            "type": "object"
+          },
+          "client_certificate_key": {
+            "$ref": "#/components/schemas/Secret"
+          },
+          "client_certificate_key_file": {
+            "type": "string"
+          },
+          "client_certificate_key_id": {
+            "type": "string"
+          },
+          "client_certificate_key_ref": {
+            "description": "ClientCertificateKeyRef is the name of the secret within the secret manager to use as the client\nsecret.",
+            "type": "string"
+          },
           "client_id": {
             "type": "string"
           },
@@ -7693,6 +7836,14 @@
               "type": "string"
             },
             "type": "object"
+          },
+          "grant_type": {
+            "description": "GrantType is the OAuth2 grant type to use. It can be one of\n\"client_credentials\" or \"urn:ietf:params:oauth:grant-type:jwt-bearer\" (RFC 7523).\nDefault value is \"client_credentials\"",
+            "type": "string"
+          },
+          "iss": {
+            "description": "Iss is the OAuth client identifier used when communicating with\nthe configured OAuth provider. Default value is client_id. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".",
+            "type": "string"
           },
           "no_proxy": {
             "description": "NoProxy contains addresses that should not use a proxy.",
@@ -7713,6 +7864,10 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "signature_algorithm": {
+            "description": "SignatureAlgorithm is the RSA algorithm used to sign JWT token. Only used if\nGrantType is set to \"urn:ietf:params:oauth:grant-type:jwt-bearer\".\nDefault value is RS256 and valid values RS256, RS384, RS512",
+            "type": "string"
           },
           "token_url": {
             "type": "string"
@@ -7864,6 +8019,10 @@
             "type": "array"
           },
           "avatarUrl": {
+            "type": "string"
+          },
+          "created": {
+            "format": "date-time",
             "type": "string"
           },
           "email": {
@@ -8112,10 +8271,7 @@
             "type": "string"
           },
           "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
+            "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
             "type": "string"
           },
           "weekStart": {
@@ -8135,6 +8291,7 @@
         "type": "object"
       },
       "Permission": {
+        "description": "Permission is the model for access control permissions",
         "properties": {
           "action": {
             "type": "string"
@@ -8151,7 +8308,6 @@
             "type": "string"
           }
         },
-        "title": "Permission is the model for access control permissions.",
         "type": "object"
       },
       "PermissionDenied": {
@@ -8430,6 +8586,12 @@
             },
             "type": "array"
           },
+          "msteamsv2_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsV2Config"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -8670,6 +8832,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -8679,6 +8847,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -9512,6 +9686,12 @@
             },
             "type": "array"
           },
+          "msteamsv2_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsV2Config"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -9596,6 +9776,26 @@
           }
         },
         "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+        "type": "object"
+      },
+      "ReceiverStatus": {
+        "properties": {
+          "active": {
+            "description": "Whether the receiver is used in a route or not.",
+            "type": "boolean"
+          },
+          "integrations": {
+            "description": "Integrations configured for this receiver.",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationStatus"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the receiver.",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "Record": {
@@ -9688,6 +9888,14 @@
           "to": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "RemoteWriteConfig": {
+        "properties": {
+          "url": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -9835,6 +10043,9 @@
       },
       "ReportOptions": {
         "properties": {
+          "csvEncoding": {
+            "type": "string"
+          },
           "layout": {
             "type": "string"
           },
@@ -10092,6 +10303,16 @@
             "type": "integer"
           }
         },
+        "required": [
+          "version",
+          "uid",
+          "name",
+          "displayName",
+          "description",
+          "group",
+          "updated",
+          "created"
+        ],
         "type": "object"
       },
       "RolesSearchQuery": {
@@ -10380,6 +10601,12 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "limit": {
             "format": "int64",
             "type": "integer"
@@ -10389,6 +10616,12 @@
           },
           "query_offset": {
             "type": "string"
+          },
+          "remote_write": {
+            "items": {
+              "$ref": "#/components/schemas/RemoteWriteConfig"
+            },
+            "type": "array"
           },
           "rules": {
             "items": {
@@ -10932,6 +11165,20 @@
         },
         "type": "object"
       },
+      "SetTeamRolesCommand": {
+        "properties": {
+          "includeHidden": {
+            "type": "boolean"
+          },
+          "roleUids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "SetUserRolesCommand": {
         "properties": {
           "global": {
@@ -11384,6 +11631,7 @@
             "type": "string"
           },
           "id": {
+            "description": "@deprecated Use UID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -11408,6 +11656,14 @@
             "type": "string"
           }
         },
+        "required": [
+          "id",
+          "uid",
+          "orgId",
+          "name",
+          "isProvisioned",
+          "memberCount"
+        ],
         "type": "object"
       },
       "TeamGroupDTO": {
@@ -11422,6 +11678,9 @@
           "teamId": {
             "format": "int64",
             "type": "integer"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -11497,6 +11756,9 @@
             "type": "integer"
           },
           "teamUID": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           },
           "userId": {
@@ -12396,10 +12658,7 @@
             "type": "string"
           },
           "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
+            "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
             "type": "string"
           },
           "weekStart": {
@@ -12510,17 +12769,10 @@
       },
       "UpdateTeamCommand": {
         "properties": {
-          "Email": {
+          "email": {
             "type": "string"
           },
-          "ExternalUID": {
-            "type": "string"
-          },
-          "ID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Name": {
+          "name": {
             "type": "string"
           }
         },
@@ -12691,6 +12943,10 @@
             "type": "array"
           },
           "avatarUrl": {
+            "type": "string"
+          },
+          "created": {
+            "format": "date-time",
             "type": "string"
           },
           "email": {
@@ -14181,6 +14437,17 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTeamRolesCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/okResponse"
@@ -14811,7 +15078,7 @@
         },
         "summary": "Returns the current state of the LDAP background sync integration.",
         "tags": [
-          "ldap_debug",
+          "admin_ldap",
           "enterprise"
         ]
       }
@@ -14969,7 +15236,8 @@
         },
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
         "tags": [
-          "access_control_provisioning",
+          "admin_provisioning",
+          "access_control",
           "enterprise"
         ]
       }
@@ -16856,7 +17124,7 @@
           },
           {
             "in": "header",
-            "name": "x-grafana-alerting-notification-receiver",
+            "name": "x-grafana-alerting-notification-settings",
             "schema": {
               "type": "string"
             }
@@ -17215,7 +17483,7 @@
           },
           {
             "in": "header",
-            "name": "x-grafana-alerting-notification-receiver",
+            "name": "x-grafana-alerting-notification-settings",
             "schema": {
               "type": "string"
             }
@@ -17404,56 +17672,6 @@
         ]
       }
     },
-    "/dashboards/calculate-diff": {
-      "post": {
-        "operationId": "calculateDashboardDiff",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "base": {
-                    "$ref": "#/components/schemas/CalculateDiffTarget"
-                  },
-                  "diffType": {
-                    "description": "The type of diff to return\nDescription:\n`basic`\n`json`",
-                    "enum": [
-                      "basic",
-                      "json"
-                    ],
-                    "type": "string"
-                  },
-                  "new": {
-                    "$ref": "#/components/schemas/CalculateDiffTarget"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "Body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/calculateDashboardDiffResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Perform diff on two dashboards.",
-        "tags": [
-          "dashboards"
-        ]
-      }
-    },
     "/dashboards/db": {
       "post": {
         "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.",
@@ -17503,6 +17721,8 @@
     },
     "/dashboards/home": {
       "get": {
+        "deprecated": true,
+        "description": "NOTE: the home dashboard is configured in preferences.  This API will be removed in G13",
         "operationId": "getHomeDashboard",
         "responses": {
           "200": {
@@ -17515,7 +17735,6 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get home dashboard.",
         "tags": [
           "dashboards"
         ]
@@ -17737,6 +17956,32 @@
           }
         },
         "summary": "Import dashboard.",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+    "/dashboards/interpolate": {
+      "post": {
+        "operationId": "interpolateDashboard",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/interpolateDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Interpolate dashboard. This is an experimental endpoint under dashboardLibrary or suggestedDashboards feature flags and is subject to change.",
         "tags": [
           "dashboards"
         ]
@@ -18135,6 +18380,8 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
+        "deprecated": true,
+        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "operationId": "restoreDashboardVersionByUID",
         "parameters": [
           {
@@ -20487,9 +20734,17 @@
             }
           },
           {
-            "description": "A comma separated list of folder ID(s) to filter the elements by.",
+            "description": "A comma separated list of folder ID(s) to filter the elements by.\nDeprecated: Use FolderFilterUIDs instead.",
             "in": "query",
             "name": "folderFilter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A comma separated list of folder UID(s) to filter the elements by.",
+            "in": "query",
+            "name": "folderFilterUIDs",
             "schema": {
               "type": "string"
             }
@@ -24463,6 +24718,21 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "accesscontrol",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -24501,8 +24771,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24540,8 +24809,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24579,8 +24847,7 @@
             "name": "teamId",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24739,6 +25006,14 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accesscontrol",
+            "schema": {
+              "default": false,
+              "type": "boolean"
             }
           }
         ],

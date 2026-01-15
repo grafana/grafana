@@ -1,26 +1,21 @@
 import { take } from 'lodash';
-import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useThrottle } from 'react-use';
 
 import { InterpolateFunction, PanelProps, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { useStyles2, IconButton, ScrollContainer, Box, Text, EmptyState, Link } from '@grafana/ui';
+import { ScrollContainer, Box, Text, EmptyState } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
-import { removeNavIndex, updateNavIndex } from 'app/core/reducers/navModel';
 import impressionSrv from 'app/core/services/impression_srv';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, LocationInfo, QueryResponse, SearchQuery } from 'app/features/search/service/types';
-import { StarToolbarButtonApiServer } from 'app/features/stars/StarToolbarButton';
-import { useDispatch, useSelector } from 'app/types/store';
+import { DashboardQueryResult, QueryResponse, SearchQuery } from 'app/features/search/service/types';
 
+import { DashListItem } from './DashListItem';
 import { Options } from './panelcfg.gen';
-import { getStyles } from './styles';
 import { useDashListUrlParams } from './utils';
 
-type Dashboard = DashboardQueryResult & {
+export type Dashboard = DashboardQueryResult & {
   isSearchResult?: boolean;
   isRecent?: boolean;
   isStarred?: boolean;
@@ -112,17 +107,10 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
   return dashMap;
 }
 
-async function fetchDashboardFolders() {
-  return getGrafanaSearcher().getLocationInfo();
-}
-
 const collator = new Intl.Collator();
 
 export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
-  const [foldersTitleMap, setFoldersTitleMap] = useState<Record<string, LocationInfo>>({});
-  const dispatch = useDispatch();
-  const navIndex = useSelector((state) => state.navIndex);
 
   const throttledRenderCount = useThrottle(props.renderCounter, 5000);
 
@@ -132,42 +120,7 @@ export function DashList(props: PanelProps<Options>) {
     });
   }, [props.options, props.replaceVariables, throttledRenderCount]);
 
-  useEffect(() => {
-    if (props.options.showFolderNames && dashboards.size > 0) {
-      fetchDashboardFolders().then((locationInfo) => {
-        setFoldersTitleMap(locationInfo);
-      });
-    }
-  }, [props.options.showFolderNames, dashboards]);
-
-  const toggleDashboardStar = async (e: SyntheticEvent, dash: Dashboard) => {
-    const { uid, name, url } = dash;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const isStarred = await getDashboardSrv().starDashboard(dash.uid, Boolean(dash.isStarred));
-    const updatedDashboards = new Map(dashboards);
-    updatedDashboards.set(dash?.uid ?? '', { ...dash, isStarred });
-    setDashboards(updatedDashboards);
-    dispatch(setStarred({ id: uid ?? '', title: name, url, isStarred }));
-
-    const starredNavItem = navIndex.starred;
-    if (isStarred) {
-      starredNavItem.children?.push({
-        id: ID_PREFIX + uid,
-        text: name,
-        url: url ?? '',
-        parentItem: starredNavItem,
-      });
-    } else {
-      dispatch(removeNavIndex(ID_PREFIX + uid));
-      const indexToRemove = starredNavItem.children?.findIndex((element) => element.id === ID_PREFIX + uid);
-      if (indexToRemove) {
-        starredNavItem.children?.splice(indexToRemove, 1);
-      }
-    }
-    dispatch(updateNavIndex(starredNavItem));
-  };
+  const { foldersByUid } = useDashboardLocationInfo(props.options.showFolderNames && dashboards.size > 0);
 
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
     const dashboardList = [...dashboards.values()];
@@ -215,7 +168,12 @@ export function DashList(props: PanelProps<Options>) {
     },
   ];
 
-  const css = useStyles2(getStyles);
+  const handleStarChange = (id: string, isStarred: boolean) => {
+    const updatedDashboards = new Map(dashboards);
+    updatedDashboards.set(id, { ...dashboards.get(id)!, isStarred });
+    setDashboards(updatedDashboards);
+  };
+
   const urlParams = useDashListUrlParams(props);
 
   const renderList = (dashboards: Dashboard[]) => (
@@ -223,36 +181,18 @@ export function DashList(props: PanelProps<Options>) {
       {dashboards.map((dash) => {
         let url = dash.url + urlParams;
         url = getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
-        const markAsStarredText = t('panel.dashlist.mark-as-starred', 'Mark "{{title}}" as favorite', {
-          title: dash.title,
-        });
-        const unmarkAsStarredText = t('panel.dashlist.unmark-as-starred', 'Unmark "{{title}}" as favorite', {
-          title: dash.title,
-        });
 
-        const locationInfo = showFolderNames && dash.location ? foldersTitleMap[dash.location] : undefined;
+        const locationInfo = showFolderNames && dash.location ? foldersByUid[dash.location] : undefined;
         return (
           <li key={`dash-${dash.uid}`}>
-            <div className={css.dashlistLink}>
-              <Box flex={1}>
-                <Link href={url}>{dash.name}</Link>
-                {showFolderNames && locationInfo && (
-                  <Text color="secondary" variant="bodySmall" element="p">
-                    {locationInfo?.name}
-                  </Text>
-                )}
-              </Box>
-              {config.featureToggles.starsFromAPIServer ? (
-                <StarToolbarButtonApiServer group="dashboard.grafana.app" kind="Dashboard" id={dash.uid ?? ''} />
-              ) : (
-                <IconButton
-                  tooltip={dash.isStarred ? unmarkAsStarredText : markAsStarredText}
-                  name={dash.isStarred ? 'favorite' : 'star'}
-                  iconType={dash.isStarred ? 'mono' : 'default'}
-                  onClick={(e) => toggleDashboardStar(e, dash)}
-                />
-              )}
-            </div>
+            <DashListItem
+              dashboard={dash}
+              url={url}
+              showFolderNames={showFolderNames}
+              locationInfo={locationInfo}
+              layoutMode="list"
+              onStarChange={handleStarChange}
+            />
           </li>
         );
       })}

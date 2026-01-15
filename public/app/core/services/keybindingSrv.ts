@@ -1,6 +1,7 @@
+import { toggleAssistant, isAssistantAvailable } from '@grafana/assistant';
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
-import { LocationService } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { LocationService, config } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
@@ -20,8 +21,8 @@ import {
 } from '../../types/events';
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
-import { contextSrv } from '../core';
 import { RouteDescriptor } from '../navigation/types';
+import { contextSrv } from '../services/context_srv';
 
 import { mousetrap } from './mousetrap';
 import { toggleTheme } from './theme';
@@ -38,6 +39,7 @@ export class KeybindingSrv {
   }
   /** string for VizPanel key and number for panelId */
   private panelId: string | number | null = null;
+  private assistantSubscription: { unsubscribe: () => void } | null = null;
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     mousetrap.reset();
@@ -51,6 +53,8 @@ export class KeybindingSrv {
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
+      // Conditionally bind open Assistant shortcut ('o a') if Assistant is available
+      this.bindAssistantShortcutIfAvailable();
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
     }
@@ -118,6 +122,30 @@ export class KeybindingSrv {
 
   private showHelpModal() {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
+  }
+
+  private bindAssistantShortcutIfAvailable() {
+    // Clean up any existing subscription
+    if (this.assistantSubscription) {
+      this.assistantSubscription.unsubscribe();
+    }
+    // Subscribe to assistant availability and bind/unbind shortcut accordingly
+    this.assistantSubscription = isAssistantAvailable().subscribe((available) => {
+      if (available) {
+        this.bind('mod+.', this.toggleAssistant);
+      } else {
+        // Unbind the shortcut if assistant becomes unavailable
+        mousetrap.unbind('mod+.');
+      }
+    });
+  }
+
+  private toggleAssistant() {
+    toggleAssistant({
+      origin: 'grafana/keyboard-shortcut',
+      prompt: '',
+      context: [],
+    });
   }
 
   private exit() {
@@ -203,9 +231,23 @@ export class KeybindingSrv {
       appEvents.publish(new AbsoluteTimeEvent({ updateUrl }));
     });
 
-    this.bind('t z', () => {
-      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
-    });
+    if (config.featureToggles.newTimeRangeZoomShortcuts) {
+      this.bind('t +', () => {
+        appEvents.publish(new ZoomOutEvent({ scale: 0.5, updateUrl }));
+      });
+
+      this.bind('t =', () => {
+        appEvents.publish(new ZoomOutEvent({ scale: 0.5, updateUrl }));
+      });
+
+      this.bind('t -', () => {
+        appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
+      });
+    } else {
+      this.bind('t z', () => {
+        appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
+      });
+    }
 
     this.bind('ctrl+z', () => {
       appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));

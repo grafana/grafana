@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -26,6 +27,8 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -56,6 +59,26 @@ import (
 const (
 	Org1 = "Org1"
 	Org2 = "OrgB"
+
+	DefaultNamespace = "default"
+)
+
+var (
+	sharedHTTPClient = &http.Client{
+		Timeout: 30 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Transport: &http.Transport{
+			MaxIdleConns:        1000,
+			MaxIdleConnsPerHost: 500,
+			MaxConnsPerHost:     500,
+			IdleConnTimeout:     90 * time.Second,
+			DisableKeepAlives:   false,
+			DisableCompression:  true,
+			ForceAttemptHTTP2:   false,
+		},
+	}
 )
 
 type K8sTestHelper struct {
@@ -75,7 +98,18 @@ type K8sTestHelper struct {
 	userSvc user.Service
 }
 
+type K8sTestHelperOpts struct {
+	testinfra.GrafanaOpts
+	// If provided, these users will be used instead of creating new ones
+	Org1Users *OrgUsers
+	OrgBUsers *OrgUsers
+}
+
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
+	return NewK8sTestHelperWithOpts(t, K8sTestHelperOpts{GrafanaOpts: opts})
+}
+
+func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelper {
 	t.Helper()
 
 	// Use GRPC server when not configured
@@ -88,8 +122,17 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
-	dir, path := testinfra.CreateGrafDir(t, opts)
-	listenerAddress, env := testinfra.StartGrafanaEnv(t, dir, path)
+	var (
+		dir  = opts.Dir
+		path = opts.DirPath
+	)
+	if opts.Dir == "" && opts.DirPath == "" {
+		dir, path = testinfra.CreateGrafDir(t, opts.GrafanaOpts)
+	}
+	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, dir, path)
+	if !opts.DisableDBCleanup {
+		t.Cleanup(testDB.Cleanup)
+	}
 
 	c := &K8sTestHelper{
 		env:             *env,
@@ -119,8 +162,24 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	_ = c.CreateOrg(Org1)
 	_ = c.CreateOrg(Org2)
 
-	c.Org1 = c.createTestUsers(Org1)
-	c.OrgB = c.createTestUsers(Org2)
+	if opts.Org1Users != nil {
+		c.Org1 = *opts.Org1Users
+		c.Org1.Admin.baseURL = listenerAddress
+		c.Org1.Editor.baseURL = listenerAddress
+		c.Org1.Viewer.baseURL = listenerAddress
+		c.Org1.None.baseURL = listenerAddress
+	} else {
+		c.Org1 = c.createTestUsers(Org1)
+	}
+	if opts.OrgBUsers != nil {
+		c.OrgB = *opts.OrgBUsers
+		c.OrgB.Admin.baseURL = listenerAddress
+		c.OrgB.Editor.baseURL = listenerAddress
+		c.OrgB.Viewer.baseURL = listenerAddress
+		c.OrgB.None.baseURL = listenerAddress
+	} else {
+		c.OrgB = c.createTestUsers(Org2)
+	}
 
 	c.loadAPIGroups()
 
@@ -151,6 +210,10 @@ func (c *K8sTestHelper) loadAPIGroups() {
 
 func (c *K8sTestHelper) GetEnv() server.TestEnv {
 	return c.env
+}
+
+func (c *K8sTestHelper) SetGithubConnectionFactory(f githubConnection.GithubFactory) {
+	c.env.GithubConnectionFactory = f
 }
 
 func (c *K8sTestHelper) GetListenerAddress() string {
@@ -386,6 +449,11 @@ func (c *User) RESTClient(t *testing.T, gv *schema.GroupVersion) *rest.RESTClien
 	return client
 }
 
+func (c *User) GetClientRegistry() *appsdk_k8s.ClientRegistry {
+	restConfig := c.NewRestConfig()
+	return appsdk_k8s.NewClientRegistry(*restConfig, appsdk_k8s.DefaultClientConfig())
+}
+
 type RequestParams struct {
 	User        User
 	Method      string // GET, POST, PATCH, etc
@@ -498,12 +566,8 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	if params.Accept != "" {
 		req.Header.Set("Accept", params.Accept)
 	}
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-	rsp, err := client.Do(req)
+
+	rsp, err := sharedHTTPClient.Do(req)
 	require.NoError(c.t, err)
 
 	r := K8sResponse[T]{
@@ -742,7 +806,7 @@ func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
 	return client
 }
 
-func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
+func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) (string, error) {
 	c.t.Helper()
 
 	disco := c.NewDiscoveryClient()
@@ -773,19 +837,22 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 		if item.Metadata.Name == group {
 			v, err := json.MarshalIndent(item.Versions, "", "  ")
 			require.NoError(c.t, err)
-			return string(v)
+			return string(v), nil
 		}
 	}
 
-	require.Failf(c.t, "could not find discovery info for: %s", group)
-	return ""
+	return "", goerrors.New("could not find discovery info for: " + group)
 }
 
 func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
+	require.NotZero(c.t, cmd.OrgID, "requires a non zero orgId")
 	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
 	require.NoError(c.t, err)
+	if cmd.UID != "" {
+		require.Equal(c.t, cmd.UID, dataSource.UID)
+	}
 	return dataSource
 }
 
@@ -937,6 +1004,50 @@ func (c *K8sTestHelper) DeleteServiceAccount(user User, orgID int64, saID int64)
 	}, &struct{}{})
 
 	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to delete service account, body: %s", string(resp.Body))
+}
+
+func (c *K8sTestHelper) DeleteFolder(user User, folderUID string) error {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/folders/%s", folderUID),
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK && resp.Response.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("failed to delete folder %s: status %d, body: %s", folderUID, resp.Response.StatusCode, string(resp.Body))
+	}
+	return nil
+}
+
+func (c *K8sTestHelper) DeleteUser(adminUser User, userID int64) error {
+	c.t.Helper()
+
+	resp := DoRequest(c, RequestParams{
+		User:   adminUser,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/admin/users/%d", userID),
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK && resp.Response.StatusCode != http.StatusNotFound {
+		return fmt.Errorf("failed to delete user %d: status %d, body: %s", userID, resp.Response.StatusCode, string(resp.Body))
+	}
+	return nil
+}
+
+func (c *K8sTestHelper) CleanupTestResources(folderUIDs []string, userIDs []int64) func() {
+	return func() {
+		c.t.Helper()
+		// Delete folders first (they may have dependencies)
+		for _, uid := range folderUIDs {
+			_ = c.DeleteFolder(c.Org1.Admin, uid)
+		}
+		// Then delete users
+		for _, id := range userIDs {
+			_ = c.DeleteUser(c.Org1.Admin, id)
+		}
+	}
 }
 
 // Ensures that the passed error is an APIStatus error and fails the test if it is not.

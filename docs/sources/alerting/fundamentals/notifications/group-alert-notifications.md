@@ -159,7 +159,9 @@ Once the first notification has been sent for a new group of alerts, the group i
 
 When the group interval timer elapses, the system resets the group interval timer and sends a notification only if there were group changes. This process repeats until there are no more alerts.
 
-It's important to note that an alert instance exits the group after being resolved and notified of its state change. When no alerts remain, the group is deleted, and then the group wait timer handles the first notification for the next incoming alert once again.
+It's important to note that an alert instance exits the group after being resolved and notified of its state change.
+
+When the group interval timer elapses and no alerts remain, the group is deleted. The [group wait timer](#group-wait) will then start again the next time a new alert arrives.
 
 ### Repeat interval
 

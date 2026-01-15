@@ -312,16 +312,20 @@ export class Explore extends PureComponent<Props, ExploreState> {
    */
   onSplitOpen = (panelType: string) => {
     return async (options?: SplitOpenOptions) => {
-      let compact = true;
+      let compact = false;
 
       /**
        * Temporary fix grafana-clickhouse-datasource as it requires the query editor to be fully rendered to update the query
        * Proposed fixes:
        * - https://github.com/grafana/clickhouse-datasource/issues/1363 - handle query update in data source
        * - https://github.com/grafana/grafana/issues/110868 - allow data links to provide meta info if the link can be handled in compact mode (default to false)
+       * Update:
+       * More data source may struggle with this setting: https://github.com/grafana/grafana/issues/112075
+       * We're making it enabled for tempo only and will try to make it optional for other data sources in the future.
        */
-      if (options?.queries?.some((q) => q.datasource?.type === 'grafana-clickhouse-datasource')) {
-        compact = false;
+      const dsType = getDataSourceSrv().getInstanceSettings({ uid: options?.datasourceUid })?.type;
+      if (dsType === 'tempo' || options?.queries?.every((q) => q.datasource?.type === 'tempo')) {
+        compact = true;
       }
 
       this.props.splitOpen(options ? { ...options, compact } : options);
@@ -406,7 +410,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderTablePanel(width: number) {
-    const { exploreId, timeZone } = this.props;
+    const { exploreId, timeZone, eventBus } = this.props;
     return (
       <ContentOutlineItem panelId="Table" title={t('explore.explore.title-table', 'Table')} icon="table">
         <TableContainer
@@ -416,6 +420,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onCellFilterAdded={this.onCellFilterAdded}
           timeZone={timeZone}
           splitOpenFn={this.onSplitOpen('table')}
+          eventBus={eventBus}
         />
       </ContentOutlineItem>
     );
@@ -471,7 +476,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onStopScanning={this.onStopScanning}
           eventBus={this.logsEventBus}
           splitOpenFn={this.splitOpenFnLogs}
-          scrollElement={this.scrollElement}
           isFilterLabelActive={this.isFilterLabelActive}
           onClickFilterString={this.onClickFilterString}
           onClickFilterOutString={this.onClickFilterOutString}
@@ -637,7 +641,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}
-              ref={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
+              ref={(scrollElement) => {
+                this.scrollElement = scrollElement || undefined;
+              }}
             >
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (

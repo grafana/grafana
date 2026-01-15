@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import { PureComponent } from 'react';
+import { PureComponent, type JSX } from 'react';
 
 import { stylesFactory } from '../../themes/stylesFactory';
 
@@ -26,6 +26,9 @@ const getStyles = stylesFactory((inlineList = false) => ({
   }),
 }));
 
+/** @deprecated Use ul/li/arr.map directly instead */
+// no point converting, this is deprecated
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 export class AbstractList<T> extends PureComponent<AbstractListProps<T>> {
   constructor(props: AbstractListProps<T>) {
     super(props);

@@ -13,6 +13,8 @@ import { mapMouseEventToMode } from './utils';
 
 /**
  * @public
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-vizlegend--docs
  */
 export function VizLegend<T>({
   items,

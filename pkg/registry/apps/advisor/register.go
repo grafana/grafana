@@ -1,39 +1,45 @@
 package advisor
 
 import (
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/grafana/grafana/apps/advisor/pkg/apis"
-	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"fmt"
+
+	authlib "github.com/grafana/authlib/types"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	advisorapp "github.com/grafana/grafana/apps/advisor/pkg/app"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type AdvisorAppProvider struct {
-	app.Provider
+var (
+	_ appsdkapiserver.AppInstaller    = (*AdvisorAppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider = (*AdvisorAppInstaller)(nil)
+)
+
+type AdvisorAppInstaller struct {
+	*advisorapp.AdvisorAppInstaller
 }
 
-func RegisterApp(
+func ProvideAppInstaller(
+	accessControlService accesscontrol.Service,
+	accessClient authlib.AccessClient,
 	checkRegistry checkregistry.CheckService,
 	cfg *setting.Cfg,
-) *AdvisorAppProvider {
-	provider := &AdvisorAppProvider{}
-	pluginConfig := cfg.PluginSettings["grafana-advisor-app"]
-	specificConfig := checkregistry.AdvisorAppConfig{
-		CheckRegistry: checkRegistry,
-		PluginConfig:  pluginConfig,
-		StackID:       cfg.StackID,
+	orgService org.Service,
+) (*AdvisorAppInstaller, error) {
+	if err := registerAccessControlRoles(accessControlService); err != nil {
+		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
-	appCfg := &runner.AppBuilderConfig{
-		OpenAPIDefGetter:         advisorv0alpha1.GetOpenAPIDefinitions,
-		ManagedKinds:             advisorapp.GetKinds(),
-		Authorizer:               advisorapp.GetAuthorizer(),
-		CustomConfig:             any(specificConfig),
-		AllowedV0Alpha1Resources: []string{builder.AllResourcesAllowed},
+
+	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
+	i, err := advisorapp.ProvideAppInstaller(authorizer, checkRegistry, cfg, orgService)
+	if err != nil {
+		return nil, err
 	}
-	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, advisorapp.New)
-	return provider
+	return &AdvisorAppInstaller{
+		AdvisorAppInstaller: i,
+	}, nil
 }

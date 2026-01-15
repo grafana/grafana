@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
@@ -485,10 +485,12 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 
 	s.Cluster = amStatus.Cluster
 	s.Config = &PostableApiAlertingConfig{Config: Config{
-		Global:       c.Global,
-		Route:        AsGrafanaRoute(c.Route),
-		InhibitRules: c.InhibitRules,
-		Templates:    c.Templates,
+		Global:            c.Global,
+		Route:             AsGrafanaRoute(c.Route),
+		InhibitRules:      c.InhibitRules,
+		Templates:         c.Templates,
+		MuteTimeIntervals: c.MuteTimeIntervals,
+		TimeIntervals:     c.TimeIntervals,
 	}}
 	s.Uptime = amStatus.Uptime
 	s.VersionInfo = amStatus.VersionInfo

@@ -38,9 +38,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
   configure-authentication:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/
   data-source-management:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
@@ -111,3 +111,4 @@ After installing and configuring the Graphite data source you can:
 - Add [transformations](ref:transformations)
 - Add [annotations](ref:annotate-visualizations)
 - Set up [alerting](ref:alerting)
+- [Troubleshoot](troubleshooting/) common issues with the Graphite data source

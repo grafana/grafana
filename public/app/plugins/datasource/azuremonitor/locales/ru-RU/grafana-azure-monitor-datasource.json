@@ -13,7 +13,7 @@
       "label-resource-group": "Группа ресурсов",
       "label-resource-name": "Имя ресурса",
       "label-resource-number": "Ресурс {{resourceNum}}",
-      "label-resource-uri": "URI ресурса ",
+      "label-resource-uri": "",
       "label-subscription": "Подписка",
       "placeholder-resource-name": "имя",
       "tooltip-region": "Область кода ресурса. Необязательно для одного ресурса, но обязательно при выборе нескольких.",
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Кнопка запуска запроса журналов Azure",
       "body-switching-to-builder": "Переключение на конструктор приведет к отмене текущего KQL-запроса и очистке редактора KQL. Вы уверены?",
-      "body-switching-to-kql": "Переключение на KQL приведет к отмене текущих настроек конструктора. Вы уверены?",
       "button-kick-start-your-query": "Запустить запрос",
       "button-run-query": "Выполнить запрос",
       "confirmText-switch-to": "Переключиться на {{newMode}}",

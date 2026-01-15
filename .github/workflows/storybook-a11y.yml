@@ -34,12 +34,12 @@ jobs:
       id-token: write
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    name: "Run Storybook a11y tests"
+    name: "Run Storybook a11y tests (light theme)"
     steps:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
         package-manager-cache: false # too large for GH's cache limits :-(
@@ -64,12 +64,12 @@ jobs:
       id-token: write
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    name: "Run Storybook a11y tests"
+    name: "Run Storybook a11y tests (dark theme)"
     steps:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
         package-manager-cache: false # too large for GH's cache limits :-(

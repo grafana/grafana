@@ -68,7 +68,7 @@ type DataPipeline []Node
 // map of the refId of the of each command
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
-
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	groupByDSFlag := s.features.IsEnabled(c, featuremgmt.FlagSseGroupByDatasource)
 	// Execute datasource nodes first, and grouped by datasource.
 	if groupByDSFlag {
@@ -333,6 +333,7 @@ func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.Directe
 		case TypeCMDNode:
 			node, err = buildCMDNode(ctx, rn, s.features, s.cfg)
 		case TypeMLNode:
+			//nolint:staticcheck // not yet migrated to OpenFeature
 			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)
 				if err != nil {

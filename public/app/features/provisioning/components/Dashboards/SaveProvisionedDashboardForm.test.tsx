@@ -9,7 +9,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
-import { SaveProvisionedDashboardForm, Props } from './SaveProvisionedDashboardForm';
+import { Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -77,6 +77,18 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryRefsQuery: jest.fn().mockReturnValue({ data: { items: [] }, isLoading: false, error: null }),
 }));
 
+// Mock the new hooks that depend on router context
+jest.mock('../../hooks/usePRBranch', () => ({
+  usePRBranch: jest.fn().mockReturnValue(undefined),
+}));
+
+jest.mock('../../hooks/useLastBranch', () => ({
+  useLastBranch: jest.fn().mockReturnValue({
+    getLastBranch: jest.fn().mockReturnValue(undefined),
+    setLastBranch: jest.fn(),
+  }),
+}));
+
 jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
   const actual = jest.requireActual('app/features/dashboard-scene/saving/SaveDashboardForm');
   return {
@@ -106,6 +118,7 @@ function setup(props: Partial<Props> = {}) {
       closeModal: jest.fn(),
       getSaveAsModel: jest.fn().mockReturnValue(mockDashboard),
       setManager: jest.fn(),
+      getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
     } as unknown as DashboardScene,
     drawer: {
       onClose: jest.fn(),
@@ -279,6 +292,7 @@ describe('SaveProvisionedDashboardForm', () => {
         closeModal: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
     });
 
@@ -373,6 +387,7 @@ describe('SaveProvisionedDashboardForm', () => {
         closeModal: jest.fn(),
         getSaveAsModel: jest.fn().mockReturnValue({}),
         setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
     });
 
@@ -400,5 +415,104 @@ describe('SaveProvisionedDashboardForm', () => {
 
     // Branch field is not shown
     expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
+  });
+
+  it('enables save button when only the comment changes', async () => {
+    const { user } = setup({
+      dashboard: {
+        useState: () => ({
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            k8s: { name: 'test-dashboard' },
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveAsModel: jest.fn().mockReturnValue({}),
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+      } as unknown as DashboardScene,
+    });
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    const saveButton = screen.getByRole('button', { name: /save/i });
+
+    expect(saveButton).toBeDisabled();
+
+    await user.type(commentInput, 'Comment-only change');
+
+    await waitFor(() => {
+      expect(saveButton).toBeEnabled();
+    });
+  });
+
+  it('should save dashboard with raw JSON from editor', async () => {
+    const mockAction = jest.fn();
+    const mockRequest = { ...mockRequestBase, isSuccess: true };
+    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
+    const rawJson = JSON.stringify({
+      title: 'Raw JSON Dashboard',
+      panels: [],
+      schemaVersion: 36,
+    });
+
+    const dashboardFromRawJson = {
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: {
+        generateName: 'p',
+        name: undefined,
+      },
+      spec: {
+        title: 'Raw JSON Dashboard',
+        panels: [],
+        schemaVersion: 36,
+      },
+    };
+
+    const { user } = setup({
+      dashboard: {
+        useState: () => ({
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveAsModel: jest.fn().mockReturnValue({}),
+        getSaveResource: jest.fn().mockReturnValue(dashboardFromRawJson),
+        getSaveResourceFromSpec: jest.fn().mockReturnValue(dashboardFromRawJson),
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(rawJson),
+      } as unknown as DashboardScene,
+    });
+
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    expect(saveButton).toBeEnabled();
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.clear(commentInput);
+    await user.type(commentInput, 'Save with raw JSON');
+
+    await user.click(saveButton);
+
+    await waitFor(() => {
+      expect(mockAction).toHaveBeenCalledWith({
+        ref: 'dashboard/2023-01-01-abcde',
+        name: 'test-repo',
+        path: 'test-dashboard.json',
+        message: 'Save with raw JSON',
+        body: dashboardFromRawJson,
+      });
+    });
   });
 });

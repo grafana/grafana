@@ -18,6 +18,7 @@ import {
   getJsonInputFiles,
   constructLatestVersionOutputFilename,
 } from './__tests__/migrationTestUtils';
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 /*
  * Backend / Frontend Migration Comparison Test Design Explanation:
@@ -71,14 +72,34 @@ describe('Backend / Frontend result comparison', () => {
       expect(backendMigrationResult.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
 
       // Migrate dashboard in Frontend.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let migratedTemplatingList: any[] = jsonInput?.templating?.list ?? [];
       const frontendModel = new DashboardModel(jsonInput, undefined, {
-        getVariablesFromState: () => jsonInput?.templating?.list ?? [],
+        getVariablesFromState: () => migratedTemplatingList,
       });
+      // Update the templating list reference after migration
+      migratedTemplatingList = frontendModel.templating?.list ?? [];
 
       const frontendMigrationResult = frontendModel.getSaveModelClone();
 
       // version in the backend is never added because it is returned from the backend as metadata
       delete frontendMigrationResult.version;
+
+      // since we are initializing panels inside collapsed rows with PanelModel in transformSceneToSaveModel (see createRowItemFromLegacyRow)
+      // and not in DashboardModel, this means that these panels will have automigratedFrom and panel type changed to the new panel type
+      // backend matches this behaviour by setting up autoMigrateFrom and type for nested panels too
+      // @ts-expect-error - we are using the type from the frontend migration result
+      for (const panel of frontendMigrationResult.panels) {
+        if (panel.type === 'row' && 'panels' in panel) {
+          for (const nestedPanel of panel.panels) {
+            const panelPluginToMigrateTo = getPanelPluginToMigrateTo(nestedPanel);
+            if (panelPluginToMigrateTo) {
+              nestedPanel.autoMigrateFrom = nestedPanel.type;
+              nestedPanel.type = panelPluginToMigrateTo;
+            }
+          }
+        }
+      }
 
       expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });

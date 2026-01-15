@@ -1,26 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { createRef, PureComponent, ReactElement } from 'react';
+import { memo, ReactElement, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Button,
-  ConfirmButton,
-  Field,
-  Icon,
-  Modal,
-  stylesFactory,
-  Themeable2,
-  Tooltip,
-  useStyles2,
-  withTheme2,
-  Stack,
-  TextLink,
-} from '@grafana/ui';
+import { Button, ConfirmButton, Field, Icon, Modal, Tooltip, useStyles2, Stack, TextLink } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 import { Organization } from 'app/types/organization';
 import { UserOrg, UserDTO } from 'app/types/user';
@@ -37,73 +24,63 @@ interface Props {
   onOrgAdd: (orgId: number, role: OrgRole) => void;
 }
 
-interface State {
-  showAddOrgModal: boolean;
-}
+export const UserOrgs = memo(({ user, orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd }: Props) => {
+  const [showAddOrgModal, setShowAddOrgModal] = useState(false);
+  const addToOrgButtonRef = useRef<HTMLButtonElement>(null);
 
-export class UserOrgs extends PureComponent<Props, State> {
-  addToOrgButtonRef = createRef<HTMLButtonElement>();
-  state = {
-    showAddOrgModal: false,
+  const showOrgAddModal = () => {
+    setShowAddOrgModal(true);
   };
 
-  showOrgAddModal = () => {
-    this.setState({ showAddOrgModal: true });
+  const dismissOrgAddModal = () => {
+    setShowAddOrgModal(false);
+    addToOrgButtonRef.current?.focus();
   };
 
-  dismissOrgAddModal = () => {
-    this.setState({ showAddOrgModal: false }, () => {
-      this.addToOrgButtonRef.current?.focus();
-    });
-  };
+  const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
 
-  render() {
-    const { user, orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd } = this.props;
-    const { showAddOrgModal } = this.state;
+  return (
+    <div>
+      <h3 className="page-heading">
+        <Trans i18nKey="admin.user-orgs.title">Organizations</Trans>
+      </h3>
+      <Stack gap={1.5} direction="column">
+        <table className="filter-table form-inline">
+          <tbody>
+            {orgs.map((org, index) => (
+              <OrgRow
+                key={`${org.orgId}-${index}`}
+                isExternalUser={isExternalUser}
+                user={user}
+                org={org}
+                onOrgRoleChange={onOrgRoleChange}
+                onOrgRemove={onOrgRemove}
+              />
+            ))}
+          </tbody>
+        </table>
 
-    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
-    return (
-      <div>
-        <h3 className="page-heading">
-          <Trans i18nKey="admin.user-orgs.title">Organizations</Trans>
-        </h3>
-        <Stack gap={1.5} direction="column">
-          <table className="filter-table form-inline">
-            <tbody>
-              {orgs.map((org, index) => (
-                <OrgRow
-                  key={`${org.orgId}-${index}`}
-                  isExternalUser={isExternalUser}
-                  user={user}
-                  org={org}
-                  onOrgRoleChange={onOrgRoleChange}
-                  onOrgRemove={onOrgRemove}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div>
+          {canAddToOrg && (
+            <Button variant="secondary" onClick={showOrgAddModal} ref={addToOrgButtonRef}>
+              <Trans i18nKey="admin.user-orgs.add-button">Add user to organization</Trans>
+            </Button>
+          )}
+        </div>
+        <AddToOrgModal
+          user={user}
+          userOrgs={orgs}
+          isOpen={showAddOrgModal}
+          onOrgAdd={onOrgAdd}
+          onDismiss={dismissOrgAddModal}
+        />
+      </Stack>
+    </div>
+  );
+});
+UserOrgs.displayName = 'UserOrgs';
 
-          <div>
-            {canAddToOrg && (
-              <Button variant="secondary" onClick={this.showOrgAddModal} ref={this.addToOrgButtonRef}>
-                <Trans i18nKey="admin.user-orgs.add-button">Add user to organization</Trans>
-              </Button>
-            )}
-          </div>
-          <AddToOrgModal
-            user={user}
-            userOrgs={orgs}
-            isOpen={showAddOrgModal}
-            onOrgAdd={onOrgAdd}
-            onDismiss={this.dismissOrgAddModal}
-          />
-        </Stack>
-      </div>
-    );
-  }
-}
-
-const getOrgRowStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getOrgRowStyles = (theme: GrafanaTheme2) => {
   return {
     removeButton: css({
       marginRight: '0.6rem',
@@ -130,9 +107,9 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme2) => {
       marginRight: theme.spacing(1),
     }),
   };
-});
+};
 
-interface OrgRowProps extends Themeable2 {
+interface OrgRowProps {
   user?: UserDTO;
   org: UserOrg;
   isExternalUser?: boolean;
@@ -140,126 +117,118 @@ interface OrgRowProps extends Themeable2 {
   onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
 }
 
-class UnThemedOrgRow extends PureComponent<OrgRowProps> {
-  state = {
-    currentRole: this.props.org.role,
-    isChangingRole: false,
-    roleOptions: [],
-  };
+const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }: OrgRowProps) => {
+  const [currentRole, setCurrentRole] = useState(org.role);
+  const [isChangingRole, setIsChangingRole] = useState(false);
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const styles = useStyles2(getOrgRowStyles);
 
-  componentDidMount() {
+  useEffect(() => {
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-        fetchRoleOptions(this.props.org.orgId)
-          .then((roles) => this.setState({ roleOptions: roles }))
+        fetchRoleOptions(org.orgId)
+          .then((roles) => setRoleOptions(roles))
           .catch((e) => console.error(e));
       }
     }
-  }
+  }, [org.orgId]);
 
-  onOrgRemove = async () => {
-    const { org } = this.props;
-    this.props.onOrgRemove(org.orgId);
+  const handleOrgRemove = async () => {
+    onOrgRemove(org.orgId);
   };
 
-  onChangeRoleClick = () => {
-    const { org } = this.props;
-    this.setState({ isChangingRole: true, currentRole: org.role });
+  const handleChangeRoleClick = () => {
+    setIsChangingRole(true);
+    setCurrentRole(org.role);
   };
 
-  onOrgRoleChange = (newRole: OrgRole) => {
-    this.setState({ currentRole: newRole });
+  const handleOrgRoleChange = (newRole: OrgRole) => {
+    setCurrentRole(newRole);
   };
 
-  onOrgRoleSave = () => {
-    this.props.onOrgRoleChange(this.props.org.orgId, this.state.currentRole);
+  const handleOrgRoleSave = () => {
+    onOrgRoleChange(org.orgId, currentRole);
   };
 
-  onCancelClick = () => {
-    this.setState({ isChangingRole: false });
+  const handleCancelClick = () => {
+    setIsChangingRole(false);
   };
 
-  onBasicRoleChange = (newRole: OrgRole) => {
-    this.props.onOrgRoleChange(this.props.org.orgId, newRole);
+  const handleBasicRoleChange = (newRole: OrgRole) => {
+    onOrgRoleChange(org.orgId, newRole);
   };
 
-  render() {
-    const { user, org, isExternalUser, theme } = this.props;
-    const authSource = user?.authLabels?.length && user?.authLabels[0];
-    const lockMessage = authSource ? `Synced via ${authSource}` : '';
-    const { currentRole, isChangingRole } = this.state;
-    const styles = getOrgRowStyles(theme);
-    const labelClass = cx('width-16', styles.label);
-    const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite);
-    const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove) && !isExternalUser;
-    const rolePickerDisabled = isExternalUser || !canChangeRole;
+  const authSource = user?.authLabels?.length && user?.authLabels[0];
+  const lockMessage = authSource ? `Synced via ${authSource}` : '';
+  const labelClass = cx('width-16', styles.label);
+  const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite);
+  const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove) && !isExternalUser;
+  const rolePickerDisabled = isExternalUser || !canChangeRole;
 
-    const inputId = `${org.name}-input`;
-    return (
-      <tr>
-        <td className={labelClass}>
-          <label htmlFor={inputId}>{org.name}</label>
-        </td>
-        {contextSrv.licensedAccessControlEnabled() ? (
-          <td>
-            <div className={styles.rolePickerWrapper}>
-              <div className={styles.rolePicker}>
-                <UserRolePicker
-                  userId={user?.id || 0}
-                  orgId={org.orgId}
-                  basicRole={org.role}
-                  roleOptions={this.state.roleOptions}
-                  onBasicRoleChange={this.onBasicRoleChange}
-                  basicRoleDisabled={rolePickerDisabled}
-                  basicRoleDisabledMessage="This user's role is not editable because it is synchronized from your auth provider.
-                    Refer to the Grafana authentication docs for details."
-                />
-              </div>
-              {isExternalUser && <ExternalUserTooltip lockMessage={lockMessage} />}
+  const inputId = `${org.name}-input`;
+  return (
+    <tr>
+      <td className={labelClass}>
+        <label htmlFor={inputId}>{org.name}</label>
+      </td>
+      {contextSrv.licensedAccessControlEnabled() ? (
+        <td>
+          <div className={styles.rolePickerWrapper}>
+            <div className={styles.rolePicker}>
+              <UserRolePicker
+                userId={user?.id || 0}
+                orgId={org.orgId}
+                basicRole={org.role}
+                roleOptions={roleOptions}
+                onBasicRoleChange={handleBasicRoleChange}
+                basicRoleDisabled={rolePickerDisabled}
+                basicRoleDisabledMessage="This user's role is not editable because it is synchronized from your auth provider.
+                  Refer to the Grafana authentication docs for details."
+              />
             </div>
-          </td>
-        ) : (
-          <>
-            {isChangingRole ? (
-              <td>
-                <OrgRolePicker inputId={inputId} value={currentRole} onChange={this.onOrgRoleChange} autoFocus />
-              </td>
-            ) : (
-              <td className="width-25">{org.role}</td>
-            )}
-            <td colSpan={1}>
-              {canChangeRole && (
-                <ChangeOrgButton
-                  lockMessage={lockMessage}
-                  isExternalUser={isExternalUser}
-                  onChangeRoleClick={this.onChangeRoleClick}
-                  onCancelClick={this.onCancelClick}
-                  onOrgRoleSave={this.onOrgRoleSave}
-                />
-              )}
-            </td>
-          </>
-        )}
-        <td colSpan={1}>
-          {canRemoveFromOrg && (
-            <ConfirmButton
-              confirmText={t('admin.un-themed-org-row.confirmText-confirm-removal', 'Confirm removal')}
-              confirmVariant="destructive"
-              onCancel={this.onCancelClick}
-              onConfirm={this.onOrgRemove}
-            >
-              {t('admin.user-orgs.remove-button', 'Remove from organization')}
-            </ConfirmButton>
-          )}
+            {isExternalUser && <ExternalUserTooltip lockMessage={lockMessage} />}
+          </div>
         </td>
-      </tr>
-    );
-  }
-}
+      ) : (
+        <>
+          {isChangingRole ? (
+            <td>
+              <OrgRolePicker inputId={inputId} value={currentRole} onChange={handleOrgRoleChange} autoFocus />
+            </td>
+          ) : (
+            <td className="width-25">{org.role}</td>
+          )}
+          <td colSpan={1}>
+            {canChangeRole && (
+              <ChangeOrgButton
+                lockMessage={lockMessage}
+                isExternalUser={isExternalUser}
+                onChangeRoleClick={handleChangeRoleClick}
+                onCancelClick={handleCancelClick}
+                onOrgRoleSave={handleOrgRoleSave}
+              />
+            )}
+          </td>
+        </>
+      )}
+      <td colSpan={1}>
+        {canRemoveFromOrg && (
+          <ConfirmButton
+            confirmText={t('admin.un-themed-org-row.confirmText-confirm-removal', 'Confirm removal')}
+            confirmVariant="destructive"
+            onCancel={handleCancelClick}
+            onConfirm={handleOrgRemove}
+          >
+            {t('admin.user-orgs.remove-button', 'Remove from organization')}
+          </ConfirmButton>
+        )}
+      </td>
+    </tr>
+  );
+});
+OrgRow.displayName = 'OrgRow';
 
-const OrgRow = withTheme2(UnThemedOrgRow);
-
-const getAddToOrgModalStyles = stylesFactory(() => ({
+const getAddToOrgModalStyles = () => ({
   modal: css({
     width: '500px',
   }),
@@ -269,7 +238,7 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
   modalContent: css({
     overflow: 'visible',
   }),
-}));
+});
 
 interface AddToOrgModalProps {
   isOpen: boolean;
@@ -280,126 +249,104 @@ interface AddToOrgModalProps {
   onDismiss?(): void;
 }
 
-interface AddToOrgModalState {
-  selectedOrg: Organization | null;
-  role: OrgRole;
-  roleOptions: Role[];
-  pendingOrgId: number | null;
-  pendingUserId: number | null;
-  pendingRoles: Role[];
-}
+export const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: AddToOrgModalProps) => {
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [role, setRole] = useState<OrgRole>(OrgRole.Viewer);
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [pendingOrgId, setPendingOrgId] = useState<number | null>(null);
+  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
+  const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
+  const styles = useStyles2(getAddToOrgModalStyles);
 
-export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
-  state: AddToOrgModalState = {
-    selectedOrg: null,
-    role: OrgRole.Viewer,
-    roleOptions: [],
-    pendingOrgId: null,
-    pendingUserId: null,
-    pendingRoles: [],
-  };
-
-  onOrgSelect = (org: OrgSelectItem) => {
-    const userOrg = this.props.userOrgs.find((userOrg) => userOrg.orgId === org.value?.id);
-    this.setState({ selectedOrg: org.value!, role: userOrg?.role || OrgRole.Viewer });
+  const onOrgSelect = (org: OrgSelectItem) => {
+    const userOrg = userOrgs.find((userOrg) => userOrg.orgId === org.value?.id);
+    setSelectedOrg(org.value!);
+    setRole(userOrg?.role || OrgRole.Viewer);
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
         fetchRoleOptions(org.value?.id)
-          .then((roles) => this.setState({ roleOptions: roles }))
+          .then((roles) => setRoleOptions(roles))
           .catch((e) => console.error(e));
       }
     }
   };
 
-  onOrgRoleChange = (newRole: OrgRole) => {
-    this.setState({
-      role: newRole,
-    });
+  const onOrgRoleChange = (newRole: OrgRole) => {
+    setRole(newRole);
   };
 
-  onAddUserToOrg = async () => {
-    const { selectedOrg, role } = this.state;
-    this.props.onOrgAdd(selectedOrg!.id, role);
+  const onAddUserToOrg = async () => {
+    onOrgAdd(selectedOrg!.id, role);
     // add the stored userRoles also
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
-        if (this.state.pendingUserId) {
-          await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
+        if (pendingUserId) {
+          await updateUserRoles(pendingRoles, pendingUserId, pendingOrgId!);
           // clear pending state
-          this.setState({
-            pendingOrgId: null,
-            pendingRoles: [],
-            pendingUserId: null,
-          });
+          setPendingOrgId(null);
+          setPendingRoles([]);
+          setPendingUserId(null);
         }
       }
     }
   };
 
-  onCancel = () => {
+  const onCancel = () => {
     // clear selectedOrg when modal is canceled
-    this.setState({
-      selectedOrg: null,
-      pendingRoles: [],
-      pendingOrgId: null,
-      pendingUserId: null,
-    });
-    if (this.props.onDismiss) {
-      this.props.onDismiss();
+    setSelectedOrg(null);
+    setPendingRoles([]);
+    setPendingOrgId(null);
+    setPendingUserId(null);
+    if (onDismiss) {
+      onDismiss();
     }
   };
 
-  onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
+  const onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
     // keep the new role assignments for user
-    this.setState({
-      pendingRoles: roles,
-      pendingOrgId: orgId!,
-      pendingUserId: userId,
-    });
+    setPendingRoles(roles);
+    setPendingOrgId(orgId!);
+    setPendingUserId(userId);
   };
 
-  render() {
-    const { isOpen, user, userOrgs } = this.props;
-    const { role, roleOptions, selectedOrg } = this.state;
-    const styles = getAddToOrgModalStyles();
-    return (
-      <Modal
-        className={styles.modal}
-        contentClassName={styles.modalContent}
-        title={t('admin.add-to-org-modal.title-add-to-an-organization', 'Add to an organization')}
-        isOpen={isOpen}
-        onDismiss={this.onCancel}
-      >
-        <Field label={t('admin.add-to-org-modal.label-organization', 'Organization')}>
-          <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} excludeOrgs={userOrgs} autoFocus />
-        </Field>
-        <Field label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null}>
-          <UserRolePicker
-            userId={user?.id || 0}
-            orgId={selectedOrg?.id}
-            basicRole={role}
-            onBasicRoleChange={this.onOrgRoleChange}
-            basicRoleDisabled={false}
-            roleOptions={roleOptions}
-            apply={true}
-            onApplyRoles={this.onRoleUpdate}
-            pendingRoles={this.state.pendingRoles}
-          />
-        </Field>
-        <Modal.ButtonRow>
-          <Stack gap={2} justifyContent="center">
-            <Button variant="secondary" fill="outline" onClick={this.onCancel}>
-              <Trans i18nKey="admin.user-orgs-modal.cancel-button">Cancel</Trans>
-            </Button>
-            <Button variant="primary" disabled={selectedOrg === null} onClick={this.onAddUserToOrg}>
-              <Trans i18nKey="admin.user-orgs-modal.add-button">Add to organization</Trans>
-            </Button>
-          </Stack>
-        </Modal.ButtonRow>
-      </Modal>
-    );
-  }
-}
+  return (
+    <Modal
+      className={styles.modal}
+      contentClassName={styles.modalContent}
+      title={t('admin.add-to-org-modal.title-add-to-an-organization', 'Add to an organization')}
+      isOpen={isOpen}
+      onDismiss={onCancel}
+    >
+      <Field label={t('admin.add-to-org-modal.label-organization', 'Organization')}>
+        <OrgPicker inputId="new-org-input" onSelected={onOrgSelect} excludeOrgs={userOrgs} autoFocus />
+      </Field>
+      <Field label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null}>
+        <UserRolePicker
+          userId={user?.id || 0}
+          orgId={selectedOrg?.id}
+          basicRole={role}
+          onBasicRoleChange={onOrgRoleChange}
+          basicRoleDisabled={false}
+          roleOptions={roleOptions}
+          apply={true}
+          onApplyRoles={onRoleUpdate}
+          pendingRoles={pendingRoles}
+        />
+      </Field>
+      <Modal.ButtonRow>
+        <Stack gap={2} justifyContent="center">
+          <Button variant="secondary" fill="outline" onClick={onCancel}>
+            <Trans i18nKey="admin.user-orgs-modal.cancel-button">Cancel</Trans>
+          </Button>
+          <Button variant="primary" disabled={selectedOrg === null} onClick={onAddUserToOrg}>
+            <Trans i18nKey="admin.user-orgs-modal.add-button">Add to organization</Trans>
+          </Button>
+        </Stack>
+      </Modal.ButtonRow>
+    </Modal>
+  );
+});
+AddToOrgModal.displayName = 'AddToOrgModal';
 
 interface ChangeOrgButtonProps {
   lockMessage?: string;

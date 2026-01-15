@@ -5,6 +5,7 @@ import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana
 
 import { createLogLine } from '../mocks/logRow';
 
+import { LogDetailsContextProvider } from './LogDetailsContext';
 import { getStyles } from './LogLine';
 import { LogLineMenu, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider } from './LogListContext';
@@ -15,7 +16,10 @@ jest.mock('./LogListContext');
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
-  useAssistant: jest.fn(() => [true, jest.fn()]),
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: true,
+    openAssistant: jest.fn(),
+  }),
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -155,8 +159,10 @@ describe('LogLineMenu', () => {
 
     test('Allows to open log details', async () => {
       render(
-        <LogListContextProvider {...contextProps} enableLogDetails={true}>
-          <LogLineMenu log={log} styles={styles} />
+        <LogListContextProvider {...contextProps}>
+          <LogDetailsContextProvider enableLogDetails logs={contextProps.logs} showControls>
+            <LogLineMenu log={log} styles={styles} />
+          </LogDetailsContextProvider>
         </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
@@ -165,8 +171,10 @@ describe('LogLineMenu', () => {
 
     test('Does not show log details option when disabled', async () => {
       render(
-        <LogListContextProvider {...contextProps} enableLogDetails={false}>
-          <LogLineMenu log={log} styles={styles} />
+        <LogListContextProvider {...contextProps}>
+          <LogDetailsContextProvider logs={contextProps.logs} showControls enableLogDetails={false}>
+            <LogLineMenu log={log} styles={styles} />
+          </LogDetailsContextProvider>
         </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));

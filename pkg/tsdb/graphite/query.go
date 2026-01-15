@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/net/html"
@@ -28,6 +27,8 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		req      *http.Request
 		formData url.Values
 	}{}
+	// FromAlert header is defined in pkg/services/ngalert/models/constants.go
+	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
@@ -98,7 +99,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 		}()
 
-		queryFrames, err := s.toDataFrames(res, refId)
+		queryFrames, err := s.toDataFrames(res, refId, fromAlert)
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
@@ -193,7 +194,7 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 	return graphiteReq, formData, emptyQuery, nil
 }
 
-func (s *Service) toDataFrames(response *http.Response, refId string) (frames data.Frames, error error) {
+func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert bool) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(response)
 	if err != nil {
 		return nil, err
@@ -216,7 +217,9 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				value = series.Target
+				if fromAlert {
+					value = series.Target
+				}
 			}
 			switch value := value.(type) {
 			case string:
@@ -250,14 +253,24 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 	if res.StatusCode/100 != 2 {
 		graphiteError := parseGraphiteError(res.StatusCode, string(body))
 		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", string(body))
-		return nil, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed with error: %s", graphiteError), false)
+		err := fmt.Errorf("request failed with error: %s", graphiteError)
+		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+		return nil, backend.PluginError(err)
 	}
 
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		s.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
-		return nil, backend.DownstreamError(err)
+		s.logger.Warn("Failed to unamrshal to newer graphite response, attempting legacy")
+		var legacyData LegacyTargetResponseDTO
+		err = json.Unmarshal(body, &legacyData)
+		if err != nil {
+			s.logger.Info("Failed to unmarshal legacy graphite response", "error", err, "status", res.Status, "body", string(body))
+			return nil, backend.PluginError(err)
+		}
+		return legacyData.Series, nil
 	}
 
 	return data, nil

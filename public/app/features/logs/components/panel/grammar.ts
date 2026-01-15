@@ -21,12 +21,10 @@ const jsonGrammar: Grammar = {
   'log-token-json-key': {
     pattern: /(^|[^\\])"(?:\\.|[^\\"\r\n])*"(?=\s*:)/,
     lookbehind: true,
-    greedy: true,
   },
   'log-token-string': {
     pattern: /(^|[^\\])"(?:\\.|[^\\"\r\n])*"(?!\s*:)/,
     lookbehind: true,
-    greedy: true,
     inside: {
       ...tokensGrammar,
     },
@@ -36,37 +34,46 @@ const jsonGrammar: Grammar = {
 
 export const generateLogGrammar = (log: LogListModel) => {
   const labels = Object.keys(log.labels).concat(log.fields.map((field) => field.keys[0]));
-  const logGrammar: Grammar = {
+  const labelGrammar: Grammar = {
     'log-token-label': new RegExp(`\\b(${labels.join('|')})(?:[=:]{1})\\b`, 'g'),
   };
   if (log.isJSON) {
     return {
-      ...logGrammar,
+      ...labelGrammar,
       ...jsonGrammar,
     };
   }
   return {
-    ...logGrammar,
+    ...labelGrammar,
     ...tokensGrammar,
     ...logsGrammar,
   };
 };
 
-export const generateTextMatchGrammar = (
-  highlightWords: string[] | undefined = [],
-  search: string | undefined
-): Grammar => {
+export const generateTextMatchGrammar = (highlightWords: string[] | undefined = [], search?: string): Grammar => {
   /**
    * See:
    * - https://github.com/grafana/grafana/blob/96f1582c36f94cf4ac7621b7af86bc9e2ad626fb/public/app/features/logs/components/LogRowMessage.tsx#L67
    * - https://github.com/grafana/grafana/blob/96f1582c36f94cf4ac7621b7af86bc9e2ad626fb/packages/grafana-data/src/text/text.ts#L12
    */
-  const expressions = highlightWords.map((word) => {
-    const { cleaned, flags } = parseFlags(cleanNeedle(word));
-    return new RegExp(`(?:${cleaned})`, flags);
-  });
+  const expressions = highlightWords
+    .map((word) => {
+      const { cleaned, flags } = parseFlags(cleanNeedle(word));
+      try {
+        return new RegExp(`(?:${cleaned})`, flags);
+      } catch (e) {
+        console.error(`generateTextMatchGrammar: cannot generate regular expression from /${cleaned}/${flags}`, e);
+      }
+      return undefined;
+    })
+    .filter((expression) => expression !== undefined);
+
   if (search) {
-    expressions.push(new RegExp(escapeRegex(search), 'gi'));
+    try {
+      expressions.push(new RegExp(escapeRegex(search), 'gi'));
+    } catch (e) {
+      console.error(`generateTextMatchGrammar: cannot generate regular expression from /${search}/gi`, e);
+    }
   }
   if (!expressions.length) {
     return {};

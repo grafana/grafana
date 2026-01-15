@@ -13,7 +13,7 @@
       "label-resource-group": "Kelompok Sumber Daya",
       "label-resource-name": "Nama Sumber Daya",
       "label-resource-number": "Sumber Daya {{resourceNum}}",
-      "label-resource-uri": "URI Sumber Daya ",
+      "label-resource-uri": "",
       "label-subscription": "Berlangganan",
       "placeholder-resource-name": "nama",
       "tooltip-region": "Wilayah kode sumber daya. Opsional untuk satu sumber daya tetapi wajib saat memilih beberapa sumber daya.",
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Tombol kueri untuk memulai menggunakan log Azure",
       "body-switching-to-builder": "Beralih ke Builder akan membuang kueri KQL Anda saat ini dan menghapus editor KQL. Anda yakin?",
-      "body-switching-to-kql": "Beralih ke KQL akan membuang pengaturan pembangun Anda saat ini. Anda yakin?",
       "button-kick-start-your-query": "Mulai kueri Anda",
       "button-run-query": "Jalankan kueri",
       "confirmText-switch-to": "Beralih ke {{newMode}}",

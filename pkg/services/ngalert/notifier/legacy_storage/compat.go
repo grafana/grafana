@@ -71,6 +71,13 @@ func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, prov
 	if err != nil {
 		return nil, err
 	}
+	if postable.HasMimirIntegrations() {
+		mimir, err := PostableMimirReceiverToIntegrations(postable.Receiver)
+		if err != nil {
+			return nil, err
+		}
+		integrations = append(integrations, mimir...)
+	}
 	r := &models.Receiver{
 		UID:          NameToUid(postable.GetName()), // TODO replace with stable UID.
 		Name:         postable.GetName(),
@@ -115,6 +122,26 @@ func PostableGrafanaReceiversToIntegrations(postables []*apimodels.PostableGrafa
 	}
 
 	return integrations, nil
+}
+
+func PostableMimirReceiverToIntegrations(r alertingNotify.ConfigReceiver) ([]*models.Integration, error) {
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
+	}
+	result := make([]*models.Integration, 0, len(v0))
+	for _, config := range v0 {
+		s, err := config.ConfigMap()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get settings of v0 receiver %s (version %s): %w", config.Schema.Type(), config.Schema.Version, err)
+		}
+		result = append(result, &models.Integration{
+			Config:         config.Schema,
+			Settings:       s,
+			SecureSettings: map[string]string{},
+		})
+	}
+	return result, nil
 }
 
 func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) (*models.Integration, error) {

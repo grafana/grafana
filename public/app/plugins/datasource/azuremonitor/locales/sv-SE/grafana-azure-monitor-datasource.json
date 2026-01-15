@@ -13,7 +13,7 @@
       "label-resource-group": "Resursgrupp",
       "label-resource-name": "Rättigheter",
       "label-resource-number": "Resurs {{resourceNum}}",
-      "label-resource-uri": "Resurs-URI ",
+      "label-resource-uri": "",
       "label-subscription": "Prenumeration",
       "placeholder-resource-name": "namn",
       "tooltip-region": "Resursens kodregion. Valfritt för en enskild resurs men obligatoriskt vid val av flera.",
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Knapp för att kickstarta Azure-loggfrågor",
       "body-switching-to-builder": "Om du byter till Builder kommer din nuvarande KQL-förfrågan att kasseras och KQL-redigeraren att rensas. Är du säker på att du vill göra det?",
-      "body-switching-to-kql": "Om du byter till KQL kommer dina nuvarande byggarinställningar att kasseras. Är du säker?",
       "button-kick-start-your-query": "Kickstarta din fråga",
       "button-run-query": "Kör fråga",
       "confirmText-switch-to": "Byt till {{newMode}}",

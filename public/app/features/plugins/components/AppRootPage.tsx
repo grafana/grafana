@@ -17,12 +17,13 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert, ErrorWithStack } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 
 import {
@@ -32,7 +33,7 @@ import {
   useExposedComponentsRegistry,
   useAddedFunctionsRegistry,
 } from '../extensions/ExtensionRegistriesContext';
-import { importAppPlugin } from '../pluginLoader';
+import { pluginImporter } from '../importer/pluginImporter';
 import { getPluginSettings } from '../pluginSettings';
 import { buildPluginSectionNav, pluginsLogger } from '../utils';
 
@@ -234,7 +235,7 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
         dispatch(stateSlice.actions.setState({ pluginNav: getWarningNav(error) }));
         return null;
       }
-      return importAppPlugin(info);
+      return pluginImporter.importApp(info);
     });
     dispatch(stateSlice.actions.setState({ plugin: app, loading: false, loadingError: false, pluginNav: null }));
   } catch (err) {

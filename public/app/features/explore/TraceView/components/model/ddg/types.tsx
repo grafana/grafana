@@ -14,8 +14,6 @@
 
 import PathElem from './PathElem';
 
-export { default as PathElem } from './PathElem';
-
 export type TDdgService = {
   name: string;
   operations: Map<string, TDdgOperation>;

@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import { Component } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { Dashboard } from '@grafana/schema';
@@ -16,12 +15,10 @@ import { Props, SoloPanelPage } from './SoloPanelPage';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
-  class DashboardPanel extends Component<DashboardPanelProps> {
-    render() {
-      // In this test we only check whether a new panel has arrived in the props
-      return <>{this.props.panel?.title}</>;
-    }
-  }
+  const DashboardPanel = (props: DashboardPanelProps) => {
+    // In this test we only check whether a new panel has arrived in the props
+    return <>{props.panel?.title}</>;
+  };
 
   return { DashboardPanel };
 });

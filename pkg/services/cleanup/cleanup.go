@@ -14,10 +14,11 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -62,6 +63,7 @@ type CleanUpService struct {
 	orgService                org.Service
 	teamService               team.Service
 	dataSourceService         datasources.DataSourceService
+	dynamicClientFactory      func(*rest.Config) (dynamic.Interface, error)
 }
 
 func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serverLockService *serverlock.ServerLockService,
@@ -87,6 +89,9 @@ func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serve
 		orgService:                orgService,
 		teamService:               teamService,
 		dataSourceService:         dataSourceService,
+		dynamicClientFactory: func(c *rest.Config) (dynamic.Interface, error) {
+			return dynamic.NewForConfig(c)
+		},
 	}
 	return s
 }
@@ -231,12 +236,91 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 
 func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}
-	if err := srv.dashboardSnapshotService.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
-		logger.Error("Failed to delete expired snapshots", "error", err.Error())
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+		srv.deleteKubernetesExpiredSnapshots(ctx)
 	} else {
-		logger.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
+		cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}
+		if err := srv.dashboardSnapshotService.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
+			logger.Error("Failed to delete expired snapshots", "error", err.Error())
+		} else {
+			logger.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
+		}
 	}
+}
+
+func (srv *CleanUpService) deleteKubernetesExpiredSnapshots(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
+	logger.Debug("Starting deleting expired Kubernetes snapshots")
+
+	// Create the dynamic client for Kubernetes API
+	restConfig, err := srv.clientConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		logger.Error("Failed to get REST config for Kubernetes client", "error", err.Error())
+		return
+	}
+
+	client, err := srv.dynamicClientFactory(restConfig)
+	if err != nil {
+		logger.Error("Failed to create Kubernetes client", "error", err.Error())
+		return
+	}
+
+	// Set up the GroupVersionResource for snapshots
+	gvr := v0alpha1.SnapshotKind().GroupVersionResource()
+
+	// Expiration time is now
+	expirationTime := time.Now()
+	expirationTimestamp := expirationTime.UnixMilli()
+	deletedCount := 0
+
+	// List and delete expired snapshots across all namespaces
+	orgs, err := srv.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		logger.Error("Failed to list organizations", "error", err.Error())
+		return
+	}
+
+	for _, o := range orgs {
+		ctx, _ := identity.WithServiceIdentity(ctx, o.ID)
+		namespaceMapper := request.GetNamespaceMapper(srv.Cfg)
+		snapshots, err := client.Resource(gvr).Namespace(namespaceMapper(o.ID)).List(ctx, v1.ListOptions{})
+		if err != nil {
+			logger.Error("Failed to list snapshots for org", "orgID", o.ID, "error", err.Error())
+			continue
+		}
+		// Check each snapshot for expiration
+		for _, item := range snapshots.Items {
+			// Convert unstructured object to Snapshot struct
+			var snapshot v0alpha1.Snapshot
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &snapshot)
+			if err != nil {
+				logger.Error("Failed to convert unstructured object to snapshot", "name", item.GetName(), "namespace", item.GetNamespace(), "error", err.Error())
+				continue
+			}
+
+			// Only delete expired snapshots
+			if snapshot.Spec.Expires != nil && *snapshot.Spec.Expires < expirationTimestamp {
+				namespace := snapshot.Namespace
+				name := snapshot.Name
+
+				err := client.Resource(gvr).Namespace(namespace).Delete(ctx, name, v1.DeleteOptions{})
+				if err != nil {
+					// Check if it's a "not found" error, which is expected if the resource was already deleted
+					if k8serrors.IsNotFound(err) {
+						logger.Debug("Snapshot already deleted", "name", name, "namespace", namespace)
+					} else {
+						logger.Error("Failed to delete expired snapshot", "name", name, "namespace", namespace, "error", err.Error())
+					}
+				} else {
+					deletedCount++
+					logger.Debug("Successfully deleted expired snapshot", "name", name, "namespace", namespace, "creationTime", snapshot.CreationTimestamp.Unix(), "expirationTime", expirationTimestamp)
+				}
+			}
+		}
+	}
+
+	logger.Debug("Deleted expired Kubernetes snapshots", "count", deletedCount)
 }
 
 func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
@@ -293,6 +377,7 @@ func (srv *CleanUpService) expireOldVerifications(ctx context.Context) {
 
 func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
 		srv.deleteStaleKubernetesShortURLs(ctx)
 	} else {
@@ -318,18 +403,14 @@ func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
 		return
 	}
 
-	client, err := dynamic.NewForConfig(restConfig)
+	client, err := srv.dynamicClientFactory(restConfig)
 	if err != nil {
 		logger.Error("Failed to create Kubernetes client", "error", err.Error())
 		return
 	}
 
 	// Set up the GroupVersionResource for shortURLs
-	gvr := schema.GroupVersionResource{
-		Group:    v1alpha1.ShortURLKind().Group(),
-		Version:  v1alpha1.ShortURLKind().Version(),
-		Resource: v1alpha1.ShortURLKind().Plural(),
-	}
+	gvr := v1beta1.ShortURLKind().GroupVersionResource()
 
 	// Calculate the expiration time
 	expirationTime := time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour)
@@ -354,7 +435,7 @@ func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
 		// Check each shortURL for expiration
 		for _, item := range shortURLs.Items {
 			// Convert unstructured object to ShortURL struct
-			var shortURL v1alpha1.ShortURL
+			var shortURL v1beta1.ShortURL
 			err := runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &shortURL)
 			if err != nil {
 				logger.Error("Failed to convert unstructured object to ShortURL", "name", item.GetName(), "namespace", item.GetNamespace(), "error", err.Error())

@@ -40,6 +40,11 @@ const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 const NO_DATA_TEXT = 'No data';
 
+/**
+ * Used for displaying tabular data
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-table--docs
+ */
 export const Table = memo((props: Props) => {
   const {
     ariaLabel,

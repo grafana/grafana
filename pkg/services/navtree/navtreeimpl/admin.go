@@ -44,7 +44,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
 	}
-	if hasAccess(cloudmigration.MigrationAssistantAccess) && s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) {
+	if hasAccess(cloudmigration.MigrationAssistantAccess) && s.cfg.CloudMigration.Enabled {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Migrate to Grafana Cloud",
 			Id:       "migrate-to-cloud",
@@ -52,10 +52,10 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if c.HasRole(identity.RoleAdmin) &&
-		(s.cfg.StackID == "" || // show OnPrem even when provisioning is disabled
-			s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
-		configNodes = append(configNodes, &navtree.NavLink{
+		s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
@@ -88,7 +88,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/plugins",
 		})
 	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagCorrelations) && hasAccess(correlations.ConfigurationPageAccess) {
+	if hasAccess(correlations.ConfigurationPageAccess) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Correlations",
 			Icon:     "gf-glue",
@@ -98,6 +98,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if (s.cfg.Env == setting.Dev) || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Extensions",
@@ -146,6 +147,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if s.license.FeatureEnabled("groupsync") &&
 		s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) &&
 		hasAccess(ac.EvalAny(

@@ -16,13 +16,6 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 )
 
-// GetReceiverQuery represents a query for a single receiver.
-type GetReceiverQuery struct {
-	OrgID   int64
-	Name    string
-	Decrypt bool
-}
-
 // GetReceiversQuery represents a query for receiver groups.
 type GetReceiversQuery struct {
 	OrgID   int64
@@ -130,6 +123,9 @@ func (r *Receiver) WithExistingSecureFields(existing *Receiver, integrationSecur
 // Validate validates all integration settings, ensuring that the integrations are correctly configured.
 func (r *Receiver) Validate(decryptFn DecryptFn) error {
 	var errs []error
+	if r.Name == "" {
+		errs = append(errs, fmt.Errorf("name should not be an empty string"))
+	}
 	for _, integration := range r.Integrations {
 		if err := integration.Validate(decryptFn); err != nil {
 			errs = append(errs, err)

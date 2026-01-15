@@ -18,16 +18,17 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
@@ -119,12 +120,14 @@ func TestLoader_Load(t *testing.T) {
 						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
-					Module:       "core:plugin/cloudwatch",
-					BaseURL:      "public/plugins/cloudwatch",
-					FS:           mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
-					Signature:    plugins.SignatureStatusInternal,
-					Class:        plugins.ClassCore,
-					Translations: map[string]string{},
+					Class:           plugins.ClassCore,
+					BaseURL:         "public/plugins/cloudwatch",
+					FS:              mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
+					Module:          "core:plugin/cloudwatch",
+					Signature:       plugins.SignatureStatusInternal,
+					SkipHostEnvVars: true,
+					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -212,14 +215,16 @@ func TestLoader_Load(t *testing.T) {
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 					},
-					Class:         plugins.ClassExternal,
-					Module:        "public/plugins/test-app/module.js",
-					BaseURL:       "public/plugins/test-app",
-					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "includes-symlinks")),
-					Signature:     "valid",
-					SignatureType: plugins.SignatureTypeGrafana,
-					SignatureOrg:  "Grafana Labs",
-					Translations:  map[string]string{},
+					Class:           plugins.ClassExternal,
+					Module:          "public/plugins/test-app/module.js",
+					BaseURL:         "public/plugins/test-app",
+					FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "includes-symlinks")),
+					Signature:       "valid",
+					SignatureType:   plugins.SignatureTypeGrafana,
+					SignatureOrg:    "Grafana Labs",
+					SkipHostEnvVars: true,
+					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -265,12 +270,14 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:        plugins.ClassExternal,
-					Module:       "public/plugins/test-datasource/module.js",
-					BaseURL:      "public/plugins/test-datasource",
-					FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
-					Signature:    "unsigned",
-					Translations: map[string]string{},
+					Class:           plugins.ClassExternal,
+					Module:          "public/plugins/test-datasource/module.js",
+					BaseURL:         "public/plugins/test-datasource",
+					FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
+					Signature:       "unsigned",
+					SkipHostEnvVars: true,
+					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -329,12 +336,14 @@ func TestLoader_Load(t *testing.T) {
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:        plugins.ClassExternal,
-					Module:       "public/plugins/test-datasource/module.js",
-					BaseURL:      "public/plugins/test-datasource",
-					FS:           mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
-					Signature:    plugins.SignatureStatusUnsigned,
-					Translations: map[string]string{},
+					Class:           plugins.ClassExternal,
+					Module:          "public/plugins/test-datasource/module.js",
+					BaseURL:         "public/plugins/test-datasource",
+					FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
+					Signature:       plugins.SignatureStatusUnsigned,
+					SkipHostEnvVars: true,
+					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
@@ -449,21 +458,23 @@ func TestLoader_Load(t *testing.T) {
 						},
 						Backend: false,
 					},
-					DefaultNavURL: "/plugins/test-app/page/root-page-react",
-					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app-with-includes")),
-					Class:         plugins.ClassExternal,
-					Signature:     plugins.SignatureStatusUnsigned,
-					Module:        "public/plugins/test-app/module.js",
-					BaseURL:       "public/plugins/test-app",
-					Translations:  map[string]string{},
+					DefaultNavURL:   "/plugins/test-app/page/root-page-react",
+					FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app-with-includes")),
+					Class:           plugins.ClassExternal,
+					Signature:       plugins.SignatureStatusUnsigned,
+					Module:          "public/plugins/test-app/module.js",
+					BaseURL:         "public/plugins/test-app",
+					SkipHostEnvVars: true,
+					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
-		reg := fakes.NewFakePluginRegistry()
-		procPrvdr := fakes.NewFakeBackendProcessProvider()
-		procMgr := fakes.NewFakeProcessManager()
+		reg := pluginfakes.NewFakePluginRegistry()
+		procPrvdr := pluginfakes.NewFakeBackendProcessProvider()
+		procMgr := pluginfakes.NewFakeProcessManager()
 		errTracker := pluginerrs.ProvideErrorTracker()
 
 		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker, pluginassets.NewLocalProvider())
@@ -546,20 +557,22 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 				},
-				Translations: map[string]string{},
+				SkipHostEnvVars: true,
+				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
-		backendFactoryProvider := fakes.NewFakeBackendProcessProvider()
+		backendFactoryProvider := pluginfakes.NewFakeBackendProcessProvider()
 		backendFactoryProvider.BackendFactoryFunc = func(ctx context.Context, plugin *plugins.Plugin) backendplugin.PluginFactoryFunc {
 			return func(pluginID string, logger log.Logger, tracer trace.Tracer, env func() []string) (backendplugin.Plugin, error) {
 				require.Equal(t, "grafana-test-datasource", pluginID)
-				return &fakes.FakeBackendPlugin{}, nil
+				return &pluginfakes.FakeBackendPlugin{}, nil
 			}
 		}
 
 		l := newLoaderWithOpts(t, cfg, loaderDepOpts{
-			authServiceRegistry: &fakes.FakeAuthService{
+			authServiceRegistry: &pluginfakes.FakeAuthService{
 				Result: &auth.ExternalService{
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
@@ -567,7 +580,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 			},
 			backendFactoryProvider: backendFactoryProvider,
 		})
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+		got, err := l.Load(context.Background(), &pluginfakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
@@ -641,14 +654,16 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 							Executable: "test",
 							State:      plugins.ReleaseStateAlpha,
 						},
-						Class:         plugins.ClassExternal,
-						Module:        "public/plugins/test-datasource/module.js",
-						BaseURL:       "public/plugins/test-datasource",
-						FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-pvt-signature/plugin")),
-						Signature:     "valid",
-						SignatureType: plugins.SignatureTypePrivate,
-						SignatureOrg:  "Will Browne",
-						Translations:  map[string]string{},
+						Class:           plugins.ClassExternal,
+						Module:          "public/plugins/test-datasource/module.js",
+						BaseURL:         "public/plugins/test-datasource",
+						FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-pvt-signature/plugin")),
+						Signature:       "valid",
+						SignatureType:   plugins.SignatureTypePrivate,
+						SignatureOrg:    "Will Browne",
+						SkipHostEnvVars: true,
+						Translations:    map[string]string{},
+						LoadingStrategy: plugins.LoadingStrategyScript,
 					},
 				},
 				pluginErrors: map[string]*plugins.Error{
@@ -661,14 +676,14 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			reg := fakes.NewFakePluginRegistry()
-			procPrvdr := fakes.NewFakeBackendProcessProvider()
-			procMgr := fakes.NewFakeProcessManager()
+			reg := pluginfakes.NewFakePluginRegistry()
+			procPrvdr := pluginfakes.NewFakeBackendProcessProvider()
+			procMgr := pluginfakes.NewFakeProcessManager()
 			errTracker := pluginerrs.ProvideErrorTracker()
 
 			l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker, pluginassets.NewLocalProvider())
 			t.Run(tt.name, func(t *testing.T) {
-				got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+				got, err := l.Load(context.Background(), &pluginfakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
 						return plugins.ClassExternal
 					},
@@ -760,26 +775,28 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 						},
 						Backend: false,
 					},
-					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app-with-roles")),
-					Class:         plugins.ClassExternal,
-					Signature:     plugins.SignatureStatusValid,
-					SignatureType: plugins.SignatureTypePrivate,
-					SignatureOrg:  "gabrielmabille",
-					Module:        "public/plugins/test-app/module.js",
-					BaseURL:       "public/plugins/test-app",
-					Translations:  map[string]string{},
+					FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app-with-roles")),
+					Class:           plugins.ClassExternal,
+					Signature:       plugins.SignatureStatusValid,
+					SignatureType:   plugins.SignatureTypePrivate,
+					SignatureOrg:    "gabrielmabille",
+					Module:          "public/plugins/test-app/module.js",
+					BaseURL:         "public/plugins/test-app",
+					SkipHostEnvVars: true,
+					Translations:    map[string]string{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
 				},
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		reg := fakes.NewFakePluginRegistry()
-		procPrvdr := fakes.NewFakeBackendProcessProvider()
-		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
+		reg := pluginfakes.NewFakePluginRegistry()
+		procPrvdr := pluginfakes.NewFakeBackendProcessProvider()
+		procMgr := pluginfakes.NewFakeProcessManager()
+		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, pluginfakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
 
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+		got, err := l.Load(context.Background(), &pluginfakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
@@ -829,23 +846,25 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 					Backend:    true,
 					Executable: "test",
 				},
-				FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri/plugin")),
-				Class:         plugins.ClassExternal,
-				Signature:     plugins.SignatureStatusValid,
-				SignatureType: plugins.SignatureTypePrivate,
-				SignatureOrg:  "Will Browne",
-				Module:        "public/plugins/test-datasource/module.js",
-				BaseURL:       "public/plugins/test-datasource",
-				Translations:  map[string]string{},
+				FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri/plugin")),
+				Class:           plugins.ClassExternal,
+				Signature:       plugins.SignatureStatusValid,
+				SignatureType:   plugins.SignatureTypePrivate,
+				SignatureOrg:    "Will Browne",
+				SkipHostEnvVars: true,
+				Module:          "public/plugins/test-datasource/module.js",
+				BaseURL:         "public/plugins/test-datasource",
+				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
-		reg := fakes.NewFakePluginRegistry()
-		procPrvdr := fakes.NewFakeBackendProcessProvider()
-		procMgr := fakes.NewFakeProcessManager()
+		reg := pluginfakes.NewFakePluginRegistry()
+		procPrvdr := pluginfakes.NewFakeBackendProcessProvider()
+		procMgr := pluginfakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{GrafanaAppURL: defaultAppURL}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, pluginfakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
+		got, err := l.Load(context.Background(), &pluginfakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
@@ -916,23 +935,25 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					},
 					Backend: false,
 				},
-				FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app")),
-				Class:         plugins.ClassExternal,
-				Signature:     plugins.SignatureStatusValid,
-				SignatureType: plugins.SignatureTypeGrafana,
-				SignatureOrg:  "Grafana Labs",
-				Module:        "public/plugins/test-app/module.js",
-				BaseURL:       "public/plugins/test-app",
-				Translations:  map[string]string{},
+				FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app")),
+				Class:           plugins.ClassExternal,
+				Signature:       plugins.SignatureStatusValid,
+				SignatureType:   plugins.SignatureTypeGrafana,
+				SignatureOrg:    "Grafana Labs",
+				Module:          "public/plugins/test-app/module.js",
+				BaseURL:         "public/plugins/test-app",
+				SkipHostEnvVars: true,
+				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
-		reg := fakes.NewFakePluginRegistry()
-		procPrvdr := fakes.NewFakeBackendProcessProvider()
-		procMgr := fakes.NewFakeProcessManager()
+		reg := pluginfakes.NewFakePluginRegistry()
+		procPrvdr := pluginfakes.NewFakeBackendProcessProvider()
+		procMgr := pluginfakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, pluginfakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
+		got, err := l.Load(context.Background(), &pluginfakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
@@ -1007,32 +1028,34 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 					},
 					Backend: false,
 				},
-				FS:            mustNewStaticFSForTests(t, pluginDir1),
-				Class:         plugins.ClassExternal,
-				Signature:     plugins.SignatureStatusValid,
-				SignatureType: plugins.SignatureTypeGrafana,
-				SignatureOrg:  "Grafana Labs",
-				Module:        "public/plugins/test-app/module.js",
-				BaseURL:       "public/plugins/test-app",
-				Translations:  map[string]string{},
+				FS:              mustNewStaticFSForTests(t, pluginDir1),
+				Class:           plugins.ClassExternal,
+				Signature:       plugins.SignatureStatusValid,
+				SignatureType:   plugins.SignatureTypeGrafana,
+				SignatureOrg:    "Grafana Labs",
+				Module:          "public/plugins/test-app/module.js",
+				BaseURL:         "public/plugins/test-app",
+				SkipHostEnvVars: true,
+				Translations:    map[string]string{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
 			},
 		}
 
-		reg := fakes.NewFakePluginRegistry()
-		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		reg := pluginfakes.NewFakePluginRegistry()
+		procPrvdr := pluginfakes.NewFakeBackendProcessProvider()
 		// Cause an initialization error
 		procPrvdr.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 			return func(pluginID string, _ log.Logger, _ trace.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 				if pluginID == "test-datasource" {
 					return nil, errors.New("failed to initialize")
 				}
-				return &fakes.FakePluginClient{}, nil
+				return &pluginfakes.FakePluginClient{}, nil
 			}
 		}
-		procMgr := fakes.NewFakeProcessManager()
+		procMgr := pluginfakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, pluginfakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
+		got, err := l.Load(context.Background(), &pluginfakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
@@ -1065,17 +1088,17 @@ func TestLoader_AngularClass(t *testing.T) {
 			expAngularDetectionRun: true,
 		},
 		{
-			name:                   "other-class plugin should run angular detection",
-			class:                  "CDN", // (enterprise-only class)
-			expAngularDetectionRun: true,
+			name:                   "other class plugin should skip angular detection",
+			class:                  "foo",
+			expAngularDetectionRun: false,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			fakePluginSource := &fakes.FakePluginSource{
+			fakePluginSource := &pluginfakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return tc.class
 				},
-				DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
+				DiscoverFunc: sources.NewLocalSource(tc.class, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 			}
 			// if angularDetected = true, it means that the detection has run
 			l := newLoaderWithOpts(t, &config.PluginManagementCfg{}, loaderDepOpts{
@@ -1094,7 +1117,7 @@ func TestLoader_AngularClass(t *testing.T) {
 }
 
 func TestLoader_Load_Angular(t *testing.T) {
-	fakePluginSource := &fakes.FakePluginSource{
+	fakePluginSource := &pluginfakes.FakePluginSource{
 		PluginClassFunc: func(ctx context.Context) plugins.Class {
 			return plugins.ClassExternal
 		},
@@ -1169,14 +1192,16 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Backend: true,
 		},
-		Module:        "public/plugins/test-datasource/module.js",
-		BaseURL:       "public/plugins/test-datasource",
-		FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "nested-plugins/parent")),
-		Signature:     plugins.SignatureStatusValid,
-		SignatureType: plugins.SignatureTypeGrafana,
-		SignatureOrg:  "Grafana Labs",
-		Class:         plugins.ClassExternal,
-		Translations:  map[string]string{},
+		Module:          "public/plugins/test-datasource/module.js",
+		BaseURL:         "public/plugins/test-datasource",
+		FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "nested-plugins/parent")),
+		Signature:       plugins.SignatureStatusValid,
+		SignatureType:   plugins.SignatureTypeGrafana,
+		SignatureOrg:    "Grafana Labs",
+		Class:           plugins.ClassExternal,
+		SkipHostEnvVars: true,
+		Translations:    map[string]string{},
+		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 
 	child := &plugins.Plugin{
@@ -1213,27 +1238,29 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
 		},
-		Module:        "public/plugins/test-panel/module.js",
-		BaseURL:       "public/plugins/test-panel",
-		FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "nested-plugins/parent/nested")),
-		Signature:     plugins.SignatureStatusValid,
-		SignatureType: plugins.SignatureTypeGrafana,
-		SignatureOrg:  "Grafana Labs",
-		Class:         plugins.ClassExternal,
-		Translations:  map[string]string{},
+		Module:          "public/plugins/test-panel/module.js",
+		BaseURL:         "public/plugins/test-panel",
+		FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "nested-plugins/parent/nested")),
+		Signature:       plugins.SignatureStatusValid,
+		SignatureType:   plugins.SignatureTypeGrafana,
+		SignatureOrg:    "Grafana Labs",
+		Class:           plugins.ClassExternal,
+		SkipHostEnvVars: true,
+		Translations:    map[string]string{},
+		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 
 	parent.Children = []*plugins.Plugin{child}
 	child.Parent = parent
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
-		procPrvdr := fakes.NewFakeBackendProcessProvider()
-		procMgr := fakes.NewFakeProcessManager()
-		reg := fakes.NewFakePluginRegistry()
+		procPrvdr := pluginfakes.NewFakeBackendProcessProvider()
+		procMgr := pluginfakes.NewFakeProcessManager()
+		reg := pluginfakes.NewFakePluginRegistry()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, pluginfakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
 
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+		got, err := l.Load(context.Background(), &pluginfakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
@@ -1254,7 +1281,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		verifyState(t, expected, reg, procPrvdr, procMgr)
 
 		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
-			got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			got, err := l.Load(context.Background(), &pluginfakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.ClassExternal
 				},
@@ -1362,15 +1389,17 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				},
 				Backend: false,
 			},
-			Module:        "public/plugins/myorgid-simple-app/module.js",
-			BaseURL:       "public/plugins/myorgid-simple-app",
-			FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist")),
-			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
-			Signature:     plugins.SignatureStatusValid,
-			SignatureType: plugins.SignatureTypeGrafana,
-			SignatureOrg:  "Grafana Labs",
-			Class:         plugins.ClassExternal,
-			Translations:  map[string]string{},
+			Module:          "public/plugins/myorgid-simple-app/module.js",
+			BaseURL:         "public/plugins/myorgid-simple-app",
+			FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist")),
+			DefaultNavURL:   "/plugins/myorgid-simple-app/page/root-page-react",
+			Signature:       plugins.SignatureStatusValid,
+			SignatureType:   plugins.SignatureTypeGrafana,
+			SignatureOrg:    "Grafana Labs",
+			Class:           plugins.ClassExternal,
+			SkipHostEnvVars: true,
+			Translations:    map[string]string{},
+			LoadingStrategy: plugins.LoadingStrategyScript,
 		}
 
 		child := &plugins.Plugin{
@@ -1421,19 +1450,21 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			SignatureType:   plugins.SignatureTypeGrafana,
 			SignatureOrg:    "Grafana Labs",
 			Class:           plugins.ClassExternal,
+			SkipHostEnvVars: true,
 			Translations:    map[string]string{},
+			LoadingStrategy: plugins.LoadingStrategyScript,
 		}
 
 		parent.Children = []*plugins.Plugin{child}
 		child.Parent = parent
 		expected := []*plugins.Plugin{parent, child}
 
-		reg := fakes.NewFakePluginRegistry()
-		procPrvdr := fakes.NewFakeBackendProcessProvider()
-		procMgr := fakes.NewFakeProcessManager()
+		reg := pluginfakes.NewFakePluginRegistry()
+		procPrvdr := pluginfakes.NewFakeBackendProcessProvider()
+		procMgr := pluginfakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, fakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, pluginfakes.NewFakeErrorTracker(), pluginassets.NewLocalProvider())
+		got, err := l.Load(context.Background(), &pluginfakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
@@ -1469,15 +1500,15 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	require.NoError(t, err)
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginAssetsProvider),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginAssetsProvider, pluginscdn.ProvideService(cfg)),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &pluginfakes.FakeAuthService{}, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), pluginfakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)
 }
 
 func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loaderDepOpts) *Loader {
-	reg := fakes.NewFakePluginRegistry()
-	proc := fakes.NewFakeProcessManager()
+	reg := pluginfakes.NewFakePluginRegistry()
+	proc := pluginfakes.NewFakeProcessManager()
 
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
 	require.NoError(t, err)
@@ -1490,23 +1521,23 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 
 	authServiceRegistry := opts.authServiceRegistry
 	if authServiceRegistry == nil {
-		authServiceRegistry = &fakes.FakeAuthService{}
+		authServiceRegistry = &pluginfakes.FakeAuthService{}
 	}
 
 	backendFactoryProvider := opts.backendFactoryProvider
 	if backendFactoryProvider == nil {
-		backendFactoryProvider = fakes.NewFakeBackendProcessProvider()
+		backendFactoryProvider = pluginfakes.NewFakeBackendProcessProvider()
 	}
 
 	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
-		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider()),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider(), pluginscdn.ProvideService(cfg)),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, pluginfakes.NewFakeRoleRegistry(), pluginfakes.NewFakeActionSetRegistry(), pluginfakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest(), provisionedplugins.NewNoop()),
 		terminate, errTracker)
 }
 
 func verifyState(t *testing.T, ps []*plugins.Plugin, reg registry.Service,
-	procPrvdr *fakes.FakeBackendProcessProvider, procMngr *fakes.FakeProcessManager,
+	procPrvdr *pluginfakes.FakeBackendProcessProvider, procMngr *pluginfakes.FakeProcessManager,
 ) {
 	t.Helper()
 

@@ -84,7 +84,11 @@ export { EmotionPerfTest } from '../components/ThemeDemos/EmotionPerfTest';
 export { ThemeDemo } from '../components/ThemeDemos/ThemeDemo';
 
 export { VizTooltipContent } from '../components/VizTooltip/VizTooltipContent';
-export { VizTooltipFooter, type AdHocFilterModel } from '../components/VizTooltip/VizTooltipFooter';
+export {
+  VizTooltipFooter,
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
+} from '../components/VizTooltip/VizTooltipFooter';
 export { VizTooltipHeader } from '../components/VizTooltip/VizTooltipHeader';
 export { VizTooltipWrapper } from '../components/VizTooltip/VizTooltipWrapper';
 export { VizTooltipRow } from '../components/VizTooltip/VizTooltipRow';
@@ -104,3 +108,4 @@ export { useComponentInstanceId } from '../utils/useComponetInstanceId';
 export { closePopover } from '../utils/closePopover';
 
 export { flattenTokens } from '../slate-plugins/slate-prism';
+export { RadialGauge } from '../components/RadialGauge/RadialGauge';

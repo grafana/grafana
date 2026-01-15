@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -34,7 +35,7 @@ func ProvideService(routeRegister routing.RouteRegister,
 		features:               features,
 	}
 
-	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac)
+	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac, features)
 	dashboardImportAPI.RegisterAPIEndpoints(routeRegister)
 
 	return s
@@ -48,7 +49,7 @@ type ImportDashboardService struct {
 	features               featuremgmt.FeatureToggles
 }
 
-func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
+func (s *ImportDashboardService) InterpolateDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
 	var draftDashboard *dashboards.Dashboard
 	if req.PluginId != "" {
 		loadReq := &plugindashboards.LoadPluginDashboardRequest{
@@ -60,12 +61,23 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		} else {
 			draftDashboard = resp.Dashboard
 		}
-	} else {
+	} else if req.Dashboard != nil {
 		draftDashboard = dashboards.NewDashboardFromJson(req.Dashboard)
+	} else {
+		return nil, fmt.Errorf("either PluginId or Dashboard must be provided")
 	}
 
 	evaluator := utils.NewDashTemplateEvaluator(draftDashboard.Data, req.Inputs)
 	generatedDash, err := evaluator.Eval()
+	if err != nil {
+		return nil, err
+	}
+
+	return generatedDash, nil
+}
+
+func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
+	generatedDash, err := s.InterpolateDashboard(ctx, req)
 	if err != nil {
 		return nil, err
 	}

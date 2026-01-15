@@ -13,7 +13,7 @@
       "label-resource-group": "リソースグループ",
       "label-resource-name": "リソース名",
       "label-resource-number": "リソース {{resourceNum}}",
-      "label-resource-uri": "リソースURI",
+      "label-resource-uri": "",
       "label-subscription": "サブスクリプション",
       "placeholder-resource-name": "名前",
       "tooltip-region": "リソースのコード領域。単一のリソースの場合はオプションですが、複数のリソースを選択する場合は必須です。",
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azureログのクエリ開始ボタン",
       "body-switching-to-builder": "ビルダーに切り替えると、現在のKQLクエリが破棄され、KQLエディターがクリアされます。よろしいですか？",
-      "body-switching-to-kql": "KQLに切り替えると、現在のビルダー設定が破棄されます。よろしいですか？",
       "button-kick-start-your-query": "クエリを開始",
       "button-run-query": "クエリの実行",
       "confirmText-switch-to": "{{newMode}}に切り替える",

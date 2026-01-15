@@ -13,7 +13,7 @@
       "label-resource-group": "資源群組",
       "label-resource-name": "資源名稱",
       "label-resource-number": "資源 {{resourceNum}}",
-      "label-resource-uri": "資源 URI",
+      "label-resource-uri": "",
       "label-subscription": "訂閱",
       "placeholder-resource-name": "名稱",
       "tooltip-region": "資源的代碼區域。對於單一資源為選填，但選取多個資源時為必填。",
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure 紀錄會啟動您的查詢按鈕",
       "body-switching-to-builder": "切換到建立器將捨棄您目前的 KQL 查詢並清除 KQL 編輯器。您確定嗎？",
-      "body-switching-to-kql": "切換到 KQL 將捨棄您目前的建立器設定。您確定嗎？",
       "button-kick-start-your-query": "啟動您的查詢",
       "button-run-query": "執行查詢",
       "confirmText-switch-to": "切換到 {{newMode}}",

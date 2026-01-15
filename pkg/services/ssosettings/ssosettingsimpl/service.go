@@ -65,6 +65,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 
 	providersList := ssosettings.AllOAuthProviders
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
 		providersList = append(providersList, social.LDAPProviderName)
 		configurableProviders[social.LDAPProviderName] = true

@@ -5,13 +5,13 @@ import { MouseEvent, useCallback, useMemo } from 'react';
 import {
   CoreApp,
   EventBus,
+  GrafanaTheme2,
   LogLevel,
   LogsDedupDescription,
   LogsDedupStrategy,
   LogsSortOrder,
   store,
 } from '@grafana/data';
-import { GrafanaTheme2 } from '@grafana/data/';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
@@ -22,7 +22,7 @@ import { DownloadFormat } from '../../utils';
 import { useLogListContext } from './LogListContext';
 import { LogListControlsOption, LogListControlsSelectOption } from './LogListControlsOption';
 import { useLogListSearchContext } from './LogListSearchContext';
-import { ScrollToLogsEvent } from './virtualization';
+import { LOG_LIST_CONTROLS_WIDTH, ScrollToLogsEvent } from './virtualization';
 
 type Props = {
   eventBus: EventBus;
@@ -757,7 +757,6 @@ const getWrapButtonStyles = (theme: GrafanaTheme2, expanded: boolean) => {
   };
 };
 
-export const CONTROLS_WIDTH = 35;
 export const CONTROLS_WIDTH_EXPANDED = 176;
 
 const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
@@ -769,7 +768,7 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
       gap: theme.spacing(3),
       flexDirection: 'column',
       justifyContent: 'flex-start',
-      width: controlsExpanded ? CONTROLS_WIDTH_EXPANDED : CONTROLS_WIDTH,
+      width: controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH,
       paddingTop: theme.spacing(0.75),
       paddingLeft: theme.spacing(1),
       borderLeft: `solid 1px ${theme.colors.border.medium}`,

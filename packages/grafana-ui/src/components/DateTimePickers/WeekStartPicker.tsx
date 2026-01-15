@@ -39,6 +39,9 @@ export function getWeekStart(override?: string): WeekStart {
   return 'monday';
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-weekstartpicker--docs
+ */
 export const WeekStartPicker = (props: Props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
   const weekStarts: ComboboxOption[] = useMemo(

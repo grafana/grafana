@@ -77,6 +77,10 @@ var (
 		"user.sync.user-externalUID-mismatch",
 		errutil.WithPublicMessage("User externalUID mismatch"),
 	)
+	errSCIMAuthModuleMismatch = errutil.Unauthorized(
+		"user.sync.scim-auth-module-mismatch",
+		errutil.WithPublicMessage("User was provisioned via SCIM and must login via SAML"),
+	)
 )
 
 var (
@@ -187,6 +191,13 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 		return nil
 	}
 
+	effectiveReject := s.shouldRejectNonProvisionedUsers(ctx, currentIdentity)
+
+	if !effectiveReject {
+		log.Debug("Skip provisioning validation, non-provisioned users are allowed")
+		return nil
+	}
+
 	log.Debug("Validating user provisioning")
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
@@ -226,7 +237,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 	}
 
 	// Reject non-provisioned users if configured to do so
-	if s.shouldRejectNonProvisionedUsers(ctx, currentIdentity) {
+	if effectiveReject {
 		log.Error("Failed to authenticate user, user is not provisioned")
 		return errUserNotProvisioned.Errorf("user is not provisioned")
 	}
@@ -301,6 +312,21 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		// just try to fetch the user one more to make the other request work.
 		if errors.Is(err, user.ErrUserAlreadyExists) {
 			usr, _, err = s.getUser(ctx, id)
+
+			// Check if this is a SCIM-provisioned user trying to login via an auth module that is not SAML or GCOM
+			if err == nil && usr != nil && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
+				_, authErr := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+					UserId:     usr.ID,
+					AuthModule: id.AuthenticatedBy,
+				})
+				if errors.Is(authErr, user.ErrUserNotFound) {
+					s.log.FromContext(ctx).Error("SCIM-provisioned user attempted login via non-SAML auth module",
+						"user_id", usr.ID,
+						"attempted_module", id.AuthenticatedBy,
+					)
+					return errSCIMAuthModuleMismatch.Errorf("user was provisioned via SCIM but attempted login via %s", id.AuthenticatedBy)
+				}
+			}
 		}
 
 		if err != nil {
@@ -431,6 +457,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 			AuthId:     identity.AuthID,
 		}
 
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			setAuthInfoCmd.OAuthToken = identity.OAuthToken
 		}
@@ -443,6 +470,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 		AuthModule: identity.AuthenticatedBy,
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		updateAuthInfoCmd.OAuthToken = identity.OAuthToken
 	}
@@ -506,7 +534,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	if usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
+	if s.shouldRejectNonProvisionedUsers(ctx, id) && usr.IsProvisioned && id.AuthenticatedBy != login.GrafanaComAuthModule {
 		ctxLogger.Debug("User is provisioned", "id.UID", id.UID)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
