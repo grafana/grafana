@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -20,7 +21,13 @@ const (
 )
 
 type notifier interface {
+	// Watch returns a channel that will receive events as they happen.
 	Watch(context.Context, watchOptions) <-chan Event
+	// Publish lets callers to inform watchers about events. Some notifiers
+	// (e.g., channel notifier) require callers to provide the events to be published.
+	// Others (e.g., polling notifier) queries events separately, making
+	// publishing a no-op.
+	Publish(Event)
 }
 
 type pollingNotifier struct {
@@ -55,16 +62,53 @@ func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
 	}
 
 	if opts.useChannelNotifier {
-		return &channelNotifier{}
+		return newChannelNotifier(opts.log)
 	}
 
 	return &pollingNotifier{eventStore: eventStore, log: opts.log}
 }
 
-type channelNotifier struct{}
+type channelNotifier struct {
+	log         logging.Logger
+	subscribers map[chan Event]struct{}
+	mu          sync.Mutex
+}
+
+func newChannelNotifier(log logging.Logger) *channelNotifier {
+	return &channelNotifier{
+		log:         log,
+		subscribers: make(map[chan Event]struct{}),
+	}
+}
 
 func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
-	return nil
+	events := make(chan Event, opts.BufferSize)
+
+	cn.mu.Lock()
+	cn.subscribers[events] = struct{}{}
+	cn.mu.Unlock()
+
+	context.AfterFunc(ctx, func() {
+		cn.mu.Lock()
+		delete(cn.subscribers, events)
+		close(events)
+		cn.mu.Unlock()
+	})
+
+	return events
+}
+
+func (cn *channelNotifier) Publish(event Event) {
+	cn.mu.Lock()
+	defer cn.mu.Unlock()
+
+	for ch := range cn.subscribers {
+		select {
+		case ch <- event:
+		default:
+			cn.log.Warn("dropped event notification, channel full")
+		}
+	}
 }
 
 // Return the last resource version from the event store
@@ -159,4 +203,8 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan E
 		}
 	}()
 	return events
+}
+
+func (n *pollingNotifier) Publish(_ Event) {
+	// no-op
 }
