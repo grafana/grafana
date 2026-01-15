@@ -12,14 +12,14 @@ export interface Props {
   options: VariableValueOption[];
 }
 
-const hasMultiProps = (options: Props['options']) => {
-  return Object.keys(options[1]?.properties ?? options[0]?.properties ?? {}).length > 0;
-};
-
 export const VariableValuesPreview = ({ options }: Props) => {
   const styles = useStyles2(getStyles);
   const hasOptions = options.length > 0;
-  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasOptions && hasMultiProps(options);
+  const displayMultiPropsPreview =
+    config.featureToggles.multiPropsVariables &&
+    hasOptions &&
+    // the option at index 0 can be "All" so we try to grab the propertiesfrom the 2nd option
+    Object.keys(options[1]?.properties ?? options[0]?.properties ?? {}).length > 0;
 
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>
