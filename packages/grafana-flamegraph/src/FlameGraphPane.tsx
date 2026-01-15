@@ -61,15 +61,12 @@ const FlameGraphPane = ({
   sharedSandwichItem,
   setSharedSandwichItem,
 }: FlameGraphPaneProps) => {
-  // Pane-specific state - each instance maintains its own
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   const [localSandwichItem, setLocalSandwichItem] = useState<string>();
 
-  // Use shared sandwich state when the setter is provided (indicates parent wants to manage state)
-  // Otherwise use local state
   const isUsingSharedSandwich = setSharedSandwichItem !== undefined;
   const sandwichItem = isUsingSharedSandwich ? sharedSandwichItem : localSandwichItem;
   const setSandwichItem = useCallback(
@@ -82,30 +79,25 @@ const FlameGraphPane = ({
     },
     [isUsingSharedSandwich, setSharedSandwichItem]
   );
-  // Initialize collapsedMap from dataContainer to ensure collapsed groups are shown correctly on first render
   const [collapsedMap, setCollapsedMap] = useState(() => dataContainer.getCollapsedMap());
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
 
   const styles = useMemo(() => getStyles(theme), [theme]);
 
-  // Re-initialize collapsed map when dataContainer changes (e.g., new data loaded)
-  // Using useLayoutEffect to ensure collapsed state is applied before browser paint
+  // useLayoutEffect ensures collapsed state is applied before browser paint
   useLayoutEffect(() => {
     setCollapsedMap(dataContainer.getCollapsedMap());
   }, [dataContainer]);
 
-  // Reset internal state when resetKey changes (triggered by parent's reset button)
   useEffect(() => {
     if (resetKey !== undefined && resetKey > 0) {
       setFocusedItemData(undefined);
       setRangeMin(0);
       setRangeMax(1);
-      // Reset local sandwich state (shared state is reset by parent)
       setLocalSandwichItem(undefined);
     }
   }, [resetKey]);
 
-  // Handle focus preservation or reset when data changes
   useEffect(() => {
     if (!keepFocusOnDataChange) {
       setFocusedItemData(undefined);
@@ -169,7 +161,6 @@ const FlameGraphPane = ({
     [search, setSearch, resetFocus, onTableSymbolClick]
   );
 
-  // Separate callback for CallTree that doesn't trigger search
   const onCallTreeSymbolClick = useCallback(
     (symbol: string) => {
       onTableSymbolClick?.(symbol);
@@ -177,7 +168,6 @@ const FlameGraphPane = ({
     [onTableSymbolClick]
   );
 
-  // Search callback for CallTree search button
   const onCallTreeSearch = useCallback(
     (symbol: string) => {
       const anchored = `^${escapeStringForRegex(symbol)}$`;
@@ -192,7 +182,6 @@ const FlameGraphPane = ({
     [search, setSearch, resetFocus, onTableSymbolClick]
   );
 
-  // Search callback for TopTable search button - stable because setSearch is stable
   const onTopTableSearch = useCallback(
     (str: string) => {
       if (!str) {

@@ -103,7 +103,6 @@ const FlameGraphContainer = ({
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
 }: Props) => {
-  // Shared state across all views
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Multi);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
@@ -111,30 +110,22 @@ const FlameGraphContainer = ({
   const [rightPaneView, setRightPaneView] = useState<PaneView>(PaneView.FlameGraph);
   const [singleView, setSingleView] = useState<PaneView>(PaneView.FlameGraph);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
-  // Used to trigger reset of pane-specific state (focus, sandwich) when parent reset button is clicked
   const [resetKey, setResetKey] = useState(0);
-  // Track if we temporarily switched away from Both view due to narrow width
   const [viewBeforeNarrow, setViewBeforeNarrow] = useState<SelectedView | null>(null);
-  // Track the item indexes of the focused item in the flame graph, for cross-pane highlighting (e.g., in CallTree)
-  // Using itemIndexes (from LevelItem) allows us to find the exact node in the call tree, not just by label
   const [highlightedItemIndexes, setHighlightedItemIndexes] = useState<number[] | undefined>(undefined);
-  // Shared sandwich state for cross-pane synchronization (flame graph sandwich view triggers callers mode in call tree)
   const [sharedSandwichItem, setSharedSandwichItem] = useState<string | undefined>(undefined);
 
-  // Create stable callback wrappers using refs to prevent child re-renders on resize
-  // The refs always hold the latest callback, while the wrapper functions are stable
+  // Use refs and stable wrappers to prevent child re-renders when callbacks change
   const onTableSymbolClickRef = useRef(onTableSymbolClick);
   const onTextAlignSelectedRef = useRef(onTextAlignSelected);
   const onTableSortRef = useRef(onTableSort);
 
-  // Keep refs in sync with latest props
   useEffect(() => {
     onTableSymbolClickRef.current = onTableSymbolClick;
     onTextAlignSelectedRef.current = onTextAlignSelected;
     onTableSortRef.current = onTableSort;
   });
 
-  // Stable callback wrappers that call through the refs
   const stableOnTableSymbolClick = useCallback((symbol: string) => {
     onTableSymbolClickRef.current?.(symbol);
   }, []);
@@ -159,7 +150,6 @@ const FlameGraphContainer = ({
   const styles = getStyles(theme);
   const matchedLabels = useLabelSearch(search, dataContainer);
 
-  // Handle responsive layout: switch away from Both view when narrow, restore when wide again
   useEffect(() => {
     if (containerWidth === 0) {
       return;
@@ -168,9 +158,7 @@ const FlameGraphContainer = ({
     const isNarrow = containerWidth < MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH && !vertical;
 
     if (isNarrow && selectedView === SelectedView.Multi) {
-      // Going narrow: save current view and switch to the right pane's view type
       setViewBeforeNarrow(SelectedView.Multi);
-      // Convert PaneView to SelectedView (they have matching values)
       const currentRightView = viewMode === ViewMode.Single ? singleView : rightPaneView;
       const narrowView =
         currentRightView === PaneView.TopTable
@@ -180,24 +168,19 @@ const FlameGraphContainer = ({
             : SelectedView.FlameGraph;
       setSelectedView(narrowView);
     } else if (!isNarrow && viewBeforeNarrow !== null) {
-      // Going wide again: restore the previous view
       setSelectedView(viewBeforeNarrow);
       setViewBeforeNarrow(null);
     }
   }, [containerWidth, vertical, selectedView, viewBeforeNarrow, viewMode, singleView, rightPaneView]);
 
-  // Sync singleView with rightPaneView when switching between Split and Single modes
-  // This ensures the right pane content becomes the single view and vice versa
   const prevViewMode = usePrevious(viewMode);
   useEffect(() => {
     if (prevViewMode === undefined) {
       return;
     }
     if (prevViewMode === ViewMode.Split && viewMode === ViewMode.Single) {
-      // Switching from Split to Single: use the right pane's view type
       setSingleView(rightPaneView);
     } else if (prevViewMode === ViewMode.Single && viewMode === ViewMode.Split) {
-      // Switching from Single to Split: sync the right pane with single view
       setRightPaneView(singleView);
     }
   }, [viewMode, prevViewMode, rightPaneView, singleView]);
@@ -283,9 +266,6 @@ const FlameGraphContainer = ({
       />
     );
   } else if (selectedView === SelectedView.Multi) {
-    // New view model: support split view with independent pane selections
-    // The right pane and single view share the same component instance to preserve state
-    // We keep a consistent tree structure so React doesn't remount the component
     const isSplit = viewMode === ViewMode.Split;
     const rightSinglePaneView = isSplit ? rightPaneView : singleView;
 
@@ -341,10 +321,6 @@ const FlameGraphContainer = ({
       />
     );
 
-    // Render the layout
-    // The right/single pane preserves state because it uses the same key and stays in a consistent position
-    // The left pane is conditionally rendered (its state is not preserved, which is acceptable)
-    // We use a wrapper div with a stable key to keep the right pane in the same React tree position
     if (vertical) {
       body = (
         <div>
@@ -396,7 +372,6 @@ const FlameGraphContainer = ({
             setSingleView={setSingleView}
             containerWidth={containerWidth}
             onReset={() => {
-              // Reset search and pane states when user clicks reset button
               setSearch('');
               setHighlightedItemIndexes(undefined);
               setSharedSandwichItem(undefined);
@@ -516,7 +491,7 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'horizontalPaneContainer',
       flexBasis: '50%',
       maxHeight: 800,
-      minWidth: 0, // Allow shrinking below content size in flex layout
+      minWidth: 0,
       overflow: 'hidden',
     }),
 
@@ -531,12 +506,11 @@ function getStyles(theme: GrafanaTheme2) {
       height: 800,
     }),
 
-    // Single pane container that works within horizontal flex layout
     singlePaneContainerHorizontal: css({
       label: 'singlePaneContainerHorizontal',
       flexBasis: '100%',
       maxHeight: 800,
-      minWidth: 0, // Allow shrinking below content size in flex layout
+      minWidth: 0,
       overflow: 'hidden',
     }),
   };

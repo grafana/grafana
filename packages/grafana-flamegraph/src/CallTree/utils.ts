@@ -1,22 +1,21 @@
 import { FlameGraphDataContainer, LevelItem } from '../FlameGraph/dataTransform';
 
 export interface CallTreeNode {
-  id: string; // Path-based ID (e.g., "0.2.1")
-  label: string; // Function name
-  self: number; // Self value
-  total: number; // Total value
-  selfPercent: number; // Self as % of root
-  totalPercent: number; // Total as % of root
-  depth: number; // Indentation level
-  parentId?: string; // Parent node ID
-  hasChildren: boolean; // Has expandable children
-  childCount: number; // Number of direct children
-  subtreeSize: number; // Total number of nodes in subtree (excluding self)
-  levelItem: LevelItem; // Reference to original data
-  subRows?: CallTreeNode[]; // Child nodes for react-table useExpanded
-  isLastChild: boolean; // Whether this is the last child of its parent
+  id: string;
+  label: string;
+  self: number;
+  total: number;
+  selfPercent: number;
+  totalPercent: number;
+  depth: number;
+  parentId?: string;
+  hasChildren: boolean;
+  childCount: number;
+  subtreeSize: number;
+  levelItem: LevelItem;
+  subRows?: CallTreeNode[];
+  isLastChild: boolean;
 
-  // For diff profiles
   selfRight?: number;
   totalRight?: number;
   selfPercentRight?: number;
@@ -40,7 +39,6 @@ export function buildCallTreeNode(
   const nodeId = parentId ? `${parentId}.${childIndex}` : `${childIndex}`;
   const depth = parentDepth + 1;
 
-  // Get values for current item
   const itemIndex = rootItem.itemIndexes[0];
   const label = data.getLabel(itemIndex);
   const self = data.getSelf(itemIndex);
@@ -48,7 +46,6 @@ export function buildCallTreeNode(
   const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
   const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
 
-  // For diff profiles
   let selfRight: number | undefined;
   let totalRight: number | undefined;
   let selfPercentRight: number | undefined;
@@ -61,28 +58,24 @@ export function buildCallTreeNode(
     selfPercentRight = rootTotal > 0 ? (selfRight / rootTotal) * 100 : 0;
     totalPercentRight = rootTotal > 0 ? (totalRight / rootTotal) * 100 : 0;
 
-    // Calculate diff percentage (change from baseline to comparison)
     if (self > 0) {
       diffPercent = ((selfRight - self) / self) * 100;
     } else if (selfRight > 0) {
-      diffPercent = Infinity; // New in comparison
+      diffPercent = Infinity;
     } else {
       diffPercent = 0;
     }
   }
 
-  // Recursively build children
   const subRows =
     rootItem.children.length > 0
       ? rootItem.children.map((child, index) => {
           const childNode = buildCallTreeNode(data, child, rootTotal, nodeId, depth, index);
-          // Mark if this is the last child
           childNode.isLastChild = index === rootItem.children.length - 1;
           return childNode;
         })
       : undefined;
 
-  // Calculate child count and subtree size
   const childCount = rootItem.children.length;
   const subtreeSize = subRows ? subRows.reduce((sum, child) => sum + child.subtreeSize + 1, 0) : 0;
 
@@ -100,7 +93,7 @@ export function buildCallTreeNode(
     subtreeSize,
     levelItem: rootItem,
     subRows,
-    isLastChild: false, // Will be set by parent
+    isLastChild: false,
     selfRight,
     totalRight,
     selfPercentRight,
@@ -120,7 +113,6 @@ export function buildAllCallTreeNodes(data: FlameGraphDataContainer): CallTreeNo
   const levels = data.getLevels();
   const rootTotal = levels.length > 0 ? levels[0][0].value : 0;
 
-  // Build hierarchical structure for each root item
   const rootNodes = levels[0].map((rootItem, index) =>
     buildCallTreeNode(data, rootItem, rootTotal, undefined, -1, index)
   );
@@ -143,13 +135,10 @@ export function buildCallTreeFromLevels(
     return [];
   }
 
-  // Map to track LevelItem -> CallTreeNode for building relationships
   const levelItemToNode = new Map<LevelItem, CallTreeNode>();
 
-  // Process each level and build nodes
   levels.forEach((level, levelIndex) => {
     level.forEach((levelItem, itemIndex) => {
-      // Get values from data
       const itemDataIndex = levelItem.itemIndexes[0];
       const label = data.getLabel(itemDataIndex);
       const self = data.getSelf(itemDataIndex);
@@ -157,7 +146,6 @@ export function buildCallTreeFromLevels(
       const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
       const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
 
-      // For diff profiles
       let selfRight: number | undefined;
       let totalRight: number | undefined;
       let selfPercentRight: number | undefined;
@@ -170,7 +158,6 @@ export function buildCallTreeFromLevels(
         selfPercentRight = rootTotal > 0 ? (selfRight / rootTotal) * 100 : 0;
         totalPercentRight = rootTotal > 0 ? (totalRight / rootTotal) * 100 : 0;
 
-        // Calculate diff percentage
         if (self > 0) {
           diffPercent = ((selfRight - self) / self) * 100;
         } else if (selfRight > 0) {
@@ -180,7 +167,6 @@ export function buildCallTreeFromLevels(
         }
       }
 
-      // Determine parent (if exists)
       let parentId: string | undefined;
       let depth = levelIndex;
 
@@ -192,20 +178,15 @@ export function buildCallTreeFromLevels(
         }
       }
 
-      // Generate path-based ID
-      // For root nodes, use index at level 0
-      // For child nodes, append index to parent ID
       let nodeId: string;
       if (!parentId) {
         nodeId = `${itemIndex}`;
       } else {
-        // Find index among siblings
         const parent = levelItemToNode.get(levelItem.parents![0]);
         const siblingIndex = parent?.subRows?.length || 0;
         nodeId = `${parentId}.${siblingIndex}`;
       }
 
-      // Create the node (without children initially)
       const node: CallTreeNode = {
         id: nodeId,
         label,
@@ -217,7 +198,7 @@ export function buildCallTreeFromLevels(
         parentId,
         hasChildren: levelItem.children.length > 0,
         childCount: levelItem.children.length,
-        subtreeSize: 0, // Will be calculated later
+        subtreeSize: 0,
         levelItem,
         subRows: undefined,
         isLastChild: false,
@@ -228,10 +209,8 @@ export function buildCallTreeFromLevels(
         diffPercent,
       };
 
-      // Add to map
       levelItemToNode.set(levelItem, node);
 
-      // Add as child to parent
       if (levelItem.parents && levelItem.parents.length > 0) {
         const parentNode = levelItemToNode.get(levelItem.parents[0]);
         if (parentNode) {
@@ -239,7 +218,6 @@ export function buildCallTreeFromLevels(
             parentNode.subRows = [];
           }
           parentNode.subRows.push(node);
-          // Mark if this is the last child
           const isLastChild = parentNode.subRows.length === parentNode.childCount;
           node.isLastChild = isLastChild;
         }
@@ -247,7 +225,6 @@ export function buildCallTreeFromLevels(
     });
   });
 
-  // Calculate subtreeSize for all nodes (bottom-up)
   const calculateSubtreeSize = (node: CallTreeNode): number => {
     if (!node.subRows || node.subRows.length === 0) {
       node.subtreeSize = 0;
@@ -262,7 +239,6 @@ export function buildCallTreeFromLevels(
     return size;
   };
 
-  // Collect root nodes (level 0)
   const rootNodes: CallTreeNode[] = [];
   levels[0].forEach((levelItem) => {
     const node = levelItemToNode.get(levelItem);
@@ -312,7 +288,6 @@ export function restructureCallersTree(
   nodes: CallTreeNode[],
   targetLabel: string
 ): { restructuredTree: CallTreeNode[]; targetNode: CallTreeNode | undefined } {
-  // First, find all paths from root to target node
   const findPathsToTarget = (
     nodes: CallTreeNode[],
     targetLabel: string,
@@ -324,12 +299,10 @@ export function restructureCallersTree(
       const newPath = [...currentPath, node];
 
       if (node.label === targetLabel) {
-        // Found a path to the target
         paths.push(newPath);
       }
 
       if (node.subRows && node.subRows.length > 0) {
-        // Continue searching in children
         const childPaths = findPathsToTarget(node.subRows, targetLabel, newPath);
         paths.push(...childPaths);
       }
@@ -341,29 +314,19 @@ export function restructureCallersTree(
   const paths = findPathsToTarget(nodes, targetLabel);
 
   if (paths.length === 0) {
-    // Target not found, return original tree
     return { restructuredTree: nodes, targetNode: undefined };
   }
 
-  // Get the target node from the first path (they should all have the same target node)
   const targetNode = paths[0][paths[0].length - 1];
 
-  // Now restructure: create a new tree with target at root
-  // Each path to the target becomes a branch under the target
-  // For example, if we have: root -> A -> B -> target
-  // We want: target -> B -> A -> root (inverted)
-
   const buildInvertedChildren = (paths: CallTreeNode[][]): CallTreeNode[] => {
-    // Group paths by their immediate caller (the node right before target)
     const callerGroups = new Map<string, CallTreeNode[][]>();
 
     for (const path of paths) {
       if (path.length <= 1) {
-        // Path is just the target node itself, no callers
         continue;
       }
 
-      // The immediate caller is the node right before the target
       const immediateCaller = path[path.length - 2];
       const callerKey = immediateCaller.label;
 
@@ -373,19 +336,15 @@ export function restructureCallersTree(
       callerGroups.get(callerKey)!.push(path);
     }
 
-    // Build nodes for each immediate caller
     const callerNodes: CallTreeNode[] = [];
     let callerIndex = 0;
 
     for (const [, callerPaths] of callerGroups.entries()) {
-      // Get the immediate caller node from one of the paths
       const immediateCallerNode = callerPaths[0][callerPaths[0].length - 2];
 
-      // For this caller, recursively build its callers (from the remaining path)
-      const remainingPaths = callerPaths.map((path) => path.slice(0, -1)); // Remove target from paths
+      const remainingPaths = callerPaths.map((path) => path.slice(0, -1));
       const grandCallers = buildInvertedChildren(remainingPaths);
 
-      // Create a new node for this caller as a child of the target
       const newCallerId = `0.${callerIndex}`;
       const callerNode: CallTreeNode = {
         ...immediateCallerNode,
@@ -398,7 +357,6 @@ export function restructureCallersTree(
         isLastChild: callerIndex === callerGroups.size - 1,
       };
 
-      // Update IDs of grandCallers
       if (grandCallers.length > 0) {
         grandCallers.forEach((grandCaller, idx) => {
           updateNodeIds(grandCaller, newCallerId, idx);
@@ -412,7 +370,6 @@ export function restructureCallersTree(
     return callerNodes;
   };
 
-  // Helper to recursively update node IDs
   const updateNodeIds = (node: CallTreeNode, parentId: string, index: number) => {
     node.id = `${parentId}.${index}`;
     node.parentId = parentId;
@@ -425,10 +382,8 @@ export function restructureCallersTree(
     }
   };
 
-  // Build the inverted children for the target
   const invertedChildren = buildInvertedChildren(paths);
 
-  // Create the restructured target node as root
   const restructuredTarget: CallTreeNode = {
     ...targetNode,
     id: '0',
@@ -459,7 +414,6 @@ export function buildCallersTreeFromLevels(
     return { tree: [], targetNode: undefined };
   }
 
-  // Find the target node in the levels
   let targetLevelIndex = -1;
   let targetItem: LevelItem | undefined;
 
@@ -476,11 +430,9 @@ export function buildCallersTreeFromLevels(
   }
 
   if (!targetItem || targetLevelIndex === -1) {
-    // Target not found
     return { tree: [], targetNode: undefined };
   }
 
-  // Create a map from LevelItem to all items that reference it as a parent
   const childrenMap = new Map<LevelItem, LevelItem[]>();
 
   for (const level of levels) {
@@ -496,8 +448,6 @@ export function buildCallersTreeFromLevels(
     }
   }
 
-  // Build the inverted tree recursively
-  // For callers view: the target is root, and parents become children
   const buildInvertedNode = (
     item: LevelItem,
     nodeId: string,
@@ -511,7 +461,6 @@ export function buildCallersTreeFromLevels(
     const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
     const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
 
-    // For diff profiles
     let selfRight: number | undefined;
     let totalRight: number | undefined;
     let selfPercentRight: number | undefined;
@@ -533,7 +482,6 @@ export function buildCallersTreeFromLevels(
       }
     }
 
-    // In the inverted tree, parents become children (callers)
     const callers = item.parents || [];
     const subRows =
       callers.length > 0
@@ -571,7 +519,6 @@ export function buildCallersTreeFromLevels(
     };
   };
 
-  // Build tree with target as root
   const targetNode = buildInvertedNode(targetItem, '0', 0, undefined);
 
   return { tree: [targetNode], targetNode };

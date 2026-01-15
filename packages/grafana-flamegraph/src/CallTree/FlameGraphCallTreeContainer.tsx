@@ -38,54 +38,37 @@ const FlameGraphCallTreeContainer = memo(
     onSearch,
     highlightedItemIndexes,
   }: Props) => {
-    // Track compact mode state - only triggers re-render when compact mode changes
     const [isCompact, setIsCompact] = useState(false);
-    // Use ref for width to avoid re-renders on every resize
     const widthRef = useRef(0);
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
-    // Ref for the matched search row to enable auto-scrolling
     const searchMatchRowRef = useRef<HTMLTableRowElement | null>(null);
-
-    // Ref for the highlighted row (from flame graph focus) to enable auto-scrolling
     const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
 
-    // Use package-based color scheme by default
     const colorScheme = data.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.PackageBased;
 
-    // Focus state - track which node is focused
     const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>(undefined);
-
-    // Callers state - track which function's callers we're showing
     const [callersNodeLabel, setCallersNodeLabel] = useState<string | undefined>(undefined);
 
-    // Sync callers mode with sandwich item from flame graph
-    // When sandwich mode is activated, automatically enter callers mode for that function
-    // When sandwich mode is cleared, exit callers mode
     useEffect(() => {
       if (sandwichItem !== undefined) {
-        // Enter callers mode for the sandwiched function
         setCallersNodeLabel(sandwichItem);
-        setFocusedNodeId(undefined); // Clear focus mode when entering callers mode
+        setFocusedNodeId(undefined);
       } else {
-        // Exit callers mode when sandwich is cleared
         setCallersNodeLabel(undefined);
       }
     }, [sandwichItem]);
 
-    // Search state - use search from parent (shared with TopTable and FlameGraph)
     const searchQuery = search;
     const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(0);
     const [searchError, setSearchError] = useState<string | undefined>(undefined);
 
-    // Wrapper functions for mutual exclusivity - memoized to prevent unnecessary re-renders
     const handleSetFocusMode = useCallback((nodeIdOrLabel: string | undefined, isLabel: boolean = false) => {
       if (nodeIdOrLabel === undefined) {
         setFocusedNodeId(undefined);
       } else if (isLabel) {
         // When switching from callers mode, we need to find the node by label in the normal tree
-        // We'll set a special marker that the useMemo will use to find the node
         setFocusedNodeId(`label:${nodeIdOrLabel}`);
       } else {
         setFocusedNodeId(nodeIdOrLabel);
@@ -103,21 +86,17 @@ const FlameGraphCallTreeContainer = memo(
       }
     }, []);
 
-    // Build nodes - dependencies include currentSearchMatchId to force rebuild when search match changes
     const { nodes, focusedNode, callersNode } = useMemo(() => {
       const allNodes = buildAllCallTreeNodes(data);
 
-      // If there's a focused node, find it and use its subtree with parent
       let nodesToUse = allNodes;
       let focused: CallTreeNode | undefined;
       let callersTargetNode: CallTreeNode | undefined;
 
       if (focusedNodeId) {
-        // Check if we're searching by label (when switching from callers mode)
         const isLabelSearch = focusedNodeId.startsWith('label:');
         const searchKey = isLabelSearch ? focusedNodeId.substring(6) : focusedNodeId;
 
-        // Find the focused node in the tree
         const findNode = (nodes: CallTreeNode[], searchKey: string, byLabel: boolean): CallTreeNode | undefined => {
           for (const node of nodes) {
             if (byLabel ? node.label === searchKey : node.id === searchKey) {
@@ -133,18 +112,14 @@ const FlameGraphCallTreeContainer = memo(
 
         focused = findNode(allNodes, searchKey, isLabelSearch);
         if (focused) {
-          // If we searched by label, update the focusedNodeId to use the actual ID
           if (isLabelSearch) {
-            // Update state to use the actual ID for future operations
-            // We do this asynchronously to avoid updating state during render
+            // Update asynchronously to avoid updating state during render
             setTimeout(() => setFocusedNodeId(focused!.id), 0);
           }
 
-          // If the focused node has a parent, show parent with focused node as only child
           if (focused.parentId) {
             const parent = findNode(allNodes, focused.parentId, false);
             if (parent) {
-              // Create a modified parent that only shows the focused node as its child
               const modifiedParent: CallTreeNode = {
                 ...parent,
                 subRows: [focused],
@@ -153,17 +128,14 @@ const FlameGraphCallTreeContainer = memo(
               };
               nodesToUse = [modifiedParent];
             } else {
-              // Parent not found, just use focused node
               nodesToUse = [focused];
             }
           } else {
-            // No parent, use the focused node as the root
             nodesToUse = [focused];
           }
         }
       }
 
-      // If there's a callers mode active, build the inverted tree
       if (callersNodeLabel) {
         const [callers, _] = data.getSandwichLevels(callersNodeLabel);
 
@@ -171,13 +143,11 @@ const FlameGraphCallTreeContainer = memo(
           const levels = data.getLevels();
           const rootTotal = levels.length > 0 ? levels[0][0].value : 0;
 
-          // Build inverted tree directly with target as root and callers as children
           const { tree, targetNode } = buildCallersTreeFromLevels(callers, callersNodeLabel, data, rootTotal);
 
           nodesToUse = tree;
           callersTargetNode = targetNode;
         } else {
-          // No callers found - show empty tree
           nodesToUse = [];
           callersTargetNode = undefined;
         }
@@ -186,7 +156,6 @@ const FlameGraphCallTreeContainer = memo(
       return { nodes: nodesToUse, focusedNode: focused, callersNode: callersTargetNode };
     }, [data, focusedNodeId, callersNodeLabel]);
 
-    // Search function - finds matching nodes in the tree
     const searchNodes = useMemo(() => {
       if (!searchQuery.trim()) {
         return [];
@@ -195,7 +164,6 @@ const FlameGraphCallTreeContainer = memo(
       const MAX_MATCHES = 50;
       const matches: Array<{ id: string; total: number }> = [];
 
-      // Determine if the query is a regex pattern (contains regex special chars)
       const regexChars = /[.*+?^${}()|[\]\\]/;
       let isRegexQuery = regexChars.test(searchQuery);
       let searchRegex: RegExp | null = null;
@@ -210,14 +178,12 @@ const FlameGraphCallTreeContainer = memo(
         }
       }
 
-      // Recursive search through nodes
       const search = (nodesToSearch: CallTreeNode[]) => {
         for (const node of nodesToSearch) {
           if (matches.length >= MAX_MATCHES) {
             break;
           }
 
-          // Match against node label
           let isMatch = false;
           if (searchRegex) {
             isMatch = searchRegex.test(node.label);
@@ -229,7 +195,6 @@ const FlameGraphCallTreeContainer = memo(
             matches.push({ id: node.id, total: node.total });
           }
 
-          // Recursively search children
           if (node.subRows && matches.length < MAX_MATCHES) {
             search(node.subRows);
           }
@@ -238,7 +203,7 @@ const FlameGraphCallTreeContainer = memo(
 
       search(nodes);
 
-      // Sort by total time descending (most significant first)
+      // Sort by total time descending so most significant matches appear first
       matches.sort((a, b) => b.total - a.total);
 
       const matchIds = matches.map((m) => m.id);
@@ -247,20 +212,16 @@ const FlameGraphCallTreeContainer = memo(
       return matchIds;
     }, [searchQuery, nodes]);
 
-    // Find the node matching the highlighted item indexes (from flame graph focus)
-    // This finds the exact node in the call tree by matching the LevelItem's itemIndexes
     const highlightedNodeId = useMemo(() => {
       if (!highlightedItemIndexes || highlightedItemIndexes.length === 0) {
         return undefined;
       }
 
-      // Helper to check if two itemIndexes arrays match
       const itemIndexesMatch = (a: number[], b: number[]): boolean => {
         if (a.length !== b.length) return false;
         return a.every((val, idx) => val === b[idx]);
       };
 
-      // Find the exact node by matching itemIndexes
       const findExactMatch = (nodesToSearch: CallTreeNode[]): string | undefined => {
         for (const node of nodesToSearch) {
           if (itemIndexesMatch(node.levelItem.itemIndexes, highlightedItemIndexes)) {
@@ -277,7 +238,6 @@ const FlameGraphCallTreeContainer = memo(
       return findExactMatch(nodes);
     }, [highlightedItemIndexes, nodes]);
 
-    // Auto-scroll to the highlighted row when it changes
     useEffect(() => {
       if (highlightedRowRef.current) {
         highlightedRowRef.current.scrollIntoView({
@@ -287,14 +247,12 @@ const FlameGraphCallTreeContainer = memo(
       }
     }, [highlightedNodeId]);
 
-    // Reset current match index when search results change
     const searchResultKey = searchNodes.join(',');
     useEffect(() => {
       setCurrentMatchIndex(searchNodes.length > 0 ? 0 : -1);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchResultKey]);
 
-    // Navigation functions for search results
     const navigateToNextMatch = () => {
       if (searchNodes.length > 0) {
         setCurrentMatchIndex((prev) => (prev + 1) % searchNodes.length);
@@ -307,7 +265,6 @@ const FlameGraphCallTreeContainer = memo(
       }
     };
 
-    // Get current search match node ID
     const currentSearchMatchId = useMemo(() => {
       if (searchNodes.length > 0 && currentMatchIndex >= 0 && currentMatchIndex < searchNodes.length) {
         return searchNodes[currentMatchIndex];
@@ -315,7 +272,6 @@ const FlameGraphCallTreeContainer = memo(
       return undefined;
     }, [searchNodes, currentMatchIndex]);
 
-    // Auto-scroll to the matched row when current match changes
     useEffect(() => {
       if (searchMatchRowRef.current) {
         searchMatchRowRef.current.scrollIntoView({
@@ -325,24 +281,18 @@ const FlameGraphCallTreeContainer = memo(
       }
     }, [currentMatchIndex, currentSearchMatchId]);
 
-    // Calculate expanded state
     const calculatedExpanded = useMemo(() => {
       const baseExpanded = getInitialExpandedState(nodes, 1);
 
-      // If there's a search match, expand path to show it
       if (currentSearchMatchId) {
-        // Expand all nodes along the path to the current match
         const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
           for (const node of nodes) {
             if (node.id === targetId) {
-              // Found the target
               return true;
             }
             if (node.subRows && node.hasChildren) {
-              // Check if target is in this subtree
               const foundInSubtree = expandPathToNode(node.subRows, targetId);
               if (foundInSubtree) {
-                // Target is in this subtree, so expand this node
                 baseExpanded[node.id] = true;
                 return true;
               }
@@ -354,42 +304,32 @@ const FlameGraphCallTreeContainer = memo(
         expandPathToNode(nodes, currentSearchMatchId);
       }
 
-      // If there's a focused node, expand to show its children
       if (focusedNodeId && nodes.length > 0) {
         const rootNode = nodes[0];
 
-        // Check if focusedNodeId is a label-based search
         const isLabelSearch = focusedNodeId.startsWith('label:');
         const searchLabel = isLabelSearch ? focusedNodeId.substring(6) : undefined;
 
-        // Always expand the root to show the focused node
         if (rootNode.hasChildren) {
           baseExpanded['0'] = true;
         }
 
-        // If the root is the parent (not the focused node itself), also expand the focused node
         const isRootTheFocusedNode = isLabelSearch ? rootNode.label === searchLabel : rootNode.id === focusedNodeId;
 
         if (!isRootTheFocusedNode && rootNode.hasChildren) {
-          // The focused node is at "0.0" (first child of parent)
           baseExpanded['0.0'] = true;
         }
       }
 
-      // If in callers mode, expand to show the target node
       if (callersNodeLabel && callersNode && nodes.length > 0) {
-        // Find path from root to target node and expand all nodes along the path
         const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
           for (const node of nodes) {
             if (node.id === targetId) {
-              // Found the target - don't expand it yet, but confirm path
               return true;
             }
             if (node.subRows && node.hasChildren) {
-              // Check if target is in this subtree
               const foundInSubtree = expandPathToNode(node.subRows, targetId);
               if (foundInSubtree) {
-                // Target is in this subtree, so expand this node
                 baseExpanded[node.id] = true;
                 return true;
               }
@@ -398,16 +338,13 @@ const FlameGraphCallTreeContainer = memo(
           return false;
         };
 
-        // Expand path to target
         expandPathToNode(nodes, callersNode.id);
 
-        // Also expand the target node itself to show its immediate callers (children in this view)
         if (callersNode.hasChildren) {
           baseExpanded[callersNode.id] = true;
         }
       }
 
-      // If there's a highlighted node (from flame graph focus), expand path to show it
       if (highlightedNodeId) {
         const expandPathToHighlightedNode = (nodes: CallTreeNode[], targetId: string): boolean => {
           for (const node of nodes) {
@@ -431,7 +368,6 @@ const FlameGraphCallTreeContainer = memo(
       return baseExpanded;
     }, [nodes, focusedNodeId, callersNodeLabel, callersNode, currentSearchMatchId, highlightedNodeId]);
 
-    // Column width constants
     const ACTIONS_WIDTH = onSearch ? 75 : 50;
     const COLOR_BAR_WIDTH = 200;
     const SELF_WIDTH = 150;
@@ -439,13 +375,10 @@ const FlameGraphCallTreeContainer = memo(
     const BASELINE_WIDTH = 100;
     const COMPARISON_WIDTH = 100;
     const DIFF_WIDTH = 100;
-    // Threshold for function column width before switching to compact mode
-    // Set high enough to ensure function names are readable in non-compact mode
+    // Threshold high enough to ensure function names are readable in non-compact mode
     const FUNCTION_COMPACT_THRESHOLD = 550;
-    // Actual minimum width for function column (used in column definition)
     const FUNCTION_MIN_WIDTH = 100;
 
-    // Calculate minimum width threshold for compact mode
     const minNonCompactWidth = useMemo(() => {
       let fixedColumnsWidth: number;
       if (data.isDiffFlamegraph()) {
@@ -456,10 +389,8 @@ const FlameGraphCallTreeContainer = memo(
       return fixedColumnsWidth + FUNCTION_COMPACT_THRESHOLD;
     }, [data, ACTIONS_WIDTH]);
 
-    // Use prop if provided, otherwise use state
     const compact = compactProp !== undefined ? compactProp : isCompact;
 
-    // Helper to calculate function column width for a given width and compact mode
     const calculateFunctionColumnWidth = useCallback(
       (width: number, compactMode: boolean) => {
         if (width <= 0) return undefined;
@@ -483,7 +414,6 @@ const FlameGraphCallTreeContainer = memo(
       [data, ACTIONS_WIDTH]
     );
 
-    // Define columns
     const columns = useMemo<Column<CallTreeNode>[]>(() => {
       if (data.isDiffFlamegraph()) {
         const cols: Column<CallTreeNode>[] = [
@@ -716,18 +646,13 @@ const FlameGraphCallTreeContainer = memo(
       handleSetCallersMode,
     ]);
 
-    // toggleRowExpanded is used in the Cell renderers but doesn't need to be in the dependencies
-    // because it's accessed at render time, not definition time
+    // toggleRowExpanded is accessed at render time, not definition time, so it's not in the dependencies
 
-    // Create a stable nodes reference that changes when search match changes
-    // This triggers autoResetExpanded in the table
+    // tableNodes changes reference when search/highlight changes to trigger autoResetExpanded
     const tableNodes = useMemo(() => {
-      // Return a shallow copy to force reference change
       return [...nodes];
     }, [nodes, currentSearchMatchId, highlightedNodeId]);
 
-    // Setup table instance with expand and sort
-    // Using autoResetExpanded: true so expansion resets when data changes
     const tableInstance = useTable<CallTreeNode>(
       {
         columns,
@@ -828,8 +753,7 @@ const FlameGraphCallTreeContainer = memo(
 
         <AutoSizer style={{ width: '100%', height: 'calc(100% - 50px)' }}>
           {({ width, height }) => {
-            // Update compact mode only when crossing the threshold
-            // This avoids re-renders on every resize
+            // Only update compact mode when crossing the threshold to avoid re-renders on every resize
             if (compactProp === undefined) {
               const shouldBeCompact = width > 0 && width < minNonCompactWidth;
               if (shouldBeCompact !== isCompact) {
@@ -838,7 +762,6 @@ const FlameGraphCallTreeContainer = memo(
             }
             widthRef.current = width;
 
-            // Calculate function column width for this render
             const functionColumnWidth = calculateFunctionColumnWidth(width, compact);
 
             if (width < 3 || height < 3) {
@@ -857,7 +780,6 @@ const FlameGraphCallTreeContainer = memo(
                             const { key: headerKey, ...headerProps } = column.getHeaderProps(
                               column.getSortByToggleProps()
                             );
-                            // Apply functionColumnWidth for the label column, otherwise use column.width
                             const columnWidth = column.id === 'label' ? functionColumnWidth : column.width;
                             return (
                               <th
@@ -890,7 +812,6 @@ const FlameGraphCallTreeContainer = memo(
                       const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
                       const isHighlightedRow = highlightedNodeId && row.original.id === highlightedNodeId;
 
-                      // Determine which ref to use - prioritize search match, then highlighted
                       const rowRef = isSearchMatchRow ? searchMatchRowRef : isHighlightedRow ? highlightedRowRef : null;
 
                       return (
@@ -943,7 +864,6 @@ const FlameGraphCallTreeContainer = memo(
 
 FlameGraphCallTreeContainer.displayName = 'FlameGraphCallTreeContainer';
 
-// Helper function to get row background color
 function getRowBackgroundColor(
   node: CallTreeNode,
   data: FlameGraphDataContainer,
@@ -951,7 +871,6 @@ function getRowBackgroundColor(
   theme: GrafanaTheme2
 ): string {
   if (data.isDiffFlamegraph()) {
-    // For diff profiles, use diff coloring
     const levels = data.getLevels();
     const rootTotal = levels[0][0].value;
     const rootTotalRight = levels[0][0].valueRight || 0;
@@ -965,37 +884,30 @@ function getRowBackgroundColor(
     );
     return barColor.setAlpha(1.0).toString();
   } else {
-    // For regular profiles
     if (colorScheme === ColorScheme.ValueBased) {
       const levels = data.getLevels();
       const rootTotal = levels[0][0].value;
       const barColor = getBarColorByValue(node.total, rootTotal, 0, 1);
       return barColor.setAlpha(1.0).toString();
     } else {
-      // PackageBased
       const barColor = getBarColorByPackage(node.label, theme);
       return barColor.setAlpha(1.0).toString();
     }
   }
 }
 
-// Cell Components
-
 type ActionsCellProps = {
-  // Primitive values from row.original - stable across renders
   nodeId: string;
   label: string;
   hasChildren: boolean;
   depth: number;
   parentId: string | undefined;
-  // Callbacks and state
   onFocus: (nodeIdOrLabel: string, isLabel?: boolean) => void;
   onShowCallers: (label: string) => void;
   onSearch?: (symbol: string) => void;
   focusedNodeId: string | undefined;
   callersNodeLabel: string | undefined;
   isSearchMatch: boolean;
-  // Individual class names as strings (primitives for memo comparison)
   actionsCellClass: string;
   actionButtonSlotClass: string;
   actionButtonClass: string;
@@ -1026,17 +938,7 @@ const ActionsCell = memo(function ActionsCell({
   const inFocusMode = focusedNodeId !== undefined;
   const isRootNode = depth === 0 && !parentId;
 
-  // Show focus button if:
-  // - Node has children AND
-  // - Node is not the currently focused node AND
-  // - If it's the root node, only show when in focus mode (as parent)
-  // Allow switching from callers mode to focus mode
   const shouldShowFocusButton = hasChildren && !isTheFocusedNode && !(isRootNode && !inFocusMode);
-
-  // Show callers button if:
-  // - Node is not the current callers target AND
-  // - Node is not the root node
-  // Allow switching from focus mode to callers mode
   const shouldShowCallersButton = !isTheCallersTarget && !isRootNode;
 
   return (
@@ -1049,7 +951,6 @@ const ActionsCell = memo(function ActionsCell({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              // When in callers mode, switch by label; otherwise use ID
               if (inCallersMode) {
                 onFocus(label, true);
               } else {
@@ -1148,27 +1049,23 @@ function FunctionCellWithExpander({
     onSymbolClick(value);
   };
 
-  // Helper to check if a node at a given row index is the last visible child of its parent
   const isLastVisibleChildAtIndex = (index: number): boolean => {
     if (index === undefined) return false;
 
     const currentRow = rows[index];
     const parentId = currentRow.original.parentId;
 
-    // Find the next sibling (same parent, appears after current row)
     for (let i = index + 1; i < rows.length; i++) {
       if (rows[i].original.parentId === parentId) {
-        return false; // Found a sibling, so not last
+        return false;
       }
-      // If we encounter a node at same or higher level, stop searching
       if (rows[i].original.depth <= currentRow.original.depth) {
         break;
       }
     }
-    return true; // No more siblings found
+    return true;
   };
 
-  // Build the tree connector string
   const buildTreeConnector = () => {
     if (depth === 0) {
       return null;
@@ -1176,31 +1073,23 @@ function FunctionCellWithExpander({
 
     const lines: string[] = [];
 
-    // For each ancestor level, determine if we need a vertical line
-    // We draw a vertical line if there are more siblings of that ancestor
-
-    // Build a map of node ID to the actual node from rows (for flat access)
     const nodeIdToNode = new Map<string, CallTreeNode>();
     rows.forEach((r) => {
       nodeIdToNode.set(r.original.id, r.original);
     });
 
-    // Helper to check if there are more siblings at the target depth level after current row
     const hasMoreNodesAtDepth = (targetDepth: number): boolean => {
       if (rowIndex === undefined) {
         return false;
       }
 
-      // Look through rows after the CURRENT row
       for (let i = rowIndex + 1; i < rows.length; i++) {
         const checkRow = rows[i];
 
-        // If we find a node at the target depth, there are more nodes at that level
         if (checkRow.original.depth === targetDepth) {
           return true;
         }
 
-        // If we've reached a node at depth < targetDepth, we've left the subtree
         if (checkRow.original.depth < targetDepth) {
           break;
         }
@@ -1208,12 +1097,9 @@ function FunctionCellWithExpander({
       return false;
     };
 
-    // Walk up the parent chain to build ancestor list
-    // We need to collect all parent nodes (not including current node or root)
     const ancestors: CallTreeNode[] = [];
     let currentNode = row.original;
 
-    // Walk up the parent chain using the parentId
     while (currentNode.parentId && currentNode.depth > 0) {
       const parent = nodeIdToNode.get(currentNode.parentId);
       if (parent) {
@@ -1224,10 +1110,7 @@ function FunctionCellWithExpander({
       }
     }
 
-    // For each position before the current node's branch, check if vertical line needed
     for (let i = 0; i < depth - 1; i++) {
-      // The vertical line at position i connects nodes at depth i+1
-      // So check if there are more nodes at depth i+1 after the current row
       if (hasMoreNodesAtDepth(i + 1)) {
         lines.push('│ ');
       } else {
@@ -1235,7 +1118,6 @@ function FunctionCellWithExpander({
       }
     }
 
-    // Add the branch character for the current node
     const isLastChild = rowIndex !== undefined ? isLastVisibleChildAtIndex(rowIndex) : false;
     lines.push(isLastChild ? '└─' : '├─');
 
@@ -1281,22 +1163,16 @@ function ColorBarCell({
 }) {
   const barColor = getRowBackgroundColor(node, data, colorScheme, theme);
 
-  // Calculate bar width
   let barWidth: string;
 
   if (focusedNode) {
-    // In focused state - scale bars relative to focused node
     if (node.id === focusedNode.parentId) {
-      // This is the parent node - skip the bar
       barWidth = '0%';
     } else {
-      // Scale relative to the focused node's total
       const relativePercent = focusedNode.total > 0 ? (node.total / focusedNode.total) * 100 : 0;
       barWidth = `${Math.min(relativePercent, 100)}%`;
     }
   } else {
-    // Not in focused state (normal mode or callers mode) - use the original percentage
-    // In callers mode, we keep original scaling to show relative impact of different caller paths
     barWidth = `${Math.min(node.totalPercent, 100)}%`;
   }
 
@@ -1338,8 +1214,6 @@ function DiffCell({
 
   return <span style={{ color, fontWeight: 'bold' }}>{displayValue}</span>;
 }
-
-// Styles
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -1496,7 +1370,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: '20px',
       lineHeight: '1',
       overflow: 'hidden',
-      minWidth: 0, // Allow flex items to shrink below content size
+      minWidth: 0,
     }),
     treeConnector: css({
       color: theme.colors.text.secondary,
@@ -1552,13 +1426,13 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'flex-end',
       gap: theme.spacing(0.5),
       height: '20px',
-      minWidth: '60px', // Fixed width to ensure consistent alignment (72px when search button is present)
+      minWidth: '60px',
     }),
     actionButtonSlot: css({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      width: '24px', // Fixed width for each button slot
+      width: '24px',
       height: '20px',
     }),
     actionButtonPlaceholder: css({
@@ -1584,7 +1458,6 @@ function getStyles(theme: GrafanaTheme2) {
         color: theme.colors.text.primary,
       },
     }),
-    // Pill style matching FlameGraphMetadata
     modePill: css({
       display: 'inline-flex',
       alignItems: 'center',
