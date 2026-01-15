@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -849,7 +850,8 @@ func Test_PluginsSettings(t *testing.T) {
 				pCfg := &config.PluginManagementCfg{}
 				pluginCDN := pluginscdn.ProvideService(pCfg)
 				sig := signature.ProvideService(pCfg, statickey.New())
-				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
+				calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), pluginCDN, sig)
+				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, calc)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,

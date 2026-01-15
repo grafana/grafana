@@ -1,10 +1,11 @@
 name: Deploy Storybook
 
 on:
-  workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
+  release:
+    types: [released]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -37,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     # Only run in grafana/grafana
-    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.repository == 'grafana/grafana' && (needs.detect-changes.outputs.changed-frontend-packages == 'true' || github.event_name == 'release')
     permissions:
       contents: read
       id-token: write
@@ -61,14 +62,39 @@ jobs:
         run: yarn storybook:build
 
       # Create the GCS folder name
-      # Right now, this just returns "canary"
-      # But we'll expand this to work for "latest" as well in the future
+      # "latest" when triggered from the latest release
+      # "canary" on pushes to main
       - name: Create deploy name
         id: create-deploy-name
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            LATEST_RELEASE_TAG=$(curl -s "https://api.github.com/repos/grafana/grafana/releases/latest" | jq -r '.tag_name')
+            if [[ "$RELEASE_TAG" == "$LATEST_RELEASE_TAG" ]]; then
+              echo "deploy-name=latest" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "This is a release but not the latest release; skipping storybook deploy"
+            exit 1
+          fi
+
           echo "deploy-name=canary" >> "$GITHUB_OUTPUT"
 
-      - name: Upload Storybook
+      - name: Log in to GCS
+        id: login-to-gcs
+        uses: grafana/shared-workflows/actions/login-to-gcs@main
+        with:
+          environment: prod
+          service_account: github-gf-storybook-deploy@grafanalabs-workload-identity.iam.gserviceaccount.com
+
+      - name: Cleanup old storybook
+        id: cleanup-old-storybook
+        run: |
+          gcloud storage rm "gs://${{ env.BUCKET_NAME }}/${{ steps.create-deploy-name.outputs.deploy-name }}/**" || echo "No existing files to delete"
+
+      - name: Upload new storybook
+        id: upload-new-storybook
         uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           environment: prod
@@ -77,3 +103,5 @@ jobs:
           path: packages/grafana-ui/dist/storybook
           service_account: github-gf-storybook-deploy@grafanalabs-workload-identity.iam.gserviceaccount.com
           parent: false
+          # need to unset this as the default doesn't work on a bucket with uniform bucket-level access
+          predefinedAcl: ''

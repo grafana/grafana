@@ -5341,6 +5341,7 @@
       },
       "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
+      "new-row-title": "New row",
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
@@ -12736,14 +12737,6 @@
       "starred": "Starred",
       "view-as-folders": "View by folders",
       "view-as-list": "View as list"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alphabetically (A-Z)",
-          "alphabetically-za": "Alphabetically (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Import",
