@@ -21,6 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	k8srest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -2258,17 +2260,35 @@ func TestIntegrationFolderWithOwner(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, folder.GetName(), out.GetName())
 
-	// Get everything
-	results, err := client.Resource.List(context.Background(), metav1.ListOptions{})
-	require.NoError(t, err)
-	require.Equal(t, []string{"folderA", "folderB"}, getNames(results.Items))
+	// Get everything - wait for both folders to be indexed
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		results, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		assert.NoError(collect, err)
+		assert.Equal(collect, []string{"folderA", "folderB"}, getNames(results.Items))
+	}, 10*time.Second, 100*time.Millisecond)
 
-	// Find results with a specific owner
-	results, err = client.Resource.List(context.Background(), metav1.ListOptions{
-		FieldSelector: "search.ownerReference=iam.grafana.app/Team/engineering",
-	})
+	// Verify folderB has owner references set
+	folderB, err := client.Resource.Get(context.Background(), "folderB", metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Equal(t, []string{"folderB"}, getNames(results.Items))
+	owners := folderB.GetOwnerReferences()
+	require.Len(t, owners, 1, "folderB should have 1 owner reference")
+	require.Equal(t, "engineering", owners[0].Name)
+	require.Equal(t, "Team", owners[0].Kind)
+	t.Logf("folderB owner references: %+v", owners)
+
+	// Find results with a specific owner (with trimming suffix)
+	sr := callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/engineering ")
+	require.Len(t, sr.Hits, 1)
+	require.Equal(t, "folderB", sr.Hits[0].Name)
+
+	// Do not find results if owner does not match
+	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing")
+	require.Len(t, sr.Hits, 0)
+
+	// Find results using OR (search for owners)
+	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing&ownerReference=iam.grafana.app/Team/engineering")
+	require.Len(t, sr.Hits, 1)
+	require.Equal(t, "folderB", sr.Hits[0].Name)
 }
 
 func getNames(items []unstructured.Unstructured) []string {
@@ -2277,4 +2297,37 @@ func getNames(items []unstructured.Unstructured) []string {
 		names = append(names, item.GetName())
 	}
 	return names
+}
+
+func callSearch(t *testing.T, user apis.User, params string) *v0alpha1.SearchResults {
+	require.NotNil(t, user)
+	ns := user.Identity.GetNamespace()
+	cfg := dynamic.ConfigFor(user.NewRestConfig())
+	gv := gvr.GroupVersion()
+	cfg.GroupVersion = &gv
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+
+	var statusCode int
+	req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+		Param("limit", "1000").
+		Param("type", "folder")
+
+	for kv := range strings.SplitSeq(params, "&") {
+		if kv == "" {
+			continue
+		}
+		parts := strings.SplitN(kv, "=", 2)
+		if len(parts) == 2 {
+			req = req.Param(parts[0], parts[1])
+		}
+	}
+	res := req.Do(context.Background()).StatusCode(&statusCode)
+	require.NoError(t, res.Error())
+	require.Equal(t, http.StatusOK, statusCode)
+	var sr v0alpha1.SearchResults
+	raw, err := res.Raw()
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &sr))
+	return &sr
 }

@@ -485,10 +485,15 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	}
 
 	// The ownerReferences filter
+	// Multiple values for the same param = OR logic (use "in" operator)
 	if vals, ok := queryParams["ownerReference"]; ok {
+		operator := "="
+		if len(vals) > 1 {
+			operator = "in"
+		}
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
-			Operator: "=",
+			Operator: operator,
 			Values:   vals,
 		})
 	}

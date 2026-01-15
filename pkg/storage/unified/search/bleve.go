@@ -1556,23 +1556,25 @@ var termFields = []string{
 	resource.SEARCH_FIELD_TITLE,
 }
 
+// exactTermFields fields to use termQuery for filtering without any extra queries
+var exactTermFields = []string{
+	resource.SEARCH_FIELD_OWNER_REFERENCES,
+}
+
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
+	useExactTermQuery := false
+	if slices.Contains(exactTermFields, req.Key) {
+		useExactTermQuery = true
+	}
 	switch selection.Operator(req.Operator) {
 	case selection.Equals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
 
-		// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
-		// This should be fixed by using the info from the schema
-		if len(req.Values) == 1 {
-			switch req.Key {
-			case "login", "email", resource.SEARCH_FIELD_OWNER_REFERENCES:
-				tq := bleve.NewTermQuery(req.Values[0])
-				tq.SetField(prefix + req.Key)
-				return tq, nil
-			}
+		if len(req.Values) == 1 && useExactTermQuery {
+			return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
 		}
 
 		if len(req.Values) == 1 {
@@ -1592,14 +1594,23 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
+
 		if len(req.Values) == 1 {
+			if useExactTermQuery {
+				return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
+			}
 			q := newQuery(req.Key, filterValue(req.Key, req.Values[0]), prefix)
 			return q, nil
 		}
 
 		disjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := newQuery(req.Key, filterValue(req.Key, v), prefix)
+			var q query.Query
+			if useExactTermQuery {
+				q = newExactTermsQuery(req.Key, v, prefix)
+			} else {
+				q = newQuery(req.Key, filterValue(req.Key, v), prefix)
+			}
 			disjuncts = append(disjuncts, q)
 		}
 
@@ -1654,15 +1665,21 @@ func newQuery(key string, value string, prefix string) query.Query {
 
 // newTermsQuery will create a query that will match on term or tokens
 func newTermsQuery(key string, value string, delimiter string, prefix string) query.Query {
+	q := newExactTermsQuery(key, value, prefix)
+
 	tokens := strings.Split(value, delimiter)
+	cq := newMatchAllTokensQuery(tokens, key, prefix)
+	return bleve.NewDisjunctionQuery(q, cq)
+}
+
+// newTermsQuery will create a query that will match on term without any extra queries
+func newExactTermsQuery(key string, value string, prefix string) query.Query {
 	// won't match with ending space
 	value = strings.TrimSuffix(value, " ")
 
 	q := bleve.NewTermQuery(value)
 	q.SetField(prefix + key)
-
-	cq := newMatchAllTokensQuery(tokens, key, prefix)
-	return bleve.NewDisjunctionQuery(q, cq)
+	return q
 }
 
 // newMatchAllTokensQuery will create a query that will match on all tokens
