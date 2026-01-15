@@ -93,7 +93,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, fmt.Errorf("expected a datasource object")
 	}
 
-	// Verify the secure value commands
+	// Verify the secure value commands. While we're using dual writer, we can only support raw secret values and not references to secrets that already exist. This is because we need the raw values to write to the legacy store.
 	for _, v := range ds.Secure {
 		if v.Create.IsZero() {
 			return nil, fmt.Errorf("secure values must use create when creating a new datasource")
