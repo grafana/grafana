@@ -7,6 +7,14 @@ import { useSelector } from 'app/types/store';
 
 import { shouldAllowRecoveringDeletedRules } from '../featureToggles';
 
+/**
+ * Returns the correct navId for alerting pages based on the alertingNavigationV2 feature toggle.
+ * Use this for pages that need to reference the Alert rules navigation.
+ */
+export function getAlertRulesNavId(): string {
+  return config.featureToggles.alertingNavigationV2 ? 'alert-rules' : 'alert-list';
+}
+
 export function useAlertRulesNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);

@@ -24,6 +24,7 @@ import {
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { Folder } from '../../types/rule-form';
 import {
   DataSourceType,
@@ -108,7 +109,7 @@ const ImportToGMARules = () => {
 
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={getAlertRulesNavId()}
       pageNav={{
         text: t('alerting.import-to-gma.pageTitle', 'Import alert rules'),
       }}

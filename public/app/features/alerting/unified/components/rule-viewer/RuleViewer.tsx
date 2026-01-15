@@ -40,6 +40,7 @@ import { useRuleLocation } from '../../hooks/useCombinedRule';
 import { useHasRulerV2 } from '../../hooks/useHasRuler';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../../hooks/useReturnTo';
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { normalizeHealth, normalizeState } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
@@ -117,7 +118,7 @@ const RuleViewer = () => {
   return (
     <AlertingPageWrapper
       pageNav={pageNav}
-      navId="alert-list"
+      navId={getAlertRulesNavId()}
       isLoading={false}
       renderTitle={(title) => (
         <Title

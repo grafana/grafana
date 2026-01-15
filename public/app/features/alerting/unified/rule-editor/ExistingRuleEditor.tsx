@@ -1,6 +1,5 @@
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Stack } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
@@ -10,6 +9,7 @@ import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRu
 import { FederatedRuleWarning } from '../components/rule-viewer/FederatedRuleWarning';
 import { useRuleWithLocation } from '../hooks/useCombinedRule';
 import { useIsRuleEditable } from '../hooks/useIsRuleEditable';
+import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { stringifyErrorLike } from '../utils/misc';
@@ -35,7 +35,7 @@ export function ExistingRuleEditor({
   isManualRestore = false,
   clone = false,
 }: ExistingRuleEditorProps) {
-  const navId = config.featureToggles.alertingNavigationV2 ? 'alert-rules' : 'alert-list';
+  const navId = getAlertRulesNavId();
   const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
   const {
     loading: loadingAlertRule,

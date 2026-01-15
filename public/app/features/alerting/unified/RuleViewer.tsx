@@ -11,6 +11,7 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
 import DetailView, { ActiveTab, useActiveTab } from './components/rule-viewer/RuleViewer';
 import { useCombinedRule } from './hooks/useCombinedRule';
+import { getAlertRulesNavId } from './navigation/useAlertRulesNav';
 import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
@@ -41,14 +42,14 @@ const RuleViewer = () => {
 
   if (error) {
     return (
-      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+      <AlertingPageWrapper pageNav={defaultPageNav} navId={getAlertRulesNavId()}>
         <ErrorMessage error={error} />
       </AlertingPageWrapper>
     );
   }
 
   if (loading) {
-    return <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true} />;
+    return <AlertingPageWrapper pageNav={defaultPageNav} navId={getAlertRulesNavId()} isLoading={true} />;
   }
 
   if (rule) {
@@ -62,7 +63,7 @@ const RuleViewer = () => {
   // if we get here assume we can't find the rule
   if (!rule && !loading) {
     return (
-      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+      <AlertingPageWrapper pageNav={defaultPageNav} navId={getAlertRulesNavId()}>
         <EntityNotFound entity="Rule" />
       </AlertingPageWrapper>
     );

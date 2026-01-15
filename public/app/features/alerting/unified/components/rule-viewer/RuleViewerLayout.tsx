@@ -7,6 +7,8 @@ import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageProps } from 'app/core/components/Page/types';
 
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
+
 type Props = {
   children: React.ReactNode | React.ReactNode[];
   title: string;
@@ -24,7 +26,7 @@ export function RuleViewerLayout(props: Props): JSX.Element | null {
   const styles = useStyles2(getPageStyles);
 
   return (
-    <Page pageNav={{ ...defaultPageNav, text: title }} renderTitle={renderTitle} navId="alert-list">
+    <Page pageNav={{ ...defaultPageNav, text: title }} renderTitle={renderTitle} navId={getAlertRulesNavId()}>
       <Page.Contents>
         <div className={styles.content}>{wrapInContent ? <RuleViewerLayoutContent {...props} /> : children}</div>
       </Page.Contents>
