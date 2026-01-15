@@ -5,7 +5,6 @@ export const getDataFrameFromSerializedSceneObject = (
   serializedSceneObject: ScopedVar<unknown> | undefined,
   refId: string
 ) => {
-  console.log('called getDataFrameFromSerializedSceneObject');
   let dataFrame: DataFrame | undefined = undefined;
   if (serializedSceneObject) {
     try {
