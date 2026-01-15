@@ -9,7 +9,7 @@ export async function setVisualization(page: PanelEditPage, visualization: strin
     await showPanelEditElement.click();
   }
   await page.getByGrafanaSelector(page.ctx.selectors.components.PanelEditor.toggleVizPicker).click();
-  await page.getByGrafanaSelector(page.ctx.selectors.components.Tab.item('All Visualizations')).click();
+  await page.getByGrafanaSelector(page.ctx.selectors.components.Tab.title('All Visualizations')).click();
   await page.getByGrafanaSelector(page.ctx.selectors.components.PluginVisualization.item(visualization)).click();
 
   const vizSelector = page.ctx.selectors.components.PanelEditor.toggleVizPicker;
