@@ -160,7 +160,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService()
 	my := mysql.ProvideService()
-	ms := mssql.ProvideService(cfg)
+	ms := mssql.ProvideService()
 	graf := grafanads.ProvideService(nil, features)
 	pyroscope := pyroscope.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)
