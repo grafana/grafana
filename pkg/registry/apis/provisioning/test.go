@@ -3,12 +3,14 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -133,13 +135,39 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					// A connection must be there
 					c, err := s.connectionGetter.GetConnection(ctx, cfg.Spec.Connection.Name)
 					if err != nil {
-						responder.Error(err)
+						responder.Error(&k8serrors.StatusError{
+							ErrStatus: metav1.Status{
+								Status:  metav1.StatusFailure,
+								Code:    http.StatusPreconditionFailed,
+								Reason:  "PreconditionFailed",
+								Message: fmt.Sprintf("connection '%s' not found", cfg.Spec.Connection.Name),
+							},
+						})
 						return
 					}
 
 					token, err := c.GenerateRepositoryToken(ctx, &cfg)
 					if err != nil {
-						responder.Error(err)
+						if errors.Is(err, connection.ErrNotImplemented) {
+							responder.Error(&k8serrors.StatusError{
+								ErrStatus: metav1.Status{
+									Status:  metav1.StatusFailure,
+									Code:    http.StatusNotImplemented,
+									Reason:  "NotImplemented",
+									Message: "token generation not implemented for given connection type",
+								},
+							})
+							return
+						}
+
+						responder.Error(&k8serrors.StatusError{
+							ErrStatus: metav1.Status{
+								Status:  metav1.StatusFailure,
+								Code:    http.StatusInternalServerError,
+								Reason:  "InternalServerError",
+								Message: "failed to generate repository token from connection",
+							},
+						})
 						return
 					}
 
@@ -161,7 +189,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 			healthChecker := s.healthProvider.GetHealthChecker()
 			if healthChecker == nil {
 				// Use precondition failed for when health checker is not ready yet
-				responder.Error(&errors.StatusError{
+				responder.Error(&k8serrors.StatusError{
 					ErrStatus: metav1.Status{
 						Status:  metav1.StatusFailure,
 						Code:    http.StatusPreconditionFailed,

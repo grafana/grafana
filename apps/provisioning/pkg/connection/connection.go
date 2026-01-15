@@ -2,9 +2,14 @@ package connection
 
 import (
 	"context"
+	"errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+)
+
+var (
+	ErrNotImplemented = errors.New("not implemented")
 )
 
 //go:generate mockery --name Connection --structname MockConnection --inpackage --filename connection_mock.go --with-expecter
