@@ -12591,7 +12591,6 @@
       "text-mode-value": "Value",
       "text-mode-value-and-name": "Value and Name",
       "threshold-labels": "Show labels",
-      "threshold-labels-description": "Show labels for values on the scale",
       "threshold-markers": "Show thresholds"
     }
   },
