@@ -1148,8 +1148,6 @@ export class LokiDatasource
       },
     };
 
-    console.log('appl tempoate vars');
-
     const dataFrame = getDataFrameFromSerializedSceneObject(scopedVars?.__sceneObject, target.refId);
 
     const exprWithAdHoc = this.addAdHocFilters(
