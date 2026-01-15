@@ -1080,6 +1080,8 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			// Page:       0,
 			// Permission: 0, // Not needed, default is List
 		}
+
+		var listRv int64
 		if req.NextPageToken != "" {
 			token, err := GetContinueToken(req.NextPageToken)
 			if err != nil {
@@ -1087,6 +1089,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 					Error: NewBadRequestError("invalid continue token"),
 				}, nil
 			}
+			listRv = token.ResourceVersion
 			srq.SearchAfter = token.SearchAfter
 			srq.SearchBefore = token.SearchBefore
 		}
@@ -1101,8 +1104,11 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		if err != nil {
 			return nil, err
 		}
+		if listRv <= 0 {
+			listRv = searchResp.ResourceVersion
+		}
 
-		rsp := &resourcepb.ListResponse{ResourceVersion: searchResp.ResourceVersion}
+		rsp := &resourcepb.ListResponse{ResourceVersion: listRv}
 		// Using searchResp.GetResults().GetRows() will not panic if anything is nil on the path.
 		for _, row := range searchResp.GetResults().GetRows() {
 			// TODO: use batch reading
@@ -1123,8 +1129,18 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				}
 			}
 		}
-		if searchResp.GetResults() != nil {
-			rsp.NextPageToken = searchResp.GetResults().GetNextPageToken()
+
+		// The token on the search results will have the current RV of the index from the most recent search page.
+		// But since were paginating, we want to override this with the RV from the start of the list operation.
+		if len(rsp.Items) > 0 {
+			token, err := GetContinueToken(searchResp.GetResults().GetNextPageToken())
+			if err != nil {
+				return &resourcepb.ListResponse{
+					Error: NewBadRequestError("invalid continue token"),
+				}, nil
+			}
+			token.ResourceVersion = listRv
+			rsp.NextPageToken = token.String()
 		}
 
 		return rsp, nil
