@@ -667,9 +667,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		}
 	}
 
-	// testing whether this fixes the issue with namespace deletion issue
-	apiGroupInfo.NegotiatedSerializer = grafanarest.DefaultSubsetNegotiatedSerializer(builder.ProvideCodecFactory(opts.Scheme))
-
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }

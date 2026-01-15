@@ -407,13 +407,11 @@ func InstallAPIs(
 			continue
 		}
 
-		err := server.InstallAPIGroup(&g)
-		if err != nil {
-			return err
-		}
-	}
+		// overrride the negotiated serializer to exclude protobuf, after the NewDefaultAPIGroupInfo, since it otherwise replaces the codecs
+		g.NegotiatedSerializer = grafanarest.DefaultSubsetNegotiatedSerializer(ProvideCodecFactory(scheme))
 
-	return nil
+		return server.InstallAPIGroup(&g)
+	}
 }
 
 func installAPIGroupsForBuilder(g *genericapiserver.APIGroupInfo, group string, b APIGroupBuilder, apiResourceConfig *serverstorage.ResourceConfig, scheme *runtime.Scheme,
