@@ -49,7 +49,7 @@ var (
 			Name:        "lokiExperimentalStreaming",
 			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
+			Owner:       grafanaOSSBigTent,
 		},
 		{
 			Name:        "featureHighlights",
@@ -177,7 +177,7 @@ var (
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
+			Owner:       grafanaOSSBigTent,
 		},
 		{
 			Name:        "disableSSEDataplane",
@@ -340,7 +340,7 @@ var (
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaObservabilityLogsSquad,
+			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:        "externalServiceAccounts",
@@ -574,8 +574,8 @@ var (
 		},
 		{
 			Name:         "dashboardNewLayouts",
-			Description:  "Enables experimental new dashboard layouts",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables new dashboard layouts",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
 			Owner:        grafanaDashboardsSquad,
 		},
@@ -745,7 +745,7 @@ var (
 			Name:         "logQLScope",
 			Description:  "In-development feature that will allow injection of labels into loki queries.",
 			Stage:        FeatureStagePrivatePreview,
-			Owner:        grafanaObservabilityLogsSquad,
+			Owner:        grafanaOSSBigTent,
 			Expression:   "false",
 			HideFromDocs: true,
 		},
@@ -880,6 +880,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "alertingNavigationV2",
+			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: false,
+		},
+		{
 			Name:         "alertingSavedSearches",
 			Description:  "Enables saved searches for alert rules list",
 			Stage:        FeatureStageExperimental,
@@ -981,7 +988,8 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
-		}, {
+		},
+		{
 			Name:         "alertingFilterV2",
 			Description:  "Enable the new alerting search experience",
 			Stage:        FeatureStageExperimental,
@@ -1260,7 +1268,7 @@ var (
 			Name:        "lokiLabelNamesQueryApi",
 			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityLogsSquad,
+			Owner:       grafanaOSSBigTent,
 			Expression:  "true",
 		},
 		{
@@ -1578,6 +1586,13 @@ var (
 		{
 			Name:         "kubernetesAuthzCoreRolesApi",
 			Description:  "Registers AuthZ Core Roles /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:         "kubernetesAuthzGlobalRolesApi",
+			Description:  "Registers AuthZ Global Roles /apis endpoint",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2068,6 +2083,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: false,
+		},
+		{
+			Name:            "alertingSyncDispatchTimer",
+			Description:     "Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			HideFromDocs:    true,
 		},
 	}
 )

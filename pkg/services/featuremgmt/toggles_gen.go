@@ -260,7 +260,7 @@ const (
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
 	// FlagDashboardNewLayouts
-	// Enables experimental new dashboard layouts
+	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
 	// FlagPdfTables
@@ -370,6 +370,10 @@ const (
 	// FlagDashboardTemplates
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
+
+	// FlagAlertingNavigationV2
+	// Enables the new Alerting navigation structure with improved menu grouping
+	FlagAlertingNavigationV2 = "alertingNavigationV2"
 
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
@@ -642,6 +646,10 @@ const (
 	// Registers AuthZ Core Roles /apis endpoint
 	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
 
+	// FlagKubernetesAuthzGlobalRolesApi
+	// Registers AuthZ Global Roles /apis endpoint
+	FlagKubernetesAuthzGlobalRolesApi = "kubernetesAuthzGlobalRolesApi"
+
 	// FlagKubernetesAuthzRolesApi
 	// Registers AuthZ Roles /apis endpoint
 	FlagKubernetesAuthzRolesApi = "kubernetesAuthzRolesApi"
@@ -789,4 +797,8 @@ const (
 	// FlagProfilesExemplars
 	// Enables profiles exemplars support in profiles drilldown
 	FlagProfilesExemplars = "profilesExemplars"
+
+	// FlagAlertingSyncDispatchTimer
+	// Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+	FlagAlertingSyncDispatchTimer = "alertingSyncDispatchTimer"
 )

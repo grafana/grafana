@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/blevesearch/bleve/v2"
+	index "github.com/blevesearch/bleve_index_api"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -258,6 +259,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
+		ScoringModel:  index.BM25Scoring,
 	}, nil)
 	require.NoError(t, err)
 

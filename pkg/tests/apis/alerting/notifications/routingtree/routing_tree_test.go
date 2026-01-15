@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -39,6 +40,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+var defaultTreeIdentifier = resource.Identifier{
+	Namespace: apis.DefaultNamespace,
+	Name:      v0alpha1.UserDefinedRoutingTreeName,
+}
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -52,7 +58,8 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	client, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	route := &v0alpha1.RoutingTree{
 		ObjectMeta: v1.ObjectMeta{
@@ -60,11 +67,7 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 		},
 		Spec: v0alpha1.RoutingTreeSpec{},
 	}
-	_, err := client.Create(ctx, route, v1.CreateOptions{})
-	assert.Error(t, err)
-	require.Truef(t, errors.IsMethodNotSupported(err), "Expected MethodNotSupported but got %s", err)
-
-	err = client.Client.DeleteCollection(ctx, v1.DeleteOptions{}, v1.ListOptions{})
+	_, err = client.Create(ctx, route, resource.CreateOptions{})
 	assert.Error(t, err)
 	require.Truef(t, errors.IsMethodNotSupported(err), "Expected MethodNotSupported but got %s", err)
 }
@@ -154,50 +157,52 @@ func TestIntegrationAccessControl(t *testing.T) {
 	}
 
 	admin := org1.Admin
-	adminClient := common.NewRoutingTreeClient(t, admin)
+	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client := common.NewRoutingTreeClient(t, tc.user)
+			client, err := v0alpha1.NewRoutingTreeClientFromGenerator(tc.user.GetClientRegistry())
+			require.NoError(t, err)
 
 			if tc.canRead {
 				t.Run("should be able to list routing trees", func(t *testing.T) {
-					list, err := client.List(ctx, v1.ListOptions{})
+					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 					require.NoError(t, err)
 					require.Len(t, list.Items, 1)
 					require.Equal(t, v0alpha1.UserDefinedRoutingTreeName, list.Items[0].Name)
 				})
 
 				t.Run("should be able to read routing trees by resource identifier", func(t *testing.T) {
-					_, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+					_, err := client.Get(ctx, defaultTreeIdentifier)
 					require.NoError(t, err)
 
 					t.Run("should get NotFound if resource does not exist", func(t *testing.T) {
-						_, err := client.Get(ctx, "Notfound", v1.GetOptions{})
+						_, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "Notfound"})
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
 			} else {
 				t.Run("should be forbidden to list routing trees", func(t *testing.T) {
-					_, err := client.List(ctx, v1.ListOptions{})
+					_, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 					require.Error(t, err)
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 				})
 
 				t.Run("should be forbidden to read routing tree by name", func(t *testing.T) {
-					_, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+					_, err := client.Get(ctx, defaultTreeIdentifier)
 					require.Error(t, err)
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if name does not exist", func(t *testing.T) {
-						_, err := client.Get(ctx, "Notfound", v1.GetOptions{})
+						_, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "Notfound"})
 						require.Error(t, err)
 						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 					})
 				})
 			}
 
-			current, err := adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+			current, err := adminClient.Get(ctx, defaultTreeIdentifier)
 			require.NoError(t, err)
 			expected := current.Copy().(*v0alpha1.RoutingTree)
 			expected.Spec.Routes = []v0alpha1.RoutingTreeRoute{
@@ -217,7 +222,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 			if tc.canUpdate {
 				t.Run("should be able to update routing tree", func(t *testing.T) {
-					updated, err := client.Update(ctx, expected, v1.UpdateOptions{})
+					updated, err := client.Update(ctx, expected, resource.UpdateOptions{})
 					require.NoErrorf(t, err, "Payload %s", string(d))
 
 					expected = updated
@@ -225,21 +230,23 @@ func TestIntegrationAccessControl(t *testing.T) {
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
 						up := expected.Copy().(*v0alpha1.RoutingTree)
 						up.Name = "notFound"
-						_, err := client.Update(ctx, up, v1.UpdateOptions{})
+						_, err := client.Update(ctx, up, resource.UpdateOptions{})
 						require.Error(t, err)
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
 			} else {
 				t.Run("should be forbidden to update routing tree", func(t *testing.T) {
-					_, err := client.Update(ctx, expected, v1.UpdateOptions{})
+					_, err := client.Update(ctx, expected, resource.UpdateOptions{})
 					require.Error(t, err)
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if resource does not exist", func(t *testing.T) {
 						up := expected.Copy().(*v0alpha1.RoutingTree)
 						up.Name = "notFound"
-						_, err := client.Update(ctx, up, v1.UpdateOptions{})
+						_, err := client.Update(ctx, up, resource.UpdateOptions{
+							ResourceVersion: up.ResourceVersion,
+						})
 						require.Error(t, err)
 						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 					})
@@ -248,32 +255,32 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 			if tc.canUpdate {
 				t.Run("should be able to reset routing tree", func(t *testing.T) {
-					err := client.Delete(ctx, expected.Name, v1.DeleteOptions{})
+					err := client.Delete(ctx, expected.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 					require.NoError(t, err)
 
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
-						err := client.Delete(ctx, "notfound", v1.DeleteOptions{})
+						err := client.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "notfound"}, resource.DeleteOptions{})
 						require.Error(t, err)
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
 			} else {
 				t.Run("should be forbidden to reset routing tree", func(t *testing.T) {
-					err := client.Delete(ctx, expected.Name, v1.DeleteOptions{})
+					err := client.Delete(ctx, expected.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 					require.Error(t, err)
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should be forbidden even if resource does not exist", func(t *testing.T) {
-						err := client.Delete(ctx, "notfound", v1.DeleteOptions{})
+						err := client.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "notfound"}, resource.DeleteOptions{})
 						require.Error(t, err)
 						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 					})
 				})
-				require.NoError(t, adminClient.Delete(ctx, expected.Name, v1.DeleteOptions{}))
+				require.NoError(t, adminClient.Delete(ctx, expected.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
 			}
 		})
 
-		err := adminClient.Delete(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.DeleteOptions{})
+		err := adminClient.Delete(ctx, defaultTreeIdentifier, resource.DeleteOptions{})
 		require.NoError(t, err)
 	}
 }
@@ -287,21 +294,22 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminClient := common.NewRoutingTreeClient(t, admin)
+	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
-	current, err := adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+	current, err := adminClient.Get(ctx, defaultTreeIdentifier)
 	require.NoError(t, err)
 	require.Equal(t, "none", current.GetProvenanceStatus())
 
 	t.Run("should provide provenance status", func(t *testing.T) {
 		require.NoError(t, db.SetProvenance(ctx, &definitions.Route{}, admin.Identity.GetOrgID(), "API"))
 
-		got, err := adminClient.Get(ctx, current.Name, v1.GetOptions{})
+		got, err := adminClient.Get(ctx, current.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 		require.Equal(t, "API", got.GetProvenanceStatus())
 	})
@@ -319,13 +327,13 @@ func TestIntegrationProvisioning(t *testing.T) {
 			},
 		}
 
-		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.Error(t, err)
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 	})
 
 	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, current.Name, v1.DeleteOptions{})
+		err := adminClient.Delete(ctx, current.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 	})
 }
@@ -336,35 +344,37 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
-	current, err := adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+	current, err := adminClient.Get(ctx, defaultTreeIdentifier)
 	require.NoError(t, err)
 	require.NotEmpty(t, current.ResourceVersion)
 
 	t.Run("should forbid if version does not match", func(t *testing.T) {
 		updated := current.Copy().(*v0alpha1.RoutingTree)
-		updated.ResourceVersion = "test"
-		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{
+			ResourceVersion: "test",
+		})
 		require.Error(t, err)
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should update if version matches", func(t *testing.T) {
 		updated := current.Copy().(*v0alpha1.RoutingTree)
 		updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "data")
-		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.EqualValues(t, updated.Spec, actualUpdated.Spec)
 		require.NotEqual(t, updated.ResourceVersion, actualUpdated.ResourceVersion)
 	})
 	t.Run("should update if version is empty", func(t *testing.T) {
-		current, err = adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+		current, err = adminClient.Get(ctx, defaultTreeIdentifier)
 		require.NoError(t, err)
 		updated := current.Copy().(*v0alpha1.RoutingTree)
 		updated.ResourceVersion = ""
 		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{Continue: true})
 
-		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.EqualValues(t, updated.Spec, actualUpdated.Spec)
 		require.NotEqual(t, current.ResourceVersion, actualUpdated.ResourceVersion)
@@ -380,20 +390,22 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	client := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	client, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	receiver := "grafana-default-email"
 	timeInterval := "test-time-interval"
 	createRoute := func(t *testing.T, route definitions.Route) {
 		t.Helper()
-		routeClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+		routeClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+		require.NoError(t, err)
 		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), route, "", func(int64) string { return "default" })
 		require.NoError(t, err)
-		_, err = routeClient.Update(ctx, v1Route, v1.UpdateOptions{})
+		_, err = routeClient.Update(ctx, v1Route, resource.UpdateOptions{})
 		require.NoError(t, err)
 	}
 
-	_, err := common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v0alpha1.TimeInterval{
+	_, err = common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v0alpha1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
@@ -435,7 +447,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 				},
 			}
 			createRoute(t, route)
-			tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+			tree, err := client.Get(ctx, defaultTreeIdentifier)
 			require.NoError(t, err)
 			expected := []v0alpha1.RoutingTreeMatcher{
 				{
@@ -503,9 +515,9 @@ func TestIntegrationDataConsistency(t *testing.T) {
 				ensureMatcher(t, labels.MatchNotEqual, "matchers", "v"),
 			}
 
-			tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+			tree, err := client.Get(ctx, defaultTreeIdentifier)
 			require.NoError(t, err)
-			_, err = client.Update(ctx, tree, v1.UpdateOptions{})
+			_, err = client.Update(ctx, tree, resource.UpdateOptions{})
 			require.NoError(t, err)
 
 			cfg, _, _ = legacyCli.GetAlertmanagerConfigWithStatus(t)
@@ -542,7 +554,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	createRoute(t, route)
 
 	t.Run("correctly reads all fields", func(t *testing.T) {
-		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+		tree, err := client.Get(ctx, defaultTreeIdentifier)
 		require.NoError(t, err)
 		assert.Equal(t, v0alpha1.RoutingTreeRouteDefaults{
 			Receiver:       receiver,
@@ -589,10 +601,10 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	t.Run("correctly save all fields", func(t *testing.T) {
 		before, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
 		require.Equalf(t, http.StatusOK, status, body)
-		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+		tree, err := client.Get(ctx, defaultTreeIdentifier)
 		tree.Spec.Defaults.GroupBy = []string{"test-123", "test-456", "test-789"}
 		require.NoError(t, err)
-		_, err = client.Update(ctx, tree, v1.UpdateOptions{})
+		_, err = client.Update(ctx, tree, resource.UpdateOptions{})
 		require.NoError(t, err)
 
 		before.AlertmanagerConfig.Route.GroupByStr = []string{"test-123", "test-456", "test-789"}
@@ -640,7 +652,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		}
 
 		createRoute(t, route)
-		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+		tree, err := client.Get(ctx, defaultTreeIdentifier)
 		require.NoError(t, err)
 		assert.Equal(t, "foo🙂", tree.Spec.Routes[0].GroupBy[0])
 		expected := []v0alpha1.RoutingTreeMatcher{
@@ -666,7 +678,8 @@ func TestIntegrationExtraConfigsConflicts(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	client := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	client, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	// Now upload a new extra config
 	testAlertmanagerConfigYAML := `
@@ -691,7 +704,7 @@ receivers:
 	}, headers)
 	require.Equal(t, "success", response.Status)
 
-	current, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+	current, err := client.Get(ctx, defaultTreeIdentifier)
 	require.NoError(t, err)
 	updated := current.Copy().(*v0alpha1.RoutingTree)
 	updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{
@@ -704,7 +717,7 @@ receivers:
 		},
 	})
 
-	_, err = client.Update(ctx, updated, v1.UpdateOptions{})
+	_, err = client.Update(ctx, updated, resource.UpdateOptions{})
 	require.Error(t, err)
 	require.Truef(t, errors.IsBadRequest(err), "Should get BadRequest error but got: %s", err)
 
@@ -712,6 +725,6 @@ receivers:
 	legacyCli.ConvertPrometheusDeleteAlertmanagerConfig(t, headers)
 
 	// and try again
-	_, err = client.Update(ctx, updated, v1.UpdateOptions{})
+	_, err = client.Update(ctx, updated, resource.UpdateOptions{})
 	require.NoError(t, err)
 }

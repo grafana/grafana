@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
@@ -35,6 +36,26 @@ var (
 	// fromSlash is filepath.FromSlash, but can be overwritten in tests path separators cross-platform
 	fromSlash = filepath.FromSlash
 )
+
+// PluginManifest holds details for the file manifest
+type PluginManifest struct {
+	Plugin  string            `json:"plugin"`
+	Version string            `json:"version"`
+	KeyID   string            `json:"keyId"`
+	Time    int64             `json:"time"`
+	Files   map[string]string `json:"files"`
+
+	// V2 supported fields
+	ManifestVersion string                `json:"manifestVersion"`
+	SignatureType   plugins.SignatureType `json:"signatureType"`
+	SignedByOrg     string                `json:"signedByOrg"`
+	SignedByOrgName string                `json:"signedByOrgName"`
+	RootURLs        []string              `json:"rootUrls"`
+}
+
+func (m *PluginManifest) IsV2() bool {
+	return strings.HasPrefix(m.ManifestVersion, "2.")
+}
 
 type Signature struct {
 	kr  plugins.KeyRetriever
@@ -66,14 +87,14 @@ func DefaultCalculator(cfg *config.PluginManagementCfg) *Signature {
 
 // readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
-func (s *Signature) readPluginManifest(ctx context.Context, body []byte) (*plugins.PluginManifest, error) {
+func (s *Signature) readPluginManifest(ctx context.Context, body []byte) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
 	if block == nil {
 		return nil, errors.New("unable to decode manifest")
 	}
 
 	// Convert to a well typed object
-	var manifest plugins.PluginManifest
+	var manifest PluginManifest
 	err := json.Unmarshal(block.Plaintext, &manifest)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
@@ -90,7 +111,7 @@ var ErrSignatureTypeUnsigned = errors.New("plugin is unsigned")
 
 // ReadPluginManifestFromFS reads the plugin manifest from the provided plugins.FS.
 // If the manifest is not found, it will return an error wrapping ErrSignatureTypeUnsigned.
-func (s *Signature) ReadPluginManifestFromFS(ctx context.Context, pfs plugins.FS) (*plugins.PluginManifest, error) {
+func (s *Signature) ReadPluginManifestFromFS(ctx context.Context, pfs plugins.FS) (*PluginManifest, error) {
 	f, err := pfs.Open("MANIFEST.txt")
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
@@ -119,9 +140,9 @@ func (s *Signature) ReadPluginManifestFromFS(ctx context.Context, pfs plugins.FS
 	return manifest, nil
 }
 
-func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, *plugins.PluginManifest, error) {
+func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
 	if defaultSignature, exists := src.DefaultSignature(ctx, plugin.JSONData.ID); exists {
-		return defaultSignature, nil, nil
+		return defaultSignature, nil
 	}
 
 	manifest, err := s.ReadPluginManifestFromFS(ctx, plugin.FS)
@@ -130,29 +151,29 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		s.log.Warn("Plugin is unsigned", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusUnsigned,
-		}, nil, nil
+		}, nil
 	case err != nil:
 		s.log.Warn("Plugin signature is invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
-		}, nil, nil
+		}, nil
 	}
 
 	if !manifest.IsV2() {
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
-		}, nil, nil
+		}, nil
 	}
 
 	fsFiles, err := plugin.FS.Files()
 	if err != nil {
-		return plugins.Signature{}, nil, fmt.Errorf("files: %w", err)
+		return plugins.Signature{}, fmt.Errorf("files: %w", err)
 	}
 	if len(fsFiles) == 0 {
 		s.log.Warn("No plugin file information in directory", "pluginId", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
-		}, nil, nil
+		}, nil
 	}
 
 	// Make sure the versions all match
@@ -160,20 +181,20 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		s.log.Debug("Plugin signature invalid because ID or Version mismatch", "pluginId", plugin.JSONData.ID, "manifestPluginId", manifest.Plugin, "pluginVersion", plugin.JSONData.Info.Version, "manifestPluginVersion", manifest.Version)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusModified,
-		}, nil, nil
+		}, nil
 	}
 
 	// Validate that plugin is running within defined root URLs
 	if len(manifest.RootURLs) > 0 {
 		if match, err := urlMatch(manifest.RootURLs, s.cfg.GrafanaAppURL, manifest.SignatureType); err != nil {
 			s.log.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", manifest.RootURLs)
-			return plugins.Signature{}, nil, err
+			return plugins.Signature{}, err
 		} else if !match {
 			s.log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.JSONData.ID,
 				"appUrl", s.cfg.GrafanaAppURL, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
 				Status: plugins.SignatureStatusInvalid,
-			}, nil, nil
+			}, nil
 		}
 	}
 
@@ -186,7 +207,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 			s.log.Debug("Plugin signature invalid", "pluginId", plugin.JSONData.ID, "error", err)
 			return plugins.Signature{
 				Status: plugins.SignatureStatusModified,
-			}, nil, nil
+			}, nil
 		}
 
 		manifestFiles[p] = struct{}{}
@@ -215,7 +236,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		s.log.Warn("The following files were not included in the signature", "plugin", plugin.JSONData.ID, "files", unsignedFiles)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusModified,
-		}, nil, nil
+		}, nil
 	}
 
 	s.log.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
@@ -223,7 +244,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		Status:     plugins.SignatureStatusValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
-	}, manifest, nil
+	}, nil
 }
 
 func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) error {
@@ -300,7 +321,7 @@ func (r invalidFieldErr) Error() string {
 	return fmt.Sprintf("valid manifest field %s is required", r.field)
 }
 
-func (s *Signature) validateManifest(ctx context.Context, m plugins.PluginManifest, block *clearsign.Block) error {
+func (s *Signature) validateManifest(ctx context.Context, m PluginManifest, block *clearsign.Block) error {
 	if len(m.Plugin) == 0 {
 		return invalidFieldErr{field: "plugin"}
 	}

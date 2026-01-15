@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -29,13 +28,12 @@ func DefaultConstructFunc(cfg *config.PluginManagementCfg, signatureCalculator p
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
-func DefaultDecorateFuncs(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) []DecorateFunc {
+func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
 		AppChildDecorateFunc(),
 		SkipHostEnvVarsDecorateFunc(cfg),
-		ModuleHashDecorateFunc(cfg, cdn),
 	}
 }
 
@@ -50,30 +48,19 @@ func NewDefaultConstructor(cfg *config.PluginManagementCfg, signatureCalculator 
 
 // Construct will calculate the plugin's signature state and create the plugin using the pluginFactoryFunc.
 func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error) {
-	// Calculate signature and cache manifest
-	sig, manifest, err := c.signatureCalculator.Calculate(ctx, src, bundle.Primary)
+	sig, err := c.signatureCalculator.Calculate(ctx, src, bundle.Primary)
 	if err != nil {
 		c.log.Warn("Could not calculate plugin signature state", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err
 	}
-
 	plugin, err := c.pluginFactoryFunc(bundle, src.PluginClass(ctx), sig)
 	if err != nil {
 		c.log.Error("Could not create primary plugin base", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err
 	}
-
-	plugin.Manifest = manifest
-
 	res := make([]*plugins.Plugin, 0, len(plugin.Children)+1)
 	res = append(res, plugin)
-	for _, child := range plugin.Children {
-		// Child plugins use the parent's manifest
-		if child.Parent != nil && child.Parent.Manifest != nil {
-			child.Manifest = child.Parent.Manifest
-		}
-		res = append(res, child)
-	}
+	res = append(res, plugin.Children...)
 	return res, nil
 }
 
@@ -155,14 +142,6 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		p.SkipHostEnvVars = !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
-		return p, nil
-	}
-}
-
-// ModuleHashDecorateFunc returns a DecorateFunc that calculates and sets the module hash for the plugin.
-func ModuleHashDecorateFunc(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) DecorateFunc {
-	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.ModuleHash = pluginassets.CalculateModuleHash(p, cfg, cdn)
 		return p, nil
 	}
 }

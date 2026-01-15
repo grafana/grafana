@@ -8,6 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
@@ -21,20 +24,27 @@ var (
 	scriptLoadingMinSupportedVersion = semver.MustParse(CreatePluginVersionScriptSupportEnabled)
 )
 
-func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, store pluginstore.Store) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service,
+	calc *modulehash.Calculator) *Service {
 	return &Service{
-		cfg:   cfg,
-		cdn:   cdn,
-		store: store,
-		log:   log.New("pluginassets"),
+		cfg:  cfg,
+		cdn:  cdn,
+		log:  log.New("pluginassets"),
+		calc: calc,
 	}
 }
 
+func ProvideModuleHashCalculator(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service,
+	signature *signature.Signature, reg registry.Service) *modulehash.Calculator {
+	return modulehash.NewCalculator(cfg, reg, cdn, signature)
+}
+
 type Service struct {
-	cfg   *config.PluginManagementCfg
-	cdn   *pluginscdn.Service
-	store pluginstore.Store
-	log   log.Logger
+	cfg  *config.PluginManagementCfg
+	cdn  *pluginscdn.Service
+	calc *modulehash.Calculator
+
+	log log.Logger
 }
 
 // LoadingStrategy calculates the loading strategy for a plugin.
@@ -69,6 +79,11 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 	}
 
 	return plugins.LoadingStrategyFetch
+}
+
+// ModuleHash returns the module.js SHA256 hash for a plugin in the format expected by the browser for SRI checks.
+func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
+	return s.calc.ModuleHash(ctx, p.ID, p.Info.Version)
 }
 
 func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
