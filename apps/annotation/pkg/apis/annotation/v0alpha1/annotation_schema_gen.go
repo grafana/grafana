@@ -5,13 +5,69 @@
 package v0alpha1
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaAnnotation = resource.NewSimpleSchema("annotation.grafana.app", "v0alpha1", &Annotation{}, &AnnotationList{}, resource.WithKind("Annotation"),
-		resource.WithPlural("annotations"), resource.WithScope(resource.NamespacedScope))
+	schemaAnnotation = resource.NewSimpleSchema("annotation.grafana.app", "v0alpha1", NewAnnotation(), &AnnotationList{}, resource.WithKind("Annotation"),
+		resource.WithPlural("annotations"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+			FieldSelector: "spec.time",
+			FieldValueFunc: func(o resource.Object) (string, error) {
+				cast, ok := o.(*Annotation)
+				if !ok {
+					return "", errors.New("provided object must be of type *Annotation")
+				}
+
+				return fmt.Sprintf("%d", cast.Spec.Time), nil
+			},
+		},
+			{
+				FieldSelector: "spec.timeEnd",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*Annotation)
+					if !ok {
+						return "", errors.New("provided object must be of type *Annotation")
+					}
+					if cast.Spec.TimeEnd == nil {
+						return "", nil
+					}
+
+					return fmt.Sprintf("%d", *cast.Spec.TimeEnd), nil
+				},
+			},
+			{
+				FieldSelector: "spec.dashboardUID",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*Annotation)
+					if !ok {
+						return "", errors.New("provided object must be of type *Annotation")
+					}
+					if cast.Spec.DashboardUID == nil {
+						return "", nil
+					}
+
+					return *cast.Spec.DashboardUID, nil
+				},
+			},
+			{
+				FieldSelector: "spec.panelID",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*Annotation)
+					if !ok {
+						return "", errors.New("provided object must be of type *Annotation")
+					}
+					if cast.Spec.PanelID == nil {
+						return "", nil
+					}
+
+					return fmt.Sprintf("%d", *cast.Spec.PanelID), nil
+				},
+			},
+		}))
 	kindAnnotation = resource.Kind{
 		Schema: schemaAnnotation,
 		Codecs: map[resource.KindEncoding]resource.Codec{

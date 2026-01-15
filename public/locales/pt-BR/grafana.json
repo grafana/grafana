@@ -807,7 +807,8 @@
       "label-integration": "Integração",
       "label-notification-settings": "Configurações de notificações",
       "label-section": "Configurações de {{name}} opcionais",
-      "test": "Teste"
+      "test": "Teste",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DE",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Este recurso foi provisionado via {{provenance}} e não pode ser editado por meio da interface do usuário",
       "badge-tooltip-standard": "Este recurso foi provisionado e não pode ser editado por meio da interface do usuário",
+      "body-imported": "",
       "body-provisioned": "Este recurso ({{resource}}) foi provisionado — ou seja, foi criado por meio de uma configuração. Entre em contato com o administrador do servidor para atualizar este {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Este recurso ({{resource}}) não pode ser editado por meio da interface de usuário"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Provisionado"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6380,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Clássico",
         "json": "JSON",
         "v1-resource": "Recurso V1",
         "v2-resource": "Recurso V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Tem certeza de que deseja restaurar o painel para a versão {{version}}? Todas as alterações não salvas serão perdidas.",
@@ -6980,6 +6986,7 @@
         "drone-datasource": "Fonte de dados do Drone",
         "git-lab-integration-and-datasource": "Fonte de dados e integração do GitLab",
         "honeycomb-integration-and-datasource": "Fonte de dados e integração do Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Fonte de dados e integração do Jira",
         "logic-monitor-devices-datasource": "Fonte de dados de dispositivos do LogicMonitor",
         "mongo-db-integration-and-data-source": "Fonte de dados e integração do MongoDB",
@@ -7838,7 +7845,6 @@
       "export-externally-label": "Exporte o painel de controle para usá-lo em outra instância",
       "export-format": "Formato",
       "export-mode": "Modelo",
-      "export-remove-ds-refs": "Remover detalhes da implantação",
       "info-text": "Copie ou baixe um arquivo contendo a definição do seu painel",
       "title": "Exportar painel"
     },

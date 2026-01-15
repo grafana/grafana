@@ -804,7 +804,8 @@
       "label-integration": "Integrasi",
       "label-notification-settings": "Pengaturan notifikasi",
       "label-section": "Pengaturan {{name}} opsional",
-      "test": "Tes"
+      "test": "Tes",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DARI",
@@ -2168,11 +2169,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Sumber daya ini telah disediakan melalui {{provenance}} dan tidak dapat diedit melalui UI",
       "badge-tooltip-standard": "Sumber daya ini telah disediakan dan tidak dapat diedit melalui UI",
+      "body-imported": "",
       "body-provisioned": "{{resource}} ini telah disediakan, artinya, ini dibuat melalui konfigurasi. Hubungi admin server Anda untuk memperbarui {{resource}} ini.",
+      "title-imported": "",
       "title-provisioned": "{{resource}} ini tidak dapat diedit melalui UI"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Disediakan"
       }
     },
@@ -2666,7 +2670,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6358,12 +6361,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasik",
         "json": "JSON",
         "v1-resource": "Sumber Daya V1",
         "v2-resource": "Sumber Daya V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Anda yakin ingin memulihkan dasbor ke versi {{version}}? Semua perubahan yang belum disimpan akan hilang.",
@@ -6956,6 +6962,7 @@
         "drone-datasource": "Sumber data Drone",
         "git-lab-integration-and-datasource": "Integrasi dan sumber data GitLab",
         "honeycomb-integration-and-datasource": "Integrasi dan sumber data Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integrasi dan sumber data Jira",
         "logic-monitor-devices-datasource": "Sumber data Perangkat LogicMonitor",
         "mongo-db-integration-and-data-source": "Integrasi dan sumber data MongoDB",
@@ -7812,7 +7819,6 @@
       "export-externally-label": "Ekspor dasbor untuk digunakan di instans lain",
       "export-format": "Format",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Hapus detail penyebaran",
       "info-text": "Salin atau unduh file yang berisi definisi dasbor Anda",
       "title": "Ekspor dasbor"
     },

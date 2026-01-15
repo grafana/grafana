@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Przycisk Uruchom zapytanie dotyczący dzienników Azure",
       "body-switching-to-builder": "Przełączenie na tryb konstruktora spowoduje odrzucenie bieżącego zapytania KQL i usunięcie danych z edytora KQL. Czy na pewno?",
-      "body-switching-to-kql": "Przełączenie na KQL spowoduje odrzucenie bieżących ustawień konstruktora. Czy na pewno?",
       "button-kick-start-your-query": "Uruchom zapytanie",
       "button-run-query": "Uruchom zapytanie",
       "confirmText-switch-to": "Przełącz na {{newMode}}",

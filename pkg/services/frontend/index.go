@@ -148,6 +148,30 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	data.Nonce = nonce
 	data.PublicDashboardAccessToken = reqCtx.PublicDashboardAccessToken
 
+	// TODO -- reevaluate with mt authnz
+	// Check for login_error cookie and set a generic error message.
+	// The backend sets an encrypted cookie on oauth login failures that we can't read
+	// so we just show a generic error if the cookie is present.
+	if cookie, err := request.Cookie("login_error"); err == nil && cookie.Value != "" {
+		p.log.Info("request has login_error cookie")
+		// Defaults to a translation key that the frontend will resolve to a localized message
+		data.Settings.LoginError = p.data.Config.OAuthLoginErrorMessage
+
+		cookiePath := "/"
+		if p.data.AppSubUrl != "" {
+			cookiePath = p.data.AppSubUrl
+		}
+		http.SetCookie(writer, &http.Cookie{
+			Name:     "login_error",
+			Value:    "",
+			Path:     cookiePath,
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   p.data.Config.CookieSecure,
+			SameSite: p.data.Config.CookieSameSiteMode,
+		})
+	}
+
 	if data.CSPEnabled {
 		data.CSPContent = middleware.ReplacePolicyVariables(p.data.CSPContent, p.data.AppSubUrl, data.Nonce)
 		writer.Header().Set("Content-Security-Policy", data.CSPContent)

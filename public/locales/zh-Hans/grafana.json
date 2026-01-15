@@ -804,7 +804,8 @@
       "label-integration": "集成",
       "label-notification-settings": "通知设置",
       "label-section": "可选{{name}}设置",
-      "test": "测试"
+      "test": "测试",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "OF",
@@ -2168,11 +2169,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "此资源已通过 {{provenance}} 配置，无法通过用户界面编辑",
       "badge-tooltip-standard": "此资源已配置，无法通过用户界面编辑",
+      "body-imported": "",
       "body-provisioned": "此 {{resource}} 已预置，这意味着它是由配置创建的。请联系服务器管理员以更新此 {{resource}}。",
+      "title-imported": "",
       "title-provisioned": "此 {{resource}} 无法通过用户界面编辑"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "已预置"
       }
     },
@@ -2666,7 +2670,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6358,12 +6361,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "经典版",
         "json": "JSON",
         "v1-resource": "V1 资源",
         "v2-resource": "V2 资源",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
@@ -6956,6 +6962,7 @@
         "drone-datasource": "Drone 数据源",
         "git-lab-integration-and-datasource": "GitLab 集成和数据源",
         "honeycomb-integration-and-datasource": "Honeycomb 集成和数据源",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira 集成和数据源",
         "logic-monitor-devices-datasource": "LogicMonitor Devices 数据源",
         "mongo-db-integration-and-data-source": "MongoDB 集成和数据源",
@@ -7812,7 +7819,6 @@
       "export-externally-label": "导出数据面板以便在其他实例中使用",
       "export-format": "格式",
       "export-mode": "模型",
-      "export-remove-ds-refs": "移除部署详情",
       "info-text": "复制或下载包含数据面板定义的文件",
       "title": "导出数据面板"
     },
