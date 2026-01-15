@@ -807,7 +807,8 @@
       "label-integration": "Integration",
       "label-notification-settings": "Aviseringsinställningar",
       "label-section": "Valfria inställningar för {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "AV",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Den här resursen har etablerats via {{provenance}} och kan inte redigeras via användargränssnittet",
       "badge-tooltip-standard": "Denna resurs har etablerats och kan inte redigeras via användargränssnittet",
+      "body-imported": "",
       "body-provisioned": "Denna {{resource}} har provisionerats, vilket betyder att den skapades genom konfigurering. Kontakta serveradministratören om du vill uppdatera denna {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Denna {{resource}} kan inte redigeras via användargränssnittet"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Provisionerad"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6380,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Classic",
         "json": "JSON",
         "v1-resource": "V1-resurs",
         "v2-resource": "V2-resurs",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Är du säker på att du vill återställa instrumentpanelen till version {{version}}? Alla ändringar som inte sparats kommer att gå förlorade.",
@@ -6980,6 +6986,7 @@
         "drone-datasource": "Drone-datakälla",
         "git-lab-integration-and-datasource": "GitLab-integrering och datakälla",
         "honeycomb-integration-and-datasource": "Honeycomb-integrering och datakälla",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira-integrering och datakälla",
         "logic-monitor-devices-datasource": "LogicMonitor Devices-datakälla",
         "mongo-db-integration-and-data-source": "MongoDB-integrering och datakälla",
@@ -7838,7 +7845,6 @@
       "export-externally-label": "Exportera instrumentpanelen om du vill använda i en annan instans",
       "export-format": "Format",
       "export-mode": "Modell",
-      "export-remove-ds-refs": "Ta bort distributionsinformation",
       "info-text": "Kopiera eller ladda ner en fil som innehåller instrumentpanelens definition",
       "title": "Exportera instrumentpanelen"
     },
