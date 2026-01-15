@@ -209,6 +209,7 @@ export enum PluginExtensionPoints {
   AlertingAlertingRuleAction = 'grafana/alerting/alertingrule/action',
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
   AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
+  AlertingCreateAlertFromPanel = 'grafana/alerting/create-alert-from-panel/v1',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DashboardEmpty = 'grafana/dashboard/empty',
