@@ -236,6 +236,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               dimensions={dimensions}
               startAngle={startAngle}
               endAngle={endAngle}
+              neutral={neutral}
             />
           );
         }

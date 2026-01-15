@@ -16,12 +16,22 @@ interface RadialScaleLabelsProps {
   startAngle: number;
   endAngle: number;
   angleRange: number;
+  neutral?: number;
 }
 
 const LINE_HEIGHT_FACTOR = 1.2;
 
 export const RadialScaleLabels = memo(
-  ({ fieldDisplay, thresholds, theme, dimensions, startAngle, endAngle, angleRange }: RadialScaleLabelsProps) => {
+  ({
+    fieldDisplay,
+    thresholds,
+    theme,
+    dimensions,
+    startAngle,
+    endAngle,
+    angleRange,
+    neutral,
+  }: RadialScaleLabelsProps) => {
     const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius } = dimensions;
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
 
@@ -29,9 +39,17 @@ export const RadialScaleLabels = memo(
     const textLineHeight = scaleLabelsFontSize * LINE_HEIGHT_FACTOR;
     const radius = scaleLabelsRadius - textLineHeight;
 
-    function getTextPosition(text: string, value: number, index: number) {
-      const isLast = index === thresholds.length - 1;
-      const isFirst = index === 0;
+    const allValues = thresholds.map((t) => t.value);
+    if (neutral !== undefined) {
+      allValues.push(neutral);
+    }
+
+    const minLabelValue = allValues.reduce((min, value) => (value < min ? value : min), allValues[0]);
+    const maxLabelValue = allValues.reduce((max, value) => (value > max ? value : max), allValues[0]);
+
+    function getTextPosition(text: string, value: number) {
+      const isLast = value === maxLabelValue;
+      const isFirst = value === minLabelValue;
 
       let valueDeg = ((value - min) / (max - min)) * angleRange;
       let finalAngle = startAngle + valueDeg;
@@ -58,24 +76,35 @@ export const RadialScaleLabels = memo(
       return { ...position, transform: `rotate(${finalAngle}, ${position.x}, ${position.y})` };
     }
 
+    const labels = thresholds.map((threshold, index) => ({
+      value: threshold.value,
+      pos: getTextPosition(String(threshold.value), threshold.value),
+      label: t(`gauge.threshold`, 'Threshold {{value}}', { value: threshold.value }),
+    }));
+
+    if (neutral !== undefined) {
+      labels.push({
+        value: neutral,
+        pos: getTextPosition(String(neutral), neutral),
+        label: t(`gauge.neutral`, 'Neutral {{value}}', { value: neutral }),
+      });
+    }
+
     return (
       <g>
-        {thresholds.map((threshold, index) => {
-          const labelPos = getTextPosition(String(threshold.value), threshold.value, index);
-          return (
-            <text
-              key={index}
-              x={labelPos.x}
-              y={labelPos.y}
-              fontSize={fontSize}
-              fill={theme.colors.text.primary}
-              transform={labelPos.transform}
-              aria-label={t(`gauge.threshold`, 'Threshold {{value}}', { value: threshold.value })}
-            >
-              {threshold.value}
-            </text>
-          );
-        })}
+        {labels.map((label) => (
+          <text
+            key={label.label}
+            x={label.pos.x}
+            y={label.pos.y}
+            fontSize={fontSize}
+            fill={theme.colors.text.primary}
+            transform={label.pos.transform}
+            aria-label={label.label}
+          >
+            {label.value}
+          </text>
+        ))}
       </g>
     );
   }

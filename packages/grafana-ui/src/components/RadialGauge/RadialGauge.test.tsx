@@ -25,10 +25,18 @@ describe('RadialGauge', () => {
     }
   );
 
-  it('should render threshold labels', () => {
+  it('should render labels', () => {
     render(<RadialGaugeExample showScaleLabels={true} />);
 
     expect(screen.getByRole('img')).toBeInTheDocument();
     expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+  });
+
+  it('should render labels including neutral', () => {
+    render(<RadialGaugeExample showScaleLabels={true} neutral={50} />);
+
+    expect(screen.getByRole('img')).toBeInTheDocument();
+    expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+    expect(screen.getByLabelText('Neutral 50')).toBeInTheDocument();
   });
 });

@@ -7991,6 +7991,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
+    "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "Gauge",
@@ -12589,7 +12590,8 @@
       "text-mode-none": "None",
       "text-mode-value": "Value",
       "text-mode-value-and-name": "Value and Name",
-      "threshold-labels": "Show threshold labels",
+      "threshold-labels": "Show labels",
+      "threshold-labels-description": "Show labels for values on the scale",
       "threshold-markers": "Show thresholds"
     }
   },
