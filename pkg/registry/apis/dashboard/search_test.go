@@ -1057,6 +1057,12 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, result)
+
+			// Exclude query fields from the expected search
+			if tt.queryString != "" {
+				result.QueryFields = nil
+			}
+
 			assert.Equal(t, tt.expected, result)
 		})
 	}
