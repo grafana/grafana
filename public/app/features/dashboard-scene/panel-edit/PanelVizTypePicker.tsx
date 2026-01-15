@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 import { useMedia, useSessionStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
@@ -48,15 +48,8 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
   const theme = useTheme2();
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
   const filterId = useId();
-  const [searchInputRef, setSearchInputRef] = useState<HTMLInputElement | null>(null);
 
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
-
-  useEffect(() => {
-    if (searchInputRef && !isMobile) {
-      searchInputRef.focus();
-    }
-  }, [searchInputRef, isMobile]);
 
   /** SEARCH */
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,6 +135,7 @@ export function PanelVizTypePicker({ panel, editPreview, data, onChange, onClose
                 )}
                 <FilterInput
                   id={filterId}
+                  autoFocus={!isMobile}
                   className={styles.filter}
                   value={searchQuery}
                   onChange={setSearchQuery}
