@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure günlükleri sorgu hızlı başlatma düğmesi",
       "body-switching-to-builder": "Oluşturucuya geçmek, mevcut KQL sorgunuzu siler ve KQL düzenleyicisini temizler. Emin misiniz?",
-      "body-switching-to-kql": "KQL'ye geçmek, mevcut oluşturucu ayarlarınızı siler. Emin misiniz?",
       "button-kick-start-your-query": "Sorgunuzu hızlı başlatın",
       "button-run-query": "Sorgu çalıştır",
       "confirmText-switch-to": "Şuna geç: {{newMode}}",

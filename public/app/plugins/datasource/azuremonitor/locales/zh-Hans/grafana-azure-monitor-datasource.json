@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure 日志启动查询按钮",
       "body-switching-to-builder": "切换到构建器将丢弃当前的 KQL 查询并清除 KQL 编辑器。您确定吗？",
-      "body-switching-to-kql": "切换到 KQL 将丢弃当前的构建器设置。您确定吗？",
       "button-kick-start-your-query": "启动您的查询",
       "button-run-query": "运行查询",
       "confirmText-switch-to": "切换到 {{newMode}}",
