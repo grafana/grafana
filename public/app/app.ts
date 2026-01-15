@@ -257,8 +257,8 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const appPluginsToAwait = getAppPluginsToAwait();
-        const appPluginsToPreload = getAppPluginsToPreload();
+        const appPluginsToAwait = await getAppPluginsToAwait();
+        const appPluginsToPreload = await getAppPluginsToPreload();
 
         preloadPlugins(appPluginsToPreload);
         await preloadPlugins(appPluginsToAwait);

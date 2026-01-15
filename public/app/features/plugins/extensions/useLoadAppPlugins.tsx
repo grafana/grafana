@@ -6,7 +6,7 @@ import { getAppPluginConfigs } from './utils';
 
 export function useLoadAppPlugins(pluginIds: string[] = []): { isLoading: boolean } {
   const { loading: isLoading } = useAsync(async () => {
-    const appConfigs = getAppPluginConfigs(pluginIds);
+    const appConfigs = await getAppPluginConfigs(pluginIds);
 
     if (!appConfigs.length) {
       return;

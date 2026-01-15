@@ -5,7 +5,7 @@ import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@gr
 import { UsePluginLinksOptions, UsePluginLinksResult } from '@grafana/runtime';
 
 import { useAddedLinksRegistrySlice } from './registry/useRegistrySlice';
-import { useLoadAppPlugins } from './useLoadAppPlugins';
+import { useLoadAppPluginsWithPredicate } from './useLoadAppPluginsWithPredicate';
 import {
   generateExtensionId,
   getExtensionPointPluginDependencies,
@@ -24,7 +24,10 @@ export function usePluginLinks({
 }: UsePluginLinksOptions): UsePluginLinksResult {
   const registryItems = useAddedLinksRegistrySlice(extensionPointId);
   const pluginContext = usePluginContext();
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPluginsWithPredicate(
+    extensionPointId,
+    getExtensionPointPluginDependencies
+  );
 
   return useMemo(() => {
     const { result, pointLog } = validateExtensionPoint({

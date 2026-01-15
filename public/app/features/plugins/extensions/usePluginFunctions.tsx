@@ -4,7 +4,7 @@ import { usePluginContext, PluginExtensionFunction, PluginExtensionTypes } from 
 import { UsePluginFunctionsOptions, UsePluginFunctionsResult } from '@grafana/runtime';
 
 import { useAddedFunctionsRegistrySlice } from './registry/useRegistrySlice';
-import { useLoadAppPlugins } from './useLoadAppPlugins';
+import { useLoadAppPluginsWithPredicate } from './useLoadAppPluginsWithPredicate';
 import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
 import { validateExtensionPoint } from './validateExtensionPoint';
 
@@ -15,8 +15,10 @@ export function usePluginFunctions<Signature>({
 }: UsePluginFunctionsOptions): UsePluginFunctionsResult<Signature> {
   const registryItems = useAddedFunctionsRegistrySlice<Signature>(extensionPointId);
   const pluginContext = usePluginContext();
-  const deps = getExtensionPointPluginDependencies(extensionPointId);
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(deps);
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPluginsWithPredicate(
+    extensionPointId,
+    getExtensionPointPluginDependencies
+  );
 
   return useMemo(() => {
     const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });

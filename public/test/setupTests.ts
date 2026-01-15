@@ -46,6 +46,11 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
   usePluginComponents: jest.fn().mockReturnValue({ components: [], isLoading: false }),
 }));
 
+// Mock useLoadAppPluginsWithPredidcate to prevent async state updates in tests
+jest.mock('app/features/plugins/extensions/useLoadAppPluginsWithPredicate', () => ({
+  useLoadAppPluginsWithPredicate: jest.fn().mockReturnValue({ isLoading: false }),
+}));
+
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness
 configure({ asyncUtilTimeout: 2000 });

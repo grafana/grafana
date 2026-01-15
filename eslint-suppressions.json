@@ -2999,7 +2999,7 @@
   },
   "public/app/features/plugins/extensions/utils.tsx": {
     "no-restricted-syntax": {
-      "count": 7
+      "count": 1
     }
   },
   "public/app/features/plugins/extensions/validators.test.tsx": {

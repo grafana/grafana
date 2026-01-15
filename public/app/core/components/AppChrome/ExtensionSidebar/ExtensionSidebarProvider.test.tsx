@@ -1,8 +1,8 @@
 import { render, screen, act } from '@testing-library/react';
+import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, EventBus, ExtensionInfo } from '@grafana/data';
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
-import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import {
@@ -41,12 +41,6 @@ jest.mock('@grafana/data', () => ({
   },
 }));
 
-// Mock the extension point plugin meta
-jest.mock('app/features/plugins/extensions/utils', () => ({
-  ...jest.requireActual('app/features/plugins/extensions/utils'),
-  getExtensionPointPluginMeta: jest.fn(),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   locationService: {
@@ -64,12 +58,17 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: jest.fn(),
+}));
+
 describe('ExtensionSidebarProvider', () => {
   let subscribeSpy: jest.SpyInstance;
   let originalAppEvents: EventBus;
   let mockEventBus: EventBusSrv;
   let locationObservableMock: { callback: jest.Mock | null; subscribe: jest.Mock };
-  const getExtensionPointPluginMetaMock = jest.mocked(getExtensionPointPluginMeta);
+  const useAsyncMock = jest.mocked(useAsync);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -80,8 +79,6 @@ describe('ExtensionSidebarProvider', () => {
     subscribeSpy = jest.spyOn(mockEventBus, 'subscribe');
 
     setAppEvents(mockEventBus);
-
-    getExtensionPointPluginMetaMock.mockReturnValue(new Map([[mockPluginMeta.pluginId, mockPluginMeta]]));
 
     locationObservableMock = {
       subscribe: jest.fn((callback) => {
@@ -97,6 +94,7 @@ describe('ExtensionSidebarProvider', () => {
     (store.get as jest.Mock).mockReturnValue(undefined);
     (store.set as jest.Mock).mockImplementation(() => {});
     (store.delete as jest.Mock).mockImplementation(() => {});
+    useAsyncMock.mockReturnValue({ loading: false, value: new Map([[mockPluginMeta.pluginId, mockPluginMeta]]) });
   });
 
   afterEach(() => {
@@ -198,12 +196,13 @@ describe('ExtensionSidebarProvider', () => {
       addedLinks: [],
     };
 
-    getExtensionPointPluginMetaMock.mockReturnValue(
-      new Map([
+    useAsyncMock.mockReturnValue({
+      loading: false,
+      value: new Map([
         [permittedPluginMeta.pluginId, permittedPluginMeta],
         [prohibitedPluginMeta.pluginId, prohibitedPluginMeta],
-      ])
-    );
+      ]),
+    });
 
     render(
       <ExtensionSidebarContextProvider>
@@ -551,7 +550,7 @@ describe('ExtensionSidebarProvider', () => {
       links: [],
     }));
 
-    getExtensionPointPluginMetaMock.mockReturnValue(new Map([[mockPluginMeta.pluginId, mockPluginMeta]]));
+    useAsyncMock.mockReturnValue({ loading: false, value: new Map([[mockPluginMeta.pluginId, mockPluginMeta]]) });
 
     render(
       <ExtensionSidebarContextProvider>

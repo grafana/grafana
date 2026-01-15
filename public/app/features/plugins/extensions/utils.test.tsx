@@ -1027,7 +1027,7 @@ describe('Plugin Extensions / Utils', () => {
       config.apps = originalApps;
     });
 
-    test('should return the app plugin configs based on the provided plugin ids', () => {
+    test('should return the app plugin configs based on the provided plugin ids', async () => {
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1043,13 +1043,11 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      expect(getAppPluginConfigs(['myorg-first-app', 'myorg-third-app'])).toEqual([
-        config.apps['myorg-first-app'],
-        config.apps['myorg-third-app'],
-      ]);
+      const appPluginIds = await getAppPluginConfigs(['myorg-first-app', 'myorg-third-app']);
+      expect(appPluginIds).toEqual([config.apps['myorg-first-app'], config.apps['myorg-third-app']]);
     });
 
-    test('should simply ignore the app plugin ids that do not belong to a config', () => {
+    test('should simply ignore the app plugin ids that do not belong to a config', async () => {
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1065,7 +1063,8 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      expect(getAppPluginConfigs(['myorg-first-app', 'unknown-app-id'])).toEqual([config.apps['myorg-first-app']]);
+      const appPluginIds = await getAppPluginConfigs(['myorg-first-app', 'unknown-app-id']);
+      expect(appPluginIds).toEqual([config.apps['myorg-first-app']]);
     });
   });
 
@@ -1106,7 +1105,7 @@ describe('Plugin Extensions / Utils', () => {
       config.apps = originalApps;
     });
 
-    test('should return the app plugin ids that register extensions to a link extension point', () => {
+    test('should return the app plugin ids that register extensions to a link extension point', async () => {
       const extensionPointId = 'myorg-first-app/link/v1';
 
       config.apps = {
@@ -1137,12 +1136,12 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+      const appPluginIds = await getExtensionPointPluginDependencies(extensionPointId);
 
       expect(appPluginIds).toEqual(['myorg-second-app']);
     });
 
-    test('should return the app plugin ids that register extensions to a component extension point', () => {
+    test('should return the app plugin ids that register extensions to a component extension point', async () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
       config.apps = {
@@ -1173,12 +1172,12 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+      const appPluginIds = await getExtensionPointPluginDependencies(extensionPointId);
 
       expect(appPluginIds).toEqual(['myorg-third-app']);
     });
 
-    test('should return an empty array if there are no apps that that extend the extension point', () => {
+    test('should return an empty array if there are no apps that that extend the extension point', async () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
       // None of the apps are extending the extension point
@@ -1197,12 +1196,12 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+      const appPluginIds = await getExtensionPointPluginDependencies(extensionPointId);
 
       expect(appPluginIds).toEqual([]);
     });
 
-    test('should also return (recursively) the app plugin ids that the apps which extend the extension-point depend on', () => {
+    test('should also return (recursively) the app plugin ids that the apps which extend the extension-point depend on', async () => {
       const extensionPointId = 'myorg-first-app/component/v1';
 
       config.apps = {
@@ -1283,7 +1282,7 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+      const appPluginIds = await getExtensionPointPluginDependencies(extensionPointId);
 
       expect(appPluginIds).toEqual(['myorg-second-app', 'myorg-fourth-app', 'myorg-fifth-app']);
     });
@@ -1320,7 +1319,7 @@ describe('Plugin Extensions / Utils', () => {
       config.apps = originalApps;
     });
 
-    test('should only return the app plugin id that exposes the component, if that component does not depend on anything', () => {
+    test('should only return the app plugin id that exposes the component, if that component does not depend on anything', async () => {
       const exposedComponentId = 'myorg-second-app/component/v1';
 
       config.apps = {
@@ -1350,12 +1349,12 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
+      const appPluginIds = await getExposedComponentPluginDependencies(exposedComponentId);
 
       expect(appPluginIds).toEqual(['myorg-second-app']);
     });
 
-    test('should also return the list of app plugin ids that the plugin - which exposes the component - is depending on', () => {
+    test('should also return the list of app plugin ids that the plugin - which exposes the component - is depending on', async () => {
       const exposedComponentId = 'myorg-second-app/component/v1';
 
       config.apps = {
@@ -1429,7 +1428,7 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
+      const appPluginIds = await getExposedComponentPluginDependencies(exposedComponentId);
 
       expect(appPluginIds).toEqual(['myorg-second-app', 'myorg-fourth-app', 'myorg-fifth-app']);
     });
@@ -1466,7 +1465,7 @@ describe('Plugin Extensions / Utils', () => {
       config.apps = originalApps;
     });
 
-    test('should not end up in an infinite loop if there are circular dependencies', () => {
+    test('should not end up in an infinite loop if there are circular dependencies', async () => {
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1494,12 +1493,12 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      const appPluginIds = getAppPluginDependencies('myorg-second-app');
+      const appPluginIds = await getAppPluginDependencies('myorg-second-app');
 
       expect(appPluginIds).toEqual(['myorg-third-app']);
     });
 
-    test('should not end up in an infinite loop if a plugin depends on itself', () => {
+    test('should not end up in an infinite loop if a plugin depends on itself', async () => {
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -1519,7 +1518,7 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      const appPluginIds = getAppPluginDependencies('myorg-second-app');
+      const appPluginIds = await getAppPluginDependencies('myorg-second-app');
 
       expect(appPluginIds).toEqual([]);
     });
@@ -1588,23 +1587,23 @@ describe('Plugin Extensions / Utils', () => {
       config.apps = originalApps;
     });
 
-    it('should return empty map when no plugins have extensions for the point', () => {
+    it('should return empty map when no plugins have extensions for the point', async () => {
       config.apps = {
         app1: { ...mockApp1, extensions: { ...mockApp1.extensions, addedComponents: [], addedLinks: [] } },
         app2: { ...mockApp2, extensions: { ...mockApp2.extensions, addedComponents: [], addedLinks: [] } },
       };
 
-      const result = getExtensionPointPluginMeta(mockExtensionPointId);
+      const result = await getExtensionPointPluginMeta(mockExtensionPointId);
       expect(result.size).toBe(0);
     });
 
-    it('should return map with plugins that have components for the extension point', () => {
+    it('should return map with plugins that have components for the extension point', async () => {
       config.apps = {
         app1: mockApp1,
         app2: mockApp2,
       };
 
-      const result = getExtensionPointPluginMeta(mockExtensionPointId);
+      const result = await getExtensionPointPluginMeta(mockExtensionPointId);
 
       expect(result.size).toBe(2);
       expect(result.get('app1')).toEqual({
@@ -1617,7 +1616,7 @@ describe('Plugin Extensions / Utils', () => {
       });
     });
 
-    it('should filter out plugins that do not have any extensions for the point', () => {
+    it('should filter out plugins that do not have any extensions for the point', async () => {
       config.apps = {
         app1: mockApp1,
         app2: { ...mockApp2, extensions: { ...mockApp2.extensions, addedComponents: [], addedLinks: [] } },
@@ -1632,7 +1631,7 @@ describe('Plugin Extensions / Utils', () => {
         },
       };
 
-      const result = getExtensionPointPluginMeta(mockExtensionPointId);
+      const result = await getExtensionPointPluginMeta(mockExtensionPointId);
 
       expect(result.size).toBe(1);
       expect(result.get('app1')).toEqual({
