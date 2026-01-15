@@ -2687,7 +2687,8 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/plugin-configs": "npm:12.4.0-pre"
     "@grafana/runtime": "npm:12.4.0-pre"
-    "@grafana/schema": "npm:12.4.0-pre"
+    "@grafana/scenes": "npm:^6.52.1"
+    "@grafana/schema": "npm:12.3.1"
     "@grafana/ui": "npm:12.4.0-pre"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
@@ -3673,6 +3674,41 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
   checksum: 10/d6172b51121e03c7dcbf30046772f99fc45922c1f7b360a7c3d2c0391300e378f306cb78251dda3b30895679379c38db30e4d52fee67a56cd95f18f38aadf3fb
+  languageName: node
+  linkType: hard
+
+"@grafana/scenes@npm:^6.52.1":
+  version: 6.52.3
+  resolution: "@grafana/scenes@npm:6.52.3"
+  dependencies:
+    "@floating-ui/react": "npm:^0.26.16"
+    "@leeoniya/ufuzzy": "npm:^1.0.16"
+    "@tanstack/react-virtual": "npm:^3.9.0"
+    i18next-parser: "npm:9.3.0"
+    react-grid-layout: "npm:1.3.4"
+    react-use: "npm:17.5.0"
+    react-virtualized-auto-sizer: "npm:1.0.24"
+    uuid: "npm:^9.0.0"
+  peerDependencies:
+    "@grafana/data": ">=10.4"
+    "@grafana/e2e-selectors": ">=10.4"
+    "@grafana/i18n": "*"
+    "@grafana/runtime": ">=10.4"
+    "@grafana/schema": ">=10.4"
+    "@grafana/ui": ">=10.4"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+    react-router-dom: ^6.28.0
+  checksum: 10/d84a09238ac3221fc552a0dfd3dfbccca480eb7b2d3a566d55c897e63e3e10cf2f060b8415a4b11d10cd3277aea5047acef03fb938755e5f2d0e463b618f88cf
+  languageName: node
+  linkType: hard
+
+"@grafana/schema@npm:12.3.1":
+  version: 12.3.1
+  resolution: "@grafana/schema@npm:12.3.1"
+  dependencies:
+    tslib: "npm:2.8.1"
+  checksum: 10/422db62d4b35d4b2d171ac69b7a21c3ae9c59bbde6acc60b1065b1a6a517b824146ff920c9d5ac28bcdbf3a9713cfa5ebdd1f183b320e03102983fdf39a894c6
   languageName: node
   linkType: hard
 

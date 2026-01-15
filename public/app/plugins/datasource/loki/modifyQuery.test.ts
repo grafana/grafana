@@ -89,6 +89,51 @@ describe('addLabelToQuery()', () => {
     }
   );
 
+  it('should not add SM twice without parser', () => {
+    const result = addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata);
+
+    expect(addLabelToQuery(result, 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | forcedLabel=`value`'
+    );
+  });
+
+  it('should not add SM twice with parser', () => {
+    const result = addLabelToQuery(
+      '{foo="bar"} | logfmt | json',
+      'forcedLabel',
+      '=',
+      'value',
+      LabelType.StructuredMetadata
+    );
+
+    expect(addLabelToQuery(result, 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | forcedLabel=`value` | logfmt | json'
+    );
+  });
+
+  it('should work when adding SM without parsers', () => {
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | forcedLabel=`value`'
+    );
+  });
+
+  it('should not add parsed twice', () => {
+    const result = addLabelToQuery('{foo="bar"} | json', 'forcedLabel', '=', 'value', LabelType.Parsed);
+
+    expect(addLabelToQuery(result, 'forcedLabel', '=', 'value', LabelType.Parsed)).toEqual(
+      '{foo="bar"} | json | forcedLabel=`value`'
+    );
+  });
+
+  it('should not add indexed twice', () => {
+    const result = addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.Indexed);
+
+    expect(addLabelToQuery(result, 'forcedLabel', '=', 'value', LabelType.Indexed)).toEqual(
+      '{foo="bar", forcedLabel="value"} | logfmt'
+    );
+  });
+
+  // @todo a parsed query should not be added if no parser?
   it('should always add label as labelFilter if label type is parsed', () => {
     expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LabelType.Parsed)).toEqual(
       '{foo="bar"} | forcedLabel=`value`'
@@ -107,8 +152,53 @@ describe('addLabelToQuery()', () => {
     );
   });
 
-  it('should always add label as labelFilter if label type is structured with parser', () => {
+  it('should always add field as metadata before the parser', () => {
     expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | forcedLabel=`value` | logfmt'
+    );
+  });
+
+  it('should always add field before parser if label type is structured with parser', () => {
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | forcedLabel=`value` | logfmt'
+    );
+  });
+
+  it('SM gets added before parser in query with parsed filters', () => {
+    const result = addLabelToQuery('{foo="bar"} | logfmt', 'parsed', '=', 'value', LabelType.Parsed);
+    expect(result).toEqual('{foo="bar"} | logfmt | parsed=`value`');
+
+    expect(addLabelToQuery(result, 'metadata', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | metadata=`value` | logfmt | parsed=`value`'
+    );
+  });
+
+  it('SM doesnt get added twice in query with parsed filters', () => {
+    expect(
+      addLabelToQuery(
+        '{foo="bar"} | metadata=`value` | metadata2="value2" | logfmt | parsed=`value`',
+        'metadata',
+        '=',
+        'value',
+        LabelType.StructuredMetadata
+      )
+    ).toEqual('{foo="bar"} | metadata=`value` | metadata2="value2" | logfmt | parsed=`value`');
+  });
+
+  it('SM doesnt get added twice in query with parsed filters reverse order', () => {
+    expect(
+      addLabelToQuery(
+        '{foo="bar"} | metadata2="value2" | metadata=`value` | logfmt | parsed=`value`',
+        'metadata',
+        '=',
+        'value',
+        LabelType.StructuredMetadata
+      )
+    ).toEqual('{foo="bar"} | metadata2="value2" | metadata=`value` | logfmt | parsed=`value`');
+  });
+
+  it('should always add field after parser if label type is parsed with parser', () => {
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.Parsed)).toEqual(
       '{foo="bar"} | logfmt | forcedLabel=`value`'
     );
   });
