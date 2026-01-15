@@ -121,11 +121,10 @@ export function SavedSearchItem({
         {/* Apply button (magnifying glass) */}
         <IconButton
           name="search"
-          aria-label={t('alerting.saved-searches.apply-aria-label', 'Apply search "{{name}}"', {
+          tooltip={t('alerting.saved-searches.apply-tooltip', 'Apply search "{{name}}"', {
             name: search.name,
           })}
           onClick={onApply}
-          tooltip={t('alerting.saved-searches.apply-tooltip', 'Apply this search')}
           size="md"
           variant="secondary"
           disabled={isDisabled}

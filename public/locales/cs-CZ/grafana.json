@@ -813,7 +813,8 @@
       "label-integration": "Integrace",
       "label-notification-settings": "Nastavení oznámení",
       "label-section": "Nepovinné nastavení: {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "Z",
@@ -2192,11 +2193,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Tento zdroj byl zajištěn prostřednictvím {{provenance}} a nelze ho upravovat přes uživatelské rozhraní",
       "badge-tooltip-standard": "Tento zdroj byl zajištěn a nelze ho upravovat přes uživatelské rozhraní",
+      "body-imported": "",
       "body-provisioned": "Tento {{resource}} byl zajištěn. To znamená, že byl vytvořen konfigurací. Pokud chcete {{resource}} aktualizovat, obraťte se na správce serveru.",
+      "title-imported": "",
       "title-provisioned": "{{resource}} nelze upravit přes uživatelské rozhraní"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Zajištěno"
       }
     },
@@ -2699,7 +2703,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6424,12 +6427,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasický",
         "json": "JSON",
         "v1-resource": "Zdroj V1",
         "v2-resource": "Zdroj V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Opravdu chcete obnovit nástěnku na verzi {{version}}? Veškeré neuložené změny budou ztraceny.",
@@ -7028,6 +7034,7 @@
         "drone-datasource": "Zdroj dat Drone",
         "git-lab-integration-and-datasource": "Integrace a zdroj dat GitLab",
         "honeycomb-integration-and-datasource": "Integrace a zdroj dat Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integrace a zdroj dat Jira",
         "logic-monitor-devices-datasource": "Zdroj dat zařízení LogicMonitor",
         "mongo-db-integration-and-data-source": "Integrace a zdroj dat MongoDB",
@@ -7890,7 +7897,6 @@
       "export-externally-label": "Exportovat nástěnku pro použití v jiné instanci",
       "export-format": "Formát",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Odebrat podrobnosti o nasazení",
       "info-text": "Zkopírujte nebo stáhněte soubor obsahující definici vaší nástěnky",
       "title": "Exportovat nástěnku"
     },
@@ -11906,7 +11912,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Odstranit",
       "confirm-delete-keep-resources": "Opravdu chcete odstranit konfiguraci úložiště, ale ponechat jeho zdroje?",
       "confirm-delete-with-resources": "Opravdu chcete odstranit konfiguraci úložiště a všechny jeho zdroje?",
@@ -12174,6 +12226,7 @@
       "jobs": "Práce"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Nastavení",
       "source-code": "Zdrojový kód"
     },
