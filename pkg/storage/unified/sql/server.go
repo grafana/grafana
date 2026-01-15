@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -37,6 +38,7 @@ type ServerOptions struct {
 	Tracer           trace.Tracer
 	Reg              prometheus.Registerer
 	AccessClient     types.AccessClient
+	SearchClient     resourcepb.ResourceIndexClient
 	SearchOptions    resource.SearchOptions
 	StorageMetrics   *resource.StorageMetrics
 	IndexMetrics     *resource.BleveIndexMetrics
@@ -115,6 +117,10 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		serverOptions.Lifecycle = backend
 	}
 
+	// use the search client when search isnt initialized. Dont need both.
+	if opts.SearchOptions.Resources == nil {
+		serverOptions.SearchClient = opts.SearchClient
+	}
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue

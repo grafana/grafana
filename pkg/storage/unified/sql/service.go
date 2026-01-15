@@ -59,12 +59,13 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 	hasSubservices     bool
 
-	backend   resource.StorageBackend
-	cfg       *setting.Cfg
-	features  featuremgmt.FeatureToggles
-	db        infraDB.DB
-	stopCh    chan struct{}
-	stoppedCh chan error
+	backend      resource.StorageBackend
+	searchClient resourcepb.ResourceIndexClient
+	cfg          *setting.Cfg
+	features     featuremgmt.FeatureToggles
+	db           infraDB.DB
+	stopCh       chan struct{}
+	stoppedCh    chan error
 
 	handler grpcserver.Provider
 
@@ -99,6 +100,7 @@ func ProvideUnifiedStorageGrpcService(
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
+	searchClient resourcepb.ResourceIndexClient,
 ) (UnifiedStorageGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-storage")
@@ -112,6 +114,7 @@ func ProvideUnifiedStorageGrpcService(
 
 	s := &service{
 		backend:            backend,
+		searchClient:       searchClient,
 		cfg:                cfg,
 		features:           features,
 		stopCh:             make(chan struct{}),
@@ -272,6 +275,7 @@ func (s *service) starting(ctx context.Context) error {
 		Tracer:         s.tracing,
 		Reg:            s.reg,
 		AccessClient:   authzClient,
+		SearchClient:   s.searchClient,
 		SearchOptions:  searchOptions,
 		StorageMetrics: s.storageMetrics,
 		IndexMetrics:   s.indexMetrics,

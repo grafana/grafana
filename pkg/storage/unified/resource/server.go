@@ -222,6 +222,9 @@ type ResourceServerOptions struct {
 	// Search options
 	Search SearchOptions
 
+	// to be used by storage
+	SearchClient resourcepb.ResourceIndexClient
+
 	// Quota service
 	OverridesService *OverridesService
 
@@ -347,6 +350,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
+		searchClient:     opts.SearchClient,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -385,6 +389,9 @@ type server struct {
 	storageMetrics   *StorageMetrics
 	indexMetrics     *BleveIndexMetrics
 	overridesService *OverridesService
+
+	// only to be used with storage server for field selector search
+	searchClient resourcepb.ResourceIndexClient
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -1059,7 +1066,8 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	// TODO: What to do about RV and version_match fields?
 	// If we get here, we're doing list with selectable fields. Let's do search instead, since
 	// we index all selectable fields, and fetch resulting documents one by one.
-	if s.search != nil && req.Source == resourcepb.ListRequest_STORE && (len(req.Options.Fields) > 0) {
+
+	if (s.search != nil || s.searchClient != nil) && req.Source == resourcepb.ListRequest_STORE && (len(req.Options.Fields) > 0) {
 		if req.Options.Key.Namespace == "" {
 			return &resourcepb.ListResponse{
 				Error: NewBadRequestError("namespace must be specified for list with filter"),
@@ -1075,7 +1083,13 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			// Permission: 0, // Not needed, default is List
 		}
 
-		searchResp, err := s.search.Search(ctx, srq)
+		var searchResp *resourcepb.ResourceSearchResponse
+		var err error
+		if s.searchClient != nil {
+			searchResp, err = s.searchClient.Search(ctx, srq)
+		} else {
+			searchResp, err = s.search.Search(ctx, srq)
+		}
 		if err != nil {
 			return nil, err
 		}

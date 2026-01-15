@@ -7,6 +7,8 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/fullstorydev/grpchan"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -89,6 +92,27 @@ func ProvideUnifiedStorageClient(opts *Options,
 	}
 
 	return client, err
+}
+
+// TODO use wire to provide to module server
+func NewSearchClient(opts options.StorageOptions, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
+	if opts.SearchServerAddress == "" {
+		return nil, fmt.Errorf("expecting address for search server")
+	}
+
+	var (
+		conn    grpc.ClientConnInterface
+		err     error
+		metrics = newClientMetrics(prometheus.NewRegistry())
+	)
+
+	conn, err = newGrpcConn(opts.SearchServerAddress, metrics, features, opts.GrpcClientKeepaliveTime)
+	if err != nil {
+		return nil, err
+	}
+
+	cc := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	return resourcepb.NewResourceIndexClient(cc), nil
 }
 
 func newClient(opts options.StorageOptions,
