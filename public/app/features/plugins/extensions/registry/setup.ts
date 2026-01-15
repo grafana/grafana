@@ -3,6 +3,7 @@ import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unif
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
+import { getCoreFunctionConfigurations } from '../getCoreFunctionConfigurations';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
@@ -25,6 +26,12 @@ export const pluginExtensionRegistries: PluginExtensionRegistries = {
 addedLinksRegistry.register({
   pluginId: 'grafana',
   configs: getCoreExtensionConfigurations(),
+});
+
+// Registering core extension functions
+addedFunctionsRegistry.register({
+  pluginId: 'grafana',
+  configs: getCoreFunctionConfigurations(),
 });
 
 // Registering core exposed components
