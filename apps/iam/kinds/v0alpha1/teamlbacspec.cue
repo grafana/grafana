@@ -6,5 +6,5 @@ TeamLBACRuleSpec: {
 	// Team UID that this TeamLBAC Rule applies to
 	team_uid: string
 	// Filters for the TeamLBAC Rule
-	filter: [...string]
+	filters: [...string]
 }

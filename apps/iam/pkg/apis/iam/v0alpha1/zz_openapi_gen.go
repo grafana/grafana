@@ -2788,7 +2788,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
-					"filter": {
+					"filters": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Filters for the TeamLBAC Rule",
 							Type:        []string{"array"},
@@ -2804,7 +2804,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref common.ReferenceCallback)
 						},
 					},
 				},
-				Required: []string{"datasource_uid", "team_uid", "filter"},
+				Required: []string{"datasource_uid", "team_uid", "filters"},
 			},
 		},
 	}

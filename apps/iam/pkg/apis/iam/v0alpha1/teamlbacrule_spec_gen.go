@@ -9,12 +9,12 @@ type TeamLBACRuleSpec struct {
 	// Team UID that this TeamLBAC Rule applies to
 	TeamUid string `json:"team_uid"`
 	// Filters for the TeamLBAC Rule
-	Filter []string `json:"filter"`
+	Filters []string `json:"filters"`
 }
 
 // NewTeamLBACRuleSpec creates a new TeamLBACRuleSpec object.
 func NewTeamLBACRuleSpec() *TeamLBACRuleSpec {
 	return &TeamLBACRuleSpec{
-		Filter: []string{},
+		Filters: []string{},
 	}
 }
