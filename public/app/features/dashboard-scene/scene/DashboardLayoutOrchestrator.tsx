@@ -10,7 +10,9 @@ import {
   SceneGridItemLike,
 } from '@grafana/scenes';
 import { createPointerDistance } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -120,6 +122,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     document.body.removeEventListener('pointermove', this._onPointerMove);
     document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
 
+    DashboardInteractions.trackAddPanelClick(
+      'sidebar',
+      this._lastDropTarget ? getLayoutType(this._lastDropTarget) : 'dashboard'
+    );
     this.setState({ isDraggingNewPanel: false });
   }
 

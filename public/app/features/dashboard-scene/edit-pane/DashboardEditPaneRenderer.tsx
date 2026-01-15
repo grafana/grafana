@@ -83,7 +83,11 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       )}
       {openPane === 'add' && (
         <Sidebar.OpenPane>
-          <DashboardSidePaneNew onAddPanel={onAddNewPanel} dashboard={dashboard} />
+          <DashboardSidePaneNew
+            onAddPanel={onAddNewPanel}
+            dashboard={dashboard}
+            selectedElement={selectedLayoutElement}
+          />
         </Sidebar.OpenPane>
       )}
       {openPane === 'outline' && (

@@ -98,8 +98,8 @@ export const DashboardInteractions = {
   // Dashboard edit item actions
   // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
   // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
-  trackAddPanelClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'add_panel' });
+  trackAddPanelClick(source?: 'sidebar' | 'canvas', target?: 'row' | 'tab' | 'dashboard') {
+    reportDashboardInteraction('edit_action_clicked', { item: 'add_panel', source, target });
   },
   trackGroupRowClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'group_row' });

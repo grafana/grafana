@@ -6,14 +6,28 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Sidebar, Text, useStyles2 } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelImg from 'img/dashboards/add-panel.png';
 
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-export function DashboardSidePaneNew({ onAddPanel, dashboard }: { onAddPanel: () => void; dashboard: SceneObject }) {
+export function DashboardSidePaneNew({
+  onAddPanel,
+  dashboard,
+  selectedElement,
+}: {
+  onAddPanel: () => void;
+  dashboard: SceneObject;
+  selectedElement: SceneObject | undefined;
+}) {
   const styles = useStyles2(getStyles);
   const orchestrator = getDashboardSceneFor(dashboard).state.layoutOrchestrator;
 
+  const onAddPanelClick = () => {
+    onAddPanel();
+    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(selectedElement));
+  };
   return (
     <DragDropContext onDragStart={() => orchestrator?.startDraggingNewPanel()} onDragEnd={() => {}}>
       <Droppable droppableId="side-drop-id" isDropDisabled>
@@ -37,11 +51,11 @@ export function DashboardSidePaneNew({ onAddPanel, dashboard }: { onAddPanel: ()
                         {...dragProvided.draggableProps}
                         {...dragProvided.dragHandleProps}
                         className={cx(styles.imageContainer, dragSnapshot.isDragging && styles.dragging)}
-                        onClick={onAddPanel}
+                        onClick={onAddPanelClick}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            onAddPanel();
+                            onAddPanelClick();
                           }
                         }}
                         aria-label={t('dashboard.add.new-panel.title', 'Panel')}
