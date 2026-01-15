@@ -82,7 +82,10 @@ const createMockExtension = (
   onClick: options.onClick,
 });
 
-const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false }) => {
+const setup = (
+  pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false },
+  hideHeaderDetails = false
+) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
 
@@ -107,6 +110,7 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
     updateNextViewRangeTime: jest.fn(),
     updateViewRangeTime: jest.fn(),
     viewRange: { time: { current: viewRangeTime } },
+    hideHeaderDetails,
   };
 
   return {
@@ -471,6 +475,49 @@ describe('TracePageHeader test', () => {
       // Check for icon
       const iconElement = buttonElement?.querySelector('svg');
       expect(iconElement).toBeInTheDocument();
+    });
+  });
+
+  describe('hideHeaderDetails', () => {
+    it('should render all header details by default when hideHeaderDetails is false', () => {
+      config.feedbackLinksEnabled = true;
+      setup({ links: [], isLoading: false }, false);
+
+      expect(screen.getByText('Trace ID')).toBeInTheDocument();
+      expect(screen.getByText('Start time')).toBeInTheDocument();
+      expect(screen.getByText('Duration')).toBeInTheDocument();
+      expect(screen.getByText('Services')).toBeInTheDocument();
+      expect(screen.getByText('URL')).toBeInTheDocument();
+
+      expect(screen.getByText('Share')).toBeInTheDocument();
+      expect(screen.getByText('Feedback')).toBeInTheDocument();
+      expect(screen.getByText('Overview')).toBeInTheDocument();
+    });
+
+    it('should still render trace name and badges when hideHeaderDetails is true', () => {
+      setup({ links: [], isLoading: false }, true);
+
+      const header = document.querySelector('header');
+      expect(getByText(header!, 'POST')).toBeInTheDocument();
+      expect(getByText(header!, '200')).toBeInTheDocument();
+    });
+
+    it('should still render filters section when hideHeaderDetails is true', () => {
+      setup({ links: [], isLoading: false }, true);
+
+      expect(screen.getByText('Filters')).toBeInTheDocument();
+    });
+
+    it('should hide plugin extension buttons when hideHeaderDetails is true', () => {
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension 1', 'Test extension description', {
+          icon: 'external-link-alt',
+          onClick: jest.fn(),
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false }, true);
+      expect(screen.queryByText('Test Extension 1')).not.toBeInTheDocument();
     });
   });
 });
