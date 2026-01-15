@@ -5,6 +5,8 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
+import { shouldAllowRecoveringDeletedRules } from '../featureToggles';
+
 export function useAlertRulesNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -31,8 +33,8 @@ export function useAlertRulesNav() {
     };
   }
 
-  // All available tabs
-  const allTabs = [
+  // Build tabs based on permissions
+  const tabs: NavModelItem[] = [
     {
       id: 'alert-rules-list',
       text: t('alerting.navigation.alert-rules', 'Alert rules'),
@@ -41,25 +43,24 @@ export function useAlertRulesNav() {
       icon: 'list-ul',
       parentItem: alertRulesNav,
     },
-    {
+  ];
+
+  // Add Recently deleted tab if user has permission
+  if (shouldAllowRecoveringDeletedRules()) {
+    tabs.push({
       id: 'alert-rules-recently-deleted',
       text: t('alerting.navigation.recently-deleted', 'Recently deleted'),
       url: '/alerting/recently-deleted',
       active: location.pathname === '/alerting/recently-deleted',
       icon: 'history',
       parentItem: alertRulesNav,
-    },
-  ].filter((tab) => {
-    // Filter based on permissions - if nav item doesn't exist, user doesn't have permission
-    const navItem = navIndex[tab.id];
-    return navItem !== undefined;
-  });
+    });
+  }
 
   // Create pageNav that represents the Alert rules page with tabs as children
   const pageNav: NavModelItem = {
     ...alertRulesNav,
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    children: allTabs as NavModelItem[],
+    children: tabs,
   };
 
   return {
