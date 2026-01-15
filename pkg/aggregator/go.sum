@@ -296,8 +296,8 @@ go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.
 go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.63.0/go.mod h1:rjbQTDEPQymPE0YnRQp9/NuPwwtL0sesz/fnqRW/v84=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.64.0 h1:ssfIgGNANqpVFCndZvcuyKbl0g+UAVcbBcqGkG28H0Y=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.64.0/go.mod h1:GQ/474YrbE4Jx8gZ4q5I4hrhUzM6UPzyrqJYV2AqPoQ=
-go.opentelemetry.io/contrib/propagators/jaeger v1.38.0 h1:nXGeLvT1QtCAhkASkP/ksjkTKZALIaQBIW+JSIw1KIc=
-go.opentelemetry.io/contrib/propagators/jaeger v1.38.0/go.mod h1:oMvOXk78ZR3KEuPMBgp/ThAMDy9ku/eyUVztr+3G6Wo=
+go.opentelemetry.io/contrib/propagators/jaeger v1.39.0 h1:Gz3yKzfMSEFzF0Vy5eIpu9ndpo4DhXMCxsLMF0OOApo=
+go.opentelemetry.io/contrib/propagators/jaeger v1.39.0/go.mod h1:2D/cxxCqTlrday0rZrPujjg5aoAdqk1NaNyoXn8FJn8=
 go.opentelemetry.io/contrib/samplers/jaegerremote v0.32.0 h1:oPW/SRFyHgIgxrvNhSBzqvZER2N5kRlci3/rGTOuyWo=
 go.opentelemetry.io/contrib/samplers/jaegerremote v0.32.0/go.mod h1:B9Oka5QVD0bnmZNO6gBbBta6nohD/1Z+f9waH2oXyBs=
 go.opentelemetry.io/otel v1.21.0/go.mod h1:QZzNPQPm1zLX4gZK4cMi+71eaorMSGT3A4znnUvNNEo=
