@@ -1,9 +1,9 @@
 import { PluginExtensionExposedComponents } from '@grafana/data';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
+import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
-import { getCoreFunctionConfigurations } from '../getCoreFunctionConfigurations';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
@@ -28,12 +28,6 @@ addedLinksRegistry.register({
   configs: getCoreExtensionConfigurations(),
 });
 
-// Registering core extension functions
-addedFunctionsRegistry.register({
-  pluginId: 'grafana',
-  configs: getCoreFunctionConfigurations(),
-});
-
 // Registering core exposed components
 exposedComponentsRegistry.register({
   pluginId: 'grafana',
@@ -49,6 +43,12 @@ exposedComponentsRegistry.register({
       title: 'Add to dashboard form',
       description: 'Add to dashboard form',
       component: AddToDashboardFormExposedComponent,
+    },
+    {
+      id: PluginExtensionExposedComponents.CreateAlertFromPanelV1,
+      title: 'Create alert from panel',
+      description: 'Modal to create an alert rule from a VizPanel',
+      component: CreateAlertFromPanelExposedComponent,
     },
   ],
 });
