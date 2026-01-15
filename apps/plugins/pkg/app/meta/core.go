@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
 const (
@@ -146,7 +147,9 @@ func createLoader(cfg *config.PluginManagementCfg) pluginsLoader.Service {
 		},
 	})
 	b := bootstrap.New(cfg, bootstrap.Opts{
-		DecorateFuncs: []bootstrap.DecorateFunc{}, // no decoration required for metadata
+		DecorateFuncs: []bootstrap.DecorateFunc{
+			bootstrap.LoadingStrategyDecorateFunc(cfg, pluginscdn.ProvideService(cfg)),
+		}, // no decoration required for metadata
 	})
 	v := validation.New(cfg, validation.Opts{
 		ValidateFuncs: []validation.ValidateFunc{
