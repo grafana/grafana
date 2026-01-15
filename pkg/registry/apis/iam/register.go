@@ -434,11 +434,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		storage[userResource.StoragePath()] = dw
 	}
 
+	legacyTeamBindingSearchClient := user.NewLegacyUserTeamSearchClient(b.store, b.tracing)
+
 	teamBindingSearchClient := resource.NewSearchClient(
 		dualwrite.NewSearchAdapter(b.dual),
 		iamv0.TeamBindingResourceInfo.GroupResource(),
 		b.unified,
-		nil,
+		legacyTeamBindingSearchClient,
 		b.features,
 	)
 
