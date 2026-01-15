@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Bouton Lancer votre requête des journaux Azure",
       "body-switching-to-builder": "Passer en mode Builder supprimera votre requête KQL actuelle et réinitialisera l’éditeur KQL. Voulez-vous continuer ?",
-      "body-switching-to-kql": "Passer en mode KQL supprimera vos paramètres Builder actuels. Voulez-vous continuer ?",
       "button-kick-start-your-query": "Lancer votre requête",
       "button-run-query": "Exécuter la requête",
       "confirmText-switch-to": "Passer en mode {{newMode}}",

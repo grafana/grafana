@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "I registri di Azure avviano il pulsante della query",
       "body-switching-to-builder": "Il passaggio a Builder eliminerà la query KQL corrente e cancellerà l'editor KQL. Vuoi davvero continuare?",
-      "body-switching-to-kql": "Il passaggio a KQL annullerà le impostazioni correnti del generatore. Vuoi davvero continuare?",
       "button-kick-start-your-query": "Avvia la query",
       "button-run-query": "Esegui query",
       "confirmText-switch-to": "Passa a {{newMode}}",

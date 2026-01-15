@@ -813,7 +813,8 @@
       "label-integration": "Интеграция",
       "label-notification-settings": "Параметры уведомлений",
       "label-section": "Дополнительные параметры {{name}}",
-      "test": "Тестирование"
+      "test": "Тестирование",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "ИЗ",
@@ -2192,11 +2193,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Ресурс был подготовлен через {{provenance}} и не может быть изменен через пользовательский интерфейс",
       "badge-tooltip-standard": "Ресурс был подготовлен и не может быть изменен через пользовательский интерфейс",
+      "body-imported": "",
       "body-provisioned": "{{resource}} подготовлен, то есть был создан с помощью конфигурации. Чтобы обновить {{resource}}, обратитесь к администратору сервера.",
+      "title-imported": "",
       "title-provisioned": "Этот {{resource}} невозможно отредактировать через пользовательский интерфейс"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Подготовлено"
       }
     },
@@ -2699,7 +2703,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -6424,12 +6427,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Классический",
         "json": "JSON",
         "v1-resource": "Ресурс V1",
         "v2-resource": "Ресурс V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Действительно восстановить дашборд до версии {{version}}? Все несохраненные изменения будут потеряны.",
@@ -7028,6 +7034,7 @@
         "drone-datasource": "Источник данных Drone",
         "git-lab-integration-and-datasource": "Интеграция и источник данных GitLab",
         "honeycomb-integration-and-datasource": "Интеграция и источник данных Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Интеграция и источник данных Jira",
         "logic-monitor-devices-datasource": "Источник данных LogicMonitor Devices",
         "mongo-db-integration-and-data-source": "Интеграция и источник данных MongoDB",
@@ -7890,7 +7897,6 @@
       "export-externally-label": "Экспорт дашборда для использования в другом экземпляре",
       "export-format": "Формат",
       "export-mode": "Модель",
-      "export-remove-ds-refs": "Удалить сведения об использовании",
       "info-text": "Скопируйте или загрузите файл, содержащий параметры вашего дашборда",
       "title": "Экспорт дашборда"
     },
