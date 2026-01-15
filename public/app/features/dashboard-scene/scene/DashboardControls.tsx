@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { GrafanaTheme2, LoadingState, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -17,8 +17,9 @@ import {
   SceneObjectUrlValues,
   CancelActivationHandler,
   sceneUtils,
+  SceneQueryRunner,
 } from '@grafana/scenes';
-import { Box, Button, useStyles2 } from '@grafana/ui';
+import { Box, Button, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 
@@ -45,6 +46,7 @@ export interface DashboardControlsState extends SceneObjectState {
   hideLinksControls?: boolean;
   // Hides the dashboard-controls dropdown menu
   hideDashboardControls?: boolean;
+  hasLivePanels?: boolean;
 }
 
 export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
@@ -104,6 +106,13 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
         refreshPickerDeactivation = this.state.refreshPicker.activate();
       }
 
+      // this._subs.add(() => {
+      //       const dashboard = getDashboardSceneFor(this);
+
+      //       dashboard.state.
+
+      // })
+
       return () => {
         if (refreshPickerDeactivation) {
           refreshPickerDeactivation();
@@ -136,6 +145,33 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 
     return !(hideVariables && hideLinks && hideTimePicker && hideDashboardControls);
   }
+}
+
+function cancelAllStreamingQueries(dashboard: DashboardScene) {
+  sceneGraph
+    .findAllObjects(
+      dashboard,
+      (obj) => obj instanceof SceneQueryRunner && obj.state.data?.state === LoadingState.Streaming
+    )
+    .forEach((obj) => {
+      if (obj instanceof SceneQueryRunner) {
+        obj.cancelQuery();
+      }
+    });
+}
+
+function CancelStreamingButton({ dashboard }: { dashboard: DashboardScene }) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <ToolbarButton
+      icon={<Icon name="circle-mono" size="md" className={styles.streaming} />}
+      onClick={() => cancelAllStreamingQueries(dashboard)}
+      variant="canvas"
+    >
+      {t('grafana-ui.panel-chrome.tooltip-stop-streaming', 'Stop streaming')}
+    </ToolbarButton>
+  );
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
@@ -186,6 +222,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
               <div className={styles.fixedControlsNewLayout}>
                 <timePicker.Component model={timePicker} />
                 <refreshPicker.Component model={refreshPicker} />
+                <CancelStreamingButton dashboard={dashboard} />
               </div>
             )}
             {config.featureToggles.dashboardNewLayouts && (
@@ -220,6 +257,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
+            <CancelStreamingButton dashboard={dashboard} />
           </div>
         )}
         {config.featureToggles.dashboardNewLayouts && (
@@ -397,6 +435,15 @@ function getStyles(theme: GrafanaTheme2) {
     contextualNavToggleNewLayout: css({
       display: 'inline-flex',
       flexShrink: 0,
+    }),
+    streaming: css({
+      label: 'panel-streaming',
+      marginRight: 0,
+      color: theme.colors.success.text,
+
+      '&:hover': {
+        color: theme.colors.success.text,
+      },
     }),
   };
 }
