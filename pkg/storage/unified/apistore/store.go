@@ -546,6 +546,11 @@ func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrap
 		}
 	}
 
+	// Temp fix for prototype testing - don't filter out when wildcard used for field selector
+	if len(predicate.Field.Requirements()) == 1 && predicate.Field.Requirements()[0].Value == "*" {
+		return obj, true, nil
+	}
+
 	// Apply predicate filtering
 	ok, err := predicate.Matches(obj)
 	if err != nil || !ok {

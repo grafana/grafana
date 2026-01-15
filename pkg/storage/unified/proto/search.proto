@@ -99,6 +99,12 @@ message ResourceSearchRequest {
   int64 page = 11;
 
   int64 permission = 12;
+
+  // JSON-encoded array of sort values for SearchAfter pagination.
+  bytes search_after = 13;
+
+  // JSON-encoded array of sort values for SearchBefore pagination.
+  bytes search_before = 14;
 }
 
 message ResourceSearchResponse {
@@ -139,6 +145,9 @@ message ResourceSearchResponse {
 
   // Facet results
   map<string,Facet> facet = 7;
+
+  // Resource version of the index used for this search.
+  int64 resource_version = 8;
 }
 
 message RebuildIndexesRequest {

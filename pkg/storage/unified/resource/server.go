@@ -1066,7 +1066,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	// TODO: What to do about RV and version_match fields?
 	// If we get here, we're doing list with selectable fields. Let's do search instead, since
 	// we index all selectable fields, and fetch resulting documents one by one.
-
 	if (s.search != nil || s.searchClient != nil) && req.Source == resourcepb.ListRequest_STORE && (len(req.Options.Fields) > 0) {
 		if req.Options.Key.Namespace == "" {
 			return &resourcepb.ListResponse{
@@ -1078,9 +1077,18 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			Options: req.Options,
 			//Federated: nil,
 			Limit: req.Limit,
-			// Offset:     req.NextPageToken, // TODO
 			// Page:       0,
 			// Permission: 0, // Not needed, default is List
+		}
+		if req.NextPageToken != "" {
+			token, err := GetContinueToken(req.NextPageToken)
+			if err != nil {
+				return &resourcepb.ListResponse{
+					Error: NewBadRequestError("invalid continue token"),
+				}, nil
+			}
+			srq.SearchAfter = token.SearchAfter
+			srq.SearchBefore = token.SearchBefore
 		}
 
 		var searchResp *resourcepb.ResourceSearchResponse
@@ -1094,7 +1102,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			return nil, err
 		}
 
-		rsp := &resourcepb.ListResponse{}
+		rsp := &resourcepb.ListResponse{ResourceVersion: searchResp.ResourceVersion}
 		// Using searchResp.GetResults().GetRows() will not panic if anything is nil on the path.
 		for _, row := range searchResp.GetResults().GetRows() {
 			// TODO: use batch reading
@@ -1115,6 +1123,10 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				}
 			}
 		}
+		if searchResp.GetResults() != nil {
+			rsp.NextPageToken = searchResp.GetResults().GetNextPageToken()
+		}
+
 		return rsp, nil
 	}
 

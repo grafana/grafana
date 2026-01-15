@@ -1037,6 +1037,8 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
+	response.ResourceVersion = b.resourceVersion
+
 	// Verifies the index federation
 	index, err := b.getIndex(ctx, req, federate)
 	if err != nil {
@@ -1086,6 +1088,19 @@ func (b *bleveIndex) Search(
 	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
 	if err != nil {
 		return nil, err
+	}
+
+	// I'm setting the NextPageToken on the response results here because we need to get the Sort fields from the last hit,
+	// which isn't available in the ResourceTable results on the search response.
+	// Another alternative would be to return the Sort fields of the last hit as part of the search response.
+	if response.Results != nil && len(res.Hits) > 0 && response.TotalHits > int64(len(res.Hits)) {
+		values := searchAfterValuesFromHit(res.Hits[len(res.Hits)-1])
+		if len(values) > 0 {
+			token, err := resource.NewSearchContinueToken(values, b.resourceVersion)
+			if err == nil {
+				response.Results.NextPageToken = token
+			}
+		}
 	}
 
 	// parse the facet fields
@@ -1207,6 +1222,22 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		From:    offset,
 		Explain: req.Explain,
 		Facets:  facets,
+	}
+	if len(req.SearchAfter) > 0 {
+		var values []string
+		if err := json.Unmarshal(req.SearchAfter, &values); err != nil {
+			return nil, resource.AsErrorResult(err)
+		}
+		searchrequest.SearchAfter = values
+		searchrequest.From = 0
+	}
+	if len(req.SearchBefore) > 0 {
+		var values []string
+		if err := json.Unmarshal(req.SearchBefore, &values); err != nil {
+			return nil, resource.AsErrorResult(err)
+		}
+		searchrequest.SearchBefore = values
+		searchrequest.From = 0
 	}
 
 	// Currently everything is within an AND query
@@ -1797,6 +1828,23 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	}
 
 	return table, nil
+}
+
+func searchAfterValuesFromHit(hit *search.DocumentMatch) []string {
+	if hit == nil {
+		return nil
+	}
+	if len(hit.Sort) > 0 {
+		values := make([]string, 0, len(hit.Sort))
+		for _, v := range hit.Sort {
+			values = append(values, fmt.Sprintf("%v", v))
+		}
+		return values
+	}
+	if hit.ID != "" {
+		return []string{hit.ID}
+	}
+	return nil
 }
 
 func (b *bleveIndex) isSelectableField(key string) bool {
