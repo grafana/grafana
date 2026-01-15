@@ -2567,12 +2567,15 @@
     {
       "metadata": {
         "name": "newGauge",
-        "resourceVersion": "1764664939750",
-        "creationTimestamp": "2025-10-20T16:33:19Z"
+        "resourceVersion": "1768490527107",
+        "creationTimestamp": "2025-10-20T16:33:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-15 15:22:07.107826 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable new gauge visualization",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
