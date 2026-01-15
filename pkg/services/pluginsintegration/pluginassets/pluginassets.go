@@ -16,7 +16,6 @@ const (
 	CreatePluginVersionScriptSupportEnabled = "4.15.0"
 )
 
-
 func ProvideService(calc *modulehash.Calculator) *Service {
 	return &Service{
 		calc: calc,
