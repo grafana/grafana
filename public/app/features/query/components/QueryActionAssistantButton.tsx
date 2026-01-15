@@ -1,7 +1,9 @@
-import { useAssistant, createAssistantContextItem, OpenAssistantButton } from "@grafana/assistant";
+import { useAssistant, createAssistantContextItem } from "@grafana/assistant";
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings } from "@grafana/data";
 import { t } from "@grafana/i18n";
+import { evaluateBooleanFlag } from "@grafana/runtime/internal";
 import { DataQuery, DataSourceJsonData } from "@grafana/schema";
+import { Button } from "@grafana/ui";
 import { queryIsEmpty } from "app/core/utils/query";
 
 
@@ -20,8 +22,14 @@ interface QueryActionAssistantButtonProps<TQuery extends DataQuery = DataQuery> 
     app,
     datasource,
   }: QueryActionAssistantButtonProps<TQuery>) {
-    const { isAvailable } = useAssistant();
-    if (!isAvailable) {
+    const { isAvailable, openAssistant } = useAssistant();
+    
+    // Check if the feature toggle is enabled
+    if (!evaluateBooleanFlag('queryWithAssistant', false)) {
+      return null;
+    }
+    
+    if (!isAvailable || !openAssistant) {
       return null;
     }
   
@@ -121,13 +129,24 @@ interface QueryActionAssistantButtonProps<TQuery extends DataQuery = DataQuery> 
       actionableSentence,
     ].join('\n');
   
+    const handleClick = () => {
+      openAssistant({
+        origin,
+        prompt,
+        context,
+        autoSend: false,
+      });
+    };
+
     return (
-      <OpenAssistantButton
-        origin={origin}
-        prompt={prompt}
-        context={context}
-        autoSend={false}
+      <Button
+        size="sm"
+        variant="secondary"
+        icon="ai"
+        onClick={handleClick}
         title={t('query-operation.header.query-with-assistant', 'Query with Assistant')}
-      />
+      >
+        {t('query-operation.header.query-with-assistant', 'Query with Assistant')}
+      </Button>
     );
   }

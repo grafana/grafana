@@ -1259,4 +1259,8 @@ export interface FeatureToggles {
   * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
   */
   alertingSyncDispatchTimer?: boolean;
+  /**
+  * Enables the Query with Assistant button in the query editor
+  */
+  queryWithAssistant?: boolean;
 }

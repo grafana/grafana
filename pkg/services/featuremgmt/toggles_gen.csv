@@ -282,3 +282,4 @@ smoothingTransformation,experimental,@grafana/datapro,false,false,true
 secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false
 alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
+queryWithAssistant,experimental,@grafana/oss-big-tent,false,false,true

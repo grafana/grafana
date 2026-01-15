@@ -400,7 +400,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, queries, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
+    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
@@ -411,13 +411,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <>
-        <QueryActionAssistantButton
-          query={query}
-          queries={queries}
-          dataSourceInstance={this.props.dataSource}
-          datasource={datasource}
-          app={app}
-        />
         {!isEditingQueryLibrary && !isUnifiedAlerting && !isExpressionQuery && (
           <SavedQueryButtons
             query={{
@@ -475,6 +468,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
     const { app, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras, hideRefId } = this.props;
+    const { datasource } = this.state;
 
     return (
       <QueryEditorRowHeader
@@ -485,7 +479,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         hidden={query.hide}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
-        renderExtras={renderHeaderExtras}
+        renderExtras={() => (
+          <>
+            <QueryActionAssistantButton
+              query={query}
+              queries={queries}
+              dataSourceInstance={this.props.dataSource}
+              datasource={datasource}
+              app={app}
+            />
+            {renderHeaderExtras && renderHeaderExtras()}
+          </>
+        )}
         alerting={app === CoreApp.UnifiedAlerting}
         hideRefId={hideRefId}
       />
