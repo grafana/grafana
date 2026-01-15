@@ -798,8 +798,20 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		}
 	}
 
-	// Generate a new resource version for the list
-	listRV := k.snowflake.Generate().Int64()
+	latestEvent, err := k.eventStore.LastEventKey(ctx)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+		}
+
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, fmt.Errorf("error trying to retrieve last event key: %w", err))
+		}
+	}
+
+	if latestEvent.ResourceVersion == sinceRv {
+		return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+	}
 
 	// Check if sinceRv is older than 1 hour
 	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
@@ -808,11 +820,11 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 
 	if sinceRvAge > time.Hour {
 		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
-		return listRV, k.listModifiedSinceDataStore(ctx, key, sinceRv)
+		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, sinceRv)
 	}
 
 	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
-	return listRV, k.listModifiedSinceEventStore(ctx, key, sinceRv)
+	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, sinceRv)
 }
 
 func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
@@ -913,9 +925,9 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 
 func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
-		// store all events ordered by RV for the given tenant here
-		eventKeys := make([]EventKey, 0)
-		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, subtractDurationFromSnowflake(sinceRv, defaultLookbackPeriod)) {
+		// we only care about the latest revision of every resource in the list
+		seen := make(map[string]struct{})
+		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, subtractDurationFromSnowflake(sinceRv, defaultLookbackPeriod), SortOrderDesc) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -935,18 +947,11 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 				continue
 			}
 
-			eventKeys = append(eventKeys, evtKey)
-		}
-
-		// we only care about the latest revision of every resource in the list
-		seen := make(map[string]struct{})
-		for i := len(eventKeys) - 1; i >= 0; i -= 1 {
-			evtKey := eventKeys[i]
 			if _, ok := seen[evtKey.Name]; ok {
 				continue
 			}
-			seen[evtKey.Name] = struct{}{}
 
+			seen[evtKey.Name] = struct{}{}
 			value, err := k.getValueFromDataStore(ctx, DataKey(evtKey))
 			if err != nil {
 				yield(&ModifiedResource{}, err)
@@ -1304,7 +1309,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	if setting.RebuildCollection {
 		for _, key := range setting.Collection {
 			events := make([]string, 0)
-			for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1) {
+			for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
 				if err != nil {
 					b.log.Error("failed to list event: %s", err)
 					return rsp

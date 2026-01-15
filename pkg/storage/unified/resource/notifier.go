@@ -119,7 +119,7 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan E
 				return
 			case <-time.After(currentInterval):
 				foundEvents := false
-				for evt, err := range n.eventStore.ListSince(ctx, subtractDurationFromSnowflake(lastRV, opts.LookbackPeriod)) {
+				for evt, err := range n.eventStore.ListSince(ctx, subtractDurationFromSnowflake(lastRV, opts.LookbackPeriod), SortOrderAsc) {
 					if err != nil {
 						n.log.Error("Failed to list events since", "error", err)
 						continue
