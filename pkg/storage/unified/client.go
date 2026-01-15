@@ -171,14 +171,23 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
-		// Create search options for the search server
 		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		// Setup QOS queue if enabled
-		var qosQueue sql.QOSEnqueueDequeuer
+		storageOptions := sql.StorageServerOptions{
+			Backend:        backend,
+			DB:             db,
+			Cfg:            cfg,
+			Tracer:         tracer,
+			Reg:            reg,
+			AccessClient:   authzc,
+			StorageMetrics: storageMetrics,
+			Features:       features,
+			SecureValues:   secure,
+		}
+
 		if cfg.QOSEnabled {
 			qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
 			queue := scheduler.NewQueue(&scheduler.QueueOptions{
@@ -189,7 +198,7 @@ func newClient(opts options.StorageOptions,
 			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
 				return nil, fmt.Errorf("failed to start queue: %w", err)
 			}
-			sched, err := scheduler.NewScheduler(queue, &scheduler.Config{
+			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 				NumWorkers: cfg.QOSNumberWorker,
 				Logger:     cfg.Logger,
 			})
@@ -197,28 +206,33 @@ func newClient(opts options.StorageOptions,
 				return nil, fmt.Errorf("failed to create scheduler: %w", err)
 			}
 
-			err = services.StartAndAwaitRunning(ctx, sched)
+			err = services.StartAndAwaitRunning(ctx, scheduler)
 			if err != nil {
 				return nil, fmt.Errorf("failed to start scheduler: %w", err)
 			}
-			qosQueue = queue
+			storageOptions.QOSQueue = queue
 		}
 
-		// Setup overrides service if enabled
-		var overridesSvc *resource.OverridesService
+		// only enable if an overrides file path is provided
 		if cfg.OverridesFilePath != "" {
-			overridesSvc, err = resource.NewOverridesService(ctx, cfg.Logger, reg, tracer, resource.ReloadOptions{
+			overridesSvc, err := resource.NewOverridesService(ctx, cfg.Logger, reg, tracer, resource.ReloadOptions{
 				FilePath:     cfg.OverridesFilePath,
 				ReloadPeriod: cfg.OverridesReloadInterval,
 			})
 			if err != nil {
 				return nil, err
 			}
+			storageOptions.OverridesService = overridesSvc
 		}
 
-		// Create the search server with shared backend
+		// Create the storage server with shared backend
+		storageServer, err := sql.NewStorageServer(storageOptions)
+		if err != nil {
+			return nil, err
+		}
+
 		searchServer, err := sql.NewSearchServer(sql.SearchServerOptions{
-			Backend:       backend, // Use shared backend to avoid duplicate metrics registration
+			Backend:       backend,
 			DB:            db,
 			Cfg:           cfg,
 			Tracer:        tracer,
@@ -226,24 +240,6 @@ func newClient(opts options.StorageOptions,
 			AccessClient:  authzc,
 			SearchOptions: searchOptions,
 			IndexMetrics:  indexMetrics,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		// Create the storage server with shared backend
-		storageServer, err := sql.NewStorageServer(sql.StorageServerOptions{
-			Backend:          backend, // Use shared backend to avoid duplicate metrics registration
-			DB:               db,
-			Cfg:              cfg,
-			Tracer:           tracer,
-			Reg:              reg,
-			AccessClient:     authzc,
-			StorageMetrics:   storageMetrics,
-			Features:         features,
-			QOSQueue:         qosQueue,
-			SecureValues:     secure,
-			OverridesService: overridesSvc,
 		})
 		if err != nil {
 			return nil, err

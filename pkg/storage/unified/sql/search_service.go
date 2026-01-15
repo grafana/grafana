@@ -31,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var _ UnifiedStorageGrpcService = (*searchService)(nil)
-
 // operation used by the search-servers to check if they own the namespace
 var (
 	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
@@ -79,7 +77,7 @@ func ProvideUnifiedSearchGrpcService(
 	memberlistKVConfig kv.Config,
 	backend resource.StorageBackend,
 	httpServerRouter *mux.Router,
-) (UnifiedStorageGrpcService, error) {
+) (UnifiedGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-search-server")
 

@@ -42,10 +42,12 @@ import (
 )
 
 var (
-	_ UnifiedStorageGrpcService = (*service)(nil)
+	_ UnifiedGrpcService = (*service)(nil)
+	_ UnifiedGrpcService = (*searchService)(nil)
+	_ UnifiedGrpcService = (*storageService)(nil)
 )
 
-type UnifiedStorageGrpcService interface {
+type UnifiedGrpcService interface {
 	services.NamedService
 
 	// Return the address where this service is running
@@ -77,7 +79,7 @@ type service struct {
 	ringLifecycler *ring.BasicLifecycler
 
 	// QoS support
-	queue     *scheduler.Queue
+	queue     QOSEnqueueDequeuer
 	scheduler *scheduler.Scheduler
 
 	// Subservices management
@@ -102,7 +104,7 @@ func ProvideUnifiedStorageGrpcService(
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
-) (UnifiedStorageGrpcService, error) {
+) (UnifiedGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-storage-combined")
 

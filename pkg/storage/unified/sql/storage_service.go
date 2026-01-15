@@ -26,8 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
-var _ UnifiedStorageGrpcService = (*storageService)(nil)
-
 type storageService struct {
 	*services.BasicService
 
@@ -65,7 +63,7 @@ func ProvideStorageService(
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
 	backend resource.StorageBackend,
-) (UnifiedStorageGrpcService, error) {
+) (UnifiedGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-storage-server")
 

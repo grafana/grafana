@@ -198,11 +198,15 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		docBuilders, err := InitializeDocumentBuilders(s.cfg)
-		if err != nil {
-			return nil, err
+		// TODO: remove when we change deployment to use search server target
+		if s.cfg.EnableSearch {
+			docBuilders, err := InitializeDocumentBuilders(s.cfg)
+			if err != nil {
+				return nil, err
+			}
+			return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
+		return sql.ProvideStorageService(s.cfg, s.features, nil, s.log, s.registerer, s.storageMetrics, s.storageBackend)
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
@@ -210,7 +214,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedSearchGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.storageBackend)
+		return sql.ProvideUnifiedSearchGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.storageBackend, s.httpServerRouter)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
