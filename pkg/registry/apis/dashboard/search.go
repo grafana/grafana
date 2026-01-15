@@ -326,7 +326,7 @@ func permissionFromQueryParams(queryParams url.Values) dashboardaccess.Permissio
 	case "admin":
 		return dashboardaccess.PERMISSION_ADMIN
 	default:
-		return dashboardaccess.PERMISSION_VIEW
+		return 0
 	}
 }
 
@@ -346,9 +346,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestedPermission := permissionFromQueryParams(queryParams)
-
-	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func() ([]string, error) {
+	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
 	if err != nil {
@@ -392,7 +390,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
 // nolint:gocyclo
-func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func() ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
+func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
 	facetLimit := 50
@@ -429,14 +427,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 	searchRequest.Fields = fields
-
-	switch strings.ToLower(queryParams.Get("permission")) {
-	case "edit":
-		searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
-	case "view":
-		searchRequest.Permission = int64(dashboardaccess.PERMISSION_VIEW)
-	case "admin":
-		searchRequest.Permission = int64(dashboardaccess.PERMISSION_ADMIN)
+	accessPermission := permissionFromQueryParams(queryParams)
+	if accessPermission > 0 {
+		searchRequest.Permission = int64(accessPermission)
 	}
 
 	// A search request can include multiple types, we need to acces the slice directly.
@@ -530,7 +523,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")
 	if folder == foldermodel.SharedWithMeFolderUID {
-		dashboardUIDs, err := getDashboardsUIDsSharedWithUser()
+		dashboardUIDs, err := getDashboardsUIDsSharedWithUser(accessPermission)
 		if err != nil {
 			return nil, err
 		}

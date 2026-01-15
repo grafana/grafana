@@ -1169,7 +1169,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 			queryParams, err := url.ParseQuery(tt.queryString)
 			require.NoError(t, err)
 
-			getDashboardsFunc := func() ([]string, error) {
+			getDashboardsFunc := func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 				if tt.sharedDashboardsError != nil {
 					return nil, tt.sharedDashboardsError
 				}
