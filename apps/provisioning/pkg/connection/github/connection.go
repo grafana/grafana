@@ -67,10 +67,10 @@ func (c *Connection) Validate(ctx context.Context) error {
 		return toError(c.obj.GetName(), list)
 	}
 
-	if c.secrets.PrivateKey.IsZero() {
+	if c.secrets.PrivateKey.IsZero() && c.obj.Secure.PrivateKey.IsZero() {
 		list = append(list, field.Required(field.NewPath("secure", "privateKey"), "privateKey must be specified for GitHub connection"))
 	}
-	if c.secrets.Token.IsZero() {
+	if c.secrets.Token.IsZero() && c.obj.Secure.Token.IsZero() {
 		list = append(list, field.Required(field.NewPath("secure", "token"), "token must be specified for GitHub connection"))
 	}
 	if !c.obj.Secure.ClientSecret.IsZero() {

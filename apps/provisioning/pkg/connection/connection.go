@@ -20,7 +20,6 @@ type Connection interface {
 	Validate(ctx context.Context) error
 
 	// GenerateRepositoryToken generates a repository-scoped access token.
-	// For GitHub connections, this creates an installation token using the GitHub App credentials.
 	// The repo parameter specifies the repository name the token should be scoped to.
 	GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (common.RawSecureValue, error)
 }
