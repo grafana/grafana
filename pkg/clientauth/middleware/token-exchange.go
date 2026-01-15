@@ -9,15 +9,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infralog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type TokenExchangeMiddleware struct {
 	tokenExchangeClient authlib.TokenExchanger
+	nsMapper            request.NamespaceMapper
 }
 
 type tokenExchangeMiddlewareImpl struct {
 	tokenExchangeClient authlib.TokenExchanger
+	nsMapper            request.NamespaceMapper
 	audiences           []string
 	next                http.RoundTripper
 }
@@ -32,6 +35,7 @@ var _ http.RoundTripper = &tokenExchangeMiddlewareImpl{}
 func TestingTokenExchangeMiddleware(tokenExchangeClient authlib.TokenExchanger) *TokenExchangeMiddleware {
 	return &TokenExchangeMiddleware{
 		tokenExchangeClient: tokenExchangeClient,
+		nsMapper:            request.GetNamespaceMapper(nil), // nil cfg for testing uses OrgNamespaceFormatter
 	}
 }
 
@@ -50,6 +54,7 @@ func NewTokenExchangeMiddleware(cfg *setting.Cfg) (*TokenExchangeMiddleware, err
 	}
 	return &TokenExchangeMiddleware{
 		tokenExchangeClient: tokenExchangeClient,
+		nsMapper:            request.GetNamespaceMapper(cfg),
 	}, nil
 }
 
@@ -57,6 +62,7 @@ func (p *TokenExchangeMiddleware) New(audiences []string) sdkhttpclient.Middlewa
 	return func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return &tokenExchangeMiddlewareImpl{
 			tokenExchangeClient: p.tokenExchangeClient,
+			nsMapper:            p.nsMapper,
 			audiences:           audiences,
 			next:                next,
 		}
@@ -72,6 +78,16 @@ func (m tokenExchangeMiddlewareImpl) RoundTrip(req *http.Request) (res *http.Res
 	}
 
 	namespace := user.GetNamespace()
+
+	if namespace == "" {
+		orgID := user.GetOrgID()
+		// For service identities (background tasks), default to orgID 1 if not set
+		if orgID < 1 {
+			orgID = 1
+		}
+		namespace = m.nsMapper(orgID)
+		log.Debug("auto-derived namespace from orgID", "orgID", orgID, "namespace", namespace)
+	}
 
 	if namespace == "" {
 		return nil, fmt.Errorf("cluster scoped resources are currently not supported")
