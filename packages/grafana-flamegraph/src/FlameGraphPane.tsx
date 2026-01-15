@@ -72,13 +72,16 @@ const FlameGraphPane = ({
   // Otherwise use local state
   const isUsingSharedSandwich = setSharedSandwichItem !== undefined;
   const sandwichItem = isUsingSharedSandwich ? sharedSandwichItem : localSandwichItem;
-  const setSandwichItem = useCallback((item: string | undefined) => {
-    if (isUsingSharedSandwich && setSharedSandwichItem) {
-      setSharedSandwichItem(item);
-    } else {
-      setLocalSandwichItem(item);
-    }
-  }, [isUsingSharedSandwich, setSharedSandwichItem]);
+  const setSandwichItem = useCallback(
+    (item: string | undefined) => {
+      if (isUsingSharedSandwich && setSharedSandwichItem) {
+        setSharedSandwichItem(item);
+      } else {
+        setLocalSandwichItem(item);
+      }
+    },
+    [isUsingSharedSandwich, setSharedSandwichItem]
+  );
   // Initialize collapsedMap from dataContainer to ensure collapsed groups are shown correctly on first render
   const [collapsedMap, setCollapsedMap] = useState(() => dataContainer.getCollapsedMap());
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
@@ -279,11 +282,7 @@ const FlameGraphPane = ({
       break;
   }
 
-  return (
-    <div className={styles.paneWrapper}>
-      {content}
-    </div>
-  );
+  return <div className={styles.paneWrapper}>{content}</div>;
 };
 
 function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {

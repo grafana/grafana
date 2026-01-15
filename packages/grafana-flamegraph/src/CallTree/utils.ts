@@ -121,7 +121,9 @@ export function buildAllCallTreeNodes(data: FlameGraphDataContainer): CallTreeNo
   const rootTotal = levels.length > 0 ? levels[0][0].value : 0;
 
   // Build hierarchical structure for each root item
-  const rootNodes = levels[0].map((rootItem, index) => buildCallTreeNode(data, rootItem, rootTotal, undefined, -1, index));
+  const rootNodes = levels[0].map((rootItem, index) =>
+    buildCallTreeNode(data, rootItem, rootTotal, undefined, -1, index)
+  );
 
   return rootNodes;
 }
@@ -276,11 +278,7 @@ export function buildCallTreeFromLevels(
 /**
  * Recursively collect expanded state for nodes up to a certain depth.
  */
-function collectExpandedByDepth(
-  node: CallTreeNode,
-  levelsToExpand: number,
-  expanded: Record<string, boolean>
-): void {
+function collectExpandedByDepth(node: CallTreeNode, levelsToExpand: number, expanded: Record<string, boolean>): void {
   if (node.depth < levelsToExpand && node.hasChildren) {
     expanded[node.id] = true;
   }

@@ -172,9 +172,12 @@ const FlameGraphContainer = ({
       setViewBeforeNarrow(SelectedView.Multi);
       // Convert PaneView to SelectedView (they have matching values)
       const currentRightView = viewMode === ViewMode.Single ? singleView : rightPaneView;
-      const narrowView = currentRightView === PaneView.TopTable ? SelectedView.TopTable
-        : currentRightView === PaneView.CallTree ? SelectedView.CallTree
-        : SelectedView.FlameGraph;
+      const narrowView =
+        currentRightView === PaneView.TopTable
+          ? SelectedView.TopTable
+          : currentRightView === PaneView.CallTree
+            ? SelectedView.CallTree
+            : SelectedView.FlameGraph;
       setSelectedView(narrowView);
     } else if (!isNarrow && viewBeforeNarrow !== null) {
       // Going wide again: restore the previous view
@@ -345,12 +348,11 @@ const FlameGraphContainer = ({
     if (vertical) {
       body = (
         <div>
-          {isSplit && (
-            <div className={styles.verticalPaneContainer}>
-              {leftPane}
-            </div>
-          )}
-          <div key="right-single-container" className={isSplit ? styles.verticalPaneContainer : styles.singlePaneContainer}>
+          {isSplit && <div className={styles.verticalPaneContainer}>{leftPane}</div>}
+          <div
+            key="right-single-container"
+            className={isSplit ? styles.verticalPaneContainer : styles.singlePaneContainer}
+          >
             {rightSinglePane}
           </div>
         </div>
@@ -358,12 +360,11 @@ const FlameGraphContainer = ({
     } else {
       body = (
         <div className={styles.horizontalContainer}>
-          {isSplit && (
-            <div className={styles.horizontalPaneContainer}>
-              {leftPane}
-            </div>
-          )}
-          <div key="right-single-container" className={isSplit ? styles.horizontalPaneContainer : styles.singlePaneContainerHorizontal}>
+          {isSplit && <div className={styles.horizontalPaneContainer}>{leftPane}</div>}
+          <div
+            key="right-single-container"
+            className={isSplit ? styles.horizontalPaneContainer : styles.singlePaneContainerHorizontal}
+          >
             {rightSinglePane}
           </div>
         </div>

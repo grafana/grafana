@@ -105,7 +105,7 @@ const FlameGraphTopTableContainer = memo(
 
             // Adjust symbol field width based on current container width
             // This modifies the frame's field config without creating a new frame object
-            const symbolField = baseFrame.fields.find(f => f.name === 'Symbol');
+            const symbolField = baseFrame.fields.find((f) => f.name === 'Symbol');
             if (symbolField?.config?.custom) {
               const newWidth = width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * (data.isDiffFlamegraph() ? 3 : 2);
               symbolField.config.custom.width = newWidth;

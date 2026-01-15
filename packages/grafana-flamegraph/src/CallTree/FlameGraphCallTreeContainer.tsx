@@ -9,12 +9,7 @@ import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafa
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { ColorScheme, ColorSchemeDiff } from '../types';
-import {
-  buildAllCallTreeNodes,
-  buildCallersTreeFromLevels,
-  CallTreeNode,
-  getInitialExpandedState,
-} from './utils';
+import { buildAllCallTreeNodes, buildCallersTreeFromLevels, CallTreeNode, getInitialExpandedState } from './utils';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -31,7 +26,18 @@ type Props = {
 };
 
 const FlameGraphCallTreeContainer = memo(
-  ({ data, onSymbolClick, sandwichItem, onSandwich, onTableSort, colorScheme: initialColorScheme, search, compact: compactProp, onSearch, highlightedItemIndexes }: Props) => {
+  ({
+    data,
+    onSymbolClick,
+    sandwichItem,
+    onSandwich,
+    onTableSort,
+    colorScheme: initialColorScheme,
+    search,
+    compact: compactProp,
+    onSearch,
+    highlightedItemIndexes,
+  }: Props) => {
     // Track compact mode state - only triggers re-render when compact mode changes
     const [isCompact, setIsCompact] = useState(false);
     // Use ref for width to avoid re-renders on every resize
@@ -235,7 +241,7 @@ const FlameGraphCallTreeContainer = memo(
       // Sort by total time descending (most significant first)
       matches.sort((a, b) => b.total - a.total);
 
-      const matchIds = matches.map(m => m.id);
+      const matchIds = matches.map((m) => m.id);
 
       setSearchError(undefined);
       return matchIds;
@@ -362,9 +368,7 @@ const FlameGraphCallTreeContainer = memo(
         }
 
         // If the root is the parent (not the focused node itself), also expand the focused node
-        const isRootTheFocusedNode = isLabelSearch
-          ? rootNode.label === searchLabel
-          : rootNode.id === focusedNodeId;
+        const isRootTheFocusedNode = isLabelSearch ? rootNode.label === searchLabel : rootNode.id === focusedNodeId;
 
         if (!isRootTheFocusedNode && rootNode.hasChildren) {
           // The focused node is at "0.0" (first child of parent)
@@ -456,25 +460,28 @@ const FlameGraphCallTreeContainer = memo(
     const compact = compactProp !== undefined ? compactProp : isCompact;
 
     // Helper to calculate function column width for a given width and compact mode
-    const calculateFunctionColumnWidth = useCallback((width: number, compactMode: boolean) => {
-      if (width <= 0) return undefined;
+    const calculateFunctionColumnWidth = useCallback(
+      (width: number, compactMode: boolean) => {
+        if (width <= 0) return undefined;
 
-      let fixedColumnsWidth: number;
-      if (compactMode) {
-        if (data.isDiffFlamegraph()) {
-          fixedColumnsWidth = ACTIONS_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
+        let fixedColumnsWidth: number;
+        if (compactMode) {
+          if (data.isDiffFlamegraph()) {
+            fixedColumnsWidth = ACTIONS_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
+          } else {
+            fixedColumnsWidth = ACTIONS_WIDTH + TOTAL_WIDTH;
+          }
         } else {
-          fixedColumnsWidth = ACTIONS_WIDTH + TOTAL_WIDTH;
+          if (data.isDiffFlamegraph()) {
+            fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
+          } else {
+            fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
+          }
         }
-      } else {
-        if (data.isDiffFlamegraph()) {
-          fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
-        } else {
-          fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
-        }
-      }
-      return Math.max(width - fixedColumnsWidth, FUNCTION_MIN_WIDTH);
-    }, [data, ACTIONS_WIDTH]);
+        return Math.max(width - fixedColumnsWidth, FUNCTION_MIN_WIDTH);
+      },
+      [data, ACTIONS_WIDTH]
+    );
 
     // Define columns
     const columns = useMemo<Column<CallTreeNode>[]>(() => {
@@ -534,7 +541,15 @@ const FlameGraphCallTreeContainer = memo(
             Header: '',
             id: 'colorBar',
             Cell: ({ row }: { row: Row<CallTreeNode> }) => (
-              <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} focusedNode={focusedNode} callersNode={callersNode} />
+              <ColorBarCell
+                node={row.original}
+                data={data}
+                colorScheme={colorScheme}
+                theme={theme}
+                styles={styles}
+                focusedNode={focusedNode}
+                callersNode={callersNode}
+              />
             ),
             minWidth: COLOR_BAR_WIDTH,
             width: COLOR_BAR_WIDTH,
@@ -629,7 +644,15 @@ const FlameGraphCallTreeContainer = memo(
               Header: '',
               id: 'colorBar',
               Cell: ({ row }: { row: Row<CallTreeNode> }) => (
-                <ColorBarCell node={row.original} data={data} colorScheme={colorScheme} theme={theme} styles={styles} focusedNode={focusedNode} callersNode={callersNode} />
+                <ColorBarCell
+                  node={row.original}
+                  data={data}
+                  colorScheme={colorScheme}
+                  theme={theme}
+                  styles={styles}
+                  focusedNode={focusedNode}
+                  callersNode={callersNode}
+                />
               ),
               minWidth: COLOR_BAR_WIDTH,
               width: COLOR_BAR_WIDTH,
@@ -675,7 +698,23 @@ const FlameGraphCallTreeContainer = memo(
 
         return cols;
       }
-    }, [data, onSymbolClick, colorScheme, theme, styles, focusedNode, callersNode, focusedNodeId, callersNodeLabel, searchNodes, onSearch, compact, ACTIONS_WIDTH, handleSetFocusMode, handleSetCallersMode]);
+    }, [
+      data,
+      onSymbolClick,
+      colorScheme,
+      theme,
+      styles,
+      focusedNode,
+      callersNode,
+      focusedNodeId,
+      callersNodeLabel,
+      searchNodes,
+      onSearch,
+      compact,
+      ACTIONS_WIDTH,
+      handleSetFocusMode,
+      handleSetCallersMode,
+    ]);
 
     // toggleRowExpanded is used in the Cell renderers but doesn't need to be in the dependencies
     // because it's accessed at render time, not definition time
@@ -784,8 +823,7 @@ const FlameGraphCallTreeContainer = memo(
             </Tooltip>
           )}
 
-          <div className={styles.toolbarRight}>
-          </div>
+          <div className={styles.toolbarRight}></div>
         </div>
 
         <AutoSizer style={{ width: '100%', height: 'calc(100% - 50px)' }}>
@@ -829,7 +867,7 @@ const FlameGraphCallTreeContainer = memo(
                                 style={{
                                   ...(columnWidth !== undefined && { width: columnWidth }),
                                   textAlign: column.id === 'self' || column.id === 'total' ? 'right' : undefined,
-                                  ...(column.minWidth !== undefined && { minWidth: column.minWidth })
+                                  ...(column.minWidth !== undefined && { minWidth: column.minWidth }),
                                 }}
                               >
                                 {column.render('Header')}
@@ -862,7 +900,10 @@ const FlameGraphCallTreeContainer = memo(
                           ref={rowRef}
                           className={cx(
                             styles.tr,
-                            (isFocusedRow || (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label)) && styles.focusedRow,
+                            (isFocusedRow ||
+                              (focusedNodeId?.startsWith('label:') &&
+                                focusedNodeId.substring(6) === row.original.label)) &&
+                              styles.focusedRow,
                             isCallersTargetRow && styles.callersTargetRow,
                             isSearchMatchRow && styles.searchMatchRow,
                             isHighlightedRow && !isSearchMatchRow && styles.highlightedRow
@@ -978,8 +1019,8 @@ const ActionsCell = memo(function ActionsCell({
   actionButtonClass,
   actionButtonPlaceholderClass,
 }: ActionsCellProps) {
-  const isTheFocusedNode = nodeId === focusedNodeId ||
-                           (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === label);
+  const isTheFocusedNode =
+    nodeId === focusedNodeId || (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === label);
   const isTheCallersTarget = label === callersNodeLabel;
   const inCallersMode = callersNodeLabel !== undefined;
   const inFocusMode = focusedNodeId !== undefined;
@@ -1212,14 +1253,14 @@ function FunctionCellWithExpander({
         </Button>
         {!compact && row.original.childCount > 0 && (
           <span className={styles.nodeBadge}>
-            {row.original.childCount} {row.original.childCount === 1 ? 'child' : 'children'}, {row.original.subtreeSize} {row.original.subtreeSize === 1 ? 'node' : 'nodes'}
+            {row.original.childCount} {row.original.childCount === 1 ? 'child' : 'children'}, {row.original.subtreeSize}{' '}
+            {row.original.subtreeSize === 1 ? 'node' : 'nodes'}
           </span>
         )}
       </span>
     </div>
   );
 }
-
 
 function ColorBarCell({
   node,
