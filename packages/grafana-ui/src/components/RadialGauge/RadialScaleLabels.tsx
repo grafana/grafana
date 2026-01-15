@@ -30,19 +30,24 @@ export const RadialScaleLabels = memo(
     startAngle,
     endAngle,
     angleRange,
-    neutral,
+    neutral: rawNeutral,
   }: RadialScaleLabelsProps) => {
     const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius } = dimensions;
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
+    const allValues = thresholds.map((t) => t.value);
+
+    // there are a couple cases where we will not show the neutral label even if neutral is set.
+    // 1. if neutral is not between min and max
+    // 2. if neutral duplicates a threshold value, showing it twice is pointless and messy
+    let neutral: number | undefined;
+    if (rawNeutral !== undefined && rawNeutral >= min && rawNeutral <= max && !allValues.includes(rawNeutral)) {
+      neutral = rawNeutral;
+      allValues.push(neutral);
+    }
 
     const fontSize = scaleLabelsFontSize;
     const textLineHeight = scaleLabelsFontSize * LINE_HEIGHT_FACTOR;
     const radius = scaleLabelsRadius - textLineHeight;
-
-    const allValues = thresholds.map((t) => t.value);
-    if (neutral !== undefined) {
-      allValues.push(neutral);
-    }
 
     const minLabelValue = allValues.reduce((min, value) => (value < min ? value : min), allValues[0]);
     const maxLabelValue = allValues.reduce((max, value) => (value > max ? value : max), allValues[0]);

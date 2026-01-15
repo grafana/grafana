@@ -25,18 +25,36 @@ describe('RadialGauge', () => {
     }
   );
 
-  it('should render labels', () => {
-    render(<RadialGaugeExample showScaleLabels={true} />);
+  describe('threshold labels', () => {
+    it('should render labels', () => {
+      render(<RadialGaugeExample showScaleLabels />);
 
-    expect(screen.getByRole('img')).toBeInTheDocument();
-    expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
-  });
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+    });
 
-  it('should render labels including neutral', () => {
-    render(<RadialGaugeExample showScaleLabels={true} neutral={50} />);
+    it('should render labels including neutral', () => {
+      render(<RadialGaugeExample showScaleLabels neutral={50} />);
 
-    expect(screen.getByRole('img')).toBeInTheDocument();
-    expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
-    expect(screen.getByLabelText('Neutral 50')).toBeInTheDocument();
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+      expect(screen.getByLabelText('Neutral 50')).toBeInTheDocument();
+    });
+
+    it('should not render neutral if it is out of range', () => {
+      render(<RadialGaugeExample showScaleLabels neutral={-50} />);
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Neutral -50')).not.toBeInTheDocument();
+    });
+
+    it('should not render neutral if it duplicates a threshold value', () => {
+      render(<RadialGaugeExample showScaleLabels neutral={85} />);
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Neutral 85')).not.toBeInTheDocument();
+    });
   });
 });
