@@ -206,7 +206,8 @@
                     },
                     "filterable": true,
                     "inspect": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -753,7 +754,8 @@
                     },
                     "filterable": true,
                     "inspect": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1303,7 +1305,8 @@
                     "filterable": true,
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1497,7 +1500,8 @@
                     "filterable": true,
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1692,7 +1696,8 @@
                     "filterable": true,
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1886,7 +1891,8 @@
                     "filterable": true,
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -2081,7 +2087,8 @@
                     "filterable": true,
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -2276,7 +2283,8 @@
                     "filterable": true,
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -2507,5 +2515,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

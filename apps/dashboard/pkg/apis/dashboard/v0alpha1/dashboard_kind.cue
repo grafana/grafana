@@ -222,8 +222,10 @@ lineage: schemas: [{
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string
-      // Determine whether regex applies to variable value or display text
-      regexApplyTo?: #VariableRegexApplyTo
+			// Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+			valuesFormat?: "csv" | "json" | *"csv"
+			// Determine whether regex applies to variable value or display text
+			regexApplyTo?: #VariableRegexApplyTo
 			// Additional static options for query variable
 			staticOptions?: [...#VariableOption]
 			// Ordering of static options in relation to options returned from data source for query variable
@@ -706,6 +708,10 @@ lineage: schemas: [{
 
 			// Field options allow you to change how the data is displayed in your visualizations.
 			fieldConfig?: #FieldConfigSource
+
+			// When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+			// This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+			autoMigrateFrom?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.

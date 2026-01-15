@@ -1,25 +1,24 @@
 import { css } from '@emotion/css';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
-  Stack,
-  Tab,
-  TabsBar,
-  TabContent,
-  Icon,
+  Alert,
   Badge,
-  Text,
-  useStyles2,
+  Icon,
   InteractiveTable,
   ScrollContainer,
-  Alert,
   Spinner,
-  IconButton,
+  Stack,
+  Tab,
+  TabContent,
+  TabsBar,
+  Text,
+  useStyles2,
 } from '@grafana/ui';
 
-import { SQLSchemas, SQLSchemaField, SQLSchemaData } from '../hooks/useSQLSchemas';
+import { SQLSchemaData, SQLSchemaField, SQLSchemas } from '../hooks/useSQLSchemas';
 
 import { getFieldTypeIcon } from './utils';
 
@@ -33,10 +32,9 @@ interface SchemaInspectorPanelProps {
   schemas: SQLSchemas | null;
   loading: boolean;
   error: Error | null;
-  onClose: () => void;
 }
 
-export const SchemaInspectorPanel = ({ schemas, loading, error, onClose }: SchemaInspectorPanelProps) => {
+export const SchemaInspectorPanel = ({ schemas, loading, error }: SchemaInspectorPanelProps) => {
   const styles = useStyles2(getStyles);
 
   const schemaResponse: SQLSchemas = schemas ?? {};
@@ -192,53 +190,27 @@ export const SchemaInspectorPanel = ({ schemas, loading, error, onClose }: Schem
   };
 
   return (
-    <div className={styles.schemaInspector}>
-      <div className={styles.tabsBarWrapper}>
-        {refIds.length > 0 && (
-          <TabsBar>
-            {refIds.map((refId) => (
-              <Tab
-                key={refId}
-                label={refId}
-                active={activeSchemaTab === refId}
-                onChangeTab={() => setSelectedTab(refId)}
-              />
-            ))}
-          </TabsBar>
-        )}
-        <IconButton
-          name="times"
-          onClick={onClose}
-          tooltip={t('expressions.sql-schema.close-schema-inspector', 'Close schema inspector')}
-          aria-label={t(
-            'expressions.schema-inspector-panel.aria-label-close-schema-inspector',
-            'Close schema inspector'
-          )}
-        />
-      </div>
+    <>
+      {refIds.length > 0 && (
+        <TabsBar>
+          {refIds.map((refId) => (
+            <Tab
+              key={refId}
+              label={refId}
+              active={activeSchemaTab === refId}
+              onChangeTab={() => setSelectedTab(refId)}
+            />
+          ))}
+        </TabsBar>
+      )}
       {renderContent()}
-    </div>
+    </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   schemaInfoContainer: css({
     padding: theme.spacing(1),
-  }),
-  schemaInspector: css({
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  // Unfortunate hack to get the close button to align with the tabs since we need to
-  // override the default styles of the TabsBar component.
-  tabsBarWrapper: css({
-    flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    padding: `0 ${theme.spacing(1)}`,
   }),
   tableCell: css({
     fontSize: theme.typography.bodySmall.fontSize,
@@ -247,10 +219,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   tableContainer: css({
     margin: theme.spacing(1),
-    flex: 1,
     overflowY: 'auto',
     overflowX: 'auto',
-    minHeight: 0, // Allow flex child to shrink
     border: `1px solid ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.background.primary,

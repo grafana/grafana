@@ -194,7 +194,8 @@
                     "filterable": true,
                     "inspect": false,
                     "wrapText": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1190,7 +1191,8 @@
                       "reducer": []
                     },
                     "inspect": true
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": []
               }
@@ -1262,7 +1264,8 @@
                       "type": "auto"
                     },
                     "inspect": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1418,7 +1421,8 @@
                       "type": "auto"
                     },
                     "inspect": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1575,7 +1579,8 @@
                       "type": "auto"
                     },
                     "inspect": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1737,7 +1742,8 @@
                       "type": "auto"
                     },
                     "inspect": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -1888,7 +1894,8 @@
                       "type": "auto"
                     },
                     "inspect": false
-                  }
+                  },
+                  "fieldMinMax": true
                 },
                 "overrides": [
                   {
@@ -2192,5 +2199,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

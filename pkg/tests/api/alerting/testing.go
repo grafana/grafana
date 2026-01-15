@@ -249,6 +249,7 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		ExecErrState:         gettable.ExecErrState,
 		IsPaused:             &gettable.IsPaused,
 		NotificationSettings: gettable.NotificationSettings,
+		Record:               gettable.Record,
 		Metadata:             gettable.Metadata,
 	}
 }

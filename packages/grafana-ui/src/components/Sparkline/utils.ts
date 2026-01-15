@@ -2,12 +2,14 @@ import { Range } from 'uplot';
 
 import {
   applyNullInsertThreshold,
+  // colorManipulator,
   DataFrame,
   FieldConfig,
   FieldSparkline,
   FieldType,
   getFieldColorModeForField,
   GrafanaTheme2,
+  guessDecimals,
   isLikelyAscendingVector,
   nullToValue,
   roundDecimals,
@@ -21,6 +23,7 @@ import {
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
+  // FieldColorModeId,
 } from '@grafana/schema';
 
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
@@ -76,8 +79,6 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
   min = Math.min(min!, field.config.min ?? Infinity);
   max = Math.max(max!, field.config.max ?? -Infinity);
 
-  // console.log({ min, max });
-
   // if noValue is set, ensure that it is included in the range as well
   const noValue = +field.config?.noValue!;
   if (!Number.isNaN(noValue)) {
@@ -85,9 +86,11 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
     max = Math.max(max, noValue);
   }
 
+  const decimals = field.config.decimals ?? Math.max(guessDecimals(min), guessDecimals(max));
+
   // call roundDecimals to mirror what is going to eventually happen in uplot
-  let roundedMin = roundDecimals(min, field.config.decimals ?? 0);
-  let roundedMax = roundDecimals(max, field.config.decimals ?? 0);
+  let roundedMin = roundDecimals(min, decimals);
+  let roundedMax = roundDecimals(max, decimals);
 
   // if the rounded min and max are different,
   // we can return the real min and max.
@@ -102,30 +105,29 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
     roundedMax = 1;
   } else if (roundedMin < 0) {
     // both are negative
-    // max = 0;
     roundedMin *= 2;
   } else {
     // both are positive
-    // min = 0;
     roundedMax *= 2;
   }
 
   return [roundedMin, roundedMax];
 }
 
-// TODO: #112977 enable highlight index
-// const HIGHLIGHT_IDX_POINT_SIZE = 6;
+const HIGHLIGHT_IDX_POINT_SIZE = 6;
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
-  pointSize: 2,
+  pointSize: 0,
 };
 
 export const prepareSeries = (
   sparkline: FieldSparkline,
-  fieldConfig?: FieldConfig<GraphFieldConfig>
+  _theme: GrafanaTheme2,
+  fieldConfig?: FieldConfig<GraphFieldConfig>,
+  _showHighlights?: boolean
 ): { frame: DataFrame; warning?: string } => {
   const frame = nullToValue(preparePlotFrame(sparkline, fieldConfig));
   if (frame.fields.some((f) => f.values.length <= 1)) {
@@ -137,16 +139,41 @@ export const prepareSeries = (
       frame,
     };
   }
+  // TODO:rgb(24, 24, 24) will address this.
+  // if (showHighlights && typeof sparkline.highlightLine === 'number') {
+  //   const highlightY = sparkline.highlightLine;
+  //   const colorMode = getFieldColorModeForField(sparkline.y);
+  //   const seriesColor = colorMode.getCalculator(sparkline.y, theme)(highlightY, 0);
+  //   frame.fields.push({
+  //     name: 'highlightLine',
+  //     type: FieldType.number,
+  //     values: new Array(frame.length).fill(highlightY),
+  //     config: {
+  //       color: {
+  //         mode: FieldColorModeId.Fixed,
+  //         fixedColor: colorManipulator.lighten(seriesColor, 0.5),
+  //       },
+  //       custom: {
+  //         lineStyle: {
+  //           fill: 'dash',
+  //           dash: [5, 2],
+  //         },
+  //       },
+  //     },
+  //     state: {},
+  //   });
+  // }
   return { frame };
 };
 
 export const prepareConfig = (
   sparkline: FieldSparkline,
   dataFrame: DataFrame,
-  theme: GrafanaTheme2
+  theme: GrafanaTheme2,
+  showHighlights?: boolean
 ): UPlotConfigBuilder => {
   const builder = new UPlotConfigBuilder();
-  // const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
+  const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
 
   builder.setCursor({
     show: false,
@@ -177,6 +204,7 @@ export const prepareConfig = (
     scaleKey: 'x',
     theme,
     placement: AxisPlacement.Hidden,
+    show: false,
   });
 
   for (let i = 0; i < dataFrame.fields.length; i++) {
@@ -203,17 +231,19 @@ export const prepareConfig = (
       scaleKey,
       theme,
       placement: AxisPlacement.Hidden,
+      show: false,
     });
 
     const colorMode = getFieldColorModeForField(field);
     const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-    // TODO: #112977 enable highlight index and adjust padding accordingly
-    // const hasHighlightIndex = typeof sparkline.highlightIndex === 'number';
-    // if (hasHighlightIndex) {
-    //   builder.setPadding([rangePad, rangePad, rangePad, rangePad]);
-    // }
+
+    const hasHighlightIndex = showHighlights && typeof sparkline.highlightIndex === 'number';
+    if (hasHighlightIndex) {
+      builder.setPadding([rangePad, rangePad, rangePad, rangePad]);
+    }
+
     const pointsMode =
-      customConfig.drawStyle === GraphDrawStyle.Points // || hasHighlightIndex
+      customConfig.drawStyle === GraphDrawStyle.Points || hasHighlightIndex
         ? VisibilityMode.Always
         : customConfig.showPoints;
 
@@ -228,9 +258,8 @@ export const prepareConfig = (
       lineWidth: customConfig.lineWidth,
       lineInterpolation: customConfig.lineInterpolation,
       showPoints: pointsMode,
-      // TODO: #112977 enable highlight index
-      pointSize: /* hasHighlightIndex ? HIGHLIGHT_IDX_POINT_SIZE : */ customConfig.pointSize,
-      // pointsFilter: hasHighlightIndex ? [sparkline.highlightIndex!] : undefined,
+      pointSize: hasHighlightIndex ? HIGHLIGHT_IDX_POINT_SIZE : customConfig.pointSize,
+      pointsFilter: hasHighlightIndex ? [sparkline.highlightIndex!] : undefined,
       fillOpacity: customConfig.fillOpacity,
       fillColor: customConfig.fillColor,
       lineStyle: customConfig.lineStyle,

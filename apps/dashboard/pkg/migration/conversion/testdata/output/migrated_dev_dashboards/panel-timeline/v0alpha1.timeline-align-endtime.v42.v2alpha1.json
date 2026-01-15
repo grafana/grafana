@@ -356,5 +356,10 @@
     "title": "Panel Tests - StateTimeline - multiple frames with endTime",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

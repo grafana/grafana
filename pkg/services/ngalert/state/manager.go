@@ -232,9 +232,7 @@ func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprin
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
-// to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
-// history.
+// DeleteStateByRuleUID removes the rule instances from cache and instanceStore.
 func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKeyWithGroup, reason string) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("Resetting state of the rule")
@@ -292,10 +290,14 @@ func (st *Manager) ForgetStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
 // history has to be saved, rule must not be nil.
 func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []StateTransition {
+	if rule == nil {
+		return nil
+	}
+
 	ruleKey := rule.GetKeyWithGroup()
 	transitions := st.DeleteStateByRuleUID(ctx, ruleKey, reason)
 
-	if rule == nil || st.historian == nil || len(transitions) == 0 {
+	if st.historian == nil || len(transitions) == 0 {
 		return transitions
 	}
 
@@ -629,9 +631,8 @@ func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
 	for _, state := range states {
 		if state.LastEvaluationTime.After(status.EvaluationTimestamp) {
 			status.EvaluationTimestamp = state.LastEvaluationTime
+			status.EvaluationDuration = state.EvaluationDuration
 		}
-
-		status.EvaluationDuration = state.EvaluationDuration
 
 		switch state.State {
 		case eval.Normal:

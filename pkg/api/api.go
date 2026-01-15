@@ -187,6 +187,15 @@ func (hs *HTTPServer) registerRoutes() {
 			publicdashboardsapi.CountPublicDashboardRequest(),
 			hs.Index,
 		)
+
+		r.Get("/bootdata/:accessToken",
+			reqNoAuth,
+			hs.PublicDashboardsApi.Middleware.HandleView,
+			publicdashboardsapi.SetPublicDashboardAccessToken,
+			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboardsapi.CountPublicDashboardRequest(),
+			hs.GetBootdata,
+		)
 	}
 
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
@@ -316,11 +325,6 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagStorage) {
 			// Will eventually be replaced with the 'object' route
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
-		}
-
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch) {
-			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org

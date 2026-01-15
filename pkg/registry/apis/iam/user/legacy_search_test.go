@@ -9,29 +9,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestUserLegacySearchClient_Search(t *testing.T) {
-	t.Run("should return error if no query fields are provided", func(t *testing.T) {
-		mockUserService := usertest.NewMockService(t)
-		client := NewUserLegacySearchClient(mockUserService, tracing.NewNoopTracerService())
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
-		req := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{Namespace: "default"},
-			},
-		}
-
-		_, err := client.Search(ctx, req)
-
-		require.Error(t, err)
-		require.Equal(t, "at least one of title, login, or email must be provided for the query", err.Error())
-	})
-
 	testCases := []struct {
 		name          string
 		fieldKey      string
@@ -66,8 +52,8 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockUserService := usertest.NewMockService(t)
-			client := NewUserLegacySearchClient(mockUserService, tracing.NewNoopTracerService())
+			mockOrgService := orgtest.NewMockService(t)
+			client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService(), &setting.Cfg{})
 			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
 			req := &resourcepb.ResourceSearchRequest{
 				Limit: 10,
@@ -81,14 +67,14 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 				Fields: []string{"email", "login"},
 			}
 
-			mockUsers := []*user.UserSearchHitDTO{
-				{ID: 1, UID: "uid1", Name: "Test User 1", Email: "test1@example.com", Login: "testlogin1"},
+			mockUsers := []*org.OrgUserDTO{
+				{UID: "uid1", Name: "Test User 1", Email: "test1@example.com", Login: "testlogin1"},
 			}
 
-			mockUserService.On("Search", mock.Anything, mock.MatchedBy(func(q *user.SearchUsersQuery) bool {
+			mockOrgService.On("SearchOrgUsers", mock.Anything, mock.MatchedBy(func(q *org.SearchOrgUsersQuery) bool {
 				return q.Query == tc.expectedQuery && q.Limit == 10 && q.Page == 1
-			})).Return(&user.SearchUserQueryResult{
-				Users:      mockUsers,
+			})).Return(&org.SearchOrgUsersQueryResult{
+				OrgUsers:   mockUsers,
 				TotalCount: 1,
 			}, nil)
 
@@ -113,7 +99,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 				require.Equal(t, UserResource, row.Key.Resource)
 				require.Equal(t, u.UID, row.Key.Name)
 
-				expectedCells := createBaseCells(&user.UserSearchHitDTO{
+				expectedCells := createCells(&org.OrgUserDTO{
 					UID:   u.UID,
 					Name:  u.Name,
 					Email: u.Email,
@@ -125,8 +111,8 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 	}
 
 	t.Run("title should have precedence over login and email", func(t *testing.T) {
-		mockUserService := usertest.NewMockService(t)
-		client := NewUserLegacySearchClient(mockUserService, tracing.NewNoopTracerService())
+		mockOrgService := orgtest.NewMockService(t)
+		client := NewUserLegacySearchClient(mockOrgService, tracing.NewNoopTracerService(), &setting.Cfg{})
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1})
 		req := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -139,9 +125,9 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 			},
 		}
 
-		mockUserService.On("Search", mock.Anything, mock.MatchedBy(func(q *user.SearchUsersQuery) bool {
+		mockOrgService.On("SearchOrgUsers", mock.Anything, mock.MatchedBy(func(q *org.SearchOrgUsersQuery) bool {
 			return q.Query == "title"
-		})).Return(&user.SearchUserQueryResult{Users: []*user.UserSearchHitDTO{}, TotalCount: 0}, nil)
+		})).Return(&org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}, TotalCount: 0}, nil)
 
 		_, err := client.Search(ctx, req)
 		require.NoError(t, err)

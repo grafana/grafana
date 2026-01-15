@@ -3,7 +3,6 @@ package authorizer
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -29,21 +28,21 @@ type GrafanaAuthorizer struct {
 //  4. We check authorizer that is configured speficially for an api.
 //  5. As a last fallback we check Role, this will only happen if an api have not configured
 //     an authorizer or return authorizer.DecisionNoOpinion
-func NewGrafanaBuiltInSTAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
+func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
 	authorizers := []authorizer.Authorizer{
-		newImpersonationAuthorizer(),
+		NewImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
 		newNamespaceAuthorizer(),
 	}
 
 	// Individual services may have explicit implementations
 	apis := make(map[string]authorizer.Authorizer)
+	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
 	authorizers = append(authorizers, &authorizerForAPI{apis})
 
-	// org role is last -- and will return allow for verbs that match expectations
-	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
-	// NOTE: role authorizer is now used by some api groups as their specific authorizer
-	// but there are still some apis not directly registered in the embedded delegate that benefit from including it here
+	// org role authorizer is last -- and will return allow for verbs that match expectations
+	// it is only helpful here for remote APIs in some cloud use-cases.
+	//nolint:staticcheck // remove once build handler chains are untangled between local and remote APIs handling
 	authorizers = append(authorizers, NewRoleAuthorizer())
 	return &GrafanaAuthorizer{
 		apis: apis,

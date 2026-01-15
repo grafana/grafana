@@ -901,8 +901,6 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
-                  "rounded": false,
-                  "spotlight": false,
                   "gradient": false
                 },
                 "orientation": "auto",
@@ -1666,5 +1664,10 @@
     "title": "Panel tests - Old gauge to new",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

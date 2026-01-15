@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/live/model"
 )
@@ -26,18 +26,17 @@ const (
 
 // DashboardEvent events related to dashboards
 type dashboardEvent struct {
-	UID       string     `json:"uid"`
-	Action    actionType `json:"action"` // saved, editing, deleted
-	SessionID string     `json:"sessionId,omitempty"`
+	UID             string     `json:"uid"`
+	Action          actionType `json:"action"` // saved, editing, deleted
+	SessionID       string     `json:"sessionId,omitempty"`
+	ResourceVersion string     `json:"rv,omitempty"`
 }
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
 type DashboardHandler struct {
-	Publisher        model.ChannelPublisher
-	ClientCount      model.ChannelClientCount
-	Store            db.DB
-	DashboardService dashboards.DashboardService
-	AccessControl    accesscontrol.AccessControl
+	Publisher     model.ChannelPublisher
+	ClientCount   model.ChannelClientCount
+	AccessControl dashboards.DashboardAccessService
 }
 
 // GetHandlerForPath called on init
@@ -51,23 +50,15 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user identity.Reques
 
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {
-		query := dashboards.GetDashboardQuery{UID: parts[1], OrgID: user.GetOrgID()}
-		_, err := h.DashboardService.GetDashboard(ctx, &query)
-		if err != nil {
-			logger.Error("Error getting dashboard", "query", query, "error", err)
-			return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
+		ns := types.OrgNamespaceFormatter(user.GetOrgID())
+		ok, err := h.AccessControl.HasDashboardAccess(ctx, user, utils.VerbGet, ns, parts[1])
+		if ok && err == nil {
+			return model.SubscribeReply{
+				Presence:  true,
+				JoinLeave: true,
+			}, backend.SubscribeStreamStatusOK, nil
 		}
-
-		evaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(parts[1]))
-		canView, err := h.AccessControl.Evaluate(ctx, user, evaluator)
-		if err != nil || !canView {
-			return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, err
-		}
-
-		return model.SubscribeReply{
-			Presence:  true,
-			JoinLeave: true,
-		}, backend.SubscribeStreamStatusOK, nil
+		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, err
 	}
 
 	// Unknown path
@@ -90,29 +81,16 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, requester identity.Req
 			// just ignore the event
 			return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
-		query := dashboards.GetDashboardQuery{UID: parts[1], OrgID: requester.GetOrgID()}
-		_, err = h.DashboardService.GetDashboard(ctx, &query)
-		if err != nil {
-			logger.Error("Unknown dashboard", "query", query)
-			return model.PublishReply{}, backend.PublishStreamStatusNotFound, nil
-		}
 
-		evaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(parts[1]))
-		canEdit, err := h.AccessControl.Evaluate(ctx, requester, evaluator)
-		if err != nil {
-			return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
+		ns := types.OrgNamespaceFormatter(requester.GetOrgID())
+		ok, err := h.AccessControl.HasDashboardAccess(ctx, requester, utils.VerbUpdate, ns, parts[1])
+		if ok && err == nil {
+			msg, err := json.Marshal(event)
+			if err != nil {
+				return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
+			}
+			return model.PublishReply{Data: msg}, backend.PublishStreamStatusOK, nil
 		}
-
-		// Ignore edit events if the user can not edit
-		if !canEdit {
-			return model.PublishReply{}, backend.PublishStreamStatusNotFound, nil // NOOP
-		}
-
-		msg, err := json.Marshal(event)
-		if err != nil {
-			return model.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
-		}
-		return model.PublishReply{Data: msg}, backend.PublishStreamStatusOK, nil
 	}
 
 	return model.PublishReply{}, backend.PublishStreamStatusNotFound, nil
@@ -128,10 +106,11 @@ func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardSaved(orgID int64, uid string) error {
+func (h *DashboardHandler) DashboardSaved(orgID int64, uid string, rv string) error {
 	return h.publish(orgID, dashboardEvent{
-		UID:    uid,
-		Action: ActionSaved,
+		UID:             uid,
+		Action:          ActionSaved,
+		ResourceVersion: rv,
 	})
 }
 

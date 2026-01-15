@@ -10,6 +10,8 @@ import (
 	"sort"
 	"unsafe"
 
+	"github.com/grafana/alerting/definition"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -23,6 +25,7 @@ type TemplateService struct {
 	xact            TransactionManager
 	log             log.Logger
 	validator       validation.ProvenanceStatusTransitionValidator
+	includeImported bool
 }
 
 func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *TemplateService {
@@ -32,6 +35,18 @@ func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, 
 		xact:            xact,
 		validator:       validation.ValidateProvenanceRelaxed,
 		log:             log,
+		includeImported: false,
+	}
+}
+
+func (t *TemplateService) WithIncludeImported() *TemplateService {
+	return &TemplateService{
+		configStore:     t.configStore,
+		provenanceStore: t.provenanceStore,
+		xact:            t.xact,
+		validator:       t.validator,
+		log:             t.log,
+		includeImported: true,
 	}
 }
 
@@ -41,35 +56,38 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 		return nil, err
 	}
 
-	if len(revision.Config.TemplateFiles) == 0 {
-		return nil, nil
-	}
+	var templates []definitions.NotificationTemplate
 
-	provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, (&definitions.NotificationTemplate{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
-
-	templates := make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
-	names := slices.Collect(maps.Keys(revision.Config.TemplateFiles))
-	sort.Strings(names)
-	for _, name := range names {
-		content := revision.Config.TemplateFiles[name]
-		tmpl := definitions.NotificationTemplate{
-			UID:             legacy_storage.NameToUid(name),
-			Name:            name,
-			Template:        content,
-			ResourceVersion: calculateTemplateFingerprint(content),
+	if len(revision.Config.TemplateFiles) > 0 {
+		provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, (&definitions.NotificationTemplate{}).ResourceType())
+		if err != nil {
+			return nil, err
 		}
-		provenance, ok := provenances[tmpl.ResourceID()]
-		if !ok {
-			provenance = models.ProvenanceNone
+		templates = make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
+		names := slices.Collect(maps.Keys(revision.Config.TemplateFiles))
+		sort.Strings(names)
+		for _, name := range names {
+			content := revision.Config.TemplateFiles[name]
+			provenance, ok := provenances[(&definitions.NotificationTemplate{Name: name}).ResourceID()]
+			if !ok {
+				provenance = models.ProvenanceNone
+			}
+			templates = append(templates, newNotificationTemplate(name, content, provenance, definition.GrafanaTemplateKind))
 		}
-		tmpl.Provenance = definitions.Provenance(provenance)
-		templates = append(templates, tmpl)
 	}
 
-	return templates, nil
+	var importedTemplates []definitions.NotificationTemplate
+	if t.includeImported && len(revision.Config.ExtraConfigs) > 0 && len(revision.Config.ExtraConfigs[0].TemplateFiles) > 0 {
+		imported := revision.Config.ExtraConfigs[0].TemplateFiles
+		importedTemplates = make([]definitions.NotificationTemplate, 0, len(imported))
+		names := slices.Collect(maps.Keys(imported))
+		sort.Strings(names)
+		for _, name := range names {
+			content := imported[name]
+			templates = append(templates, newNotificationTemplate(name, content, models.ProvenanceConvertedPrometheus, definition.MimirTemplateKind))
+		}
+	}
+	return append(templates, importedTemplates...), nil
 }
 
 func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error) {
@@ -77,29 +95,21 @@ func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, nameOrUi
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
-
-	existingName := nameOrUid
-	existingContent, ok := revision.Config.TemplateFiles[nameOrUid]
-	if !ok {
-		existingName, existingContent, ok = getTemplateByUid(revision.Config.TemplateFiles, nameOrUid)
-	}
-	if !ok {
-		return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
-	}
-
-	tmpl := definitions.NotificationTemplate{
-		UID:             legacy_storage.NameToUid(existingName),
-		Name:            existingName,
-		Template:        existingContent,
-		ResourceVersion: calculateTemplateFingerprint(existingContent),
-	}
-
-	provenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
+	result, found, err := t.getTemplateByName(ctx, revision, orgID, nameOrUid)
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
-	tmpl.Provenance = definitions.Provenance(provenance)
-	return tmpl, nil
+	if found {
+		return result, nil
+	}
+	result, found, err = t.getTemplateByUID(ctx, revision, orgID, nameOrUid)
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+	if found {
+		return result, nil
+	}
+	return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
 }
 
 func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
@@ -135,6 +145,10 @@ func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl 
 	if err != nil {
 		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(err)
 	}
+	if tmpl.Kind == definition.MimirTemplateKind {
+		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
+	}
+
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
@@ -143,6 +157,10 @@ func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl 
 }
 
 func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
+	if tmpl.Kind == definition.MimirTemplateKind {
+		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
+	}
+
 	if revision.Config.TemplateFiles == nil {
 		revision.Config.TemplateFiles = map[string]string{}
 	}
@@ -164,13 +182,7 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 		return definitions.NotificationTemplate{}, err
 	}
 
-	return definitions.NotificationTemplate{
-		UID:             legacy_storage.NameToUid(tmpl.Name),
-		Name:            tmpl.Name,
-		Template:        tmpl.Template,
-		Provenance:      tmpl.Provenance,
-		ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-	}, nil
+	return newNotificationTemplate(tmpl.Name, tmpl.Template, models.Provenance(tmpl.Provenance), tmpl.Kind), nil
 }
 
 func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error) {
@@ -192,37 +204,39 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	}
 
 	var found bool
-	var existingName, existingContent string
+	var err error
+	var existing definitions.NotificationTemplate
 	// if UID is specified, look by UID.
 	if tmpl.UID != "" {
-		existingName, existingContent, found = getTemplateByUid(revision.Config.TemplateFiles, tmpl.UID)
-		// do not fall back to name because we address by UID, and resource can be deleted\renamed
+		existing, found, err = t.getTemplateByUID(ctx, revision, orgID, tmpl.UID)
 	} else {
-		existingName = tmpl.Name
-		existingContent, found = revision.Config.TemplateFiles[existingName]
+		existing, found, err = t.getTemplateByName(ctx, revision, orgID, tmpl.Name)
+	}
+	if err != nil {
+		return definitions.NotificationTemplate{}, err
 	}
 	if !found {
 		return definitions.NotificationTemplate{}, ErrTemplateNotFound.Errorf("")
 	}
 
-	if existingName != tmpl.Name { // if template is renamed, check if this name is already taken
+	if existing.Name != tmpl.Name { // if template is renamed, check if this name is already taken
 		_, ok := revision.Config.TemplateFiles[tmpl.Name]
 		if ok {
 			// return error if template is being renamed to one that already exists
 			return definitions.NotificationTemplate{}, ErrTemplateExists.Errorf("")
 		}
 	}
-
-	// check that provenance is not changed in an invalid way
-	storedProvenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
-	if err != nil {
+	if existing.Kind != tmpl.Kind {
+		return definitions.NotificationTemplate{}, MakeErrTemplateInvalid(errors.New("cannot change template kind"))
+	}
+	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
+		return definitions.NotificationTemplate{}, makeErrTemplateOrigin(existing, "update")
+	}
+	if err := t.validator(models.Provenance(existing.Provenance), models.Provenance(tmpl.Provenance)); err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
-	if err := t.validator(storedProvenance, models.Provenance(tmpl.Provenance)); err != nil {
-		return definitions.NotificationTemplate{}, err
-	}
 
-	err = t.checkOptimisticConcurrency(tmpl.Name, existingContent, models.Provenance(tmpl.Provenance), tmpl.ResourceVersion, "update")
+	err = t.checkOptimisticConcurrency(existing.Name, existing.Template, models.Provenance(tmpl.Provenance), tmpl.ResourceVersion, "update")
 	if err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
@@ -230,9 +244,9 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	revision.Config.TemplateFiles[tmpl.Name] = tmpl.Template
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if existingName != tmpl.Name { // if template by was found by UID and it's name is different, then this is the rename operation. Delete old resources.
-			delete(revision.Config.TemplateFiles, existingName)
-			err := t.provenanceStore.DeleteProvenance(ctx, &definitions.NotificationTemplate{Name: existingName}, orgID)
+		if existing.Name != tmpl.Name { // if template by was found by UID and it's name is different, then this is the rename operation. Delete old resources.
+			delete(revision.Config.TemplateFiles, existing.Name)
+			err := t.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
 			if err != nil {
 				return err
 			}
@@ -247,13 +261,8 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		return definitions.NotificationTemplate{}, err
 	}
 
-	return definitions.NotificationTemplate{
-		UID:             legacy_storage.NameToUid(tmpl.Name), // if name was changed, this UID will not match the incoming one
-		Name:            tmpl.Name,
-		Template:        tmpl.Template,
-		Provenance:      tmpl.Provenance,
-		ResourceVersion: calculateTemplateFingerprint(tmpl.Template),
-	}, nil
+	// if name was changed, this UID needs to be recalculated
+	return newNotificationTemplate(tmpl.Name, tmpl.Template, models.Provenance(tmpl.Provenance), tmpl.Kind), nil
 }
 
 func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error {
@@ -261,44 +270,39 @@ func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameO
 	if err != nil {
 		return err
 	}
-
-	if revision.Config.TemplateFiles == nil {
+	existing, found, err := t.getTemplateByName(ctx, revision, orgID, nameOrUid)
+	if err != nil {
+		return err
+	}
+	if !found {
+		existing, found, err = t.getTemplateByUID(ctx, revision, orgID, nameOrUid)
+	}
+	if err != nil {
+		return err
+	}
+	if !found {
 		return nil
 	}
-
-	existingName := nameOrUid
-	existing, ok := revision.Config.TemplateFiles[nameOrUid]
-	if !ok {
-		existingName, existing, ok = getTemplateByUid(revision.Config.TemplateFiles, nameOrUid)
-	}
-	if !ok {
-		return nil
+	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
+		return makeErrTemplateOrigin(existing, "delete")
 	}
 
-	err = t.checkOptimisticConcurrency(existingName, existing, models.Provenance(provenance), version, "delete")
+	err = t.checkOptimisticConcurrency(existing.Name, existing.Template, models.Provenance(provenance), version, "delete")
 	if err != nil {
 		return err
 	}
 
-	// check that provenance is not changed in an invalid way
-	storedProvenance, err := t.provenanceStore.GetProvenance(ctx, &definitions.NotificationTemplate{Name: existingName}, orgID)
-	if err != nil {
-		return err
-	}
-	if err = t.validator(storedProvenance, models.Provenance(provenance)); err != nil {
+	if err = t.validator(models.Provenance(existing.Provenance), models.Provenance(provenance)); err != nil {
 		return err
 	}
 
-	delete(revision.Config.TemplateFiles, existingName)
+	delete(revision.Config.TemplateFiles, existing.Name)
 
 	return t.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		tgt := definitions.NotificationTemplate{
-			Name: existingName,
-		}
-		return t.provenanceStore.DeleteProvenance(ctx, &tgt, orgID)
+		return t.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
 	})
 }
 
@@ -323,11 +327,58 @@ func calculateTemplateFingerprint(t string) string {
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func getTemplateByUid(templates map[string]string, uid string) (string, string, bool) {
-	for n, tmpl := range templates {
-		if legacy_storage.NameToUid(n) == uid {
-			return n, tmpl, true
-		}
+func newNotificationTemplate(name, content string, provenance models.Provenance, kind definition.TemplateKind) definitions.NotificationTemplate {
+	tmpl := definitions.NotificationTemplate{
+		UID:        templateUID(kind, name),
+		Name:       name,
+		Template:   content,
+		Provenance: definitions.Provenance(provenance),
+		Kind:       kind,
 	}
-	return "", "", false
+	tmpl.ResourceVersion = calculateTemplateFingerprint(content)
+	return tmpl
+}
+
+func (t *TemplateService) getTemplateByName(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, name string) (definitions.NotificationTemplate, bool, error) {
+	existingContent, ok := revision.Config.TemplateFiles[name]
+	if !ok {
+		return definitions.NotificationTemplate{}, false, nil
+	}
+	provenance, err := t.provenanceStore.GetProvenance(ctx, &definitions.NotificationTemplate{Name: name}, orgID)
+	if err != nil {
+		return definitions.NotificationTemplate{}, false, err
+	}
+	return newNotificationTemplate(name, existingContent, provenance, definition.GrafanaTemplateKind), true, nil
+}
+
+func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, uid string) (definitions.NotificationTemplate, bool, error) {
+	find := func(templates map[string]string, uid string, kind definition.TemplateKind) (string, string, bool) {
+		for n, tmpl := range templates {
+			if templateUID(kind, n) == uid {
+				return n, tmpl, true
+			}
+		}
+		return "", "", false
+	}
+	var provenance models.Provenance
+	name, content, ok := find(revision.Config.TemplateFiles, uid, definition.GrafanaTemplateKind)
+	if !ok {
+		if t.includeImported && len(revision.Config.ExtraConfigs) > 0 {
+			name, content, ok = find(revision.Config.ExtraConfigs[0].TemplateFiles, uid, definition.MimirTemplateKind)
+			if ok {
+				return newNotificationTemplate(name, content, models.ProvenanceConvertedPrometheus, definition.MimirTemplateKind), true, nil
+			}
+		}
+		return definitions.NotificationTemplate{}, false, nil
+	}
+	var err error
+	provenance, err = t.provenanceStore.GetProvenance(ctx, &definitions.NotificationTemplate{Name: name}, orgID)
+	if err != nil {
+		return definitions.NotificationTemplate{}, false, err
+	}
+	return newNotificationTemplate(name, content, provenance, definition.GrafanaTemplateKind), true, nil
+}
+
+func templateUID(kind definition.TemplateKind, name string) string {
+	return legacy_storage.NameToUid(fmt.Sprintf("%s|%s", string(kind), name))
 }

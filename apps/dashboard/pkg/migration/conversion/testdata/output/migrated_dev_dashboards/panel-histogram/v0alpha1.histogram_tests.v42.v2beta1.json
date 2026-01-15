@@ -911,6 +911,7 @@
                   "kind": "filterFieldsByName",
                   "spec": {
                     "id": "filterFieldsByName",
+                    "disabled": true,
                     "options": {
                       "include": {
                         "names": [
@@ -924,6 +925,7 @@
                   "kind": "histogram",
                   "spec": {
                     "id": "histogram",
+                    "disabled": true,
                     "options": {
                       "combine": true,
                       "fields": {}
@@ -1276,5 +1278,10 @@
     "title": "Panel Tests - Histogram",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

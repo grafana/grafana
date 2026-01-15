@@ -961,8 +961,6 @@
           "effects": {
             "barGlow": false,
             "centerGlow": false,
-            "rounded": false,
-            "spotlight": false,
             "gradient": false
           },
           "orientation": "auto",

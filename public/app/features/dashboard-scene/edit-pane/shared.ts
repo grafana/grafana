@@ -84,6 +84,10 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
   static type = 'conditional-rendering-changed';
 }
 
+export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'repeats-updated';
+}
+
 export interface DashboardEditActionEventPayload {
   removedObject?: SceneObject;
   addedObject?: SceneObject;
@@ -245,10 +249,29 @@ export const dashboardEditActions = {
     description: t('dashboard.variable.description.action', 'Change variable description'),
     prop: 'description',
   }),
-  changeVariableHideValue: makeEditAction<SceneVariable, 'hide'>({
-    description: t('dashboard.variable.hide.action', 'Change variable hide option'),
-    prop: 'hide',
-  }),
+  changeVariableHideValue({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'hide'>) {
+    const variableSet = source.parent;
+    const variablesBeforeChange =
+      variableSet instanceof SceneVariableSet ? [...(variableSet.state.variables ?? [])] : undefined;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.variable.hide.action', 'Change variable hide option'),
+      source,
+      perform: () => {
+        source.setState({ hide: newValue });
+        // Updating the variables set since components that show/hide variables subscribe to the variable set, not the individual variables.
+        if (variableSet instanceof SceneVariableSet) {
+          variableSet.setState({ variables: [...(variableSet.state.variables ?? [])] });
+        }
+      },
+      undo: () => {
+        source.setState({ hide: oldValue });
+        if (variableSet instanceof SceneVariableSet && variablesBeforeChange) {
+          variableSet.setState({ variables: variablesBeforeChange });
+        }
+      },
+    });
+  },
 
   moveElement(props: MoveElementActionHelperProps) {
     const { movedObject, source, perform, undo } = props;
