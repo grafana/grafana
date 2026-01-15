@@ -438,6 +438,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Resource:  event.Key.Resource,
 		Name:      event.Key.Name,
 	})
+	k.notifier.Publish(eventData)
 
 	return rv, nil
 }
