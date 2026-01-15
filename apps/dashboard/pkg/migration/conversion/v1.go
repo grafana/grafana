@@ -2,7 +2,6 @@ package conversion
 
 import (
 	"k8s.io/apimachinery/pkg/conversion"
-	"k8s.io/utils/ptr"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -18,11 +17,7 @@ func Convert_V1beta1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope co
 
 	out.Spec.Object = in.Spec.Object
 
-	out.Status = dashv0.DashboardStatus{
-		Conversion: &dashv0.DashboardConversionStatus{
-			StoredVersion: ptr.To(dashv1.VERSION),
-		},
-	}
+	setConversionStatus(in, out, nil, nil)
 
 	return nil
 }
@@ -32,13 +27,7 @@ func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboa
 		out.ObjectMeta = in.ObjectMeta
 		out.APIVersion = dashv2alpha1.APIVERSION
 		out.Kind = in.Kind
-		out.Status = dashv2alpha1.DashboardStatus{
-			Conversion: &dashv2alpha1.DashboardConversionStatus{
-				StoredVersion: ptr.To(dashv1.VERSION),
-				Failed:        true,
-				Error:         ptr.To(err.Error()),
-			},
-		}
+		setConversionStatus(in, out, err, nil)
 		// Ensure layout is set even on error to prevent JSON marshaling issues
 		if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
 			out.Spec.Layout = dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
@@ -61,14 +50,7 @@ func Convert_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboa
 		}
 	}
 
-	// Set successful conversion status
-	out.Status = dashv2alpha1.DashboardStatus{
-		Conversion: &dashv2alpha1.DashboardConversionStatus{
-			StoredVersion: ptr.To(dashv1.VERSION),
-			Failed:        false,
-		},
-	}
-
+	setConversionStatus(in, out, nil, nil)
 	return nil
 }
 
@@ -78,13 +60,7 @@ func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard
 		out.ObjectMeta = in.ObjectMeta
 		out.APIVersion = dashv2beta1.APIVERSION
 		out.Kind = in.Kind
-		out.Status = dashv2beta1.DashboardStatus{
-			Conversion: &dashv2beta1.DashboardConversionStatus{
-				StoredVersion: ptr.To(dashv1.VERSION),
-				Failed:        true,
-				Error:         ptr.To(err.Error()),
-			},
-		}
+		setConversionStatus(in, out, err, nil)
 		// Ensure layout is set even on error to prevent JSON marshaling issues
 		if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
 			out.Spec.Layout = dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
@@ -101,13 +77,7 @@ func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard
 		out.ObjectMeta = in.ObjectMeta
 		out.APIVersion = dashv2beta1.APIVERSION
 		out.Kind = in.Kind
-		out.Status = dashv2beta1.DashboardStatus{
-			Conversion: &dashv2beta1.DashboardConversionStatus{
-				StoredVersion: ptr.To(dashv1.VERSION),
-				Failed:        true,
-				Error:         ptr.To(err.Error()),
-			},
-		}
+		setConversionStatus(in, out, err, nil)
 		// Ensure layout is set even on error to prevent JSON marshaling issues
 		if out.Spec.Layout.GridLayoutKind == nil && out.Spec.Layout.RowsLayoutKind == nil {
 			out.Spec.Layout = dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
@@ -120,13 +90,6 @@ func Convert_V1beta1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard
 		return err
 	}
 
-	// Set successful conversion status
-	out.Status = dashv2beta1.DashboardStatus{
-		Conversion: &dashv2beta1.DashboardConversionStatus{
-			StoredVersion: ptr.To(dashv1.VERSION),
-			Failed:        false,
-		},
-	}
-
+	setConversionStatus(in, out, nil, nil)
 	return nil
 }
