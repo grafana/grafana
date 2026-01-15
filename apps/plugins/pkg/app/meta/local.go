@@ -22,7 +22,8 @@ type LocalProvider struct {
 // NewLocalProvider creates a new LocalProvider for locally installed plugins.
 func NewLocalProvider(pluginStore pluginstore.Store, moduleHashCalc *modulehash.Calculator) *LocalProvider {
 	return &LocalProvider{
-		store: pluginStore,
+		store:          pluginStore,
+		moduleHashCalc: moduleHashCalc,
 	}
 }
 
@@ -34,7 +35,6 @@ func (p *LocalProvider) GetMeta(ctx context.Context, pluginID, version string) (
 	}
 
 	moduleHash := p.moduleHashCalc.ModuleHash(ctx, pluginID, version)
-
 	spec := pluginStorePluginToMeta(plugin, moduleHash)
 	return &Result{
 		Meta: spec,
