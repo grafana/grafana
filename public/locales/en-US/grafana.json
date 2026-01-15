@@ -12743,14 +12743,6 @@
       "view-as-folders": "View by folders",
       "view-as-list": "View as list"
     },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alphabetically (A-Z)",
-          "alphabetically-za": "Alphabetically (Z-A)"
-        }
-      }
-    },
     "dashboard-actions": {
       "import": "Import",
       "new": "New",
