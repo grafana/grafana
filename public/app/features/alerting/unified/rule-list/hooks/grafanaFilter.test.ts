@@ -455,6 +455,25 @@ describe('grafana-managed rules', () => {
         expect(frontendFilter.ruleMatches(regularRule)).toBe(true);
         expect(frontendFilter.ruleMatches(pluginRule)).toBe(true);
       });
+
+      it('should include searchFolder in backend filter when namespace is provided', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ namespace: 'my-folder' }));
+
+        expect(backendFilter.searchFolder).toBe('my-folder');
+      });
+
+      it('should skip namespace filtering on frontend when backend filtering is enabled', () => {
+        const group: PromRuleGroupDTO = {
+          name: 'Test Group',
+          file: 'production/alerts',
+          rules: [],
+          interval: 60,
+        };
+
+        const { frontendFilter } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
+        // Should return true because namespace filter is null (handled by backend)
+        expect(frontendFilter.groupMatches(group)).toBe(true);
+      });
     });
 
     describe('when alertingUIUseBackendFilters is disabled', () => {
@@ -535,6 +554,12 @@ describe('grafana-managed rules', () => {
         const { backendFilter } = getGrafanaFilter(getFilter({ groupName: 'my-group' }));
 
         expect(backendFilter.searchGroupName).toBeUndefined();
+      });
+
+      it('should not include searchFolder in backend filter', () => {
+        const { backendFilter } = getGrafanaFilter(getFilter({ namespace: 'my-folder' }));
+
+        expect(backendFilter.searchFolder).toBeUndefined();
       });
 
       it('should perform groupName filtering on frontend', () => {
@@ -706,8 +731,8 @@ describe('grafana-managed rules', () => {
         expect(frontendFilter.groupMatches(group)).toBe(true);
       });
 
-      it('should still apply always-frontend filters (namespace)', () => {
-        // Namespace filter should still work
+      it('should skip namespace filtering on frontend', () => {
+        // Namespace filter should be handled by backend
         const group: PromRuleGroupDTO = {
           name: 'Test Group',
           file: 'production/alerts',
@@ -719,7 +744,7 @@ describe('grafana-managed rules', () => {
         expect(nsFilter.groupMatches(group)).toBe(true);
 
         const { frontendFilter: nsFilter2 } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
-        expect(nsFilter2.groupMatches(group)).toBe(false);
+        expect(nsFilter2.groupMatches(group)).toBe(true);
       });
 
       it('should skip dataSourceNames filtering on frontend (handled by backend)', () => {
@@ -807,8 +832,8 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ labels: ['severity=critical'] }))).toBe(false);
       });
 
-      it('should return true for client-side only filters', () => {
-        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+      it('should return false for namespace filter (handled by backend)', () => {
+        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(false);
       });
 
       it('should return false for plugins filter (handled by backend when feature toggle is enabled)', () => {
@@ -862,8 +887,8 @@ describe('grafana-managed rules', () => {
         expect(hasGrafanaClientSideFilters(getFilter({ ruleHealth: RuleHealth.Ok }))).toBe(false);
         expect(hasGrafanaClientSideFilters(getFilter({ contactPoint: 'my-contact-point' }))).toBe(false);
 
-        // Should return true for: always-frontend filters only (namespace)
-        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(true);
+        // Should return false for: namespace (handled by backend)
+        expect(hasGrafanaClientSideFilters(getFilter({ namespace: 'production' }))).toBe(false);
 
         // plugins is backend-handled when both feature toggles are enabled
         expect(hasGrafanaClientSideFilters(getFilter({ plugins: 'hide' }))).toBe(false);
