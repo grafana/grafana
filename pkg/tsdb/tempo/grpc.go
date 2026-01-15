@@ -7,18 +7,71 @@ import (
 	"net"
 	"net/url"
 	"strings"
+	"sync"
+	"time"
 
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/tempo/pkg/tempopb"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
-var logger = backend.NewLoggerWith("logger", "tsdb.tempo")
+var (
+	logger = backend.NewLoggerWith("logger", "tsdb.tempo")
+
+	// gRPC client metrics - initialized lazily
+	grpcRequestsTotal *prometheus.CounterVec
+	grpcRequestDuration *prometheus.HistogramVec
+	grpcInFlightRequests *prometheus.GaugeVec
+
+	metricsOnce sync.Once
+)
+
+// initGRPCMetrics initializes the gRPC client metrics
+func initGRPCMetrics() {
+	metricsOnce.Do(func() {
+		grpcRequestsTotal = promauto.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: "grafana",
+				Subsystem: "tempo_grpc",
+				Name:      "requests_total",
+				Help:      "Total number of gRPC requests to Tempo",
+			},
+			[]string{"method", "status"},
+		)
+
+		grpcRequestDuration = promauto.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: "grafana",
+				Subsystem: "tempo_grpc", 
+				Name:      "request_duration_seconds",
+				Help:      "Duration of gRPC requests to Tempo",
+				Buckets:   prometheus.DefBuckets,
+			},
+			[]string{"method", "status"},
+		)
+
+		grpcInFlightRequests = promauto.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: "grafana",
+				Subsystem: "tempo_grpc",
+				Name:      "in_flight_requests",
+				Help:      "Number of in-flight gRPC requests to Tempo",
+			},
+			[]string{"method"},
+		)
+	})
+}
 
 // newGrpcClient creates a new gRPC client to connect to a streaming query service.
 // This uses the default google.golang.org/grpc library. One caveat to that is that it does not allow passing the
@@ -81,15 +134,27 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 // getDialOpts creates options and interceptors (middleware) this should roughly match what we do in
 // http_client_provider.go for standard http requests.
 func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, opts httpclient.Options) ([]grpc.DialOption, error) {
-	// TODO: Missing middleware TracingMiddleware, DataSourceMetricsMiddleware, ContextualMiddleware,
-	//  ResponseLimitMiddleware RedirectLimitMiddleware.
-	// Also User agent but that is set before each rpc call as for decoupled DS we have to get it from request context
-	// and cannot add it to client here.
+	// TODO: Still missing some middleware compared to HTTP client:
+	// - OAuth token forwarding (OAuthTokenMiddleware equivalent - requires integration with oauthtoken.OAuthTokenService)
+	// - Response limits (not applicable to gRPC streaming)
+	// - Redirect handling (not applicable to gRPC)
+	// - Complete contextual middleware support
+	//
+	// Implemented so far:
+	// ✓ Basic tracing (logging-based)
+	// ✓ Basic metrics (logging-based)
+	// ✓ Custom headers forwarding
+	// ✓ User agent handling (automatic)
 
 	var dialOps []grpc.DialOption
 
 	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(100*1024*1024)))
-	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
+  dialOps = append(dialOps, grpc.WithChainStreamInterceptor(
+		MetricsStreamInterceptor(),
+		TracingStreamInterceptor(),
+		CustomHeadersStreamInterceptor(opts),
+		UserAgentStreamInterceptor(),
+	))
 	if settings.BasicAuthEnabled {
 		// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
 		tls, err := httpclient.GetTLSConfig(opts)
@@ -152,6 +217,85 @@ func CustomHeadersStreamInterceptor(httpOpts httpclient.Options) grpc.StreamClie
 		}
 
 		return streamer(ctx, desc, cc, method, opts...)
+	}
+}
+
+// UserAgentStreamInterceptor adds user agent to the outgoing context for each RPC call.
+func UserAgentStreamInterceptor() grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		// Get user agent from context and add it to the outgoing metadata
+		if userAgent := backend.UserAgentFromContext(ctx); userAgent != nil {
+			ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", userAgent.String())
+		}
+
+		return streamer(ctx, desc, cc, method, opts...)
+	}
+}
+
+// TracingStreamInterceptor adds OpenTelemetry tracing support for gRPC streaming calls.
+// This creates proper OpenTelemetry spans with attributes and error handling.
+func TracingStreamInterceptor() grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		// Start an OpenTelemetry span for the gRPC call
+		ctx, span := tracing.Start(ctx, "tempo.grpc.stream", 
+			attribute.String("rpc.method", method),
+			attribute.String("rpc.service", "tempo"),
+			attribute.String("rpc.system", "grpc"),
+			attribute.String("stream.name", desc.StreamName),
+			attribute.Bool("stream.client", true),
+		)
+		defer span.End()
+
+		logger.Debug("gRPC streaming call", "method", method, "stream_name", desc.StreamName)
+
+		stream, err := streamer(ctx, desc, cc, method, opts...)
+		if err != nil {
+			// Record the error in the span
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			span.SetAttributes(attribute.String("rpc.grpc.status", "error"))
+			logger.Error("gRPC streaming call failed", "method", method, "error", err)
+		} else {
+			span.SetStatus(codes.Ok, "success")
+			span.SetAttributes(attribute.String("rpc.grpc.status", "ok"))
+		}
+
+		return stream, err
+	}
+}
+
+// MetricsStreamInterceptor adds Prometheus metrics collection for gRPC streaming calls.
+// This provides similar functionality to the DataSourceMetricsMiddleware for HTTP clients.
+func MetricsStreamInterceptor() grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		// Initialize metrics lazily
+		initGRPCMetrics()
+
+		startTime := time.Now()
+		
+		// Track in-flight requests
+		grpcInFlightRequests.WithLabelValues(method).Inc()
+		defer grpcInFlightRequests.WithLabelValues(method).Dec()
+
+		stream, err := streamer(ctx, desc, cc, method, opts...)
+
+		// Calculate metrics
+		duration := time.Since(startTime)
+		status := "success"
+		if err != nil {
+			status = "error"
+		}
+
+		// Record metrics
+		grpcRequestsTotal.WithLabelValues(method, status).Inc()
+		grpcRequestDuration.WithLabelValues(method, status).Observe(duration.Seconds())
+
+		logger.Debug("gRPC streaming call completed",
+			"method", method,
+			"duration_ms", duration.Milliseconds(),
+			"status", status)
+
+		return stream, err
 	}
 }
 
