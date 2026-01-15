@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
 import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
-import { useMeasure } from 'react-use';
+import { useMeasure, usePrevious } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
@@ -142,15 +142,36 @@ const FlameGraphContainer = ({
     const isNarrow = containerWidth < MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH && !vertical;
 
     if (isNarrow && selectedView === SelectedView.Multi) {
-      // Going narrow: save current view and switch to FlameGraph
+      // Going narrow: save current view and switch to the right pane's view type
       setViewBeforeNarrow(SelectedView.Multi);
-      setSelectedView(SelectedView.FlameGraph);
+      // Convert PaneView to SelectedView (they have matching values)
+      const currentRightView = viewMode === ViewMode.Single ? singleView : rightPaneView;
+      const narrowView = currentRightView === PaneView.TopTable ? SelectedView.TopTable
+        : currentRightView === PaneView.CallTree ? SelectedView.CallTree
+        : SelectedView.FlameGraph;
+      setSelectedView(narrowView);
     } else if (!isNarrow && viewBeforeNarrow !== null) {
       // Going wide again: restore the previous view
       setSelectedView(viewBeforeNarrow);
       setViewBeforeNarrow(null);
     }
-  }, [containerWidth, vertical, selectedView, viewBeforeNarrow]);
+  }, [containerWidth, vertical, selectedView, viewBeforeNarrow, viewMode, singleView, rightPaneView]);
+
+  // Sync singleView with rightPaneView when switching between Split and Single modes
+  // This ensures the right pane content becomes the single view and vice versa
+  const prevViewMode = usePrevious(viewMode);
+  useEffect(() => {
+    if (prevViewMode === undefined) {
+      return;
+    }
+    if (prevViewMode === ViewMode.Split && viewMode === ViewMode.Single) {
+      // Switching from Split to Single: use the right pane's view type
+      setSingleView(rightPaneView);
+    } else if (prevViewMode === ViewMode.Single && viewMode === ViewMode.Split) {
+      // Switching from Single to Split: sync the right pane with single view
+      setRightPaneView(singleView);
+    }
+  }, [viewMode, prevViewMode, rightPaneView, singleView]);
 
   if (!dataContainer) {
     return null;
@@ -234,145 +255,91 @@ const FlameGraphContainer = ({
     );
   } else if (selectedView === SelectedView.Multi) {
     // New view model: support split view with independent pane selections
-    if (viewMode === ViewMode.Split) {
-      if (vertical) {
-        body = (
-          <div>
-            <div className={styles.verticalPaneContainer}>
-              <FlameGraphPane
-                key="left-pane"
-                paneView={leftPaneView}
-                dataContainer={dataContainer}
-                search={search}
-                matchedLabels={matchedLabels}
-                onTableSymbolClick={onTableSymbolClick}
-                onTextAlignSelected={onTextAlignSelected}
-                onTableSort={onTableSort}
-                showFlameGraphOnly={showFlameGraphOnly}
-                disableCollapsing={disableCollapsing}
-                getExtraContextMenuButtons={getExtraContextMenuButtons}
-                selectedView={selectedView}
-                viewMode={viewMode}
-                theme={theme}
-                setSearch={setSearch}
-                resetKey={resetKey}
-                keepFocusOnDataChange={keepFocusOnDataChange}
-                highlightedItemIndexes={highlightedItemIndexes}
-                setHighlightedItemIndexes={setHighlightedItemIndexes}
-                sharedSandwichItem={sharedSandwichItem}
-                setSharedSandwichItem={setSharedSandwichItem}
-              />
-            </div>
-            <div className={styles.verticalPaneContainer}>
-              <FlameGraphPane
-                key="right-pane"
-                paneView={rightPaneView}
-                dataContainer={dataContainer}
-                search={search}
-                matchedLabels={matchedLabels}
-                onTableSymbolClick={onTableSymbolClick}
-                onTextAlignSelected={onTextAlignSelected}
-                onTableSort={onTableSort}
-                showFlameGraphOnly={showFlameGraphOnly}
-                disableCollapsing={disableCollapsing}
-                getExtraContextMenuButtons={getExtraContextMenuButtons}
-                selectedView={selectedView}
-                viewMode={viewMode}
-                theme={theme}
-                setSearch={setSearch}
-                resetKey={resetKey}
-                keepFocusOnDataChange={keepFocusOnDataChange}
-                highlightedItemIndexes={highlightedItemIndexes}
-                setHighlightedItemIndexes={setHighlightedItemIndexes}
-                sharedSandwichItem={sharedSandwichItem}
-                setSharedSandwichItem={setSharedSandwichItem}
-              />
-            </div>
-          </div>
-        );
-      } else {
-        body = (
-          <div className={styles.horizontalContainer}>
-            <div className={styles.horizontalPaneContainer}>
-              <FlameGraphPane
-                key="left-pane"
-                paneView={leftPaneView}
-                dataContainer={dataContainer}
-                search={search}
-                matchedLabels={matchedLabels}
-                onTableSymbolClick={onTableSymbolClick}
-                onTextAlignSelected={onTextAlignSelected}
-                onTableSort={onTableSort}
-                showFlameGraphOnly={showFlameGraphOnly}
-                disableCollapsing={disableCollapsing}
-                getExtraContextMenuButtons={getExtraContextMenuButtons}
-                selectedView={selectedView}
-                viewMode={viewMode}
-                theme={theme}
-                setSearch={setSearch}
-                resetKey={resetKey}
-                keepFocusOnDataChange={keepFocusOnDataChange}
-                highlightedItemIndexes={highlightedItemIndexes}
-                setHighlightedItemIndexes={setHighlightedItemIndexes}
-                sharedSandwichItem={sharedSandwichItem}
-                setSharedSandwichItem={setSharedSandwichItem}
-              />
-            </div>
-            <div className={styles.horizontalPaneContainer}>
-              <FlameGraphPane
-                key="right-pane"
-                paneView={rightPaneView}
-                dataContainer={dataContainer}
-                search={search}
-                matchedLabels={matchedLabels}
-                onTableSymbolClick={onTableSymbolClick}
-                onTextAlignSelected={onTextAlignSelected}
-                onTableSort={onTableSort}
-                showFlameGraphOnly={showFlameGraphOnly}
-                disableCollapsing={disableCollapsing}
-                getExtraContextMenuButtons={getExtraContextMenuButtons}
-                selectedView={selectedView}
-                viewMode={viewMode}
-                theme={theme}
-                setSearch={setSearch}
-                resetKey={resetKey}
-                keepFocusOnDataChange={keepFocusOnDataChange}
-                highlightedItemIndexes={highlightedItemIndexes}
-                setHighlightedItemIndexes={setHighlightedItemIndexes}
-                sharedSandwichItem={sharedSandwichItem}
-                setSharedSandwichItem={setSharedSandwichItem}
-              />
-            </div>
-          </div>
-        );
-      }
-    } else {
-      // Single view mode
+    // The right pane and single view share the same component instance to preserve state
+    // We keep a consistent tree structure so React doesn't remount the component
+    const isSplit = viewMode === ViewMode.Split;
+    const rightSinglePaneView = isSplit ? rightPaneView : singleView;
+
+    const leftPane = (
+      <FlameGraphPane
+        key="left-pane"
+        paneView={leftPaneView}
+        dataContainer={dataContainer}
+        search={search}
+        matchedLabels={matchedLabels}
+        onTableSymbolClick={onTableSymbolClick}
+        onTextAlignSelected={onTextAlignSelected}
+        onTableSort={onTableSort}
+        showFlameGraphOnly={showFlameGraphOnly}
+        disableCollapsing={disableCollapsing}
+        getExtraContextMenuButtons={getExtraContextMenuButtons}
+        selectedView={selectedView}
+        viewMode={viewMode}
+        theme={theme}
+        setSearch={setSearch}
+        resetKey={resetKey}
+        keepFocusOnDataChange={keepFocusOnDataChange}
+        highlightedItemIndexes={highlightedItemIndexes}
+        setHighlightedItemIndexes={setHighlightedItemIndexes}
+        sharedSandwichItem={sharedSandwichItem}
+        setSharedSandwichItem={setSharedSandwichItem}
+      />
+    );
+
+    const rightSinglePane = (
+      <FlameGraphPane
+        key="right-single-pane"
+        paneView={rightSinglePaneView}
+        dataContainer={dataContainer}
+        search={search}
+        matchedLabels={matchedLabels}
+        onTableSymbolClick={onTableSymbolClick}
+        onTextAlignSelected={onTextAlignSelected}
+        onTableSort={onTableSort}
+        showFlameGraphOnly={showFlameGraphOnly}
+        disableCollapsing={disableCollapsing}
+        getExtraContextMenuButtons={getExtraContextMenuButtons}
+        selectedView={selectedView}
+        viewMode={viewMode}
+        theme={theme}
+        setSearch={setSearch}
+        resetKey={resetKey}
+        keepFocusOnDataChange={keepFocusOnDataChange}
+        highlightedItemIndexes={highlightedItemIndexes}
+        setHighlightedItemIndexes={setHighlightedItemIndexes}
+        sharedSandwichItem={sharedSandwichItem}
+        setSharedSandwichItem={setSharedSandwichItem}
+      />
+    );
+
+    // Render the layout
+    // The right/single pane preserves state because it uses the same key and stays in a consistent position
+    // The left pane is conditionally rendered (its state is not preserved, which is acceptable)
+    // We use a wrapper div with a stable key to keep the right pane in the same React tree position
+    if (vertical) {
       body = (
-        <div className={styles.singlePaneContainer}>
-          <FlameGraphPane
-            key={`single-${singleView}`}
-            paneView={singleView}
-            dataContainer={dataContainer}
-            search={search}
-            matchedLabels={matchedLabels}
-            onTableSymbolClick={onTableSymbolClick}
-            onTextAlignSelected={onTextAlignSelected}
-            onTableSort={onTableSort}
-            showFlameGraphOnly={showFlameGraphOnly}
-            disableCollapsing={disableCollapsing}
-            getExtraContextMenuButtons={getExtraContextMenuButtons}
-            selectedView={selectedView}
-            viewMode={viewMode}
-            theme={theme}
-            setSearch={setSearch}
-            resetKey={resetKey}
-            keepFocusOnDataChange={keepFocusOnDataChange}
-            highlightedItemIndexes={highlightedItemIndexes}
-            setHighlightedItemIndexes={setHighlightedItemIndexes}
-            sharedSandwichItem={sharedSandwichItem}
-            setSharedSandwichItem={setSharedSandwichItem}
-          />
+        <div>
+          {isSplit && (
+            <div className={styles.verticalPaneContainer}>
+              {leftPane}
+            </div>
+          )}
+          <div key="right-single-container" className={isSplit ? styles.verticalPaneContainer : styles.singlePaneContainer}>
+            {rightSinglePane}
+          </div>
+        </div>
+      );
+    } else {
+      body = (
+        <div className={styles.horizontalContainer}>
+          {isSplit && (
+            <div className={styles.horizontalPaneContainer}>
+              {leftPane}
+            </div>
+          )}
+          <div key="right-single-container" className={isSplit ? styles.horizontalPaneContainer : styles.singlePaneContainerHorizontal}>
+            {rightSinglePane}
+          </div>
         </div>
       );
     }
@@ -522,6 +489,8 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'horizontalPaneContainer',
       flexBasis: '50%',
       maxHeight: 800,
+      minWidth: 0, // Allow shrinking below content size in flex layout
+      overflow: 'hidden',
     }),
 
     verticalPaneContainer: css({
@@ -533,6 +502,15 @@ function getStyles(theme: GrafanaTheme2) {
     singlePaneContainer: css({
       label: 'singlePaneContainer',
       height: 800,
+    }),
+
+    // Single pane container that works within horizontal flex layout
+    singlePaneContainerHorizontal: css({
+      label: 'singlePaneContainerHorizontal',
+      flexBasis: '100%',
+      maxHeight: 800,
+      minWidth: 0, // Allow shrinking below content size in flex layout
+      overflow: 'hidden',
     }),
   };
 }

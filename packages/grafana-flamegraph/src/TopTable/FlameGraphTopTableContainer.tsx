@@ -370,6 +370,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       height: '100%',
+      minWidth: 0, // Allow shrinking below content size in flex layout
+      overflow: 'hidden',
     }),
   };
 };

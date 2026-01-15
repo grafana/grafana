@@ -292,6 +292,8 @@ function getStyles(theme: GrafanaTheme2) {
       // This is not ideal for dashboard panel where it creates a double scroll. In a panel it should be 100% but then
       // in explore we need a specific height.
       height: 800,
+      minWidth: 0, // Allow shrinking below content size in flex layout
+      overflow: 'hidden',
     }),
   };
 }
