@@ -18,9 +18,10 @@ const (
 )
 
 var dependencyMap = map[string][]string{
-	MemberlistKV:            {InstrumentationServer},
-	SearchServerRing:        {InstrumentationServer, MemberlistKV},
-	GrafanaAPIServer:        {InstrumentationServer},
+	MemberlistKV:     {InstrumentationServer},
+	SearchServerRing: {InstrumentationServer, MemberlistKV},
+	GrafanaAPIServer: {InstrumentationServer},
+	// TODO: remove SearchServerRing once split search is done
 	StorageServer:           {InstrumentationServer, SearchServerRing},
 	SearchServer:            {InstrumentationServer, SearchServerRing},
 	ZanzanaServer:           {InstrumentationServer},

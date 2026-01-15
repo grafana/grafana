@@ -231,18 +231,21 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		searchServer, err := sql.NewSearchServer(sql.SearchServerOptions{
-			Backend:       backend,
-			DB:            db,
-			Cfg:           cfg,
-			Tracer:        tracer,
-			Reg:           reg,
-			AccessClient:  authzc,
-			SearchOptions: searchOptions,
-			IndexMetrics:  indexMetrics,
-		})
-		if err != nil {
-			return nil, err
+		var searchServer resource.SearchServer
+		if cfg.EnableSearch {
+			searchServer, err = sql.NewSearchServer(sql.SearchServerOptions{
+				Backend:       backend,
+				DB:            db,
+				Cfg:           cfg,
+				Tracer:        tracer,
+				Reg:           reg,
+				AccessClient:  authzc,
+				SearchOptions: searchOptions,
+				IndexMetrics:  indexMetrics,
+			})
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		return resource.NewLocalResourceClient(storageServer, searchServer), nil
