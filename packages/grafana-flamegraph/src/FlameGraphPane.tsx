@@ -33,6 +33,10 @@ export type FlameGraphPaneProps = {
   highlightedItemIndexes?: number[];
   /** Callback to set the highlighted item indexes when a node is focused in the flame graph */
   setHighlightedItemIndexes?: (itemIndexes: number[] | undefined) => void;
+  /** Shared sandwich item for cross-pane synchronization */
+  sharedSandwichItem?: string;
+  /** Callback to set the shared sandwich item */
+  setSharedSandwichItem?: (item: string | undefined) => void;
 };
 
 const FlameGraphPane = ({
@@ -54,13 +58,27 @@ const FlameGraphPane = ({
   keepFocusOnDataChange,
   highlightedItemIndexes,
   setHighlightedItemIndexes,
+  sharedSandwichItem,
+  setSharedSandwichItem,
 }: FlameGraphPaneProps) => {
   // Pane-specific state - each instance maintains its own
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
-  const [sandwichItem, setSandwichItem] = useState<string>();
+  const [localSandwichItem, setLocalSandwichItem] = useState<string>();
+
+  // Use shared sandwich state when the setter is provided (indicates parent wants to manage state)
+  // Otherwise use local state
+  const isUsingSharedSandwich = setSharedSandwichItem !== undefined;
+  const sandwichItem = isUsingSharedSandwich ? sharedSandwichItem : localSandwichItem;
+  const setSandwichItem = useCallback((item: string | undefined) => {
+    if (isUsingSharedSandwich && setSharedSandwichItem) {
+      setSharedSandwichItem(item);
+    } else {
+      setLocalSandwichItem(item);
+    }
+  }, [isUsingSharedSandwich, setSharedSandwichItem]);
   // Initialize collapsedMap from dataContainer to ensure collapsed groups are shown correctly on first render
   const [collapsedMap, setCollapsedMap] = useState(() => dataContainer.getCollapsedMap());
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
@@ -79,7 +97,8 @@ const FlameGraphPane = ({
       setFocusedItemData(undefined);
       setRangeMin(0);
       setRangeMax(1);
-      setSandwichItem(undefined);
+      // Reset local sandwich state (shared state is reset by parent)
+      setLocalSandwichItem(undefined);
     }
   }, [resetKey]);
 

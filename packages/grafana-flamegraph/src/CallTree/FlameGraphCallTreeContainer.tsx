@@ -4,7 +4,7 @@ import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } fr
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -49,6 +49,20 @@ const FlameGraphCallTreeContainer = memo(
 
     // Callers state - track which function's callers we're showing
     const [callersNodeLabel, setCallersNodeLabel] = useState<string | undefined>(undefined);
+
+    // Sync callers mode with sandwich item from flame graph
+    // When sandwich mode is activated, automatically enter callers mode for that function
+    // When sandwich mode is cleared, exit callers mode
+    useEffect(() => {
+      if (sandwichItem !== undefined) {
+        // Enter callers mode for the sandwiched function
+        setCallersNodeLabel(sandwichItem);
+        setFocusedNodeId(undefined); // Clear focus mode when entering callers mode
+      } else {
+        // Exit callers mode when sandwich is cleared
+        setCallersNodeLabel(undefined);
+      }
+    }, [sandwichItem]);
 
     // Search state - use search from parent (shared with TopTable and FlameGraph)
     const searchQuery = search;
@@ -663,33 +677,41 @@ const FlameGraphCallTreeContainer = memo(
           </div>
 
           {focusedNode && (
-            <div className={styles.focusedItem}>
-              <Button icon="compress-arrows" fill="text" size="sm" disabled aria-label="Callees view" />
-              <span className={styles.focusedItemLabel}>Showing callees of: {focusedNode.label}</span>
-              <Button
-                icon="times"
-                fill="text"
-                size="sm"
-                onClick={() => handleSetFocusMode(undefined)}
-                tooltip="Clear callees view"
-                aria-label="Clear callees view"
-              />
-            </div>
+            <Tooltip content={focusedNode.label} placement="top">
+              <div className={styles.focusedItem}>
+                <Icon size="sm" name="compress-arrows" />
+                <span className={styles.focusedItemLabel}>
+                  {focusedNode.label.substring(focusedNode.label.lastIndexOf('/') + 1)}
+                </span>
+                <IconButton
+                  className={styles.modePillCloseButton}
+                  name="times"
+                  size="sm"
+                  onClick={() => handleSetFocusMode(undefined)}
+                  tooltip="Clear callees view"
+                  aria-label="Clear callees view"
+                />
+              </div>
+            </Tooltip>
           )}
 
           {callersNode && (
-            <div className={styles.callersItem}>
-              <Button icon="expand-arrows-alt" fill="text" size="sm" disabled aria-label="Callers view" />
-              <span className={styles.callersItemLabel}>Showing callers of: {callersNodeLabel}</span>
-              <Button
-                icon="times"
-                fill="text"
-                size="sm"
-                onClick={() => handleSetCallersMode(undefined)}
-                tooltip="Clear callers view"
-                aria-label="Clear callers view"
-              />
-            </div>
+            <Tooltip content={callersNodeLabel || ''} placement="top">
+              <div className={styles.callersItem}>
+                <Icon size="sm" name="gf-show-context" />
+                <span className={styles.callersItemLabel}>
+                  {(callersNodeLabel || '').substring((callersNodeLabel || '').lastIndexOf('/') + 1)}
+                </span>
+                <IconButton
+                  className={styles.modePillCloseButton}
+                  name="times"
+                  size="sm"
+                  onClick={() => handleSetCallersMode(undefined)}
+                  tooltip="Clear callers view"
+                  aria-label="Clear callers view"
+                />
+              </div>
+            </Tooltip>
           )}
 
           <div className={styles.toolbarRight}>
@@ -1391,33 +1413,65 @@ function getStyles(theme: GrafanaTheme2) {
         color: theme.colors.text.primary,
       },
     }),
-    focusedItem: css({
-      display: 'flex',
+    // Pill style matching FlameGraphMetadata
+    modePill: css({
+      display: 'inline-flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      border: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.borderRadius(8),
+      padding: theme.spacing(0.5, 1),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+    }),
+    modePillLabel: css({
+      maxWidth: '200px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      marginLeft: theme.spacing(0.5),
+    }),
+    modePillCloseButton: css({
+      verticalAlign: 'text-bottom',
+      margin: theme.spacing(0, 0.5),
+    }),
+    // Keep old names as aliases for backwards compatibility
+    focusedItem: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.borderRadius(8),
+      padding: theme.spacing(0.5, 1),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
     }),
     focusedItemLabel: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.primary,
-      fontWeight: theme.typography.fontWeightMedium,
+      maxWidth: '200px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      marginLeft: theme.spacing(0.5),
     }),
     callersItem: css({
-      display: 'flex',
+      display: 'inline-flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      border: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.borderRadius(8),
+      padding: theme.spacing(0.5, 1),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
     }),
     callersItemLabel: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.primary,
-      fontWeight: theme.typography.fontWeightMedium,
+      maxWidth: '200px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      marginLeft: theme.spacing(0.5),
     }),
   };
 }

@@ -118,6 +118,8 @@ const FlameGraphContainer = ({
   // Track the item indexes of the focused item in the flame graph, for cross-pane highlighting (e.g., in CallTree)
   // Using itemIndexes (from LevelItem) allows us to find the exact node in the call tree, not just by label
   const [highlightedItemIndexes, setHighlightedItemIndexes] = useState<number[] | undefined>(undefined);
+  // Shared sandwich state for cross-pane synchronization (flame graph sandwich view triggers callers mode in call tree)
+  const [sharedSandwichItem, setSharedSandwichItem] = useState<string | undefined>(undefined);
 
   const theme = useMemo(() => getTheme(), [getTheme]);
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
@@ -176,6 +178,8 @@ const FlameGraphContainer = ({
         keepFocusOnDataChange={keepFocusOnDataChange}
         highlightedItemIndexes={highlightedItemIndexes}
         setHighlightedItemIndexes={setHighlightedItemIndexes}
+        sharedSandwichItem={sharedSandwichItem}
+        setSharedSandwichItem={setSharedSandwichItem}
       />
     );
   } else if (selectedView === SelectedView.TopTable) {
@@ -199,6 +203,8 @@ const FlameGraphContainer = ({
         keepFocusOnDataChange={keepFocusOnDataChange}
         highlightedItemIndexes={highlightedItemIndexes}
         setHighlightedItemIndexes={setHighlightedItemIndexes}
+        sharedSandwichItem={sharedSandwichItem}
+        setSharedSandwichItem={setSharedSandwichItem}
       />
     );
   } else if (selectedView === SelectedView.CallTree) {
@@ -222,6 +228,8 @@ const FlameGraphContainer = ({
         keepFocusOnDataChange={keepFocusOnDataChange}
         highlightedItemIndexes={highlightedItemIndexes}
         setHighlightedItemIndexes={setHighlightedItemIndexes}
+        sharedSandwichItem={sharedSandwichItem}
+        setSharedSandwichItem={setSharedSandwichItem}
       />
     );
   } else if (selectedView === SelectedView.Multi) {
@@ -251,6 +259,8 @@ const FlameGraphContainer = ({
                 keepFocusOnDataChange={keepFocusOnDataChange}
                 highlightedItemIndexes={highlightedItemIndexes}
                 setHighlightedItemIndexes={setHighlightedItemIndexes}
+                sharedSandwichItem={sharedSandwichItem}
+                setSharedSandwichItem={setSharedSandwichItem}
               />
             </div>
             <div className={styles.verticalPaneContainer}>
@@ -274,6 +284,8 @@ const FlameGraphContainer = ({
                 keepFocusOnDataChange={keepFocusOnDataChange}
                 highlightedItemIndexes={highlightedItemIndexes}
                 setHighlightedItemIndexes={setHighlightedItemIndexes}
+                sharedSandwichItem={sharedSandwichItem}
+                setSharedSandwichItem={setSharedSandwichItem}
               />
             </div>
           </div>
@@ -302,6 +314,8 @@ const FlameGraphContainer = ({
                 keepFocusOnDataChange={keepFocusOnDataChange}
                 highlightedItemIndexes={highlightedItemIndexes}
                 setHighlightedItemIndexes={setHighlightedItemIndexes}
+                sharedSandwichItem={sharedSandwichItem}
+                setSharedSandwichItem={setSharedSandwichItem}
               />
             </div>
             <div className={styles.horizontalPaneContainer}>
@@ -325,6 +339,8 @@ const FlameGraphContainer = ({
                 keepFocusOnDataChange={keepFocusOnDataChange}
                 highlightedItemIndexes={highlightedItemIndexes}
                 setHighlightedItemIndexes={setHighlightedItemIndexes}
+                sharedSandwichItem={sharedSandwichItem}
+                setSharedSandwichItem={setSharedSandwichItem}
               />
             </div>
           </div>
@@ -354,6 +370,8 @@ const FlameGraphContainer = ({
             keepFocusOnDataChange={keepFocusOnDataChange}
             highlightedItemIndexes={highlightedItemIndexes}
             setHighlightedItemIndexes={setHighlightedItemIndexes}
+            sharedSandwichItem={sharedSandwichItem}
+            setSharedSandwichItem={setSharedSandwichItem}
           />
         </div>
       );
@@ -387,6 +405,7 @@ const FlameGraphContainer = ({
               // Reset search and pane states when user clicks reset button
               setSearch('');
               setHighlightedItemIndexes(undefined);
+              setSharedSandwichItem(undefined);
               setResetKey((k) => k + 1);
             }}
             showResetButton={Boolean(search)}
