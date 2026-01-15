@@ -209,7 +209,6 @@ export enum PluginExtensionPoints {
   AlertingAlertingRuleAction = 'grafana/alerting/alertingrule/action',
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
   AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
-  AlertingCreateAlertFromPanel = 'grafana/alerting/create-alert-from-panel/v1',
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DashboardEmpty = 'grafana/dashboard/empty',
@@ -246,6 +245,7 @@ export enum PluginExtensionPointPatterns {
 export enum PluginExtensionExposedComponents {
   CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
   AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
+  CreateAlertFromPanelV1 = 'grafana/alerting/create-alert-from-panel/v1',
 }
 
 export type PluginExtensionPanelContext = {
