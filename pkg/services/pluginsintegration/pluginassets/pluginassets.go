@@ -11,11 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-const (
-	CreatePluginVersionCfgKey               = "create_plugin_version"
-	CreatePluginVersionScriptSupportEnabled = "4.15.0"
-)
-
 func ProvideService(calc *modulehash.Calculator) *Service {
 	return &Service{
 		calc: calc,
