@@ -412,6 +412,7 @@ func InstallAPIs(
 
 		return server.InstallAPIGroup(&g)
 	}
+	return nil
 }
 
 func installAPIGroupsForBuilder(g *genericapiserver.APIGroupInfo, group string, b APIGroupBuilder, apiResourceConfig *serverstorage.ResourceConfig, scheme *runtime.Scheme,
