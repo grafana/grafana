@@ -39,6 +39,9 @@ type ApiInstaller[T runtime.Object] interface {
 // while keeping the core IAM registration logic in OSS.
 type RoleApiInstaller ApiInstaller[*iamv0.Role]
 
+// GlobalRoleApiInstaller provides GlobalRole-specific API registration and validation.
+type GlobalRoleApiInstaller ApiInstaller[*iamv0.GlobalRole]
+
 // NoopApiInstaller is a no-op implementation for when roles are not available (OSS).
 type NoopApiInstaller[T runtime.Object] struct {
 	ResourceInfo utils.ResourceInfo
@@ -75,5 +78,12 @@ func (n *NoopApiInstaller[T]) ValidateOnDelete(ctx context.Context, obj T) error
 func ProvideNoopRoleApiInstaller() RoleApiInstaller {
 	return &NoopApiInstaller[*iamv0.Role]{
 		ResourceInfo: iamv0.RoleInfo,
+	}
+}
+
+// ProvideNoopGlobalRoleApiInstaller provides a no-op global role installer specifically for GlobalRole types.
+func ProvideNoopGlobalRoleApiInstaller() GlobalRoleApiInstaller {
+	return &NoopApiInstaller[*iamv0.GlobalRole]{
+		ResourceInfo: iamv0.GlobalRoleInfo,
 	}
 }

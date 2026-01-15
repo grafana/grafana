@@ -2184,6 +2184,7 @@
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "Imported",
         "text-provisioned": "Provisioned"
       }
     },
@@ -2680,8 +2681,7 @@
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
-      "apply-aria-label": "Apply search \"{{name}}\"",
-      "apply-tooltip": "Apply this search",
+      "apply-tooltip": "Apply search \"{{name}}\"",
       "button-label": "Saved searches",
       "cancel": "Cancel",
       "default-indicator": "Default search",
@@ -6383,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "Advanced options",
         "classic": "Classic",
         "json": "JSON",
         "v1-resource": "V1 Resource",
         "v2-resource": "V2 Resource",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "Share dashboard with another instance",
+      "share-externally-tooltip": "Removes all instance-specific metadata and data source references from the resource before export."
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
@@ -7842,7 +7845,6 @@
       "export-externally-label": "Export the dashboard to use in another instance",
       "export-format": "Format",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Remove deployment details",
       "info-text": "Copy or download a file containing the definition of your dashboard",
       "title": "Export dashboard"
     },
