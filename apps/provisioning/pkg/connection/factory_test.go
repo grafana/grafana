@@ -327,11 +327,11 @@ func TestFactory_Build(t *testing.T) {
 
 func TestFactory_Mutate(t *testing.T) {
 	tests := []struct {
-		name          string
-		setupExtras   func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra
-		enabled       map[provisioning.ConnectionType]struct{}
-		obj           runtime.Object
-		wantErr       bool
+		name        string
+		setupExtras func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra
+		enabled     map[provisioning.ConnectionType]struct{}
+		obj         runtime.Object
+		wantErr     bool
 	}{
 		{
 			name: "should successfully mutate with single extra",
