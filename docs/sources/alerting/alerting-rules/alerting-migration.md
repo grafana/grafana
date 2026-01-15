@@ -263,8 +263,8 @@ JSON-encoded [`AlertRuleNotificationSettings` object](#alertrulenotificationsett
 When you set `X-Grafana-Alerting-Notification-Settings`, the header value must be a JSON-encoded object with the following keys:
 
 | Field                   | Type       | Required | Example                                    | Description                                                                                             |
-| ----------------------- | ---------- | -------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `receiver`              | `string`   | Yes      | `"grafana-default-email"`                  | Name of the contact point (receiver) to which alerts are routed. Must exist in Grafana before import.   |
+| ----------------------- | ---------- | -------- |--------------------------------------------| ------------------------------------------------------------------------------------------------------- |
+| `receiver`              | `string`   | Yes      | `"grafana-default"`                        | Name of the contact point (receiver) to which alerts are routed. Must exist in Grafana before import.   |
 | `group_by`              | `[]string` | No       | `["alertname","grafana_folder","cluster"]` | Label set used by Alertmanager to aggregate alerts into a single notification.                          |
 | `group_wait`            | `duration` | No       | `"30s"`                                    | How long Alertmanager waits before sending the first notification for a new group.                      |
 | `group_interval`        | `duration` | No       | `"5m"`                                     | Time to wait before adding new alerts to an existing group's next notification.                         |
