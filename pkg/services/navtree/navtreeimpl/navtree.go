@@ -448,24 +448,26 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
-			// New navigation: Alert rules parent (tabs managed on frontend)
-			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-rules", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
-			})
+			// New navigation: Alert rules parent with children for permission checking (tabs managed on frontend)
+			alertRulesChildren := []*navtree.NavLink{}
 
-			// Add child nav items for permission checking (tabs will be rendered by frontend)
 			// Alert rules list tab
-			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			alertRulesChildren = append(alertRulesChildren, &navtree.NavLink{
 				Text: "Alert rules", Id: "alert-rules-list", Url: s.cfg.AppSubURL + "/alerting/list",
 			})
 
 			// Recently deleted tab (check additional feature flags)
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
-				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				alertRulesChildren = append(alertRulesChildren, &navtree.NavLink{
 					Text: "Recently deleted", Id: "alert-rules-recently-deleted", Url: s.cfg.AppSubURL + "/alerting/recently-deleted",
 				})
 			}
+
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-rules", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
+				Children: alertRulesChildren,
+			})
 		} else {
 			// Legacy navigation
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
