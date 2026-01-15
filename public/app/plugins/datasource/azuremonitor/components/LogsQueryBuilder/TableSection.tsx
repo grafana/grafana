@@ -92,7 +92,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
     if (includesAll && lastSelected.value === '__all_columns__') {
       buildAndUpdateQuery({
-        columns: allColumns.map((col) => col.name),
+        columns: ['__all_columns__'],
       });
       return;
     }
@@ -123,13 +123,12 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     });
   };
 
-  const allColumnNames = allColumns.length > 0 ? allColumns.map((col) => col.name) : [];
+  // const allColumnNames = allColumns.length > 0 ? allColumns.map((col) => col.name) : [];
 
-  const areAllColumnsSelected =
-    allColumnNames.length > 0 &&
-    selectedColumns.length > 0 &&
-    selectedColumns.length === allColumnNames.length &&
-    allColumnNames.every((col) => selectedColumns.includes(col));
+  const areAllColumnsSelected = selectedColumns.length === 1 && selectedColumns[0] === '__all_columns__';
+  // allColumnNames.length > 0 && selectedColumns.length > 0 && selectedColumns.length === allColumnNames.length;
+  // &&
+  // allColumnNames.every((col) => selectedColumns.includes(col));
 
   const columnSelectValue: Array<SelectableValue<string>> = areAllColumnsSelected
     ? [selectAllOption]
