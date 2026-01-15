@@ -761,24 +761,28 @@ const FlameGraphCallTreeContainer = memo(
 
         <AutoSizer style={{ width: '100%', height: 'calc(100% - 50px)' }}>
           {({ width, height }) => {
+            const SCROLLBAR_WIDTH = 16;
+            const availableWidth = width - SCROLLBAR_WIDTH;
+
             // Only update compact mode when crossing the threshold to avoid re-renders on every resize
             if (compactProp === undefined) {
-              const shouldBeCompact = width > 0 && width < minNonCompactWidth;
+              const shouldBeCompact = availableWidth > 0 && availableWidth < minNonCompactWidth;
               if (shouldBeCompact !== isCompact) {
                 queueMicrotask(() => setIsCompact(shouldBeCompact));
               }
             }
             widthRef.current = width;
 
-            const functionColumnWidth = calculateFunctionColumnWidth(width, compact);
+            const functionColumnWidth = calculateFunctionColumnWidth(availableWidth, compact);
 
             if (width < 3 || height < 3) {
               return null;
             }
 
             return (
-              <div style={{ width, height, overflow: 'auto' }}>
-                <table {...getTableProps()} className={styles.table}>
+              <div style={{ width, height, display: 'flex', flexDirection: 'column' }}>
+                {/* Fixed header table */}
+                <table {...getTableProps()} className={styles.table} style={{ flexShrink: 0 }}>
                   <thead className={styles.thead}>
                     {headerGroups.map((headerGroup) => {
                       const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
@@ -811,56 +815,66 @@ const FlameGraphCallTreeContainer = memo(
                       );
                     })}
                   </thead>
-                  <tbody {...getTableBodyProps()} className={styles.tbody}>
-                    {rows.map((row, rowIndex) => {
-                      prepareRow(row);
-                      const { key, ...rowProps } = row.getRowProps();
-                      const isFocusedRow = row.original.id === focusedNodeId;
-                      const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
-                      const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
-                      const isHighlightedRow = highlightedNodeId && row.original.id === highlightedNodeId;
-
-                      const rowRef = isSearchMatchRow ? searchMatchRowRef : isHighlightedRow ? highlightedRowRef : null;
-
-                      return (
-                        <tr
-                          key={key}
-                          {...rowProps}
-                          ref={rowRef}
-                          className={cx(
-                            styles.tr,
-                            (isFocusedRow ||
-                              (focusedNodeId?.startsWith('label:') &&
-                                focusedNodeId.substring(6) === row.original.label)) &&
-                              styles.focusedRow,
-                            isCallersTargetRow && styles.callersTargetRow,
-                            isSearchMatchRow && styles.searchMatchRow,
-                            isHighlightedRow && !isSearchMatchRow && styles.highlightedRow
-                          )}
-                        >
-                          {row.cells.map((cell) => {
-                            const { key: cellKey, ...cellProps } = cell.getCellProps();
-                            const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
-                            const isActionsColumn = cell.column.id === 'actions';
-                            return (
-                              <td
-                                key={cellKey}
-                                {...cellProps}
-                                className={cx(
-                                  styles.td,
-                                  isActionsColumn && styles.actionsColumnCell,
-                                  isValueColumn && styles.valueColumnCell
-                                )}
-                              >
-                                {cell.render('Cell', { rowIndex })}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
                 </table>
+                {/* Scrollable body */}
+                <div style={{ flex: 1, overflowY: 'scroll', overflowX: 'auto' }} className={styles.scrollContainer}>
+                  <table {...getTableProps()} className={styles.table}>
+                    <tbody {...getTableBodyProps()} className={styles.tbody}>
+                      {rows.map((row, rowIndex) => {
+                        prepareRow(row);
+                        const { key, ...rowProps } = row.getRowProps();
+                        const isFocusedRow = row.original.id === focusedNodeId;
+                        const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
+                        const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
+                        const isHighlightedRow = highlightedNodeId && row.original.id === highlightedNodeId;
+
+                        const rowRef = isSearchMatchRow ? searchMatchRowRef : isHighlightedRow ? highlightedRowRef : null;
+
+                        return (
+                          <tr
+                            key={key}
+                            {...rowProps}
+                            ref={rowRef}
+                            className={cx(
+                              styles.tr,
+                              (isFocusedRow ||
+                                (focusedNodeId?.startsWith('label:') &&
+                                  focusedNodeId.substring(6) === row.original.label)) &&
+                                styles.focusedRow,
+                              isCallersTargetRow && styles.callersTargetRow,
+                              isSearchMatchRow && styles.searchMatchRow,
+                              isHighlightedRow && !isSearchMatchRow && styles.highlightedRow
+                            )}
+                          >
+                            {row.cells.map((cell) => {
+                              const { key: cellKey, ...cellProps } = cell.getCellProps();
+                              const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
+                              const isActionsColumn = cell.column.id === 'actions';
+                              const columnWidth = cell.column.id === 'label' ? functionColumnWidth : cell.column.width;
+                              return (
+                                <td
+                                  key={cellKey}
+                                  {...cellProps}
+                                  className={cx(
+                                    styles.td,
+                                    isActionsColumn && styles.actionsColumnCell,
+                                    isValueColumn && styles.valueColumnCell
+                                  )}
+                                  style={{
+                                    ...(columnWidth !== undefined && { width: columnWidth }),
+                                    ...(cell.column.minWidth !== undefined && { minWidth: cell.column.minWidth }),
+                                  }}
+                                >
+                                  {cell.render('Cell', { rowIndex })}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             );
           }}
@@ -1233,6 +1247,21 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
     }),
+    scrollContainer: css({
+      '&::-webkit-scrollbar': {
+        width: '8px',
+      },
+      '&::-webkit-scrollbar-track': {
+        background: theme.colors.background.secondary,
+      },
+      '&::-webkit-scrollbar-thumb': {
+        background: theme.colors.text.disabled,
+        borderRadius: '4px',
+      },
+      '&::-webkit-scrollbar-thumb:hover': {
+        background: theme.colors.text.secondary,
+      },
+    }),
     toolbar: css({
       display: 'flex',
       justifyContent: 'space-between',
@@ -1289,9 +1318,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     thead: css({
       backgroundColor: theme.colors.background.secondary,
-      position: 'sticky',
-      top: 0,
-      zIndex: 1,
     }),
     th: css({
       padding: '4px 6px',
