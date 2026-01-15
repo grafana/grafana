@@ -24,7 +24,7 @@ const LINE_HEIGHT_FACTOR = 1.2;
 export const RadialScaleLabels = memo(
   ({
     fieldDisplay,
-    thresholds,
+    thresholds: rawThresholds,
     theme,
     dimensions,
     startAngle,
@@ -34,6 +34,7 @@ export const RadialScaleLabels = memo(
   }: RadialScaleLabelsProps) => {
     const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius } = dimensions;
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
+    const thresholds = rawThresholds.filter((threshold) => threshold.value >= min && threshold.value <= max);
     const allValues = thresholds.map((t) => t.value);
 
     // there are a couple cases where we will not show the neutral label even if neutral is set.
@@ -81,7 +82,7 @@ export const RadialScaleLabels = memo(
       return { ...position, transform: `rotate(${finalAngle}, ${position.x}, ${position.y})` };
     }
 
-    const labels = thresholds.map((threshold, index) => ({
+    const labels = thresholds.map((threshold) => ({
       value: threshold.value,
       pos: getTextPosition(String(threshold.value), threshold.value),
       label: t(`gauge.threshold`, 'Threshold {{value}}', { value: threshold.value }),

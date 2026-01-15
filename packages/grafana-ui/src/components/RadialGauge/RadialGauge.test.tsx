@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { ComponentProps } from 'react';
 
+import { ThresholdsMode } from '@grafana/schema';
+
 import { RadialGaugeExample } from './RadialGauge.story';
 
 describe('RadialGauge', () => {
@@ -39,6 +41,26 @@ describe('RadialGauge', () => {
       expect(screen.getByRole('img')).toBeInTheDocument();
       expect(screen.getByLabelText('Threshold 85')).toBeInTheDocument();
       expect(screen.getByLabelText('Neutral 50')).toBeInTheDocument();
+    });
+
+    it('should not render a threshold if it is out of range', () => {
+      render(
+        <RadialGaugeExample
+          showScaleLabels
+          thresholds={{
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 65, color: 'orange' },
+              { value: 200, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 65')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Threshold 200')).not.toBeInTheDocument();
     });
 
     it('should not render neutral if it is out of range', () => {

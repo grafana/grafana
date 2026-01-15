@@ -8,7 +8,7 @@ import {
   GrafanaTheme2,
   toDataFrame,
 } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId, FieldConfig, ThresholdsMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Stack } from '../Layout/Stack/Stack';
@@ -344,6 +344,7 @@ interface ExampleProps {
   segmentCount?: number;
   segmentSpacing?: number;
   roundedBars?: boolean;
+  thresholds?: FieldConfig['thresholds'];
   thresholdsBar?: boolean;
   colorScheme?: FieldColorModeId;
   endpointMarker?: RadialGaugeProps['endpointMarker'];
@@ -351,6 +352,15 @@ interface ExampleProps {
   showScaleLabels?: boolean;
   neutral?: number;
 }
+
+const DEFAULT_THRESHOLDS: FieldConfig['thresholds'] = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    { value: -Infinity, color: 'green' },
+    { value: 65, color: 'orange' },
+    { value: 85, color: 'red' },
+  ],
+};
 
 export function RadialGaugeExample({
   color,
@@ -372,6 +382,7 @@ export function RadialGaugeExample({
   segmentCount = 0,
   segmentSpacing = 0.1,
   roundedBars = false,
+  thresholds = DEFAULT_THRESHOLDS,
   thresholdsBar = false,
   colorScheme = FieldColorModeId.Thresholds,
   endpointMarker = 'glow',
@@ -408,14 +419,7 @@ export function RadialGaugeExample({
           unit: 'percent',
           decimals: decimals,
           color: { mode: colorScheme, fixedColor: color ? theme.visualization.getColorByName(color) : undefined },
-          thresholds: {
-            mode: 'absolute',
-            steps: [
-              { value: -Infinity, color: 'green' },
-              { value: 65, color: 'orange' },
-              { value: 85, color: 'red' },
-            ],
-          },
+          thresholds,
         },
         // Add state and getLinks
         state: {},
