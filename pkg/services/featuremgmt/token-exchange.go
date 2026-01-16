@@ -36,6 +36,7 @@ var _ http.RoundTripper = &tokenExchangeMiddlewareImpl{}
 func TestingTokenExchangeMiddleware(tokenExchangeClient authlib.TokenExchanger) *TokenExchangeMiddleware {
 	return &TokenExchangeMiddleware{
 		tokenExchangeClient: tokenExchangeClient,
+		namespace:           "*",
 	}
 }
 

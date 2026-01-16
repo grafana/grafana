@@ -120,7 +120,7 @@ func createProvider(
 	return newStaticProvider(staticFlags, standardFeatureFlags)
 }
 
-func createHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {
+func createHTTPClient(m *TokenExchangeMiddleware) (*http.Client, error) {
 	options := sdkhttpclient.Options{
 		TLS: &sdkhttpclient.TLSOptions{InsecureSkipVerify: true},
 		Timeouts: &sdkhttpclient.TimeoutOptions{
