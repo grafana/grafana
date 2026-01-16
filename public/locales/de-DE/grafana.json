@@ -807,7 +807,8 @@
       "label-integration": "Integration",
       "label-notification-settings": "Benachrichtigungseinstellungen",
       "label-section": "Optionale {{name}}-Einstellungen",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "VON",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Diese Ressource wurde über {{provenance}} bereitgestellt und kann nicht über die Benutzeroberfläche bearbeitet werden",
       "badge-tooltip-standard": "Diese Ressource wurde bereitgestellt und kann nicht über die Benutzeroberfläche bearbeitet werden",
+      "body-imported": "",
       "body-provisioned": "Die Ressource {{resource}} wurde bereitgestellt, d. h. es wurde von config erstellt. Bitte kontaktieren Sie Ihren Serveradministrator für die Aktualisierung von {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Die Ressource {{resource}} kann nicht über die Benutzeroberfläche bearbeitet werden"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Bereitgestellt"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3764,7 +3767,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -4614,6 +4616,7 @@
     },
     "canvas-actions": {
       "add-panel": "Panel hinzufügen",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "In Zeile gruppieren",
@@ -5337,6 +5340,7 @@
       },
       "header-hidden-tooltip": "Kopfzeile nur im Bearbeitungsmodus sichtbar",
       "name": "Zeilen",
+      "new-row-title": "",
       "row": {
         "collapse": "Zeile einklappen",
         "expand": "Zeile ausklappen",
@@ -5695,6 +5699,7 @@
     "validation": {
       "invalid-dashboard-id": "Konnte keine gültige Grafana.com-ID finden",
       "invalid-json": "JSON ungültig",
+      "tag-too-long": "",
       "tags-expected-array": "Array der jeweiligen Tags",
       "tags-expected-strings": "String-Array der jeweiligen Tags"
     },
@@ -6378,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klassisch",
         "json": "JSON",
         "v1-resource": "V1-Ressource",
         "v2-resource": "V2-Ressource",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Sind Sie sicher, dass Sie das Dashboard auf die Version {{version}} zurücksetzen möchten? Alle nicht gespeicherten Änderungen gehen verloren.",
@@ -6978,6 +6986,7 @@
         "drone-datasource": "Drone-Datenquelle",
         "git-lab-integration-and-datasource": "GitLab-Integration und -Datenquelle",
         "honeycomb-integration-and-datasource": "Honeycomb-Integration und -Datenquelle",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira-Integration und -Datenquelle",
         "logic-monitor-devices-datasource": "LogicMonitor Devices-Datenquelle",
         "mongo-db-integration-and-data-source": "MongoDB-Integration und -Datenquelle",
@@ -7836,7 +7845,6 @@
       "export-externally-label": "Exportieren Sie das Dashboard, um es in einer anderen Instanz zu verwenden",
       "export-format": "Format",
       "export-mode": "Modell",
-      "export-remove-ds-refs": "Bereitstellungsdetails entfernen",
       "info-text": "Kopieren oder downloaden Sie eine Datei, die die Definition Ihres Dashboards enthält",
       "title": "Dashboard exportieren"
     },
@@ -7983,6 +7991,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Schwellenwert-Labels anzeigen",
     "name-show-threshold-markers": "Schwellenwert-Markierungen anzeigen",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -9253,7 +9262,8 @@
     "tags-input": {
       "add": "Hinzufügen",
       "placeholder-new-tag": "Neues Tag (Eingabetaste zum Hinzufügen)",
-      "remove": "Tag entfernen: {{name}}"
+      "remove": "Tag entfernen: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Zeiten synchronisieren",
@@ -10720,18 +10730,6 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tastaturbefehle",
     "help/support": "Support",
-    "history-container": {
-      "drawer-tittle": "Verlauf"
-    },
-    "history-wrapper": {
-      "collapse": "Einklappen",
-      "expand": "Ausklappen",
-      "icon-selected": "Ausgewählter Eintrag",
-      "icon-unselected": "Normaler Eintrag",
-      "show-more": "Mehr anzeigen",
-      "today": "Heute",
-      "yesterday": "Gestern"
-    },
     "home": {
       "title": "Home"
     },
@@ -11815,7 +11813,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Löschen",
       "confirm-delete-keep-resources": "Sind Sie sicher, dass Sie die Repository-Konfiguration löschen, aber ihre Ressourcen behalten möchten?",
       "confirm-delete-with-resources": "Sind Sie sicher, dass Sie die Repository-Konfiguration und alle ihre Ressourcen löschen möchten?",
@@ -12079,6 +12123,7 @@
       "jobs": "Aufträge"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Einstellungen",
       "source-code": "Quellcode"
     },
@@ -12528,6 +12573,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12541,6 +12591,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12698,14 +12749,6 @@
       "starred": "Hervorgehoben",
       "view-as-folders": "Nach Ordnern anzeigen",
       "view-as-list": "Als Liste anzeigen"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alphabetisch (A–Z)",
-          "alphabetically-za": "Alphabetisch (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importieren",

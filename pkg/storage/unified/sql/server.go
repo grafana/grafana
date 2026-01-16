@@ -99,6 +99,9 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			return nil, err
 		}
 
+		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
 		if opts.Cfg.EnableSQLKVBackend {
 			sqlkv, err := resource.NewSQLKV(eDB)
 			if err != nil {
@@ -106,9 +109,10 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			}
 
 			kvBackendOpts := resource.KVBackendOptions{
-				KvStore: sqlkv,
-				Tracer:  opts.Tracer,
-				Reg:     opts.Reg,
+				KvStore:            sqlkv,
+				Tracer:             opts.Tracer,
+				Reg:                opts.Reg,
+				UseChannelNotifier: !isHA,
 			}
 
 			ctx := context.Background()
@@ -140,9 +144,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			serverOptions.Backend = kvBackend
 			serverOptions.Diagnostics = kvBackend
 		} else {
-			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-				opts.Cfg.SectionWithEnvOverrides("resource_api"))
-
 			backend, err := NewBackend(BackendOptions{
 				DBProvider:           eDB,
 				Reg:                  opts.Reg,

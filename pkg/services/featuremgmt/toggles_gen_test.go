@@ -190,8 +190,8 @@ func verifyFlagsConfiguration(t *testing.T) {
 		if flag.Stage == FeatureStageGeneralAvailability && flag.Expression == "" {
 			t.Errorf("GA features must be explicitly enabled or disabled, please add the `Expression` property for %s", flag.Name)
 		}
-		if flag.Expression != "" && flag.Expression != "true" && flag.Expression != "false" {
-			t.Errorf("the `Expression` property for %s is incorrect. valid values are: `true`, `false` or empty string for default", flag.Name)
+		if flag.Expression == "" {
+			t.Errorf("the `Expression` property for %s is incorrect. Empty string values are not allowed. Please explicitly define the default value of the Feature Flag. Valid values include boolean, non-empty string, integer, float, and structured values in JSON format.", flag.Name)
 		}
 		// Check camel case names
 		if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {

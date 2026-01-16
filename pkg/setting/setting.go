@@ -588,8 +588,10 @@ type Cfg struct {
 	// Unified Storage
 	UnifiedStorage map[string]UnifiedStorageConfig
 	// DisableDataMigrations will disable resources data migration to unified storage at startup
-	DisableDataMigrations                      bool
-	MaxPageSizeBytes                           int
+	DisableDataMigrations bool
+	MaxPageSizeBytes      int
+	// IndexPath the directory where index files are stored.
+	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexRebuildWorkers                        int
@@ -598,6 +600,7 @@ type Cfg struct {
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
+	IndexScoringModel                          string        // Note: Temporary config to switch the index scoring model and will be removed soon.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool

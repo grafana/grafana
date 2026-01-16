@@ -30,6 +30,11 @@ test.describe(
       });
 
       const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
+      await expect(
+        vizPicker.filter({ hasText: 'Back' }),
+        'we should be viewing the viz picker already since this is a new panel'
+      ).toBeVisible();
+      await vizPicker.click({ force: true });
 
       // Loop through every panel type and ensure no crash
       for (const [_, panel] of Object.entries(panelTypes)) {
@@ -39,21 +44,25 @@ test.describe(
 
         try {
           // Select the panel type in the viz picker
-          await expect(vizPicker).toBeVisible();
+          await expect(vizPicker.filter({ hasText: 'Change' }), 'we should be viewing panel options').toBeVisible();
           await vizPicker.click({ force: true });
-
+          await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('All visualizations')).click();
           await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
 
           // Verify panel type is selected
           await expect(
-            dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)
+            dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header),
+            'verify panel editor for the selected panel type is rendered'
           ).toHaveText(panel.name, { timeout: 10000 });
 
-          // Wait for panel to finish rendering
-          await expect(page.getByLabel('Panel loading bar')).toHaveCount(0, { timeout: 10000 });
+          await expect(page.getByLabel('Panel loading bar'), 'wait for panel to finish rendering').toHaveCount(0, {
+            timeout: 10000,
+          });
 
-          // Ensure no unexpected error occurred
-          await expect(page.getByText('An unexpected error happened')).toBeHidden();
+          await expect(
+            page.getByText('An unexpected error happened'),
+            'ensure no unexpected error occurred'
+          ).toBeHidden();
         } catch (error) {
           throw new Error(`Panel '${panel.name}' failed: ${error}`);
         }

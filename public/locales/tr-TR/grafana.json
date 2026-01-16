@@ -807,7 +807,8 @@
       "label-integration": "Entegrasyon",
       "label-notification-settings": "Bildirim ayarları",
       "label-section": "İsteğe bağlı {{name}} ayarları",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "-",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Bu kaynak {{provenance}} aracılığıyla sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
       "badge-tooltip-standard": "Bu kaynak sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
+      "body-imported": "",
       "body-provisioned": "Bu {{resource}} sağlanmış; yani yapılandırma tarafından oluşturulmuş. Bu {{resource}} ögesini güncellemek için sunucu yöneticinize başvurun.",
+      "title-imported": "",
       "title-provisioned": "Bu {{resource}} kullanıcı arayüzü üzerinden düzenlenemez"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Sağlanan"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3764,7 +3767,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -4614,6 +4616,7 @@
     },
     "canvas-actions": {
       "add-panel": "Panel ekle",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Satır olarak grupla",
@@ -5337,6 +5340,7 @@
       },
       "header-hidden-tooltip": "Satır başlığı yalnızca düzenleme modunda görünür",
       "name": "Satırlar",
+      "new-row-title": "",
       "row": {
         "collapse": "Satırı daralt",
         "expand": "Satırı genişlet",
@@ -5695,6 +5699,7 @@
     "validation": {
       "invalid-dashboard-id": "Geçerli bir Grafana.com kimliği bulunamadı",
       "invalid-json": "Geçerli JSON değil",
+      "tag-too-long": "",
       "tags-expected-array": "etiketler dizi olmalı",
       "tags-expected-strings": "etiklet dizi hâlinde metinlerden oluşmalı"
     },
@@ -6378,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasik",
         "json": "JSON",
         "v1-resource": "V1 Kaynağı",
         "v2-resource": "V2 Kaynağı",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Panoyu {{version}} sürümüne geri yüklemek istediğinize emin misiniz? Kaydedilmemiş tüm değişiklikler kaybolacaktır.",
@@ -6978,6 +6986,7 @@
         "drone-datasource": "Drone veri kaynağı",
         "git-lab-integration-and-datasource": "GitLab entegrasyonu ve veri kaynağı",
         "honeycomb-integration-and-datasource": "Honeycomb entegrasyonu ve veri kaynağı",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira entegrasyonu ve veri kaynağı",
         "logic-monitor-devices-datasource": "LogicMonitor Devices veri kaynağı",
         "mongo-db-integration-and-data-source": "MongoDB entegrasyonu ve veri kaynağı",
@@ -7836,7 +7845,6 @@
       "export-externally-label": "Başka bir oturumda kullanmak için panoyu dışa aktarın",
       "export-format": "Biçim",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Dağıtım ayrıntılarını kaldır",
       "info-text": "Panonuzun tanımını içeren bir dosyayı kopyalayın veya indirin",
       "title": "Panoyu dışa aktar"
     },
@@ -7983,6 +7991,7 @@
     "name-neutral": "Nötr",
     "name-show-threshold-labels": "Eşik etiketlerini göster",
     "name-show-threshold-markers": "Eşik işaretçilerini göster",
+    "neutral": "",
     "placeholder-neutral": "otomatik",
     "suggestions": {
       "arc": "",
@@ -9253,7 +9262,8 @@
     "tags-input": {
       "add": "Ekle",
       "placeholder-new-tag": "Yeni etiket (eklemek için anahtarı girin)",
-      "remove": "Etiketi kaldır: {{name}}"
+      "remove": "Etiketi kaldır: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Zamanları senkronize et",
@@ -10720,18 +10730,6 @@
     "help/documentation": "Belgeler",
     "help/keyboard-shortcuts": "Klavye kısayolları",
     "help/support": "Destek",
-    "history-container": {
-      "drawer-tittle": "Geçmiş"
-    },
-    "history-wrapper": {
-      "collapse": "Daralt",
-      "expand": "Genişlet",
-      "icon-selected": "Seçili giriş",
-      "icon-unselected": "Normal Giriş",
-      "show-more": "Daha fazla göster",
-      "today": "Bugün",
-      "yesterday": "Dün"
-    },
     "home": {
       "title": "Ana sayfa"
     },
@@ -11815,7 +11813,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Sil",
       "confirm-delete-keep-resources": "",
       "confirm-delete-with-resources": "",
@@ -12079,6 +12123,7 @@
       "jobs": "İşler"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Ayarlar",
       "source-code": "Kaynak kodu"
     },
@@ -12528,6 +12573,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12541,6 +12591,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12698,14 +12749,6 @@
       "starred": "Yıldızlı",
       "view-as-folders": "Klasörlere göre görüntüle",
       "view-as-list": "Liste olarak görüntüle"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetik olarak (A-Z)",
-          "alphabetically-za": "Alfabetik olarak (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "İçe aktar",

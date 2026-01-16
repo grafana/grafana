@@ -807,7 +807,8 @@
       "label-integration": "Integration",
       "label-notification-settings": "Notification settings",
       "label-section": "Optional {{name}} settings",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": "This is a legacy integration (version: {{version}}). It cannot be modified."
     },
     "classic-condition-viewer": {
       "of": "OF",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
       "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI",
+      "body-imported": "This {{resource}} contains integrations that were imported from an external Alertmanager and is currently read-only. The integrations will become editable after the migration process is complete.",
       "body-provisioned": "This {{resource}} has been provisioned, that means it was created by config. Please contact your server admin to update this {{resource}}.",
+      "title-imported": "This {{resource}} was imported and cannot be edited through the UI",
       "title-provisioned": "This {{resource}} cannot be edited through the UI"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "Imported",
         "text-provisioned": "Provisioned"
       }
     },
@@ -2673,12 +2677,14 @@
     "rules-group": {
       "deleting": "Deleting",
       "text-federated": "Federated",
-      "text-provisioned": "Provisioned"
+      "text-provisioned": "Provisioned",
+      "ungrouped": "Ungrouped",
+      "ungrouped-suffix": "{{ruleName}} (Ungrouped)",
+      "unknown-rule": "Unknown Rule"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
-      "apply-aria-label": "Apply search \"{{name}}\"",
-      "apply-tooltip": "Apply this search",
+      "apply-tooltip": "Apply search \"{{name}}\"",
       "button-label": "Saved searches",
       "cancel": "Cancel",
       "default-indicator": "Default search",
@@ -3768,7 +3774,6 @@
       "all-failed_other": "Failed to restore {{count}} dashboards",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboards failed",
-      "success": "Dashboards restored successfully",
       "success-count_one": "{{count}} dashboard restored successfully",
       "success-count_other": "{{count}} dashboards restored successfully"
     },
@@ -4614,6 +4619,7 @@
     },
     "canvas-actions": {
       "add-panel": "Add panel",
+      "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to 2 levels",
       "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
@@ -5337,6 +5343,7 @@
       },
       "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
+      "new-row-title": "New row",
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
@@ -5442,11 +5449,7 @@
         "tooltip": "Edit as code"
       },
       "export": {
-        "title": "Export",
-        "unsaved-modal": {
-          "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
-          "title": "Save changes to dashboard?"
-        }
+        "title": "Export"
       },
       "outline": {
         "title": "Outline",
@@ -5587,14 +5590,6 @@
           "title": "Share",
           "tooltip": "Copy link"
         },
-        "share-export": {
-          "modal": {
-            "noText": "Discard",
-            "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
-            "title": "Save changes to dashboard?",
-            "yesText": "Save"
-          }
-        },
         "unlink-library-panel": "Unlink library panel"
       },
       "open-original": "Open original dashboard",
@@ -5695,6 +5690,7 @@
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
       "invalid-json": "Not valid JSON",
+      "tag-too-long": "Dashboard tag too long, max 50 characters",
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
     },
@@ -6378,12 +6374,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "Advanced options",
         "classic": "Classic",
         "json": "JSON",
         "v1-resource": "V1 Resource",
         "v2-resource": "V2 Resource",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "Share dashboard with another instance",
+      "share-externally-tooltip": "Removes all instance-specific metadata and data source references from the resource before export."
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
@@ -6490,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+        "title": "Unsaved changes"
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6978,6 +6983,7 @@
         "drone-datasource": "Drone datasource",
         "git-lab-integration-and-datasource": "GitLab integration and datasource",
         "honeycomb-integration-and-datasource": "Honeycomb integration and datasource",
+        "ibmdb2-datasource": "IBM Db2 data source",
         "jira-integration-and-datasource": "Jira integration and datasource",
         "logic-monitor-devices-datasource": "LogicMonitor Devices datasource",
         "mongo-db-integration-and-data-source": "MongoDB integration and data source",
@@ -7836,7 +7842,6 @@
       "export-externally-label": "Export the dashboard to use in another instance",
       "export-format": "Format",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Remove deployment details",
       "info-text": "Copy or download a file containing the definition of your dashboard",
       "title": "Export dashboard"
     },
@@ -7983,6 +7988,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
+    "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "Gauge",
@@ -9253,7 +9259,8 @@
     "tags-input": {
       "add": "Add",
       "placeholder-new-tag": "New tag (enter key to add)",
-      "remove": "Remove tag: {{name}}"
+      "remove": "Remove tag: {{name}}",
+      "tag-too-long": "Tag too long, max 50 characters"
     },
     "time-sync-button": {
       "aria-label-sync": "Sync times",
@@ -9343,8 +9350,8 @@
       "actions-confirmation-label": "Confirmation message",
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
-      "footer-apply-series-as-filter": "Apply as filter",
-      "footer-apply-series-as-inverse-filter": "Apply as inverse filter",
+      "footer-apply-series-as-filter": "Filter on this value",
+      "footer-apply-series-as-inverse-filter": "Filter out this value",
       "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}",
       "footer-filter-for-value": "Filter for '{{value}}'",
@@ -11803,7 +11810,53 @@
       "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
+    "connection-form": {
+      "alert-connection-deleted": "Connection deleted",
+      "alert-connection-saved": "Connection saved",
+      "alert-connection-updated": "Connection updated",
+      "back-to-connections": "Back to connections",
+      "button-save": "Save",
+      "button-saving": "Saving...",
+      "description-app-id": "The ID of your GitHub App",
+      "description-installation-id": "The installation ID of your GitHub App",
+      "description-private-key": "The private key for your GitHub App in PEM format",
+      "description-provider": "Select the provider type",
+      "error-delete-connection": "Failed to delete connection",
+      "error-required": "This field is required",
+      "error-save-connection": "Failed to save connection",
+      "label-app-id": "GitHub App ID",
+      "label-installation-id": "GitHub Installation ID",
+      "label-private-key": "Private Key (PEM)",
+      "label-provider": "Provider",
+      "not-found": "Connection not found",
+      "not-found-description": "The connection you are looking for does not exist.",
+      "page-subtitle": "Configure a connection to authenticate with external providers",
+      "page-title-create": "Create connection",
+      "page-title-edit": "Edit connection",
+      "placeholder-app-id": "123456",
+      "placeholder-installation-id": "12345678",
+      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----..."
+    },
+    "connections": {
+      "add-connection": "Add connection",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
+      "delete-title": "Delete connection",
+      "error-loading": "Failed to load connections",
+      "no-connections": "No connections configured",
+      "no-connections-message": "Add a connection to authenticate with external providers",
+      "no-results": "No results matching your query",
+      "page-subtitle": "View and manage your app connections",
+      "page-title": "Connections",
+      "search-placeholder": "Search connections",
+      "status-connected": "Connected",
+      "status-disconnected": "Disconnected",
+      "status-unknown": "Unknown",
+      "view": "View"
+    },
     "delete-repository-button": {
+      "button-cancel": "Cancel",
       "button-delete": "Delete",
       "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
       "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
@@ -12067,6 +12120,7 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
+      "connections": "Connections",
       "settings": "Settings",
       "source-code": "Source code"
     },
@@ -12516,6 +12570,11 @@
       "endpoint-marker-glow": "Glow",
       "endpoint-marker-none": "None",
       "endpoint-marker-point": "Point",
+      "neutral": {
+        "description": "Leave empty to use Min as neutral point",
+        "placeholder": "none",
+        "title": "Neutral value"
+      },
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
       "shape": "Style",
@@ -12528,7 +12587,8 @@
       "text-mode-none": "None",
       "text-mode-value": "Value",
       "text-mode-value-and-name": "Value and Name",
-      "threshold-labels": "Show threshold labels",
+      "threshold-labels": "Show labels",
+      "threshold-labels-description": "Display threshold and neutral values",
       "threshold-markers": "Show thresholds"
     }
   },
@@ -12686,14 +12746,6 @@
       "starred": "Starred",
       "view-as-folders": "View by folders",
       "view-as-list": "View as list"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alphabetically (A-Z)",
-          "alphabetically-za": "Alphabetically (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Import",
