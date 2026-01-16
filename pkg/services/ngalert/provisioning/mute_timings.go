@@ -27,6 +27,7 @@ type MuteTimingService struct {
 	log                    log.Logger
 	validator              validation.ProvenanceStatusTransitionValidator
 	ruleNotificationsStore AlertRuleNotificationSettingsStore
+	includeImported        bool
 }
 
 func NewMuteTimingService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger, ns AlertRuleNotificationSettingsStore) *MuteTimingService {
@@ -37,6 +38,19 @@ func NewMuteTimingService(config alertmanagerConfigStore, prov ProvisioningStore
 		log:                    log,
 		validator:              validation.ValidateProvenanceRelaxed,
 		ruleNotificationsStore: ns,
+		includeImported:        false,
+	}
+}
+
+func (svc *MuteTimingService) WithIncludeImported() *MuteTimingService {
+	return &MuteTimingService{
+		configStore:            svc.configStore,
+		provenanceStore:        svc.provenanceStore,
+		xact:                   svc.xact,
+		log:                    svc.log,
+		validator:              svc.validator,
+		ruleNotificationsStore: svc.ruleNotificationsStore,
+		includeImported:        true,
 	}
 }
 
