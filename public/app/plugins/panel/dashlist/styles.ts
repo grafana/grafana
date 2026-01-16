@@ -8,6 +8,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     ${colorManipulator.alpha(theme.colors.primary.text, 0.1)} 0%,
     ${colorManipulator.alpha(theme.colors.secondary.main, 0.1)} 100%
   )`;
+
   return {
     dashlistLink: css({
       display: 'flex',
@@ -24,26 +25,45 @@ export const getStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
+    dashlistCardContainer: css({
+      display: 'block',
+      height: '100%',
+      paddingBottom: theme.spacing(0.5),
+      '&:hover': {
+        backgroundImage: gradient,
+        color: theme.colors.text.primary,
+      },
+    }),
     dashlistCard: css({
-      display: 'flex',
+      display: 'grid',
+      gridTemplateRows: '1fr 1fr',
+      gap: theme.spacing(2),
       flexDirection: 'column',
       '&:hover a': {
         color: theme.colors.text.link,
         textDecoration: 'underline',
       },
       height: '100%',
-      paddingTop: theme.spacing(1.5),
-
-      '&:hover': {
-        backgroundImage: gradient,
-        color: theme.colors.text.primary,
-      },
+      width: '100%',
     }),
     dashlistCardIcon: css({
       marginRight: theme.spacing(0.5),
     }),
     dashlistCardLink: css({
-      paddingTop: theme.spacing(0.5),
+      whiteSpace: 'normal',
+      overflowWrap: 'break-word',
+      wordBreak: 'break-word',
+      display: '-webkit-box',
+      WebkitBoxOrient: 'vertical',
+      WebkitLineClamp: 2,
+      overflow: 'hidden',
+    }),
+    dashlistCardFolder: css({
+      display: '-webkit-box',
+      WebkitBoxOrient: 'vertical',
+      WebkitLineClamp: 2,
+      overflow: 'hidden',
+      whiteSpace: 'normal',
     }),
   };
 };

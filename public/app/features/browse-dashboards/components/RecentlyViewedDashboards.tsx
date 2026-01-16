@@ -6,6 +6,7 @@ import { GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, CollapsableSection, Grid, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
@@ -17,9 +18,9 @@ const MAX_RECENT = 5;
 const recentDashboardsKey = `dashboard_impressions-${contextSrv.user.orgId}`;
 
 export function RecentlyViewedDashboards() {
-  const [isOpen, setIsOpen] = useState(true);
-
   const styles = useStyles2(getStyles);
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
+  const [isOpen, setIsOpen] = useState(!isSmallScreen); // Default to closed on small screens
 
   const {
     value: recentDashboards = [],
