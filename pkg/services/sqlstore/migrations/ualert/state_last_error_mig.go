@@ -6,7 +6,8 @@ import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 func AddStateLastErrorColumn(mg *migrator.Migrator) {
 	mg.AddMigration("add last_error column to alert_instance table", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_instance"}, &migrator.Column{
 		Name:     "last_error",
-		Type:     migrator.DB_Text,
+		Type:     migrator.DB_NVarchar,
+		Length:   1000,
 		Nullable: true,
 	}))
 }

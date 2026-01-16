@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+const maxLastErrorLength = 1000
+
 // jitteredBatch represents a batch of alert instances with associated jitter delay
 type jitteredBatch struct {
 	index     int
@@ -119,7 +121,7 @@ func (st InstanceDBStore) SaveAlertInstance(ctx context.Context, alertInstance m
 			alertInstance.ResultFingerprint,
 			annotationsJSON,
 			int64(alertInstance.EvaluationDuration),
-			alertInstance.LastError,
+			truncate(alertInstance.LastError, maxLastErrorLength),
 		)
 
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
@@ -406,7 +408,7 @@ func (st InstanceDBStore) insertInstancesBatch(sess *sqlstore.DBSession, batch [
 			instance.ResultFingerprint,
 			annotationsJSON,
 			int64(instance.EvaluationDuration),
-			instance.LastError,
+			truncate(instance.LastError, maxLastErrorLength),
 		)
 	}
 
@@ -435,4 +437,14 @@ func nullableTimeToUnix(t *time.Time) *int64 {
 	}
 	unix := t.Unix()
 	return &unix
+}
+
+func truncate(s string, maxLen int) string {
+	runes := []rune(s)
+	if len(runes) <= maxLen {
+		return s
+	}
+	const suffix = "... (truncated)"
+	suffixRunes := []rune(suffix)
+	return string(runes[:maxLen-len(suffixRunes)]) + suffix
 }
