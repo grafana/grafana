@@ -48,7 +48,7 @@ manifest: {
 		}
 		"v2alpha1": {
 			codegen: {
-				ts: {enabled: false}
+				ts: {enabled: true}
 				go: {enabled: true}
 			}
 			kinds: [
@@ -64,7 +64,7 @@ manifest: {
 		}
 		"v2beta1": {
 			codegen: {
-				ts: {enabled: false}
+				ts: {enabled: true}
 				go: {enabled: true}
 			}
 			kinds: [
