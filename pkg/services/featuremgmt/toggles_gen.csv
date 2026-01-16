@@ -16,7 +16,6 @@ alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
 lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
-individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
 influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
 starsFromAPIServer,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -176,7 +175,6 @@ unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,fals
 elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
 lokiLabelNamesQueryApi,GA,@grafana/oss-big-tent,false,false,false
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
-k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false

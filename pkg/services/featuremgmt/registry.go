@@ -132,12 +132,6 @@ var (
 			Expression:   "true", // turned on by default
 		},
 		{
-			Name:        "individualCookiePreferences",
-			Description: "Support overriding cookie preferences per user",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
-		},
-		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1274,13 +1268,6 @@ var (
 		{
 			Name:        "k8SFolderCounts",
 			Description: "Enable folder's api server counts",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "k8SFolderMove",
-			Description: "Enable folder's api server move",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
