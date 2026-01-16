@@ -2,8 +2,6 @@ package meta
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -29,29 +27,29 @@ const (
 
 // CoreProvider retrieves plugin metadata for core plugins.
 type CoreProvider struct {
-	mu            sync.RWMutex
-	loadedPlugins map[string]pluginsv0alpha1.MetaSpec
-	initialized   bool
-	ttl           time.Duration
-	loader        pluginsLoader.Service
-	pluginsPath   string
+	mu              sync.RWMutex
+	loadedPlugins   map[string]pluginsv0alpha1.MetaSpec
+	initialized     bool
+	ttl             time.Duration
+	loader          pluginsLoader.Service
+	pluginsPathFunc func() (string, error)
 }
 
 // NewCoreProvider creates a new CoreProvider for core plugins.
-func NewCoreProvider(pluginsPath string) *CoreProvider {
+func NewCoreProvider(pluginsPath func() (string, error)) *CoreProvider {
 	return NewCoreProviderWithTTL(pluginsPath, defaultCoreTTL)
 }
 
 // NewCoreProviderWithTTL creates a new CoreProvider with a custom TTL.
-func NewCoreProviderWithTTL(pluginsPath string, ttl time.Duration) *CoreProvider {
+func NewCoreProviderWithTTL(pluginsPathFunc func() (string, error), ttl time.Duration) *CoreProvider {
 	cfg := &config.PluginManagementCfg{
 		Features: config.Features{},
 	}
 	return &CoreProvider{
-		loadedPlugins: make(map[string]pluginsv0alpha1.MetaSpec),
-		ttl:           ttl,
-		loader:        createLoader(cfg),
-		pluginsPath:   pluginsPath,
+		loadedPlugins:   make(map[string]pluginsv0alpha1.MetaSpec),
+		ttl:             ttl,
+		loader:          createLoader(cfg),
+		pluginsPathFunc: pluginsPathFunc,
 	}
 }
 
@@ -105,12 +103,13 @@ func (p *CoreProvider) GetMeta(ctx context.Context, pluginID, _ string) (*Result
 // This error will be handled gracefully by GetMeta, which will return ErrMetaNotFound
 // to allow other providers to handle the request.
 func (p *CoreProvider) loadPlugins(ctx context.Context) error {
-	if _, err := os.Stat(p.pluginsPath); err != nil {
-		logging.FromContext(ctx).Warn("CoreProvider: plugins path does not exist", "pluginsPath", p.pluginsPath, "error", err)
-		return fmt.Errorf("plugins path %q does not exist: %w", p.pluginsPath, err)
+	pluginsPath, err := p.pluginsPathFunc()
+	if err != nil {
+		logging.FromContext(ctx).Warn("CoreProvider: could not get plugins path", "error", err)
+		return err
 	}
 
-	src := sources.NewLocalSource(plugins.ClassCore, []string{p.pluginsPath})
+	src := sources.NewLocalSource(plugins.ClassCore, []string{pluginsPath})
 	loadedPlugins, err := p.loader.Load(ctx, src)
 	if err != nil {
 		return err

@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -48,18 +49,10 @@ func ProvideAppInstaller(
 		}
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		return nil, errors.New("could not determine working directory")
-	}
-	// Check if we're in the Grafana root
-	pluginsPath := filepath.Join(wd, "public", "app", "plugins")
-	if _, err = os.Stat(pluginsPath); err != nil {
-		return nil, errors.New("could not find core plugins directory")
-	}
-
 	localProvider := meta.NewLocalProvider(pluginStore, moduleHashCalc)
-	coreProvider := meta.NewCoreProvider(pluginsPath)
+	coreProvider := meta.NewCoreProvider(func() (string, error) {
+		return getPluginsPath(cfgProvider)
+	})
 	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
 	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager)
@@ -73,4 +66,27 @@ func ProvideAppInstaller(
 		restConfigProvider: restConfigProvider,
 		PluginAppInstaller: i,
 	}, nil
+}
+
+func getPluginsPath(cfgProvider configprovider.ConfigProvider) (string, error) {
+	cfg, err := cfgProvider.Get(context.Background())
+	if err != nil {
+		wd, err := os.Getwd()
+		if err != nil {
+			return "", errors.New("getPluginsPath fallback failed: could not determine working directory")
+		}
+		// Check if we're in the Grafana root
+		pluginsPath := filepath.Join(wd, "public", "app", "plugins")
+		if _, err = os.Stat(pluginsPath); err != nil {
+			return "", errors.New("getPluginsPath fallback failed: could not find core plugins directory")
+		}
+		return pluginsPath, nil
+	}
+
+	pluginsPath := filepath.Join(cfg.StaticRootPath, "public", "app", "plugins")
+	if _, err = os.Stat(pluginsPath); err != nil {
+		return "", errors.New("could not find core plugins directory")
+	}
+
+	return pluginsPath, nil
 }
