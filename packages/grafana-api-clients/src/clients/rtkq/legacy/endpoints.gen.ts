@@ -3425,7 +3425,7 @@ export type AddTeamGroupApiApiArg = {
   teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
-export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
+export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult[];
 export type SearchTeamGroupsApiArg = {
   teamId: number;
   page?: number;
