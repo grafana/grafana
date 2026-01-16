@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 //go:generate mockery --name GithubFactory --structname MockGithubFactory --inpackage --filename factory_mock.go --with-expecter
@@ -45,33 +44,6 @@ const (
 	githubInstallationURL = "https://github.com/settings/installations"
 	jwtExpirationMinutes  = 10 // GitHub Apps JWT tokens expire in 10 minutes maximum
 )
-
-// validateAppAndInstallation validates the appID and installationID against the given github token.
-func (c *Connection) validateAppAndInstallation(ctx context.Context) *field.Error {
-	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
-
-	app, err := ghClient.GetApp(ctx)
-	if err != nil {
-		if errors.Is(err, ErrServiceUnavailable) {
-			return field.InternalError(field.NewPath("spec", "token"), ErrServiceUnavailable)
-		}
-		return field.Invalid(field.NewPath("spec", "token"), "[REDACTED]", "invalid token")
-	}
-
-	if fmt.Sprintf("%d", app.ID) != c.obj.Spec.GitHub.AppID {
-		return field.Invalid(field.NewPath("spec", "appID"), c.obj.Spec.GitHub.AppID, "appID mismatch")
-	}
-
-	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
-	if err != nil {
-		if errors.Is(err, ErrServiceUnavailable) {
-			return field.InternalError(field.NewPath("spec", "token"), ErrServiceUnavailable)
-		}
-		return field.Invalid(field.NewPath("spec", "installationID"), c.obj.Spec.GitHub.InstallationID, "invalid installation ID")
-	}
-
-	return nil
-}
 
 // GenerateRepositoryToken generates a repository-scoped access token.
 func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (common.RawSecureValue, error) {

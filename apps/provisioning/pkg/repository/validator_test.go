@@ -1,9 +1,11 @@
 package repository
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -258,11 +260,13 @@ func TestValidateRepository(t *testing.T) {
 		},
 	}
 
-	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false)
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tests validate new configurations, so always pass isCreate=true
-			errors := validator.ValidateRepository(tt.repository, true)
+			errors := validator.ValidateRepository(context.Background(), tt.repository, true)
 			require.Len(t, errors, tt.expectedErrs)
 			if tt.validateError != nil {
 				tt.validateError(t, errors)

@@ -29,7 +29,7 @@ func (t *SimpleRepositoryTester) TestRepository(ctx context.Context, repo Reposi
 	cfg := repo.Config()
 	isCreate := cfg.Status.ObservedGeneration == 0
 
-	errors := t.validator.ValidateRepository(cfg, isCreate)
+	errors := t.validator.ValidateRepository(ctx, cfg, isCreate)
 	if len(errors) > 0 {
 		rsp := &provisioning.TestResults{
 			Code:    http.StatusUnprocessableEntity, // Invalid

@@ -196,7 +196,7 @@ func NewAPIBuilder(
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
-		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering, repoFactory),
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 	}
 
@@ -782,18 +782,14 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		}
 	}
 
-	// Structural validation without decryption
-	if err := b.repoFactory.Validate(ctx, r); err != nil {
-		return err
-	}
-
 	// ALL configuration validations should be done in ValidateRepository -
 	// this is how the UI is able to show proper validation errors
 	//
 	// the only time to add configuration checks here is if you need to compare
 	// the incoming change to the current configuration
+	// Note: Structural validation (URL, branch, path, etc.) is now done inside ValidateRepository
 	isCreate := a.GetOperation() == admission.Create
-	list := b.repoValidator.ValidateRepository(r, isCreate)
+	list := b.repoValidator.ValidateRepository(ctx, r, isCreate)
 	if a.GetOperation() == admission.Update {
 		oldRepo := a.GetOldObject().(*provisioning.Repository)
 		if r.Spec.Type != oldRepo.Spec.Type {
