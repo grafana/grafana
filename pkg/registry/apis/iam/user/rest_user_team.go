@@ -22,20 +22,20 @@ import (
 )
 
 var (
-	_ rest.Storage         = (*LegacyUserTeamREST)(nil)
-	_ rest.StorageMetadata = (*LegacyUserTeamREST)(nil)
-	_ rest.Connecter       = (*LegacyUserTeamREST)(nil)
+	_ rest.Storage         = (*UserTeamREST)(nil)
+	_ rest.StorageMetadata = (*UserTeamREST)(nil)
+	_ rest.Connecter       = (*UserTeamREST)(nil)
 )
 
-type LegacyUserTeamREST struct {
+type UserTeamREST struct {
 	log      log.Logger
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
 }
 
-func NewLegacyTeamMemberREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles) *LegacyUserTeamREST {
-	return &LegacyUserTeamREST{
+func NewTeamMemberREST(client resourcepb.ResourceIndexClient, tracer trace.Tracer, features featuremgmt.FeatureToggles) *UserTeamREST {
+	return &UserTeamREST{
 		log:      log.New("grafana-apiserver.user.teams"),
 		client:   client,
 		tracer:   tracer,
@@ -44,25 +44,25 @@ func NewLegacyTeamMemberREST(client resourcepb.ResourceIndexClient, tracer trace
 }
 
 // New implements rest.Storage.
-func (s *LegacyUserTeamREST) New() runtime.Object {
+func (s *UserTeamREST) New() runtime.Object {
 	return &legacyiamv0.UserTeamList{}
 }
 
 // Destroy implements rest.Storage.
-func (s *LegacyUserTeamREST) Destroy() {}
+func (s *UserTeamREST) Destroy() {}
 
 // ProducesMIMETypes implements rest.StorageMetadata.
-func (s *LegacyUserTeamREST) ProducesMIMETypes(verb string) []string {
+func (s *UserTeamREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
 // ProducesObject implements rest.StorageMetadata.
-func (s *LegacyUserTeamREST) ProducesObject(verb string) interface{} {
+func (s *UserTeamREST) ProducesObject(verb string) interface{} {
 	return s.New()
 }
 
 // Connect implements rest.Connecter.
-func (s *LegacyUserTeamREST) Connect(ctx context.Context, name string, options runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, span := s.tracer.Start(r.Context(), "user.teams")
 		defer span.End()
@@ -141,16 +141,16 @@ func (s *LegacyUserTeamREST) Connect(ctx context.Context, name string, options r
 }
 
 // NewConnectOptions implements rest.Connecter.
-func (s *LegacyUserTeamREST) NewConnectOptions() (runtime.Object, bool, string) {
+func (s *UserTeamREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
 // ConnectMethods implements rest.Connecter.
-func (s *LegacyUserTeamREST) ConnectMethods() []string {
+func (s *UserTeamREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func (h *LegacyUserTeamREST) parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetTeamsBody, error) {
+func (h *UserTeamREST) parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetTeamsBody, error) {
 	if result == nil {
 		return iamv0alpha1.GetTeamsBody{}, nil
 	} else if result.Error != nil {

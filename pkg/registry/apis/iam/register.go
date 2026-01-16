@@ -444,7 +444,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		b.features,
 	)
 
-	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(teamBindingSearchClient, b.tracing, b.features)
+	storage[userResource.StoragePath("teams")] = user.NewTeamMemberREST(teamBindingSearchClient, b.tracing, b.features)
 
 	return nil
 }

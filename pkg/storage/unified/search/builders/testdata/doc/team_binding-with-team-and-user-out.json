@@ -1,0 +1,19 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "teambindings",
+    "name": "with-team-and-user"
+  },
+  "name": "with-team-and-user",
+  "rv": 1234,
+  "title": "with-team-and-user",
+  "title_ngram": "with-team-and-user",
+  "title_phrase": "with-team-and-user",
+  "fields": {
+    "external": true,
+    "permission": "Viewer",
+    "subject.name": "user.one",
+    "teamRef.name": "team.one"
+  }
+}
