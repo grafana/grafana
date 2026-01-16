@@ -184,9 +184,36 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						content, ok := op.RequestBody.Content["*/*"]
 						if ok {
 							op.RequestBody.Content = map[string]*spec3.MediaType{
-								"application/json":                    content,
-								"application/yaml":                    content,
-								"application/vnd.kubernetes.protobuf": content,
+								"application/json": content,
+								"application/yaml": content,
+							}
+						}
+					}
+
+					// Remove protobuf from all response content types since we don't support it
+					allOps := GetPathOperations(v)
+					for _, op := range allOps {
+						if op == nil {
+							continue
+						}
+						// Remove protobuf from request body content types
+						if op.RequestBody != nil && op.RequestBody.Content != nil {
+							delete(op.RequestBody.Content, "application/vnd.kubernetes.protobuf")
+						}
+						// Remove protobuf from response content types
+						if op.Responses != nil {
+							if op.Responses.StatusCodeResponses != nil {
+								for _, response := range op.Responses.StatusCodeResponses {
+									if response.Content != nil {
+										delete(response.Content, "application/vnd.kubernetes.protobuf")
+										delete(response.Content, "application/vnd.kubernetes.protobuf;stream=watch")
+									}
+								}
+							}
+							// Handle default response
+							if op.Responses.Default != nil && op.Responses.Default.Content != nil {
+								delete(op.Responses.Default.Content, "application/vnd.kubernetes.protobuf")
+								delete(op.Responses.Default.Content, "application/vnd.kubernetes.protobuf;stream=watch")
 							}
 						}
 					}
