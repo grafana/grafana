@@ -18,6 +18,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketConnectionConfig": schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Connection":                schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionInfo":            schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionList":            schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSecure":          schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionSpec":            schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
@@ -25,6 +26,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.DeleteJobOptions":          schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails":              schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExportJobOptions":          schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepository":        schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepositoryList":    schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.FileItem":                  schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.FileList":                  schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubConnectionConfig":    schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref),
@@ -224,6 +227,26 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -297,7 +320,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref common.Reference
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue"),
 						},
 					},
-					"webhook": {
+					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back",
 							Default:     map[string]interface{}{},
@@ -520,6 +543,96 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 				},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name of the repository",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"owner": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Owner is the user, organization, or workspace that owns the repository For GitHub: organization or user For GitLab: namespace (user or group) For Bitbucket: workspace For pure Git: empty",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL of the repository",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name", "url"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ExternalRepositoryList lists repositories from an external git provider",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepository"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ExternalRepository", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -1474,13 +1587,6 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"history": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Preserve history (if possible)",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"message": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Message to use when committing the changes in a single commit",
@@ -1868,12 +1974,18 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig"),
 						},
 					},
+					"connection": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The connection the repository references. This means the Repository is interacting with git via a Connection.",
+							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionInfo"),
+						},
+					},
 				},
 				Required: []string{"title", "workflows", "sync", "type"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncOptions"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.BitbucketRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionInfo", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitLabRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.GitRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncOptions"},
 	}
 }
 
@@ -2089,13 +2201,6 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 						SchemaProps: spec.SchemaProps{
 							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"legacyStorage": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
-							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},

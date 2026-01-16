@@ -27,6 +27,8 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { RowItem } from '../layout-rows/RowItem';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -230,6 +232,19 @@ export class TabItem
 
     if (isDashboardLayoutGrid(layout)) {
       layout.addGridItem(gridItem);
+    } else if (layout instanceof RowsLayoutManager) {
+      // For RowsLayoutManager, add to the first row's layout
+      const firstRow = layout.state.rows[0];
+      if (firstRow) {
+        const rowLayout = firstRow.getLayout();
+        if (isDashboardLayoutGrid(rowLayout)) {
+          rowLayout.addGridItem(gridItem);
+        } else {
+          const warningMessage = 'First row layout does not support addGridItem';
+          console.warn(warningMessage);
+          logWarning(warningMessage);
+        }
+      }
     } else {
       const warningMessage = 'Layout manager does not support addGridItem';
       console.warn(warningMessage);
@@ -237,6 +252,48 @@ export class TabItem
     }
     this.setIsDropTarget(false);
 
+    const parentLayout = this.getParentLayout();
+    if (parentLayout.state.currentTabSlug !== this.getSlug()) {
+      parentLayout.setState({ currentTabSlug: this.getSlug() });
+    }
+  }
+
+  /**
+   * Accept a dropped row into this tab.
+   * If the tab doesn't have a RowsLayoutManager, convert the layout first.
+   */
+  public acceptDroppedRow(row: RowItem): void {
+    const currentLayout = this.getLayout();
+
+    // Clear the parent reference from the row before adding to new layout
+    row.clearParent();
+
+    if (currentLayout instanceof RowsLayoutManager) {
+      // Already has a RowsLayoutManager, just add the row
+      currentLayout.addNewRow(row);
+    } else {
+      // Need to convert the layout to RowsLayoutManager
+      let rowsLayout: RowsLayoutManager;
+
+      // If the current layout is empty, just create a new RowsLayoutManager with only the dropped row
+      if (currentLayout.getVizPanels().length === 0) {
+        rowsLayout = new RowsLayoutManager({ rows: [row] });
+      } else {
+        // Convert existing layout and add the dropped row
+        // Use direct state update instead of addNewRow because the rowsLayout
+        // isn't connected to the scene yet, so dashboardEditActions won't work
+        rowsLayout = RowsLayoutManager.createFromLayout(currentLayout);
+        rowsLayout.setState({ rows: [...rowsLayout.state.rows, row] });
+      }
+
+      // Clear the parent reference from the old layout
+      currentLayout.clearParent();
+
+      // Switch to the new rows layout
+      this.setState({ layout: rowsLayout });
+    }
+
+    // Ensure this tab is active after the drop
     const parentLayout = this.getParentLayout();
     if (parentLayout.state.currentTabSlug !== this.getSlug()) {
       parentLayout.setState({ currentTabSlug: this.getSlug() });

@@ -1,18 +1,14 @@
 import { useMemo, useState } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
-import {
-  useDeletecollectionRepositoryMutation,
-  useGetFrontendSettingsQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { t } from '@grafana/i18n';
+import { ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { useDeletecollectionRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
-import { InlineSecureValueWarning } from './components/InlineSecureValueWarning';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
 enum TabSelection {
@@ -22,7 +18,6 @@ enum TabSelection {
 
 export default function HomePage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
-  const settings = useGetFrontendSettingsQuery();
   const [deleteAll] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [activeTab, setActiveTab] = useState<TabSelection>(TabSelection.Repositories);
@@ -71,25 +66,6 @@ export default function HomePage() {
       actions={activeTab === TabSelection.Repositories && <ConnectRepositoryButton items={items} />}
     >
       <Page.Contents isLoading={isLoading}>
-        {settings.data?.legacyStorage && (
-          <Alert
-            title={t('provisioning.home-page.title-legacy-storage-detected', 'Legacy storage detected')}
-            severity="error"
-            buttonContent={
-              <Trans i18nKey="provisioning.home-page.remove-all-configured-repositories">
-                Remove all configured repositories
-              </Trans>
-            }
-            onRemove={() => {
-              setShowDeleteModal(true);
-            }}
-          >
-            <Trans i18nKey="provisioning.home-page.configured-repositories-while-running-legacy-storage">
-              Configured repositories will not work while running legacy storage.
-            </Trans>
-          </Alert>
-        )}
-        <InlineSecureValueWarning items={items} />
         <ConfirmModal
           isOpen={showDeleteModal}
           title={t(

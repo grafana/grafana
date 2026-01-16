@@ -211,6 +211,10 @@ export interface VariableModel {
    * Type of variable
    */
   type: VariableType;
+  /**
+   * Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+   */
+  valuesFormat?: ('csv' | 'json');
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
@@ -220,6 +224,7 @@ export const defaultVariableModel: Partial<VariableModel> = {
   options: [],
   skipUrlSync: false,
   staticOptions: [],
+  valuesFormat: 'csv',
 };
 
 /**
@@ -838,6 +843,11 @@ export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSy
  * Dashboard panels are the basic visualization building blocks.
  */
 export interface Panel {
+  /**
+   * When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+   * This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+   */
+  autoMigrateFrom?: string;
   /**
    * Sets panel queries cache timeout.
    */

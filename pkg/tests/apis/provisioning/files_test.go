@@ -1,7 +1,9 @@
 package provisioning
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -588,5 +591,392 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 		dashboard2, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo2's dashboard should still exist")
 		require.Equal(t, repo2, dashboard2.GetAnnotations()[utils.AnnoKeyManagerIdentity], "repo2's dashboard should still be owned by repo2")
+	})
+}
+
+func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "auth-test-repo"
+	helper.CreateRepo(t, TestRepo{
+		Name:   repo,
+		Path:   helper.ProvisioningPath,
+		Target: "instance",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "dashboard1.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    0,
+	})
+
+	// Wait for initial sync to complete
+	var dashboardUID string
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list dashboards error: %s", err.Error())
+			return
+		}
+		if len(dashboards.Items) != 1 {
+			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 1)
+			return
+		}
+		assert.Len(collect, dashboards.Items, 1)
+		dashboardUID = dashboards.Items[0].GetName()
+	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards after sync")
+
+	// Grant permissions to Editor user for all dashboards using wildcard
+	// The access checker checks resource-level permissions, so we need to grant them
+	// Using wildcard "*" to grant permissions to all dashboards (including ones created during tests)
+	// Note: Viewer role gets permissions via HTTP API below, Editor gets them here via SetPermissions
+	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:delete"},
+			Resource:          "dashboards",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	})
+
+	// Grant view permission to Viewer role via HTTP API (for the initial dashboard)
+	// Note: This only grants permissions to the initial dashboard, but viewers should be able to read all
+	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	setDashboardPermissions := func(permissions []map[string]interface{}) {
+		payload := map[string]interface{}{
+			"items": permissions,
+		}
+		payloadBytes, err := json.Marshal(payload)
+		require.NoError(t, err)
+		url := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s/permissions", addr, dashboardUID)
+		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.NoError(t, resp.Body.Close())
+	}
+
+	// Grant view permission to Viewer role for the initial dashboard
+	setDashboardPermissions([]map[string]interface{}{
+		{"role": "Viewer", "permission": 1}, // View permission
+	})
+
+	t.Run("GET operations", func(t *testing.T) {
+		t.Run("viewer can GET files", func(t *testing.T) {
+			var statusCode int
+			result := helper.ViewerREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "dashboard1.json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "viewer should be able to GET files")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+		})
+
+		t.Run("editor can GET files", func(t *testing.T) {
+			var statusCode int
+			result := helper.EditorREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "dashboard1.json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "editor should be able to GET files")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+		})
+
+		t.Run("admin can GET files", func(t *testing.T) {
+			var statusCode int
+			result := helper.AdminREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "dashboard1.json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "admin should be able to GET files")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+		})
+	})
+
+	t.Run("POST operations", func(t *testing.T) {
+		t.Run("viewer cannot POST files", func(t *testing.T) {
+			var statusCode int
+			result := helper.ViewerREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "viewer-test.json").
+				Body(helper.LoadFile("testdata/text-options.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.Error(t, result.Error(), "viewer should not be able to POST files")
+			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+			require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
+		})
+
+		t.Run("editor can POST files", func(t *testing.T) {
+			var statusCode int
+			result := helper.EditorREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "editor-test.json").
+				Body(helper.LoadFile("testdata/text-options.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "editor should be able to POST files")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+			// Clean up
+			helper.AdminREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "editor-test.json").
+				Do(ctx)
+		})
+
+		t.Run("admin can POST files", func(t *testing.T) {
+			var statusCode int
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "admin-test.json").
+				Body(helper.LoadFile("testdata/text-options.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "admin should be able to POST files")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+			// Clean up
+			helper.AdminREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "admin-test.json").
+				Do(ctx)
+		})
+	})
+
+	t.Run("PUT operations", func(t *testing.T) {
+		// Create a test file first using admin
+		helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "update-test.json").
+			Body(helper.LoadFile("testdata/text-options.json")).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		t.Run("viewer cannot PUT files", func(t *testing.T) {
+			var statusCode int
+			result := helper.ViewerREST.Put().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "update-test.json").
+				Body(helper.LoadFile("testdata/timeline-demo.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.Error(t, result.Error(), "viewer should not be able to PUT files")
+			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+			require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
+		})
+
+		t.Run("editor can PUT files", func(t *testing.T) {
+			var statusCode int
+			result := helper.EditorREST.Put().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "update-test.json").
+				Body(helper.LoadFile("testdata/timeline-demo.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "editor should be able to PUT files")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+		})
+
+		t.Run("admin can PUT files", func(t *testing.T) {
+			var statusCode int
+			result := helper.AdminREST.Put().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "update-test.json").
+				Body(helper.LoadFile("testdata/text-options.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "admin should be able to PUT files")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+		})
+
+		// Clean up
+		helper.AdminREST.Delete().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "update-test.json").
+			Do(ctx)
+	})
+
+	t.Run("DELETE operations", func(t *testing.T) {
+		// Create test files for deletion tests
+		helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "delete-viewer-test.json").
+			Body(helper.LoadFile("testdata/text-options.json")).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "delete-editor-test.json").
+			Body(helper.LoadFile("testdata/text-options.json")).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "delete-admin-test.json").
+			Body(helper.LoadFile("testdata/text-options.json")).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+
+		t.Run("viewer cannot DELETE files", func(t *testing.T) {
+			var statusCode int
+			result := helper.ViewerREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "delete-viewer-test.json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.Error(t, result.Error(), "viewer should not be able to DELETE files")
+			require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
+			require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
+
+			// Verify file still exists
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "delete-viewer-test.json")
+			require.NoError(t, err, "file should still exist after failed delete")
+		})
+
+		t.Run("editor can DELETE files", func(t *testing.T) {
+			var statusCode int
+			result := helper.EditorREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "delete-editor-test.json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "editor should be able to DELETE files")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+			// Verify file was deleted
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "delete-editor-test.json")
+			require.Error(t, err, "file should be deleted")
+			require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted file")
+		})
+
+		t.Run("admin can DELETE files", func(t *testing.T) {
+			var statusCode int
+			result := helper.AdminREST.Delete().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "delete-admin-test.json").
+				Do(ctx).StatusCode(&statusCode)
+
+			require.NoError(t, result.Error(), "admin should be able to DELETE files")
+			require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+
+			// Verify file was deleted
+			_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "delete-admin-test.json")
+			require.Error(t, err, "file should be deleted")
+			require.True(t, apierrors.IsNotFound(err), "should return NotFound for deleted file")
+		})
+	})
+
+	t.Run("folder operations", func(t *testing.T) {
+		t.Run("viewer cannot create folders", func(t *testing.T) {
+			// Create a folder by POSTing to a directory path
+			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+			url := fmt.Sprintf("http://viewer:viewer@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/test-folder/", addr, repo)
+			req, err := http.NewRequest(http.MethodPost, url, nil)
+			require.NoError(t, err)
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			// nolint:errcheck
+			defer resp.Body.Close()
+
+			require.Equal(t, http.StatusForbidden, resp.StatusCode, "viewer should not be able to create folders")
+		})
+
+		t.Run("editor can create folders", func(t *testing.T) {
+			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+			url := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/editor-folder/", addr, repo)
+			req, err := http.NewRequest(http.MethodPost, url, nil)
+			require.NoError(t, err)
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			// nolint:errcheck
+			defer resp.Body.Close()
+
+			require.Equal(t, http.StatusOK, resp.StatusCode, "editor should be able to create folders")
+
+			// Clean up - delete folder
+			deleteURL := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/editor-folder/", addr, repo)
+			deleteReq, err := http.NewRequest(http.MethodDelete, deleteURL, nil)
+			require.NoError(t, err)
+			deleteResp, err := http.DefaultClient.Do(deleteReq)
+			require.NoError(t, err)
+			// nolint:errcheck
+			defer deleteResp.Body.Close()
+		})
+
+		t.Run("admin can create folders", func(t *testing.T) {
+			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+			url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/admin-folder/", addr, repo)
+			req, err := http.NewRequest(http.MethodPost, url, nil)
+			require.NoError(t, err)
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			// nolint:errcheck
+			defer resp.Body.Close()
+
+			require.Equal(t, http.StatusOK, resp.StatusCode, "admin should be able to create folders")
+
+			// Clean up - delete folder
+			deleteURL := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/admin-folder/", addr, repo)
+			deleteReq, err := http.NewRequest(http.MethodDelete, deleteURL, nil)
+			require.NoError(t, err)
+			deleteResp, err := http.DefaultClient.Do(deleteReq)
+			require.NoError(t, err)
+			// nolint:errcheck
+			defer deleteResp.Body.Close()
+		})
 	})
 }

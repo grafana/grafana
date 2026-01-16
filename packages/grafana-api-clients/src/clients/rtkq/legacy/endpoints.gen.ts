@@ -727,17 +727,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['dashboards', 'permissions'],
       }),
-      restoreDashboardVersionByUid: build.mutation<
-        RestoreDashboardVersionByUidApiResponse,
-        RestoreDashboardVersionByUidApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/dashboards/uid/${queryArg.uid}/restore`,
-          method: 'POST',
-          body: queryArg.restoreDashboardVersionCommand,
-        }),
-        invalidatesTags: ['dashboards', 'versions'],
-      }),
       getDashboardVersionsByUid: build.query<GetDashboardVersionsByUidApiResponse, GetDashboardVersionsByUidApiArg>({
         query: (queryArg) => ({
           url: `/dashboards/uid/${queryArg.uid}/versions`,
@@ -770,18 +759,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['datasources', 'correlations'],
-      }),
-      getDataSourceIdByName: build.query<GetDataSourceIdByNameApiResponse, GetDataSourceIdByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/id/${queryArg.name}` }),
-        providesTags: ['datasources'],
-      }),
-      deleteDataSourceByName: build.mutation<DeleteDataSourceByNameApiResponse, DeleteDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}`, method: 'DELETE' }),
-        invalidatesTags: ['datasources'],
-      }),
-      getDataSourceByName: build.query<GetDataSourceByNameApiResponse, GetDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}` }),
-        providesTags: ['datasources'],
       }),
       datasourceProxyDeleteByUiDcalls: build.mutation<
         DatasourceProxyDeleteByUiDcallsApiResponse,
@@ -1021,6 +998,7 @@ const injectedRtkApi = api
             typeFilter: queryArg.typeFilter,
             excludeUid: queryArg.excludeUid,
             folderFilter: queryArg.folderFilter,
+            folderFilterUIDs: queryArg.folderFilterUiDs,
             perPage: queryArg.perPage,
             page: queryArg.page,
           },
@@ -2627,26 +2605,6 @@ export type UpdateDashboardPermissionsByUidApiArg = {
   uid: string;
   updateDashboardAclCommand: UpdateDashboardAclCommand;
 };
-export type RestoreDashboardVersionByUidApiResponse = /** status 200 (empty) */ {
-  /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
-  folderUid?: string;
-  /** ID The unique identifier (id) of the created/updated dashboard. */
-  id: number;
-  /** Status status of the response. */
-  status: string;
-  /** Slug The slug of the dashboard. */
-  title: string;
-  /** UID The unique identifier (uid) of the created/updated dashboard. */
-  uid: string;
-  /** URL The relative URL for accessing the created/updated dashboard. */
-  url: string;
-  /** Version The version of the dashboard. */
-  version: number;
-};
-export type RestoreDashboardVersionByUidApiArg = {
-  uid: string;
-  restoreDashboardVersionCommand: RestoreDashboardVersionCommand;
-};
 export type GetDashboardVersionsByUidApiResponse = /** status 200 (empty) */ DashboardVersionResponseMeta;
 export type GetDashboardVersionsByUidApiArg = {
   uid: string;
@@ -2682,26 +2640,6 @@ export type GetCorrelationsApiArg = {
   page?: number;
   /** Source datasource UID filter to be applied to correlations */
   sourceUid?: string[];
-};
-export type GetDataSourceIdByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the data source. */
-  id: number;
-};
-export type GetDataSourceIdByNameApiArg = {
-  name: string;
-};
-export type DeleteDataSourceByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the deleted data source. */
-  id: number;
-  /** Message Message of the deleted dashboard. */
-  message: string;
-};
-export type DeleteDataSourceByNameApiArg = {
-  name: string;
-};
-export type GetDataSourceByNameApiResponse = /** status 200 (empty) */ DataSource;
-export type GetDataSourceByNameApiArg = {
-  name: string;
 };
 export type DatasourceProxyDeleteByUiDcallsApiResponse = unknown;
 export type DatasourceProxyDeleteByUiDcallsApiArg = {
@@ -2915,8 +2853,11 @@ export type GetLibraryElementsApiArg = {
   typeFilter?: string;
   /** Element UID to exclude from search results. */
   excludeUid?: string;
-  /** A comma separated list of folder ID(s) to filter the elements by. */
+  /** A comma separated list of folder ID(s) to filter the elements by.
+    Deprecated: Use FolderFilterUIDs instead. */
   folderFilter?: string;
+  /** A comma separated list of folder UID(s) to filter the elements by. */
+  folderFilterUiDs?: string;
   /** The number of results per page. */
   perPage?: number;
   /** The page for a set of records, given that only perPage records are returned at a time. Numbering starts at 1. */
@@ -3440,19 +3381,19 @@ export type RemoveTeamGroupApiQueryApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RemoveTeamGroupApiQueryApiArg = {
   groupId?: string;
-  teamId: number;
+  teamId: string;
 };
 export type GetTeamGroupsApiApiResponse = /** status 200 (empty) */ TeamGroupDto[];
 export type GetTeamGroupsApiApiArg = {
-  teamId: number;
+  teamId: string;
 };
 export type AddTeamGroupApiApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type AddTeamGroupApiApiArg = {
-  teamId: number;
+  teamId: string;
   teamGroupMapping: TeamGroupMapping;
 };
-export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult;
+export type SearchTeamGroupsApiResponse = /** status 200 (empty) */ SearchTeamGroupsQueryResult[];
 export type SearchTeamGroupsApiArg = {
   teamId: number;
   page?: number;
@@ -4564,9 +4505,6 @@ export type DashboardAclUpdateItem = {
 export type UpdateDashboardAclCommand = {
   items?: DashboardAclUpdateItem[];
 };
-export type RestoreDashboardVersionCommand = {
-  version?: number;
-};
 export type DashboardVersionMeta = {
   created?: string;
   createdBy?: string;
@@ -5265,11 +5203,6 @@ export type AddInviteForm = {
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   sendEmail?: boolean;
 };
-export type PreferencesCookiePreferences = {
-  analytics?: any;
-  functional?: any;
-  performance?: any;
-};
 export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -5278,7 +5211,6 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  cookiePreferences?: PreferencesCookiePreferences;
   /** UID for the home dashboard */
   homeDashboardUID?: string;
   /** Selected language (beta) */
@@ -5295,7 +5227,6 @@ export type PreferencesSpec = {
   /** day of the week (sunday, monday, etc) */
   weekStart?: string;
 };
-export type CookieType = string;
 export type NavbarPreference = {
   bookmarkUrls?: string[];
 };
@@ -5303,7 +5234,6 @@ export type QueryHistoryPreference = {
   homeTab?: string;
 };
 export type PatchPrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -5312,11 +5242,11 @@ export type PatchPrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export type UpdatePrefsCmd = {
-  cookies?: CookieType[];
   /** The numerical :id of a favorited dashboard */
   homeDashboardId?: number;
   homeDashboardUID?: string;
@@ -5325,7 +5255,8 @@ export type UpdatePrefsCmd = {
   queryHistory?: QueryHistoryPreference;
   regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
-  timezone?: 'utc' | 'browser';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
   weekStart?: string;
 };
 export type OrgUserDto = {
@@ -5334,6 +5265,7 @@ export type OrgUserDto = {
   };
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   isDisabled?: boolean;
   isExternallySynced?: boolean;
@@ -5554,6 +5486,7 @@ export type ReportDashboard = {
 };
 export type Type = string;
 export type ReportOptions = {
+  csvEncoding?: string;
   layout?: string;
   orientation?: string;
   pdfCombineOneFile?: boolean;
@@ -6111,6 +6044,7 @@ export type ChangeUserPasswordCommand = {
 export type UserSearchHitDto = {
   authLabels?: string[];
   avatarUrl?: string;
+  created?: string;
   email?: string;
   id?: number;
   isAdmin?: boolean;
@@ -6624,7 +6558,6 @@ export const {
   useGetDashboardPermissionsListByUidQuery,
   useLazyGetDashboardPermissionsListByUidQuery,
   useUpdateDashboardPermissionsByUidMutation,
-  useRestoreDashboardVersionByUidMutation,
   useGetDashboardVersionsByUidQuery,
   useLazyGetDashboardVersionsByUidQuery,
   useGetDashboardVersionByUidQuery,
@@ -6634,11 +6567,6 @@ export const {
   useAddDataSourceMutation,
   useGetCorrelationsQuery,
   useLazyGetCorrelationsQuery,
-  useGetDataSourceIdByNameQuery,
-  useLazyGetDataSourceIdByNameQuery,
-  useDeleteDataSourceByNameMutation,
-  useGetDataSourceByNameQuery,
-  useLazyGetDataSourceByNameQuery,
   useDatasourceProxyDeleteByUiDcallsMutation,
   useDatasourceProxyGetByUiDcallsQuery,
   useLazyDatasourceProxyGetByUiDcallsQuery,

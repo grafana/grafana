@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for center x and y 1`] = `"M 150 120 A 80 80 0 1 1 149.98603736605492 120.00000121846968"`;
+
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for half arc 1`] = `"M 100 20 A 80 80 0 0 1 100 180"`;
+
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow bar width 1`] = `"M 100 20 A 80 80 0 0 1 100 180"`;
+
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow radius 1`] = `"M 100 50 A 50 50 0 0 1 100 150"`;
+
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for quarter arc 1`] = `"M 100 20 A 80 80 0 0 1 180 100"`;
+
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for rounded bars 1`] = `"M 100 20 A 80 80 0 1 1 20 100.00000000000001"`;
+
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for three quarter arc 1`] = `"M 100 20 A 80 80 0 1 1 20 100.00000000000001"`;
+
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for wide bar width 1`] = `"M 100 20 A 80 80 0 0 1 100 180"`;

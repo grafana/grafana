@@ -1,6 +1,6 @@
 module cog
 
-go 1.25.5
+go 1.25.6
 
 tool github.com/grafana/cog/cmd/cli
 
@@ -10,7 +10,7 @@ require (
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/proto v1.13.2 // indirect
-	github.com/expr-lang/expr v1.17.0 // indirect
+	github.com/expr-lang/expr v1.17.7 // indirect
 	github.com/getkin/kin-openapi v0.132.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect

@@ -23,6 +23,7 @@ import {
   DataQueryKind,
   defaultPanelQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -40,6 +41,7 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
@@ -59,12 +61,22 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const queryOptions = panel.spec.data.spec.queryOptions;
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
 
+  // Extract __angularMigration data if present
+  // This data is used to run Angular panel migrations in v2 (e.g., singlestat -> stat)
+  const rawOptions = panel.spec.vizConfig.spec.options ?? {};
+  const rawAngularMigration = rawOptions.__angularMigration;
+  const angularMigration = isAngularMigrationData(rawAngularMigration) ? rawAngularMigration : undefined;
+
+  // Create clean options without __angularMigration (it's only for migration, not for the panel)
+  const options = { ...rawOptions };
+  delete options.__angularMigration;
+
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.group,
-    options: panel.spec.vizConfig.spec.options,
+    options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.version,
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
@@ -82,6 +94,12 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
   };
+
+  // Set up Angular migration handler if migration data is present
+  // This enables proper migration of options from Angular panels (e.g., singlestat format/valueName)
+  if (angularMigration) {
+    vizPanelState._UNSAFE_customMigrationHandler = getV2AngularMigrationHandler(angularMigration);
+  }
 
   if (!config.publicDashboardAccessToken) {
     vizPanelState.menu = new VizPanelMenu({
@@ -211,29 +229,45 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
  * This ensures v2→Scene→v1 conversion produces the same output as the Go backend,
  * which does NOT add panel-level datasource for non-mixed panels.
  */
-function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
-  if (!panel.spec.data?.spec.queries?.length) {
+export function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
+  const queries = panel.spec.data?.spec.queries;
+  if (!queries?.length) {
     return undefined;
   }
 
-  let firstDatasource: DataSourceRef | undefined = undefined;
-  let isMixedDatasource = false;
+  // Check if multiple queries use Dashboard datasource - this needs mixed mode
+  const dashboardDsQueryCount = queries.filter((q) => q.spec.query.datasource?.name === SHARED_DASHBOARD_QUERY).length;
+  if (dashboardDsQueryCount > 1) {
+    return { type: 'mixed', uid: MIXED_DATASOURCE_NAME };
+  }
 
-  panel.spec.data.spec.queries.forEach((query) => {
-    const queryDs = query.spec.query.datasource?.name
+  // Get all datasources from queries
+  const datasources = queries.map((query) =>
+    query.spec.query.datasource?.name
       ? { uid: query.spec.query.datasource.name, type: query.spec.query.group }
-      : getRuntimePanelDataSource(query.spec.query);
+      : getRuntimePanelDataSource(query.spec.query)
+  );
 
-    if (!firstDatasource) {
-      firstDatasource = queryDs;
-    } else if (firstDatasource.uid !== queryDs?.uid || firstDatasource.type !== queryDs?.type) {
-      isMixedDatasource = true;
-    }
-  });
+  const firstDatasource = datasources[0];
+
+  // Check if queries use different datasources
+  const isMixedDatasource = datasources.some(
+    (ds) => ds?.uid !== firstDatasource?.uid || ds?.type !== firstDatasource?.type
+  );
+
+  if (isMixedDatasource) {
+    return { type: 'mixed', uid: MIXED_DATASOURCE_NAME };
+  }
+
+  // Handle case where all queries use Dashboard datasource - needs to set datasource for proper data fetching
+  // See DashboardDatasourceBehaviour.tsx for more details
+  if (firstDatasource?.uid === SHARED_DASHBOARD_QUERY) {
+    return { type: 'datasource', uid: SHARED_DASHBOARD_QUERY };
+  }
 
   // Only return mixed datasource - for non-mixed panels, each query already has its own datasource
   // This matches the Go backend behavior which doesn't add panel.datasource for non-mixed panels
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
+  return undefined;
 }
 
 /**

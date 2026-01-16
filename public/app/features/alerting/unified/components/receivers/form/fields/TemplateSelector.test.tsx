@@ -7,8 +7,8 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
+import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -68,7 +68,7 @@ describe('getTemplateOptions function', () => {
         uid: title,
         title,
         content,
-        provenance: PROVENANCE_NONE,
+        provenance: KnownProvenance.None,
       };
     });
     const defaultTemplates = parseTemplates(DEFAULT_TEMPLATES);

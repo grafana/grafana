@@ -1,6 +1,6 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { setVisualization } from '../../../panels-suite/vizpicker-utils';
+import { setVisualization } from '../../../utils/panel-helpers';
 import { formatExpectError } from '../errors';
 import { successfulDataQuery } from '../mocks/queries';
 
@@ -25,10 +25,10 @@ test.describe(
         ).toContainText(['Field', 'Max', 'Mean', 'Last']);
       });
 
-      test('table panel data assertions', async ({ panelEditPage, selectors }) => {
+      test('table panel data assertions', async ({ panelEditPage }) => {
         await panelEditPage.mockQueryDataResponse(successfulDataQuery, 200);
         await panelEditPage.datasource.set('gdev-testdata');
-        await setVisualization(panelEditPage, 'Table', selectors);
+        await setVisualization(panelEditPage, 'Table');
         await panelEditPage.refreshPanel();
         await expect(
           panelEditPage.panel.locator,
@@ -44,10 +44,10 @@ test.describe(
         ).toContainText(['val1', 'val2', 'val3', 'val4']);
       });
 
-      test('timeseries panel - table view assertions', async ({ panelEditPage, selectors }) => {
+      test('timeseries panel - table view assertions', async ({ panelEditPage }) => {
         await panelEditPage.mockQueryDataResponse(successfulDataQuery, 200);
         await panelEditPage.datasource.set('gdev-testdata');
-        await setVisualization(panelEditPage, 'Time series', selectors);
+        await setVisualization(panelEditPage, 'Time series');
         await panelEditPage.refreshPanel();
         await panelEditPage.toggleTableView();
         await expect(

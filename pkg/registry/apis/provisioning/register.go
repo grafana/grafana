@@ -28,10 +28,9 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	connectionvalidation "github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -54,14 +53,12 @@ import (
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -100,7 +97,8 @@ type APIBuilder struct {
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
-	store               grafanarest.Storage
+	repoStore           grafanarest.Storage
+	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -108,18 +106,21 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistoryConfig *JobHistoryConfig
-	jobHistoryLoki   *jobs.LokiJobHistory
-	resourceLister   resources.ResourceLister
-	dashboardAccess  legacy.MigrationDashboardAccessor
-	storageStatus    dualwrite.Service
-	unified          resource.ResourceClient
-	repoFactory      repository.Factory
-	client           client.ProvisioningV0alpha1Interface
-	access           authlib.AccessChecker
-	statusPatcher    *appcontroller.RepositoryStatusPatcher
-	healthChecker    *controller.HealthChecker
-	validator        repository.RepositoryValidator
+	jobHistoryConfig  *JobHistoryConfig
+	jobHistoryLoki    *jobs.LokiJobHistory
+	resourceLister    resources.ResourceLister
+	dashboardAccess   legacy.MigrationDashboardAccessor
+	unified           resource.ResourceClient
+	repoFactory       repository.Factory
+	connectionFactory connection.Factory
+	client            client.ProvisioningV0alpha1Interface
+	access            auth.AccessChecker
+	accessWithAdmin   auth.AccessChecker
+	accessWithEditor  auth.AccessChecker
+	accessWithViewer  auth.AccessChecker
+	statusPatcher     *appcontroller.RepositoryStatusPatcher
+	healthChecker     *controller.HealthChecker
+	repoValidator     repository.RepositoryValidator
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
@@ -134,6 +135,7 @@ type APIBuilder struct {
 func NewAPIBuilder(
 	onlyApiServer bool,
 	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
@@ -159,9 +161,17 @@ func NewAPIBuilder(
 	} else {
 		clients = resources.NewClientFactory(configProvider)
 	}
+
 	parsers := resources.NewParserFactory(clients)
-	legacyMigrator := migrations.ProvideUnifiedMigrator(dashboardAccess, unified)
-	resourceLister := resources.NewResourceListerForMigrations(unified, legacyMigrator, storageStatus)
+	resourceLister := resources.NewResourceListerForMigrations(unified)
+
+	// Create access checker based on mode
+	var accessChecker auth.AccessChecker
+	if useExclusivelyAccessCheckerForAuthz {
+		accessChecker = auth.NewTokenAccessChecker(access)
+	} else {
+		accessChecker = auth.NewSessionAccessChecker(access)
+	}
 
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
@@ -169,21 +179,24 @@ func NewAPIBuilder(
 		usageStats:                          usageStats,
 		features:                            features,
 		repoFactory:                         repoFactory,
+		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		parsers:                             parsers,
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		resourceLister:                      resourceLister,
 		dashboardAccess:                     dashboardAccess,
-		storageStatus:                       storageStatus,
 		unified:                             unified,
-		access:                              access,
+		access:                              accessChecker,
+		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
+		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
+		accessWithViewer:                    accessChecker.WithFallbackRole(identity.RoleViewer),
 		jobHistoryConfig:                    jobHistoryConfig,
 		extraWorkers:                        extraWorkers,
 		restConfigGetter:                    restConfigGetter,
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
-		validator:                           repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 	}
 
@@ -244,10 +257,15 @@ func RegisterAPIService(
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
 ) (*APIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
+	}
+
+	if dualwrite.IsReadingLegacyDashboardsAndFolders(context.Background(), storageStatus) {
+		return nil, fmt.Errorf("resources are stored in an incompatible data format to use provisioning. Please enable data migration in settings for folders and dashboards by adding the following configuration:\n[unified_storage.folders.folder.grafana.app]\nenableMigration = true\n\n[unified_storage.dashboards.dashboard.grafana.app]\nenableMigration = true\n\nAlternatively, disable provisioning")
 	}
 
 	allowedTargets := []provisioning.SyncTargetType{}
@@ -258,6 +276,7 @@ func RegisterAPIService(
 	builder := NewAPIBuilder(
 		cfg.DisableControllers,
 		repoFactory,
+		connectionFactory,
 		features,
 		client,
 		configProvider,
@@ -300,170 +319,213 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 			}
 
-			info, ok := authlib.AuthInfoFrom(ctx)
-			// when running as standalone API server, the identity type may not always match TypeAccessPolicy
-			// so we allow it to use the access checker if there is any auth info available
-			if ok && (authlib.IsIdentityType(info.GetIdentityType(), authlib.TypeAccessPolicy) || b.useExclusivelyAccessCheckerForAuthz) {
-				res, err := b.access.Check(ctx, info, authlib.CheckRequest{
-					Verb:        a.GetVerb(),
-					Group:       a.GetAPIGroup(),
-					Resource:    a.GetResource(),
-					Name:        a.GetName(),
-					Namespace:   a.GetNamespace(),
-					Subresource: a.GetSubresource(),
-					Path:        a.GetPath(),
-				}, "")
-				if err != nil {
-					return authorizer.DecisionDeny, "failed to perform authorization", err
-				}
-
-				if !res.Allowed {
-					return authorizer.DecisionDeny, "permission denied", nil
-				}
-
-				return authorizer.DecisionAllow, "", nil
-			}
-
-			id, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "failed to find requester", err
-			}
-
-			return b.authorizeResource(ctx, a, id)
+			return b.authorizeResource(ctx, a)
 		})
 }
 
 // authorizeResource handles authorization for different resources.
-// Different routes may need different permissions.
-// * Reading and modifying a repository's configuration requires administrator privileges.
-// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
-// * Reading a repository's files requires viewer privileges.
-// * Reading a repository's refs requires viewer privileges.
-// * Editing a repository's files requires editor privileges.
-// * Syncing a repository requires editor privileges.
-// * Exporting a repository requires administrator privileges.
-// * Migrating a repository requires administrator privileges.
-// * Testing a repository configuration requires administrator privileges.
-// * Viewing a repository's history requires editor privileges.
-func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
+// Uses fine-grained permissions defined in accesscontrol.go:
+//
+// Repositories:
+//   - CRUD: repositories:create/read/write/delete
+//   - Subresources: files (any auth), refs (editor), resources/history/status (admin)
+//   - Test: repositories:write
+//   - Jobs subresource: jobs:create/read
+//
+// Connections:
+//   - CRUD: connections:create/read/write/delete
+//   - Status: connections:read
+//
+// Jobs:
+//   - CRUD: jobs:create/read/write/delete
+//
+// Historic Jobs:
+//   - Read-only: historicjobs:read
+//
+// Settings:
+//   - settings:read - granted to Viewer (all logged-in users)
+//
+// Stats:
+//   - stats:read - granted to Admin only
+func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch a.GetResource() {
 	case provisioning.RepositoryResourceInfo.GetName():
-		return b.authorizeRepositorySubresource(a, id)
-	case "stats":
-		return b.authorizeStats(id)
-	case "settings":
-		return b.authorizeSettings(id)
-	case provisioning.JobResourceInfo.GetName(), provisioning.HistoricJobResourceInfo.GetName():
-		return b.authorizeJobs(id)
+		return b.authorizeRepositorySubresource(ctx, a)
 	case provisioning.ConnectionResourceInfo.GetName():
-		return b.authorizeConnectionSubresource(a, id)
+		return b.authorizeConnectionSubresource(ctx, a)
+	case provisioning.JobResourceInfo.GetName():
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.JobResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+	case provisioning.HistoricJobResourceInfo.GetName():
+		// Historic jobs are read-only and admin-only (not editor)
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.HistoricJobResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+	case "settings":
+		// Settings are read-only and accessible by all logged-in users (Viewer role)
+		return toAuthorizerDecision(b.accessWithViewer.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  "settings",
+			Namespace: a.GetNamespace(),
+		}, ""))
+	case "stats":
+		// Stats are read-only and admin-only
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  "stats",
+			Namespace: a.GetNamespace(),
+		}, ""))
 	default:
-		return b.authorizeDefault(id)
+		return b.authorizeDefault(ctx)
 	}
 }
 
 // authorizeRepositorySubresource handles authorization for repository subresources.
-func (b *APIBuilder) authorizeRepositorySubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
-	// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
+// Uses the access checker with verb-based authorization.
+func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch a.GetSubresource() {
-	case "", "test":
-		// Doing something with the repository itself.
-		if id.GetOrgRole().Includes(identity.RoleAdmin) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "admin role is required", nil
-
-	case "jobs":
-		// Posting jobs requires editor privileges (for syncing).
-		if id.GetOrgRole().Includes(identity.RoleAdmin) || id.GetOrgRole().Includes(identity.RoleEditor) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "editor role is required", nil
-
-	case "refs":
-		// This is strictly a read operation. It is handy on the frontend for viewers.
-		if id.GetOrgRole().Includes(identity.RoleViewer) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "viewer role is required", nil
-
-	case "files":
-		// Access to files is controlled by the AccessClient
-		return authorizer.DecisionAllow, "", nil
-
-	case "resources", "sync", "history":
-		// These are strictly read operations.
-		// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
-		if id.GetOrgRole().Includes(identity.RoleEditor) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "editor role is required", nil
-
-	case "status":
-		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "users cannot update the status of a repository", nil
-
-	default:
-		if id.GetIsGrafanaAdmin() {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
-	}
-}
-
-// authorizeStats handles authorization for stats resource.
-func (b *APIBuilder) authorizeStats(id identity.Requester) (authorizer.Decision, string, error) {
-	// This can leak information one shouldn't necessarily have access to.
-	if id.GetOrgRole().Includes(identity.RoleAdmin) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "admin role is required", nil
-}
-
-// authorizeSettings handles authorization for settings resource.
-func (b *APIBuilder) authorizeSettings(id identity.Requester) (authorizer.Decision, string, error) {
-	// This is strictly a read operation. It is handy on the frontend for viewers.
-	if id.GetOrgRole().Includes(identity.RoleViewer) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "viewer role is required", nil
-}
-
-// authorizeJobs handles authorization for job resources.
-func (b *APIBuilder) authorizeJobs(id identity.Requester) (authorizer.Decision, string, error) {
-	// Jobs are shown on the configuration page.
-	if id.GetOrgRole().Includes(identity.RoleAdmin) {
-		return authorizer.DecisionAllow, "", nil
-	}
-	return authorizer.DecisionDeny, "admin role is required", nil
-}
-
-// authorizeRepositorySubresource handles authorization for connections subresources.
-func (b *APIBuilder) authorizeConnectionSubresource(a authorizer.Attributes, id identity.Requester) (authorizer.Decision, string, error) {
-	switch a.GetSubresource() {
+	// Repository CRUD - use access checker with the actual verb
 	case "":
-		// Doing something with the connection itself.
-		if id.GetOrgRole().Includes(identity.RoleAdmin) {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "admin role is required", nil
-	case "status":
-		if id.GetOrgRole().Includes(identity.RoleViewer) && a.GetVerb() == apiutils.VerbGet {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "users cannot update the status of a connection", nil
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	// Test requires write permission (testing before save)
+	case "test":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbUpdate,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	// Files subresource: allow any authenticated user at route level.
+	// Directory listing checks repositories:read in the connector.
+	// Individual file operations are authorized by DualReadWriter based on the actual resource.
+	case "files":
+		return authorizer.DecisionAllow, "", nil
+
+	// refs subresource - editors need to see branches to push changes
+	case "refs":
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	// Read-only subresources: resources, history, status (admin only)
+	case "resources", "history", "status":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	// Jobs subresource - check jobs permissions with the verb (editors can manage jobs)
+	case "jobs":
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.JobResourceInfo.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
 	default:
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return authorizer.DecisionDeny, "failed to find requester", err
+		}
 		if id.GetIsGrafanaAdmin() {
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
 	}
+}
+
+// authorizeConnectionSubresource handles authorization for connection subresources.
+// Uses the access checker with verb-based authorization.
+func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+	switch a.GetSubresource() {
+	// Connection CRUD - use access checker with the actual verb
+	case "":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	// Status is read-only
+	case "status":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	// Repositories is read-only
+	case "repositories":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
+	default:
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return authorizer.DecisionDeny, "failed to find requester", err
+		}
+		if id.GetIsGrafanaAdmin() {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "unmapped subresource defaults to no access", nil
+	}
+}
+
+// ----------------------------------------------------------------------------
+// Authorization helpers
+// ----------------------------------------------------------------------------
+
+// toAuthorizerDecision converts an access check error to an authorizer decision tuple.
+func toAuthorizerDecision(err error) (authorizer.Decision, string, error) {
+	if err != nil {
+		return authorizer.DecisionDeny, err.Error(), nil
+	}
+	return authorizer.DecisionAllow, "", nil
 }
 
 // authorizeDefault handles authorization for unmapped resources.
-func (b *APIBuilder) authorizeDefault(id identity.Requester) (authorizer.Decision, string, error) {
+func (b *APIBuilder) authorizeDefault(ctx context.Context) (authorizer.Decision, string, error) {
+	id, err := identity.GetRequester(ctx)
+	if err != nil {
+		return authorizer.DecisionDeny, "failed to find requester", err
+	}
 	// We haven't bothered with this kind yet.
 	if id.GetIsGrafanaAdmin() {
 		return authorizer.DecisionAllow, "", nil
@@ -503,6 +565,22 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	// Register custom field label conversion for Repository to enable field selectors like spec.connection.name
+	err = scheme.AddFieldLabelConversionFunc(
+		provisioning.SchemeGroupVersion.WithKind("Repository"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.connection.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for Repository: %s", label)
+			}
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	metav1.AddToGroupVersion(scheme, provisioning.SchemeGroupVersion)
 	// Only 1 version (for now?)
 	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
@@ -513,12 +591,21 @@ func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.RepositoryResourceInfo, opts.OptsGetter)
+	// Create repository storage with custom field selectors (e.g., spec.connection.name)
+	repositoryStorage, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+		opts.Scheme,
+		provisioning.RepositoryResourceInfo,
+		opts.OptsGetter,
+		grafanaregistry.SelectableFieldsOptions{
+			GetAttrs: RepositoryGetAttrs,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
+
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.store = repositoryStorage
+	b.repoStore = repositoryStorage
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -550,6 +637,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create connection storage: %w", err)
 	}
 	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
+	b.connectionStore = connectionsStore
 
 	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
@@ -557,10 +645,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
+	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector()
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.repoValidator), b.VerifyAgainstExistingRepositories))
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -600,10 +689,10 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	if ok {
 		return nil
 	}
-	// TODO: complete this as part of https://github.com/grafana/git-ui-sync-project/issues/700
+
 	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		return connectionvalidation.MutateConnection(c)
+		return b.connectionFactory.Mutate(ctx, c)
 	}
 
 	r, ok := obj.(*provisioning.Repository)
@@ -654,9 +743,15 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return nil
 	}
 
-	connection, ok := obj.(*provisioning.Connection)
+	// Validate connections
+	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		return connectionvalidation.ValidateConnection(connection)
+		conn, err := b.asConnection(ctx, c, a.GetOldObject())
+		if err != nil {
+			return err
+		}
+
+		return conn.Validate(ctx)
 	}
 
 	// Validate Jobs
@@ -675,7 +770,8 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	//
 	// the only time to add configuration checks here is if you need to compare
 	// the incoming change to the current configuration
-	list := b.validator.ValidateRepository(repo)
+	isCreate := a.GetOperation() == admission.Create
+	list := b.repoValidator.ValidateRepository(repo, isCreate)
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
@@ -718,7 +814,7 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 }
 
 func (b *APIBuilder) VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error {
-	return VerifyAgainstExistingRepositories(ctx, b.store, cfg)
+	return VerifyAgainstExistingRepositories(ctx, b.repoStore, cfg)
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
@@ -748,7 +844,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.validator))
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.repoValidator))
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
@@ -759,18 +855,14 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
+			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
-
-			// When starting with an empty instance -- swith to "mode 4+"
-			err = b.tryRunningOnlyUnifiedStorage()
-			if err != nil {
-				return err
-			}
+			go connInformer.Informer().Run(postStartHookCtx.Done())
 
 			// Create the repository resources factory
 			repositoryListerWrapper := func(ctx context.Context) ([]provisioning.Repository, error) {
-				return GetRepositoriesInNamespace(ctx, b.store)
+				return GetRepositoriesInNamespace(ctx, b.repoStore)
 			}
 			usageMetricCollector := usage.MetricCollector(b.tracer, repositoryListerWrapper, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
@@ -790,28 +882,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
-				b.storageStatus,
 				b.statusPatcher.Patch,
 				syncer,
 				metrics,
 				b.tracer,
 				10,
-			)
-			signerFactory := signature.NewSignerFactory(b.clients)
-			legacyResources := migrate.NewLegacyResourcesMigrator(
-				b.repositoryResources,
-				b.parsers,
-				b.dashboardAccess,
-				signerFactory,
-				b.clients,
-				export.ExportAll,
-			)
-			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
-			legacyMigrator := migrate.NewLegacyMigrator(
-				legacyResources,
-				storageSwapper,
-				syncWorker,
-				stageIfPossible,
 			)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
@@ -820,12 +895,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				exportWorker,
 				syncWorker,
 			)
-
-			migrationWorker := migrate.NewMigrationWorker(
-				legacyMigrator,
-				unifiedStorageMigrator,
-				b.storageStatus,
-			)
+			migrationWorker := migrate.NewMigrationWorker(unifiedStorageMigrator)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
@@ -897,7 +967,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.resourceLister,
 				b.clients,
 				b.jobs,
-				b.storageStatus,
 				b.GetHealthChecker(),
 				b.statusPatcher,
 				b.registry,
@@ -909,6 +978,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+
+			// Create and run connection controller
+			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
+			connController, err := controller.NewConnectionController(
+				b.GetClient(),
+				connInformer,
+				connStatusPatcher,
+			)
+			if err != nil {
+				return err
+			}
+			go connController.Run(postStartHookCtx.Context, repoControllerWorkers)
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
@@ -1229,6 +1310,23 @@ spec:
 		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
 	}
 
+	// Document connection repositories endpoint
+	connectionprefix := root + "namespaces/{namespace}/connections/{name}"
+	sub = oas.Paths.Paths[connectionprefix+"/repositories"]
+	if sub != nil {
+		sub.Get.Description = "List repositories available from the external git provider through this connection"
+		sub.Get.Summary = "List external repositories"
+		sub.Get.Parameters = []*spec3.Parameter{}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs[defsBase+"ExternalRepositoryList"].Schema
+		mt["*/*"].Schema = &s
+	}
+
 	// Run all extra post-processors.
 	for _, extra := range b.extras {
 		if err := extra.PostProcessOpenAPI(oas); err != nil {
@@ -1306,74 +1404,23 @@ spec:
 	return oas, nil
 }
 
-// FIXME: This logic does not belong in provisioning! (but required for now)
-// When starting an empty instance, we shift so that we never reference legacy storage
-// This should run somewhere else at startup by default (dual writer? dashboards?)
-func (b *APIBuilder) tryRunningOnlyUnifiedStorage() error {
-	ctx := context.Background()
-
-	if !b.storageStatus.ShouldManage(dashboard.DashboardResourceInfo.GroupResource()) {
-		return nil // not enabled
-	}
-
-	if !dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus) {
-		return nil
-	}
-
-	// Count how many things exist - create a migrator on-demand for this
-	legacyMigrator := migrations.ProvideUnifiedMigrator(b.dashboardAccess, b.unified)
-	rsp, err := legacyMigrator.Migrate(ctx, legacy.MigrateOptions{
-		Namespace: "default", // FIXME! this works for single org, but need to check multi-org
-		Resources: []schema.GroupResource{{
-			Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE,
-		}, {
-			Group: folders.GROUP, Resource: folders.RESOURCE,
-		}},
-		OnlyCount: true,
-	})
-	if err != nil {
-		return fmt.Errorf("error getting legacy count %w", err)
-	}
-	for _, stats := range rsp.Summary {
-		if stats.Count > 0 {
-			return nil // something exists we can not just switch
-		}
-	}
-
-	logger := logging.DefaultLogger.With("logger", "provisioning startup")
-	mode5 := func(gr schema.GroupResource) error {
-		status, _ := b.storageStatus.Status(ctx, gr)
-		if !status.ReadUnified {
-			status.ReadUnified = true
-			status.WriteLegacy = false
-			status.WriteUnified = true
-			status.Runtime = false
-			status.Migrated = time.Now().UnixMilli()
-			_, err = b.storageStatus.Update(ctx, status)
-			logger.Info("set unified storage access", "group", gr.Group, "resource", gr.Resource)
-			return err
-		}
-		return nil // already reading unified
-	}
-
-	if err = mode5(dashboard.DashboardResourceInfo.GroupResource()); err != nil {
-		return err
-	}
-	if err = mode5(folders.FolderResourceInfo.GroupResource()); err != nil {
-		return err
-	}
-	return nil
-}
-
 // Helpers for fetching valid Repository objects
 // TODO: where should the helpers live?
 
 func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
-	obj, err := b.store.Get(ctx, name, &metav1.GetOptions{})
+	obj, err := b.repoStore.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	return b.asRepository(ctx, obj, nil)
+}
+
+func (b *APIBuilder) GetConnection(ctx context.Context, name string) (connection.Connection, error) {
+	obj, err := b.connectionStore.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return b.asConnection(ctx, obj, nil)
 }
 
 func (b *APIBuilder) GetRepoFactory() repository.Factory {
@@ -1421,6 +1468,35 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old r
 	}
 
 	return b.repoFactory.Build(ctx, r)
+}
+
+func (b *APIBuilder) asConnection(ctx context.Context, obj runtime.Object, old runtime.Object) (connection.Connection, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("missing connection object")
+	}
+
+	c, ok := obj.(*provisioning.Connection)
+	if !ok {
+		return nil, fmt.Errorf("expected connection object")
+	}
+
+	// Copy previous values if they exist
+	if old != nil {
+		o, ok := old.(*provisioning.Connection)
+		if ok && !o.Secure.IsZero() {
+			if c.Secure.PrivateKey.IsZero() {
+				c.Secure.PrivateKey = o.Secure.PrivateKey
+			}
+			if c.Secure.Token.IsZero() {
+				c.Secure.Token = o.Secure.Token
+			}
+			if c.Secure.ClientSecret.IsZero() {
+				c.Secure.ClientSecret = o.Secure.ClientSecret
+			}
+		}
+	}
+
+	return b.connectionFactory.Build(ctx, c)
 }
 
 func getJSONResponse(ref string) *spec3.Responses {

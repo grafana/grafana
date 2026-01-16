@@ -95,6 +95,8 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
     datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
     ruleMatchers: ruleMatchersBackendFilter,
+    plugins: ruleFilterConfig.plugins ? undefined : normalizedFilterState.plugins,
+    searchFolder: groupFilterConfig.namespace ? undefined : normalizedFilterState.namespace,
   };
 
   return {
@@ -128,12 +130,12 @@ function buildGrafanaFilterConfigs() {
     labels: useBackendFilters ? null : labelsFilter,
     ruleHealth: null,
     dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
-    plugins: pluginsFilter,
+    plugins: useBackendFilters || useFullyCompatibleBackendFilters ? null : pluginsFilter,
     contactPoint: null,
   };
 
   const groupFilterConfig: GroupFilterConfig = {
-    namespace: namespaceFilter,
+    namespace: useBackendFilters ? null : namespaceFilter,
     groupName: useBackendFilters ? null : groupNameFilter,
   };
 

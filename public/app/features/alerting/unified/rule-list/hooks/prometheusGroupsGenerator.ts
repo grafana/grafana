@@ -50,6 +50,7 @@ interface GrafanaPromApiFilter {
   contactPoint?: string;
   title?: string;
   searchGroupName?: string;
+  searchFolder?: string;
   type?: 'alerting' | 'recording';
   dashboardUid?: string;
 }
