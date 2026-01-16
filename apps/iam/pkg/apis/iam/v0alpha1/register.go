@@ -396,8 +396,6 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&GetSearchTeams{},
 		&TeamBinding{},
 		&TeamBindingList{},
-		&TeamLBACRule{},
-		&TeamLBACRuleList{},
 		&ExternalGroupMapping{},
 		&ExternalGroupMappingList{},
 		&GetGroups{},
