@@ -596,7 +596,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 		}}
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "invalid bitbucket connection")
+		assert.Contains(t, err.Error(), "bitbucket info must be specified in Bitbucket connection")
 	})
 
 	t.Run("should fail when type is bitbucket but client secret is not there", func(t *testing.T) {
@@ -666,7 +666,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 		}}
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "invalid gitlab connection")
+		assert.Contains(t, err.Error(), "gitlab info must be specified in Gitlab connection")
 	})
 
 	t.Run("should fail when type is gitlab but client secret is not there", func(t *testing.T) {
