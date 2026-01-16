@@ -20,12 +20,6 @@ type retryConfig struct {
 }
 
 // unaryRetryInterceptor creates an interceptor to perform retries for unary methods.
-//
-// Note: Retry codes are the same as the default codes.
-//
-//	From go-grpc-middleware/interceptors/retry/options.go:
-//	`ResourceExhausted` means that the user quota, e.g. per-RPC limits, have been reached.
-//	`Unavailable` means that system is currently unavailable and the client should retry again.
 func unaryRetryInterceptor(cfg retryConfig) grpc.UnaryClientInterceptor {
 	return grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(cfg.Max),
@@ -51,7 +45,7 @@ func unaryRetryInstrument(metric *prometheus.CounterVec) grpc.UnaryClientInterce
 func connectionBackoffOptions() grpc.DialOption {
 	return grpc.WithConnectParams(grpc.ConnectParams{
 		Backoff: backoff.Config{
-			BaseDelay:  100 * time.Millisecond,
+			BaseDelay:  1 * time.Second,
 			Multiplier: 1.6,
 			Jitter:     0.2,
 			MaxDelay:   10 * time.Second,
