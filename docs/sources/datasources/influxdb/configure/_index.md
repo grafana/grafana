@@ -33,17 +33,17 @@ refs:
 
 # Configure the InfluxDB data source
 
-This document provides instructions for configuring the InfluxDB data source and explains the available configuration options.
+Learn how to configure the InfluxDB data source and explore the available configuration options.
 
 ## Before you begin
 
-To configure the InfluxDB data source you must have the `Administrator` role.
+To configure the InfluxDB data source, you must have the `Administrator` role.
 
-InfluxData provides three query languages. Some key points to consider:
+InfluxData provides three query languages:
 
-- Flux is a functional data scripting language for InfluxDB 2.x. Refer to [Query InfluxDB with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/query-influxdb/) for a basic guide on working with Flux.
-- InfluxQL is SQL-like query language developed by InfluxData. It doesn't support more advanced functions such as JOINs.
-- SQL is only available for InfluxDB v3.x.
+- **Flux** - A functional data scripting language for InfluxDB 2.x. Refer to [Query InfluxDB with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/query-influxdb/) for a basic guide on working with Flux.
+- **InfluxQL** - A SQL-like query language developed by InfluxData. It doesn't support advanced functions such as JOINs.
+- **SQL** - Native SQL language available for InfluxDB v3.x.
 
 To help choose the best language for your needs, refer to
 a [comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/)
@@ -59,7 +59,7 @@ Complete the following steps to set up a new InfluxDB data source:
 4. Select the **InfluxDB** data source.
 5. Click **Add new data source** in the upper right.
 
-You are taken to the **Settings** tab where you will configure the data source. A sidebar on the left displays navigation links to each configuration section:
+Grafana opens the **Settings** tab where you configure the data source. A sidebar on the left displays navigation links to each configuration section:
 
 - URL and authentication
 - Database settings
@@ -68,18 +68,18 @@ You are taken to the **Settings** tab where you will configure the data source. 
 
 ## Configuration options
 
-The following is a list of configuration options for InfluxDB.
+The following sections describe the available configuration options.
 
-![Updated UI image for InfluxDB](/media/docs/influxdb/nfluxdb-updated-ui-v12.3.png.png)
+![InfluxDB data source configuration page showing the sidebar navigation and settings](/media/docs/influxdb/influxdb-updated-ui-v12.3.png)
 
-The first option is to configure the name of your connection.
+First, configure the name of your connection.
 
 - **Name** - Sets the name you use to refer to the data source in panels and queries. Examples: `InfluxDB-InfluxQL`, `InfluxDB_SQL`.
 - **Default** - Toggle to set as the default data source.
 
 ### URL and authentication
 
-These settings identify the InfluxDB instance and schema the data source connects to.
+Use these settings to specify the InfluxDB instance the data source connects to.
 
 - **URL** - The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB's default API port is `8086`. When you enter a URL, Grafana attempts to auto-detect your InfluxDB product based on URL patterns. Refer to [InfluxDB detection](https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/) for more information.
 - **Product** - Select the InfluxDB product you're connecting to. The available query languages depend on your product selection.
@@ -104,9 +104,9 @@ The following table shows which query languages are available for each InfluxDB 
 | InfluxDB OSS 3.x           | SQL, InfluxQL             |
 
 {{< admonition type="note" >}}
-_For InfluxQL only._ **Database + Retention Policy (DBRP) Mapping** must be configured before data can be queried for the following product versions: _Influx OSS 1.x_, _Influx OSS 2.x_, _Influx Enterprise 1.x_, _Influx Cloud (TSM)_, _Influx Cloud Serverless_
+_For InfluxQL only._ **Database + Retention Policy (DBRP) Mapping** must be configured before data can be queried for the following products: _InfluxDB OSS 1.x_, _InfluxDB OSS 2.x_, _InfluxDB Enterprise 1.x_, _InfluxDB Cloud (TSM)_, _InfluxDB Cloud Serverless_.
 
-Refer to [Manage DBRP Mappings](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/) for guidance on setting this up via the CLI or API
+Refer to [Manage DBRP Mappings](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/) for guidance on setting this up using the CLI or API.
 {{< /admonition >}}
 
 #### Advanced HTTP settings
@@ -128,7 +128,7 @@ Click **+ Add header** to add one or more HTTP headers. HTTP headers pass additi
 Toggle **Auth and TLS/SSL Settings** to expand authentication and security options.
 
 - **No Authentication** - Make the data source available without authentication. Grafana recommends using some type of authentication method.
-- **Basic auth** - The most common authentication method. Use your Influx instance username and password to authenticate.
+- **Basic auth** - The most common authentication method. Use your InfluxDB instance username and password to authenticate.
 - **Forward OAuth identity** - Forward the OAuth access token (and also the OIDC ID token if available) of the user querying the data source.
 - **With credentials** - Toggle to enable credentials such as cookies or auth headers to be sent with cross-site requests.
 
@@ -149,7 +149,7 @@ Setting the database for this data source **does not deny access to other databa
 To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
 {{< /admonition >}}
 
-These settings identify the InfluxDB database your data source connects to. The required fields vary based on the query language selected in **URL and authentication**.
+Use these settings to specify the InfluxDB database your data source connects to. The required fields vary based on the query language selected in **URL and authentication**.
 
 The following table shows which fields are required for each query language:
 
@@ -195,7 +195,7 @@ Toggle **Advanced Database Settings** to expand optional settings that give you 
 
 ### Private data source connect
 
-_For Grafana Cloud only._ Private data source connect (PDC) allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information about Grafana PDC, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
+_For Grafana Cloud only._ Private data source connect (PDC) allows you to establish a private, secured connection between a Grafana Cloud instance and data sources secured within a private network. For more information, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
 Click **Manage private data source connect** to go to your PDC connection page, where you'll find your PDC configuration details.
 
@@ -307,7 +307,7 @@ datasources:
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB_v3_InfluxQL
+  - name: InfluxDB_v3_SQL
     type: influxdb
     access: proxy
     url: http://localhost:8086
