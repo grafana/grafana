@@ -213,7 +213,7 @@ func TestTestConnection(t *testing.T) {
 			name: "validation fails with multiple errors",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Type:   provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
 						// Missing AppID and InstallationID
 					},
