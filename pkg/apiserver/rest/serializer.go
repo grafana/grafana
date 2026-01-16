@@ -31,7 +31,7 @@ func NoProtobuf(info runtime.SerializerInfo) bool {
 
 // NoProtobufNegotiatedSerializer is a runtime.NegotiatedSerializer that omits the support for protobuf.
 func NoProtobufNegotiatedSerializer(codecs serializer.CodecFactory, accepts ...func(info runtime.SerializerInfo) bool) runtime.NegotiatedSerializer {
-	return noProtobufNegotiatedSerializer{accepts, codecs.WithoutConversion()}
+	return noProtobufNegotiatedSerializer{accepts, codecs}
 }
 
 // DefaultNoProtobufNegotiatedSerializer is the default serializer that does not use protobuf.
