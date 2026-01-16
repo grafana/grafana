@@ -8,7 +8,6 @@ import {
   ClipboardButton,
   CustomCellRendererProps,
   IconButton,
-  Modal,
   TableCellInspector,
   TableCellInspectorMode,
   useTheme2,
