@@ -3767,7 +3767,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5341,6 +5340,7 @@
       },
       "header-hidden-tooltip": "Satır başlığı yalnızca düzenleme modunda görünür",
       "name": "Satırlar",
+      "new-row-title": "",
       "row": {
         "collapse": "Satırı daralt",
         "expand": "Satırı genişlet",
@@ -7991,6 +7991,7 @@
     "name-neutral": "Nötr",
     "name-show-threshold-labels": "Eşik etiketlerini göster",
     "name-show-threshold-markers": "Eşik işaretçilerini göster",
+    "neutral": "",
     "placeholder-neutral": "otomatik",
     "suggestions": {
       "arc": "",
@@ -12572,6 +12573,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12585,6 +12591,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12742,14 +12749,6 @@
       "starred": "Yıldızlı",
       "view-as-folders": "Klasörlere göre görüntüle",
       "view-as-list": "Liste olarak görüntüle"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetik olarak (A-Z)",
-          "alphabetically-za": "Alfabetik olarak (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "İçe aktar",

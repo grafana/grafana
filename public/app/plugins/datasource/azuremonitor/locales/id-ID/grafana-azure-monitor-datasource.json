@@ -274,7 +274,7 @@
       "label-time-column": "Kolom Waktu",
       "label-time-range": "Rentang waktu",
       "tooltip-time-column": "<0>Menentukan kolom waktu yang digunakan untuk penyaringan. Default ke kolom <1>timeSpan</1> tabel pertama, kolom <3>datetime</3> pertama yang ditemukan, atau <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Menentukan rentang waktu yang digunakan untuk kueri. Opsi <1>Kueri</1> hanya akan menggunakan rentang waktu yang ditentukan dalam kueri. <3>Dasbor</3> hanya akan menggunakan rentang waktu Grafana. Dalam mode Pembuat Log, hanya waktu Dasbor yang akan digunakan.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Top"
