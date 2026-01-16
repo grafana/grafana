@@ -485,7 +485,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   onAddAdHocFilter = (filter: AdHocFilterItem) => {
-    const { key, value, operator } = filter;
+    const { key, value, operator, lokiLabelType } = filter;
 
     // When the datasource is null/undefined (for a default datasource), we use getInstanceSettings
     // to find the real datasource ref for the default datasource.
@@ -495,7 +495,15 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       return;
     }
 
-    dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
+    dispatch(
+      applyFilterFromTable({
+        datasource: datasourceRef,
+        key,
+        operator,
+        value,
+        lokiLabelType,
+      })
+    );
   };
 
   renderPanelContent(innerWidth: number, innerHeight: number) {

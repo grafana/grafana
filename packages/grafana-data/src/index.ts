@@ -922,4 +922,6 @@ export {
   userHasAnyPermission,
 } from './rbac/rbac';
 
+export { narrowLokiLabelTypes } from './utils/filters/narrowing';
+
 export { type UserStorage } from './types/userStorage';

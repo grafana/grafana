@@ -68,7 +68,7 @@ export interface AdHocVariableFilter {
   /** @deprecated  */
   condition?: string;
   // Required to differentiate loki fields
-  lokiLabelType?: LokiLabelType;
+  lokiLabelType: LokiLabelType | null;
 }
 
 export interface AdHocVariableModel extends BaseVariableModel {

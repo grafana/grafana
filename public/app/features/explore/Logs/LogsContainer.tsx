@@ -1,38 +1,37 @@
-import { PureComponent } from 'react';
 import * as React from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import {
   AbsoluteTimeRange,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceWithLogsContextSupport,
+  DataSourceWithQueryModificationSupport,
+  EventBus,
   hasLogsContextSupport,
   hasLogsContextUiSupport,
+  hasQueryModificationSupport,
+  hasToggleableQueryFiltersSupport,
   LoadingState,
+  LogRowContextOptions,
   LogRowModel,
   RawTimeRange,
-  EventBus,
   SplitOpen,
-  DataFrame,
   SupplementaryQueryType,
-  DataQueryResponse,
-  LogRowContextOptions,
-  DataSourceWithLogsContextSupport,
-  DataSourceApi,
-  hasToggleableQueryFiltersSupport,
-  DataSourceWithQueryModificationSupport,
-  hasQueryModificationSupport,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { PanelChrome } from '@grafana/ui';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { GetFieldLinksFn, onClickFilterLabelType, onClickFilterOutLabelType } from 'app/plugins/panel/logs/types';
 import { ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../../profile/state/selectors';
 import { loadSupplementaryQueryData, selectIsWaitingForData, setSupplementaryQueryEnabled } from '../state/query';
-import { updateTimeRange, loadMoreLogs } from '../state/time';
+import { loadMoreLogs, updateTimeRange } from '../state/time';
 import { LiveTailControls } from '../useLiveTailControls';
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -46,8 +45,8 @@ interface LogsContainerProps extends PropsFromRedux {
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
-  onClickFilterLabel: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel: onClickFilterLabelType;
+  onClickFilterOutLabel: onClickFilterOutLabelType;
   onStartScanning: () => void;
   onStopScanning: () => void;
   eventBus: EventBus;

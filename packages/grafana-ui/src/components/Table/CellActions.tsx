@@ -41,6 +41,7 @@ export function CellActions({
   const onFilterFor = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       if (onCellFilterAdded) {
+        // @todo labelType support
         onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: cell.value });
       }
     },
@@ -49,6 +50,7 @@ export function CellActions({
   const onFilterOut = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       if (onCellFilterAdded) {
+        // @todo labelType support
         onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: cell.value });
       }
     },

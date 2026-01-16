@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { AdHocVariableFilter, AdHocVariableModel, DataSourceRef } from '@grafana/data';
+import { AdHocVariableFilter, AdHocVariableModel, DataSourceRef, LokiLabelType } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { StoreState, ThunkResult } from 'app/types/store';
 
@@ -27,6 +27,7 @@ export interface AdHocTableOptions {
   key: string;
   value: string;
   operator: string;
+  lokiLabelType: LokiLabelType | null;
 }
 
 const filterTableName = 'Filters';
@@ -46,8 +47,8 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
     const index = variable.filters.findIndex((f) => f.key === options.key && f.value === options.value);
 
     if (index === -1) {
-      const { value, key, operator } = options;
-      const filter = { value, key, operator };
+      const { value, key, operator, lokiLabelType } = options;
+      const filter = { value, key, operator, lokiLabelType };
       return await dispatch(addFilter(toKeyedVariableIdentifier(variable), filter));
     }
 

@@ -1017,6 +1017,9 @@ MetricFindValue: {
 	expandable?: bool
 }
 
+// Loki Label types
+LokiLabelType: "Indexed" | "Parsed" | "Metadata" @cuetsy(kind="enum")
+
 // Define the AdHocFilterWithLabels type
 AdHocFilterWithLabels: {
 	key:      string
@@ -1027,6 +1030,7 @@ AdHocFilterWithLabels: {
 	valueLabels?: [...string]
 	forceEdit?: bool
 	origin?: FilterOrigin
+	lokiLabelType: LokiLabelType
 	// @deprecated
 	condition?: string
 }

@@ -1,5 +1,7 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+import { LokiLabelType } from '@grafana/data';
+
 export interface AnnotationQueryKind {
 	kind: "AnnotationQuery";
 	spec: AnnotationQuerySpec;
@@ -1461,8 +1463,11 @@ export interface AdHocFilterWithLabels {
 	valueLabels?: string[];
 	forceEdit?: boolean;
 	origin?: "dashboard";
+  // @todo how to generate this file?
+  lokiLabelType: LokiLabelType | null;
 	// @deprecated
 	condition?: string;
+
 }
 
 export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({

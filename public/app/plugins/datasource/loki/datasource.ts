@@ -1104,7 +1104,7 @@ export class LokiDatasource
 
       let labelType = filter.lokiLabelType;
       if (!labelType && dataFrame) {
-        labelType = getLabelTypeFromFrame(key, dataFrame, 0) ?? undefined;
+        labelType = getLabelTypeFromFrame(key, dataFrame, 0);
       }
       return addLabelToQuery(acc, key, operator, value, labelType);
     }, expr);

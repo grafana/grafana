@@ -1,7 +1,13 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
+import {
+  AdHocVariableFilter,
+  DataSourceRef,
+  LokiLabelType,
+  narrowLokiLabelTypes,
+  SelectableValue,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';
@@ -17,6 +23,7 @@ interface Props {
 export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, allFilters }: Props) => {
   const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
+  const [lokiLabelType, setLokiLabelType] = useState<LokiLabelType | null>(null);
 
   const onKeyChanged = useCallback(
     (item: SelectableValue<string | null>) => {
@@ -27,6 +34,19 @@ export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, allF
       setKey(null);
     },
     [setKey]
+  );
+
+  const onLokiLabelTypeChange = useCallback(
+    (item: SelectableValue<string | null>) => {
+      const labelType = narrowLokiLabelTypes(item.value);
+      if (labelType) {
+        setLokiLabelType(labelType);
+        return;
+      }
+
+      setLokiLabelType(null);
+    },
+    [setLokiLabelType]
   );
 
   const onOperatorChanged = useCallback(
@@ -40,15 +60,28 @@ export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, allF
         value: item.value ?? '',
         operator: operator,
         key: key!,
+        lokiLabelType: lokiLabelType,
       });
       setKey(null);
       setOperator('=');
     },
-    [onCompleted, operator, key]
+    [onCompleted, operator, key, lokiLabelType]
   );
 
   if (key === null) {
     return <AdHocFilterKey datasource={datasource} filterKey={key} onChange={onKeyChanged} allFilters={allFilters} />;
+  }
+
+  // @todo
+  if (datasource.type === 'loki' && lokiLabelType === null) {
+    return (
+      <AdHocFilterKey
+        datasource={datasource}
+        filterKey={lokiLabelType}
+        onChange={onLokiLabelTypeChange}
+        allFilters={allFilters}
+      />
+    );
   }
 
   return (
@@ -56,7 +89,7 @@ export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, allF
       {appendBefore}
       <AdHocFilterRenderer
         datasource={datasource}
-        filter={{ key, value: '', operator }}
+        filter={{ key, value: '', operator, lokiLabelType }}
         placeHolder={t('variable.adhoc.placeholder', 'Select value')}
         onKeyChange={onKeyChanged}
         onOperatorChange={onOperatorChanged}

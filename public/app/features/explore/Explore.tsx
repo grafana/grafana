@@ -12,6 +12,7 @@ import {
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
+  LokiLabelType,
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
@@ -35,6 +36,7 @@ import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types/store';
 
+import { onClickFilterLabelType, onClickFilterOutLabelType } from '../../plugins/panel/logs/types';
 import { getTimeZone } from '../profile/state/selectors';
 
 import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline/ContentOutline';
@@ -168,13 +170,13 @@ export class Explore extends PureComponent<Props, ExploreState> {
   };
 
   onCellFilterAdded = (filter: AdHocFilterItem) => {
-    const { value, key, operator } = filter;
+    const { value, key, operator, lokiLabelType } = filter;
     if (operator === FILTER_FOR_OPERATOR) {
-      this.onClickFilterLabel(key, value);
+      this.onClickFilterLabel(key, value, lokiLabelType);
     }
 
     if (operator === FILTER_OUT_OPERATOR) {
-      this.onClickFilterOutLabel(key, value);
+      this.onClickFilterOutLabel(key, value, lokiLabelType);
     }
   };
 
@@ -213,7 +215,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (key: string, value: string | number, frame?: DataFrame) => {
+  onClickFilterLabel: onClickFilterLabelType = (
+    key: string,
+    value: string | number,
+    lokiLabelType: LokiLabelType | null,
+    frame?: DataFrame
+  ) => {
     this.onModifyQueries(
       {
         type: 'ADD_FILTER',
@@ -227,7 +234,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (key: string, value: string | number, frame?: DataFrame) => {
+  onClickFilterOutLabel: onClickFilterOutLabelType = (
+    key: string,
+    value: string | number,
+    lokiLabelType: LokiLabelType | null,
+    frame?: DataFrame
+  ) => {
     this.onModifyQueries(
       {
         type: 'ADD_FILTER_OUT',

@@ -8,13 +8,13 @@ import { LogListOptions } from 'app/features/logs/components/panel/LogList';
 export type onClickFilterLabelType = (
   key: string,
   value: string,
-  lokiLabelType?: LokiLabelType | null,
+  lokiLabelType: LokiLabelType | null,
   frame?: DataFrame
 ) => void;
 export type onClickFilterOutLabelType = (
   key: string,
   value: string,
-  lokiLabelType?: LokiLabelType | null,
+  lokiLabelType: LokiLabelType | null,
   frame?: DataFrame
 ) => void;
 export type onClickFilterValueType = (value: string, refId?: string) => void;

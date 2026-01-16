@@ -399,7 +399,7 @@ export const LogsPanel = ({
         key,
         value,
         operator: '=',
-        lokiLabelType: lokiLabelType ?? undefined,
+        lokiLabelType: lokiLabelType,
       };
       onAddAdHocFilter?.(adHocFilterItem);
     },
@@ -412,7 +412,7 @@ export const LogsPanel = ({
         key,
         value,
         operator: '!=',
-        lokiLabelType: lokiLabelType ?? undefined,
+        lokiLabelType: lokiLabelType,
       });
     },
     [onAddAdHocFilter]
