@@ -337,15 +337,7 @@ describe('TableNG', () => {
 
   describe('initialRowIndex', () => {
     it('should not scroll by default', async () => {
-      render(
-        <TableNG
-          enableVirtualization={true}
-          maxHeight={10}
-          data={createSortingTestDataFrame()}
-          width={800}
-          height={10}
-        />
-      );
+      render(<TableNG enableVirtualization={true} data={createSortingTestDataFrame()} width={100} height={100} />);
       expect(jestScrollIntoView).not.toHaveBeenCalled();
     });
 
