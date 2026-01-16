@@ -1802,6 +1802,41 @@ func TestEnsurePanelsHaveUniqueIds(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "fix_duplicate_ids_in_rows",
+			input: map[string]interface{}{
+				"rows": []interface{}{
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{"type": "timeseries", "id": float64(1)},
+							map[string]interface{}{"type": "table", "id": float64(5)},
+						},
+					},
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{"type": "stat", "id": float64(1)},
+							map[string]interface{}{"type": "gauge", "id": float64(5)},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"rows": []interface{}{
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{"type": "timeseries", "id": float64(1)},
+							map[string]interface{}{"type": "table", "id": float64(5)},
+						},
+					},
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{"type": "stat", "id": float64(6)},
+							map[string]interface{}{"type": "gauge", "id": float64(7)},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
