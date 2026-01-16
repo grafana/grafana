@@ -237,17 +237,12 @@ export const LogsTable = ({
    * Build columns meta
    */
   useEffect(() => {
-    if (extractedFrame === null) {
+    if (logsFrame === null) {
       return;
     }
-    const extractedLogsFrame = parseLogsFrame(extractedFrame[0]);
-    if (extractedLogsFrame === null) {
-      return;
-    }
-    handleSetColumnsWithMeta(
-      buildColumnsWithMeta(extractedLogsFrame, extractedLogsFrame?.timeField.values.length, displayedFields)
-    );
-  }, [displayedFields, handleSetColumnsWithMeta, extractedFrame]);
+
+    handleSetColumnsWithMeta(buildColumnsWithMeta(logsFrame, logsFrame?.timeField.values.length, displayedFields));
+  }, [displayedFields, handleSetColumnsWithMeta, logsFrame]);
 
   if (extractedFrame === null || organizedFrame === null || logsFrame === null || columnsWithMeta === null) {
     return;
