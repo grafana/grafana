@@ -891,7 +891,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		body := rsp.Body
 
 		// Clear the plugin version and build stamp from snapshot
-		if v, ok := rsp.Result.Info.VendorExtensible.Extensions["x-grafana-plugin"]; ok && v != nil {
+		if v, ok := rsp.Result.Info.Extensions["x-grafana-plugin"]; ok && v != nil {
 			if pluginInfo, ok := v.(map[string]any); ok {
 				delete(pluginInfo, "version")
 				delete(pluginInfo, "build")
@@ -902,7 +902,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}
 
 		var prettyJSON bytes.Buffer
-		err = json.Indent(&prettyJSON, rsp.Body, "", "  ")
+		err = json.Indent(&prettyJSON, body, "", "  ")
 		require.NoError(t, err)
 		pretty := prettyJSON.String()
 
