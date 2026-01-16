@@ -21,7 +21,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { GetFieldLinksFn, onClickFilterLabelType, onClickFilterOutLabelType } from 'app/plugins/panel/logs/types';
 
 import { LogListFieldSelector } from '../fieldSelector/FieldSelector';
 
@@ -64,8 +64,8 @@ export interface Props {
   logsMeta?: LogsMetaItem[];
   logSupportsContext?: (row: LogRowModel) => boolean;
   noInteractions?: boolean;
-  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel?: onClickFilterLabelType;
+  onClickFilterOutLabel?: onClickFilterOutLabelType;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;

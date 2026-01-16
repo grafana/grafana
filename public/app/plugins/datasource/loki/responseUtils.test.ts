@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType, LokiLabelType } from '@grafana/data';
 
 import {
   dataFrameHasLevelLabel,
@@ -10,7 +10,6 @@ import {
   extractLabelKeysFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { LabelType } from './types';
 
 const frame: DataFrame = {
   length: 1,
@@ -183,12 +182,12 @@ describe('extractLabelKeysFromDataFrame', () => {
 
   it('extracts structured metadata label keys', () => {
     const input = cloneDeep(frameWithTypes);
-    expect(extractLabelKeysFromDataFrame(input, LabelType.StructuredMetadata)).toEqual(['structured']);
+    expect(extractLabelKeysFromDataFrame(input, LokiLabelType.StructuredMetadata)).toEqual(['structured']);
   });
 
   it('does not extract structured metadata label keys from non-typed frame', () => {
     const input = cloneDeep(frame);
-    expect(extractLabelKeysFromDataFrame(input, LabelType.StructuredMetadata)).toEqual([]);
+    expect(extractLabelKeysFromDataFrame(input, LokiLabelType.StructuredMetadata)).toEqual([]);
   });
 });
 

@@ -521,6 +521,7 @@ export {
   VariableRefresh,
   VariableSort,
   VariableHide,
+  LokiLabelType,
   type VariableRegexApplyTo,
   type VariableType,
   type VariableModel,

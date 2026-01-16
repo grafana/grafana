@@ -1,8 +1,13 @@
 import { invert } from 'lodash';
 
-import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, DataFrame, TimeRange } from '@grafana/data';
-
-import { LabelType } from './types';
+import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  AbstractQuery,
+  DataFrame,
+  LokiLabelType,
+  TimeRange,
+} from '@grafana/data';
 
 function roundMsToMin(milliseconds: number): number {
   return roundSecToMin(milliseconds / 1000);
@@ -93,7 +98,7 @@ export function isBytesString(string: string) {
   return !!match;
 }
 
-export function getLabelTypeFromFrame(labelKey: string, frame?: DataFrame, index?: number): null | LabelType {
+export function getLabelTypeFromFrame(labelKey: string, frame?: DataFrame, index?: number): null | LokiLabelType {
   if (!frame || index === undefined) {
     return null;
   }
@@ -104,11 +109,11 @@ export function getLabelTypeFromFrame(labelKey: string, frame?: DataFrame, index
   }
   switch (typeField[labelKey]) {
     case 'I':
-      return LabelType.Indexed;
+      return LokiLabelType.Indexed;
     case 'S':
-      return LabelType.StructuredMetadata;
+      return LokiLabelType.StructuredMetadata;
     case 'P':
-      return LabelType.Parsed;
+      return LokiLabelType.Parsed;
     default:
       return null;
   }

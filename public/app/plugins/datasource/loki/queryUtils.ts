@@ -1,7 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryRequest } from '@grafana/data';
+import { DataQueryRequest, LokiLabelType } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -32,7 +32,7 @@ import { DataQuery } from '@grafana/schema';
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
-import { LabelType, LokiQuery } from './types';
+import { LokiQuery } from './types';
 
 /**
  * Returns search terms from a LogQL query.
@@ -414,7 +414,7 @@ export const interpolateShardingSelector = (queries: LokiQuery[], shards: number
 };
 
 function addStreamShardLabelsToQuery(query: string, operator: string, shardValue: string) {
-  const shardedQuery = addLabelToQuery(query, '__stream_shard__', operator, shardValue, LabelType.Indexed);
+  const shardedQuery = addLabelToQuery(query, '__stream_shard__', operator, shardValue, LokiLabelType.Indexed);
   if (!isLogsQuery(query)) {
     return addDropToQuery(shardedQuery, ['__stream_shard__']);
   }

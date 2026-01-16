@@ -53,6 +53,12 @@ export enum VariableHide {
   inControlsMenu,
 }
 
+export enum LokiLabelType {
+  Indexed = 'I',
+  StructuredMetadata = 'S',
+  Parsed = 'P',
+}
+
 export interface AdHocVariableFilter {
   key: string;
   operator: string;
@@ -62,7 +68,7 @@ export interface AdHocVariableFilter {
   /** @deprecated  */
   condition?: string;
   // Required to differentiate loki fields
-  lokiType?: 'Indexed' | 'StructuredMetadata' | 'Parsed';
+  lokiLabelType?: LokiLabelType;
 }
 
 export interface AdHocVariableModel extends BaseVariableModel {

@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { groupBy } from 'lodash';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
+  AdHocVariableFilter,
   CoreApp,
   DataFrame,
   DataHoverClearEvent,
@@ -17,18 +18,18 @@ import {
   hasLogsContextSupport,
   hasLogsContextUiSupport,
   Labels,
+  LoadingState,
   LogRowContextOptions,
   LogRowModel,
+  LogSortOrderChangeEvent,
   LogsSortOrder,
   PanelData,
   PanelProps,
+  rangeUtil,
   TimeRange,
   TimeZone,
   toUtc,
   urlUtil,
-  LogSortOrderChangeEvent,
-  LoadingState,
-  rangeUtil,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
@@ -63,6 +64,8 @@ import {
   isOnNewLogsReceivedType,
   isReactNodeArray,
   isSetDisplayedFields,
+  onClickFilterLabelType,
+  onClickFilterOutLabelType,
   onNewLogsReceivedType,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -70,10 +73,10 @@ import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 interface LogsPanelProps extends PanelProps<Options> {
   /**
    * Adds a key => value filter to the query referenced by the provided DataFrame refId. Used by Log details and Logs table.
-   * onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+   * onClickFilterLabel?: onClickFilterLabelType;
    *
    * Adds a negative key => value filter to the query referenced by the provided DataFrame refId. Used by Log details and Logs table.
-   * onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+   * onClickFilterOutLabel?: onClickFilterOutLabelType;
    *
    * Adds a string filter to the query referenced by the provided DataFrame refId. Used by the Logs popover menu.
    * onClickFilterOutString?: (value: string, refId?: string) => void;
@@ -390,23 +393,26 @@ export const LogsPanel = ({
     [scrollElement]
   );
 
-  const handleOnClickFilterLabel = useCallback(
-    (key: string, value: string) => {
-      onAddAdHocFilter?.({
+  const handleOnClickFilterLabel: onClickFilterLabelType = useCallback(
+    (key, value, lokiLabelType) => {
+      const adHocFilterItem: AdHocVariableFilter = {
         key,
         value,
         operator: '=',
-      });
+        lokiLabelType: lokiLabelType ?? undefined,
+      };
+      onAddAdHocFilter?.(adHocFilterItem);
     },
     [onAddAdHocFilter]
   );
 
-  const handleOnClickFilterOutLabel = useCallback(
-    (key: string, value: string) => {
+  const handleOnClickFilterOutLabel: onClickFilterOutLabelType = useCallback(
+    (key, value, lokiLabelType) => {
       onAddAdHocFilter?.({
         key,
         value,
         operator: '!=',
+        lokiLabelType: lokiLabelType ?? undefined,
       });
     },
     [onAddAdHocFilter]

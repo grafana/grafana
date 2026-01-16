@@ -1,20 +1,19 @@
 import { cx } from '@emotion/css';
-import { MouseEvent, ReactNode, useState, useMemo, useCallback, useRef, useEffect, memo } from 'react';
+import { memo, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  TimeZone,
-  LogsDedupStrategy,
-  LogRowModel,
-  LogsSortOrder,
   CoreApp,
-  DataFrame,
   LogRowContextOptions,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsSortOrder,
   TimeRange,
+  TimeZone,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { GetFieldLinksFn, onClickFilterLabelType } from 'app/plugins/panel/logs/types';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -41,8 +40,8 @@ export interface Props {
   displayedFields?: string[];
   app?: CoreApp;
   showContextToggle?: (row: LogRowModel) => boolean;
-  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel?: onClickFilterLabelType;
+  onClickFilterOutLabel?: onClickFilterLabelType;
   getFieldLinks?: GetFieldLinksFn;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;

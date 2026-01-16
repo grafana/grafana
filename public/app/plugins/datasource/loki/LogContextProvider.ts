@@ -15,6 +15,7 @@ import {
   LogRowContextOptions,
   dateTime,
   ScopedVars,
+  LokiLabelType,
 } from '@grafana/data';
 import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
 
@@ -30,7 +31,7 @@ import {
   isQueryWithParser,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
-import { ContextFilter, LabelType, LokiQuery } from './types';
+import { ContextFilter, LokiQuery } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
@@ -269,7 +270,7 @@ export class LogContextProvider {
             parsedLabel.label,
             '=',
             parsedLabel.value,
-            hasParser ? LabelType.Parsed : LabelType.StructuredMetadata
+            hasParser ? LokiLabelType.Parsed : LokiLabelType.StructuredMetadata
           );
         }
       }
@@ -358,7 +359,7 @@ export class LogContextProvider {
         label,
         value: value,
         enabled: allLabels.includes(label),
-        nonIndexed: labelType !== null && labelType !== LabelType.Indexed,
+        nonIndexed: labelType !== null && labelType !== LokiLabelType.Indexed,
       };
 
       contextFilters.push(filter);

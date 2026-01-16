@@ -25,6 +25,7 @@ import {
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 
+import { onClickFilterLabelType, onClickFilterOutLabelType } from '../../../plugins/panel/logs/types';
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsTable } from './LogsTable';
@@ -39,8 +40,8 @@ interface Props {
   logsSortOrder: LogsSortOrder;
   panelState: ExploreLogsPanelState | undefined;
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
-  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel?: onClickFilterLabelType;
+  onClickFilterOutLabel?: onClickFilterOutLabelType;
   datasourceType?: string;
   exploreId?: string;
   displayedFields?: string[];

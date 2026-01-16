@@ -4,7 +4,6 @@ import { PureComponent, useMemo } from 'react';
 import {
   TimeRange,
   CoreApp,
-  DataFrame,
   DataFrameType,
   IconName,
   LinkModel,
@@ -15,7 +14,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { GetFieldLinksFn, onClickFilterLabelType, onClickFilterOutLabelType } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
@@ -34,8 +33,8 @@ export interface Props extends Themeable2 {
   app?: CoreApp;
   styles: LogRowStyles;
 
-  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel?: onClickFilterLabelType;
+  onClickFilterOutLabel?: onClickFilterOutLabelType;
   getFieldLinks?: GetFieldLinksFn;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;

@@ -13,12 +13,6 @@ export enum LokiResultType {
   Matrix = 'matrix',
 }
 
-export enum LabelType {
-  Indexed = 'I',
-  StructuredMetadata = 'S',
-  Parsed = 'P',
-}
-
 export interface LokiQuery extends LokiQueryFromSchema {
   direction?: LokiQueryDirection;
   /** Used only to identify supporting queries, e.g. logs volume, logs sample and data sample */

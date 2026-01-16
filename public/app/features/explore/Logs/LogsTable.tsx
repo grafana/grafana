@@ -33,8 +33,10 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { getLabelTypeFromFrame } from '@grafana-plugins/loki/languageUtils';
 import { DATAPLANE_ID_NAME, LogsFrame } from 'app/features/logs/logsFrame';
 
+import { onClickFilterLabelType, onClickFilterOutLabelType } from '../../../plugins/panel/logs/types';
 import { getFieldLinksForExplore } from '../utils/links';
 
 import { LogsTableActionButtons } from './LogsTableActionButtons';
@@ -49,8 +51,8 @@ interface Props {
   logsSortOrder: LogsSortOrder;
   columnsWithMeta: Record<string, FieldNameMeta>;
   height: number;
-  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel?: onClickFilterLabelType;
+  onClickFilterOutLabel?: onClickFilterOutLabelType;
   logsFrame: LogsFrame | null;
   tableSortBy?: string;
   tableSortDir?: 'asc' | 'desc';
@@ -319,11 +321,13 @@ export function LogsTable(props: Props) {
       return;
     }
     if (operator === FILTER_FOR_OPERATOR) {
-      onClickFilterLabel(key, value, dataFrame);
+      const labelType = getLabelTypeFromFrame(key, dataFrame);
+      onClickFilterLabel(key, value, labelType, dataFrame);
     }
 
     if (operator === FILTER_OUT_OPERATOR) {
-      onClickFilterOutLabel(key, value, dataFrame);
+      const labelType = getLabelTypeFromFrame(key, dataFrame);
+      onClickFilterOutLabel(key, value, labelType, dataFrame);
     }
   };
 

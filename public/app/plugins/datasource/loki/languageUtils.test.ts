@@ -1,4 +1,4 @@
-import { toDataFrame, FieldType, AbstractQuery, AbstractLabelOperator } from '@grafana/data';
+import { toDataFrame, FieldType, AbstractQuery, AbstractLabelOperator, LokiLabelType } from '@grafana/data';
 
 import {
   abstractQueryToExpr,
@@ -8,7 +8,6 @@ import {
   processLabels,
   unescapeLabelValue,
 } from './languageUtils';
-import { LabelType } from './types';
 
 describe('isBytesString', () => {
   it('correctly matches bytes string with integers', () => {
@@ -77,13 +76,13 @@ describe('getLabelTypeFromFrame', () => {
     ],
   });
   it('returns structuredMetadata', () => {
-    expect(getLabelTypeFromFrame('structured', frameWithTypes, 0)).toBe(LabelType.StructuredMetadata);
+    expect(getLabelTypeFromFrame('structured', frameWithTypes, 0)).toBe(LokiLabelType.StructuredMetadata);
   });
   it('returns indexed', () => {
-    expect(getLabelTypeFromFrame('indexed', frameWithTypes, 0)).toBe(LabelType.Indexed);
+    expect(getLabelTypeFromFrame('indexed', frameWithTypes, 0)).toBe(LokiLabelType.Indexed);
   });
   it('returns parsed', () => {
-    expect(getLabelTypeFromFrame('parsed', frameWithTypes, 0)).toBe(LabelType.Parsed);
+    expect(getLabelTypeFromFrame('parsed', frameWithTypes, 0)).toBe(LokiLabelType.Parsed);
   });
   it('returns null for unknown field', () => {
     expect(getLabelTypeFromFrame('unknown', frameWithTypes, 0)).toBe(null);

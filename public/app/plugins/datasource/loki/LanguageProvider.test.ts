@@ -1,4 +1,4 @@
-import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, ScopedVars } from '@grafana/data';
+import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, ScopedVars, LokiLabelType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
@@ -13,7 +13,7 @@ import {
   extractLabelKeysFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LabelType } from './types';
+import { DetectedFieldsResult } from './types';
 
 jest.mock('./responseUtils');
 
@@ -706,11 +706,11 @@ describe('Query imports', () => {
       datasource = createLokiDatasource();
       languageProvider = new LanguageProvider(datasource);
       jest.mocked(extractLabelKeysFromDataFrame).mockImplementation((_, type) => {
-        if (type === LabelType.Indexed || !type) {
+        if (type === LokiLabelType.Indexed || !type) {
           return extractedLabelKeys;
-        } else if (type === LabelType.StructuredMetadata) {
+        } else if (type === LokiLabelType.StructuredMetadata) {
           return structuredMetadataKeys;
-        } else if (type === LabelType.Parsed) {
+        } else if (type === LokiLabelType.Parsed) {
           return parsedKeys;
         } else {
           return [];

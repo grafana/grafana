@@ -13,7 +13,6 @@ import {
 import { createAssistantContextItem, OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
   CoreApp,
-  DataFrame,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
@@ -26,6 +25,7 @@ import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
+import { onClickFilterLabelType, onClickFilterOutLabelType } from '../../../../plugins/panel/logs/types';
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
 import { getFieldSelectorState } from '../fieldSelector/FieldSelector';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
@@ -149,8 +149,8 @@ export interface Props {
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
   noInteractions?: boolean;
-  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel?: onClickFilterLabelType;
+  onClickFilterOutLabel?: onClickFilterOutLabelType;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
   onClickShowField?: (key: string) => void;

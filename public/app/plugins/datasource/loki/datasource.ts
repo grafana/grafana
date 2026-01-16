@@ -6,7 +6,6 @@ import {
   AbstractQuery,
   AdHocVariableFilter,
   AnnotationEvent,
-  AnnotationQueryRequest,
   CoreApp,
   CustomVariableModel,
   DataFrame,
@@ -90,9 +89,8 @@ import { getDataFrameFromSerializedSceneObject } from './scenes/utils';
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
-import { LabelType, LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType, QueryStats } from './types';
+import { LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType, QueryStats } from './types';
 
-export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
 export const DEFAULT_MAX_LINES_SAMPLE = 10;
 export const LOKI_ENDPOINT = '/loki/api/v1';
@@ -1104,9 +1102,9 @@ export class LokiDatasource
         value = escapeLabelValueInSelector(value, operator);
       }
 
-      let labelType: LabelType | null = (filter.lokiType && LabelType[filter.lokiType]) ?? null;
+      let labelType = filter.lokiLabelType;
       if (!labelType && dataFrame) {
-        labelType = getLabelTypeFromFrame(key, dataFrame, 0);
+        labelType = getLabelTypeFromFrame(key, dataFrame, 0) ?? undefined;
       }
       return addLabelToQuery(acc, key, operator, value, labelType);
     }, expr);

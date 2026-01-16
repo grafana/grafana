@@ -1,8 +1,7 @@
-import { DataFrame, DataQueryResponse, FieldType, isValidGoDuration, Labels } from '@grafana/data';
+import { DataFrame, DataQueryResponse, FieldType, isValidGoDuration, Labels, LokiLabelType } from '@grafana/data';
 
 import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
-import { LabelType } from './types';
 
 export const LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX = 'the query would read too many bytes';
 export const LOKI_TIMEOUT_ERROR_MSG =
@@ -49,7 +48,7 @@ export function extractLogParserFromDataFrame(frame: DataFrame): {
   return { hasLogfmt, hasJSON, hasPack };
 }
 
-export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType = LabelType.Indexed): string[] {
+export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LokiLabelType = LokiLabelType.Indexed): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
     frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
   const labelTypeArray: Array<{ [key: string]: string }> | undefined =
@@ -59,9 +58,9 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType 
     return [];
   }
 
-  // if there are no label types and type is LabelType.Indexed return all label keys
+  // if there are no label types and type is LokiLabelType.Indexed return all label keys
   if (!labelTypeArray?.length) {
-    if (type === LabelType.Indexed) {
+    if (type === LokiLabelType.Indexed) {
       const { keys: labelKeys } = processLabels(labelsArray);
       return labelKeys;
     }

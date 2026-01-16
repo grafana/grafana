@@ -1,13 +1,24 @@
 import React, { ReactNode } from 'react';
 
-import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
+import { CoreApp, DataFrame, Field, LinkModel, LokiLabelType, ScopedVars } from '@grafana/data';
 import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { LogListOptions } from 'app/features/logs/components/panel/LogList';
 
-type onClickFilterLabelType = (key: string, value: string, frame?: DataFrame) => void;
-type onClickFilterOutLabelType = (key: string, value: string, frame?: DataFrame) => void;
-type onClickFilterValueType = (value: string, refId?: string) => void;
-type onClickFilterOutStringType = (value: string, refId?: string) => void;
+// @todo refactor to filter: AdHocVariableFilter, frame?: DataFrame, null | undefined
+export type onClickFilterLabelType = (
+  key: string,
+  value: string,
+  lokiLabelType?: LokiLabelType | null,
+  frame?: DataFrame
+) => void;
+export type onClickFilterOutLabelType = (
+  key: string,
+  value: string,
+  lokiLabelType?: LokiLabelType | null,
+  frame?: DataFrame
+) => void;
+export type onClickFilterValueType = (value: string, refId?: string) => void;
+export type onClickFilterOutStringType = (value: string, refId?: string) => void;
 type filterLabelActiveType = (key: string, value: string, refId?: string) => Promise<boolean>;
 type onClickShowFieldType = (value: string) => void;
 type onClickHideFieldType = (value: string) => void;

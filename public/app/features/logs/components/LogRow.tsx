@@ -1,20 +1,12 @@
 import { debounce } from 'lodash';
 import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  CoreApp,
-  DataFrame,
-  dateTimeFormat,
-  LogRowContextOptions,
-  LogRowModel,
-  LogsSortOrder,
-  TimeRange,
-} from '@grafana/data';
+import { CoreApp, dateTimeFormat, LogRowContextOptions, LogRowModel, LogsSortOrder, TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { GetFieldLinksFn, onClickFilterLabelType, onClickFilterOutLabelType } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
 
@@ -38,8 +30,8 @@ export interface Props {
   app?: CoreApp;
   displayedFields?: string[];
   getRows: () => LogRowModel[];
-  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel?: onClickFilterLabelType;
+  onClickFilterOutLabel?: onClickFilterOutLabelType;
   onContextClick?: () => void;
   getFieldLinks?: GetFieldLinksFn;
   showContextToggle?: (row: LogRowModel) => boolean;

@@ -1,19 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import { PureComponent, useEffect, useState } from 'react';
 import * as React from 'react';
+import { PureComponent, useEffect, useState } from 'react';
 
-import {
-  CoreApp,
-  DataFrame,
-  Field,
-  GrafanaTheme2,
-  IconName,
-  LinkModel,
-  LogLabelStatsModel,
-  LogRowModel,
-} from '@grafana/data';
+import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
@@ -25,7 +16,9 @@ import {
   Tooltip,
   withTheme2,
 } from '@grafana/ui';
+import { getLabelTypeFromFrame } from '@grafana-plugins/loki/languageUtils';
 
+import { onClickFilterLabelType, onClickFilterOutLabelType } from '../../../plugins/panel/logs/types';
 import { logRowToSingleRowDataFrame } from '../logsModel';
 import { getLabelTypeFromRow } from '../utils';
 
@@ -42,8 +35,8 @@ export interface Props extends Themeable2 {
   disableActions: boolean;
   wrapLogMessage?: boolean;
   isLabel?: boolean;
-  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterLabel?: onClickFilterLabelType;
+  onClickFilterOutLabel?: onClickFilterOutLabelType;
   links?: LinkModelWithIcon[];
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
@@ -185,7 +178,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterLabel = () => {
     const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(parsedKeys[0], parsedValues[0], logRowToSingleRowDataFrame(row) || undefined);
+      const dataFrame = logRowToSingleRowDataFrame(row) ?? undefined;
+      const labelType = getLabelTypeFromFrame(parsedKeys[0], dataFrame);
+      onClickFilterLabel(parsedKeys[0], parsedValues[0], labelType, dataFrame);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -198,7 +193,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterOutLabel = () => {
     const { onClickFilterOutLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], logRowToSingleRowDataFrame(row) || undefined);
+      const dataFrame = logRowToSingleRowDataFrame(row) ?? undefined;
+      const labelType = getLabelTypeFromFrame(parsedKeys[0], dataFrame);
+      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], labelType, dataFrame);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {

@@ -7,6 +7,7 @@ import { CoreApp, Field, fuzzySearch, GrafanaTheme2, IconName, LinkModel, LogLab
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
+import { getLabelTypeFromFrame } from '@grafana-plugins/loki/languageUtils';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -212,7 +213,9 @@ export const LogLineDetailsField = ({
 
   const filterLabel = useCallback(() => {
     if (onClickFilterLabel) {
-      onClickFilterLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
+      const dataFrame = logRowToSingleRowDataFrame(log);
+      const labelType = getLabelTypeFromFrame(keys[0], dataFrame ?? undefined);
+      onClickFilterLabel(keys[0], values[0], labelType, logRowToSingleRowDataFrame(log) ?? undefined);
     }
 
     reportInteractionWrapper('logs_log_line_details_filter_clicked', {
@@ -224,7 +227,9 @@ export const LogLineDetailsField = ({
 
   const filterOutLabel = useCallback(() => {
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
+      const dataFrame = logRowToSingleRowDataFrame(log) ?? undefined;
+      const labelType = getLabelTypeFromFrame(keys[0], dataFrame);
+      onClickFilterOutLabel(keys[0], values[0], labelType, dataFrame);
     }
 
     reportInteractionWrapper('logs_log_line_details_filter_clicked', {
