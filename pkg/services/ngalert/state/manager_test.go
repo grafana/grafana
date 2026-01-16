@@ -121,6 +121,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			ResolvedAt:         nil,
 			Annotations:        map[string]string{"testAnnotation": "value-4"},
 			ResultFingerprint:  data.Fingerprint(1),
+			Error:              errors.New("test error message"),
 		},
 		{
 			AlertRuleUID:       rule.UID,
@@ -218,6 +219,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		Annotations:        models.InstanceAnnotations{"testAnnotation": "value-4"},
 		ResultFingerprint:  data.Fingerprint(1).String(),
 		EvaluationDuration: 4 * time.Second,
+		LastError:          "test error message",
 	})
 
 	labels = models.InstanceLabels{"test5": "testValue5"}
@@ -282,7 +284,16 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			setCacheID(entry)
 			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheID)
 
-			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "LatestResult")); diff != "" {
+			errorComparer := cmp.Comparer(func(a, b error) bool {
+				if a == nil && b == nil {
+					return true
+				}
+				if a == nil || b == nil {
+					return false
+				}
+				return a.Error() == b.Error()
+			})
+			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "LatestResult"), errorComparer); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 				t.FailNow()
 			}

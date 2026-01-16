@@ -86,6 +86,10 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			return nil
 		}
+		var lastError string
+		if s.Error != nil {
+			lastError = s.Error.Error()
+		}
 		instance := ngModels.AlertInstance{
 			AlertInstanceKey:   key,
 			Labels:             ngModels.InstanceLabels(s.Labels),
@@ -100,6 +104,7 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 			LastSentAt:         s.LastSentAt,
 			ResultFingerprint:  s.ResultFingerprint.String(),
 			EvaluationDuration: s.EvaluationDuration,
+			LastError:          lastError,
 		}
 
 		err = a.store.SaveAlertInstance(ctx, instance)
