@@ -204,7 +204,7 @@ func (s *ModuleServer) Run() error {
 			if err != nil {
 				return nil, err
 			}
-			return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
+			return sql.ProvideSearchGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.storageBackend, s.httpServerRouter)
 		}
 		return sql.ProvideStorageService(s.cfg, s.features, nil, s.log, s.registerer, s.storageMetrics, s.storageBackend)
 	})
@@ -214,7 +214,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedSearchGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.storageBackend, s.httpServerRouter)
+		return sql.ProvideSearchGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.storageBackend, s.httpServerRouter)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

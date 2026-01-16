@@ -5,9 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"net"
 	"net/http"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -65,7 +70,7 @@ type searchService struct {
 	hasSubservices     bool
 }
 
-func ProvideUnifiedSearchGrpcService(
+func ProvideSearchGrpcService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
@@ -317,4 +322,40 @@ func (s *searchService) RegisterHTTPEndpoints(httpServerRouter *mux.Router) {
 	if httpServerRouter != nil && s.cfg.EnableSharding {
 		httpServerRouter.Path("/prepare-downscale").Methods("GET", "POST", "DELETE").Handler(http.HandlerFunc(s.PrepareDownscale))
 	}
+}
+
+func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
+	instanceAddr, err := ring.GetInstanceAddr(cfg.MemberlistBindAddr, netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, logger), logger, true)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, err
+	}
+
+	instanceId := cfg.InstanceID
+	if instanceId == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return ring.BasicLifecyclerConfig{}, err
+		}
+
+		instanceId = hostname
+	}
+
+	_, grpcPortStr, err := net.SplitHostPort(cfg.GRPCServer.Address)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, fmt.Errorf("could not get grpc port from grpc server address: %s", err)
+	}
+
+	grpcPort, err := strconv.Atoi(grpcPortStr)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, fmt.Errorf("error converting grpc address port to int: %s", err)
+	}
+
+	return ring.BasicLifecyclerConfig{
+		Addr:                fmt.Sprintf("%s:%d", instanceAddr, grpcPort),
+		ID:                  instanceId,
+		HeartbeatPeriod:     15 * time.Second,
+		HeartbeatTimeout:    resource.RingHeartbeatTimeout,
+		TokensObservePeriod: 0,
+		NumTokens:           resource.RingNumTokens,
+	}, nil
 }
