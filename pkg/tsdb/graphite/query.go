@@ -197,13 +197,13 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 	return graphiteReq, formData, emptyQuery, target, nil
 }
 
+var aliasRegex = regexp.MustCompile(`(alias|aliasByMetric|aliasByNode|aliasByTags|aliasQuery|aliasSub)\(`)
+
 func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert bool, rawTarget string) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(response)
 	if err != nil {
 		return nil, err
 	}
-
-	aliasRegex := regexp.MustCompile(`(alias\(|aliasByMetric|aliasByNode|aliasByTags|aliasQuery|aliasSub)`)
 
 	frames = data.Frames{}
 	for _, series := range responseData {
