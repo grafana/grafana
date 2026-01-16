@@ -93,10 +93,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Support overriding cookie preferences per user
-  */
-  individualCookiePreferences?: boolean;
-  /**
   * Query InfluxDB InfluxQL without the proxy
   * @default true
   */
@@ -775,11 +771,6 @@ export interface FeatureToggles {
   * @default false
   */
   k8SFolderCounts?: boolean;
-  /**
-  * Enable folder's api server move
-  * @default false
-  */
-  k8SFolderMove?: boolean;
   /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
   * @default true

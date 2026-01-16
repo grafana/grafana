@@ -132,12 +132,6 @@ var (
 			Expression:   "true", // turned on by default
 		},
 		{
-			Name:        "individualCookiePreferences",
-			Description: "Support overriding cookie preferences per user",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
-		},
-		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1279,13 +1273,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "k8SFolderMove",
-			Description: "Enable folder's api server move",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "improvedExternalSessionHandlingSAML",
 			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1895,7 +1882,7 @@ var (
 		{
 			Name:         "newGauge",
 			Description:  "Enable new gauge visualization",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
