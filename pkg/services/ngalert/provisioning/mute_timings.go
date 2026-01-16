@@ -135,10 +135,13 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	_, found := getMuteTimingByName(revision, mt.Name)
-	if found {
+	_, found, err := svc.getMuteTimingByName(ctx, revision, orgID, mt.Name)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	} else if found {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
+
 	revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, config.TimeInterval(mt.MuteTimeInterval))
 
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -150,12 +153,8 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	return definitions.MuteTimeInterval{
-		UID:              legacy_storage.NameToUid(mt.Name),
-		MuteTimeInterval: mt.MuteTimeInterval,
-		Version:          calculateMuteTimeIntervalFingerprint(mt.MuteTimeInterval),
-		Provenance:       mt.Provenance,
-	}, nil
+
+	return newMuteTimingInterval(mt.MuteTimeInterval, mt.Provenance), nil
 }
 
 // UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, ErrMuteTimingsNotFound is returned.
