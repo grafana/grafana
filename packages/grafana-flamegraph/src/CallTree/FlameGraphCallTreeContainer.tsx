@@ -107,7 +107,9 @@ const FlameGraphCallTreeContainer = memo(
             }
             if (node.subRows) {
               const found = findNode(node.subRows, searchKey, byLabel);
-              if (found) {return found;}
+              if (found) {
+                return found;
+              }
             }
           }
           return undefined;
@@ -221,7 +223,9 @@ const FlameGraphCallTreeContainer = memo(
       }
 
       const itemIndexesMatch = (a: number[], b: number[]): boolean => {
-        if (a.length !== b.length) {return false;}
+        if (a.length !== b.length) {
+          return false;
+        }
         return a.every((val, idx) => val === b[idx]);
       };
 
@@ -232,7 +236,9 @@ const FlameGraphCallTreeContainer = memo(
           }
           if (node.subRows) {
             const found = findExactMatch(node.subRows);
-            if (found) {return found;}
+            if (found) {
+              return found;
+            }
           }
         }
         return undefined;
@@ -396,7 +402,9 @@ const FlameGraphCallTreeContainer = memo(
 
     const calculateFunctionColumnWidth = useCallback(
       (width: number, compactMode: boolean) => {
-        if (width <= 0) {return undefined;}
+        if (width <= 0) {
+          return undefined;
+        }
 
         let fixedColumnsWidth: number;
         if (compactMode) {
@@ -828,7 +836,11 @@ const FlameGraphCallTreeContainer = memo(
                         const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
                         const isHighlightedRow = highlightedNodeId && row.original.id === highlightedNodeId;
 
-                        const rowRef = isSearchMatchRow ? searchMatchRowRef : isHighlightedRow ? highlightedRowRef : null;
+                        const rowRef = isSearchMatchRow
+                          ? searchMatchRowRef
+                          : isHighlightedRow
+                            ? highlightedRowRef
+                            : null;
 
                         return (
                           <tr
@@ -1073,7 +1085,9 @@ function FunctionCellWithExpander({
   };
 
   const isLastVisibleChildAtIndex = (index: number): boolean => {
-    if (index === undefined) {return false;}
+    if (index === undefined) {
+      return false;
+    }
 
     const currentRow = rows[index];
     const parentId = currentRow.original.parentId;

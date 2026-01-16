@@ -426,7 +426,9 @@ export function buildCallersTreeFromLevels(
         break;
       }
     }
-    if (targetItem) {break;}
+    if (targetItem) {
+      break;
+    }
   }
 
   if (!targetItem || targetLevelIndex === -1) {
