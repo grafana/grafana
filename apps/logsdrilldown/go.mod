@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/logsdrilldown
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/grafana/grafana-app-sdk v0.48.1
