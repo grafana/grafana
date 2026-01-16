@@ -748,17 +748,8 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	if ok {
 		// Copy previous values if they exist
 		if a.GetOldObject() != nil {
-			o, ok := a.GetOldObject().(*provisioning.Connection)
-			if ok && !o.Secure.IsZero() {
-				if c.Secure.PrivateKey.IsZero() {
-					c.Secure.PrivateKey = o.Secure.PrivateKey
-				}
-				if c.Secure.Token.IsZero() {
-					c.Secure.Token = o.Secure.Token
-				}
-				if c.Secure.ClientSecret.IsZero() {
-					c.Secure.ClientSecret = o.Secure.ClientSecret
-				}
+			if oldConn, ok := a.GetOldObject().(*provisioning.Connection); ok {
+				copyConnectionSecureValues(c, oldConn)
 			}
 		}
 
@@ -786,14 +777,8 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 
 	// Copy previous values if they exist
 	if a.GetOldObject() != nil {
-		o, ok := a.GetOldObject().(*provisioning.Repository)
-		if ok && !o.Secure.IsZero() {
-			if r.Secure.Token.IsZero() {
-				r.Secure.Token = o.Secure.Token
-			}
-			if r.Secure.WebhookSecret.IsZero() {
-				r.Secure.WebhookSecret = o.Secure.WebhookSecret
-			}
+		if oldRepo, ok := a.GetOldObject().(*provisioning.Repository); ok {
+			copyRepositorySecureValues(r, oldRepo)
 		}
 	}
 
@@ -841,6 +826,37 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 	return apierrors.NewInvalid(
 		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
 		name, list)
+}
+
+// copyRepositorySecureValues copies secure values from old to new repository if they are zero in the new one.
+// This preserves existing secrets during updates when they are not provided in the new object.
+func copyRepositorySecureValues(new, old *provisioning.Repository) {
+	if old == nil || old.Secure.IsZero() {
+		return
+	}
+	if new.Secure.Token.IsZero() {
+		new.Secure.Token = old.Secure.Token
+	}
+	if new.Secure.WebhookSecret.IsZero() {
+		new.Secure.WebhookSecret = old.Secure.WebhookSecret
+	}
+}
+
+// copyConnectionSecureValues copies secure values from old to new connection if they are zero in the new one.
+// This preserves existing secrets during updates when they are not provided in the new object.
+func copyConnectionSecureValues(new, old *provisioning.Connection) {
+	if old == nil || old.Secure.IsZero() {
+		return
+	}
+	if new.Secure.PrivateKey.IsZero() {
+		new.Secure.PrivateKey = old.Secure.PrivateKey
+	}
+	if new.Secure.Token.IsZero() {
+		new.Secure.Token = old.Secure.Token
+	}
+	if new.Secure.ClientSecret.IsZero() {
+		new.Secure.ClientSecret = old.Secure.ClientSecret
+	}
 }
 
 func (b *APIBuilder) VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error {
@@ -1486,14 +1502,8 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old r
 
 	// Copy previous values if they exist
 	if old != nil {
-		o, ok := old.(*provisioning.Repository)
-		if ok && !o.Secure.IsZero() {
-			if r.Secure.Token.IsZero() {
-				r.Secure.Token = o.Secure.Token
-			}
-			if r.Secure.WebhookSecret.IsZero() {
-				r.Secure.WebhookSecret = o.Secure.WebhookSecret
-			}
+		if oldRepo, ok := old.(*provisioning.Repository); ok {
+			copyRepositorySecureValues(r, oldRepo)
 		}
 	}
 
@@ -1512,17 +1522,8 @@ func (b *APIBuilder) asConnection(ctx context.Context, obj runtime.Object, old r
 
 	// Copy previous values if they exist
 	if old != nil {
-		o, ok := old.(*provisioning.Connection)
-		if ok && !o.Secure.IsZero() {
-			if c.Secure.PrivateKey.IsZero() {
-				c.Secure.PrivateKey = o.Secure.PrivateKey
-			}
-			if c.Secure.Token.IsZero() {
-				c.Secure.Token = o.Secure.Token
-			}
-			if c.Secure.ClientSecret.IsZero() {
-				c.Secure.ClientSecret = o.Secure.ClientSecret
-			}
+		if oldConn, ok := old.(*provisioning.Connection); ok {
+			copyConnectionSecureValues(c, oldConn)
 		}
 	}
 
