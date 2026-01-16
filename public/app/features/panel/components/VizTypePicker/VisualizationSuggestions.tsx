@@ -109,6 +109,14 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
     return result;
   }, [suggestions]);
 
+  const suggestionIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    suggestions?.forEach((suggestion, index) => {
+      map.set(suggestion.hash, index);
+    });
+    return map;
+  }, [suggestions]);
+
   const applySuggestion = useCallback(
     (
       suggestion: PanelPluginVisualizationSuggestion,
@@ -224,7 +232,7 @@ export function VisualizationSuggestions({ onChange, editPreview, data, panel, s
                 </div>
                 {vizTypeSuggestions?.map((suggestion, index) => {
                   const isCardSelected = suggestionHash === suggestion.hash;
-                  const suggestionIndex = suggestions?.findIndex((s) => s.hash === suggestion.hash) ?? -1;
+                  const suggestionIndex = suggestionIndexMap.get(suggestion.hash) ?? -1;
                   return (
                     <div
                       key={suggestion.hash}
