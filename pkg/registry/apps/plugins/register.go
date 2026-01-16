@@ -1,7 +1,10 @@
 package plugins
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	authlib "github.com/grafana/authlib/types"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -45,8 +48,19 @@ func ProvideAppInstaller(
 		}
 	}
 
+	wd, err := os.Getwd()
+	if err != nil {
+		return nil, errors.New("could not determine working directory")
+	}
+	// Check if we're in the Grafana root
+	pluginsPath := filepath.Join(wd, "public", "app", "plugins")
+	if _, err = os.Stat(pluginsPath); err != nil {
+		return nil, errors.New("could not find core plugins directory")
+	}
+
 	localProvider := meta.NewLocalProvider(pluginStore, moduleHashCalc)
-	metaProviderManager := meta.NewProviderManager(localProvider)
+	coreProvider := meta.NewCoreProvider(pluginsPath)
+	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
 	i, err := pluginsapp.ProvideAppInstaller(authorizer, metaProviderManager)
 	if err != nil {
