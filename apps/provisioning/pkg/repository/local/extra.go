@@ -33,3 +33,7 @@ func (e *extra) Build(_ context.Context, r *provisioning.Repository) (repository
 func (e *extra) Mutate(_ context.Context, _ runtime.Object) error {
 	return nil
 }
+
+func (e *extra) Validate(ctx context.Context, obj runtime.Object) error {
+	return Validate(ctx, obj, e.resolver)
+}

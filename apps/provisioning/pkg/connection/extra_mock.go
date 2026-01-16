@@ -175,6 +175,53 @@ func (_c *MockExtra_Type_Call) RunAndReturn(run func() v0alpha1.ConnectionType) 
 	return _c
 }
 
+// Validate provides a mock function with given fields: ctx, obj
+func (_m *MockExtra) Validate(ctx context.Context, obj runtime.Object) error {
+	ret := _m.Called(ctx, obj)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Validate")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, runtime.Object) error); ok {
+		r0 = rf(ctx, obj)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockExtra_Validate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Validate'
+type MockExtra_Validate_Call struct {
+	*mock.Call
+}
+
+// Validate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - obj runtime.Object
+func (_e *MockExtra_Expecter) Validate(ctx interface{}, obj interface{}) *MockExtra_Validate_Call {
+	return &MockExtra_Validate_Call{Call: _e.mock.On("Validate", ctx, obj)}
+}
+
+func (_c *MockExtra_Validate_Call) Run(run func(ctx context.Context, obj runtime.Object)) *MockExtra_Validate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(runtime.Object))
+	})
+	return _c
+}
+
+func (_c *MockExtra_Validate_Call) Return(_a0 error) *MockExtra_Validate_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockExtra_Validate_Call) RunAndReturn(run func(context.Context, runtime.Object) error) *MockExtra_Validate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockExtra creates a new instance of MockExtra. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockExtra(t interface {

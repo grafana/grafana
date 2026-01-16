@@ -34,8 +34,9 @@ func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.S
 // ValidateRepository solely does configuration checks on the repository object. It does not run a health check or compare against existing repositories.
 // isCreate indicates whether this is a CREATE operation (true) or UPDATE operation (false).
 // When isCreate is false, allowedTargets validation is skipped to allow existing repositories to continue working.
+// Note: Structural validation (URL, branch, path, etc.) is done by Factory.Validate() before this is called.
 func (v *RepositoryValidator) ValidateRepository(repo Repository, isCreate bool) field.ErrorList {
-	list := repo.Validate()
+	var list field.ErrorList
 	cfg := repo.Config()
 
 	if cfg.Spec.Title == "" {

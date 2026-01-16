@@ -746,12 +746,31 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	// Validate connections
 	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		conn, err := b.asConnection(ctx, c, a.GetOldObject())
-		if err != nil {
+		// Copy previous values if they exist
+		if a.GetOldObject() != nil {
+			o, ok := a.GetOldObject().(*provisioning.Connection)
+			if ok && !o.Secure.IsZero() {
+				if c.Secure.PrivateKey.IsZero() {
+					c.Secure.PrivateKey = o.Secure.PrivateKey
+				}
+				if c.Secure.Token.IsZero() {
+					c.Secure.Token = o.Secure.Token
+				}
+				if c.Secure.ClientSecret.IsZero() {
+					c.Secure.ClientSecret = o.Secure.ClientSecret
+				}
+			}
+		}
+
+		// Structural validation without decryption
+		if err := b.connectionFactory.Validate(ctx, c); err != nil {
 			return err
 		}
 
-		return conn.Validate(ctx)
+		// Note: Runtime validation (e.g., checking GitHub API) is skipped during admission
+		// to avoid decrypting secrets. Runtime validation can be done via Test() method if needed.
+
+		return nil
 	}
 
 	// Validate Jobs
@@ -760,6 +779,30 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return jobsvalidation.ValidateJob(job)
 	}
 
+	r, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return fmt.Errorf("expected repository configuration")
+	}
+
+	// Copy previous values if they exist
+	if a.GetOldObject() != nil {
+		o, ok := a.GetOldObject().(*provisioning.Repository)
+		if ok && !o.Secure.IsZero() {
+			if r.Secure.Token.IsZero() {
+				r.Secure.Token = o.Secure.Token
+			}
+			if r.Secure.WebhookSecret.IsZero() {
+				r.Secure.WebhookSecret = o.Secure.WebhookSecret
+			}
+		}
+	}
+
+	// Structural validation without decryption
+	if err := b.repoFactory.Validate(ctx, r); err != nil {
+		return err
+	}
+
+	// Build repository for additional validation that requires decryption
 	repo, err := b.asRepository(ctx, obj, a.GetOldObject())
 	if err != nil {
 		return err

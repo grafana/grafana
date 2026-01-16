@@ -58,6 +58,10 @@ func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
 	return Mutate(ctx, obj)
 }
 
+func (e *extra) Validate(ctx context.Context, obj runtime.Object) error {
+	return Validate(ctx, obj)
+}
+
 func Extra(decrypter connection.Decrypter, factory GithubFactory) connection.Extra {
 	return &extra{
 		decrypter: decrypter,

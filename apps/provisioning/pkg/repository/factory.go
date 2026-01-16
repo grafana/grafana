@@ -16,6 +16,7 @@ type Extra interface {
 	Type() provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
 	Mutate(ctx context.Context, obj runtime.Object) error
+	Validate(ctx context.Context, obj runtime.Object) error
 }
 
 //go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
@@ -23,6 +24,7 @@ type Factory interface {
 	Types() []provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
 	Mutate(ctx context.Context, obj runtime.Object) error
+	Validate(ctx context.Context, obj runtime.Object) error
 }
 
 type factory struct {
@@ -78,6 +80,16 @@ func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Reposi
 func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
 	for _, e := range f.extras {
 		if err := e.Mutate(ctx, obj); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (f *factory) Validate(ctx context.Context, obj runtime.Object) error {
+	for _, e := range f.extras {
+		if err := e.Validate(ctx, obj); err != nil {
 			return err
 		}
 	}
