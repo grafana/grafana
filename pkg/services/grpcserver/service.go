@@ -163,11 +163,11 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 
 	select {
 	case err := <-serveErrCh:
-
 		return err
 	case <-ctx.Done():
 		// Context cancelled, proceed with graceful shutdown
 	}
+
 	s.logger.Info("GRPC server: initiating graceful shutdown")
 	gracefulStopDone := make(chan struct{})
 	go func() {

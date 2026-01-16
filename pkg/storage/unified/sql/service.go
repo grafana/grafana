@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"hash/fnv"
 	"net"
@@ -351,7 +350,7 @@ func (s *service) running(ctx context.Context) error {
 
 	select {
 	case err := <-serverErrCh:
-		if err != nil && !errors.Is(err, context.Canceled) {
+		if err != nil {
 			return err
 		}
 		return nil
@@ -360,16 +359,19 @@ func (s *service) running(ctx context.Context) error {
 	case <-ctx.Done():
 		s.log.Info("Stopping resource server")
 		if s.serverStopper != nil {
-			if err := s.serverStopper.Stop(context.Background()); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := s.serverStopper.Stop(ctx); err != nil {
 				s.log.Warn("Failed to stop resource server", "error", err)
+			} else {
+				s.log.Info("Resource server stopped")
 			}
-			s.log.Info("Resource server stopped")
 		}
 
 		// Now wait for the gRPC server to complete graceful shutdown.
 		s.log.Info("Waiting for gRPC server to complete graceful shutdown")
 		err := <-serverErrCh
-		if err != nil && !errors.Is(err, context.Canceled) {
+		if err != nil {
 			return err
 		}
 		return nil
