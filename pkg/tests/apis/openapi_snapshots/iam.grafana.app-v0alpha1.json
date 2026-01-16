@@ -917,7 +917,7 @@
         "tags": [
           "Search"
         ],
-        "description": "External Group Mapping search",
+        "description": "Search ExternalGroupMapping resources by the provided external group IDs.",
         "operationId": "searchExternalGroupMappings",
         "parameters": [
           {
@@ -929,14 +929,6 @@
               "type": "string"
             },
             "example": "default"
-          },
-          {
-            "name": "teamName",
-            "in": "query",
-            "description": "Team name",
-            "schema": {
-              "type": "string"
-            }
           },
           {
             "name": "limit",

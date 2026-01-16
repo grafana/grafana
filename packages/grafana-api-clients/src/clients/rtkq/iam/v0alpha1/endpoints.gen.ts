@@ -162,7 +162,6 @@ const injectedRtkApi = api
           method: 'POST',
           body: queryArg.body,
           params: {
-            teamName: queryArg.teamName,
             limit: queryArg.limit,
             page: queryArg.page,
             offset: queryArg.offset,
@@ -908,8 +907,6 @@ export type UpdateExternalGroupMappingApiArg = {
 };
 export type SearchExternalGroupMappingsApiResponse = unknown;
 export type SearchExternalGroupMappingsApiArg = {
-  /** Team name */
-  teamName?: string;
   /** number of results to return */
   limit?: number;
   /** page number (starting from 1) */

@@ -110,6 +110,12 @@ func (n *NoopSearchREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 										Description: "sortable field",
 										Example:     "",
 										Examples: map[string]*spec3.Example{
+											"": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "default sorting",
+													Value:   "externalGroup",
+												},
+											},
 											"externalGroup": {
 												ExampleProps: spec3.ExampleProps{
 													Summary: "externalGroup ascending",
