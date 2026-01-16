@@ -125,7 +125,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
   // const allColumnNames = allColumns.length > 0 ? allColumns.map((col) => col.name) : [];
 
-  const areAllColumnsSelected = selectedColumns.length === 1 && selectedColumns[0] === '__all_columns__';
+  const allColumnsSelected = selectedColumns.length === 1 && selectedColumns[0] === '__all_columns__';
   // allColumnNames.length > 0 && selectedColumns.length > 0 && selectedColumns.length === allColumnNames.length;
   // &&
   // allColumnNames.every((col) => selectedColumns.includes(col));
