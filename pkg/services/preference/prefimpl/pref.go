@@ -106,6 +106,11 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 }
 
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
+	jsonData, err := preferenceData(cmd)
+	if err != nil {
+		return err
+	}
+
 	preference, err := s.store.Get(ctx, &pref.Preference{
 		OrgID:  cmd.OrgID,
 		UserID: cmd.UserID,
@@ -124,9 +129,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
-				JSONData: &pref.PreferenceJSONData{
-					Language: cmd.Language,
-				},
+				JSONData:        jsonData,
 			}
 
 			if cmd.HomeDashboardUID != nil {
@@ -150,13 +153,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	if cmd.HomeDashboardUID != nil {
 		preference.HomeDashboardUID = *cmd.HomeDashboardUID
 	}
-	preference.JSONData = &pref.PreferenceJSONData{
-		Language: cmd.Language,
-	}
-
-	if cmd.QueryHistory != nil {
-		preference.JSONData.QueryHistory = *cmd.QueryHistory
-	}
+	preference.JSONData = jsonData
 
 	return s.store.Update(ctx, preference)
 }
@@ -261,4 +258,19 @@ func (s *Service) GetDefaults() *pref.Preference {
 
 func (s *Service) Delete(ctx context.Context, cmd *pref.DeleteCommand) error {
 	return s.store.Delete(ctx, cmd)
+}
+
+func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, error) {
+	jsonData := &pref.PreferenceJSONData{
+		Language:       cmd.Language,
+		RegionalFormat: cmd.RegionalFormat,
+	}
+	if cmd.Navbar != nil {
+		jsonData.Navbar = *cmd.Navbar
+	}
+	if cmd.QueryHistory != nil {
+		jsonData.QueryHistory = *cmd.QueryHistory
+	}
+
+	return jsonData, nil
 }
