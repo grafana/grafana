@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
@@ -1217,7 +1218,7 @@ func TestSocialGoogle_AuthCodeURL(t *testing.T) {
 func createTestRSAKey(t *testing.T) (*rsa.PrivateKey, string) {
 	t.Helper()
 	// Use a simple RSA key for testing
-	key, err := rsa.GenerateKey(nil, 2048)
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
 	keyID := "test-key-id"
 	return key, keyID

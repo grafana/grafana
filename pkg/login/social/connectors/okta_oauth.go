@@ -148,9 +148,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 
 	// If JWT validation is enabled, validate the signature
 	if s.validateIDToken && s.jwkSetURL != "" {
-		// create a dedicated client for the JWKS retrieval, without a token source
-		JWKSClient := s.Client(ctx, nil)
-		rawJSON, err := s.SocialBase.validateIDTokenSignature(ctx, JWKSClient, idTokenString, s.jwkSetURL)
+		rawJSON, err := s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.jwkSetURL)
 		if err != nil {
 			return nil, fmt.Errorf("error validating id token signature: %w", err)
 		}

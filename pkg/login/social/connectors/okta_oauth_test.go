@@ -609,7 +609,18 @@ func TestSocialOkta_UserInfo_WithIDTokenValidation(t *testing.T) {
 				}
 			}
 
-			s := NewOktaProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			cfg := &setting.Cfg{
+				AutoAssignOrgRole: "Viewer", // default role
+			}
+
+			s := NewOktaProvider(
+				info,
+				cfg,
+				ProvideOrgRoleMapper(cfg,
+					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+				ssosettingstests.NewFakeService(),
+				featuremgmt.WithFeatures(),
+				nil)
 
 			// Sign the token
 			idToken := signJWT(t, tc.tokenKey, tc.tokenKeyID, claims)

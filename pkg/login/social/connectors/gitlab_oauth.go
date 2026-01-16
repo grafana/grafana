@@ -308,9 +308,7 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 
 	// If JWT validation is enabled, validate the signature
 	if s.validateIDToken && s.jwkSetURL != "" {
-		// create a dedicated client for the JWKS retrieval, without a token source
-		JWKSClient := s.Client(ctx, nil)
-		rawJSON, err = s.SocialBase.validateIDTokenSignature(ctx, JWKSClient, idTokenString, s.jwkSetURL)
+		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.jwkSetURL)
 		if err != nil {
 			s.log.Warn("Error validating ID token signature", "error", err)
 			return nil, nil
