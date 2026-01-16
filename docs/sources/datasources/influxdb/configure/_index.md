@@ -90,18 +90,18 @@ Use these settings to specify the InfluxDB instance the data source connects to.
 
 The following table shows which query languages are available for each InfluxDB product:
 
-| Product                    | Supported query languages |
-| -------------------------- | ------------------------- |
-| InfluxDB Cloud Dedicated   | SQL, InfluxQL             |
-| InfluxDB Cloud Serverless  | SQL, InfluxQL, Flux       |
-| InfluxDB Clustered         | SQL, InfluxQL             |
-| InfluxDB Enterprise 1.x    | InfluxQL, Flux            |
-| InfluxDB Enterprise 3.x    | SQL, InfluxQL             |
-| InfluxDB Cloud (TSM)       | InfluxQL, Flux            |
-| InfluxDB Cloud 1           | InfluxQL                  |
-| InfluxDB OSS 1.x           | InfluxQL, Flux            |
-| InfluxDB OSS 2.x           | InfluxQL, Flux            |
-| InfluxDB OSS 3.x           | SQL, InfluxQL             |
+| Product                   | Supported query languages |
+| ------------------------- | ------------------------- |
+| InfluxDB Cloud Dedicated  | SQL, InfluxQL             |
+| InfluxDB Cloud Serverless | SQL, InfluxQL, Flux       |
+| InfluxDB Clustered        | SQL, InfluxQL             |
+| InfluxDB Enterprise 1.x   | InfluxQL, Flux            |
+| InfluxDB Enterprise 3.x   | SQL, InfluxQL             |
+| InfluxDB Cloud (TSM)      | InfluxQL, Flux            |
+| InfluxDB Cloud 1          | InfluxQL                  |
+| InfluxDB OSS 1.x          | InfluxQL, Flux            |
+| InfluxDB OSS 2.x          | InfluxQL, Flux            |
+| InfluxDB OSS 3.x          | SQL, InfluxQL             |
 
 {{< admonition type="note" >}}
 _For InfluxQL only._ **Database + Retention Policy (DBRP) Mapping** must be configured before data can be queried for the following products: _InfluxDB OSS 1.x_, _InfluxDB OSS 2.x_, _InfluxDB Enterprise 1.x_, _InfluxDB Cloud (TSM)_, _InfluxDB Cloud Serverless_.
@@ -205,11 +205,11 @@ After you have configured your connection settings, click **Save & test** to val
 
 A successful test returns one of the following messages depending on your query language:
 
-| Query language | Success message                              |
-| -------------- | -------------------------------------------- |
-| Flux           | `datasource is working. X buckets found`     |
-| InfluxQL       | `datasource is working. X measurements found`|
-| SQL            | `OK`                                         |
+| Query language | Success message                               |
+| -------------- | --------------------------------------------- |
+| Flux           | `datasource is working. X buckets found`      |
+| InfluxQL       | `datasource is working. X measurements found` |
+| SQL            | `OK`                                          |
 
 If the test fails, refer to [Troubleshoot issues with the InfluxDB data source](../troubleshooting/) for help resolving common connection and authentication errors.
 
