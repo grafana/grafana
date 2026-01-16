@@ -81,9 +81,9 @@ describe('RawPrometheusPanel', () => {
   });
 });
 
-function buildPanelData(overrideValues?: Partial<RawPrometheusPanelProps>): PrometheusInstantResultsPanelProps {
+function buildPanelData(overrideValues?: Partial<RawPrometheusPanelProps>): RawPrometheusPanelProps {
   const timeRange = createTimeRange();
-  const defaultValues: PrometheusInstantResultsPanelProps = {
+  const defaultValues: RawPrometheusPanelProps = {
     id: Number(uniqueId()),
     data: {
       series: [],
