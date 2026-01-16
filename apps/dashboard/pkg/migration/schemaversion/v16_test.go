@@ -1709,7 +1709,7 @@ func TestV16(t *testing.T) {
 			},
 		},
 		{
-			name: "ID collision prevention: row panels have higher IDs than top-level panels",
+			name: "ID collision prevention: new row panel gets unique ID based on max from all sources",
 			input: map[string]interface{}{
 				"schemaVersion": 15,
 				"panels": []interface{}{
@@ -1725,7 +1725,7 @@ func TestV16(t *testing.T) {
 				"rows": []interface{}{
 					map[string]interface{}{
 						"showTitle": true,
-						"title":     "Row with high ID panels",
+						"title":     "Test Row",
 						"height":    250,
 						"panels": []interface{}{
 							map[string]interface{}{
@@ -1768,9 +1768,9 @@ func TestV16(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"id":     8,
+						"id":     8, // max(1, 6, 7) + 1 = 8
 						"type":   "row",
-						"title":  "Row with high ID panels",
+						"title":  "Test Row",
 						"repeat": "",
 						"panels": []interface{}{},
 						"gridPos": map[string]interface{}{
@@ -1781,7 +1781,7 @@ func TestV16(t *testing.T) {
 			},
 		},
 		{
-			name: "ID collision prevention: assign unique IDs to panels without IDs",
+			name: "ID collision prevention: assigns unique IDs to panels without IDs",
 			input: map[string]interface{}{
 				"schemaVersion": 15,
 				"panels": []interface{}{
