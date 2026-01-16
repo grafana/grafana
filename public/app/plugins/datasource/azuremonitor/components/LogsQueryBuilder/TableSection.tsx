@@ -24,6 +24,7 @@ interface TableSectionProps {
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
   const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions, isLoadingSchema } = props;
+  const ALL_COLUMNS_VALUE = '__all_columns__';
 
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
@@ -42,7 +43,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
   const selectAllOption: SelectableValue<string> = {
     label: 'All Columns',
-    value: '__all_columns__',
+    value: ALL_COLUMNS_VALUE,
   };
 
   const selectableOptions: Array<SelectableValue<string>> = [
@@ -87,18 +88,18 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       return;
     }
 
-    const includesAll = selectedArray.some((opt) => opt.value === '__all_columns__');
+    const includesAll = selectedArray.some((opt) => opt.value === ALL_COLUMNS_VALUE);
     const lastSelected = selectedArray[selectedArray.length - 1];
 
-    if (includesAll && lastSelected.value === '__all_columns__') {
+    if (includesAll && lastSelected.value === ALL_COLUMNS_VALUE) {
       buildAndUpdateQuery({
-        columns: ['__all_columns__'],
+        columns: [ALL_COLUMNS_VALUE],
       });
       return;
     }
 
     if (includesAll && selectedArray.length > 1) {
-      const filtered = selectedArray.filter((opt) => opt.value !== '__all_columns__');
+      const filtered = selectedArray.filter((opt) => opt.value !== ALL_COLUMNS_VALUE);
       buildAndUpdateQuery({
         columns: filtered.map((opt) => opt.value!),
       });
@@ -123,14 +124,9 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     });
   };
 
-  // const allColumnNames = allColumns.length > 0 ? allColumns.map((col) => col.name) : [];
+  const allColumnsSelected = selectedColumns.length === 1 && selectedColumns[0] === ALL_COLUMNS_VALUE;
 
-  const allColumnsSelected = selectedColumns.length === 1 && selectedColumns[0] === '__all_columns__';
-  // allColumnNames.length > 0 && selectedColumns.length > 0 && selectedColumns.length === allColumnNames.length;
-  // &&
-  // allColumnNames.every((col) => selectedColumns.includes(col));
-
-  const columnSelectValue: Array<SelectableValue<string>> = areAllColumnsSelected
+  const columnSelectValue: Array<SelectableValue<string>> = allColumnsSelected
     ? [selectAllOption]
     : selectedColumns.map((col) => ({ label: col, value: col }));
 
