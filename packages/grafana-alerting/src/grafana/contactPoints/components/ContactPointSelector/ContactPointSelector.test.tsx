@@ -1,10 +1,16 @@
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { render, screen, within } from '../../../../../tests/test-utils';
+import { ContactPoint } from '../../../api/notifications/v0alpha1/types';
 import { getContactPointDescription } from '../../utils';
 
 import { ContactPointSelector } from './ContactPointSelector';
-import { simpleContactPointsList, simpleContactPointsListScenario } from './ContactPointSelector.test.scenario';
+import {
+  contactPointsWithProvenance,
+  contactPointsWithProvenanceScenario,
+  simpleContactPointsList,
+  simpleContactPointsListScenario,
+} from './ContactPointSelector.test.scenario';
 
 const server = setupMockServer();
 
@@ -50,5 +56,54 @@ describe('listing contact points', () => {
     const firstOption = await screen.findByText(firstContactPoint.spec.title);
     await user.click(firstOption);
     expect(onChangeHandler).toHaveBeenCalledWith(firstContactPoint);
+  });
+});
+
+describe('filtering contact points', () => {
+  beforeEach(() => {
+    server.use(...contactPointsWithProvenanceScenario);
+  });
+
+  it('should filter out contact points when filter prop is provided', async () => {
+    const onChangeHandler = jest.fn();
+
+    // Filter that excludes contact points with 'converted_prometheus' provenance
+    const filterOutImported = (contactPoint: ContactPoint) => {
+      const provenance = contactPoint.metadata?.annotations?.['grafana.com/provenance'];
+      return provenance !== 'converted_prometheus';
+    };
+
+    const { user } = render(<ContactPointSelector onChange={onChangeHandler} filter={filterOutImported} />);
+    await user.click(screen.getByRole('combobox'));
+
+    // Only non-imported contact points should be shown (2 out of 3)
+    const options = await screen.findAllByRole('option');
+    expect(options).toHaveLength(2);
+
+    // The imported contact point should NOT be in the list
+    const importedContactPoint = contactPointsWithProvenance.items.find(
+      (cp) => cp.metadata?.annotations?.['grafana.com/provenance'] === 'converted_prometheus'
+    );
+    expect(
+      screen.queryByRole('option', { name: new RegExp(importedContactPoint!.spec.title) })
+    ).not.toBeInTheDocument();
+
+    // The non-imported contact points should be in the list
+    const nonImportedContactPoints = contactPointsWithProvenance.items.filter(
+      (cp) => cp.metadata?.annotations?.['grafana.com/provenance'] !== 'converted_prometheus'
+    );
+    for (const item of nonImportedContactPoints) {
+      expect(await screen.findByRole('option', { name: new RegExp(item.spec.title) })).toBeInTheDocument();
+    }
+  });
+
+  it('should show all contact points when no filter is provided', async () => {
+    const onChangeHandler = jest.fn();
+
+    const { user } = render(<ContactPointSelector onChange={onChangeHandler} />);
+    await user.click(screen.getByRole('combobox'));
+
+    // All contact points should be shown
+    expect(await screen.findAllByRole('option')).toHaveLength(contactPointsWithProvenance.items.length);
   });
 });

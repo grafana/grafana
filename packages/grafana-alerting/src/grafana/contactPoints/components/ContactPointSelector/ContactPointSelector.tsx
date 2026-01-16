@@ -10,13 +10,21 @@ import { CustomComboBoxProps } from './ComboBox.types';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
-export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint>;
+export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint> & {
+  /**
+   * Optional filter function to exclude certain contact points from the dropdown.
+   * Return `true` to include the contact point, `false` to exclude it.
+   */
+  filter?: (contactPoint: ContactPoint) => boolean;
+};
 
 /**
  * Contact Point Combobox which lists all available contact points
  * @TODO make ComboBox accept a ReactNode so we can use icons and such
  */
 function ContactPointSelector(props: ContactPointSelectorProps) {
+  const { filter, ...comboboxProps } = props;
+
   const { currentData: contactPoints, isLoading } = useListContactPoints(
     {},
     { refetchOnFocus: true, refetchOnMountOrArgChange: true }
@@ -25,6 +33,7 @@ function ContactPointSelector(props: ContactPointSelectorProps) {
   // Create a mapping of options with their corresponding contact points
   const contactPointOptions = chain(contactPoints?.items)
     .toArray()
+    .filter((contactPoint) => (filter ? filter(contactPoint) : true))
     .map((contactPoint) => ({
       option: {
         label: contactPoint.spec.title,
@@ -39,8 +48,8 @@ function ContactPointSelector(props: ContactPointSelectorProps) {
   const options = contactPointOptions.map<ComboboxOption>((item) => item.option);
 
   const handleChange = (selectedOption: ComboboxOption<string> | null) => {
-    if (selectedOption == null && props.isClearable) {
-      props.onChange(null);
+    if (selectedOption == null && comboboxProps.isClearable) {
+      comboboxProps.onChange(null);
       return;
     }
 
@@ -50,11 +59,11 @@ function ContactPointSelector(props: ContactPointSelectorProps) {
         return;
       }
 
-      props.onChange(matchedOption.contactPoint);
+      comboboxProps.onChange(matchedOption.contactPoint);
     }
   };
 
-  return <Combobox {...props} loading={isLoading} options={options} onChange={handleChange} />;
+  return <Combobox {...comboboxProps} loading={isLoading} options={options} onChange={handleChange} />;
 }
 
 export { ContactPointSelector };

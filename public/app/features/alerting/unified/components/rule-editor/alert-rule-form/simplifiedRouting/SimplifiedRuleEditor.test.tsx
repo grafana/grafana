@@ -1,4 +1,5 @@
 import { UserEvent } from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { ReactNode } from 'react';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
@@ -167,6 +168,68 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     await selectContactPoint('lotsa-emails');
     expect(screen.getByDisplayValue('lotsa-emails')).toBeInTheDocument();
+  });
+
+  it('does not show imported contact points in the dropdown', async () => {
+    // Override the receivers handler to include an imported contact point
+    server.use(
+      http.get('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () => {
+        return HttpResponse.json({
+          kind: 'ReceiverList',
+          apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+          metadata: {},
+          items: [
+            {
+              metadata: {
+                uid: 'regular-receiver',
+                annotations: {
+                  'grafana.com/provenance': '',
+                  'grafana.com/access/canAdmin': 'true',
+                  'grafana.com/access/canDelete': 'true',
+                  'grafana.com/access/canWrite': 'true',
+                },
+              },
+              spec: {
+                title: 'regular-receiver',
+                integrations: [{ type: 'email', settings: { addresses: 'test@example.com' } }],
+              },
+            },
+            {
+              metadata: {
+                uid: 'imported-receiver',
+                annotations: {
+                  'grafana.com/provenance': 'converted_prometheus',
+                  'grafana.com/access/canAdmin': 'true',
+                  'grafana.com/access/canDelete': 'false',
+                  'grafana.com/access/canWrite': 'false',
+                },
+              },
+              spec: {
+                title: 'imported-receiver',
+                integrations: [{ type: 'email', settings: { addresses: 'imported@example.com' } }],
+              },
+            },
+          ],
+        });
+      })
+    );
+
+    const { user } = renderRuleEditor();
+
+    await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
+
+    // Open the contact point dropdown
+    const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
+    const combobox = await within(contactPointInput).findByRole('combobox');
+    await user.click(combobox);
+
+    // Wait for options to load and verify imported contact point is not in the list
+    await waitFor(() => {
+      expect(screen.queryByRole('option', { name: /imported-receiver/i })).not.toBeInTheDocument();
+    });
+
+    // Verify that non-imported contact points are still shown
+    expect(await screen.findByRole('option', { name: /regular-receiver/i })).toBeInTheDocument();
   });
 
   describe('switch modes enabled', () => {

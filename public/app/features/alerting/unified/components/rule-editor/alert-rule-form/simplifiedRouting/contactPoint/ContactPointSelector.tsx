@@ -1,16 +1,19 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { isEmpty } from 'lodash';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { base64UrlEncode } from '@grafana/alerting';
 import {
+  ContactPoint,
   ContactPointSelector as GrafanaManagedContactPointSelector,
   notificationsAPIv0alpha1,
 } from '@grafana/alerting/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
+import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { stringifyFieldSelector } from 'app/features/alerting/unified/utils/k8s/utils';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -43,6 +46,13 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
     }
   }, [contactPointInForm, selectedContactPointField, status, trigger]);
 
+  // Filter out imported contact points (those with 'converted_prometheus' provenance)
+  // as they are read-only and cannot be used for simplified routing
+  const filterOutImportedContactPoints = useCallback((contactPoint: ContactPoint) => {
+    const provenance = contactPoint.metadata?.annotations?.[K8sAnnotations.Provenance];
+    return provenance !== KnownProvenance.ConvertedPrometheus; //todo: use isImportedResource instead once we merge https://github.com/grafana/grafana/pull/116249
+  }, []);
+
   return (
     <Stack direction="row" alignItems="center">
       <Field
@@ -60,6 +70,7 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
                   onChange={(contactPoint) => onChange(contactPoint.spec.title)}
                   width={50}
                   value={contactPointInForm}
+                  filter={filterOutImportedContactPoints}
                 />
                 <LinkToContactPoints />
               </Stack>
