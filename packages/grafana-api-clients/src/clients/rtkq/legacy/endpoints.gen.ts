@@ -5996,6 +5996,7 @@ export type TeamGroupDto = {
   groupId?: string;
   orgId?: number;
   teamId?: number;
+  teamUid?: string;
   uid?: string;
 };
 export type TeamGroupMapping = {

@@ -11658,6 +11658,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "teamUid": {
+            "type": "string"
+          },
           "uid": {
             "type": "string"
           }

@@ -153,6 +153,24 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['ExternalGroupMapping'],
       }),
+      searchExternalGroupMappings: build.mutation<
+        SearchExternalGroupMappingsApiResponse,
+        SearchExternalGroupMappingsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/searchExternalGroupMappings`,
+          method: 'POST',
+          body: queryArg.body,
+          params: {
+            teamName: queryArg.teamName,
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+            sort: queryArg.sort,
+          },
+        }),
+        invalidatesTags: ['Search'],
+      }),
       getSearchTeams: build.query<GetSearchTeamsApiResponse, GetSearchTeamsApiArg>({
         query: (queryArg) => ({
           url: `/searchTeams`,
@@ -887,6 +905,22 @@ export type UpdateExternalGroupMappingApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type SearchExternalGroupMappingsApiResponse = unknown;
+export type SearchExternalGroupMappingsApiArg = {
+  /** Team name */
+  teamName?: string;
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
+  /** sortable field */
+  sort?: string;
+  body: {
+    externalGroups?: string[];
+  };
 };
 export type GetSearchTeamsApiResponse = /** status 200 undefined */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2147,6 +2181,7 @@ export const {
   useReplaceExternalGroupMappingMutation,
   useDeleteExternalGroupMappingMutation,
   useUpdateExternalGroupMappingMutation,
+  useSearchExternalGroupMappingsMutation,
   useGetSearchTeamsQuery,
   useLazyGetSearchTeamsQuery,
   useGetSearchUsersQuery,
