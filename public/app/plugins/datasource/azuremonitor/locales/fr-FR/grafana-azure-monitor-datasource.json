@@ -274,7 +274,7 @@
       "label-time-column": "Colonne de temps",
       "label-time-range": "Plage de temps",
       "tooltip-time-column": "<0>Spécifie la colonne de temps utilisée pour le filtrage. Par défaut, la première colonne <1>timeSpan</1> des tableaux, la première colonne <3>datetime</3> trouvée ou <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Spécifie la plage de temps utilisée pour la requête. L’option <1>Requête</1> n’utilisera que les plages de temps spécifiées dans la requête. Le <3>tableau de bord</3> n’utilisera que la plage de temps Grafana. En mode Créateur de journaux, seule l’heure du tableau de bord sera utilisée.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Haut"

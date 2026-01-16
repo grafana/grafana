@@ -206,13 +206,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "extraThemes",
-			Description:  "Enables extra themes",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
 			Stage:        FeatureStageGeneralAvailability,

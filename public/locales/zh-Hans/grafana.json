@@ -3751,7 +3751,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_other": "",
       "failed-count_other": "",
       "success-count_other": ""
@@ -5321,6 +5320,7 @@
       },
       "header-hidden-tooltip": "行标题仅在编辑模式下可见",
       "name": "行",
+      "new-row-title": "",
       "row": {
         "collapse": "折叠行",
         "expand": "展开行",
@@ -7965,6 +7965,7 @@
     "name-neutral": "中性",
     "name-show-threshold-labels": "显示阈值标签",
     "name-show-threshold-markers": "显示阈值标记",
+    "neutral": "",
     "placeholder-neutral": "自动",
     "suggestions": {
       "arc": "",
@@ -12519,6 +12520,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12532,6 +12538,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12687,14 +12694,6 @@
       "starred": "已加星标",
       "view-as-folders": "按文件夹查看",
       "view-as-list": "以列表形式查看"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "按字母顺序 (A-Z)",
-          "alphabetically-za": "按字母顺序 (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "导入",

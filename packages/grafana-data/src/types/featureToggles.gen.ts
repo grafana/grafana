@@ -138,10 +138,6 @@ export interface FeatureToggles {
   */
   enableDatagridEditing?: boolean;
   /**
-  * Enables extra themes
-  */
-  extraThemes?: boolean;
-  /**
   * A table visualisation for logs in Explore
   * @default true
   */
