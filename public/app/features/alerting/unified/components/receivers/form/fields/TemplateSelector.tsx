@@ -3,6 +3,7 @@ import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
+import { TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -29,7 +30,6 @@ import {
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
-import { TemplateKind } from 'app/features/alerting/unified/types/notification-template';
 
 import { defaultPayloadString } from '../../TemplateForm';
 
@@ -79,7 +79,7 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
             onClose={handleClose}
             option={option}
             valueInForm={valueInForm}
-            filterKind={TemplateKind.Grafana}
+            filterKind="grafana"
           />
         </Drawer>
       )}
@@ -127,7 +127,7 @@ interface TemplateSelectorProps {
   onClose: () => void;
   option: NotificationChannelOption;
   valueInForm: string;
-  filterKind?: TemplateKind;
+  filterKind?: TemplateGroupTemplateKind;
 }
 
 export function TemplateSelector({ onSelect, onClose, option, valueInForm, filterKind }: TemplateSelectorProps) {

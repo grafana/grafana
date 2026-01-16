@@ -12,7 +12,6 @@ import {
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
-import { TemplateKind } from 'app/features/alerting/unified/types/notification-template';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -74,7 +73,7 @@ describe('getTemplateOptions function', () => {
         title,
         content,
         provenance: KnownProvenance.None,
-        kind: TemplateKind.Grafana,
+        kind: 'grafana' as const,
       };
     });
     const defaultTemplates = parseTemplates(DEFAULT_TEMPLATES);
@@ -97,14 +96,14 @@ describe('getTemplateOptions function', () => {
         title: 'grafana-template',
         content: '{{ define "grafana-template" }} Grafana content {{ end }}',
         provenance: KnownProvenance.None,
-        kind: TemplateKind.Grafana,
+        kind: 'grafana' as const,
       },
       {
         uid: 'mimir-template',
         title: 'mimir-template',
         content: '{{ define "mimir-template" }} Mimir content {{ end }}',
         provenance: KnownProvenance.None,
-        kind: TemplateKind.Mimir,
+        kind: 'mimir' as const,
       },
     ];
 
@@ -144,11 +143,7 @@ describe('TemplatesPicker', () => {
   });
 
   it('filters out Mimir templates when filterKind is grafana', async () => {
-    addTemplateToDb(
-      'mimir-template',
-      '{{ define "mimir-template" }} Mimir template content {{ end }}',
-      TemplateKind.Mimir
-    );
+    addTemplateToDb('mimir-template', '{{ define "mimir-template" }} Mimir template content {{ end }}', 'mimir');
 
     const onSelect = jest.fn();
     const mockOption = { label: 'title' } as NotificationChannelOption;
@@ -165,11 +160,7 @@ describe('TemplatesPicker', () => {
   });
 
   it('shows all templates when filterKind is not specified', async () => {
-    addTemplateToDb(
-      'mimir-template',
-      '{{ define "mimir-template" }} Mimir template content {{ end }}',
-      TemplateKind.Mimir
-    );
+    addTemplateToDb('mimir-template', '{{ define "mimir-template" }} Mimir template content {{ end }}', 'mimir');
 
     const onSelect = jest.fn();
     const mockOption = { label: 'title' } as NotificationChannelOption;

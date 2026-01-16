@@ -1,17 +1,17 @@
 import { HttpResponse, http } from 'msw';
 
+import { TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup } from 'app/features/alerting/unified/openapi/templatesApi.gen';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
-import { TemplateKind } from 'app/features/alerting/unified/types/notification-template';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
 type TemplateGroupSpecWithKind = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup['spec'] & {
-  kind?: TemplateKind;
+  kind?: TemplateGroupTemplateKind;
 };
 
 // Map alertmanager templates to k8s templates
@@ -25,7 +25,7 @@ const mappedTemplates = Object.entries(
   spec: {
     title: title,
     content: template,
-    kind: TemplateKind.Grafana,
+    kind: 'grafana',
   } as TemplateGroupSpecWithKind,
 }));
 
@@ -106,7 +106,7 @@ function titleToK8sResourceName(title: string) {
   return `k8s-${title}-resource-name`;
 }
 
-export function addTemplateToDb(title: string, content: string, kind: TemplateKind = TemplateKind.Grafana): void {
+export function addTemplateToDb(title: string, content: string, kind: TemplateGroupTemplateKind = 'grafana'): void {
   const name = titleToK8sResourceName(title);
   templatesDb.set(name, {
     metadata: {
