@@ -370,11 +370,12 @@
       "items": {
         "type": "object",
         "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/developers/plugin-tools/how-to-guides/data-source-plugins/add-authentication-for-data-source-plugins).",
+        "required": ["path"],
         "additionalProperties": false,
         "properties": {
           "path": {
             "type": "string",
-            "description": "For data source plugins. The route path that is replaced by the route URL field when proxying the call."
+            "description": "For data source plugins. The route path that is replaced by the route URL field when proxying the call. **Warning**: Don't use an empty string (\"\")."
           },
           "method": {
             "type": "string",

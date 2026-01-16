@@ -785,20 +785,6 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesCookiePreferences": {
-        "type": "object",
-        "properties": {
-          "analytics": {
-            "type": "object"
-          },
-          "functional": {
-            "type": "object"
-          },
-          "performance": {
-            "type": "object"
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesList": {
         "type": "object",
         "required": [
@@ -869,14 +855,6 @@
       "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec": {
         "type": "object",
         "properties": {
-          "cookiePreferences": {
-            "description": "Cookie preferences",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesCookiePreferences"
-              }
-            ]
-          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"

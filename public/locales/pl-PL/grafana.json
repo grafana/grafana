@@ -3799,7 +3799,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_few": "",
       "all-failed_many": "",
@@ -5381,6 +5380,7 @@
       },
       "header-hidden-tooltip": "Nagłówek wiersza widoczny tylko w trybie edycji",
       "name": "Wiersze",
+      "new-row-title": "",
       "row": {
         "collapse": "Zwiń wiersz",
         "expand": "Rozwiń wiersz",
@@ -8043,6 +8043,7 @@
     "name-neutral": "Neutralne",
     "name-show-threshold-labels": "Pokaż etykiety progów",
     "name-show-threshold-markers": "Pokaż znaczniki progów",
+    "neutral": "",
     "placeholder-neutral": "automatycznie",
     "suggestions": {
       "arc": "",
@@ -12678,6 +12679,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12691,6 +12697,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12852,14 +12859,6 @@
       "starred": "Oznaczone gwiazdką",
       "view-as-folders": "Wyświetl według folderów",
       "view-as-list": "Wyświetl jako listę"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetycznie (A–Z)",
-          "alphabetically-za": "Alfabetycznie (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importuj",
