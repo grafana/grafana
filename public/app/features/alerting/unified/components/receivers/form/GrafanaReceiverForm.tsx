@@ -28,7 +28,7 @@ import {
   formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
 } from '../../../utils/receiver-form';
-import { ImportedContactPointAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
 import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
@@ -175,7 +175,9 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         </Alert>
       )}
 
-      {isProvisioned && hasLegacyIntegrations(contactPoint, grafanaNotifiers) && <ImportedContactPointAlert />}
+      {isProvisioned && hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
+        <ImportedResourceAlert resource={ProvisionedResource.ContactPoint} />
+      )}
       {isProvisioned && !hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
         <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />
       )}
