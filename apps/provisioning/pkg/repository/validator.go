@@ -35,10 +35,8 @@ func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.S
 // isCreate indicates whether this is a CREATE operation (true) or UPDATE operation (false).
 // When isCreate is false, allowedTargets validation is skipped to allow existing repositories to continue working.
 // Note: Structural validation (URL, branch, path, etc.) is done by Factory.Validate() before this is called.
-func (v *RepositoryValidator) ValidateRepository(repo Repository, isCreate bool) field.ErrorList {
+func (v *RepositoryValidator) ValidateRepository(cfg *provisioning.Repository, isCreate bool) field.ErrorList {
 	var list field.ErrorList
-	cfg := repo.Config()
-
 	if cfg.Spec.Title == "" {
 		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
 	}

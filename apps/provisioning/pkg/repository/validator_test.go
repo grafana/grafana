@@ -14,34 +14,30 @@ import (
 func TestValidateRepository(t *testing.T) {
 	tests := []struct {
 		name          string
-		repository    *MockRepository
+		repository    *provisioning.Repository
 		expectedErrs  int
 		validateError func(t *testing.T, errors field.ErrorList)
 	}{
 		{
 			name: "valid repository",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 					},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 0,
 		},
 		{
 			name: "missing title",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -50,18 +46,15 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "sync enabled without target",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Sync: provisioning.SyncOptions{
 							Enabled:         true,
 							IntervalSeconds: 10,
-						},
-					},
-				})
-				return m
+						}},
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -70,19 +63,16 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "sync interval too low",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Sync: provisioning.SyncOptions{
 							Enabled:         true,
 							Target:          provisioning.SyncTargetTypeFolder,
 							IntervalSeconds: 5,
-						},
-					},
-				})
-				return m
+						}},
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -91,17 +81,19 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "reserved name",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "sql",
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
-					},
-				})
-				return m
+						Sync: provisioning.SyncOptions{
+							Enabled:         true,
+							Target:          provisioning.SyncTargetTypeFolder,
+							IntervalSeconds: 10,
+						}},
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -110,16 +102,14 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "mismatched local config",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Type:  provisioning.GitHubRepositoryType,
 						Local: &provisioning.LocalRepositoryConfig{},
 					},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -128,16 +118,14 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "mismatched github config",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
 						Type:   provisioning.LocalRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{},
 					},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -146,18 +134,14 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "github enabled when image rendering is not allowed",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-						Type:  provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							GenerateDashboardPreviews: true,
-						},
+						Title:  "Test Repo",
+						Type:   provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{GenerateDashboardPreviews: true},
 					},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -166,16 +150,14 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "mismatched git config",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
 						Type:  provisioning.LocalRepositoryType,
 						Git:   &provisioning.GitRepositoryConfig{},
 					},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -184,40 +166,36 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "multiple validation errors",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "sql",
 					},
 					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
 						Sync: provisioning.SyncOptions{
 							Enabled:         true,
 							IntervalSeconds: 5,
 							Target:          provisioning.SyncTargetTypeInstance,
 						},
 					},
-				})
-				return m
+				}
 			}(),
-			expectedErrs: 4,
-			// 1. missing title
-			// 2. sync target missing
-			// 3. reserved name
-			// 4. sync target not supported
+			expectedErrs: 3,
+			// 1. reserved name
+			// 2. sync interval too low
+			// 3. sync target not supported
 		},
 		{
 			name: "branch workflow for non-github repository",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
 						Type:      provisioning.LocalRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
 					},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -226,16 +204,14 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "invalid workflow in the list",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
 						Type:      provisioning.GitHubRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, "invalid"},
 					},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -244,9 +220,8 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "mutual exclusive finalizers are set together",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Finalizers: []string{RemoveOrphanResourcesFinalizer, ReleaseOrphanResourcesFinalizer},
 					},
@@ -255,8 +230,7 @@ func TestValidateRepository(t *testing.T) {
 						Type:      provisioning.GitHubRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {
@@ -265,9 +239,8 @@ func TestValidateRepository(t *testing.T) {
 		},
 		{
 			name: "invalid finalizer in the list",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
-				m.On("Config").Return(&provisioning.Repository{
+			repository: func() *provisioning.Repository {
+				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Finalizers: []string{CleanFinalizer, "invalid-finalizer", RemoveOrphanResourcesFinalizer},
 					},
@@ -276,8 +249,7 @@ func TestValidateRepository(t *testing.T) {
 						Type:      provisioning.GitHubRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					},
-				})
-				return m
+				}
 			}(),
 			expectedErrs: 1,
 			validateError: func(t *testing.T, errors field.ErrorList) {

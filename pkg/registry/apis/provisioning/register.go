@@ -802,35 +802,22 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return err
 	}
 
-	// Build repository for additional validation that requires decryption
-	repo, err := b.asRepository(ctx, obj, a.GetOldObject())
-	if err != nil {
-		return err
-	}
-
 	// ALL configuration validations should be done in ValidateRepository -
 	// this is how the UI is able to show proper validation errors
 	//
 	// the only time to add configuration checks here is if you need to compare
 	// the incoming change to the current configuration
 	isCreate := a.GetOperation() == admission.Create
-	list := b.repoValidator.ValidateRepository(repo, isCreate)
-	cfg := repo.Config()
-
+	list := b.repoValidator.ValidateRepository(r, isCreate)
 	if a.GetOperation() == admission.Update {
-		oldRepo, err := b.asRepository(ctx, a.GetOldObject(), nil)
-		if err != nil {
-			return fmt.Errorf("get old repository for update: %w", err)
-		}
-		oldCfg := oldRepo.Config()
-
-		if cfg.Spec.Type != oldCfg.Spec.Type {
+		oldRepo := a.GetOldObject().(*provisioning.Repository)
+		if r.Spec.Type != oldRepo.Spec.Type {
 			list = append(list, field.Forbidden(field.NewPath("spec", "type"),
 				"Changing repository type is not supported"))
 		}
 
 		// Do not allow changing the sync target once anything has synced successfully
-		if cfg.Spec.Sync.Target != oldCfg.Spec.Sync.Target && len(cfg.Status.Stats) > 0 {
+		if r.Spec.Sync.Target != oldRepo.Spec.Sync.Target && len(oldRepo.Status.Stats) > 0 {
 			list = append(list, field.Forbidden(field.NewPath("spec", "sync", "target"),
 				"Changing sync target after running sync is not supported"))
 		}
@@ -842,7 +829,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	}
 
 	// Exit early if we have already found errors
-	targetError := b.VerifyAgainstExistingRepositories(ctx, cfg)
+	targetError := b.VerifyAgainstExistingRepositories(ctx, r)
 	if targetError != nil {
 		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
 	}
