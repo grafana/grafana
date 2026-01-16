@@ -1737,6 +1737,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
+			Expression:   "false",
 		},
 		{
 			Name:         "kubernetesAuthzRoleBindingsApi",
