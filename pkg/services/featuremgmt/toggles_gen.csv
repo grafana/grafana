@@ -27,7 +27,6 @@ renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,fal
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,false
-extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false
@@ -37,7 +36,6 @@ provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
 queryCacheRequestDeduplication,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-permissionsFilterRemoveSubquery,experimental,@grafana/search-and-storage,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 dashgpt,GA,@grafana/dashboards-squad,false,false,true
 aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true

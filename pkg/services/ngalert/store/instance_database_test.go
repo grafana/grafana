@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -102,6 +103,30 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 				require.Len(t, alerts, 2)
 				containsHash(t, alerts, "hash1")
 				containsHash(t, alerts, "hash2")
+			},
+		},
+		{
+			name: "truncates long LastError when saving compressed state",
+			setupInstances: func() []models.AlertInstance {
+				return []models.AlertInstance{
+					*models.AlertInstanceGen(
+						models.InstanceMuts.WithOrgID(alertRule1.OrgID),
+						models.InstanceMuts.WithRuleUID(alertRule1.UID),
+						models.InstanceMuts.WithLabelsHash("truncateHash"),
+						models.InstanceMuts.WithState(models.InstanceStateError),
+						models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+						models.InstanceMuts.WithLastError(strings.Repeat("e", 1200)),
+					),
+				}
+			},
+			listQuery: &models.ListAlertInstancesQuery{
+				RuleOrgID: alertRule1.OrgID,
+				RuleUID:   alertRule1.UID,
+			},
+			validate: func(t *testing.T, alerts []*models.AlertInstance) {
+				require.Len(t, alerts, 1)
+				require.LessOrEqual(t, len(alerts[0].LastError), 1000, "LastError should be truncated to max 1000 chars")
+				require.True(t, strings.HasSuffix(alerts[0].LastError, "... (truncated)"), "Truncated error should have suffix")
 			},
 		},
 	}
@@ -305,6 +330,37 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		require.Equal(t, instance2.RuleUID, alerts[0].RuleUID)
 		require.Equal(t, instance2.Labels, alerts[0].Labels)
 		require.Equal(t, instance2.CurrentState, alerts[0].CurrentState)
+	})
+
+	t.Run("truncates long LastError when saving", func(t *testing.T) {
+		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+		labels := models.InstanceLabels{"test": "truncation"}
+		_, hash, _ := labels.StringAndHash()
+
+		longError := strings.Repeat("e", 1200)
+		instance := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  alertRule.OrgID,
+				RuleUID:    alertRule.UID,
+				LabelsHash: hash,
+			},
+			CurrentState: models.InstanceStateError,
+			Labels:       labels,
+			LastError:    longError,
+		}
+		err := ng.InstanceStore.SaveAlertInstance(ctx, instance)
+		require.NoError(t, err)
+
+		listCmd := &models.ListAlertInstancesQuery{
+			RuleOrgID: instance.RuleOrgID,
+			RuleUID:   instance.RuleUID,
+		}
+		alerts, err := ng.InstanceStore.ListAlertInstances(ctx, listCmd)
+		require.NoError(t, err)
+
+		require.Len(t, alerts, 1)
+		require.LessOrEqual(t, len(alerts[0].LastError), 1000, "LastError should be truncated to max 1000 chars")
+		require.True(t, strings.HasSuffix(alerts[0].LastError, "... (truncated)"), "Truncated error should have suffix")
 	})
 }
 
@@ -523,6 +579,28 @@ func TestIntegrationFullSync(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, res, largeCount)
+	})
+
+	t.Run("Should truncate long LastError during FullSync", func(t *testing.T) {
+		longError := strings.Repeat("x", 1200)
+		testInstances := []models.AlertInstance{
+			*models.AlertInstanceGen(
+				models.InstanceMuts.WithOrgID(orgID),
+				models.InstanceMuts.WithRuleUID("truncate-test"),
+				models.InstanceMuts.WithLastError(longError),
+			),
+		}
+
+		err := ng.InstanceStore.FullSync(ctx, testInstances, 1, nil)
+		require.NoError(t, err)
+
+		res, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		require.LessOrEqual(t, len(res[0].LastError), 1000, "LastError should be truncated to max 1000 chars")
+		require.True(t, strings.HasSuffix(res[0].LastError, "... (truncated)"), "Truncated error should have suffix")
 	})
 }
 
