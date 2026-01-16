@@ -23,6 +23,12 @@ type Preferences struct {
 	Spec PreferencesSpec `json:"spec" yaml:"spec"`
 }
 
+func NewPreferences() *Preferences {
+	return &Preferences{
+		Spec: *NewPreferencesSpec(),
+	}
+}
+
 func (o *Preferences) GetSpec() any {
 	return o.Spec
 }
