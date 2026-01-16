@@ -77,13 +77,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "logRequestsInstrumentedAsUnknown",
-			Description: "Logs the path for requests that are instrumented as unknown",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
-			Expression:  "false",
-		},
-		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,

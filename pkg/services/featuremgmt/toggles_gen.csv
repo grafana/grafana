@@ -7,7 +7,6 @@ lokiExperimentalStreaming,experimental,@grafana/oss-big-tent,false,false,false
 featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
 storage,experimental,@grafana/search-and-storage,false,false,false
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-logRequestsInstrumentedAsUnknown,experimental,@grafana/grafana-backend-group,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false

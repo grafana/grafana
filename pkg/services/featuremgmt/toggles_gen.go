@@ -31,10 +31,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagLogRequestsInstrumentedAsUnknown
-	// Logs the path for requests that are instrumented as unknown
-	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
