@@ -28,19 +28,32 @@ export function getValueAngleForValue(
   fieldDisplay: FieldDisplay,
   startAngle: number,
   endAngle: number,
-  value = fieldDisplay.display.numeric
+  neutral?: number
 ) {
   const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
+  const value = fieldDisplay.display.numeric;
 
-  let angle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
+  const valueAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
 
-  if (angle > angleRange) {
-    angle = angleRange;
-  } else if (angle < 0) {
-    angle = 0;
+  let endValueAngle = valueAngle;
+
+  let startValueAngle = 0;
+  if (typeof neutral === 'number') {
+    const [min, max] = getFieldConfigMinMax(fieldDisplay);
+    const clampedNeutral = Math.min(Math.max(min, neutral), max);
+    const neutralAngle = getValuePercentageForValue(fieldDisplay, clampedNeutral) * angleRange;
+    if (neutralAngle <= valueAngle) {
+      startValueAngle = neutralAngle;
+      endValueAngle = valueAngle - neutralAngle;
+    } else {
+      startValueAngle = valueAngle;
+      endValueAngle = neutralAngle - valueAngle;
+    }
   }
 
-  return { angleRange, angle };
+  const clampedEndValueAngle = Math.min(Math.max(endValueAngle, 0), angleRange);
+
+  return { angleRange, startValueAngle, endValueAngle: clampedEndValueAngle };
 }
 
 /**
@@ -155,6 +168,8 @@ export function calculateDimensions(
   }
 
   return {
+    vizWidth: width,
+    vizHeight: height,
     margin,
     gaugeBottomY: centerY + belowCenterY,
     radius: innerRadius,
@@ -185,7 +200,7 @@ export function drawRadialArcPath(
   dimensions: RadialGaugeDimensions,
   roundedBars?: boolean
 ): string {
-  const { radius, centerX, centerY, barWidth } = dimensions;
+  const { radius, centerX, centerY } = dimensions;
 
   // For some reason a 100% full arc cannot be rendered
   if (endAngle >= 360) {
@@ -197,66 +212,12 @@ export function drawRadialArcPath(
 
   const largeArc = endAngle > 180 ? 1 : 0;
 
-  const outerR = radius + barWidth / 2;
-  const innerR = Math.max(0, radius - barWidth / 2);
-  if (innerR <= 0) {
-    return ''; // cannot draw arc with 0 inner radius
-  }
+  let x1 = centerX + radius * Math.cos(startRadians);
+  let y1 = centerY + radius * Math.sin(startRadians);
+  let x2 = centerX + radius * Math.cos(endRadians);
+  let y2 = centerY + radius * Math.sin(endRadians);
 
-  // get points for both an inner and outer arc. we draw
-  // the arc entirely with a path's fill instead of using stroke
-  // so that it can be used as a clip-path.
-  const ox1 = centerX + outerR * Math.cos(startRadians);
-  const oy1 = centerY + outerR * Math.sin(startRadians);
-  const ox2 = centerX + outerR * Math.cos(endRadians);
-  const oy2 = centerY + outerR * Math.sin(endRadians);
-
-  const ix1 = centerX + innerR * Math.cos(startRadians);
-  const iy1 = centerY + innerR * Math.sin(startRadians);
-  const ix2 = centerX + innerR * Math.cos(endRadians);
-  const iy2 = centerY + innerR * Math.sin(endRadians);
-
-  // calculate the cap width in case we're drawing rounded bars
-  const capR = barWidth / 2;
-
-  const pathParts = [
-    // start at outer start
-    'M',
-    ox1,
-    oy1,
-    // outer arc from start to end (clockwise)
-    'A',
-    outerR,
-    outerR,
-    0,
-    largeArc,
-    1,
-    ox2,
-    oy2,
-  ];
-
-  if (roundedBars) {
-    // rounded end cap: small arc connecting outer end to inner end
-    pathParts.push('A', capR, capR, 0, 0, 1, ix2, iy2);
-  } else {
-    // straight line to inner end (square butt)
-    pathParts.push('L', ix2, iy2);
-  }
-
-  // inner arc from end back to start (counter-clockwise)
-  pathParts.push('A', innerR, innerR, 0, largeArc, 0, ix1, iy1);
-
-  if (roundedBars) {
-    // rounded start cap: small arc connecting inner start back to outer start
-    pathParts.push('A', capR, capR, 0, 0, 1, ox1, oy1);
-  } else {
-    // straight line back to outer start (square butt)
-    pathParts.push('L', ox1, oy1);
-  }
-
-  pathParts.push('Z');
-
-  return pathParts.join(' ');
+  return ['M', x1, y1, 'A', radius, radius, 0, largeArc, 1, x2, y2].join(' ');
 }
 
 export function getAngleBetweenSegments(segmentSpacing: number, segmentCount: number, range: number) {

@@ -44,6 +44,9 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample metric showing connection count.",
         "fieldConfig": {
           "defaults": {
@@ -134,6 +137,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample counter metric.",
         "fieldConfig": {
           "defaults": {
@@ -224,6 +230,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample error metric.",
         "fieldConfig": {
           "defaults": {
@@ -314,6 +323,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample event rate metric.",
         "fieldConfig": {
           "defaults": {
@@ -404,6 +416,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample resource utilization metric.",
         "fieldConfig": {
           "defaults": {
@@ -493,6 +508,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample memory allocation metrics.",
         "fieldConfig": {
           "defaults": {
@@ -593,6 +611,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample utilization percentage.",
         "fieldConfig": {
           "defaults": {
@@ -662,6 +683,9 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample latency metric for primary operations.",
         "fieldConfig": {
           "defaults": {
@@ -748,6 +772,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample latency metric for secondary operations.",
         "fieldConfig": {
           "defaults": {
@@ -834,6 +861,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "uid": "${example_datasource}"
+        },
         "description": "Sample expansion events metric.",
         "fieldConfig": {
           "defaults": {

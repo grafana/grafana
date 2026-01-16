@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -26,6 +27,8 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -56,6 +59,8 @@ import (
 const (
 	Org1 = "Org1"
 	Org2 = "OrgB"
+
+	DefaultNamespace = "default"
 )
 
 var (
@@ -205,6 +210,10 @@ func (c *K8sTestHelper) loadAPIGroups() {
 
 func (c *K8sTestHelper) GetEnv() server.TestEnv {
 	return c.env
+}
+
+func (c *K8sTestHelper) SetGithubConnectionFactory(f githubConnection.GithubFactory) {
+	c.env.GithubConnectionFactory = f
 }
 
 func (c *K8sTestHelper) GetListenerAddress() string {
@@ -438,6 +447,11 @@ func (c *User) RESTClient(t *testing.T, gv *schema.GroupVersion) *rest.RESTClien
 	client, err := rest.RESTClientFor(cfg)
 	require.NoError(t, err)
 	return client
+}
+
+func (c *User) GetClientRegistry() *appsdk_k8s.ClientRegistry {
+	restConfig := c.NewRestConfig()
+	return appsdk_k8s.NewClientRegistry(*restConfig, appsdk_k8s.DefaultClientConfig())
 }
 
 type RequestParams struct {

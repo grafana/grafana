@@ -30,7 +30,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
-	connectionvalidation "github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -97,7 +97,8 @@ type APIBuilder struct {
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
-	store               grafanarest.Storage
+	repoStore           grafanarest.Storage
+	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -105,20 +106,21 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistoryConfig *JobHistoryConfig
-	jobHistoryLoki   *jobs.LokiJobHistory
-	resourceLister   resources.ResourceLister
-	dashboardAccess  legacy.MigrationDashboardAccessor
-	unified          resource.ResourceClient
-	repoFactory      repository.Factory
-	client           client.ProvisioningV0alpha1Interface
-	access           auth.AccessChecker
-	accessWithAdmin  auth.AccessChecker
-	accessWithEditor auth.AccessChecker
-	accessWithViewer auth.AccessChecker
-	statusPatcher    *appcontroller.RepositoryStatusPatcher
-	healthChecker    *controller.HealthChecker
-	validator        repository.RepositoryValidator
+	jobHistoryConfig  *JobHistoryConfig
+	jobHistoryLoki    *jobs.LokiJobHistory
+	resourceLister    resources.ResourceLister
+	dashboardAccess   legacy.MigrationDashboardAccessor
+	unified           resource.ResourceClient
+	repoFactory       repository.Factory
+	connectionFactory connection.Factory
+	client            client.ProvisioningV0alpha1Interface
+	access            auth.AccessChecker
+	accessWithAdmin   auth.AccessChecker
+	accessWithEditor  auth.AccessChecker
+	accessWithViewer  auth.AccessChecker
+	statusPatcher     *appcontroller.RepositoryStatusPatcher
+	healthChecker     *controller.HealthChecker
+	repoValidator     repository.RepositoryValidator
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
@@ -133,6 +135,7 @@ type APIBuilder struct {
 func NewAPIBuilder(
 	onlyApiServer bool,
 	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
@@ -176,6 +179,7 @@ func NewAPIBuilder(
 		usageStats:                          usageStats,
 		features:                            features,
 		repoFactory:                         repoFactory,
+		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		parsers:                             parsers,
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
@@ -192,7 +196,7 @@ func NewAPIBuilder(
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
-		validator:                           repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 	}
 
@@ -253,6 +257,7 @@ func RegisterAPIService(
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
 ) (*APIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -271,6 +276,7 @@ func RegisterAPIService(
 	builder := NewAPIBuilder(
 		cfg.DisableControllers,
 		repoFactory,
+		connectionFactory,
 		features,
 		client,
 		configProvider,
@@ -480,6 +486,16 @@ func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
+	// Repositories is read-only
+	case "repositories":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbGet,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
 	default:
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
@@ -549,6 +565,22 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	// Register custom field label conversion for Repository to enable field selectors like spec.connection.name
+	err = scheme.AddFieldLabelConversionFunc(
+		provisioning.SchemeGroupVersion.WithKind("Repository"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.connection.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for Repository: %s", label)
+			}
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	metav1.AddToGroupVersion(scheme, provisioning.SchemeGroupVersion)
 	// Only 1 version (for now?)
 	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
@@ -559,12 +591,21 @@ func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.RepositoryResourceInfo, opts.OptsGetter)
+	// Create repository storage with custom field selectors (e.g., spec.connection.name)
+	repositoryStorage, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+		opts.Scheme,
+		provisioning.RepositoryResourceInfo,
+		opts.OptsGetter,
+		grafanaregistry.SelectableFieldsOptions{
+			GetAttrs: RepositoryGetAttrs,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
+
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.store = repositoryStorage
+	b.repoStore = repositoryStorage
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -596,6 +637,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create connection storage: %w", err)
 	}
 	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
+	b.connectionStore = connectionsStore
 
 	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
@@ -603,9 +645,10 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
+	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector()
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.validator), b.VerifyAgainstExistingRepositories))
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.repoValidator), b.VerifyAgainstExistingRepositories))
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -646,10 +689,10 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	if ok {
 		return nil
 	}
-	// TODO: complete this as part of https://github.com/grafana/git-ui-sync-project/issues/700
+
 	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		return connectionvalidation.MutateConnection(c)
+		return b.connectionFactory.Mutate(ctx, c)
 	}
 
 	r, ok := obj.(*provisioning.Repository)
@@ -700,9 +743,15 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return nil
 	}
 
-	connection, ok := obj.(*provisioning.Connection)
+	// Validate connections
+	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		return connectionvalidation.ValidateConnection(connection)
+		conn, err := b.asConnection(ctx, c, a.GetOldObject())
+		if err != nil {
+			return err
+		}
+
+		return conn.Validate(ctx)
 	}
 
 	// Validate Jobs
@@ -722,7 +771,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	// the only time to add configuration checks here is if you need to compare
 	// the incoming change to the current configuration
 	isCreate := a.GetOperation() == admission.Create
-	list := b.validator.ValidateRepository(repo, isCreate)
+	list := b.repoValidator.ValidateRepository(repo, isCreate)
 	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
@@ -765,7 +814,7 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 }
 
 func (b *APIBuilder) VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error {
-	return VerifyAgainstExistingRepositories(ctx, b.store, cfg)
+	return VerifyAgainstExistingRepositories(ctx, b.repoStore, cfg)
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
@@ -795,7 +844,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.validator))
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.repoValidator))
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
@@ -806,12 +855,14 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
+			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
+			go connInformer.Informer().Run(postStartHookCtx.Done())
 
 			// Create the repository resources factory
 			repositoryListerWrapper := func(ctx context.Context) ([]provisioning.Repository, error) {
-				return GetRepositoriesInNamespace(ctx, b.store)
+				return GetRepositoriesInNamespace(ctx, b.repoStore)
 			}
 			usageMetricCollector := usage.MetricCollector(b.tracer, repositoryListerWrapper, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
@@ -927,6 +978,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+
+			// Create and run connection controller
+			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
+			connController, err := controller.NewConnectionController(
+				b.GetClient(),
+				connInformer,
+				connStatusPatcher,
+			)
+			if err != nil {
+				return err
+			}
+			go connController.Run(postStartHookCtx.Context, repoControllerWorkers)
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
@@ -1247,6 +1310,23 @@ spec:
 		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
 	}
 
+	// Document connection repositories endpoint
+	connectionprefix := root + "namespaces/{namespace}/connections/{name}"
+	sub = oas.Paths.Paths[connectionprefix+"/repositories"]
+	if sub != nil {
+		sub.Get.Description = "List repositories available from the external git provider through this connection"
+		sub.Get.Summary = "List external repositories"
+		sub.Get.Parameters = []*spec3.Parameter{}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs[defsBase+"ExternalRepositoryList"].Schema
+		mt["*/*"].Schema = &s
+	}
+
 	// Run all extra post-processors.
 	for _, extra := range b.extras {
 		if err := extra.PostProcessOpenAPI(oas); err != nil {
@@ -1328,11 +1408,19 @@ spec:
 // TODO: where should the helpers live?
 
 func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
-	obj, err := b.store.Get(ctx, name, &metav1.GetOptions{})
+	obj, err := b.repoStore.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	return b.asRepository(ctx, obj, nil)
+}
+
+func (b *APIBuilder) GetConnection(ctx context.Context, name string) (connection.Connection, error) {
+	obj, err := b.connectionStore.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return b.asConnection(ctx, obj, nil)
 }
 
 func (b *APIBuilder) GetRepoFactory() repository.Factory {
@@ -1380,6 +1468,35 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old r
 	}
 
 	return b.repoFactory.Build(ctx, r)
+}
+
+func (b *APIBuilder) asConnection(ctx context.Context, obj runtime.Object, old runtime.Object) (connection.Connection, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("missing connection object")
+	}
+
+	c, ok := obj.(*provisioning.Connection)
+	if !ok {
+		return nil, fmt.Errorf("expected connection object")
+	}
+
+	// Copy previous values if they exist
+	if old != nil {
+		o, ok := old.(*provisioning.Connection)
+		if ok && !o.Secure.IsZero() {
+			if c.Secure.PrivateKey.IsZero() {
+				c.Secure.PrivateKey = o.Secure.PrivateKey
+			}
+			if c.Secure.Token.IsZero() {
+				c.Secure.Token = o.Secure.Token
+			}
+			if c.Secure.ClientSecret.IsZero() {
+				c.Secure.ClientSecret = o.Secure.ClientSecret
+			}
+		}
+	}
+
+	return b.connectionFactory.Build(ctx, c)
 }
 
 func getJSONResponse(ref string) *spec3.Responses {

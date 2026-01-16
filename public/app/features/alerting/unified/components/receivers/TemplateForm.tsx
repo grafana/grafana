@@ -33,6 +33,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { EditorColumnHeader } from '../EditorColumnHeader';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -122,7 +123,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   // AI feedback state
   const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState(false);
 
-  const { isProvisioned } = useNotificationTemplateMetadata(originalTemplate);
+  const { provenance } = useNotificationTemplateMetadata(originalTemplate);
+  const isProvisioned = isProvisionedResource(provenance);
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
     : undefined;

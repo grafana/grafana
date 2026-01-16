@@ -1831,6 +1831,22 @@
             }
           },
           {
+            "name": "panelType",
+            "in": "query",
+            "description": "find dashboards using panels of a given plugin type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataSourceType",
+            "in": "query",
+            "description": "find dashboards using datasources of a given plugin type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "permission",
             "in": "query",
             "description": "permission needed for the resource (view, edit, admin)",
@@ -1877,6 +1893,14 @@
             "name": "explain",
             "in": "query",
             "description": "add debugging info that may help explain why the result matched",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "panelTitleSearch",
+            "in": "query",
+            "description": "[experimental] optionally include matches from panel titles",
             "schema": {
               "type": "boolean"
             }

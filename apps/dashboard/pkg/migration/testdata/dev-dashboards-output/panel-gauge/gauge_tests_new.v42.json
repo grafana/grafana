@@ -71,13 +71,13 @@
       "id": 1,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -149,13 +149,13 @@
       "id": 4,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": false,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -227,13 +227,13 @@
       "id": 3,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -305,13 +305,13 @@
       "id": 8,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.4,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -383,13 +383,13 @@
       "id": 22,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -461,13 +461,13 @@
       "id": 23,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -552,13 +552,13 @@
       "id": 18,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.1,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -630,13 +630,13 @@
       "id": 19,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.32,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -708,13 +708,13 @@
       "id": 20,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.57,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -786,13 +786,13 @@
       "id": 21,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidthFactor": 0.8,
         "effects": {
           "barGlow": true,
           "centerGlow": true,
           "gradient": false
         },
-        "barShape": "rounded",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -881,13 +881,13 @@
       "id": 25,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -959,13 +959,13 @@
       "id": 26,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1037,13 +1037,13 @@
       "id": 29,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1115,13 +1115,13 @@
       "id": 30,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1193,13 +1193,13 @@
       "id": 28,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.72,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": false
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1288,13 +1288,13 @@
       "id": 32,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1370,13 +1370,13 @@
       "id": 34,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1452,13 +1452,13 @@
       "id": 33,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.9,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1541,9 +1541,9 @@
       "id": 9,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.4,
-        "barShape": "rounded",
         "effects": {
           "barGlow": true,
           "centerGlow": true,
@@ -1624,6 +1624,7 @@
       "id": 11,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.4,
         "effects": {
@@ -1631,7 +1632,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1720,6 +1720,7 @@
       "id": 13,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.49,
         "effects": {
@@ -1727,7 +1728,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1760,6 +1760,7 @@
           "startValue": 0
         }
       ],
+      "title": "Active gateways",
       "transformations": [
         {
           "id": "calculateField",
@@ -1770,13 +1771,12 @@
             },
             "replaceFields": true,
             "unary": {
-              "operator": "round",
-              "fieldName": "A-series"
+              "fieldName": "A-series",
+              "operator": "round"
             }
           }
         }
       ],
-      "title": "Active gateways",
       "type": "radialbar"
     },
     {
@@ -1819,6 +1819,7 @@
       "id": 14,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.49,
         "effects": {
@@ -1826,7 +1827,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1859,6 +1859,7 @@
           "startValue": 0
         }
       ],
+      "title": "Active pods",
       "transformations": [
         {
           "id": "calculateField",
@@ -1869,13 +1870,12 @@
             },
             "replaceFields": true,
             "unary": {
-              "operator": "round",
-              "fieldName": "A-series"
+              "fieldName": "A-series",
+              "operator": "round"
             }
           }
         }
       ],
-      "title": "Active pods",
       "type": "radialbar"
     },
     {
@@ -1917,6 +1917,7 @@
       "id": 15,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.84,
         "effects": {
@@ -1924,7 +1925,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -1999,6 +1999,7 @@
       "id": 16,
       "maxDataPoints": 20,
       "options": {
+        "barShape": "rounded",
         "barWidth": 12,
         "barWidthFactor": 0.66,
         "effects": {
@@ -2006,7 +2007,6 @@
           "centerGlow": true,
           "gradient": true
         },
-        "barShape": "rounded",
         "glow": "both",
         "orientation": "auto",
         "reduceOptions": {
@@ -2086,13 +2086,13 @@
       },
       "id": 36,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.5,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -2117,7 +2117,7 @@
         }
       ],
       "title": "Numeric, no series",
-      "type": "gauge"
+      "type": "radialbar"
     },
     {
       "datasource": {
@@ -2153,13 +2153,13 @@
       },
       "id": 37,
       "options": {
+        "barShape": "flat",
         "barWidthFactor": 0.5,
         "effects": {
           "barGlow": false,
           "centerGlow": false,
           "gradient": true
         },
-        "barShape": "flat",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -2183,7 +2183,7 @@
         }
       ],
       "title": "Non-numeric",
-      "type": "gauge"
+      "type": "radialbar"
     }
   ],
   "preload": false,

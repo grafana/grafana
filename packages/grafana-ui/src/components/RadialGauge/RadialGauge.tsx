@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useId } from 'react';
+import { useId, ReactNode } from 'react';
 
 import { DisplayValueAlignmentFactors, FALLBACK_COLOR, FieldDisplay, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -67,6 +67,11 @@ export interface RadialGaugeProps {
   /** Specify which text should be visible  */
   textMode?: RadialTextMode;
   showScaleLabels?: boolean;
+  /**
+   * If set, the gauge will use the neutral value instead of the min value as the starting point for a gauge.
+   * this is most useful when you need to show positive and negative values on a gauge.
+   */
+  neutral?: number;
   /** For data links */
   onClick?: React.MouseEventHandler<HTMLElement>;
   timeRange?: TimeRange;
@@ -91,6 +96,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     roundedBars = true,
     thresholdsBar = false,
     showScaleLabels = false,
+    neutral,
     endpointMarker,
     onClick,
     values,
@@ -107,14 +113,20 @@ export function RadialGauge(props: RadialGaugeProps) {
   const startAngle = shape === 'gauge' ? 250 : 0;
   const endAngle = shape === 'gauge' ? 110 : 360;
 
-  const defs: React.ReactNode[] = [];
-  const graphics: React.ReactNode[] = [];
-  let sparklineElement: React.ReactNode | null = null;
+  const defs: ReactNode[] = [];
+  const graphics: ReactNode[] = [];
+  let sparklineElement: ReactNode | null = null;
 
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const displayValue = values[barIndex];
-    const { angle, angleRange } = getValueAngleForValue(displayValue, startAngle, endAngle);
-    const gradientStops = buildGradientColors(gradient, theme, displayValue);
+    const { startValueAngle, endValueAngle, angleRange } = getValueAngleForValue(
+      displayValue,
+      startAngle,
+      endAngle,
+      neutral
+    );
+
+    const gradientStops = gradient ? buildGradientColors(theme, displayValue) : undefined;
     const color = displayValue.display.color ?? FALLBACK_COLOR;
     const dimensions = calculateDimensions(
       width,
@@ -131,14 +143,16 @@ export function RadialGauge(props: RadialGaugeProps) {
     // FIXME: I want to move the ids for these filters into a context which the children
     // can reference via a hook, rather than passing them down as props
     const spotlightGradientId = `spotlight-${barIndex}-${gaugeId}`;
+    const spotlightGradientRef = endpointMarker === 'glow' ? `url(#${spotlightGradientId})` : undefined;
     const glowFilterId = `glow-${gaugeId}`;
+    const glowFilterRef = glowBar ? `url(#${glowFilterId})` : undefined;
 
     if (endpointMarker === 'glow') {
       defs.push(
         <SpotlightGradient
           key={spotlightGradientId}
           id={spotlightGradientId}
-          angle={angle + startAngle}
+          angle={endValueAngle + startAngle}
           dimensions={dimensions}
           roundedBars={roundedBars}
           theme={theme}
@@ -154,7 +168,9 @@ export function RadialGauge(props: RadialGaugeProps) {
           fieldDisplay={displayValue}
           angleRange={angleRange}
           startAngle={startAngle}
-          glowFilter={`url(#${glowFilterId})`}
+          startValueAngle={startValueAngle}
+          endValueAngle={endValueAngle}
+          glowFilter={glowFilterRef}
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
           shape={shape}
@@ -166,12 +182,13 @@ export function RadialGauge(props: RadialGaugeProps) {
         <RadialBar
           key={`radial-bar-${barIndex}-${gaugeId}`}
           dimensions={dimensions}
-          angle={angle}
           angleRange={angleRange}
           startAngle={startAngle}
+          startValueAngle={startValueAngle}
+          endValueAngle={endValueAngle}
           roundedBars={roundedBars}
-          glowFilter={`url(#${glowFilterId})`}
-          endpointMarkerGlowFilter={`url(#${spotlightGradientId})`}
+          glowFilter={glowFilterRef}
+          endpointMarkerGlowFilter={spotlightGradientRef}
           shape={shape}
           gradient={gradientStops}
           fieldDisplay={displayValue}
@@ -183,7 +200,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     // These elements are only added for first value / bar
     if (barIndex === 0) {
       if (glowBar) {
-        defs.push(<GlowGradient key="glow-filter" id={glowFilterId} barWidth={dimensions.barWidth} />);
+        defs.push(<GlowGradient key={glowFilterId} id={glowFilterId} barWidth={dimensions.barWidth} />);
       }
 
       if (glowCenter) {
@@ -219,6 +236,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               dimensions={dimensions}
               startAngle={startAngle}
               endAngle={endAngle}
+              neutral={neutral}
             />
           );
         }
@@ -234,7 +252,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               endAngle={endAngle}
               angleRange={angleRange}
               roundedBars={roundedBars}
-              glowFilter={`url(#${glowFilterId})`}
+              glowFilter={glowFilterRef}
               shape={shape}
               gradient={gradientStops}
             />
@@ -260,7 +278,7 @@ export function RadialGauge(props: RadialGaugeProps) {
   const body = (
     <>
       <svg width={width} height={height} role="img" aria-label={t('gauge.category-gauge', 'Gauge')}>
-        <defs>{defs}</defs>
+        {defs.length > 0 && <defs>{defs}</defs>}
         {graphics}
       </svg>
       {sparklineElement}

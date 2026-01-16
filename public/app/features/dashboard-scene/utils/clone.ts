@@ -43,6 +43,7 @@ export function getLocalVariableValueSet(
         name: variable.state.name,
         value,
         text,
+        properties: variable.state.options.find((o) => o.value === value)?.properties,
         isMulti: variable.state.isMulti,
         includeAll: variable.state.includeAll,
       }),

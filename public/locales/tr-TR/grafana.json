@@ -807,7 +807,8 @@
       "label-integration": "Entegrasyon",
       "label-notification-settings": "Bildirim ayarları",
       "label-section": "İsteğe bağlı {{name}} ayarları",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "-",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Bu kaynak {{provenance}} aracılığıyla sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
       "badge-tooltip-standard": "Bu kaynak sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
+      "body-imported": "",
       "body-provisioned": "Bu {{resource}} sağlanmış; yani yapılandırma tarafından oluşturulmuş. Bu {{resource}} ögesini güncellemek için sunucu yöneticinize başvurun.",
+      "title-imported": "",
       "title-provisioned": "Bu {{resource}} kullanıcı arayüzü üzerinden düzenlenemez"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Sağlanan"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3135,9 +3138,12 @@
       "table": "Tablo"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Bir uyarı kuralının tetiklenmesi için karşılanması gereken koşulu tanımlayın",
       "description-configure-firing-alert-instances-routed-contact": "Tetiklenen uyarı örneklerinin iletişim noktalarına nasıl yönlendirileceğini yapılandırın",
       "description-configure-receives-notifications": "Bildirimlerin kime gönderileceğini ve nasıl gönderileceğini yapılandırın",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Uyarı kuralları",
       "title-contact-points": "İletişim noktaları",
       "title-notification-policies": "Bildirim politikaları"
@@ -3756,7 +3762,6 @@
     },
     "recently-viewed": {
       "clear": "",
-      "empty": "",
       "error": "",
       "retry": "",
       "title": ""
@@ -4413,6 +4418,7 @@
       },
       "no-properties-changed": "İlgili hiçbir özellik değiştirilmedi",
       "table": {
+        "notes": "",
         "updated": "Tarih",
         "updatedBy": "Güncelleyen:",
         "version": "Sürüm"
@@ -4611,6 +4617,7 @@
     },
     "canvas-actions": {
       "add-panel": "Panel ekle",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Satır olarak grupla",
@@ -4871,7 +4878,8 @@
           "apply": "",
           "change-value": "",
           "discard": "",
-          "modal-title": ""
+          "modal-title": "",
+          "values": "Virgülle ayrılmış değerler"
         },
         "datasource-options": {
           "name-filter": "Ad filtresi",
@@ -5691,6 +5699,7 @@
     "validation": {
       "invalid-dashboard-id": "Geçerli bir Grafana.com kimliği bulunamadı",
       "invalid-json": "Geçerli JSON değil",
+      "tag-too-long": "",
       "tags-expected-array": "etiketler dizi olmalı",
       "tags-expected-strings": "etiklet dizi hâlinde metinlerden oluşmalı"
     },
@@ -5796,6 +5805,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5964,6 +5974,9 @@
     },
     "custom-variable-form": {
       "custom-options": "Özel seçenekler",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Virgülle ayrılmış değerler",
       "selection-options": "Seçim ayarları"
     },
@@ -6370,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasik",
         "json": "JSON",
         "v1-resource": "V1 Kaynağı",
         "v2-resource": "V2 Kaynağı",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Panoyu {{version}} sürümüne geri yüklemek istediğinize emin misiniz? Kaydedilmemiş tüm değişiklikler kaybolacaktır.",
@@ -6551,6 +6567,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Pano kaydedildi"
     },
@@ -6574,6 +6595,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6633,8 +6655,9 @@
       "tooltip-show-usages": "Kullanımları göster"
     },
     "variable-values-preview": {
-      "preview-of-values": "Değerlerin ön izlemesi",
-      "show-more": "Daha fazla göster"
+      "show-more": "Daha fazla göster",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -6963,6 +6986,7 @@
         "drone-datasource": "Drone veri kaynağı",
         "git-lab-integration-and-datasource": "GitLab entegrasyonu ve veri kaynağı",
         "honeycomb-integration-and-datasource": "Honeycomb entegrasyonu ve veri kaynağı",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira entegrasyonu ve veri kaynağı",
         "logic-monitor-devices-datasource": "LogicMonitor Devices veri kaynağı",
         "mongo-db-integration-and-data-source": "MongoDB entegrasyonu ve veri kaynağı",
@@ -7821,7 +7845,6 @@
       "export-externally-label": "Başka bir oturumda kullanmak için panoyu dışa aktarın",
       "export-format": "Biçim",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Dağıtım ayrıntılarını kaldır",
       "info-text": "Panonuzun tanımını içeren bir dosyayı kopyalayın veya indirin",
       "title": "Panoyu dışa aktar"
     },
@@ -9238,7 +9261,8 @@
     "tags-input": {
       "add": "Ekle",
       "placeholder-new-tag": "Yeni etiket (eklemek için anahtarı girin)",
-      "remove": "Etiketi kaldır: {{name}}"
+      "remove": "Etiketi kaldır: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Zamanları senkronize et",
@@ -10705,18 +10729,6 @@
     "help/documentation": "Belgeler",
     "help/keyboard-shortcuts": "Klavye kısayolları",
     "help/support": "Destek",
-    "history-container": {
-      "drawer-tittle": "Geçmiş"
-    },
-    "history-wrapper": {
-      "collapse": "Daralt",
-      "expand": "Genişlet",
-      "icon-selected": "Seçili giriş",
-      "icon-unselected": "Normal Giriş",
-      "show-more": "Daha fazla göster",
-      "today": "Bugün",
-      "yesterday": "Dün"
-    },
     "home": {
       "title": "Ana sayfa"
     },
@@ -11800,7 +11812,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Sil",
       "confirm-delete-keep-resources": "",
       "confirm-delete-with-resources": "",
@@ -12064,6 +12122,7 @@
       "jobs": "İşler"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Ayarlar",
       "source-code": "Kaynak kodu"
     },
@@ -14394,6 +14453,17 @@
       },
       "name": {
         "series-to-rows": "Seriden satırlara"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {
