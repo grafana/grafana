@@ -162,7 +162,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 		require.NoError(t, os.Chdir(tempDir))
 
-		provider := NewCoreProvider(func() (string, error){ return "",errors.New("not found")})
+		provider := NewCoreProvider(func() (string, error) { return "", errors.New("not found") })
 		err = provider.loadPlugins(ctx)
 
 		assert.Error(t, err)
