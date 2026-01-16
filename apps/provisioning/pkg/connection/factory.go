@@ -88,6 +88,44 @@ func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
 
 func (f *factory) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
 	var list field.ErrorList
+
+	conn, ok := obj.(*provisioning.Connection)
+	if !ok {
+		return list
+	}
+
+	// Check if connection type is supported
+	var foundExtra Extra
+	for _, e := range f.extras {
+		if e.Type() == conn.Spec.Type {
+			foundExtra = e
+			break
+		}
+	}
+	if foundExtra == nil {
+		// Return error message matching Build() error format: "connection type %q is not supported"
+		list = append(list, field.Invalid(
+			field.NewPath("spec", "type"),
+			conn.Spec.Type,
+			fmt.Sprintf("connection type %q is not supported", conn.Spec.Type),
+		))
+		// Return early if type is not supported - no point validating further
+		return list
+	}
+
+	// Check if connection type is enabled
+	if _, enabled := f.enabled[conn.Spec.Type]; !enabled {
+		// Return error message matching Build() error format: "connection type %q is not enabled"
+		list = append(list, field.Invalid(
+			field.NewPath("spec", "type"),
+			conn.Spec.Type,
+			fmt.Sprintf("connection type %q is not enabled", conn.Spec.Type),
+		))
+		// Return early if type is not enabled - no point validating further
+		return list
+	}
+
+	// Validate using registered extras
 	for _, e := range f.extras {
 		list = append(list, e.Validate(ctx, obj)...)
 	}

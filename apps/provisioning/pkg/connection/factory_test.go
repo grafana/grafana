@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -454,6 +455,228 @@ func TestFactory_Mutate(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestFactory_Validate(t *testing.T) {
+	tests := []struct {
+		name          string
+		connection    *provisioning.Connection
+		setupExtras   func(t *testing.T, ctx context.Context) []connection.Extra
+		enabled       map[provisioning.ConnectionType]struct{}
+		expectedErrs  int
+		validateError func(t *testing.T, errs []*field.Error)
+	}{
+		{
+			name: "should return no errors for valid enabled connection type",
+			connection: &provisioning.Connection{
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123456",
+						InstallationID: "454545",
+					},
+				},
+			},
+			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			expectedErrs: 0,
+		},
+		{
+			name: "should return error when connection type is not supported",
+			connection: &provisioning.Connection{
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GitlabConnectionType,
+				},
+			},
+			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errs []*field.Error) {
+				require.Len(t, errs, 1)
+				assert.Equal(t, "spec.type", errs[0].Field)
+				assert.Contains(t, errs[0].Detail, "connection type \"gitlab\" is not supported")
+			},
+		},
+		{
+			name: "should return error when connection type is empty",
+			connection: &provisioning.Connection{
+				Spec: provisioning.ConnectionSpec{
+					Type: "",
+				},
+			},
+			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errs []*field.Error) {
+				require.Len(t, errs, 1)
+				assert.Equal(t, "spec.type", errs[0].Field)
+				assert.Contains(t, errs[0].Detail, "connection type \"\" is not supported")
+			},
+		},
+		{
+			name: "should return error when connection type is not enabled",
+			connection: &provisioning.Connection{
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GitlabConnectionType,
+				},
+			},
+			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GitlabConnectionType)
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errs []*field.Error) {
+				require.Len(t, errs, 1)
+				assert.Equal(t, "spec.type", errs[0].Field)
+				assert.Contains(t, errs[0].Detail, "connection type \"gitlab\" is not enabled")
+			},
+		},
+		{
+			name: "should return errors from Extra.Validate when type is valid and enabled",
+			connection: &provisioning.Connection{
+				Spec: provisioning.ConnectionSpec{
+					Type:   provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						// Missing AppID and InstallationID
+					},
+				},
+			},
+			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{
+					field.Required(field.NewPath("spec", "github", "appID"), "appID must be specified for GitHub connection"),
+					field.Required(field.NewPath("spec", "github", "installationID"), "installationID must be specified for GitHub connection"),
+				})
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			expectedErrs: 2,
+			validateError: func(t *testing.T, errs []*field.Error) {
+				require.Len(t, errs, 2)
+				assert.Equal(t, "spec.github.appID", errs[0].Field)
+				assert.Equal(t, "spec.github.installationID", errs[1].Field)
+			},
+		},
+		{
+			name:       "should return no errors when object is not a Connection",
+			connection: nil, // Will pass a Repository instead
+			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+			},
+			expectedErrs: 0,
+		},
+		{
+			name: "should validate with multiple extras registered",
+			connection: &provisioning.Connection{
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123456",
+						InstallationID: "454545",
+					},
+				},
+			},
+			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
+				extra1 := connection.NewMockExtra(t)
+				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				extra1.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
+
+				extra2 := connection.NewMockExtra(t)
+				extra2.EXPECT().Type().Return(provisioning.GitlabConnectionType)
+				extra2.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
+
+				return []connection.Extra{extra1, extra2}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType: {},
+				provisioning.GitlabConnectionType: {},
+			},
+			expectedErrs: 0,
+		},
+		{
+			name: "should return error for unsupported type before checking enabled",
+			connection: &provisioning.Connection{
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.BitbucketConnectionType,
+				},
+			},
+			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
+				extra := connection.NewMockExtra(t)
+				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+				return []connection.Extra{extra}
+			},
+			enabled: map[provisioning.ConnectionType]struct{}{
+				provisioning.GithubConnectionType:    {},
+				provisioning.BitbucketConnectionType: {}, // Even if enabled, not supported
+			},
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errs []*field.Error) {
+				require.Len(t, errs, 1)
+				assert.Equal(t, "spec.type", errs[0].Field)
+				assert.Contains(t, errs[0].Detail, "connection type \"bitbucket\" is not supported")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			extras := tt.setupExtras(t, ctx)
+
+			factory, err := connection.ProvideFactory(tt.enabled, extras)
+			require.NoError(t, err)
+
+			var obj runtime.Object = tt.connection
+			if tt.connection == nil {
+				// Use a Repository object to test non-Connection handling
+				obj = &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+				}
+			}
+
+			errs := factory.Validate(ctx, obj)
+
+			if tt.expectedErrs == 0 {
+				assert.Empty(t, errs, "expected no validation errors")
+			} else {
+				require.Len(t, errs, tt.expectedErrs, "expected %d validation errors", tt.expectedErrs)
+				if tt.validateError != nil {
+					tt.validateError(t, errs)
+				}
 			}
 		})
 	}

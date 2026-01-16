@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -353,7 +354,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		}}
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "invalid github connection")
+		assert.Contains(t, err.Error(), "github info must be specified for GitHub connection")
 	})
 
 	t.Run("should fail when type is github but private key is not there", func(t *testing.T) {
@@ -444,9 +445,47 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				},
 			},
 		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "spec.token: Internal error: github is unavailable")
+		// CREATE should succeed - runtime validation happens in controller
+		created, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.NoError(t, err, "CREATE should succeed")
+		require.NotNil(t, created)
+
+		connName := created.GetName()
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for controller to process and mark connection as unhealthy
+		restConfig := helper.Org1.Admin.NewRestConfig()
+		provisioningClient, err := clientset.NewForConfig(restConfig)
+		require.NoError(t, err)
+		connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
+
+		require.Eventually(t, func() bool {
+			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			// Connection should be unhealthy with error message about API being unavailable
+			return !conn.Status.Health.Healthy &&
+				conn.Status.Health.Checked > 0 &&
+				len(conn.Status.Health.Message) > 0
+		}, 10*time.Second, 500*time.Millisecond, "connection should be marked unhealthy")
+
+		// Verify the error message contains information about API being unavailable
+		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
+		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
+		// Check that error message mentions API unavailable
+		hasUnavailableError := false
+		for _, msg := range conn.Status.Health.Message {
+			if strings.Contains(msg, "unavailable") || strings.Contains(msg, "Service unavailable") {
+				hasUnavailableError = true
+				break
+			}
+		}
+		assert.True(t, hasUnavailableError, "error message should mention API unavailable")
 	})
 
 	t.Run("should fail when type is github and returned app ID doesn't match given one", func(t *testing.T) {
@@ -483,9 +522,47 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				},
 			},
 		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "spec.appID: Invalid value: \"123456\": appID mismatch")
+		// CREATE should succeed - runtime validation happens in controller
+		created, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.NoError(t, err, "CREATE should succeed")
+		require.NotNil(t, created)
+
+		connName := created.GetName()
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for controller to process and mark connection as unhealthy
+		restConfig := helper.Org1.Admin.NewRestConfig()
+		provisioningClient, err := clientset.NewForConfig(restConfig)
+		require.NoError(t, err)
+		connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
+
+		require.Eventually(t, func() bool {
+			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			// Connection should be unhealthy with error message about app ID mismatch
+			return !conn.Status.Health.Healthy &&
+				conn.Status.Health.Checked > 0 &&
+				len(conn.Status.Health.Message) > 0
+		}, 10*time.Second, 500*time.Millisecond, "connection should be marked unhealthy")
+
+		// Verify the error message contains information about app ID mismatch
+		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
+		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
+		// Check that error message mentions app ID mismatch
+		hasMismatchError := false
+		for _, msg := range conn.Status.Health.Message {
+			if strings.Contains(msg, "appID mismatch") || strings.Contains(msg, "123456") {
+				hasMismatchError = true
+				break
+			}
+		}
+		assert.True(t, hasMismatchError, "error message should mention appID mismatch")
 	})
 }
 
