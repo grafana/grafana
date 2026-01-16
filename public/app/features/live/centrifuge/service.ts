@@ -7,7 +7,7 @@ import {
   ServerPublicationContext,
   State,
 } from 'centrifuge';
-import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
+import { BehaviorSubject, Observable, of, share, startWith } from 'rxjs';
 
 import {
   DataQueryError,
@@ -15,6 +15,8 @@ import {
   LiveChannelAddress,
   LiveChannelConnectionState,
   LiveChannelId,
+  LoadingState,
+  StreamingDataFrame,
   toLiveChannelId,
 } from '@grafana/data';
 import {
@@ -29,10 +31,11 @@ import {
   getBackendSrv,
 } from '@grafana/runtime';
 
-import { StreamingResponseData } from '../data/utils';
+import { StreamingResponseData, StreamingResponseDataType } from '../data/utils';
 
 import { LiveDataStream } from './LiveDataStream';
 import { CentrifugeLiveChannel } from './channel';
+import { blockLiveStreamingService } from './liveStreamingService';
 
 export type CentrifugeSrvDeps = {
   grafanaAuthToken: string | null;
@@ -241,14 +244,39 @@ export class CentrifugeService implements CentrifugeSrv {
     return this.liveDataStreamByChannelId[channelId];
   };
   /**
-   * Connect to a channel and return results as DataFrames
+   * Connect to a channel and return results as DataFrames.
+   * Returns "No data" response if live streaming is blocked by dashboard settings.
    */
   getDataStream: CentrifugeSrv['getDataStream'] = (options) => {
+    // Check if live streaming should be blocked based on dashboard settings
+    if (this.isLiveStreamingBlocked()) {
+      const subscriptionKey = this.createSubscriptionKey(options);
+      const emptyFrame = StreamingDataFrame.empty();
+      const response: StreamingDataQueryResponse = {
+        key: subscriptionKey,
+        state: LoadingState.Done,
+        data: [
+          {
+            type: StreamingResponseDataType.FullFrame,
+            frame: emptyFrame.serialize(),
+          },
+        ],
+      };
+      return of(response);
+    }
+
     const subscriptionKey = this.createSubscriptionKey(options);
 
     const stream = this.getLiveDataStream(options);
     return stream.get(options, subscriptionKey);
   };
+
+  /**
+   * Check if live streaming is blocked by dashboard settings.
+   */
+  private isLiveStreamingBlocked(): boolean {
+    return blockLiveStreamingService.isBlocked();
+  }
 
   /**
    * Executes a query over the live websocket. Query response can contain live channels we can subscribe to for further updates

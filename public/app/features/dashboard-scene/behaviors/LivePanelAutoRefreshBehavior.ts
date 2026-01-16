@@ -1,49 +1,63 @@
 import { LoadingState } from '@grafana/data';
+import { RefreshEvent } from '@grafana/runtime';
 import { SceneQueryRunner, sceneGraph } from '@grafana/scenes';
+import { blockLiveStreamingService } from 'app/features/live/centrifuge/liveStreamingService';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
 /**
  * Behavior that cancels all streaming queries when auto refresh is set to "Off"
  * and connectLiveToAutoRefresh is enabled on the dashboard.
+ * Also controls the liveStreamingService to block new streams from starting.
  */
 export function livePanelAutoRefreshBehavior(dashboard: DashboardScene) {
+  if (!dashboard.state.connectLiveToAutoRefresh) {
+    return;
+  }
+
   const controls = dashboard.state.controls;
   if (!controls) {
     return;
   }
 
+  // initial state
   const refreshPicker = controls.state.refreshPicker;
 
-  const cancelStreamingQueries = () => {
-    const connectLiveToAutoRefresh = dashboard.state.connectLiveToAutoRefresh ?? false;
-    const refresh = refreshPicker.state.refresh ?? '';
+  const connectLiveToAutoRefresh = dashboard.state.connectLiveToAutoRefresh ?? false;
+  const refresh = refreshPicker.state.refresh ?? '';
+  const shouldBlock = connectLiveToAutoRefresh && refresh === '';
 
-    // When connectLiveToAutoRefresh is enabled and refresh is Off (empty string),
-    // cancel all streaming queries
-    if (connectLiveToAutoRefresh && refresh === '') {
-      // Find all SceneQueryRunner instances and cancel their queries
-      sceneGraph
-        .findAllObjects(
-          dashboard,
-          (obj) => obj instanceof SceneQueryRunner && obj.state.data?.state === LoadingState.Streaming
-        )
-        .forEach((obj) => {
-          if (obj instanceof SceneQueryRunner) {
-            obj.cancelQuery();
-          }
-        });
-    }
-  };
+  // Update the service to block/unblock new live streams
+  blockLiveStreamingService.setBlocked(shouldBlock);
 
   // Subscribe to refresh picker state changes
-  const sub = refreshPicker.subscribeToState((newState, oldState) => {
+  const refreshSub = refreshPicker.subscribeToState((newState, oldState) => {
     if (newState.refresh !== oldState.refresh) {
-      cancelStreamingQueries();
+      const connectLiveToAutoRefresh = dashboard.state.connectLiveToAutoRefresh ?? false;
+      const refresh = refreshPicker.state.refresh ?? '';
+      const shouldBlock = connectLiveToAutoRefresh && refresh === '';
+      if (shouldBlock) {
+        sceneGraph
+          .findAllObjects(
+            dashboard,
+            (obj) => obj instanceof SceneQueryRunner && obj.state.data?.state === LoadingState.Streaming
+          )
+          .forEach((obj) => {
+            if (obj instanceof SceneQueryRunner) {
+              obj.cancelQuery();
+            }
+          });
+      }
     }
   });
 
+  const refreshTrig = dashboard.subscribeToEvent(RefreshEvent, () => {
+    blockLiveStreamingService.setBlocked(false);
+  });
+
   return () => {
-    sub.unsubscribe();
+    refreshSub.unsubscribe();
+    refreshTrig.unsubscribe();
+    blockLiveStreamingService.setBlocked(false);
   };
 }
