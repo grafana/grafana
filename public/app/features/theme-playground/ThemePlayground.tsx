@@ -7,12 +7,15 @@ import aubergine from '@grafana/data/themes/definitions/aubergine.json';
 import debug from '@grafana/data/themes/definitions/debug.json';
 import desertbloom from '@grafana/data/themes/definitions/desertbloom.json';
 import deuteranopia_protanopia_dark from '@grafana/data/themes/definitions/deuteranopia_protanopia_dark.json';
+import deuteranopia_protanopia_light from '@grafana/data/themes/definitions/deuteranopia_protanopia_light.json';
 import gildedgrove from '@grafana/data/themes/definitions/gildedgrove.json';
 import gloom from '@grafana/data/themes/definitions/gloom.json';
 import mars from '@grafana/data/themes/definitions/mars.json';
 import matrix from '@grafana/data/themes/definitions/matrix.json';
 import sapphiredusk from '@grafana/data/themes/definitions/sapphiredusk.json';
 import synthwave from '@grafana/data/themes/definitions/synthwave.json';
+import tritanopia_dark from '@grafana/data/themes/definitions/tritanopia_dark.json';
+import tritanopia_light from '@grafana/data/themes/definitions/tritanopia_light.json';
 import tron from '@grafana/data/themes/definitions/tron.json';
 import victorian from '@grafana/data/themes/definitions/victorian.json';
 import zen from '@grafana/data/themes/definitions/zen.json';
@@ -52,12 +55,15 @@ const experimentalDefinitions: Record<string, unknown> = {
   debug,
   desertbloom,
   deuteranopia_protanopia_dark,
+  deuteranopia_protanopia_light,
   gildedgrove,
   gloom,
   mars,
   matrix,
   sapphiredusk,
   synthwave,
+  tritanopia_dark,
+  tritanopia_light,
   tron,
   victorian,
   zen,

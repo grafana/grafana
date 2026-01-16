@@ -5,12 +5,15 @@ import aubergine from './themeDefinitions/aubergine.json';
 import debug from './themeDefinitions/debug.json';
 import desertbloom from './themeDefinitions/desertbloom.json';
 import deuteranopia_protanopia_dark from './themeDefinitions/deuteranopia_protanopia_dark.json';
+import deuteranopia_protanopia_light from './themeDefinitions/deuteranopia_protanopia_light.json';
 import gildedgrove from './themeDefinitions/gildedgrove.json';
 import gloom from './themeDefinitions/gloom.json';
 import mars from './themeDefinitions/mars.json';
 import matrix from './themeDefinitions/matrix.json';
 import sapphiredusk from './themeDefinitions/sapphiredusk.json';
 import synthwave from './themeDefinitions/synthwave.json';
+import tritanopia_dark from './themeDefinitions/tritanopia_dark.json';
+import tritanopia_light from './themeDefinitions/tritanopia_light.json';
 import tron from './themeDefinitions/tron.json';
 import victorian from './themeDefinitions/victorian.json';
 import zen from './themeDefinitions/zen.json';
@@ -26,12 +29,15 @@ const extraThemes: { [key: string]: unknown } = {
   debug,
   desertbloom,
   deuteranopia_protanopia_dark,
+  deuteranopia_protanopia_light,
   gildedgrove,
   gloom,
   mars,
   matrix,
   sapphiredusk,
   synthwave,
+  tritanopia_dark,
+  tritanopia_light,
   tron,
   victorian,
   zen,
