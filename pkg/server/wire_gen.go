@@ -376,7 +376,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
 	localProvider := pluginassets.NewLocalProvider()
-	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider)
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider, pluginscdnService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
 	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
@@ -714,9 +715,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	calculator := pluginassets2.ProvideModuleHashCalculator(pluginManagementCfg, pluginscdnService, signatureSignature, inMemory)
-	pluginassetsService := pluginassets2.ProvideService(pluginManagementCfg, pluginscdnService, calculator)
+	pluginassetsService := pluginassets2.ProvideService(calculator)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, dashboardService, folderimplService, acimplService, teamService, userService, actionSetService, dashboardServiceImpl, eventualRestConfigProvider)
@@ -787,7 +787,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	appInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, pluginassetsService, acimplService, accessClient, featureToggles)
+	appInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -1044,7 +1044,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
 	localProvider := pluginassets.NewLocalProvider()
-	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider)
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider, pluginscdnService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
 	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
@@ -1384,9 +1385,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	calculator := pluginassets2.ProvideModuleHashCalculator(pluginManagementCfg, pluginscdnService, signatureSignature, inMemory)
-	pluginassetsService := pluginassets2.ProvideService(pluginManagementCfg, pluginscdnService, calculator)
+	pluginassetsService := pluginassets2.ProvideService(calculator)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, dashboardService, folderimplService, acimplService, teamService, userService, actionSetService, dashboardServiceImpl, eventualRestConfigProvider)
@@ -1457,7 +1457,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	appInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, pluginassetsService, acimplService, accessClient, featureToggles)
+	appInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, featureToggles)
 	if err != nil {
 		return nil, err
 	}

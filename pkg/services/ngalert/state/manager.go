@@ -631,9 +631,8 @@ func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
 	for _, state := range states {
 		if state.LastEvaluationTime.After(status.EvaluationTimestamp) {
 			status.EvaluationTimestamp = state.LastEvaluationTime
+			status.EvaluationDuration = state.EvaluationDuration
 		}
-
-		status.EvaluationDuration = state.EvaluationDuration
 
 		switch state.State {
 		case eval.Normal:

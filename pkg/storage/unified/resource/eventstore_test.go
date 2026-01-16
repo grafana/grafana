@@ -367,23 +367,45 @@ func testEventStoreListKeysSince(t *testing.T, ctx context.Context, store *event
 		require.NoError(t, err)
 	}
 
-	// List events since RV 1500 (should get events with RV 2000 and 3000)
-	retrievedEvents := make([]string, 0, 2)
-	for eventKey, err := range store.ListKeysSince(ctx, 1500) {
+	{
+		// List events since RV 1500 (should get events with RV 2000 and 3000)
+		retrievedEvents := make([]string, 0, 2)
+		for eventKey, err := range store.ListKeysSince(ctx, 1500, SortOrderAsc) {
+			require.NoError(t, err)
+			retrievedEvents = append(retrievedEvents, eventKey)
+		}
+
+		// Should return events in ASCENDING order of resource version
+		require.Len(t, retrievedEvents, 2)
+		evt1, err := ParseEventKey(retrievedEvents[0])
 		require.NoError(t, err)
-		retrievedEvents = append(retrievedEvents, eventKey)
+		assert.Equal(t, int64(2000), evt1.ResourceVersion)
+		assert.Equal(t, "test-2", evt1.Name)
+		evt2, err := ParseEventKey(retrievedEvents[1])
+		require.NoError(t, err)
+		assert.Equal(t, int64(3000), evt2.ResourceVersion)
+		assert.Equal(t, "test-3", evt2.Name)
 	}
 
-	// Should return events in ascending order of resource version
-	require.Len(t, retrievedEvents, 2)
-	evt1, err := ParseEventKey(retrievedEvents[0])
-	require.NoError(t, err)
-	assert.Equal(t, int64(2000), evt1.ResourceVersion)
-	assert.Equal(t, "test-2", evt1.Name)
-	evt2, err := ParseEventKey(retrievedEvents[1])
-	require.NoError(t, err)
-	assert.Equal(t, int64(3000), evt2.ResourceVersion)
-	assert.Equal(t, "test-3", evt2.Name)
+	{
+		// List events since RV 1500 (should get events with RV 2000 and 3000)
+		retrievedEvents := make([]string, 0, 2)
+		for eventKey, err := range store.ListKeysSince(ctx, 1500, SortOrderDesc) {
+			require.NoError(t, err)
+			retrievedEvents = append(retrievedEvents, eventKey)
+		}
+
+		// Should return events in DESCENDING order of resource version
+		require.Len(t, retrievedEvents, 2)
+		evt1, err := ParseEventKey(retrievedEvents[0])
+		require.NoError(t, err)
+		assert.Equal(t, int64(3000), evt1.ResourceVersion)
+		assert.Equal(t, "test-3", evt1.Name)
+		evt2, err := ParseEventKey(retrievedEvents[1])
+		require.NoError(t, err)
+		assert.Equal(t, int64(2000), evt2.ResourceVersion)
+		assert.Equal(t, "test-2", evt2.Name)
+	}
 }
 
 func TestEventStore_ListSince(t *testing.T) {
@@ -429,7 +451,7 @@ func testEventStoreListSince(t *testing.T, ctx context.Context, store *eventStor
 
 	// List events since RV 1500 (should get events with RV 2000 and 3000)
 	retrievedEvents := make([]Event, 0, 2)
-	for event, err := range store.ListSince(ctx, 1500) {
+	for event, err := range store.ListSince(ctx, 1500, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
 	}
@@ -453,7 +475,7 @@ func TestEventStore_ListSince_Empty(t *testing.T) {
 func testEventStoreListSinceEmpty(t *testing.T, ctx context.Context, store *eventStore) {
 	// List events when store is empty
 	retrievedEvents := make([]Event, 0)
-	for event, err := range store.ListSince(ctx, 0) {
+	for event, err := range store.ListSince(ctx, 0, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
 	}
@@ -825,7 +847,7 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 	// List events since 90 minutes ago using subtractDurationFromSnowflake
 	sinceRV := subtractDurationFromSnowflake(snowflakeFromTime(now), 90*time.Minute)
 	retrievedEvents := make([]string, 0)
-	for eventKey, err := range store.ListKeysSince(ctx, sinceRV) {
+	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
 	}
@@ -842,7 +864,7 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 	// List events since 30 minutes ago using subtractDurationFromSnowflake
 	sinceRV = subtractDurationFromSnowflake(snowflakeFromTime(now), 30*time.Minute)
 	retrievedEvents = make([]string, 0)
-	for eventKey, err := range store.ListKeysSince(ctx, sinceRV) {
+	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
 	}

@@ -176,7 +176,6 @@ unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,fals
 elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
 lokiLabelNamesQueryApi,GA,@grafana/oss-big-tent,false,false,false
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
-k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
@@ -257,7 +256,7 @@ pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,fal
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
-newGauge,experimental,@grafana/dataviz-squad,false,false,true
+newGauge,preview,@grafana/dataviz-squad,false,false,true
 newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true

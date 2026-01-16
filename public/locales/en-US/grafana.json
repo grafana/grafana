@@ -3771,7 +3771,6 @@
       "all-failed_other": "Failed to restore {{count}} dashboards",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboards failed",
-      "success": "Dashboards restored successfully",
       "success-count_one": "{{count}} dashboard restored successfully",
       "success-count_other": "{{count}} dashboards restored successfully"
     },
@@ -7992,6 +7991,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
+    "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "Gauge",
@@ -12573,6 +12573,11 @@
       "endpoint-marker-glow": "Glow",
       "endpoint-marker-none": "None",
       "endpoint-marker-point": "Point",
+      "neutral": {
+        "description": "Leave empty to use Min as neutral point",
+        "placeholder": "none",
+        "title": "Neutral value"
+      },
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
       "shape": "Style",
@@ -12585,7 +12590,8 @@
       "text-mode-none": "None",
       "text-mode-value": "Value",
       "text-mode-value-and-name": "Value and Name",
-      "threshold-labels": "Show threshold labels",
+      "threshold-labels": "Show labels",
+      "threshold-labels-description": "Display threshold and neutral values",
       "threshold-markers": "Show thresholds"
     }
   },

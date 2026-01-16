@@ -25747,7 +25747,10 @@
     "searchTeamGroupsResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/SearchTeamGroupsQueryResult"
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SearchTeamGroupsQueryResult"
+        }
       }
     },
     "searchTeamsResponse": {
