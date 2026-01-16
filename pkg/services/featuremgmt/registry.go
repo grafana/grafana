@@ -575,6 +575,13 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingUIUseLimitRules",
+			Description:  "Enables the UI to use limit_rules=0 when calling the API and rules information is not needed",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:        "alertmanagerRemotePrimary",
 			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,

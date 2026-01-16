@@ -435,7 +435,8 @@ type GetGrafanaRuleStatusesParams struct {
 	// default: -1
 	LimitAlerts int64 `json:"limit_alerts"`
 
-	// Limit the number of rules per group.
+	// Limit the number of rules per group. When set to 0, returns empty rule groups (only group metadata without rules).
+	// limit_rules=0 cannot be used together with state or health filters, and returns an empty response.
 	// in: query
 	// required: false
 	// default: -1
