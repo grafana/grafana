@@ -113,7 +113,7 @@ export function isAlertmanagerDataSourceInterestedInAlerts(
   return dataSourceSettings.jsonData.handleGrafanaManagedAlerts === true;
 }
 
-const grafanaAlertManagerDataSource: AlertManagerDataSource = {
+export const grafanaAlertManagerDataSource: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
   imgUrl: grafanaIconSvg,
   hasConfigurationAPI: true,

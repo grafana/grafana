@@ -92,6 +92,7 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
     keepFiringFor: KEEP_FIRING_FOR_DEFAULT,
     evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
     manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false
+    notificationPolicy: {selectedPolicy: ''},
     contactPoints: {},
     overrideGrouping: false,
     overrideTimings: false,

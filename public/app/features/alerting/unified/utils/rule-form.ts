@@ -44,6 +44,7 @@ import {
   AlertManagerManualRouting,
   ContactPoint,
   KVObject,
+  PolicyRouting,
   RuleFormType,
   RuleFormValues,
   SimplifiedEditor,
@@ -60,6 +61,8 @@ import {
 import { arrayToRecord, recordToArray } from './misc';
 import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
 import { parseInterval } from './time';
+import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNotificationPolicyRoute';
+import { ROOT_ROUTE_NAME } from './k8s/constants';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
 
@@ -149,6 +152,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     queries,
     isPaused,
     contactPoints,
+    notificationPolicy,
     manualRouting,
     type,
     metric,
@@ -166,6 +170,15 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   const labels = arrayToRecord(cleanLabels(values.labels));
+
+  const policyName = notificationPolicy?.selectedPolicy?.trim();
+  if (!manualRouting && policyName && policyName != ROOT_ROUTE_NAME) {
+    // Adds a special policy routing label.
+    labels[NAMED_ROOT_LABEL_NAME] = policyName;
+  } else {
+    // Remove NAMED_ROOT_LABEL_NAME in case one already exists.
+    delete labels[NAMED_ROOT_LABEL_NAME];
+  }
 
   const wantsAlertingRule = isGrafanaAlertingRuleByType(type);
   const wantsRecordingRule = isGrafanaRecordingRuleByType(type!);
@@ -256,6 +269,11 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
   return routingSettings;
 }
 
+export function getNotificationPolicyFromDTO(rule:  RulerRuleDTO): PolicyRouting | undefined {
+  const policyName = rule.labels?.[NAMED_ROOT_LABEL_NAME];
+  return policyName ? { selectedPolicy: policyName } : undefined;
+}
+
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
   // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
   if (!config.featureToggles.alertingQueryAndExpressionsStepMode) {
@@ -323,6 +341,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           isPaused: ga.is_paused,
 
           contactPoints: routingSettings,
+          notificationPolicy: getNotificationPolicyFromDTO(rule),
           manualRouting: Boolean(routingSettings),
 
           editorSettings: getEditorSettingsFromDTO(ga),
@@ -426,6 +445,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
       execErrState: ga.exec_err_state,
 
       contactPoints: routingSettings,
+      notificationPolicy: getNotificationPolicyFromDTO(rule),
       manualRouting: Boolean(routingSettings),
 
       editorSettings: getEditorSettingsFromDTO(ga),

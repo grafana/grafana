@@ -5,6 +5,7 @@ import { Button, Stack, Text } from '@grafana/ui';
 
 import { AIImproveLabelsButtonComponent } from '../../../enterprise-components/AI/AIGenImproveLabelsButton/addAIImproveLabelsButton';
 import { RuleFormValues } from '../../../types/rule-form';
+import { isPrivateLabelKey } from '../../../utils/labels';
 import { isGrafanaManagedRuleByType, isRecordingRuleByType } from '../../../utils/rules';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
@@ -29,7 +30,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
         'Add labels to your rule for searching, silencing, or routing to a notification policy.'
       );
 
-  const hasLabels = Object.keys(labels).length > 0 && labels.some((label) => label.key || label.value);
+  const hasLabels = Object.keys(labels).length > 0 && labels.some((label) => (label.key && !isPrivateLabelKey(label.key)) || label.value);
 
   return (
     <Stack direction="column" gap={2}>

@@ -15,10 +15,10 @@ import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRu
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
+import { AutomaticRouting } from './alert-rule-form/automaticRouting/AutomaticRouting';
 import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/SimplifiedRouting';
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
 import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
-import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
 type NotificationsStepProps = {
   alertUid?: string;
@@ -137,7 +137,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       {shouldAllowSimplifiedRouting && !simplifiedModeInNotificationsStepEnabled && (
         <ManualAndAutomaticRouting alertUid={alertUid} />
       )}
-      {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
+      {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRouting alertUid={alertUid} />}
     </RuleEditorSection>
   );
 };
@@ -193,7 +193,7 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
 
       <RoutingOptionDescription manualRouting={manualRouting} />
 
-      {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
+      {manualRouting ? <SimplifiedRouting /> : <AutomaticRouting alertUid={alertUid} />}
     </Stack>
   );
 }
@@ -218,34 +218,8 @@ function ManualAndAutomaticRoutingSimplified({ alertUid }: { alertUid?: string }
     <Stack direction="column" gap={2}>
       <RoutingOptionDescription manualRouting={manualRouting} />
 
-      {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
+      {manualRouting ? <SimplifiedRouting /> : <AutomaticRouting alertUid={alertUid} />}
     </Stack>
-  );
-}
-
-interface AutomaticRootingProps {
-  alertUid?: string;
-}
-
-function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
-  const { watch } = useFormContext<RuleFormValues>();
-  const [labels, queries, condition, folder, alertName] = watch([
-    'labels',
-    'queries',
-    'condition',
-    'folder',
-    'name',
-    'manualRouting',
-  ]);
-  return (
-    <NotificationPreview
-      alertQueries={queries}
-      customLabels={labels}
-      condition={condition}
-      folder={folder}
-      alertName={alertName}
-      alertUid={alertUid}
-    />
   );
 }
 

@@ -24,6 +24,10 @@ export interface AlertManagerManualRouting {
   [key: string]: ContactPoint;
 }
 
+export interface PolicyRouting {
+  selectedPolicy: string
+}
+
 export interface SimplifiedEditor {
   simplifiedQueryEditor: boolean;
   simplifiedNotificationEditor: boolean;
@@ -52,8 +56,11 @@ export interface RuleFormValues {
   evaluateFor: string;
   keepFiringFor?: string;
   isPaused?: boolean;
+
   manualRouting: boolean; // if true contactPoints are used. This field will not be used for saving the rule
-  contactPoints?: AlertManagerManualRouting;
+  notificationPolicy?: PolicyRouting; // Used if manualRouting is false.
+  contactPoints?: AlertManagerManualRouting; // Used if manualRouting is true.
+
   editorSettings?: SimplifiedEditor;
   metric?: string;
   targetDatasourceUid?: string;

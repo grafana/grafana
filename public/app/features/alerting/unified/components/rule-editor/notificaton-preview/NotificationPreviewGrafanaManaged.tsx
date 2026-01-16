@@ -17,13 +17,16 @@ const UNKNOWN_RECEIVER = 'unknown';
 function NotificationPreviewGrafanaManaged({
   alertManagerSource,
   instances,
+  policy,
 }: {
   alertManagerSource: AlertManagerDataSource;
   instances: Labels[];
+  policy?: string;
 }) {
   const { treeMatchingResults, isLoading, error } = useAlertmanagerNotificationRoutingPreview(
     alertManagerSource.name,
-    instances
+    instances,
+    policy
   );
 
   if (error) {

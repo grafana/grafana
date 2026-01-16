@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  NAMED_ROOT_LABEL_NAME,
   useNotificationPolicyRoute,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 
@@ -12,13 +11,7 @@ import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { normalizeRoute } from '../../../utils/notification-policies';
 
-export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, instances: Labels[]) => {
-  // if a NAMED_ROOT_LABEL_NAME label exists, then we only match to that route.
-  const routeName = useMemo(() => {
-    const routeNameLabel = instances.find((instance) => instance[NAMED_ROOT_LABEL_NAME]);
-    return routeNameLabel?.[NAMED_ROOT_LABEL_NAME];
-  }, [instances]);
-
+export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, instances: Labels[], routeName?: string) => {
   const {
     data: defaultPolicy,
     isLoading: isPoliciesLoading,

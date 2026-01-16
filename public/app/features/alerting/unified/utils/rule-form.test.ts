@@ -14,11 +14,10 @@ import { setupDataSources } from '../testSetup/datasources';
 import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import {
+import formValuesToRulerGrafanaRuleDTO, {
   alertingRulerRuleToRuleForm,
   cleanAnnotations,
   cleanLabels,
-  formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
   getInstantFromDataQuery,
