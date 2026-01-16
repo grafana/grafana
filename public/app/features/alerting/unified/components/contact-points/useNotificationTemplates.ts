@@ -1,16 +1,20 @@
 import { useEffect } from 'react';
 import { Validate } from 'react-hook-form';
 
+import { TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
 import { getAPINamespace } from '../../../../../api/utils';
 import { AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { templatesApi } from '../../api/templateApi';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
+// TODO: Migrate to use types from @grafana/api-clients/rtkq/notifications.alerting/v0alpha1 instead of the legacy generated types.
+// This requires updating templateApi.ts to use the new API client. See packages/grafana-api-clients for the proper types.
+// The legacy types are missing the `kind` field in TemplateGroupSpec - we work around this with TemplateGroupSpecWithKind below.
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList,
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupSpec,
 } from '../../openapi/templatesApi.gen';
 import {
   addNotificationTemplateAction,
@@ -18,7 +22,6 @@ import {
   updateNotificationTemplateAction,
 } from '../../reducers/alertmanager/notificationTemplates';
 import { KnownProvenance } from '../../types/knownProvenance';
-import { TemplateKind } from '../../types/notification-template';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { getAnnotation, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
@@ -28,22 +31,14 @@ interface BaseAlertmanagerArgs {
   alertmanager: string;
 }
 
-/**
- * Extended spec type that includes the `kind` field.
- * The generated types are outdated and missing this field, but the API returns it.
- * This avoids inline type assertions and keeps the code type-safe.
- */
-type TemplateGroupSpecWithKind = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupSpec & {
-  kind?: TemplateKind;
-};
-
 export interface NotificationTemplate {
   uid: string;
   title: string;
   content: string;
   provenance: string;
   missing?: boolean;
-  kind: TemplateKind;
+  /** The kind/source of the template - 'grafana' for native templates, 'mimir' for external */
+  kind: TemplateGroupTemplateKind;
 }
 
 const { useGetAlertmanagerConfigurationQuery, useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
@@ -89,10 +84,24 @@ function templateGroupsToTemplates(
   return templateGroups.items.map((templateGroup) => templateGroupToTemplate(templateGroup));
 }
 
+/**
+ * Spec type with the `kind` field that exists in the API response but is missing from the generated types.
+ * The generated types in openapi/templatesApi.gen.ts are outdated - the proper types with `kind` are in
+ * @grafana/api-clients/rtkq/notifications.alerting/v0alpha1, but we can't use them directly here because
+ * the API hooks return the old types. This interface bridges the gap.
+ */
+interface TemplateGroupSpecWithKind {
+  content: string;
+  title: string;
+  kind?: TemplateGroupTemplateKind;
+}
+
 function templateGroupToTemplate(
   templateGroup: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
 ): NotificationTemplate {
   const provenance = getAnnotation(templateGroup, K8sAnnotations.Provenance) ?? KnownProvenance.None;
+  // The generated types are missing the `kind` field, but the API returns it.
+  // We use a typed variable to safely access it without type assertions.
   const spec: TemplateGroupSpecWithKind = templateGroup.spec;
   return {
     // K8s entities should always have a metadata.name property. The type is marked as optional because it's also used in other places
@@ -100,7 +109,7 @@ function templateGroupToTemplate(
     title: spec.title,
     content: spec.content,
     provenance,
-    kind: spec.kind ?? TemplateKind.Grafana,
+    kind: spec.kind ?? 'grafana',
   };
 }
 
@@ -114,7 +123,7 @@ function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemp
     // Undefined, null or empty string should be converted to KnownProvenance.None
     provenance: (config.template_file_provenances ?? {})[title] || KnownProvenance.None,
     missing: !templates.includes(title),
-    kind: TemplateKind.Grafana, // Config API templates are always Grafana templates
+    kind: 'grafana', // Config API templates are always Grafana templates
   }));
 }
 
