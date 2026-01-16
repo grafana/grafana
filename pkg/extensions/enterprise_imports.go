@@ -15,6 +15,8 @@ import (
 	_ "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	_ "github.com/aws/aws-sdk-go-v2/service/sts"
 	_ "github.com/beevik/etree"
+	_ "github.com/blugelabs/bluge"
+	_ "github.com/blugelabs/bluge_segment_api"
 	_ "github.com/crewjam/saml"
 	_ "github.com/docker/go-connections/nat"
 	_ "github.com/go-jose/go-jose/v4"
