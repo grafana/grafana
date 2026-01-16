@@ -170,8 +170,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Dashboard",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Dashboard"
         }
       },
       "post": {
@@ -294,8 +294,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Dashboard",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Dashboard"
         }
       },
       "delete": {
@@ -448,8 +448,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Dashboard",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Dashboard"
         }
       },
       "parameters": [
@@ -506,8 +506,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Dashboard",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Dashboard"
         }
       },
       "put": {
@@ -610,8 +610,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Dashboard",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Dashboard"
         }
       },
       "delete": {
@@ -712,8 +712,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Dashboard",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Dashboard"
         }
       },
       "patch": {
@@ -830,8 +830,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Dashboard",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Dashboard"
         }
       },
       "parameters": [
@@ -888,8 +888,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "DashboardWithAccessInfo",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "DashboardWithAccessInfo"
         }
       },
       "parameters": [
@@ -1049,8 +1049,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "LibraryPanel",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "LibraryPanel"
         }
       },
       "post": {
@@ -1173,8 +1173,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "LibraryPanel",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "LibraryPanel"
         }
       },
       "delete": {
@@ -1327,8 +1327,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "LibraryPanel",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "LibraryPanel"
         }
       },
       "parameters": [
@@ -1385,8 +1385,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "LibraryPanel",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "LibraryPanel"
         }
       },
       "put": {
@@ -1489,8 +1489,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "LibraryPanel",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "LibraryPanel"
         }
       },
       "delete": {
@@ -1591,8 +1591,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "LibraryPanel",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "LibraryPanel"
         }
       },
       "patch": {
@@ -1709,8 +1709,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "LibraryPanel",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "LibraryPanel"
         }
       },
       "parameters": [
@@ -2013,8 +2013,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Snapshot",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Snapshot"
         }
       },
       "parameters": [
@@ -2168,8 +2168,8 @@
         "x-grafana-action": "create",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "DashboardCreateResponse",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "DashboardCreateResponse"
         }
       }
     },
@@ -2225,8 +2225,8 @@
         "x-grafana-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "SnapshotSharingOptions",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "SnapshotSharingOptions"
         }
       }
     },
@@ -2262,8 +2262,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Snapshot",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Snapshot"
         }
       },
       "delete": {
@@ -2364,8 +2364,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Snapshot",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Snapshot"
         }
       },
       "parameters": [
@@ -2422,8 +2422,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "kind": "Dashboard",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Dashboard"
         }
       },
       "parameters": [

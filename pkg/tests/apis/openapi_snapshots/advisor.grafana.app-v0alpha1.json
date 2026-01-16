@@ -169,8 +169,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "post": {
@@ -293,8 +293,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "delete": {
@@ -447,8 +447,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "parameters": [
@@ -505,8 +505,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "put": {
@@ -609,8 +609,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "delete": {
@@ -711,8 +711,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "patch": {
@@ -829,8 +829,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "parameters": [
@@ -897,8 +897,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "put": {
@@ -1001,8 +1001,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "patch": {
@@ -1119,8 +1119,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "Check",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Check"
         }
       },
       "parameters": [
@@ -1289,8 +1289,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "post": {
@@ -1413,8 +1413,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "delete": {
@@ -1567,8 +1567,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "parameters": [
@@ -1625,8 +1625,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "put": {
@@ -1729,8 +1729,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "delete": {
@@ -1831,8 +1831,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "patch": {
@@ -1949,8 +1949,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "parameters": [
@@ -2017,8 +2017,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "put": {
@@ -2121,8 +2121,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "patch": {
@@ -2239,8 +2239,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "advisor.grafana.app",
-          "kind": "CheckType",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "CheckType"
         }
       },
       "parameters": [

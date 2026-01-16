@@ -170,8 +170,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "post": {
@@ -294,8 +294,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "delete": {
@@ -448,8 +448,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "parameters": [
@@ -506,8 +506,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "put": {
@@ -610,8 +610,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "delete": {
@@ -712,8 +712,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "patch": {
@@ -830,8 +830,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "parameters": [
@@ -913,8 +913,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ExternalRepositoryList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ExternalRepositoryList"
         }
       },
       "parameters": [
@@ -972,8 +972,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "put": {
@@ -1076,8 +1076,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "patch": {
@@ -1194,8 +1194,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Connection"
         }
       },
       "parameters": [
@@ -1364,8 +1364,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "post": {
@@ -1488,8 +1488,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "delete": {
@@ -1642,8 +1642,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -1700,8 +1700,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "put": {
@@ -1804,8 +1804,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "delete": {
@@ -1906,8 +1906,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "patch": {
@@ -2024,8 +2024,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -2194,8 +2194,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "post": {
@@ -2318,8 +2318,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "delete": {
@@ -2472,8 +2472,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -2530,8 +2530,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "put": {
@@ -2634,8 +2634,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "delete": {
@@ -2736,8 +2736,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "patch": {
@@ -2854,8 +2854,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -2960,8 +2960,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "parameters": [
@@ -3032,8 +3032,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "put": {
@@ -3144,8 +3144,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "post": {
@@ -3256,8 +3256,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "delete": {
@@ -3328,8 +3328,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "parameters": [
@@ -3410,8 +3410,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "HistoryList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "HistoryList"
         }
       },
       "parameters": [
@@ -3482,8 +3482,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "HistoryList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "HistoryList"
         }
       },
       "parameters": [
@@ -3541,8 +3541,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "post": {
@@ -3595,8 +3595,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -3644,8 +3644,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -3727,8 +3727,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "RefList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "RefList"
         }
       },
       "parameters": [
@@ -3772,8 +3772,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -3831,8 +3831,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceList"
         }
       },
       "parameters": [
@@ -3890,8 +3890,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "put": {
@@ -3994,8 +3994,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "patch": {
@@ -4112,8 +4112,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -4202,8 +4202,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "TestResults",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TestResults"
         }
       },
       "parameters": [
@@ -4251,8 +4251,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "WebhookResponse",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "WebhookResponse"
         }
       },
       "post": {
@@ -4276,8 +4276,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "WebhookResponse",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "WebhookResponse"
         }
       },
       "parameters": [

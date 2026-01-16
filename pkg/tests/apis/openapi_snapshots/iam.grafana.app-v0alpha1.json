@@ -216,8 +216,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ExternalGroupMapping",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ExternalGroupMapping"
         }
       },
       "post": {
@@ -340,8 +340,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ExternalGroupMapping",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ExternalGroupMapping"
         }
       },
       "delete": {
@@ -494,8 +494,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ExternalGroupMapping",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ExternalGroupMapping"
         }
       },
       "parameters": [
@@ -552,8 +552,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ExternalGroupMapping",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ExternalGroupMapping"
         }
       },
       "put": {
@@ -656,8 +656,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ExternalGroupMapping",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ExternalGroupMapping"
         }
       },
       "delete": {
@@ -758,8 +758,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ExternalGroupMapping",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ExternalGroupMapping"
         }
       },
       "patch": {
@@ -876,8 +876,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ExternalGroupMapping",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ExternalGroupMapping"
         }
       },
       "parameters": [
@@ -1305,8 +1305,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ServiceAccount",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ServiceAccount"
         }
       },
       "post": {
@@ -1429,8 +1429,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ServiceAccount",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ServiceAccount"
         }
       },
       "delete": {
@@ -1583,8 +1583,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ServiceAccount",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ServiceAccount"
         }
       },
       "parameters": [
@@ -1641,8 +1641,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ServiceAccount",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ServiceAccount"
         }
       },
       "put": {
@@ -1745,8 +1745,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ServiceAccount",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ServiceAccount"
         }
       },
       "delete": {
@@ -1847,8 +1847,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ServiceAccount",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ServiceAccount"
         }
       },
       "patch": {
@@ -1965,8 +1965,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ServiceAccount",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ServiceAccount"
         }
       },
       "parameters": [
@@ -2023,8 +2023,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "ServiceAccountTokenList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ServiceAccountTokenList"
         }
       },
       "parameters": [
@@ -2092,8 +2092,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "SSOSetting",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "SSOSetting"
         }
       },
       "parameters": [
@@ -2240,8 +2240,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "SSOSetting",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "SSOSetting"
         }
       },
       "put": {
@@ -2344,8 +2344,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "SSOSetting",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "SSOSetting"
         }
       },
       "delete": {
@@ -2446,8 +2446,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "SSOSetting",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "SSOSetting"
         }
       },
       "patch": {
@@ -2564,8 +2564,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "SSOSetting",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "SSOSetting"
         }
       },
       "parameters": [
@@ -2734,8 +2734,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "TeamBinding",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TeamBinding"
         }
       },
       "post": {
@@ -2858,8 +2858,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "TeamBinding",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TeamBinding"
         }
       },
       "delete": {
@@ -3012,8 +3012,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "TeamBinding",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TeamBinding"
         }
       },
       "parameters": [
@@ -3070,8 +3070,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "TeamBinding",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TeamBinding"
         }
       },
       "put": {
@@ -3174,8 +3174,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "TeamBinding",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TeamBinding"
         }
       },
       "delete": {
@@ -3276,8 +3276,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "TeamBinding",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TeamBinding"
         }
       },
       "patch": {
@@ -3394,8 +3394,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "TeamBinding",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TeamBinding"
         }
       },
       "parameters": [
@@ -3564,8 +3564,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "Team",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Team"
         }
       },
       "post": {
@@ -3688,8 +3688,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "Team",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Team"
         }
       },
       "delete": {
@@ -3842,8 +3842,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "Team",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Team"
         }
       },
       "parameters": [
@@ -3900,8 +3900,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "Team",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Team"
         }
       },
       "put": {
@@ -4004,8 +4004,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "Team",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Team"
         }
       },
       "delete": {
@@ -4106,8 +4106,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "Team",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Team"
         }
       },
       "patch": {
@@ -4224,8 +4224,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "Team",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Team"
         }
       },
       "parameters": [
@@ -4282,8 +4282,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "GetGroups",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "GetGroups"
         }
       },
       "parameters": [
@@ -4331,8 +4331,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "TeamMemberList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TeamMemberList"
         }
       },
       "parameters": [
@@ -4492,8 +4492,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "User",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "User"
         }
       },
       "post": {
@@ -4616,8 +4616,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "User",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "User"
         }
       },
       "delete": {
@@ -4770,8 +4770,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "User",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "User"
         }
       },
       "parameters": [
@@ -4828,8 +4828,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "User",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "User"
         }
       },
       "put": {
@@ -4932,8 +4932,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "User",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "User"
         }
       },
       "delete": {
@@ -5034,8 +5034,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "User",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "User"
         }
       },
       "patch": {
@@ -5152,8 +5152,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "User",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "User"
         }
       },
       "parameters": [
@@ -5210,8 +5210,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "iam.grafana.app",
-          "kind": "UserTeamList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "UserTeamList"
         }
       },
       "parameters": [

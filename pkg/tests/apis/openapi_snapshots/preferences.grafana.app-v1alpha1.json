@@ -169,8 +169,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "kind": "Preferences",
-          "version": "v1alpha1"
+          "version": "v1alpha1",
+          "kind": "Preferences"
         }
       },
       "post": {
@@ -293,8 +293,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "kind": "Preferences",
-          "version": "v1alpha1"
+          "version": "v1alpha1",
+          "kind": "Preferences"
         }
       },
       "parameters": [
@@ -381,8 +381,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "kind": "Preferences",
-          "version": "v1alpha1"
+          "version": "v1alpha1",
+          "kind": "Preferences"
         }
       },
       "put": {
@@ -485,8 +485,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "kind": "Preferences",
-          "version": "v1alpha1"
+          "version": "v1alpha1",
+          "kind": "Preferences"
         }
       },
       "delete": {
@@ -587,8 +587,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "kind": "Preferences",
-          "version": "v1alpha1"
+          "version": "v1alpha1",
+          "kind": "Preferences"
         }
       },
       "patch": {
@@ -705,8 +705,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "kind": "Preferences",
-          "version": "v1alpha1"
+          "version": "v1alpha1",
+          "kind": "Preferences"
         }
       },
       "parameters": [

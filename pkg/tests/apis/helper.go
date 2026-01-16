@@ -887,25 +887,33 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			require.Failf(t, "Not OK", "Code[%d] %s", rsp.Response.StatusCode, string(rsp.Body))
 		}
 
+		var err error
+		body := rsp.Body
+
 		// Clear the plugin version and build stamp from snapshot
 		if v, ok := rsp.Result.Info.VendorExtensible.Extensions["x-grafana-plugin"]; ok && v != nil {
 			if pluginInfo, ok := v.(map[string]any); ok {
 				delete(pluginInfo, "version")
 				delete(pluginInfo, "build")
+
+				body, err = rsp.Result.MarshalJSON()
+				require.NoError(t, err)
 			}
 		}
 
-		pretty, err := json.MarshalIndent(rsp.Result, "", "  ")
+		var prettyJSON bytes.Buffer
+		err = json.Indent(&prettyJSON, rsp.Body, "", "  ")
 		require.NoError(t, err)
+		pretty := prettyJSON.String()
 
 		write := false
 		fpath := filepath.Join(dir, fmt.Sprintf("%s-%s.json", gv.Group, gv.Version))
 
 		// nolint:gosec
 		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
-		body, err := os.ReadFile(fpath)
+		body, err = os.ReadFile(fpath)
 		if err == nil {
-			if !assert.JSONEq(t, string(body), string(pretty)) {
+			if !assert.JSONEq(t, string(body), pretty) {
 				t.Logf("openapi spec has changed: %s", path)
 				t.Fail()
 				write = true
@@ -916,7 +924,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}
 
 		if write {
-			e2 := os.WriteFile(fpath, pretty, 0o644)
+			e2 := os.WriteFile(fpath, []byte(pretty), 0o644)
 			if e2 != nil {
 				t.Errorf("error writing file: %s", e2.Error())
 			}
