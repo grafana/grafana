@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -12,12 +14,14 @@ import (
 type Extra interface {
 	Type() provisioning.ConnectionType
 	Build(ctx context.Context, r *provisioning.Connection) (Connection, error)
+	Mutate(ctx context.Context, obj runtime.Object) error
 }
 
 //go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
 type Factory interface {
 	Types() []provisioning.ConnectionType
 	Build(ctx context.Context, r *provisioning.Connection) (Connection, error)
+	Mutate(ctx context.Context, obj runtime.Object) error
 }
 
 type factory struct {
@@ -68,6 +72,15 @@ func (f *factory) Build(ctx context.Context, c *provisioning.Connection) (Connec
 	}
 
 	return nil, fmt.Errorf("connection type %q is not supported", c.Spec.Type)
+}
+
+func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
+	for _, e := range f.extras {
+		if err := e.Mutate(ctx, obj); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 var (

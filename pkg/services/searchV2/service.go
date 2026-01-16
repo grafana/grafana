@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -117,8 +117,7 @@ func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEv
 }
 
 func (s *StandardSearchService) IsDisabled() bool {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	return !s.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
+	return true // TODO: https://github.com/grafana/grafana/pull/115744 will remove this entirely
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {

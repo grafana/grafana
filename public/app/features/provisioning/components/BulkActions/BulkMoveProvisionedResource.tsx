@@ -10,7 +10,7 @@ import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
-import { collectSelectedItems } from 'app/features/browse-dashboards/components/utils';
+import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';

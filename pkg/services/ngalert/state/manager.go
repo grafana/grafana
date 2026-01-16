@@ -215,6 +215,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				EndsAt:               entry.CurrentStateEnd,
 				FiredAt:              entry.FiredAt,
 				LastEvaluationTime:   entry.LastEvalTime,
+				EvaluationDuration:   entry.EvaluationDuration,
 				Annotations:          annotations,
 				ResultFingerprint:    resultFp,
 				ResolvedAt:           entry.ResolvedAt,
@@ -631,9 +632,8 @@ func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
 	for _, state := range states {
 		if state.LastEvaluationTime.After(status.EvaluationTimestamp) {
 			status.EvaluationTimestamp = state.LastEvaluationTime
+			status.EvaluationDuration = state.EvaluationDuration
 		}
-
-		status.EvaluationDuration = state.EvaluationDuration
 
 		switch state.State {
 		case eval.Normal:

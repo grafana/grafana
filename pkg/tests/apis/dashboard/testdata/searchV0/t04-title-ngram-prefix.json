@@ -1,0 +1,17 @@
+{
+  "totalHits": 1,
+  "hits": [
+    {
+      "resource": "dashboards",
+      "name": "timeseries-y-ticks-zero-decimals",
+      "title": "Zero Decimals Y Ticks",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ],
+      "score": 0.35
+    }
+  ],
+  "maxScore": 0.35
+}

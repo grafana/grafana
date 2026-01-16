@@ -543,6 +543,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/tsconfig.json @grafana/grafana-frontend-platform
 /packages/grafana-data/test/ @grafana/grafana-frontend-platform
 /packages/grafana-data/typings/ @grafana/grafana-frontend-platform
+/packages/grafana-data/scripts/ @grafana/grafana-frontend-platform
 
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-data/src/context/plugins/ @grafana/plugins-platform-frontend
