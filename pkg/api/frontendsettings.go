@@ -12,11 +12,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -153,12 +151,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
-		ns := request.GetNamespaceMapper(hs.Cfg)(1)
-		ctx := identity.WithServiceIdentityForSingleNamespaceContext(c.Req.Context(), ns)
-		evalCtx := openfeature.TransactionContext(ctx)
-		editingEnabled, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagEnableDatagridEditing, false, evalCtx)
+		evalCtx := openfeature.TransactionContext(c.Req.Context())
+		editingEnabled, err := openfeature.NewDefaultClient().BooleanValueDetails(c.Req.Context(), featuremgmt.FlagEnableDatagridEditing, false, evalCtx)
 		if err != nil {
 			hs.log.Error("flag evaluation error", "flag", featuremgmt.FlagEnableDatagridEditing, "error", err)
+		} else {
+			hs.log.Debug("successfully evaluated flag", "flag", featuremgmt.FlagEnableDatagridEditing, "details", editingEnabled)
 		}
 		if panel.ID == "datagrid" && !editingEnabled.Value {
 			continue
