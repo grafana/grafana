@@ -38,7 +38,7 @@ export function SaveBeforeShareModal({ dashboard, onContinue, onDismiss, title, 
     onDismiss();
     dashboard.openSaveDrawer({
       onSaveSuccess: () => {
-        void onContinue();
+        onContinue();
       },
     });
   }, [dashboard, onContinue, onDismiss]);
