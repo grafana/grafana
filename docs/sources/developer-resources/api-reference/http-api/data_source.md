@@ -87,7 +87,8 @@ Content-Type: application/json
 `GET /api/datasources/:datasourceId`
 
 {{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for getting a single data source by UID](#get-a-single-data-source-by-uid) or to the [API for getting a single data source by its name](#get-a-single-data-source-by-name).
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
+Refer to the [API for getting a single data source by UID](#get-a-single-data-source-by-uid)
 {{< /admonition >}}
 
 **Required permissions**
@@ -203,7 +204,7 @@ Content-Type: application/json
 `GET /api/datasources/name/:name`
 
 {{< admonition type="warning" >}}
-This API is deprecated since and will be removed in a future release.
+This API is deprecated and will be removed in a future release.
 {{< /admonition >}}
 
 **Required permissions**
@@ -263,7 +264,7 @@ Content-Type: application/json
 `GET /api/datasources/id/:name`
 
 {{< admonition type="warning" >}}
-This API is deprecated since and will be removed in a future release.
+This API is deprecated and will be removed in a future release.
 {{< /admonition >}}
 
 **Required permissions**
@@ -451,7 +452,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 `PUT /api/datasources/:datasourceId`
 
 {{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source update API](#update-an-existing-data-source).
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
+Refer to the [new data source update API](#update-an-existing-data-source).
 {{< /admonition >}}
 
 **Required permissions**
@@ -626,7 +628,8 @@ Similar to [creating a data source](#create-a-data-source), `password` and `basi
 `DELETE /api/datasources/:datasourceId`
 
 {{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for deleting an existing data source by UID](#delete-an-existing-data-source-by-uid) or to the [API for deleting an existing data source by its name](#delete-an-existing-data-source-by-name)
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
+Refer to the [API for deleting an existing data source by UID](#delete-an-existing-data-source-by-uid)
 {{< /admonition >}}
 
 **Required permissions**
@@ -697,7 +700,7 @@ Content-Type: application/json
 `DELETE /api/datasources/name/:datasourceName`
 
 {{< admonition type="warning" >}}
-This API is deprecated since and will be removed in a future release.
+This API is deprecated and will be removed in a future release.
 {{< /admonition >}}
 
 **Required permissions**
@@ -734,7 +737,8 @@ Content-Type: application/json
 ## Data source proxy calls by id
 
 {{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source API for proxying requests](#data-source-proxy-calls).
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
+Refer to the [new data source API for proxying requests](#data-source-proxy-calls).
 {{< /admonition >}}
 
 `GET /api/datasources/proxy/:datasourceId/*`
@@ -749,7 +753,10 @@ Proxies all calls to the actual data source identified by the `uid`.
 
 ## Check data source health by id
 
-> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source health check API](#check-data-source-health).
+{{< admonition type="warning" >}}
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
+Refer to the [new data source health check API](#check-data-source-health).
+{{< /admonition >}}
 
 `GET /api/datasources/:datasourceId/health`
 
@@ -810,7 +817,8 @@ Content-Type: application/json
 ## Fetch data source resources by id
 
 {{< admonition type="warning" >}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source resources API](#fetch-data-source-resources).
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release.
+Refer to the [new data source resources API](#fetch-data-source-resources).
 {{< /admonition >}}
 
 `GET /api/datasources/:datasourceId/resources/*`
