@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/dskit/services"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -113,6 +114,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				Tracer:             opts.Tracer,
 				Reg:                opts.Reg,
 				UseChannelNotifier: !isHA,
+				Log:                log.New("storage-backend"),
 			}
 
 			ctx := context.Background()
