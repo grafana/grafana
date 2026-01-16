@@ -23,7 +23,6 @@ interface Props extends CustomCellRendererProps {
 
 /**
  * Logs row actions buttons
- * @todo use new inspector and default to code mode
  * @param props
  * @constructor
  */
