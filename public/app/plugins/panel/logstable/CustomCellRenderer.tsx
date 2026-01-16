@@ -35,7 +35,7 @@ const buildLinkToLog: BuildLinkToLogLine = (logsFrame, rowIndex, field) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     firstColumnCell: css({
-      paddingLeft: theme.spacing(7),
+      paddingLeft: theme.spacing(10),
     }),
   };
 };

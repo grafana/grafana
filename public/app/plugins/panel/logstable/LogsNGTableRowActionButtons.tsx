@@ -4,7 +4,15 @@ import { useState } from 'react';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, CustomCellRendererProps, IconButton, Modal, useTheme2 } from '@grafana/ui';
+import {
+  ClipboardButton,
+  CustomCellRendererProps,
+  IconButton,
+  Modal,
+  TableCellInspector,
+  TableCellInspectorMode,
+  useTheme2,
+} from '@grafana/ui';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { BuildLinkToLogLine } from './types';
@@ -64,18 +72,13 @@ export function LogsNGTableRowActionButtons(props: Props) {
         )}
       </div>
       {isInspecting && (
-        <Modal
-          onDismiss={() => setIsInspecting(false)}
-          isOpen={true}
-          title={t('explore.logs-table.action-buttons.inspect-value', 'Inspect value')}
-        >
-          <pre>{getLineValue(logsFrame, frame, rowIndex)}</pre>
-          <Modal.ButtonRow>
-            <ClipboardButton icon="copy" getText={() => getLineValue(logsFrame, frame, rowIndex)}>
-              {t('explore.logs-table.action-buttons.copy-to-clipboard', 'Copy to Clipboard')}
-            </ClipboardButton>
-          </Modal.ButtonRow>
-        </Modal>
+        <TableCellInspector
+          value={getLineValue(logsFrame, frame, rowIndex)}
+          mode={TableCellInspectorMode.code}
+          onDismiss={function (): void {
+            setIsInspecting(false);
+          }}
+        />
       )}
     </>
   );
