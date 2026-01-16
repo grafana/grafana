@@ -81,7 +81,7 @@ First, configure the name of your connection.
 
 Use these settings to specify the InfluxDB instance the data source connects to.
 
-- **URL** - The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB's default API port is `8086`. When you enter a URL, Grafana attempts to auto-detect your InfluxDB product based on URL patterns. Refer to [InfluxDB detection](https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/) for more information.
+- **URL** - The HTTP protocol, IP address, and port of your InfluxDB API. The InfluxDB default API port is `8086`. When you enter a URL, Grafana attempts to auto-detect your InfluxDB product based on URL patterns. Refer to [InfluxDB detection](https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/) for more information.
 - **Product** - Select the InfluxDB product you're connecting to. The available query languages depend on your product selection.
 - **Query language** - Select the query language for your InfluxDB instance. This determines the connection details needed in **Database settings**. The available options are:
   - **Flux** - Flux is a data scripting language developed by InfluxData that allows you to query, analyze, and act on data. Refer to [Get started with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/) for guidance on using Flux.
@@ -234,7 +234,7 @@ You can also override this setting in a dashboard panel under its data source op
 
 ## Provision the InfluxDB data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer
 to [Provision Grafana](ref:provision-grafana).
 
