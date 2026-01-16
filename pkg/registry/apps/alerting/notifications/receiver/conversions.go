@@ -142,15 +142,16 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 func convertReceiverIntegrationToIntegration(receiverTitle string, integration model.ReceiverIntegration) (ngmodels.Integration, []string, error) {
 	t, err := alertingNotify.IntegrationTypeFromString(integration.Type)
 	if err != nil {
-		return ngmodels.Integration{}, nil, err
+		return ngmodels.Integration{}, nil, ngmodels.ErrReceiverInvalid(err)
 	}
 	var config schema.IntegrationSchemaVersion
 	typeSchema, _ := alertingNotify.GetSchemaForIntegration(t)
+	// TODO:yuri make version required when UI is updated
 	if integration.Version != "" {
 		var ok bool
 		config, ok = typeSchema.GetVersion(schema.Version(integration.Version))
 		if !ok {
-			return ngmodels.Integration{}, nil, fmt.Errorf("invalid version %s for integration type %s", integration.Version, integration.Type)
+			return ngmodels.Integration{}, nil, ngmodels.ErrReceiverInvalid(fmt.Errorf("invalid version %s for integration type %s", integration.Version, integration.Type))
 		}
 	} else {
 		config = typeSchema.GetCurrentVersion()
