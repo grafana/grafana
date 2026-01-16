@@ -278,16 +278,6 @@ func GetComposableKinds() ([]ComposableKind, error) {
 		CueFile:  piechartCue,
 	})
 
-	prometheusinstantresultsCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/prometheus-instant-results/panelcfg.cue"))
-	if err != nil {
-		return nil, err
-	}
-	kinds = append(kinds, ComposableKind{
-		Name:     "prometheusinstantresults",
-		Filename: "panelcfg.cue",
-		CueFile:  prometheusinstantresultsCue,
-	})
-
 	radialbarCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/radialbar/panelcfg.cue"))
 	if err != nil {
 		return nil, err
@@ -296,6 +286,16 @@ func GetComposableKinds() ([]ComposableKind, error) {
 		Name:     "radialbar",
 		Filename: "panelcfg.cue",
 		CueFile:  radialbarCue,
+	})
+
+	rawprometheusCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/raw-prometheus/panelcfg.cue"))
+	if err != nil {
+		return nil, err
+	}
+	kinds = append(kinds, ComposableKind{
+		Name:     "rawprometheus",
+		Filename: "panelcfg.cue",
+		CueFile:  rawprometheusCue,
 	})
 
 	statCue, err := loadCueFileWithCommon(root, filepath.Join(root, "./public/app/plugins/panel/stat/panelcfg.cue"))

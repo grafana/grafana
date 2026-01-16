@@ -12,21 +12,21 @@ import {
   toDataFrame,
 } from '@grafana/data';
 
-import { PrometheusInstantResultsPanel } from './PrometheusInstantResultsPanel';
+import { RawPrometheusPanel } from './RawPrometheusPanel';
 import { Options } from './panelcfg.gen';
 
-type PrometheusInstantResultsPanelProps = PanelProps<Options>;
+type RawPrometheusPanelProps = PanelProps<Options>;
 
 const completeDefaultOptions: Options = {
   expandedView: false,
 };
 
-describe('PrometheusInstantResultsPanel', () => {
+describe('RawPrometheusPanel', () => {
   describe('when there is no data', () => {
     it('shows "0 series returned" message', () => {
       const panelData = buildPanelData();
 
-      render(<PrometheusInstantResultsPanel {...panelData} />);
+      render(<RawPrometheusPanel {...panelData} />);
 
       expect(screen.getByText(/0 series returned/i)).toBeInTheDocument();
     });
@@ -50,7 +50,7 @@ describe('PrometheusInstantResultsPanel', () => {
         },
       });
 
-      render(<PrometheusInstantResultsPanel {...panelData} />);
+      render(<RawPrometheusPanel {...panelData} />);
 
       // Should show "Expand results" switch in raw view
       expect(screen.getByText(/Expand results/i)).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('PrometheusInstantResultsPanel', () => {
         },
       });
 
-      render(<PrometheusInstantResultsPanel {...panelData} />);
+      render(<RawPrometheusPanel {...panelData} />);
 
       // Should render metric name
       expect(screen.getByText('up')).toBeInTheDocument();
@@ -81,9 +81,7 @@ describe('PrometheusInstantResultsPanel', () => {
   });
 });
 
-function buildPanelData(
-  overrideValues?: Partial<PrometheusInstantResultsPanelProps>
-): PrometheusInstantResultsPanelProps {
+function buildPanelData(overrideValues?: Partial<RawPrometheusPanelProps>): PrometheusInstantResultsPanelProps {
   const timeRange = createTimeRange();
   const defaultValues: PrometheusInstantResultsPanelProps = {
     id: Number(uniqueId()),
@@ -98,7 +96,7 @@ function buildPanelData(
     transparent: false,
     timeRange,
     timeZone: 'utc',
-    title: 'Prometheus Instant Results',
+    title: 'Raw Prometheus',
     fieldConfig: {
       defaults: {},
       overrides: [],

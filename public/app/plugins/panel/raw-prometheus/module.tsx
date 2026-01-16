@@ -1,12 +1,12 @@
 import { PanelPlugin } from '@grafana/data';
 
-import { PrometheusInstantResultsPanel } from './PrometheusInstantResultsPanel';
-import { prometheusInstantResultsMigrationHandler } from './migrations';
+import { RawPrometheusPanel } from './RawPrometheusPanel';
+import { rawPrometheusMigrationHandler } from './migrations';
 import { defaultOptions, Options } from './panelcfg.gen';
-import { prometheusInstantResultsSuggestionsSupplier } from './suggestions';
+import { rawPrometheusSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<Options>(PrometheusInstantResultsPanel)
-  .setMigrationHandler(prometheusInstantResultsMigrationHandler)
+export const plugin = new PanelPlugin<Options>(RawPrometheusPanel)
+  .setMigrationHandler(rawPrometheusMigrationHandler)
   .setPanelOptions((builder) => {
     builder.addBooleanSwitch({
       path: 'expandedView',
@@ -15,4 +15,4 @@ export const plugin = new PanelPlugin<Options>(PrometheusInstantResultsPanel)
       defaultValue: defaultOptions.expandedView,
     });
   })
-  .setSuggestionsSupplier(prometheusInstantResultsSuggestionsSupplier);
+  .setSuggestionsSupplier(rawPrometheusSuggestionsSupplier);

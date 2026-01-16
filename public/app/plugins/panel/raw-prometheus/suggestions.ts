@@ -2,7 +2,7 @@ import { FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } 
 
 import { Options, defaultOptions } from './panelcfg.gen';
 
-export const prometheusInstantResultsSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (ds) => {
+export const rawPrometheusSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> = (ds) => {
   if (!ds.hasData) {
     return;
   }
@@ -18,7 +18,7 @@ export const prometheusInstantResultsSuggestionsSupplier: VisualizationSuggestio
     ds.hasFieldType(FieldType.number)
   ) {
     suggestions.push({
-      name: 'Prometheus Instant Results',
+      name: 'Raw Prometheus',
       options: {
         ...defaultOptions,
       },

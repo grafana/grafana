@@ -1,17 +1,17 @@
 {
   "type": "panel",
-  "name": "Prometheus Instant Results",
-  "id": "prometheus-instant-results",
+  "name": "Raw Prometheus",
+  "id": "raw-prometheus",
   "suggestions": true,
   "info": {
-    "description": "Display Prometheus instant query results in a virtualized list view",
+    "description": "Series breakdown in native Prometheus format",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-prometheus-instant-results.svg",
-      "large": "img/icn-prometheus-instant-results.svg"
+      "small": "img/icn-raw-prometheus.svg",
+      "large": "img/icn-raw-prometheus.svg"
     },
     "links": [
       { "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" },
