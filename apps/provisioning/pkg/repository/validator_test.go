@@ -261,7 +261,7 @@ func TestValidateRepository(t *testing.T) {
 	}
 
 	mockFactory := NewMockFactory(t)
-	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

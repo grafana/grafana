@@ -255,17 +255,17 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := Validate(context.Background(), tt.obj, tt.resolver)
+			list := Validate(context.Background(), tt.obj, tt.resolver)
 			if tt.expectedError {
-				assert.Error(t, err)
+				assert.NotEmpty(t, list)
 				if len(tt.errorContains) > 0 {
-					errStr := err.Error()
+					errStr := list.ToAggregate().Error()
 					for _, contains := range tt.errorContains {
 						assert.Contains(t, errStr, contains)
 					}
 				}
 			} else {
-				assert.NoError(t, err)
+				assert.Empty(t, list)
 			}
 		})
 	}

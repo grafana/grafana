@@ -12,7 +12,7 @@ import (
 
 // Validate validates the local repository configuration without requiring decrypted secrets.
 // The resolver is needed to validate the local path against permitted prefixes.
-func Validate(_ context.Context, obj runtime.Object, resolver *LocalFolderResolver) error {
+func Validate(_ context.Context, obj runtime.Object, resolver *LocalFolderResolver) field.ErrorList {
 	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil
@@ -24,9 +24,9 @@ func Validate(_ context.Context, obj runtime.Object, resolver *LocalFolderResolv
 
 	cfg := repo.Spec.Local
 	if cfg == nil {
-		return toRepoError(repo.Name, field.ErrorList{
+		return field.ErrorList{
 			field.Required(field.NewPath("spec", "local"), "local configuration is required for local repository type"),
-		})
+		}
 	}
 
 	var list field.ErrorList
@@ -34,12 +34,12 @@ func Validate(_ context.Context, obj runtime.Object, resolver *LocalFolderResolv
 	// The path value must be set for local provisioning
 	if cfg.Path == "" {
 		list = append(list, field.Required(field.NewPath("spec", "local", "path"), "must enter a path to local file"))
-		return toRepoError(repo.Name, list)
+		return list
 	}
 
 	if err := safepath.IsSafe(cfg.Path); err != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "local", "path"), cfg.Path, err.Error()))
-		return toRepoError(repo.Name, list)
+		return list
 	}
 
 	// Check if it is valid according to permitted prefixes
@@ -50,13 +50,5 @@ func Validate(_ context.Context, obj runtime.Object, resolver *LocalFolderResolv
 		}
 	}
 
-	return toRepoError(repo.Name, list)
-}
-
-func toRepoError(name string, list field.ErrorList) error {
-	if len(list) == 0 {
-		return nil
-	}
-
-	return list.ToAggregate()
+	return list
 }

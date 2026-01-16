@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -58,7 +59,7 @@ func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
 	return Mutate(ctx, obj)
 }
 
-func (e *extra) Validate(ctx context.Context, obj runtime.Object) error {
+func (e *extra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
 	return Validate(ctx, obj)
 }
 

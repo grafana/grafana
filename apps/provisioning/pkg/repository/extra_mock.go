@@ -6,6 +6,8 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
+	field "k8s.io/apimachinery/pkg/util/validation/field"
+
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -176,18 +178,20 @@ func (_c *MockExtra_Type_Call) RunAndReturn(run func() v0alpha1.RepositoryType) 
 }
 
 // Validate provides a mock function with given fields: ctx, obj
-func (_m *MockExtra) Validate(ctx context.Context, obj runtime.Object) error {
+func (_m *MockExtra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
 	ret := _m.Called(ctx, obj)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Validate")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, runtime.Object) error); ok {
+	var r0 field.ErrorList
+	if rf, ok := ret.Get(0).(func(context.Context, runtime.Object) field.ErrorList); ok {
 		r0 = rf(ctx, obj)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(field.ErrorList)
+		}
 	}
 
 	return r0
@@ -212,12 +216,12 @@ func (_c *MockExtra_Validate_Call) Run(run func(ctx context.Context, obj runtime
 	return _c
 }
 
-func (_c *MockExtra_Validate_Call) Return(_a0 error) *MockExtra_Validate_Call {
+func (_c *MockExtra_Validate_Call) Return(_a0 field.ErrorList) *MockExtra_Validate_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockExtra_Validate_Call) RunAndReturn(run func(context.Context, runtime.Object) error) *MockExtra_Validate_Call {
+func (_c *MockExtra_Validate_Call) RunAndReturn(run func(context.Context, runtime.Object) field.ErrorList) *MockExtra_Validate_Call {
 	_c.Call.Return(run)
 	return _c
 }

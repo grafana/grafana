@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -15,7 +16,7 @@ type Extra interface {
 	Type() provisioning.ConnectionType
 	Build(ctx context.Context, r *provisioning.Connection) (Connection, error)
 	Mutate(ctx context.Context, obj runtime.Object) error
-	Validate(ctx context.Context, obj runtime.Object) error
+	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
 //go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
@@ -23,7 +24,7 @@ type Factory interface {
 	Types() []provisioning.ConnectionType
 	Build(ctx context.Context, r *provisioning.Connection) (Connection, error)
 	Mutate(ctx context.Context, obj runtime.Object) error
-	Validate(ctx context.Context, obj runtime.Object) error
+	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
 type factory struct {
@@ -85,13 +86,12 @@ func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
 	return nil
 }
 
-func (f *factory) Validate(ctx context.Context, obj runtime.Object) error {
+func (f *factory) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	var list field.ErrorList
 	for _, e := range f.extras {
-		if err := e.Validate(ctx, obj); err != nil {
-			return err
-		}
+		list = append(list, e.Validate(ctx, obj)...)
 	}
-	return nil
+	return list
 }
 
 var (

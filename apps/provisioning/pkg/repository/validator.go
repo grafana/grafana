@@ -47,25 +47,7 @@ func (v *RepositoryValidator) ValidateRepository(ctx context.Context, cfg *provi
 	// FIXME: Structural validation (URL, branch, path, etc.) is done here via Factory.Validate().
 	// This creates a coupling between RepositoryValidator and Factory that is not ideal from a separation
 	// of concerns perspective, but avoids more extensive refactoring.
-	if v.repoFactory != nil {
-		if err := v.repoFactory.Validate(ctx, cfg); err != nil {
-			// Convert factory validation errors to field errors
-			// Factory.Validate returns aggregate errors from field.ErrorList.ToAggregate()
-			if aggErr, ok := err.(interface{ Errors() []error }); ok {
-				for _, e := range aggErr.Errors() {
-					if fieldErr, ok := e.(*field.Error); ok {
-						list = append(list, fieldErr)
-					} else {
-						// If it's not a field error, wrap it
-						list = append(list, field.Invalid(field.NewPath(""), "", e.Error()))
-					}
-				}
-			} else {
-				// If it's not an aggregate error, wrap it
-				list = append(list, field.Invalid(field.NewPath(""), "", err.Error()))
-			}
-		}
-	}
+	list = append(list, v.repoFactory.Validate(ctx, cfg)...)
 	if cfg.Spec.Title == "" {
 		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
 	}

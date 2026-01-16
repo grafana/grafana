@@ -20,7 +20,7 @@ import (
 func TestNewHealthChecker(t *testing.T) {
 	mockPatcher := mocks.NewStatusPatcher(t)
 	mockFactory := repository.NewMockFactory(t)
-	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
 	validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
 	hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
@@ -141,7 +141,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
-			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
 			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
@@ -231,7 +231,7 @@ func TestHasRecentFailure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
-			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
 			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
@@ -276,7 +276,7 @@ func TestRecordFailure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
-			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
 			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
@@ -324,7 +324,7 @@ func TestRecordFailure(t *testing.T) {
 func TestRecordFailureFunction(t *testing.T) {
 	mockPatcher := mocks.NewStatusPatcher(t)
 	mockFactory := repository.NewMockFactory(t)
-	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 	validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
 	hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
@@ -504,7 +504,7 @@ func TestRefreshHealth(t *testing.T) {
 			}
 
 			mockFactory := repository.NewMockFactory(t)
-			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
 			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
@@ -639,7 +639,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 
 			// Create health checker with validator and tester
 			mockFactory := repository.NewMockFactory(t)
-			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
 			hc := NewHealthChecker(nil, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 
@@ -749,7 +749,7 @@ func TestHasHealthStatusChanged(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
-			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
 			hc := NewHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewSimpleRepositoryTester(validator))
 

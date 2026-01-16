@@ -754,8 +754,10 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		}
 
 		// Structural validation without decryption
-		if err := b.connectionFactory.Validate(ctx, c); err != nil {
-			return err
+		if list := b.connectionFactory.Validate(ctx, c); len(list) > 0 {
+			return apierrors.NewInvalid(
+				provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
+				c.GetName(), list)
 		}
 
 		// Note: Runtime validation (e.g., checking GitHub API) is skipped during admission

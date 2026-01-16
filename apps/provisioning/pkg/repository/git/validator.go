@@ -11,7 +11,7 @@ import (
 )
 
 // Validate validates the git repository configuration without requiring decrypted secrets.
-func Validate(_ context.Context, obj runtime.Object) error {
+func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil
@@ -23,13 +23,12 @@ func Validate(_ context.Context, obj runtime.Object) error {
 
 	cfg := repo.Spec.Git
 	if cfg == nil {
-		return toRepoError(repo.Name, field.ErrorList{
+		return field.ErrorList{
 			field.Required(field.NewPath("spec", "git"), "git configuration is required for git repository type"),
-		})
+		}
 	}
 
-	list := validateGitConfig(repo, cfg)
-	return toRepoError(repo.Name, list)
+	return validateGitConfig(repo, cfg)
 }
 
 // validateGitConfig validates the git configuration fields.
@@ -109,12 +108,4 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 	}
 
 	return list
-}
-
-func toRepoError(name string, list field.ErrorList) error {
-	if len(list) == 0 {
-		return nil
-	}
-
-	return list.ToAggregate()
 }

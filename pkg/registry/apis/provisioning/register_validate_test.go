@@ -8,6 +8,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
@@ -20,7 +21,7 @@ import (
 
 func TestAPIBuilderValidate(t *testing.T) {
 	factory := repository.NewMockFactory(t)
-	factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+	factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 	validator := repository.NewValidator(30*time.Second, []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder}, false, factory)
 	b := &APIBuilder{
 		repoFactory:         factory,

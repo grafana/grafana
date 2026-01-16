@@ -12,7 +12,7 @@ import (
 )
 
 // Validate validates the github repository configuration without requiring decrypted secrets.
-func Validate(_ context.Context, obj runtime.Object) error {
+func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil
@@ -24,9 +24,9 @@ func Validate(_ context.Context, obj runtime.Object) error {
 
 	gh := repo.Spec.GitHub
 	if gh == nil {
-		return toRepoError(repo.Name, field.ErrorList{
+		return field.ErrorList{
 			field.Required(field.NewPath("spec", "github"), "a github config is required"),
-		})
+		}
 	}
 
 	var list field.ErrorList
@@ -43,18 +43,10 @@ func Validate(_ context.Context, obj runtime.Object) error {
 	}
 
 	if len(list) > 0 {
-		return toRepoError(repo.Name, list)
+		return list
 	}
 
 	// Validate git-related fields (branch, path, token/connection) using the shared git validator
-	list = git.ValidateGitConfigFields(repo, gh.URL, gh.Branch, gh.Path)
-	return toRepoError(repo.Name, list)
-}
-
-func toRepoError(name string, list field.ErrorList) error {
-	if len(list) == 0 {
-		return nil
-	}
-
-	return list.ToAggregate()
+	list = append(list, git.ValidateGitConfigFields(repo, gh.URL, gh.Branch, gh.Path)...)
+	return list
 }

@@ -11,7 +11,7 @@ import (
 
 // Validate validates the github connection configuration without requiring decrypted secrets.
 // This performs structural validation only - it does not verify the connection works.
-func Validate(_ context.Context, obj runtime.Object) error {
+func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 	conn, ok := obj.(*provisioning.Connection)
 	if !ok {
 		return nil
@@ -30,7 +30,7 @@ func Validate(_ context.Context, obj runtime.Object) error {
 		)
 
 		// Doesn't make much sense to continue validating a connection with no information.
-		return toConnError(conn.GetName(), list)
+		return list
 	}
 
 	// Check if required secure values are present (without decryption)
@@ -52,13 +52,5 @@ func Validate(_ context.Context, obj runtime.Object) error {
 		list = append(list, field.Required(field.NewPath("spec", "github", "installationID"), "installationID must be specified for GitHub connection"))
 	}
 
-	return toConnError(conn.GetName(), list)
-}
-
-func toConnError(name string, list field.ErrorList) error {
-	if len(list) == 0 {
-		return nil
-	}
-
-	return list.ToAggregate()
+	return list
 }

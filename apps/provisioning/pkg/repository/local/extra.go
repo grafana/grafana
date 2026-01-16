@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 type extra struct {
@@ -34,6 +35,6 @@ func (e *extra) Mutate(_ context.Context, _ runtime.Object) error {
 	return nil
 }
 
-func (e *extra) Validate(ctx context.Context, obj runtime.Object) error {
+func (e *extra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
 	return Validate(ctx, obj, e.resolver)
 }

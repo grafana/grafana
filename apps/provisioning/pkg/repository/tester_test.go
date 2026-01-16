@@ -101,7 +101,7 @@ func TestTestRepository(t *testing.T) {
 	}
 
 	mockFactory := NewMockFactory(t)
-	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory))
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -141,7 +141,7 @@ func TestTester_TestRepository(t *testing.T) {
 	}, nil)
 
 	mockFactory := NewMockFactory(t)
-	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory))
 	results, err := tester.TestRepository(context.Background(), repository)
 	require.NoError(t, err)
