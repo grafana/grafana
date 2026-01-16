@@ -67,6 +67,11 @@ export interface RadialGaugeProps {
   /** Specify which text should be visible  */
   textMode?: RadialTextMode;
   showScaleLabels?: boolean;
+  /**
+   * If set, the gauge will use the neutral value instead of the min value as the starting point for a gauge.
+   * this is most useful when you need to show positive and negative values on a gauge.
+   */
+  neutral?: number;
   /** For data links */
   onClick?: React.MouseEventHandler<HTMLElement>;
   timeRange?: TimeRange;
@@ -91,6 +96,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     roundedBars = true,
     thresholdsBar = false,
     showScaleLabels = false,
+    neutral,
     endpointMarker,
     onClick,
     values,
@@ -113,7 +119,13 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const displayValue = values[barIndex];
-    const { angle, angleRange } = getValueAngleForValue(displayValue, startAngle, endAngle);
+    const { startValueAngle, endValueAngle, angleRange } = getValueAngleForValue(
+      displayValue,
+      startAngle,
+      endAngle,
+      neutral
+    );
+
     const gradientStops = gradient ? buildGradientColors(theme, displayValue) : undefined;
     const color = displayValue.display.color ?? FALLBACK_COLOR;
     const dimensions = calculateDimensions(
@@ -140,7 +152,7 @@ export function RadialGauge(props: RadialGaugeProps) {
         <SpotlightGradient
           key={spotlightGradientId}
           id={spotlightGradientId}
-          angle={angle + startAngle}
+          angle={endValueAngle + startAngle}
           dimensions={dimensions}
           roundedBars={roundedBars}
           theme={theme}
@@ -156,6 +168,8 @@ export function RadialGauge(props: RadialGaugeProps) {
           fieldDisplay={displayValue}
           angleRange={angleRange}
           startAngle={startAngle}
+          startValueAngle={startValueAngle}
+          endValueAngle={endValueAngle}
           glowFilter={glowFilterRef}
           segmentCount={segmentCount}
           segmentSpacing={segmentSpacing}
@@ -168,9 +182,10 @@ export function RadialGauge(props: RadialGaugeProps) {
         <RadialBar
           key={`radial-bar-${barIndex}-${gaugeId}`}
           dimensions={dimensions}
-          angle={angle}
           angleRange={angleRange}
           startAngle={startAngle}
+          startValueAngle={startValueAngle}
+          endValueAngle={endValueAngle}
           roundedBars={roundedBars}
           glowFilter={glowFilterRef}
           endpointMarkerGlowFilter={spotlightGradientRef}
@@ -221,6 +236,7 @@ export function RadialGauge(props: RadialGaugeProps) {
               dimensions={dimensions}
               startAngle={startAngle}
               endAngle={endAngle}
+              neutral={neutral}
             />
           );
         }

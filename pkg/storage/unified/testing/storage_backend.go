@@ -93,12 +93,11 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 	}
 
 	for _, tc := range cases {
-		if shouldSkip := opts.SkipTests[tc.name]; shouldSkip {
-			t.Logf("Skipping test: %s", tc.name)
-			continue
-		}
-
 		t.Run(tc.name, func(t *testing.T) {
+			if opts.SkipTests[tc.name] {
+				t.Skip()
+			}
+
 			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
 		})
 	}
@@ -550,7 +549,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			Resource:  "resource",
 		}
 		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
-		require.Greater(t, latestRv, rvCreated)
+		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
 		counter := 0
 		for res, err := range seq {
@@ -612,23 +611,43 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		require.Equal(t, 1, counter) // only one event should be returned
 	})
 
-	t.Run("will order events by resource version ascending and name descending", func(t *testing.T) {
+	t.Run("everything all at once", func(t *testing.T) {
 		key := resource.NamespacedResource{
 			Namespace: ns,
 			Group:     "group",
 			Resource:  "resource",
 		}
 
-		rvCreated1, _ := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
-		rvCreated2, _ := writeEvent(ctx, backend, "aItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
-		rvCreated3, _ := writeEvent(ctx, backend, "bItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		rv1, err := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		require.NoError(t, err)
+		rv2, err := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv1))
+		require.NoError(t, err)
+		rv3, err := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv2))
+		require.NoError(t, err)
+		// add a few events to another namespace in between events for the one we're testing
+		rv4, err := writeEvent(ctx, backend, "otherNsItem", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
+		require.NoError(t, err)
+		rv5, err := writeEvent(ctx, backend, "otherNsItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV("other-ns", rv4))
+		require.NoError(t, err)
+		_, err = writeEvent(ctx, backend, "otherNsItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV("other-ns", rv5))
+		require.NoError(t, err)
+		rv6, err := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv3))
+		require.NoError(t, err)
+		rv7, err := writeEvent(ctx, backend, "aItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		require.NoError(t, err)
+		rv8, err := writeEvent(ctx, backend, "aItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv7))
+		require.NoError(t, err)
+		rv9, err := writeEvent(ctx, backend, "aItem", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv8))
+		require.NoError(t, err)
+		rv10, err := writeEvent(ctx, backend, "bItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		require.NoError(t, err)
 
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated1-1)
-		require.Greater(t, latestRv, rvCreated3)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rv1-1)
+		require.GreaterOrEqual(t, latestRv, rv10)
 
 		counter := 0
-		names := []string{"aItem", "bItem", "cItem"}
-		rvs := []int64{rvCreated2, rvCreated3, rvCreated1}
+		names := []string{"bItem", "aItem", "cItem"}
+		rvs := []int64{rv10, rv9, rv6}
 		for res, err := range seq {
 			require.NoError(t, err)
 			require.Equal(t, key.Namespace, res.Key.Namespace)
@@ -1166,7 +1185,7 @@ func runTestIntegrationBackendCreateNewResource(t *testing.T, backend resource.S
 	}))
 
 	server := newServer(t, backend)
-	ns := nsPrefix + "-create-resource"
+	ns := nsPrefix + "-create-rsrce" // create-resource
 	ctx = request.WithNamespace(ctx, ns)
 
 	request := &resourcepb.CreateRequest{
@@ -1607,7 +1626,7 @@ func (s *sliceBulkRequestIterator) RollbackRequested() bool {
 
 func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-optimistic-locking"
+	ns := nsPrefix + "-optimis-lock" // optimistic-locking. need to cut down on characters to not exceed namespace character limit (40)
 
 	t.Run("concurrent updates with same RV - only one succeeds", func(t *testing.T) {
 		// Create initial resource with rv0 (no previous RV)

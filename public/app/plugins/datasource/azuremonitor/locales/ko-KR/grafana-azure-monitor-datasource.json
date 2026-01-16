@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure 로그 쿼리 시작 버튼",
       "body-switching-to-builder": "빌더로 전환하면 현재 KQL 쿼리가 취소되고 KQL 편집기가 지워집니다. 정말 진행하시겠어요?",
-      "body-switching-to-kql": "KQL로 전환하면 현재 빌더 설정이 취소됩니다. 정말 진행하시겠어요?",
       "button-kick-start-your-query": "쿼리 시작하기",
       "button-run-query": "쿼리 실행",
       "confirmText-switch-to": "{{newMode}} 모드로 전환",

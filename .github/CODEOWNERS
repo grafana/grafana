@@ -441,6 +441,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/TestDashboard.json @grafana/dashboards-squad @grafana/grafana-search-navigate-organise
 /e2e-playwright/dashboards/TestV2Dashboard.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithRepeats.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/V2DashWithRowRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithTabRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/adhoc-filter-from-panel.spec.ts @grafana/datapro
 /e2e-playwright/dashboards-suite/dashboard-browse-nested.spec.ts @grafana/grafana-search-navigate-organise
@@ -543,6 +544,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/tsconfig.json @grafana/grafana-frontend-platform
 /packages/grafana-data/test/ @grafana/grafana-frontend-platform
 /packages/grafana-data/typings/ @grafana/grafana-frontend-platform
+/packages/grafana-data/scripts/ @grafana/grafana-frontend-platform
 
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-data/src/context/plugins/ @grafana/plugins-platform-frontend
@@ -658,6 +660,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/LocationService.tsx @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/services/LocationSrv.ts @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/services/live.ts @grafana/dashboards-squad
+/packages/grafana-runtime/src/services/pluginMeta @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/utils/chromeHeaderHeight.ts @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/utils/DataSourceWithBackend* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/licensing.ts @grafana/grafana-operator-experience-squad

@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -6,6 +7,11 @@ import { checkRequiredFeatures } from '../GettingStarted/features';
 import { CONNECTIONS_URL, CONNECT_URL, GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
+  const featureToggles = config.featureToggles || {};
+  if (!featureToggles.provisioning) {
+    return [];
+  }
+
   if (!checkRequiredFeatures()) {
     return [
       {
