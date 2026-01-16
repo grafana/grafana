@@ -6,6 +6,7 @@ import { CustomCellRendererProps, useStyles2 } from '@grafana/ui';
 import { LogsFrame } from '../../../features/logs/logsFrame';
 
 import { LogsNGTableRowActionButtons } from './LogsNGTableRowActionButtons';
+import { ROW_ACTION_BUTTON_WIDTH } from './LogsTable';
 import { BuildLinkToLogLine } from './types';
 
 export function LogsTableCustomCellRenderer(props: {
@@ -35,7 +36,7 @@ const buildLinkToLog: BuildLinkToLogLine = (logsFrame, rowIndex, field) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     firstColumnCell: css({
-      paddingLeft: theme.spacing(10),
+      paddingLeft: ROW_ACTION_BUTTON_WIDTH,
     }),
   };
 };

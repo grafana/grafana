@@ -7,6 +7,7 @@ import {
   DataFrame,
   Field,
   FieldConfigSource,
+  getFieldDisplayName,
   GrafanaTheme2,
   PanelProps,
   transformDataFrame,
@@ -29,6 +30,7 @@ import { isSetDisplayedFields } from '../logs/types';
 import { TablePanel } from '../table/TablePanel';
 import type { Options as TableOptions } from '../table/panelcfg.gen';
 
+import { buildColumnsWithMeta } from './ColumnsWithMeta';
 import { LogsTableCustomCellRenderer } from './CustomCellRenderer';
 import type { Options as LogsTableOptions } from './panelcfg.gen';
 import { isBuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
@@ -40,6 +42,8 @@ interface LogsTablePanelProps extends PanelProps<LogsTableOptions> {
 
 // Defaults
 const DEFAULT_SIDEBAR_WIDTH = 200;
+const DEFAULT_TIME_FIELD_WIDTH = 160;
+export const ROW_ACTION_BUTTON_WIDTH = 80;
 
 export const LogsTable = ({
   data,
@@ -78,6 +82,7 @@ export const LogsTable = ({
   const [extractedFrame, setExtractedFrame] = useState<DataFrame[] | null>(null);
   const [organizedFrame, setOrganizedFrame] = useState<DataFrame[] | null>(null);
   const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? defaultDisplayedFields);
+  const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | null>(null);
   const styles = useStyles2(getStyles, DEFAULT_SIDEBAR_WIDTH, height, width);
   const dataLinksContext = useDataLinksContext();
   const dataLinkPostProcessor = dataLinksContext.dataLinkPostProcessor;
@@ -121,10 +126,15 @@ export const LogsTable = ({
     [onFieldConfigChange]
   );
 
+  const handleSetColumnsWithMeta = useCallback((columnsWithMeta: FieldNameMetaStore) => {
+    setColumnsWithMeta(columnsWithMeta);
+  }, []);
+
   /**
    * Extract fields transform
    */
   useEffect(() => {
+    // @todo move
     const extractFields = async () => {
       return await lastValueFrom(
         transformDataFrame(getLogsExtractFields(unTransformedDataFrame), [unTransformedDataFrame])
@@ -148,6 +158,7 @@ export const LogsTable = ({
    * Organize fields transform
    */
   useEffect(() => {
+    // @todo move
     const organizeFields = async (displayedFields: string[]) => {
       if (!extractedFrame) {
         return Promise.resolve(null);
@@ -185,14 +196,13 @@ export const LogsTable = ({
         const frame = organizedFrame[frameIndex];
         for (const [fieldIndex, field] of frame.fields.entries()) {
           const isFirstField = fieldIndex === 0;
-
           field.config = {
             ...field.config,
             filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field, logsFrame),
             custom: {
               ...field.config.custom,
+              width: getFieldWidth(field.config.custom?.width, field, fieldIndex, logsFrame),
               inspect: field.config?.custom?.inspect ?? doesFieldSupportInspector(field, logsFrame),
-              // @todo add row actions panel option
               cellOptions:
                 isFirstField && logsFrame
                   ? {
@@ -207,7 +217,7 @@ export const LogsTable = ({
                         />
                       ),
                     }
-                  : field.config.custom?.cellOptions,
+                  : undefined,
             },
           };
         }
@@ -223,21 +233,41 @@ export const LogsTable = ({
     });
   }, [extractedFrame, displayedFields, logsFrame, options.buildLinkToLogLine]);
 
-  if (extractedFrame === null || organizedFrame === null || logsFrame === null) {
+  /**
+   * Build columns meta
+   */
+  useEffect(() => {
+    if (extractedFrame === null) {
+      return;
+    }
+    const extractedLogsFrame = parseLogsFrame(extractedFrame[0]);
+    if (extractedLogsFrame === null) {
+      return;
+    }
+    handleSetColumnsWithMeta(
+      buildColumnsWithMeta(extractedLogsFrame, extractedLogsFrame?.timeField.values.length, displayedFields)
+    );
+  }, [displayedFields, handleSetColumnsWithMeta, extractedFrame]);
+
+  if (extractedFrame === null || organizedFrame === null || logsFrame === null || columnsWithMeta === null) {
     return;
   }
 
-  console.log('render::LogsTable', { extractedFrame, organizedFrame });
+  console.log('render::LogsTable', { extractedFrame, organizedFrame, columnsWithMeta });
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.sidebarWrapper}>
         <LogsTableFieldSelector
-          clear={() => {}}
-          columnsWithMeta={displayedFieldsToColumns(displayedFields, logsFrame)}
+          clear={() => {
+            handleSetDisplayedFields(defaultDisplayedFields);
+          }}
+          columnsWithMeta={columnsWithMeta}
           dataFrames={extractedFrame}
           logs={[]}
-          reorder={(columns: string[]) => {}}
+          reorder={(columns: string[]) => {
+            handleSetDisplayedFields(columns);
+          }}
           setSidebarWidth={(width) => {}}
           sidebarWidth={DEFAULT_SIDEBAR_WIDTH}
           toggle={(key: string) => {
@@ -273,34 +303,35 @@ export const LogsTable = ({
   );
 };
 
-function displayedFieldsToColumns(displayedFields: string[], logsFrame: LogsFrame): FieldNameMetaStore {
-  const columns: FieldNameMetaStore = {};
-  for (const [idx, field] of displayedFields.entries()) {
-    columns[field] = {
-      percentOfLinesWithLabel: 0,
-      type:
-        field === logsFrame.bodyField.name
-          ? 'BODY_FIELD'
-          : field === logsFrame.timeField.name
-            ? 'TIME_FIELD'
-            : undefined,
-      active: true,
-      index: idx,
-    };
+function getFieldWidth(width: number | undefined, field: Field, fieldIndex: number, logsFrame: LogsFrame) {
+  if (width !== undefined) {
+    if (fieldIndex === 0) {
+      return width + ROW_ACTION_BUTTON_WIDTH;
+    }
+    return width;
   }
 
-  return columns;
+  return width ?? getDefaultFieldWidth(field, fieldIndex, logsFrame);
+}
+
+function getDefaultFieldWidth(field: Field, fieldIndex: number, logsFrame: LogsFrame): number | undefined {
+  if (getFieldDisplayName(field) === logsFrame.timeField.name) {
+    if (fieldIndex === 0) {
+      return DEFAULT_TIME_FIELD_WIDTH + ROW_ACTION_BUTTON_WIDTH;
+    }
+    return DEFAULT_TIME_FIELD_WIDTH;
+  }
+
+  return undefined;
 }
 
 function doesFieldSupportInspector(field: Field, logsFrame: LogsFrame) {
-  // const unsupportedFields = [logsFrame.bodyField.name]
-  // return !unsupportedFields.includes(field.name);
   return false;
 }
 
 function doesFieldSupportAdHocFiltering(field: Field, logsFrame: LogsFrame): boolean {
   const unsupportedFields = [logsFrame.timeField.name, logsFrame.bodyField.name];
-  return !unsupportedFields.includes(field.name);
+  return !unsupportedFields.includes(getFieldDisplayName(field));
 }
 
 const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, width: number) => {
