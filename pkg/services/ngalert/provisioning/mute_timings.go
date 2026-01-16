@@ -62,9 +62,10 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 		return nil, err
 	}
 
-	intervals := getTimeIntervals(rev)
+	grafanaIntervals := getGrafanaTimeIntervals(rev)
+	importedIntervals := svc.getImportedTimeIntervals(rev)
 
-	if len(intervals) == 0 {
+	if len(grafanaIntervals)+len(importedIntervals) == 0 {
 		return []definitions.MuteTimeInterval{}, nil
 	}
 
@@ -73,22 +74,24 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 		return nil, err
 	}
 
-	slices.SortFunc(intervals, func(a, b config.MuteTimeInterval) int {
+	result := make([]definitions.MuteTimeInterval, 0, len(grafanaIntervals))
+	for _, interval := range grafanaIntervals {
+		prov, ok := provenances[(&definitions.MuteTimeInterval{MuteTimeInterval: interval}).ResourceID()]
+		if !ok {
+			prov = models.ProvenanceNone
+		}
+
+		result = append(result, newMuteTimingInterval(interval, definitions.Provenance(prov)))
+	}
+
+	for _, interval := range importedIntervals {
+		result = append(result, newMuteTimingInterval(interval, definitions.Provenance(models.ProvenanceConvertedPrometheus)))
+	}
+
+	slices.SortFunc(result, func(a, b definitions.MuteTimeInterval) int {
 		return strings.Compare(a.Name, b.Name)
 	})
-	result := make([]definitions.MuteTimeInterval, 0, len(intervals))
-	for _, interval := range intervals {
-		version := calculateMuteTimeIntervalFingerprint(interval)
-		def := definitions.MuteTimeInterval{
-			UID:              legacy_storage.NameToUid(interval.Name),
-			MuteTimeInterval: interval,
-			Version:          version,
-		}
-		if prov, ok := provenances[def.ResourceID()]; ok {
-			def.Provenance = definitions.Provenance(prov)
-		}
-		result = append(result, def)
-	}
+
 	return result, nil
 }
 
