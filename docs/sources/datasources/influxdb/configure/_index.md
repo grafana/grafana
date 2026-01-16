@@ -5,13 +5,16 @@ aliases:
   - ../features/datasources/influxdb/
   - provision-influxdb/
   - ../influxdb/configure-influxdb-data-source/
-description: Guide for using InfluxDB in Grafana
+description: Guide for configuring the InfluxDB data source in Grafana
 keywords:
   - grafana
   - influxdb
-  - guide
+  - data source
   - flux
+  - influxql
+  - sql
   - terraform
+  - provisioning
 labels:
   products:
     - cloud
