@@ -4,6 +4,7 @@ aliases:
   - ../data-sources/influxdb/provision-influxdb/
   - ../features/datasources/influxdb/
   - provision-influxdb/
+  - ../influxdb/configure-influxdb-data-source/
 description: Guide for using InfluxDB in Grafana
 keywords:
   - grafana
@@ -16,7 +17,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure the InfluxDB data source
+menuTitle: Configure
 title: Configure the InfluxDB data source
 weight: 300
 refs:
@@ -160,16 +161,16 @@ The following table shows which fields are required for each query language:
 | **Password**       |          | &#x2713;     |          |
 | **Token**          | &#x2713; |              | &#x2713; |
 
-- **Organization** - Sets the [InfluxDB organization](https://v2.docs.influxdata.com/v2.0/organizations/) used for Flux queries. Also used for the `v.organization` query macro.
-- **Default Bucket** - The [InfluxDB bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) used for the `v.defaultBucket` macro in Flux queries.
-- **Database** - Sets the database name to query. Refer to [View buckets](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) in InfluxData's documentation on how to locate the list of available buckets and their corresponding IDs.
+- **Organization** - Sets the [InfluxDB organization](https://docs.influxdata.com/influxdb/v2/admin/organizations/) used for Flux queries. Also used for the `v.organization` query macro.
+- **Default Bucket** - The [InfluxDB bucket](https://docs.influxdata.com/influxdb/v2/admin/buckets/) used for the `v.defaultBucket` macro in Flux queries.
+- **Database** - Sets the database name to query. Refer to [View buckets](https://docs.influxdata.com/influxdb/v2/admin/buckets/view-buckets/) in InfluxData's documentation on how to locate the list of available buckets and their corresponding IDs.
 - **User** - The username used to sign in to InfluxDB.
 - **Password** - The password for the specified user. Used with InfluxQL queries.
-- **Token** - The authentication token used to query InfluxDB. Retrieve this from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) in the InfluxDB UI.
+- **Token** - The authentication token used to query InfluxDB. Retrieve this from the [Tokens page](https://docs.influxdata.com/influxdb/v2/admin/tokens/view-tokens/) in the InfluxDB UI.
 
 **For Flux**
 
-- With InfluxDB 2.x products, use the [InfluxDB authentication token](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).
+- With InfluxDB 2.x products, use the [InfluxDB authentication token](https://docs.influxdata.com/influxdb/v2/admin/tokens/create-token/).
 - For InfluxDB 1.8, the token is `username:password`.
 
 #### Advanced database settings
