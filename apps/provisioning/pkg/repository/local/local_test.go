@@ -255,7 +255,6 @@ func TestLocalRepository_Test(t *testing.T) {
 	}
 }
 
-
 func TestInvalidLocalFolderError(t *testing.T) {
 	testCases := []struct {
 		name           string

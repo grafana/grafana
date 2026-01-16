@@ -416,4 +416,3 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 		})
 	}
 }
-
