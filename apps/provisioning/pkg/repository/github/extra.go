@@ -5,13 +5,15 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/util"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
+//go:generate mockery --name WebhookURLBuilder --structname MockWebhookURLBuilder --inpackage --filename webhook_builder_mock.go --with-expecter
 type WebhookURLBuilder interface {
 	WebhookURL(ctx context.Context, r *provisioning.Repository) string
 }
@@ -35,24 +37,22 @@ func (e *extra) Type() provisioning.RepositoryType {
 }
 
 func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+	if r == nil || r.Spec.GitHub == nil {
+		return nil, fmt.Errorf("github configuration is required")
+	}
 	logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
 	logger.Info("Instantiating Github repository")
 
 	secure := e.decrypter(r)
-	cfg := r.Spec.GitHub
-	if cfg == nil {
-		return nil, fmt.Errorf("github configuration is required")
-	}
-
 	token, err := secure.Token(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
 	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
-		URL:    cfg.URL,
-		Branch: cfg.Branch,
-		Path:   cfg.Path,
+		URL:    r.Spec.GitHub.URL,
+		Branch: r.Spec.GitHub.Branch,
+		Path:   r.Spec.GitHub.Path,
 		Token:  token,
 	})
 	if err != nil {

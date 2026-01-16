@@ -919,7 +919,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
-	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, githubFactory)
+	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory)
 	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v7)
 	if err != nil {
 		return nil, err
@@ -1590,7 +1590,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
-	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, githubFactory)
+	v7 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory)
 	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v7)
 	if err != nil {
 		return nil, err
