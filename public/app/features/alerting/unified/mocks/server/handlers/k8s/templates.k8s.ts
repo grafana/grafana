@@ -1,23 +1,24 @@
 import { HttpResponse, http } from 'msw';
 
-import { TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import {
+  API_GROUP,
+  API_VERSION,
+  TemplateGroup,
+  TemplateGroupTemplateKind,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
-import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup } from 'app/features/alerting/unified/openapi/templatesApi.gen';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
-type TemplateGroupSpecWithKind = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup['spec'] & {
-  kind?: TemplateGroupTemplateKind;
-};
+const apiVersion = `${API_GROUP}/${API_VERSION}`;
+const kind = 'TemplateGroup';
 
 // Map alertmanager templates to k8s templates
-const mappedTemplates = Object.entries(
-  config.template_files || {}
-).map<ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup>(([title, template]) => ({
+const mappedTemplates = Object.entries(config.template_files || {}).map<TemplateGroup>(([title, template]) => ({
   metadata: {
     name: titleToK8sResourceName(title), // K8s uses unique identifiers for resources
     annotations: { [PROVENANCE_ANNOTATION]: config.template_file_provenances?.[title] || KnownProvenance.None },
@@ -26,19 +27,16 @@ const mappedTemplates = Object.entries(
     title: title,
     content: template,
     kind: 'grafana',
-  } as TemplateGroupSpecWithKind,
+  },
+  apiVersion,
+  kind,
 }));
 
-const templatesDb = new Map<string, ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup>(
-  mappedTemplates.map((t) => [t.metadata.name!, t])
-);
+const templatesDb = new Map<string, TemplateGroup>(mappedTemplates.map((t) => [t.metadata.name!, t]));
 
 const listNamespacedTemplateHandler = () =>
   http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/templategroups`, () => {
-    const parsedTemplates = getK8sResponse<ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup>(
-      'TemplateGroupList',
-      Array.from(templatesDb.values())
-    );
+    const parsedTemplates = getK8sResponse<TemplateGroup>('TemplateGroupList', Array.from(templatesDb.values()));
 
     return HttpResponse.json(parsedTemplates);
   });
@@ -58,10 +56,7 @@ const getNamespacedTemplateHandler = () =>
   );
 
 const putNamespacedTemplateHandler = () =>
-  http.put<
-    { namespace: string; name: string },
-    ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
-  >(
+  http.put<{ namespace: string; name: string }, TemplateGroup>(
     `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/templategroups/:name`,
     async ({ params: { name }, request }) => {
       const template = templatesDb.get(name);
@@ -117,7 +112,9 @@ export function addTemplateToDb(title: string, content: string, kind: TemplateGr
       title,
       content,
       kind,
-    } as TemplateGroupSpecWithKind,
+    },
+    apiVersion,
+    kind,
   });
 }
 
