@@ -113,6 +113,20 @@ export class GeomapPanel extends Component<Props, State> {
 
   componentWillUnmount() {
     this.subs.unsubscribe();
+
+    // Clear any pending debounce timeout
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
+
+    // Unregister view listener
+    if (this.viewListernerKey && this.map) {
+      const view = this.map.getView();
+      view.un('change', this.viewListernerKey.listener);
+      this.viewListernerKey = null;
+    }
+
     for (const lyr of this.layers) {
       lyr.handler.dispose?.();
     }
@@ -242,8 +256,8 @@ export class GeomapPanel extends Component<Props, State> {
   // updateGeoVariables debounce timeout
   private timeoutId: NodeJS.Timeout | null = null; // for debounce
 
-  // Updates the dashboard variable `mapViewData` with the view extent value.
-  // Use a debounce strategy to wait the user stop dragging or zooming the map.
+  // Updates the dashboard variable with the view extent value.
+  // Use a debounce strategy to wait for the user to stop dragging or zooming the map.
   updateGeoVariables = (view: View, options: Options) => {
     const bounds = view.calculateExtent();
     const bounds4326 = transformExtent(bounds, 'EPSG:3857', 'EPSG:4326');
@@ -251,10 +265,15 @@ export class GeomapPanel extends Component<Props, State> {
       clearTimeout(this.timeoutId);
     }
     this.timeoutId = setTimeout(() => {
-      if (options.controls.showDebug) {
-        console.log('GeomapPanel.updateGeoVariables', bounds4326);
+      const variableName = options.view.dashboardVariableName;
+      if (!variableName) {
+        return;
       }
-      locationService.partial({ 'var-mapViewData': `${bounds4326}` }, true);
+      if (options.controls.showDebug) {
+        console.log('GeomapPanel.updateGeoVariables', variableName, bounds4326);
+      }
+      // Store as comma-separated values: minLon,minLat,maxLon,maxLat
+      locationService.partial({ [`var-${variableName}`]: `${bounds4326}` }, true);
     }, 500);
   };
 

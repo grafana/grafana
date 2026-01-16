@@ -177,16 +177,6 @@ Default Views are also available including:
 | South Asia | South-East Asia | East Asia | Australia | Oceania |
 <!-- prettier-ignore-end -->
 
-#### Enable dashboard variable (Experimental)
-
-When toggled, the Geomap panel updates the dashboard variable named `mapViewData` (if it exists) with the bounding box data of the current view.
-
-The variable should be of the type `Custom` and can be hidden on the dashboard by setting its visibility to “Nothing” (Show on dashboard: Nothing).
-
-You can use then the variable inside your query to receive on the server side a string like this:
-
-    4.102646520428928,44.489253792751214,12.793524298588558,46.4346026776777
-
 #### Share view
 
 The **Share view** option allows you to link the movement and zoom actions of multiple map visualizations within the same dashboard. The map visualizations that have this option enabled act in tandem when one of them is moved or zoomed, leaving the other ones independent.
@@ -198,6 +188,17 @@ You might need to reload the dashboard for this feature to work.
 #### No map repeating
 
 The **No map repeating** option prevents the base map tiles from repeating horizontally when you pan across the world. This constrains the view to a single instance of the world map and avoids visual confusion when displaying global datasets. Enabling this option requires the map to reinitialize.
+
+#### Enable dashboard variable
+
+Stores the current map viewport bounding box in a dashboard variable.
+
+1. Create a Custom dashboard variable first
+2. Enable this option
+3. Select the variable name from the dropdown
+4. Use the variable in your queries
+
+The variable contains an array of coordinates (EPSG:4326): `[minLon,minLat,maxLon,maxLat]`
 
 ### Map layers options
 
