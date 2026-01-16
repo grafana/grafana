@@ -70,9 +70,7 @@ You are taken to the **Settings** tab where you will configure the data source. 
 
 The following is a list of configuration options for InfluxDB.
 
-{{< admonition type="note" >}}
-Placeholder: Add screenshot of the new InfluxDB configuration UI showing the sidebar navigation and main settings.
-{{< /admonition >}}
+![Updated UI image for InfluxDB](/media/docs/influxdb/nfluxdb-updated-ui-v12.3.png.png)
 
 The first option is to configure the name of your connection.
 
