@@ -3127,11 +3127,6 @@
       "count": 1
     }
   },
-  "public/app/features/search/service/bluge.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    }
-  },
   "public/app/features/search/state/SearchStateManager.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

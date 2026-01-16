@@ -227,22 +227,22 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     // Only dashboards have additional properties
     if (q.sort?.length && !q.sort.includes('name')) {
-      q.kind = ['dashboard', 'folder']; // skip panels
+      q.kind = ['dashboard', 'folder'];
     }
 
     if (!q.query?.length) {
       q.query = '*';
       if (!q.location) {
-        q.kind = ['dashboard', 'folder']; // skip panels
+        q.kind = ['dashboard', 'folder'];
       }
     }
 
-    if (!this.state.includePanels && !q.kind) {
-      q.kind = ['dashboard', 'folder']; // skip panels
+    if (!q.kind) {
+      q.kind = ['dashboard', 'folder'];
     }
 
-    if (q.panel_type?.length) {
-      q.kind = ['panel'];
+    if (this.state.includePanels && q.kind.includes('dashboard')) {
+      q.panelTitleSearch = true;
     }
 
     return q;

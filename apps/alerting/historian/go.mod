@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/alerting/historian
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/go-kit/log v0.2.1
@@ -19,7 +19,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
-	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
+	github.com/HdrHistogram/hdrhistogram-go v1.2.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect

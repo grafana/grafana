@@ -3771,7 +3771,6 @@
       "all-failed_other": "Failed to restore {{count}} dashboards",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboards failed",
-      "success": "Dashboards restored successfully",
       "success-count_one": "{{count}} dashboard restored successfully",
       "success-count_other": "{{count}} dashboards restored successfully"
     },
@@ -5341,6 +5340,7 @@
       },
       "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
+      "new-row-title": "New row",
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
@@ -7991,6 +7991,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
+    "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "Gauge",
@@ -9352,8 +9353,8 @@
       "actions-confirmation-label": "Confirmation message",
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
-      "footer-apply-series-as-filter": "Apply as filter",
-      "footer-apply-series-as-inverse-filter": "Apply as inverse filter",
+      "footer-apply-series-as-filter": "Filter on this value",
+      "footer-apply-series-as-inverse-filter": "Filter out this value",
       "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}",
       "footer-filter-for-value": "Filter for '{{value}}'",
@@ -12572,6 +12573,11 @@
       "endpoint-marker-glow": "Glow",
       "endpoint-marker-none": "None",
       "endpoint-marker-point": "Point",
+      "neutral": {
+        "description": "Leave empty to use Min as neutral point",
+        "placeholder": "none",
+        "title": "Neutral value"
+      },
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
       "shape": "Style",
@@ -12584,7 +12590,8 @@
       "text-mode-none": "None",
       "text-mode-value": "Value",
       "text-mode-value-and-name": "Value and Name",
-      "threshold-labels": "Show threshold labels",
+      "threshold-labels": "Show labels",
+      "threshold-labels-description": "Display threshold and neutral values",
       "threshold-markers": "Show thresholds"
     }
   },
@@ -12742,14 +12749,6 @@
       "starred": "Starred",
       "view-as-folders": "View by folders",
       "view-as-list": "View as list"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alphabetically (A-Z)",
-          "alphabetically-za": "Alphabetically (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Import",

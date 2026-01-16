@@ -804,7 +804,8 @@
       "label-integration": "통합",
       "label-notification-settings": "알림 설정",
       "label-section": "{{name}} 설정(선택 사항)",
-      "test": "테스트"
+      "test": "테스트",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "의",
@@ -2168,11 +2169,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "이 리소스는 {{provenance}}을(를) 통해 프로비저닝되었으며 UI를 통해 편집할 수 없습니다.",
       "badge-tooltip-standard": "이 리소스는 프로비저닝되었으며 UI를 통해 편집할 수 없습니다.",
+      "body-imported": "",
       "body-provisioned": "이 {{resource}}이(가) 프로비저닝되었으며, 이는 구성에 의해 생성되었음을 의미합니다. 이 {{resource}}을(를) 업데이트하려면 서버 관리자에게 문의하세요.",
+      "title-imported": "",
       "title-provisioned": "이 {{resource}}은(는) UI에서 편집할 수 없습니다"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "프로비저닝됨"
       }
     },
@@ -2666,7 +2670,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3748,7 +3751,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_other": "",
       "failed-count_other": "",
       "success-count_other": ""
@@ -5318,6 +5320,7 @@
       },
       "header-hidden-tooltip": "행 헤더는 편집 모드에서만 표시됩니다",
       "name": "행",
+      "new-row-title": "",
       "row": {
         "collapse": "행 접기",
         "expand": "행 펼치기",
@@ -6358,12 +6361,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "클래식",
         "json": "JSON",
         "v1-resource": "V1 리소스",
         "v2-resource": "V2 리소스",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "정말 대시보드를 {{version}} 버전으로 복원하시겠어요? 저장하지 않은 변경 사항은 모두 손실됩니다.",
@@ -6956,6 +6962,7 @@
         "drone-datasource": "Drone 데이터 소스",
         "git-lab-integration-and-datasource": "GitLab 통합 및 데이터 소스",
         "honeycomb-integration-and-datasource": "Honeycomb 통합 및 데이터 소스",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira 통합 및 데이터 소스",
         "logic-monitor-devices-datasource": "LogicMonitor 장치 데이터 소스",
         "mongo-db-integration-and-data-source": "MongoDB 통합 및 데이터 소스",
@@ -7812,7 +7819,6 @@
       "export-externally-label": "다른 인스턴스에서 사용할 대시보드 내보내기",
       "export-format": "형식",
       "export-mode": "모델",
-      "export-remove-ds-refs": "배포 세부 정보 제거",
       "info-text": "대시보드의 정의가 포함된 파일을 복사하거나 다운로드",
       "title": "대시보드 내보내기"
     },
@@ -7959,6 +7965,7 @@
     "name-neutral": "중간임",
     "name-show-threshold-labels": "임계값 레이블 표시",
     "name-show-threshold-markers": "임계값 마커 표시",
+    "neutral": "",
     "placeholder-neutral": "자동",
     "suggestions": {
       "arc": "",
@@ -12513,6 +12520,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12526,6 +12538,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12681,14 +12694,6 @@
       "starred": "별표 표시됨",
       "view-as-folders": "폴더별로 보기",
       "view-as-list": "리스트로 보기"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "알파벳순(A~Z)",
-          "alphabetically-za": "알파벳순(Z~A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "가져오기",
