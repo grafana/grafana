@@ -384,7 +384,6 @@
 
 # Grafana app platform
 /pkg/services/live/ @grafana/grafana-app-platform-squad
-/pkg/services/searchV2/ @grafana/grafana-app-platform-squad
 /pkg/services/store/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad

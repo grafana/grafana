@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"strconv"
 	"strings"
@@ -203,6 +204,10 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				}
 				resultFp = data.Fingerprint(fp)
 			}
+			var stateError error
+			if entry.LastError != "" {
+				stateError = errors.New(entry.LastError)
+			}
 			state := &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
@@ -215,10 +220,12 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				EndsAt:               entry.CurrentStateEnd,
 				FiredAt:              entry.FiredAt,
 				LastEvaluationTime:   entry.LastEvalTime,
+				EvaluationDuration:   entry.EvaluationDuration,
 				Annotations:          annotations,
 				ResultFingerprint:    resultFp,
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
+				Error:                stateError,
 			}
 			st.cache.set(state)
 			statesCount++

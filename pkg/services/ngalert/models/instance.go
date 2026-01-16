@@ -7,18 +7,20 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	AlertInstanceKey  `xorm:"extends"`
-	Labels            InstanceLabels
-	Annotations       InstanceAnnotations
-	CurrentState      InstanceStateType
-	CurrentReason     string
-	CurrentStateSince time.Time
-	CurrentStateEnd   time.Time
-	LastEvalTime      time.Time
-	LastSentAt        *time.Time
-	FiredAt           *time.Time
-	ResolvedAt        *time.Time
-	ResultFingerprint string
+	AlertInstanceKey   `xorm:"extends"`
+	Labels             InstanceLabels
+	Annotations        InstanceAnnotations
+	CurrentState       InstanceStateType
+	CurrentReason      string
+	CurrentStateSince  time.Time
+	CurrentStateEnd    time.Time
+	LastEvalTime       time.Time
+	LastSentAt         *time.Time
+	FiredAt            *time.Time
+	ResolvedAt         *time.Time
+	ResultFingerprint  string
+	EvaluationDuration time.Duration `xorm:"evaluation_duration_ns"`
+	LastError          string        `xorm:"last_error"`
 }
 
 type AlertInstanceKey struct {
