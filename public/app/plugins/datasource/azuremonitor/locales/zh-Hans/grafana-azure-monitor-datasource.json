@@ -274,7 +274,7 @@
       "label-time-column": "时间列",
       "label-time-range": "时间范围",
       "tooltip-time-column": "<0>指定用于筛选条件的时间列。默认为第一个表格 <1>timeSpan</1> 列、找到的第一个 <3>datetime</3> 列，或 <5>TimeGenerated</5> 列</0>。",
-      "tooltip-time-range": "<0>指定用于查询的时间范围。<1>查询</1>选项将只使用查询中指定的时间范围。<3>数据面板</3>只使用 Grafana 时间范围。在日志生成器模式下，只会使用数据面板时间。</0>。"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "热门"

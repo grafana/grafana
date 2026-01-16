@@ -1905,7 +1905,10 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SearchTeamGroupsQueryResult"
+              "items": {
+                "$ref": "#/components/schemas/SearchTeamGroupsQueryResult"
+              },
+              "type": "array"
             }
           }
         },
@@ -4016,9 +4019,6 @@
           }
         },
         "type": "object"
-      },
-      "CookieType": {
-        "type": "string"
       },
       "Correlation": {
         "description": "Correlation is the model for correlations definitions",
@@ -8233,12 +8233,6 @@
       },
       "PatchPrefsCmd": {
         "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
@@ -8886,15 +8880,6 @@
         },
         "type": "object"
       },
-      "PreferencesCookiePreferences": {
-        "description": "+k8s:openapi-gen=true",
-        "properties": {
-          "analytics": {},
-          "functional": {},
-          "performance": {}
-        },
-        "type": "object"
-      },
       "PreferencesNavbarPreference": {
         "description": "+k8s:openapi-gen=true",
         "properties": {
@@ -8920,9 +8905,6 @@
       "PreferencesSpec": {
         "description": "+k8s:openapi-gen=true",
         "properties": {
-          "cookiePreferences": {
-            "$ref": "#/components/schemas/PreferencesCookiePreferences"
-          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"
@@ -12619,12 +12601,6 @@
       },
       "UpdatePrefsCmd": {
         "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
