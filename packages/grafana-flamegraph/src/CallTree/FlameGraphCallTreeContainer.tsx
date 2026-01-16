@@ -4,7 +4,7 @@ import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } fr
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -377,7 +377,7 @@ const FlameGraphCallTreeContainer = memo(
       return baseExpanded;
     }, [nodes, focusedNodeId, callersNodeLabel, callersNode, currentSearchMatchId, highlightedNodeId]);
 
-    const ACTIONS_WIDTH = onSearch ? 75 : 50;
+    const ACTIONS_WIDTH = 30;
     const COLOR_BAR_WIDTH = 200;
     const SELF_WIDTH = 150;
     const TOTAL_WIDTH = 150;
@@ -445,9 +445,6 @@ const FlameGraphCallTreeContainer = memo(
                 callersNodeLabel={callersNodeLabel}
                 isSearchMatch={searchNodes?.includes(row.original.id) ?? false}
                 actionsCellClass={styles.actionsCell}
-                actionButtonSlotClass={styles.actionButtonSlot}
-                actionButtonClass={styles.actionButton}
-                actionButtonPlaceholderClass={styles.actionButtonPlaceholder}
               />
             ),
             width: ACTIONS_WIDTH,
@@ -548,9 +545,6 @@ const FlameGraphCallTreeContainer = memo(
                 callersNodeLabel={callersNodeLabel}
                 isSearchMatch={searchNodes?.includes(row.original.id) ?? false}
                 actionsCellClass={styles.actionsCell}
-                actionButtonSlotClass={styles.actionButtonSlot}
-                actionButtonClass={styles.actionButton}
-                actionButtonPlaceholderClass={styles.actionButtonPlaceholder}
               />
             ),
             width: ACTIONS_WIDTH,
@@ -748,7 +742,7 @@ const FlameGraphCallTreeContainer = memo(
           {callersNode && (
             <Tooltip content={callersNodeLabel || ''} placement="top">
               <div className={styles.callersItem}>
-                <Icon size="sm" name="gf-show-context" />
+                <Icon size="sm" name="expand-arrows-alt" />
                 <span className={styles.callersItemLabel}>
                   {(callersNodeLabel || '').substring((callersNodeLabel || '').lastIndexOf('/') + 1)}
                 </span>
@@ -944,9 +938,6 @@ type ActionsCellProps = {
   callersNodeLabel: string | undefined;
   isSearchMatch: boolean;
   actionsCellClass: string;
-  actionButtonSlotClass: string;
-  actionButtonClass: string;
-  actionButtonPlaceholderClass: string;
 };
 
 const ActionsCell = memo(function ActionsCell({
@@ -962,9 +953,6 @@ const ActionsCell = memo(function ActionsCell({
   callersNodeLabel,
   isSearchMatch,
   actionsCellClass,
-  actionButtonSlotClass,
-  actionButtonClass,
-  actionButtonPlaceholderClass,
 }: ActionsCellProps) {
   const isTheFocusedNode =
     nodeId === focusedNodeId || (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === label);
@@ -973,67 +961,43 @@ const ActionsCell = memo(function ActionsCell({
   const inFocusMode = focusedNodeId !== undefined;
   const isRootNode = depth === 0 && !parentId;
 
-  const shouldShowFocusButton = hasChildren && !isTheFocusedNode && !(isRootNode && !inFocusMode);
-  const shouldShowCallersButton = !isTheCallersTarget && !isRootNode;
+  const shouldShowFocusItem = hasChildren && !isTheFocusedNode && !(isRootNode && !inFocusMode);
+  const shouldShowCallersItem = !isTheCallersTarget && !isRootNode;
+  const shouldShowSearchItem = onSearch && !isSearchMatch;
+
+  const hasAnyAction = shouldShowFocusItem || shouldShowCallersItem || shouldShowSearchItem;
+
+  if (!hasAnyAction) {
+    return <div className={actionsCellClass} />;
+  }
+
+  const menu = (
+    <Menu>
+      {shouldShowFocusItem && (
+        <Menu.Item
+          label="Focus on callees"
+          icon="compress-arrows"
+          onClick={() => {
+            if (inCallersMode) {
+              onFocus(label, true);
+            } else {
+              onFocus(nodeId, false);
+            }
+          }}
+        />
+      )}
+      {shouldShowCallersItem && (
+        <Menu.Item label="Show callers" icon="expand-arrows-alt" onClick={() => onShowCallers(label)} />
+      )}
+      {shouldShowSearchItem && <Menu.Item label="Search" icon="search" onClick={() => onSearch!(label)} />}
+    </Menu>
+  );
 
   return (
     <div className={actionsCellClass}>
-      <div className={actionButtonSlotClass}>
-        {shouldShowFocusButton ? (
-          <Button
-            icon="compress-arrows"
-            fill="text"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (inCallersMode) {
-                onFocus(label, true);
-              } else {
-                onFocus(nodeId, false);
-              }
-            }}
-            tooltip="Show callees of this function"
-            aria-label="Show callees"
-            className={actionButtonClass}
-          />
-        ) : (
-          <div className={actionButtonPlaceholderClass} />
-        )}
-      </div>
-      <div className={actionButtonSlotClass}>
-        {shouldShowCallersButton ? (
-          <Button
-            icon="expand-arrows-alt"
-            fill="text"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onShowCallers(label);
-            }}
-            tooltip="Show callers of this function"
-            aria-label="Show callers"
-            className={actionButtonClass}
-          />
-        ) : (
-          <div className={actionButtonPlaceholderClass} />
-        )}
-      </div>
-      {onSearch && !isSearchMatch && (
-        <div className={actionButtonSlotClass}>
-          <Button
-            icon="search"
-            fill="text"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSearch(label);
-            }}
-            tooltip="Search for this function"
-            aria-label="Search"
-            className={actionButtonClass}
-          />
-        </div>
-      )}
+      <Dropdown overlay={menu}>
+        <IconButton name="ellipsis-v" aria-label="Actions" size="sm" onClick={(e) => e.stopPropagation()} />
+      </Dropdown>
     </div>
   );
 });
@@ -1472,20 +1436,7 @@ function getStyles(theme: GrafanaTheme2) {
     actionsCell: css({
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'flex-end',
-      gap: theme.spacing(0.5),
-      height: '20px',
-      minWidth: '60px',
-    }),
-    actionButtonSlot: css({
-      display: 'flex',
-      alignItems: 'center',
       justifyContent: 'center',
-      width: '24px',
-      height: '20px',
-    }),
-    actionButtonPlaceholder: css({
-      width: '24px',
       height: '20px',
     }),
     actionsColumnCell: css({
@@ -1497,15 +1448,6 @@ function getStyles(theme: GrafanaTheme2) {
     valueColumnCell: css({
       overflow: 'visible',
       textAlign: 'right',
-    }),
-    actionButton: css({
-      padding: 0,
-      minWidth: 'auto',
-      height: '20px',
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
     }),
     modePill: css({
       display: 'inline-flex',
