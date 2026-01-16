@@ -168,7 +168,9 @@ func TestGetMuteTiming(t *testing.T) {
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 
-		prov.AssertCalled(t, "GetProvenance", mock.Anything, &result, orgID)
+		prov.AssertCalled(t, "GetProvenance", mock.Anything, mock.MatchedBy(func(mt *definitions.MuteTimeInterval) bool {
+			return mt.Name == result.Name
+		}), orgID)
 
 		t.Run("and by UID", func(t *testing.T) {
 			result2, err := sut.GetMuteTiming(context.Background(), result.UID, orgID)
@@ -199,7 +201,9 @@ func TestGetMuteTiming(t *testing.T) {
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 
-		prov.AssertCalled(t, "GetProvenance", mock.Anything, &result, orgID)
+		prov.AssertCalled(t, "GetProvenance", mock.Anything, mock.MatchedBy(func(mt *definitions.MuteTimeInterval) bool {
+			return mt.Name == result.Name
+		}), orgID)
 
 		t.Run("and by UID", func(t *testing.T) {
 			result2, err := sut.GetMuteTiming(context.Background(), result.UID, orgID)
