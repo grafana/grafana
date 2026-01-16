@@ -407,6 +407,38 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._initialState !== undefined;
   }
 
+  /**
+   * Discard changes and revert to the last saved state, while keeping edit mode enabled.
+   * This is useful for flows where you want to continue an action (for example share/export)
+   * without forcing the user to exit edit mode.
+   */
+  public discardChangesAndKeepEditing() {
+    if (!this.canDiscard()) {
+      console.error('Trying to discard back to a state that does not exist, initialState undefined');
+      return;
+    }
+
+    // Stop tracking while we reset state.
+    this._changeTracker.stopTrackingChanges();
+
+    const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
+
+    // Ensure the restored layout stays editable.
+    restoredState.body.editModeChanged?.(true);
+
+    this.setState({
+      ...restoredState,
+      isEditing: true,
+      editable: true,
+      isDirty: false,
+      editPanel: undefined,
+      editview: undefined,
+      overlay: undefined,
+    });
+
+    this._changeTracker.startTrackingChanges();
+  }
+
   public pauseTrackingChanges() {
     this._changeTracker.stopTrackingChanges();
   }

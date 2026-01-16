@@ -144,18 +144,15 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
   // Map notifiers to Notifier[] format for ReceiverForm
   // The grafanaNotifiers include version-specific options via the versions array from the backend
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
   const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
     if (n.type === ReceiverTypes.OnCall) {
       return {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-        dto: extendOnCallNotifierFeatures(n as any) as any,
+        dto: extendOnCallNotifierFeatures(n),
         meta: onCallNotifierMeta,
       };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-    return { dto: n as any };
+    return { dto: n };
   });
 
   return (

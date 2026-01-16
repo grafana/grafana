@@ -325,7 +325,69 @@ func TestCacheMetricsDebounce(t *testing.T) {
 	})
 }
 
-func randomSate(ruleKey models.AlertRuleKey) State {
+func TestCache_GetAlertInstances(t *testing.T) {
+	ruleKey := models.AlertRuleKey{
+		OrgID: 1,
+		UID:   "rule-uid",
+	}
+
+	testCases := []struct {
+		name   string
+		states []*State
+	}{
+		{
+			name:   "returns empty slice when cache is empty",
+			states: nil,
+		},
+		{
+			name:   "returns alert instances",
+			states: []*State{util.Pointer(randomState(ruleKey)), util.Pointer(randomState(ruleKey))},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cache := newCache()
+			for _, state := range tc.states {
+				cache.set(state)
+			}
+
+			instances := cache.GetAlertInstances()
+
+			require.Len(t, instances, len(tc.states))
+
+			expected := make([]models.AlertInstance, 0, len(tc.states))
+			for _, state := range tc.states {
+				key, err := state.GetAlertInstanceKey()
+				require.NoError(t, err)
+				var lastError string
+				if state.Error != nil {
+					lastError = state.Error.Error()
+				}
+				expected = append(expected, models.AlertInstance{
+					AlertInstanceKey:   key,
+					Labels:             models.InstanceLabels(state.Labels),
+					Annotations:        state.Annotations,
+					CurrentState:       models.InstanceStateType(state.State.String()),
+					CurrentReason:      state.StateReason,
+					LastEvalTime:       state.LastEvaluationTime,
+					CurrentStateSince:  state.StartsAt,
+					CurrentStateEnd:    state.EndsAt,
+					FiredAt:            state.FiredAt,
+					ResolvedAt:         state.ResolvedAt,
+					LastSentAt:         state.LastSentAt,
+					ResultFingerprint:  state.ResultFingerprint.String(),
+					EvaluationDuration: state.EvaluationDuration,
+					LastError:          lastError,
+				})
+			}
+
+			require.ElementsMatch(t, expected, instances)
+		})
+	}
+}
+
+func randomState(ruleKey models.AlertRuleKey) State {
 	return State{
 		OrgID:             ruleKey.OrgID,
 		AlertRuleUID:      ruleKey.UID,
