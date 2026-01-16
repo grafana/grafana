@@ -170,8 +170,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "Dashboard"
+          "kind": "Dashboard",
+          "version": "v2alpha1"
         }
       },
       "post": {
@@ -294,8 +294,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "Dashboard"
+          "kind": "Dashboard",
+          "version": "v2alpha1"
         }
       },
       "delete": {
@@ -448,8 +448,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "Dashboard"
+          "kind": "Dashboard",
+          "version": "v2alpha1"
         }
       },
       "parameters": [
@@ -506,8 +506,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "Dashboard"
+          "kind": "Dashboard",
+          "version": "v2alpha1"
         }
       },
       "put": {
@@ -610,8 +610,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "Dashboard"
+          "kind": "Dashboard",
+          "version": "v2alpha1"
         }
       },
       "delete": {
@@ -712,8 +712,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "Dashboard"
+          "kind": "Dashboard",
+          "version": "v2alpha1"
         }
       },
       "patch": {
@@ -830,8 +830,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "Dashboard"
+          "kind": "Dashboard",
+          "version": "v2alpha1"
         }
       },
       "parameters": [
@@ -888,8 +888,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "dashboard.grafana.app",
-          "version": "v2alpha1",
-          "kind": "DashboardWithAccessInfo"
+          "kind": "DashboardWithAccessInfo",
+          "version": "v2alpha1"
         }
       },
       "parameters": [

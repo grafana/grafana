@@ -169,8 +169,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Receiver"
+          "kind": "Receiver",
+          "version": "v0alpha1"
         }
       },
       "post": {
@@ -293,8 +293,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Receiver"
+          "kind": "Receiver",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -447,8 +447,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Receiver"
+          "kind": "Receiver",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -505,8 +505,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Receiver"
+          "kind": "Receiver",
+          "version": "v0alpha1"
         }
       },
       "put": {
@@ -609,8 +609,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Receiver"
+          "kind": "Receiver",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -711,8 +711,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Receiver"
+          "kind": "Receiver",
+          "version": "v0alpha1"
         }
       },
       "patch": {
@@ -829,8 +829,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Receiver"
+          "kind": "Receiver",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -999,8 +999,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "RoutingTree"
+          "kind": "RoutingTree",
+          "version": "v0alpha1"
         }
       },
       "post": {
@@ -1123,8 +1123,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "RoutingTree"
+          "kind": "RoutingTree",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -1277,8 +1277,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "RoutingTree"
+          "kind": "RoutingTree",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -1335,8 +1335,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "RoutingTree"
+          "kind": "RoutingTree",
+          "version": "v0alpha1"
         }
       },
       "put": {
@@ -1439,8 +1439,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "RoutingTree"
+          "kind": "RoutingTree",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -1541,8 +1541,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "RoutingTree"
+          "kind": "RoutingTree",
+          "version": "v0alpha1"
         }
       },
       "patch": {
@@ -1659,8 +1659,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "RoutingTree"
+          "kind": "RoutingTree",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -1829,8 +1829,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TemplateGroup"
+          "kind": "TemplateGroup",
+          "version": "v0alpha1"
         }
       },
       "post": {
@@ -1953,8 +1953,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TemplateGroup"
+          "kind": "TemplateGroup",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -2107,8 +2107,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TemplateGroup"
+          "kind": "TemplateGroup",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -2165,8 +2165,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TemplateGroup"
+          "kind": "TemplateGroup",
+          "version": "v0alpha1"
         }
       },
       "put": {
@@ -2269,8 +2269,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TemplateGroup"
+          "kind": "TemplateGroup",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -2371,8 +2371,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TemplateGroup"
+          "kind": "TemplateGroup",
+          "version": "v0alpha1"
         }
       },
       "patch": {
@@ -2489,8 +2489,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TemplateGroup"
+          "kind": "TemplateGroup",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -2659,8 +2659,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TimeInterval"
+          "kind": "TimeInterval",
+          "version": "v0alpha1"
         }
       },
       "post": {
@@ -2783,8 +2783,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TimeInterval"
+          "kind": "TimeInterval",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -2937,8 +2937,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TimeInterval"
+          "kind": "TimeInterval",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -2995,8 +2995,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TimeInterval"
+          "kind": "TimeInterval",
+          "version": "v0alpha1"
         }
       },
       "put": {
@@ -3099,8 +3099,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TimeInterval"
+          "kind": "TimeInterval",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -3201,8 +3201,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TimeInterval"
+          "kind": "TimeInterval",
+          "version": "v0alpha1"
         }
       },
       "patch": {
@@ -3319,8 +3319,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "TimeInterval"
+          "kind": "TimeInterval",
+          "version": "v0alpha1"
         }
       },
       "parameters": [

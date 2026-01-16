@@ -218,8 +218,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "post": {
@@ -342,8 +342,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -496,8 +496,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -554,8 +554,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "put": {
@@ -658,8 +658,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -760,8 +760,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "patch": {
@@ -878,8 +878,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -946,8 +946,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "put": {
@@ -1050,8 +1050,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "patch": {
@@ -1168,8 +1168,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "historian.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Dummy"
+          "kind": "Dummy",
+          "version": "v0alpha1"
         }
       },
       "parameters": [

@@ -169,8 +169,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "post": {
@@ -293,8 +293,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "delete": {
@@ -447,8 +447,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "parameters": [
@@ -505,8 +505,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "put": {
@@ -609,8 +609,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "delete": {
@@ -711,8 +711,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "patch": {
@@ -829,8 +829,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "parameters": [
@@ -887,8 +887,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "ResourceCallOptions",
+          "version": "v1beta1"
         }
       },
       "parameters": [
@@ -946,8 +946,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "put": {
@@ -1050,8 +1050,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "patch": {
@@ -1168,8 +1168,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "shorturl.grafana.app",
-          "version": "v1beta1",
-          "kind": "ShortURL"
+          "kind": "ShortURL",
+          "version": "v1beta1"
         }
       },
       "parameters": [
