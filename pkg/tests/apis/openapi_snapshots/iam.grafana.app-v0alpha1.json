@@ -1033,6 +1033,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Forbidden"
           }
         }
       }

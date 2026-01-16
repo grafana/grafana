@@ -136,6 +136,13 @@ func (n *NoopSearchREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										403: {
+											ResponseProps: spec3.ResponseProps{
+												Description: "Forbidden",
+											},
+										},
+									},
 									Default: &spec3.Response{
 										ResponseProps: spec3.ResponseProps{
 											Description: "Default OK response",
