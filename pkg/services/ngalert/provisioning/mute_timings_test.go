@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -123,6 +124,92 @@ func TestGetMuteTimings(t *testing.T) {
 			require.ErrorIs(t, err, expected)
 		})
 	})
+
+	t.Run("with imported intervals", func(t *testing.T) {
+		grafanaIntervals := []config.MuteTimeInterval{
+			{Name: "grafana-interval"},
+		}
+		importedIntervals := []config.MuteTimeInterval{
+			{Name: "imported-interval"},
+		}
+		revision := createConfigWithImportedIntervals(grafanaIntervals, importedIntervals)
+
+		provenances := map[string]models.Provenance{
+			"grafana-interval": models.ProvenanceAPI,
+		}
+
+		t.Run("returns only Grafana intervals without WithIncludeImported", func(t *testing.T) {
+			sut, store, prov := createMuteTimingSvcSut()
+			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+				return revision, nil
+			}
+			prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(provenances, nil)
+
+			result, err := sut.GetMuteTimings(context.Background(), orgID)
+
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Equal(t, "grafana-interval", result[0].Name)
+			require.EqualValues(t, models.ProvenanceAPI, result[0].Provenance)
+		})
+
+		t.Run("returns both Grafana and imported intervals with WithIncludeImported", func(t *testing.T) {
+			sut, store, prov := createMuteTimingSvcSut()
+			sut = sut.WithIncludeImported()
+
+			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+				return revision, nil
+			}
+			prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(provenances, nil)
+
+			result, err := sut.GetMuteTimings(context.Background(), orgID)
+
+			require.NoError(t, err)
+			require.Len(t, result, 2)
+
+			// Find Grafana interval
+			var grafanaInterval *definitions.MuteTimeInterval
+			var importedInterval *definitions.MuteTimeInterval
+			for i := range result {
+				switch name := result[i].Name; name {
+				case "grafana-interval":
+					grafanaInterval = &result[i]
+				case "imported-interval":
+					importedInterval = &result[i]
+				}
+			}
+
+			require.NotNil(t, grafanaInterval, "Grafana interval not found")
+			require.NotNil(t, importedInterval, "Imported interval not found")
+
+			// Verify Grafana interval
+			require.Equal(t, "grafana-interval", grafanaInterval.Name)
+			require.EqualValues(t, models.ProvenanceAPI, grafanaInterval.Provenance)
+			require.Equal(t, legacy_storage.NameToUid(grafanaInterval.Name), grafanaInterval.UID)
+
+			// Verify imported interval
+			require.Equal(t, "imported-interval", importedInterval.Name)
+			require.EqualValues(t, models.ProvenanceConvertedPrometheus, importedInterval.Provenance)
+			require.Equal(t, legacy_storage.NameToUid(importedInterval.Name), importedInterval.UID)
+		})
+
+		t.Run("handles empty ExtraConfigs", func(t *testing.T) {
+			sut, store, prov := createMuteTimingSvcSut()
+			sut = sut.WithIncludeImported()
+
+			emptyRevision := createConfigWithImportedIntervals(grafanaIntervals, nil)
+			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+				return emptyRevision, nil
+			}
+			prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(provenances, nil)
+
+			result, err := sut.GetMuteTimings(context.Background(), orgID)
+
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Equal(t, "grafana-interval", result[0].Name)
+		})
+	})
 }
 
 func TestGetMuteTiming(t *testing.T) {
@@ -168,7 +255,9 @@ func TestGetMuteTiming(t *testing.T) {
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 
-		prov.AssertCalled(t, "GetProvenance", mock.Anything, &result, orgID)
+		prov.AssertCalled(t, "GetProvenance", mock.Anything, mock.MatchedBy(func(mt *definitions.MuteTimeInterval) bool {
+			return mt.Name == result.Name
+		}), orgID)
 
 		t.Run("and by UID", func(t *testing.T) {
 			result2, err := sut.GetMuteTiming(context.Background(), result.UID, orgID)
@@ -199,7 +288,9 @@ func TestGetMuteTiming(t *testing.T) {
 		require.Equal(t, "Get", store.Calls[0].Method)
 		require.Equal(t, orgID, store.Calls[0].Args[1])
 
-		prov.AssertCalled(t, "GetProvenance", mock.Anything, &result, orgID)
+		prov.AssertCalled(t, "GetProvenance", mock.Anything, mock.MatchedBy(func(mt *definitions.MuteTimeInterval) bool {
+			return mt.Name == result.Name
+		}), orgID)
 
 		t.Run("and by UID", func(t *testing.T) {
 			result2, err := sut.GetMuteTiming(context.Background(), result.UID, orgID)
@@ -317,10 +408,11 @@ func TestCreateMuteTimings(t *testing.T) {
 	})
 
 	t.Run("returns ErrTimeIntervalExists if mute timing with the name exists", func(t *testing.T) {
-		sut, store, _ := createMuteTimingSvcSut()
+		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
 		existing := initialConfig().AlertmanagerConfig.MuteTimeIntervals[0]
 		timing := definitions.MuteTimeInterval{
@@ -1261,4 +1353,75 @@ func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storage.AlertmanagerC
 		},
 		ruleNotificationsStore: &fakeAlertRuleNotificationStore{},
 	}, store, prov
+}
+
+// buildMimirAMConfigWithTimeIntervals creates a Mimir alertmanager config YAML string
+// containing the provided time intervals for use in ExtraConfigs.
+// This generates a minimal but valid Prometheus alertmanager config with a route and receiver.
+func buildMimirAMConfigWithTimeIntervals(intervals []config.MuteTimeInterval) string {
+	if len(intervals) == 0 {
+		return ""
+	}
+
+	// Start with required route and receivers
+	yaml := "route:\n"
+	yaml += "  receiver: test-receiver\n"
+	yaml += "receivers:\n"
+	yaml += "  - name: test-receiver\n"
+
+	// Add time intervals
+	yaml += "time_intervals:\n"
+	for _, interval := range intervals {
+		yaml += fmt.Sprintf("  - name: %s\n", interval.Name)
+		if len(interval.TimeIntervals) > 0 {
+			yaml += "    time_intervals:\n"
+			for _, ti := range interval.TimeIntervals {
+				yaml += "      -\n"
+				if len(ti.Times) > 0 {
+					yaml += "        times:\n"
+					for _, tr := range ti.Times {
+						yaml += fmt.Sprintf("          - start_time: '%02d:%02d'\n", tr.StartMinute/60, tr.StartMinute%60)
+						yaml += fmt.Sprintf("            end_time: '%02d:%02d'\n", tr.EndMinute/60, tr.EndMinute%60)
+					}
+				}
+				if len(ti.Weekdays) > 0 {
+					yaml += "        weekdays:\n"
+					for _, wd := range ti.Weekdays {
+						// WeekdayRange uses InclusiveRange with Begin/End
+						if wd.Begin == wd.End {
+							yaml += fmt.Sprintf("          - %d\n", wd.Begin)
+						} else {
+							yaml += fmt.Sprintf("          - %d:%d\n", wd.Begin, wd.End)
+						}
+					}
+				}
+			}
+		}
+	}
+	return yaml
+}
+
+// createConfigWithImportedIntervals creates a ConfigRevision with both Grafana and imported
+// Mimir time intervals for testing.
+func createConfigWithImportedIntervals(grafanaIntervals []config.MuteTimeInterval, importedIntervals []config.MuteTimeInterval) *legacy_storage.ConfigRevision {
+	cfg := &definitions.PostableUserConfig{
+		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+			Config: definitions.Config{
+				MuteTimeIntervals: grafanaIntervals,
+			},
+		},
+	}
+
+	if len(importedIntervals) > 0 {
+		mimirConfig := buildMimirAMConfigWithTimeIntervals(importedIntervals)
+		cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+			{
+				Identifier:         "test-mimir",
+				MergeMatchers:      config.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "__imported", Value: "test"}},
+				AlertmanagerConfig: mimirConfig,
+			},
+		}
+	}
+
+	return &legacy_storage.ConfigRevision{Config: cfg}
 }
