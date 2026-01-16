@@ -1205,11 +1205,6 @@
       "count": 1
     }
   },
-  "public/app/core/store.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/core/time_series2.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 19

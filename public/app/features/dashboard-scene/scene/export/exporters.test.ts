@@ -22,13 +22,14 @@ import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
 import { makeExportableV1, makeExportableV2, LibraryElementExport } from './exporters';
 
-jest.mock('app/core/store', () => {
-  return {
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  store: {
     getBool: jest.fn(),
     getObject: jest.fn((_a, b) => b),
     get: jest.fn(),
-  };
-});
+  },
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

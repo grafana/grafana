@@ -885,11 +885,9 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/flatten.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/impression_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/rangeutil.test.ts @grafana/grafana-frontend-platform
-/public/app/core/specs/store.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/TableModel.test.ts @grafana/partner-datasources
 /public/app/core/specs/ticks.test.ts @grafana/plugins-platform-frontend
 /public/app/core/specs/time_series.test.ts @grafana/dataviz-squad
-/public/app/core/store.ts @grafana/grafana-frontend-platform
 /public/app/core/TableModel.ts @grafana/partner-datasources
 /public/app/core/time_series2.ts @grafana/dataviz-squad
 /public/app/core/trustedTypePolicies.ts @grafana/grafana-frontend-platform
