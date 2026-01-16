@@ -53,7 +53,7 @@ func TestGracefulShutdown(t *testing.T) {
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		require.NoError(t, err)
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		// Make a health check call to ensure server is working
 		healthClient := grpc_health_v1.NewHealthClient(conn)
@@ -116,7 +116,7 @@ func TestGracefulShutdown(t *testing.T) {
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		require.NoError(t, err)
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		healthClient := grpc_health_v1.NewHealthClient(conn)
 
@@ -235,15 +235,13 @@ func TestGracefulShutdown(t *testing.T) {
 		<-service.startedChan
 
 		// Create multiple client connections
-		var conns []*grpc.ClientConn
 		for i := 0; i < 5; i++ {
 			conn, err := grpc.NewClient(
 				service.GetAddress(),
 				grpc.WithTransportCredentials(insecure.NewCredentials()),
 			)
 			require.NoError(t, err)
-			defer conn.Close()
-			conns = append(conns, conn)
+			defer func() { _ = conn.Close() }()
 
 			// Make a call to ensure connection is established
 			healthClient := grpc_health_v1.NewHealthClient(conn)
