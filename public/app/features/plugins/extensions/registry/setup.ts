@@ -47,7 +47,7 @@ exposedComponentsRegistry.register({
     {
       id: PluginExtensionExposedComponents.CreateAlertFromPanelV1,
       title: 'Create alert from panel',
-      description: 'Modal to create an alert rule from a VizPanel',
+      description: 'Modal to create an alert rule from panel data',
       component: CreateAlertFromPanelExposedComponent,
     },
   ],

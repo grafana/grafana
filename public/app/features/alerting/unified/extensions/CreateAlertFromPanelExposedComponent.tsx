@@ -1,6 +1,6 @@
 import { useAsync } from 'react-use';
 
-import { RawTimeRange, getNextRefId, locationUtil, urlUtil } from '@grafana/data';
+import { getNextRefId, locationUtil, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
@@ -48,11 +48,6 @@ export interface CreateAlertFromPanelProps {
     /** Max data points for the query */
     maxDataPoints?: number;
   };
-  /**
-   * Optional time range. If provided, used for context.
-   * The alert rule will use a relative time range (default: 10 minutes).
-   */
-  range?: { raw: RawTimeRange };
   /** Callback when the modal is dismissed */
   onDismiss: () => void;
 }
