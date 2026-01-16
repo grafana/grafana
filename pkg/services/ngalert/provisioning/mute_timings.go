@@ -238,25 +238,22 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		return err
 	}
 
-	existing, found := getMuteTimingByName(revision, nameOrUID)
-	if !found {
-		name, err := legacy_storage.UidToName(nameOrUID)
-		if err == nil {
-			existing, found = getMuteTimingByName(revision, name)
-		}
-	}
-	if !found {
-		svc.log.FromContext(ctx).Debug("Time interval was not found. Skip deleting", "name", nameOrUID)
+	existing, err := svc.getMuteTiming(ctx, revision, nameOrUID, orgID)
+	if err != nil && !errors.Is(err, ErrTimeIntervalNotFound) {
+		return err
+	} else if errors.Is(err, ErrTimeIntervalNotFound) {
 		return nil
 	}
 
-	target := definitions.MuteTimeInterval{MuteTimeInterval: existing, Provenance: provenance}
-	// check that provenance is not changed in an invalid way
-	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &target, orgID)
-	if err != nil {
-		return err
+	// Block deletes of imported intervals
+	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
+		return makeErrMuteTimeIntervalOrigin(existing, "delete")
 	}
-	if err := svc.validator(storedProvenance, models.Provenance(provenance)); err != nil {
+
+	existingInterval := existing.MuteTimeInterval
+	target := definitions.MuteTimeInterval{MuteTimeInterval: existingInterval, Provenance: provenance}
+
+	if err := svc.validator(models.Provenance(existing.Provenance), models.Provenance(provenance)); err != nil {
 		return err
 	}
 
@@ -266,11 +263,10 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
 	}
 
-	err = svc.checkOptimisticConcurrency(existing, models.Provenance(provenance), version, "delete")
-	if err != nil {
+	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(provenance), version, "delete"); err != nil {
 		return err
 	}
-	deleteTimeInterval(revision, existing)
+	deleteTimeInterval(revision, existingInterval)
 
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		keys, err := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
