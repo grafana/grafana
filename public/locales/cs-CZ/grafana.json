@@ -3799,7 +3799,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_few": "",
       "all-failed_many": "",
@@ -5381,6 +5380,7 @@
       },
       "header-hidden-tooltip": "Záhlaví řádku viditelné pouze v režimu úprav",
       "name": "Řádky",
+      "new-row-title": "",
       "row": {
         "collapse": "Sbalit řádek",
         "expand": "Rozbalit řádek",
@@ -8043,6 +8043,7 @@
     "name-neutral": "Neutrální",
     "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
     "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
+    "neutral": "",
     "placeholder-neutral": "auto.",
     "suggestions": {
       "arc": "",
@@ -12678,6 +12679,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12691,6 +12697,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12852,14 +12859,6 @@
       "starred": "Označeno hvězdičkou",
       "view-as-folders": "Zobrazit podle složek",
       "view-as-list": "Zobrazit jako seznam"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Abecedně (A–Z)",
-          "alphabetically-za": "Abecedně (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importovat",

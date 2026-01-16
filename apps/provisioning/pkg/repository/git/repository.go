@@ -102,8 +102,37 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 
 	// Readonly repositories may not need a token (if public)
 	if len(r.config.Spec.Workflows) > 0 {
-		if cfg.Token == "" && r.config.Secure.Token.IsZero() {
-			list = append(list, field.Required(field.NewPath("secure", "token"), "a git access token is required"))
+		// If a token is provided, then the connection should not be there
+		if cfg.Token != "" || !r.config.Secure.Token.IsZero() {
+			if r.config.Spec.Connection != nil && r.config.Spec.Connection.Name != "" {
+				list = append(
+					list,
+					field.Invalid(
+						field.NewPath("spec", "connection", "name"),
+						r.config.Spec.Connection.Name,
+						"cannot have both connection and token defined",
+					),
+					field.Invalid(
+						field.NewPath("secure", "token"),
+						"[REDACTED]",
+						"cannot have both connection and token defined",
+					),
+				)
+			}
+		} else {
+			if r.config.Spec.Connection == nil || r.config.Spec.Connection.Name == "" {
+				list = append(
+					list,
+					field.Required(
+						field.NewPath("spec", "connection"),
+						"either a token or a connection should be provided",
+					),
+					field.Required(
+						field.NewPath("secure", "token"),
+						"either a token or a connection should be provided",
+					),
+				)
+			}
 		}
 	}
 

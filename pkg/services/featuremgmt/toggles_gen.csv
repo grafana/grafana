@@ -16,7 +16,6 @@ alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
 lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
-individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
 influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
 starsFromAPIServer,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -28,7 +27,6 @@ renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,fal
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,false
-extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false

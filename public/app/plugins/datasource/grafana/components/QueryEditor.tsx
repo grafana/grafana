@@ -14,7 +14,6 @@ import {
   Stack,
   InlineLabel,
 } from '@grafana/ui';
-import { hasAlphaPanels } from 'app/core/config';
 import { getManagedChannelInfo } from 'app/features/live/info';
 import { SearchQuery } from 'app/features/search/service/types';
 
@@ -22,7 +21,6 @@ import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 
 import { RandomWalkEditor } from './RandomWalkEditor';
-import SearchEditor from './SearchEditor';
 
 interface Props extends QueryEditorProps<GrafanaDatasource, GrafanaQuery>, Themeable2 {}
 
@@ -57,21 +55,6 @@ export class UnthemedQueryEditor extends React.PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-
-    if (config.featureToggles.panelTitleSearch && hasAlphaPanels) {
-      this.queryTypes.push({
-        label: 'Search',
-        value: GrafanaQueryType.Search,
-        description: 'Search for grafana resources',
-      });
-    }
-    if (config.featureToggles.unifiedStorageSearchUI) {
-      this.queryTypes.push({
-        label: 'Search (experimental)',
-        value: GrafanaQueryType.SearchNext,
-        description: 'Search for grafana resources',
-      });
-    }
   }
 
   loadChannelInfo() {
@@ -391,12 +374,6 @@ export class UnthemedQueryEditor extends React.PureComponent<Props, State> {
 
     return (
       <>
-        {queryType === GrafanaQueryType.Search && (
-          <Alert title="Grafana Search" severity="info">
-            Using this datasource to call the new search system is experimental, and subject to change at any time
-            without notice.
-          </Alert>
-        )}
         <InlineFieldRow>
           <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
             <Select
@@ -412,12 +389,6 @@ export class UnthemedQueryEditor extends React.PureComponent<Props, State> {
         {queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
         {queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
         {queryType === GrafanaQueryType.Snapshot && this.renderSnapshotQuery()}
-        {queryType === GrafanaQueryType.Search && (
-          <SearchEditor value={query.search ?? {}} onChange={this.onSearchChange} />
-        )}
-        {queryType === GrafanaQueryType.SearchNext && (
-          <SearchEditor value={query.searchNext ?? {}} onChange={this.onSearchNextChange} />
-        )}
       </>
     );
   }
