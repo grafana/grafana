@@ -4,6 +4,8 @@
       {
         "builtIn": 1,
         "datasource": {
+          "apiVersion": "v1",
+          "type": "grafana",
           "uid": "-- Grafana --"
         },
         "enable": true,
@@ -61,6 +63,7 @@
           "type": "text"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -151,7 +154,7 @@
           ],
           "thresholds": "",
           "title": "Client Request Volume",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -163,6 +166,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -252,7 +256,7 @@
           ],
           "thresholds": "95, 99, 99.5",
           "title": "Client Success Rate (non-5xx responses)",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -265,6 +269,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -355,7 +360,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -378,6 +383,7 @@
           }
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -469,7 +475,7 @@
           ],
           "thresholds": "",
           "title": "TCP Received Bytes",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -481,6 +487,7 @@
           "valueName": "avg"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -571,7 +578,7 @@
           ],
           "thresholds": "",
           "title": "Server Request Volume",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -583,6 +590,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -672,7 +680,7 @@
           ],
           "thresholds": "95, 99, 99.5",
           "title": "Server Success Rate (non-5xx responses)",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -685,6 +693,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -775,7 +784,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -798,6 +807,7 @@
           }
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -889,7 +899,7 @@
           ],
           "thresholds": "",
           "title": "TCP Sent Bytes",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -955,6 +965,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1032,7 +1043,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1059,6 +1070,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1138,7 +1150,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1164,6 +1176,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1318,7 +1331,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1343,6 +1356,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1495,7 +1509,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1520,6 +1534,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1672,7 +1687,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1697,6 +1712,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1773,7 +1789,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1798,6 +1814,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1873,7 +1890,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1951,6 +1968,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2028,7 +2046,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2055,6 +2073,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2134,7 +2153,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2160,6 +2179,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2314,7 +2334,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2339,6 +2359,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2491,7 +2512,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2516,6 +2537,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2668,7 +2690,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2693,6 +2715,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2769,7 +2792,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2794,6 +2817,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2869,7 +2893,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,

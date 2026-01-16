@@ -4,6 +4,8 @@
       {
         "builtIn": 1,
         "datasource": {
+          "apiVersion": "v1",
+          "type": "grafana",
           "uid": "-- Grafana --"
         },
         "enable": true,
@@ -2186,6 +2188,7 @@
       "id": 20,
       "panels": [
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2259,7 +2262,7 @@
           ],
           "thresholds": "",
           "title": "Active clients",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2271,6 +2274,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2345,7 +2349,7 @@
           ],
           "thresholds": "",
           "title": "Database size",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2503,6 +2507,7 @@
           "type": "gauge"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2579,7 +2584,7 @@
           ],
           "thresholds": "",
           "title": "Transaction rate",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2592,6 +2597,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": true,
           "dashLength": 10,
           "dashes": false,
@@ -2669,7 +2675,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2695,6 +2701,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2776,7 +2783,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2800,6 +2807,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2885,7 +2893,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2911,6 +2919,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2987,7 +2996,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3013,6 +3022,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3084,7 +3094,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3110,6 +3120,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3184,7 +3195,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3210,6 +3221,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3284,7 +3296,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,

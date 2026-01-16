@@ -4,6 +4,8 @@
       {
         "builtIn": 1,
         "datasource": {
+          "apiVersion": "v1",
+          "type": "grafana",
           "uid": "-- Grafana --"
         },
         "enable": true,
@@ -682,6 +684,7 @@
       "id": 22,
       "panels": [
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -760,7 +763,7 @@
           ],
           "thresholds": "",
           "title": "Number Of Nodes",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -772,6 +775,7 @@
           "valueName": "avg"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": true,
           "colorValue": false,
           "colors": [
@@ -849,7 +853,7 @@
           ],
           "thresholds": "1",
           "title": "Nodes Unavailable",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -862,6 +866,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -931,7 +936,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -956,6 +961,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1046,7 +1052,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1071,6 +1077,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1134,7 +1141,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1182,6 +1189,7 @@
       "id": 14,
       "panels": [
         {
+          "autoMigrateFrom": "table-old",
           "columns": [],
           "datasource": {
             "uid": "$datasource"
@@ -1270,9 +1278,10 @@
           ],
           "title": "Deployment Replicas - Up To Date",
           "transform": "timeseries_to_rows",
-          "type": "table-old"
+          "type": "table"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -1348,7 +1357,7 @@
           ],
           "thresholds": "",
           "title": "Deployment Replicas",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -1360,6 +1369,7 @@
           "valueName": "avg"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -1435,7 +1445,7 @@
           ],
           "thresholds": "",
           "title": "Deployment Replicas - Updated",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -1447,6 +1457,7 @@
           "valueName": "avg"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -1522,7 +1533,7 @@
           ],
           "thresholds": "",
           "title": "Deployment Replicas - Unavailable",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -1559,6 +1570,7 @@
       "id": 71,
       "panels": [
         {
+          "autoMigrateFrom": "table-old",
           "columns": [],
           "datasource": {
             "uid": "$datasource"
@@ -1641,10 +1653,11 @@
           ],
           "title": "Statefulset Replicas - Up To Date",
           "transform": "timeseries_to_rows",
-          "type": "table-old"
+          "type": "table"
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1701,7 +1714,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1749,6 +1762,7 @@
       "id": 28,
       "panels": [
         {
+          "autoMigrateFrom": "table-old",
           "columns": [],
           "datasource": {
             "uid": "$datasource"
@@ -1824,10 +1838,11 @@
           ],
           "title": "Pods restart in 30m",
           "transform": "timeseries_to_rows",
-          "type": "table-old"
+          "type": "table"
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1895,7 +1910,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1920,6 +1935,7 @@
           }
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -1996,7 +2012,7 @@
           ],
           "thresholds": "",
           "title": "Pods Running",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2008,6 +2024,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2084,7 +2101,7 @@
           ],
           "thresholds": "",
           "title": "Pods Succeeded",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2096,6 +2113,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2172,7 +2190,7 @@
           ],
           "thresholds": "",
           "title": "Pods Failed",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2184,6 +2202,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2260,7 +2279,7 @@
           ],
           "thresholds": "",
           "title": "Pods Pending",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2272,6 +2291,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2348,7 +2368,7 @@
           ],
           "thresholds": "",
           "title": "Pods Unknown",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2385,6 +2405,7 @@
       "id": 36,
       "panels": [
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2462,7 +2483,7 @@
           ],
           "thresholds": "",
           "title": "Containers Running",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2474,6 +2495,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2549,7 +2571,7 @@
           ],
           "thresholds": "",
           "title": "Containers Waiting",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2561,6 +2583,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2636,7 +2659,7 @@
           ],
           "thresholds": "",
           "title": "Containers Terminated",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2648,6 +2671,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2723,7 +2747,7 @@
           ],
           "thresholds": "",
           "title": "Containers Restarts (Last 30 Minutes)",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2735,6 +2759,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2810,7 +2835,7 @@
           ],
           "thresholds": "",
           "title": "CPU Cores Requested by Containers",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2822,6 +2847,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -2897,7 +2923,7 @@
           ],
           "thresholds": "",
           "title": "Memory Requested By Containers",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2935,6 +2961,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3023,7 +3050,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3047,6 +3074,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3112,7 +3140,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3136,6 +3164,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3201,7 +3230,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3225,6 +3254,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3290,7 +3320,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3338,6 +3368,7 @@
       "id": 45,
       "panels": [
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -3413,7 +3444,7 @@
           ],
           "thresholds": "",
           "title": "Jobs Succeeded",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -3425,6 +3456,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "table-old",
           "columns": [],
           "datasource": {
             "uid": "$datasource"
@@ -3507,9 +3539,10 @@
           "title": "Job last success time from now",
           "transform": "timeseries_to_rows",
           "transparent": true,
-          "type": "table-old"
+          "type": "table"
         },
         {
+          "autoMigrateFrom": "table-old",
           "columns": [],
           "datasource": {
             "uid": "$datasource"
@@ -3593,9 +3626,10 @@
           "title": "Job failed",
           "transform": "timeseries_to_rows",
           "transparent": true,
-          "type": "table-old"
+          "type": "table"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -3671,7 +3705,7 @@
           ],
           "thresholds": "",
           "title": "Jobs Active",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -3683,6 +3717,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -3758,7 +3793,7 @@
           ],
           "thresholds": "",
           "title": "Jobs Failed",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -3795,6 +3830,7 @@
       "id": 64,
       "panels": [
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -3866,7 +3902,7 @@
           ],
           "thresholds": "",
           "title": "pvc is bound",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -3878,6 +3914,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -3949,7 +3986,7 @@
           ],
           "thresholds": "",
           "title": "pvc is not bound",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -3961,6 +3998,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "table-old",
           "columns": [],
           "datasource": {
             "uid": "$datasource"
@@ -4018,7 +4056,7 @@
           ],
           "title": "pvc",
           "transform": "timeseries_to_rows",
-          "type": "table-old"
+          "type": "table"
         }
       ],
       "targets": [

@@ -1327,6 +1327,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "${DS_PROMETHEUS}"
@@ -1391,7 +1392,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "show": true
           },
@@ -1439,6 +1440,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "${DS_PROMETHEUS}"
@@ -1515,7 +1517,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "show": true
           },
@@ -1563,6 +1565,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "${DS_PROMETHEUS}"
@@ -1639,7 +1642,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "show": true
           },

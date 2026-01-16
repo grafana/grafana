@@ -480,6 +480,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -542,7 +543,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -563,6 +564,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -649,7 +651,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,

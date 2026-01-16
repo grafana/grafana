@@ -11,6 +11,7 @@ import { createQueryVariableAdapter } from 'app/features/variables/query/adapter
 import { createTextBoxVariableAdapter } from 'app/features/variables/textbox/adapter';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
+import { normalizeMigratedDashboard } from './DashboardMigratorToBackendHistoricalDataset.utils';
 import { DashboardModel } from './DashboardModel';
 import {
   setupTestDataSources,
@@ -108,6 +109,8 @@ describe('Oldest Historical Dashboard Backend / Frontend result comparison', () 
 
       // version in the backend is never added because it is returned from the backend as metadata
       delete frontendMigrationResult.version;
+
+      normalizeMigratedDashboard(frontendMigrationResult, backendMigrationResult);
 
       expect(backendMigrationResult).toEqual(frontendMigrationResult);
     });

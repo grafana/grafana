@@ -2366,6 +2366,7 @@
           "type": "table"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": true,
           "colorValue": false,
           "colors": [
@@ -2495,7 +2496,7 @@
           ],
           "thresholds": "0.5,1",
           "transparent": true,
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -2547,6 +2548,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "$datasource"
@@ -2933,7 +2935,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2954,6 +2956,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "$datasource"
@@ -3339,7 +3342,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,

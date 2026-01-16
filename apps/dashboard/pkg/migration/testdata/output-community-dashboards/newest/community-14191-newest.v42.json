@@ -4,6 +4,8 @@
       {
         "builtIn": 1,
         "datasource": {
+          "apiVersion": "v1",
+          "type": "grafana",
           "uid": "-- Grafana --"
         },
         "enable": true,
@@ -1501,6 +1503,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1581,7 +1584,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1606,6 +1609,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1686,7 +1690,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1740,6 +1744,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1808,7 +1813,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1832,6 +1837,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1900,7 +1906,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1953,6 +1959,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2021,7 +2028,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2045,6 +2052,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2123,7 +2131,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2695,6 +2703,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2790,7 +2799,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -2817,6 +2826,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -2912,7 +2922,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3524,6 +3534,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3602,7 +3613,7 @@
             "sort": 0,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3627,6 +3638,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3705,7 +3717,7 @@
             "sort": 0,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3730,6 +3742,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3810,7 +3823,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3835,6 +3848,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -3915,7 +3929,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -3969,6 +3983,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -4148,7 +4163,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -4173,6 +4188,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -4363,7 +4379,7 @@
             "sort": 2,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -4417,6 +4433,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -4489,7 +4506,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -4513,6 +4530,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -4587,7 +4605,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -4611,6 +4629,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -4686,7 +4705,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -4710,6 +4729,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -4784,7 +4804,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -4837,6 +4857,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -4917,7 +4938,7 @@
             "sort": 0,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -4942,6 +4963,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5022,7 +5044,7 @@
             "sort": 0,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -5047,6 +5069,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5127,7 +5150,7 @@
             "sort": 0,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -5152,6 +5175,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5232,7 +5256,7 @@
             "sort": 0,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -5257,6 +5281,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5337,7 +5362,7 @@
             "sort": 0,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -5391,6 +5416,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5461,7 +5487,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -5485,6 +5511,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5555,7 +5582,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -5608,6 +5635,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5679,7 +5707,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -5703,6 +5731,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5774,7 +5803,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -5798,6 +5827,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5869,7 +5899,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -5922,6 +5952,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -5979,7 +6010,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -6000,6 +6031,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -6057,7 +6089,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -6107,6 +6139,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -6177,7 +6210,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -6201,6 +6234,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -6271,7 +6305,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,

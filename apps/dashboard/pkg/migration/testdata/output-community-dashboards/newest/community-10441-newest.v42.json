@@ -4,6 +4,8 @@
       {
         "builtIn": 1,
         "datasource": {
+          "apiVersion": "v1",
+          "type": "grafana",
           "uid": "-- Grafana --"
         },
         "enable": true,
@@ -14,6 +16,8 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
+          "type": "grafana",
           "uid": "-- Grafana --"
         },
         "enable": true,

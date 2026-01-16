@@ -256,6 +256,7 @@
       "id": 33,
       "panels": [
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -331,7 +332,7 @@
           "thresholds": "20",
           "title": "Total Cache Hit Ratio",
           "transparent": true,
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -343,6 +344,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -418,12 +420,13 @@
           ],
           "thresholds": "1,5",
           "title": "Cache Bytes Total",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "100%",
           "valueMaps": [],
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -499,12 +502,13 @@
           ],
           "thresholds": "1,5",
           "title": "Cache Bytes Used",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "100%",
           "valueMaps": [],
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -580,12 +584,13 @@
           ],
           "thresholds": "1,5",
           "title": "Cache Total Hits",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "100%",
           "valueMaps": [],
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -661,7 +666,7 @@
           ],
           "thresholds": "1,5",
           "title": "Cache Total Misses",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "100%",
           "valueMaps": [],
           "valueName": "current"
@@ -696,6 +701,7 @@
       "id": 34,
       "panels": [
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -771,7 +777,7 @@
           "thresholds": "20",
           "title": "Total Cache RAM Hit Ratio",
           "transparent": true,
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -783,6 +789,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -854,7 +861,7 @@
           ],
           "thresholds": "",
           "title": "Cache RAM Bytes Total",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -866,6 +873,7 @@
           "valueName": "avg"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -937,7 +945,7 @@
           ],
           "thresholds": "",
           "title": "Cache RAM Bytes Used",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -949,6 +957,7 @@
           "valueName": "avg"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -1020,7 +1029,7 @@
           ],
           "thresholds": "",
           "title": "Cache RAM Total Hits",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -1032,6 +1041,7 @@
           "valueName": "avg"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -1103,7 +1113,7 @@
           ],
           "thresholds": "",
           "title": "Cache RAM Total Misses",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -1148,6 +1158,7 @@
             "prometheus": "#C15C17",
             "{instance=\"localhost:9090\",job=\"prometheus\"}": "#C15C17"
           },
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1214,7 +1225,7 @@
             "value_type": "cumulative"
           },
           "transparent": true,
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1264,6 +1275,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -1326,7 +1338,7 @@
             "sort": 0,
             "value_type": "cumulative"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,

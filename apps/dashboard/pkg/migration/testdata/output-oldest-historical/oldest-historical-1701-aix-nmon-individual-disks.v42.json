@@ -40,6 +40,7 @@
       "panels": [
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "content": "",
           "datasource": {
@@ -150,7 +151,7 @@
             "sort": 0,
             "value_type": ""
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -171,6 +172,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "content": "",
           "datasource": {
@@ -281,7 +283,7 @@
             "sort": 0,
             "value_type": ""
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -302,6 +304,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "content": "",
           "datasource": {
@@ -410,7 +413,7 @@
             "sort": 0,
             "value_type": ""
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,

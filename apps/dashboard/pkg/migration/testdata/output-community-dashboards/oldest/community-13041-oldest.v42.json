@@ -5,6 +5,8 @@
         "$$hashKey": "object:44",
         "builtIn": 1,
         "datasource": {
+          "apiVersion": "v1",
+          "type": "grafana",
           "uid": "-- Grafana --"
         },
         "enable": true,

@@ -38,6 +38,7 @@
       "id": 26,
       "panels": [
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -157,7 +158,7 @@
           ],
           "thresholds": "",
           "title": "Throughput",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -169,6 +170,7 @@
           "valueName": "current"
         },
         {
+          "autoMigrateFrom": "singlestat",
           "colorBackground": false,
           "colorValue": false,
           "colors": [
@@ -273,7 +275,7 @@
           ],
           "thresholds": "",
           "title": "Error %",
-          "type": "singlestat",
+          "type": "stat",
           "valueFontSize": "80%",
           "valueMaps": [
             {
@@ -286,6 +288,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "$datasource"
@@ -388,7 +391,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -411,6 +414,7 @@
           "aliasColors": {
             "application.httprequests__apdex.last": "#6ED0E0"
           },
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "$datasource"
@@ -535,7 +539,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -559,6 +563,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "$datasource"
@@ -704,7 +709,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -725,6 +730,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "$datasource"
@@ -872,7 +878,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -893,6 +899,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "$datasource"
@@ -998,7 +1005,7 @@
             "sort": 0,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1021,6 +1028,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "graph",
           "bars": false,
           "datasource": {
             "uid": "$datasource"
@@ -1169,7 +1177,7 @@
             "sort": 2,
             "value_type": "individual"
           },
-          "type": "graph",
+          "type": "timeseries",
           "xaxis": {
             "mode": "time",
             "show": true,
@@ -1190,6 +1198,7 @@
         },
         {
           "aliasColors": {},
+          "autoMigrateFrom": "grafana-piechart-panel",
           "combine": {
             "label": "Others",
             "threshold": 0
@@ -1275,7 +1284,7 @@
             }
           ],
           "title": "Errors",
-          "type": "grafana-piechart-panel",
+          "type": "piechart",
           "valueName": "current"
         },
         {
