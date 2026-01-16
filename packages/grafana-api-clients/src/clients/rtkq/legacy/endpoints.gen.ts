@@ -760,18 +760,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['datasources', 'correlations'],
       }),
-      getDataSourceIdByName: build.query<GetDataSourceIdByNameApiResponse, GetDataSourceIdByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/id/${queryArg.name}` }),
-        providesTags: ['datasources'],
-      }),
-      deleteDataSourceByName: build.mutation<DeleteDataSourceByNameApiResponse, DeleteDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}`, method: 'DELETE' }),
-        invalidatesTags: ['datasources'],
-      }),
-      getDataSourceByName: build.query<GetDataSourceByNameApiResponse, GetDataSourceByNameApiArg>({
-        query: (queryArg) => ({ url: `/datasources/name/${queryArg.name}` }),
-        providesTags: ['datasources'],
-      }),
       datasourceProxyDeleteByUiDcalls: build.mutation<
         DatasourceProxyDeleteByUiDcallsApiResponse,
         DatasourceProxyDeleteByUiDcallsApiArg
@@ -2652,26 +2640,6 @@ export type GetCorrelationsApiArg = {
   page?: number;
   /** Source datasource UID filter to be applied to correlations */
   sourceUid?: string[];
-};
-export type GetDataSourceIdByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the data source. */
-  id: number;
-};
-export type GetDataSourceIdByNameApiArg = {
-  name: string;
-};
-export type DeleteDataSourceByNameApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the deleted data source. */
-  id: number;
-  /** Message Message of the deleted dashboard. */
-  message: string;
-};
-export type DeleteDataSourceByNameApiArg = {
-  name: string;
-};
-export type GetDataSourceByNameApiResponse = /** status 200 (empty) */ DataSource;
-export type GetDataSourceByNameApiArg = {
-  name: string;
 };
 export type DatasourceProxyDeleteByUiDcallsApiResponse = unknown;
 export type DatasourceProxyDeleteByUiDcallsApiArg = {
@@ -6599,11 +6567,6 @@ export const {
   useAddDataSourceMutation,
   useGetCorrelationsQuery,
   useLazyGetCorrelationsQuery,
-  useGetDataSourceIdByNameQuery,
-  useLazyGetDataSourceIdByNameQuery,
-  useDeleteDataSourceByNameMutation,
-  useGetDataSourceByNameQuery,
-  useLazyGetDataSourceByNameQuery,
   useDatasourceProxyDeleteByUiDcallsMutation,
   useDatasourceProxyGetByUiDcallsQuery,
   useLazyDatasourceProxyGetByUiDcallsQuery,
