@@ -1270,7 +1270,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
       '&::-webkit-scrollbar-thumb': {
         background: theme.colors.text.disabled,
-        borderRadius: '4px',
+        borderRadius: theme.shape.radius.default,
       },
       '&::-webkit-scrollbar-thumb:hover': {
         background: theme.colors.text.secondary,
