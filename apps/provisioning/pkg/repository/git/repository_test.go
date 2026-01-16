@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -138,12 +139,15 @@ func TestGitRepository_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "missing token for R/W repository",
+			name: "r/w repository: missing token and connection",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Type:      "test_type",
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					// Missing connection
+					Connection: nil,
 				},
+				// Missing token creation
 			},
 			gitConfig: RepositoryConfig{
 				URL:    "https://git.example.com/repo.git",
@@ -151,7 +155,136 @@ func TestGitRepository_Validate(t *testing.T) {
 				Token:  "", // Empty token
 			},
 			want: field.ErrorList{
-				field.Required(field.NewPath("secure", "token"), "a git access token is required"),
+				field.Required(
+					field.NewPath("spec", "connection"),
+					"either a token or a connection should be provided",
+				),
+				field.Required(
+					field.NewPath("secure", "token"),
+					"either a token or a connection should be provided",
+				),
+			},
+		},
+		{
+			name: "r/w repository: missing token but connection provided",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      "test_type",
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					// Provided connection
+					Connection: &provisioning.ConnectionInfo{Name: "some-connection"},
+				},
+				// Missing token creation
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/repo.git",
+				Branch: "main",
+				Token:  "", // Empty token
+			},
+			want: nil,
+		},
+		{
+			name: "r/w repository: provided existing token but connection missing",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      "test_type",
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					// Missing connection
+					Connection: nil,
+				},
+				// Missing token creation
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/repo.git",
+				Branch: "main",
+				Token:  "some-token", // existing token
+			},
+			want: nil,
+		},
+		{
+			name: "r/w repository: provided new token but connection missing",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      "test_type",
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					// Missing connection
+					Connection: nil,
+				},
+				// New token provided
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("some-token"),
+					},
+				},
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/repo.git",
+				Branch: "main",
+				Token:  "", // no existing token
+			},
+			want: nil,
+		},
+		{
+			name: "r/w repository: both new token and connection are provided",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      "test_type",
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					// Provided connection
+					Connection: &provisioning.ConnectionInfo{Name: "some-connection"},
+				},
+				// New token provided
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("some-token"),
+					},
+				},
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/repo.git",
+				Branch: "main",
+				Token:  "", // Empty existing token
+			},
+			want: field.ErrorList{
+				field.Invalid(
+					field.NewPath("spec", "connection", "name"),
+					"some-connection",
+					"cannot have both connection and token defined",
+				),
+				field.Invalid(
+					field.NewPath("secure", "token"),
+					"[REDACTED]",
+					"cannot have both connection and token defined",
+				),
+			},
+		},
+		{
+			name: "r/w repository: both existing token and connection are provided",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      "test_type",
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					// Provided connection
+					Connection: &provisioning.ConnectionInfo{Name: "some-connection"},
+				},
+				// New token missing
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/repo.git",
+				Branch: "main",
+				Token:  "some-token", // Existing token
+			},
+			want: field.ErrorList{
+				field.Invalid(
+					field.NewPath("spec", "connection", "name"),
+					"some-connection",
+					"cannot have both connection and token defined",
+				),
+				field.Invalid(
+					field.NewPath("secure", "token"),
+					"[REDACTED]",
+					"cannot have both connection and token defined",
+				),
 			},
 		},
 		{

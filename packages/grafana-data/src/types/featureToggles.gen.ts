@@ -93,10 +93,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Support overriding cookie preferences per user
-  */
-  individualCookiePreferences?: boolean;
-  /**
   * Query InfluxDB InfluxQL without the proxy
   * @default true
   */
@@ -141,10 +137,6 @@ export interface FeatureToggles {
   * Enables the edit functionality in the datagrid panel
   */
   enableDatagridEditing?: boolean;
-  /**
-  * Enables extra themes
-  */
-  extraThemes?: boolean;
   /**
   * A table visualisation for logs in Explore
   * @default true
@@ -356,7 +348,7 @@ export interface FeatureToggles {
   */
   dashboardScene?: boolean;
   /**
-  * Enables experimental new dashboard layouts
+  * Enables new dashboard layouts
   */
   dashboardNewLayouts?: boolean;
   /**
@@ -530,6 +522,10 @@ export interface FeatureToggles {
   * Enables the new alert list view design
   */
   alertingListViewV2?: boolean;
+  /**
+  * Enables the new Alerting navigation structure with improved menu grouping
+  */
+  alertingNavigationV2?: boolean;
   /**
   * Enables saved searches for alert rules list
   */
@@ -772,11 +768,6 @@ export interface FeatureToggles {
   */
   k8SFolderCounts?: boolean;
   /**
-  * Enable folder's api server move
-  * @default false
-  */
-  k8SFolderMove?: boolean;
-  /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
   * @default true
   */
@@ -958,6 +949,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzCoreRolesApi?: boolean;
   /**
+  * Registers AuthZ Global Roles /apis endpoint
+  */
+  kubernetesAuthzGlobalRolesApi?: boolean;
+  /**
   * Registers AuthZ Roles /apis endpoint
   */
   kubernetesAuthzRolesApi?: boolean;
@@ -983,6 +978,11 @@ export interface FeatureToggles {
   * @default false
   */
   recentlyViewedDashboards?: boolean;
+  /**
+  * A/A test for recently viewed dashboards feature
+  * @default false
+  */
+  experimentRecentlyViewedDashboards?: boolean;
   /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
@@ -1246,4 +1246,8 @@ export interface FeatureToggles {
   * Enables profiles exemplars support in profiles drilldown
   */
   profilesExemplars?: boolean;
+  /**
+  * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+  */
+  alertingSyncDispatchTimer?: boolean;
 }

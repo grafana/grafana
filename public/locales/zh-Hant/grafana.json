@@ -804,7 +804,8 @@
       "label-integration": "整合",
       "label-notification-settings": "通知設定",
       "label-section": "可選{{name}}設定",
-      "test": "測試"
+      "test": "測試",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "的",
@@ -2168,11 +2169,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "此資源已透過 {{provenance}} 設定，無法透過使用者介面編輯",
       "badge-tooltip-standard": "此資源已設定，無法透過使用者介面編輯",
+      "body-imported": "",
       "body-provisioned": "此{{resource}}已佈建，這表示其是透過設定所建立。請聯絡您的伺服器管理員以更新此{{resource}}。",
+      "title-imported": "",
       "title-provisioned": "此{{resource}}無法透過使用者介面編輯"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "已佈建"
       }
     },
@@ -2666,7 +2670,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3748,7 +3751,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_other": "",
       "failed-count_other": "",
       "success-count_other": ""
@@ -5318,6 +5320,7 @@
       },
       "header-hidden-tooltip": "只有在編輯模式下才能看到列標題",
       "name": "列",
+      "new-row-title": "",
       "row": {
         "collapse": "收闔列",
         "expand": "展開列",
@@ -6358,12 +6361,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "經典",
         "json": "JSON",
         "v1-resource": "V1 資源",
         "v2-resource": "V2 資源",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "確定要將儀表板還原到版本{{version}}嗎？所有未儲存變更將會遺失。",
@@ -6956,6 +6962,7 @@
         "drone-datasource": "Drone 資料來源",
         "git-lab-integration-and-datasource": "GitLab 整合與資料來源",
         "honeycomb-integration-and-datasource": "Honeycomb 整合與資料來源",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira 整合與資料來源",
         "logic-monitor-devices-datasource": "LogicMonitor 裝置資料來源",
         "mongo-db-integration-and-data-source": "MongoDB 整合與資料來源",
@@ -7812,7 +7819,6 @@
       "export-externally-label": "匯出儀表板以便在另一個執行個體中使用",
       "export-format": "格式",
       "export-mode": "模式",
-      "export-remove-ds-refs": "移除部署詳細資料",
       "info-text": "複製或下載包含儀表板定義的檔案",
       "title": "匯出儀表板"
     },
@@ -7959,6 +7965,7 @@
     "name-neutral": "中性",
     "name-show-threshold-labels": "顯示閾值標籤",
     "name-show-threshold-markers": "顯示閾值標記",
+    "neutral": "",
     "placeholder-neutral": "自動",
     "suggestions": {
       "arc": "",
@@ -11756,7 +11763,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "刪除",
       "confirm-delete-keep-resources": "確定要刪除儲存庫設定，但保留其資源嗎？",
       "confirm-delete-with-resources": "確定要刪除儲存庫設定及其所有資源嗎？",
@@ -12018,6 +12071,7 @@
       "jobs": "作業"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "設定",
       "source-code": "原始碼"
     },
@@ -12466,6 +12520,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12479,6 +12538,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12634,14 +12694,6 @@
       "starred": "已加星號",
       "view-as-folders": "依資料夾檢視",
       "view-as-list": "以清單形式檢視"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "按字母順序排列（由 A 到 Z）",
-          "alphabetically-za": "按字母順序排列（由 Z 到 A）"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "匯入",

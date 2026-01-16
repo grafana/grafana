@@ -473,8 +473,6 @@ func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
 		return ErrNotFound
 	}
 
-	// TODO reflect change to resource table
-
 	return nil
 }
 
