@@ -1,23 +1,26 @@
-package middleware
+package featuremgmt
 
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	authlib "github.com/grafana/authlib/authn"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infralog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type TokenExchangeMiddleware struct {
 	tokenExchangeClient authlib.TokenExchanger
+	namespace           string
 }
 
 type tokenExchangeMiddlewareImpl struct {
 	tokenExchangeClient authlib.TokenExchanger
+	namespace           string
 	audiences           []string
 	next                http.RoundTripper
 }
@@ -25,6 +28,7 @@ type tokenExchangeMiddlewareImpl struct {
 type signerSettings struct {
 	token            string
 	tokenExchangeURL string
+	namespace        string
 }
 
 var _ http.RoundTripper = &tokenExchangeMiddlewareImpl{}
@@ -32,6 +36,7 @@ var _ http.RoundTripper = &tokenExchangeMiddlewareImpl{}
 func TestingTokenExchangeMiddleware(tokenExchangeClient authlib.TokenExchanger) *TokenExchangeMiddleware {
 	return &TokenExchangeMiddleware{
 		tokenExchangeClient: tokenExchangeClient,
+		namespace:           "*",
 	}
 }
 
@@ -40,6 +45,18 @@ func NewTokenExchangeMiddleware(cfg *setting.Cfg) (*TokenExchangeMiddleware, err
 	if err != nil {
 		return nil, err
 	}
+
+	stackID := cfg.SectionWithEnvOverrides("environment").Key("stack_id").MustString("")
+	if stackID == "" {
+		return nil, fmt.Errorf("stack_id is required")
+	}
+
+	stackIDInt, err := strconv.ParseInt(stackID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse stack_id: %w", err)
+	}
+	nsMapper := request.GetNamespaceMapper(cfg)
+	namespace := nsMapper(stackIDInt)
 
 	tokenExchangeClient, err := authlib.NewTokenExchangeClient(authlib.TokenExchangeConfig{
 		Token:            clientCfg.token,
@@ -50,6 +67,7 @@ func NewTokenExchangeMiddleware(cfg *setting.Cfg) (*TokenExchangeMiddleware, err
 	}
 	return &TokenExchangeMiddleware{
 		tokenExchangeClient: tokenExchangeClient,
+		namespace:           namespace,
 	}, nil
 }
 
@@ -57,6 +75,7 @@ func (p *TokenExchangeMiddleware) New(audiences []string) sdkhttpclient.Middlewa
 	return func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return &tokenExchangeMiddlewareImpl{
 			tokenExchangeClient: p.tokenExchangeClient,
+			namespace:           p.namespace,
 			audiences:           audiences,
 			next:                next,
 		}
@@ -66,16 +85,7 @@ func (p *TokenExchangeMiddleware) New(audiences []string) sdkhttpclient.Middlewa
 func (m tokenExchangeMiddlewareImpl) RoundTrip(req *http.Request) (res *http.Response, e error) {
 	log := infralog.New("token-exchange-middleware")
 
-	user, err := identity.GetRequester(req.Context())
-	if err != nil {
-		return nil, err
-	}
-
-	namespace := user.GetNamespace()
-
-	if namespace == "" {
-		return nil, fmt.Errorf("cluster scoped resources are currently not supported")
-	}
+	namespace := m.namespace
 
 	log.Debug("signing request", "url", req.URL.Path, "audience", m.audiences, "namespace", namespace)
 	token, err := m.tokenExchangeClient.Exchange(req.Context(), authlib.TokenExchangeRequest{
