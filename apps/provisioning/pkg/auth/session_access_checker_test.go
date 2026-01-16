@@ -9,7 +9,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -204,8 +203,8 @@ func TestSessionAccessChecker_RealSignedInUser(t *testing.T) {
 
 	checker := NewSessionAccessChecker(mock).WithFallbackRole(identity.RoleAdmin)
 
-	// Use a real SignedInUser
-	signedInUser := &user.SignedInUser{
+	// Pretend to be a signed-in admin user
+	signedInUser := &identity.StaticRequester{
 		UserID:  1,
 		OrgID:   1,
 		OrgRole: identity.RoleAdmin,
