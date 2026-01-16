@@ -705,86 +705,102 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		switch typedObj := a.GetObject().(type) {
-		case *iamv0.User:
-			return user.ValidateOnCreate(ctx, b.userSearchClient, typedObj)
-		case *iamv0.ServiceAccount:
-			return serviceaccount.ValidateOnCreate(ctx, typedObj)
-		case *iamv0.Team:
-			return team.ValidateOnCreate(ctx, typedObj)
-		case *iamv0.TeamBinding:
-			return teambinding.ValidateOnCreate(ctx, typedObj)
-		case *iamv0.ResourcePermission:
-			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
-		case *iamv0.ExternalGroupMapping:
-			return externalgroupmapping.ValidateOnCreate(typedObj)
-		case *iamv0.Role:
-			return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
-		case *iamv0.GlobalRole:
-			return b.globalRoleApiInstaller.ValidateOnCreate(ctx, typedObj)
-		case *iamv0.TeamLBACRule:
-			return b.teamLBACApiInstaller.ValidateOnCreate(ctx, typedObj)
-		}
-		return nil
+		return b.validateCreate(ctx, a)
 	case admission.Update:
-		switch typedObj := a.GetObject().(type) {
-		case *iamv0.User:
-			oldUserObj, ok := a.GetOldObject().(*iamv0.User)
-			if !ok {
-				return fmt.Errorf("expected old object to be a User, got %T", oldUserObj)
-			}
-			return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
-		case *iamv0.ResourcePermission:
-			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
-		case *iamv0.Team:
-			oldTeamObj, ok := a.GetOldObject().(*iamv0.Team)
-			if !ok {
-				return fmt.Errorf("expected old object to be a Team, got %T", oldTeamObj)
-			}
-			return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
-		case *iamv0.TeamBinding:
-			oldTeamBindingObj, ok := a.GetOldObject().(*iamv0.TeamBinding)
-			if !ok {
-				return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldTeamBindingObj)
-			}
-			return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
-		case *iamv0.Role:
-			oldRoleObj, ok := a.GetOldObject().(*iamv0.Role)
-			if !ok {
-				return fmt.Errorf("expected old object to be a Role, got %T", oldRoleObj)
-			}
-			return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
-		case *iamv0.GlobalRole:
-			oldGlobalRoleObj, ok := a.GetOldObject().(*iamv0.GlobalRole)
-			if !ok {
-				return fmt.Errorf("expected old object to be a GlobalRole, got %T", oldGlobalRoleObj)
-			}
-			return b.globalRoleApiInstaller.ValidateOnUpdate(ctx, oldGlobalRoleObj, typedObj)
-		case *iamv0.TeamLBACRule:
-			oldTeamLBACRuleObj, ok := a.GetOldObject().(*iamv0.TeamLBACRule)
-			if !ok {
-				return fmt.Errorf("expected old object to be a TeamLBACRule, got %T", oldTeamLBACRuleObj)
-			}
-			return b.teamLBACApiInstaller.ValidateOnUpdate(ctx, oldTeamLBACRuleObj, typedObj)
-		}
-		return nil
+		return b.validateUpdate(ctx, a)
 	case admission.Delete:
-		switch oldObj := a.GetOldObject().(type) {
-		case *iamv0.Role:
-			return b.roleApiInstaller.ValidateOnDelete(ctx, oldObj)
-		case *iamv0.GlobalRole:
-			return b.globalRoleApiInstaller.ValidateOnDelete(ctx, oldObj)
-		case *iamv0.TeamLBACRule:
-			if b.teamLBACApiInstaller != nil {
-				return b.teamLBACApiInstaller.ValidateOnDelete(ctx, oldObj)
-			}
-			return nil
-		}
-		return nil
+		return b.validateDelete(ctx, a)
 	case admission.Connect:
+		return b.validateConnect(ctx, a)
+	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context, a admission.Attributes) error {
+	switch typedObj := a.GetObject().(type) {
+	case *iamv0.User:
+		return user.ValidateOnCreate(ctx, b.userSearchClient, typedObj)
+	case *iamv0.ServiceAccount:
+		return serviceaccount.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.Team:
+		return team.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.TeamBinding:
+		return teambinding.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.ResourcePermission:
+		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+	case *iamv0.ExternalGroupMapping:
+		return externalgroupmapping.ValidateOnCreate(typedObj)
+	case *iamv0.Role:
+		return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.GlobalRole:
+		return b.globalRoleApiInstaller.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.TeamLBACRule:
+		return b.teamLBACApiInstaller.ValidateOnCreate(ctx, typedObj)
+	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context, a admission.Attributes) error {
+	oldObj := a.GetOldObject()
+	switch typedObj := a.GetObject().(type) {
+	case *iamv0.User:
+		oldUserObj, ok := oldObj.(*iamv0.User)
+		if !ok {
+			return fmt.Errorf("expected old object to be a User, got %T", oldObj)
+		}
+		return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
+	case *iamv0.ResourcePermission:
+		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+	case *iamv0.Team:
+		oldTeamObj, ok := oldObj.(*iamv0.Team)
+		if !ok {
+			return fmt.Errorf("expected old object to be a Team, got %T", oldObj)
+		}
+		return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
+	case *iamv0.TeamBinding:
+		oldTeamBindingObj, ok := oldObj.(*iamv0.TeamBinding)
+		if !ok {
+			return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldObj)
+		}
+		return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
+	case *iamv0.Role:
+		oldRoleObj, ok := oldObj.(*iamv0.Role)
+		if !ok {
+			return fmt.Errorf("expected old object to be a Role, got %T", oldObj)
+		}
+		return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
+	case *iamv0.GlobalRole:
+		oldGlobalRoleObj, ok := oldObj.(*iamv0.GlobalRole)
+		if !ok {
+			return fmt.Errorf("expected old object to be a GlobalRole, got %T", oldObj)
+		}
+		return b.globalRoleApiInstaller.ValidateOnUpdate(ctx, oldGlobalRoleObj, typedObj)
+	case *iamv0.TeamLBACRule:
+		oldTeamLBACRuleObj, ok := oldObj.(*iamv0.TeamLBACRule)
+		if !ok {
+			return fmt.Errorf("expected old object to be a TeamLBACRule, got %T", oldObj)
+		}
+		return b.teamLBACApiInstaller.ValidateOnUpdate(ctx, oldTeamLBACRuleObj, typedObj)
+	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
+	switch oldObj := a.GetOldObject().(type) {
+	case *iamv0.Role:
+		return b.roleApiInstaller.ValidateOnDelete(ctx, oldObj)
+	case *iamv0.GlobalRole:
+		return b.globalRoleApiInstaller.ValidateOnDelete(ctx, oldObj)
+	case *iamv0.TeamLBACRule:
+		if b.teamLBACApiInstaller != nil {
+			return b.teamLBACApiInstaller.ValidateOnDelete(ctx, oldObj)
+		}
 		return nil
 	}
+	return nil
+}
 
+func (b *IdentityAccessManagementAPIBuilder) validateConnect(ctx context.Context, a admission.Attributes) error {
 	return nil
 }
 
