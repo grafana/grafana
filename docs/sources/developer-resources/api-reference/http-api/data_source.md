@@ -202,6 +202,10 @@ Content-Type: application/json
 
 `GET /api/datasources/name/:name`
 
+{{< admonition type="warning" >}}
+This API is deprecated since and will be removed in a future release.
+{{< /admonition >}}
+
 **Required permissions**
 
 See note in the [introduction](#data-source-api) for an explanation.
@@ -257,6 +261,10 @@ Content-Type: application/json
 ## Get data source Id by name
 
 `GET /api/datasources/id/:name`
+
+{{< admonition type="warning" >}}
+This API is deprecated since and will be removed in a future release.
+{{< /admonition >}}
 
 **Required permissions**
 
@@ -687,6 +695,10 @@ Content-Type: application/json
 ## Delete an existing data source by name
 
 `DELETE /api/datasources/name/:datasourceName`
+
+{{< admonition type="warning" >}}
+This API is deprecated since and will be removed in a future release.
+{{< /admonition >}}
 
 **Required permissions**
 
