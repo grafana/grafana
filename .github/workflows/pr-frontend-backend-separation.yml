@@ -3,7 +3,7 @@ name: "PR Frontend/Backend Separation Check"
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    branches: [ main ]
+    branches: [ main, test/frontend-backend-separation-action ]
 
 permissions:
   contents: read
