@@ -274,7 +274,7 @@
       "label-time-column": "Tidskolumn",
       "label-time-range": "Tidsintervall",
       "tooltip-time-column": "<0>Anger tidskolumnen som används för filtrering. Standardinställningen är den första tabellens <1>timeSpan</1>-kolumn, den första <3>datetime</3>-kolumnen som hittas eller <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Anger tidsintervallet som används för att fråga. Alternativet <1>Fråga</1> använder endast de tidsintervall som anges i frågan. <3>Instrumentpanelen</3> kommer endast att använda Grafanas tidsintervall. I Logs Builder-läget kommer endast instrumentpanelens tid att användas.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Topp"

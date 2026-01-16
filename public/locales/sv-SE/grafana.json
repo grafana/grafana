@@ -3767,7 +3767,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5341,6 +5340,7 @@
       },
       "header-hidden-tooltip": "Radrubrik endast synlig i redigeringsläge",
       "name": "Rader",
+      "new-row-title": "",
       "row": {
         "collapse": "Dölj rad",
         "expand": "Expandera rad",
@@ -7991,6 +7991,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Visa tröskelvärdesetiketter",
     "name-show-threshold-markers": "Visa tröskelmarkörer",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -12572,6 +12573,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12585,6 +12591,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12742,14 +12749,6 @@
       "starred": "Stjärnmärkt",
       "view-as-folders": "Visa efter mappar",
       "view-as-list": "Visa som lista"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetiskt (A–Ö)",
-          "alphabetically-za": "Alfabetiskt (Ö–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importera",

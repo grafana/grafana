@@ -3767,7 +3767,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5341,6 +5340,7 @@
       },
       "header-hidden-tooltip": "Koptekst van de rij is alleen zichtbaar in bewerkingsmodus",
       "name": "Rijen",
+      "new-row-title": "",
       "row": {
         "collapse": "Rij samenvouwen",
         "expand": "Rij uitvouwen",
@@ -7991,6 +7991,7 @@
     "name-neutral": "Neutraal",
     "name-show-threshold-labels": "Drempellabels weergeven",
     "name-show-threshold-markers": "Drempelmarkeringen weergeven",
+    "neutral": "",
     "placeholder-neutral": "automatisch",
     "suggestions": {
       "arc": "",
@@ -12572,6 +12573,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12585,6 +12591,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12742,14 +12749,6 @@
       "starred": "Favorieten",
       "view-as-folders": "Weergeven als mappen",
       "view-as-list": "Weergeven als lijst"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetisch (A-Z)",
-          "alphabetically-za": "Alfabetisch (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importeren",

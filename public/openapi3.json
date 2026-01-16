@@ -18627,6 +18627,7 @@
     },
     "/datasources/id/{name}": {
       "get": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "operationId": "getDataSourceIdByName",
         "parameters": [
@@ -18656,7 +18657,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get data source Id by Name.",
+        "summary": "Get data source Id by Name. This function will be removed in the future.",
         "tags": [
           "datasources"
         ]
@@ -18664,6 +18665,7 @@
     },
     "/datasources/name/{name}": {
       "delete": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "operationId": "deleteDataSourceByName",
         "parameters": [
@@ -18693,12 +18695,13 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Delete an existing data source by name.",
+        "summary": "Delete an existing data source by name. This function will be removed in the future.",
         "tags": [
           "datasources"
         ]
       },
       "get": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "operationId": "getDataSourceByName",
         "parameters": [
@@ -18725,7 +18728,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get a single data source by Name.",
+        "summary": "Get a single data source by Name.  This function will be removed in the future.",
         "tags": [
           "datasources"
         ]

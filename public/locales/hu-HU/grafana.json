@@ -3767,7 +3767,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5341,6 +5340,7 @@
       },
       "header-hidden-tooltip": "Sorfejléc csak szerkesztési módban látható",
       "name": "Sorok",
+      "new-row-title": "",
       "row": {
         "collapse": "Sor összecsukása",
         "expand": "Sor kibontása",
@@ -7991,6 +7991,7 @@
     "name-neutral": "Semleges",
     "name-show-threshold-labels": "Küszöbértékcímkék megjelenítése",
     "name-show-threshold-markers": "Küszöbértékjelölők megjelenítése",
+    "neutral": "",
     "placeholder-neutral": "automatikus",
     "suggestions": {
       "arc": "",
@@ -12572,6 +12573,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12585,6 +12591,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12742,14 +12749,6 @@
       "starred": "Csillagozott",
       "view-as-folders": "Nézet mappák szerint",
       "view-as-list": "Listanézet"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Betűrendben (A–Z)",
-          "alphabetically-za": "Betűrendben (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importálás",
