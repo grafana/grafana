@@ -5,6 +5,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // Check returns metadata about the check being executed and the list of Steps
@@ -36,4 +38,20 @@ type Step interface {
 	Resolution() string
 	// Run executes the step for an item and returns a report
 	Run(ctx context.Context, log logging.Logger, obj *advisorv0alpha1.CheckSpec, item any) ([]advisorv0alpha1.CheckReportFailure, error)
+}
+
+// PluginInfoGetter is a minimal interface for retrieving plugin information from a repository.
+// It contains only the GetPluginsInfo method used by plugincheck and datasourcecheck.
+type PluginInfoGetter interface {
+	// GetPluginsInfo will return a list of plugins from grafana.com/api/plugins.
+	GetPluginsInfo(ctx context.Context, options repo.GetPluginsInfoOptions, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error)
+}
+
+// DataSourceGetter is a minimal interface for retrieving datasource information.
+// It contains only the GetDataSources and GetDataSource methods used by datasourcecheck.
+type DataSourceGetter interface {
+	// GetDataSources gets datasources.
+	GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
+	// GetDataSource gets a datasource.
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 }
