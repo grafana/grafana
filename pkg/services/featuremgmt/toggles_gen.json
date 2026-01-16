@@ -2837,7 +2837,8 @@
       "metadata": {
         "name": "permissionsFilterRemoveSubquery",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-08-02T07:39:25Z"
+        "creationTimestamp": "2023-08-02T07:39:25Z",
+        "deletionTimestamp": "2026-01-16T09:04:04Z"
       },
       "spec": {
         "description": "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",

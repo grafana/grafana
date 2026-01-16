@@ -102,18 +102,9 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 	}
 
 	var f PermissionsFilter
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagPermissionsFilterRemoveSubquery) {
-		f = &accessControlDashboardPermissionFilterNoFolderSubquery{
-			accessControlDashboardPermissionFilter: accessControlDashboardPermissionFilter{
-				user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
-				features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect,
-			},
-		}
-	} else {
-		f = &accessControlDashboardPermissionFilter{user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
-			features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect,
-		}
+	f = &accessControlDashboardPermissionFilter{
+		user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
+		features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect,
 	}
 	f.buildClauses(dialect)
 	return f
