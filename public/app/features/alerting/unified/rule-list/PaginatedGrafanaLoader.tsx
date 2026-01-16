@@ -1,6 +1,7 @@
 import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
+import { t } from '@grafana/i18n';
 import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -9,6 +10,7 @@ import { FolderActionsButton } from '../components/folder-actions/FolderActionsB
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
+import { isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
@@ -161,10 +163,15 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
 
   const detailsLink = groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name);
 
+  const firstRuleName = group.rules[0]?.name ?? t('alerting.rules-group.unknown-rule', 'Unknown Rule');
+  const groupDisplayName = isUngroupedRuleGroup(group.name)
+    ? t('alerting.rules-group.ungrouped-suffix', '{{ruleName}} (Ungrouped)', { ruleName: firstRuleName })
+    : group.name;
+
   return (
     <ListGroup
       key={group.name}
-      name={group.name}
+      name={groupDisplayName}
       metaRight={<GroupIntervalIndicator seconds={group.interval} />}
       href={detailsLink}
       isOpen={false}

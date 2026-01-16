@@ -82,6 +82,7 @@ type Alertmanager interface {
 type ExternalState struct {
 	Silences []byte
 	Nflog    []byte
+	FlushLog []byte
 }
 
 // StateMerger describes a type that is able to merge external state (nflog, silences) with its own.
@@ -378,7 +379,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 	activeOrganizations map[int64]struct{},
 ) {
-	storedFiles := []string{NotificationLogFilename, SilencesFilename}
+	storedFiles := []string{NotificationLogFilename, SilencesFilename, FlushLogFilename}
 	for _, fileName := range storedFiles {
 		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)
 		if err != nil {

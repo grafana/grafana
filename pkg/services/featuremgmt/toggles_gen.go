@@ -55,10 +55,6 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
-	// FlagIndividualCookiePreferences
-	// Support overriding cookie preferences per user
-	FlagIndividualCookiePreferences = "individualCookiePreferences"
-
 	// FlagKubernetesStars
 	// Routes stars requests from /api to the /apis endpoint
 	FlagKubernetesStars = "kubernetesStars"
@@ -122,10 +118,6 @@ const (
 	// FlagQueryCacheRequestDeduplication
 	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
 	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
-
-	// FlagPermissionsFilterRemoveSubquery
-	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
-	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
 
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
@@ -260,7 +252,7 @@ const (
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
 	// FlagDashboardNewLayouts
-	// Enables experimental new dashboard layouts
+	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
 	// FlagPdfTables
@@ -371,6 +363,10 @@ const (
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
 
+	// FlagAlertingNavigationV2
+	// Enables the new Alerting navigation structure with improved menu grouping
+	FlagAlertingNavigationV2 = "alertingNavigationV2"
+
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
@@ -455,10 +451,6 @@ const (
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
 
-	// FlagUnifiedStorageSearchSprinkles
-	// Enable sprinkles on unified storage search
-	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
-
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"
@@ -542,10 +534,6 @@ const (
 	// FlagK8SFolderCounts
 	// Enable folder&#39;s api server counts
 	FlagK8SFolderCounts = "k8SFolderCounts"
-
-	// FlagK8SFolderMove
-	// Enable folder&#39;s api server move
-	FlagK8SFolderMove = "k8SFolderMove"
 
 	// FlagImprovedExternalSessionHandlingSAML
 	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
@@ -645,6 +633,10 @@ const (
 	// FlagKubernetesAuthzCoreRolesApi
 	// Registers AuthZ Core Roles /apis endpoint
 	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
+
+	// FlagKubernetesAuthzGlobalRolesApi
+	// Registers AuthZ Global Roles /apis endpoint
+	FlagKubernetesAuthzGlobalRolesApi = "kubernetesAuthzGlobalRolesApi"
 
 	// FlagKubernetesAuthzRolesApi
 	// Registers AuthZ Roles /apis endpoint
@@ -793,4 +785,8 @@ const (
 	// FlagProfilesExemplars
 	// Enables profiles exemplars support in profiles drilldown
 	FlagProfilesExemplars = "profilesExemplars"
+
+	// FlagAlertingSyncDispatchTimer
+	// Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
+	FlagAlertingSyncDispatchTimer = "alertingSyncDispatchTimer"
 )
