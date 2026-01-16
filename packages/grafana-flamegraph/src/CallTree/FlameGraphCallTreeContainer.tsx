@@ -161,6 +161,14 @@ const FlameGraphCallTreeContainer = memo(
       return { nodes: nodesToUse, focusedNode: focused, callersNode: callersTargetNode };
     }, [data, focusedNodeId, callersNodeLabel]);
 
+    // Calculate depth offset for focus mode - the top-most visible node should appear at depth 0
+    const depthOffset = useMemo(() => {
+      if (focusedNodeId && nodes.length > 0) {
+        return nodes[0].depth;
+      }
+      return 0;
+    }, [focusedNodeId, nodes]);
+
     const searchNodes = useMemo(() => {
       if (!searchQuery.trim()) {
         return [];
@@ -436,7 +444,7 @@ const FlameGraphCallTreeContainer = memo(
                 nodeId={row.original.id}
                 label={row.original.label}
                 hasChildren={row.original.hasChildren}
-                depth={row.original.depth}
+                depth={row.original.depth - depthOffset}
                 parentId={row.original.parentId}
                 onFocus={handleSetFocusMode}
                 onShowCallers={handleSetCallersMode}
@@ -459,7 +467,7 @@ const FlameGraphCallTreeContainer = memo(
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
                 value={value}
-                depth={row.original.depth}
+                depth={row.original.depth - depthOffset}
                 hasChildren={row.original.hasChildren}
                 rowIndex={rowIndex}
                 rows={tableInstance.rows}
@@ -536,7 +544,7 @@ const FlameGraphCallTreeContainer = memo(
                 nodeId={row.original.id}
                 label={row.original.label}
                 hasChildren={row.original.hasChildren}
-                depth={row.original.depth}
+                depth={row.original.depth - depthOffset}
                 parentId={row.original.parentId}
                 onFocus={handleSetFocusMode}
                 onShowCallers={handleSetCallersMode}
@@ -559,7 +567,7 @@ const FlameGraphCallTreeContainer = memo(
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
                 value={value}
-                depth={row.original.depth}
+                depth={row.original.depth - depthOffset}
                 hasChildren={row.original.hasChildren}
                 rowIndex={rowIndex}
                 rows={tableInstance.rows}
