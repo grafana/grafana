@@ -807,7 +807,8 @@
       "label-integration": "Integración",
       "label-notification-settings": "Ajustes de notificaciones",
       "label-section": "Ajustes de {{name}} opcionales",
-      "test": "Prueba"
+      "test": "Prueba",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DE",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Este recurso se ha aprovisionado a través de {{provenance}} y no se puede editar mediante la interfaz de usuario",
       "badge-tooltip-standard": "Este recurso se ha aprovisionado y no se puede editar a través de la interfaz de usuario",
+      "body-imported": "",
       "body-provisioned": "Este {{resource}} se ha aprovisionado, lo que significa que ha sido creado por la configuración. Ponte en contacto con el administrador del servidor para actualizar este {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Este {{resource}} no se puede editar a través de la interfaz de usuario"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Provisionado"
       }
     },
@@ -2677,7 +2681,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3764,7 +3767,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5338,6 +5340,7 @@
       },
       "header-hidden-tooltip": "El encabezado de la fila solo es visible en el modo de edición",
       "name": "Filas",
+      "new-row-title": "",
       "row": {
         "collapse": "Contraer fila",
         "expand": "Expandir fila",
@@ -6380,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Clásico",
         "json": "JSON",
         "v1-resource": "Recurso V1",
         "v2-resource": "Recurso V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "¿Seguro que quieres restaurar el dashboard a la versión {{version}}? Todos los cambios no guardados se perderán.",
@@ -6980,6 +6986,7 @@
         "drone-datasource": "Fuente de datos de Drone",
         "git-lab-integration-and-datasource": "Integración y fuente de datos de GitLab",
         "honeycomb-integration-and-datasource": "Integración y fuente de datos de Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integración y fuente de datos de Jira",
         "logic-monitor-devices-datasource": "Fuente de datos de dispositivos de LogicMonitor",
         "mongo-db-integration-and-data-source": "Integración y fuente de datos de MongoDB",
@@ -7838,7 +7845,6 @@
       "export-externally-label": "Exportar el panel de control para utilizarlo en otra instancia",
       "export-format": "Formato",
       "export-mode": "Modelo",
-      "export-remove-ds-refs": "Eliminar detalles de implementación",
       "info-text": "Copiar o descargar un archivo que contenga la definición de su dashboard",
       "title": "Exportar panel"
     },
@@ -7985,6 +7991,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Mostrar etiquetas de umbral",
     "name-show-threshold-markers": "Mostrar marcadores de umbral",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -12566,6 +12573,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12579,6 +12591,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12736,14 +12749,6 @@
       "starred": "Destacado",
       "view-as-folders": "Ver por carpetas",
       "view-as-list": "Ver como lista"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabéticamente (A-Z)",
-          "alphabetically-za": "Alfabéticamente (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importar",

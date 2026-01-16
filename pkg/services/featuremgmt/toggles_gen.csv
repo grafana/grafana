@@ -16,7 +16,6 @@ alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
 lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
-individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
 influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
 starsFromAPIServer,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -28,7 +27,6 @@ renderAuthJWT,preview,@grafana/grafana-operator-experience-squad,false,false,fal
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,false
-extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false
@@ -38,7 +36,6 @@ provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
 queryCacheRequestDeduplication,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-permissionsFilterRemoveSubquery,experimental,@grafana/search-and-storage,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 dashgpt,GA,@grafana/dashboards-squad,false,false,true
 aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
@@ -176,7 +173,6 @@ unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,fals
 elasticsearchCrossClusterSearch,GA,@grafana/partner-datasources,false,false,false
 lokiLabelNamesQueryApi,GA,@grafana/oss-big-tent,false,false,false
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
-k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
@@ -218,6 +214,7 @@ kubernetesAuthZHandlerRedirect,experimental,@grafana/identity-access-team,false,
 kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
+kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
@@ -256,7 +253,7 @@ pluginContainers,privatePreview,@grafana/plugins-platform-backend,false,true,fal
 cdnPluginsLoadFirst,experimental,@grafana/plugins-platform-backend,false,false,false
 cdnPluginsUrls,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
-newGauge,experimental,@grafana/dataviz-squad,false,false,true
+newGauge,preview,@grafana/dataviz-squad,false,false,true
 newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
 externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
