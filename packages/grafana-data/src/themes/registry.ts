@@ -4,6 +4,7 @@ import { createTheme, NewThemeOptionsSchema } from './createTheme';
 import aubergine from './themeDefinitions/aubergine.json';
 import debug from './themeDefinitions/debug.json';
 import desertbloom from './themeDefinitions/desertbloom.json';
+import deuteranopia_protanopia_dark from './themeDefinitions/deuteranopia_protanopia_dark.json';
 import gildedgrove from './themeDefinitions/gildedgrove.json';
 import gloom from './themeDefinitions/gloom.json';
 import mars from './themeDefinitions/mars.json';
@@ -24,6 +25,7 @@ const extraThemes: { [key: string]: unknown } = {
   aubergine,
   debug,
   desertbloom,
+  deuteranopia_protanopia_dark,
   gildedgrove,
   gloom,
   mars,

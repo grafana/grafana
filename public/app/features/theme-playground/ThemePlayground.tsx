@@ -6,6 +6,7 @@ import { NewThemeOptionsSchema } from '@grafana/data/internal';
 import aubergine from '@grafana/data/themes/definitions/aubergine.json';
 import debug from '@grafana/data/themes/definitions/debug.json';
 import desertbloom from '@grafana/data/themes/definitions/desertbloom.json';
+import deuteranopia_protanopia_dark from '@grafana/data/themes/definitions/deuteranopia_protanopia_dark.json';
 import gildedgrove from '@grafana/data/themes/definitions/gildedgrove.json';
 import gloom from '@grafana/data/themes/definitions/gloom.json';
 import mars from '@grafana/data/themes/definitions/mars.json';
@@ -50,6 +51,7 @@ const experimentalDefinitions: Record<string, unknown> = {
   aubergine,
   debug,
   desertbloom,
+  deuteranopia_protanopia_dark,
   gildedgrove,
   gloom,
   mars,
