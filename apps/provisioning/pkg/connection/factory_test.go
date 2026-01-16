@@ -10,6 +10,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -191,6 +192,7 @@ func TestFactory_Build(t *testing.T) {
 			connectionType: provisioning.GithubConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				mockConnection := connection.NewMockConnection(t)
+				mockConnection.EXPECT().Test(mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 				extra := connection.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				extra.EXPECT().Build(ctx, &provisioning.Connection{
@@ -270,6 +272,7 @@ func TestFactory_Build(t *testing.T) {
 			connectionType: provisioning.GitlabConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				mockConnection := connection.NewMockConnection(t)
+				mockConnection.EXPECT().Test(mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 
 				extra1 := connection.NewMockExtra(t)
 				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)

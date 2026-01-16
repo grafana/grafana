@@ -17,4 +17,7 @@ type Connection interface {
 	// GenerateRepositoryToken generates a repository-scoped access token.
 	// The repo parameter specifies the repository name the token should be scoped to.
 	GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (common.RawSecureValue, error)
+
+	// Test checks if the connection information actually works.
+	Test(ctx context.Context) (*provisioning.TestResults, error)
 }

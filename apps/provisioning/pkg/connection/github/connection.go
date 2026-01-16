@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -44,6 +48,110 @@ const (
 	githubInstallationURL = "https://github.com/settings/installations"
 	jwtExpirationMinutes  = 10 // GitHub Apps JWT tokens expire in 10 minutes maximum
 )
+
+// Test validates the appID and installationID against the given github token.
+func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error) {
+	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+
+	app, err := ghClient.GetApp(ctx)
+	if err != nil {
+		if errors.Is(err, ErrServiceUnavailable) {
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusServiceUnavailable,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "token").String(),
+						Detail: ErrServiceUnavailable.Error(),
+					},
+				},
+			}, nil
+		}
+		return &provisioning.TestResults{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: provisioning.APIVERSION,
+				Kind:       "TestResults",
+			},
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("spec", "token").String(),
+					Detail: "invalid token",
+				},
+			},
+		}, nil
+	}
+
+	if fmt.Sprintf("%d", app.ID) != c.obj.Spec.GitHub.AppID {
+		return &provisioning.TestResults{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: provisioning.APIVERSION,
+				Kind:       "TestResults",
+			},
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("spec", "appID").String(),
+					Detail: fmt.Sprintf("appID mismatch: expected %s, got %d", c.obj.Spec.GitHub.AppID, app.ID),
+				},
+			},
+		}, nil
+	}
+
+	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
+	if err != nil {
+		if errors.Is(err, ErrServiceUnavailable) {
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusServiceUnavailable,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "token").String(),
+						Detail: ErrServiceUnavailable.Error(),
+					},
+				},
+			}, nil
+		}
+		return &provisioning.TestResults{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: provisioning.APIVERSION,
+				Kind:       "TestResults",
+			},
+			Code:    http.StatusBadRequest,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("spec", "installationID").String(),
+					Detail: fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID),
+				},
+			},
+		}, nil
+	}
+
+	return &provisioning.TestResults{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: provisioning.APIVERSION,
+			Kind:       "TestResults",
+		},
+		Code:    http.StatusOK,
+		Success: true,
+	}, nil
+}
 
 // GenerateRepositoryToken generates a repository-scoped access token.
 func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (common.RawSecureValue, error) {
