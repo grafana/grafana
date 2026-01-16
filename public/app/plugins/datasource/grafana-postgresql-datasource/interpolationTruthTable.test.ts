@@ -391,4 +391,20 @@ describe('PostgresDatasource interpolation truth table', () => {
       },
       expectedSql: `SELECT * FROM users WHERE name IN ('O''Brien','user.name','test''s')`,
     }));
+
+  it('Multi variable with single string containing single quote', () =>
+    runCase({
+      name: 'Multi variable with single string containing single quote',
+      rawSql: "SELECT * FROM users WHERE name = '$user'",
+      scopedVars: { user: makeScoped("O'Brien", makeVariable('user', { multi: true })) },
+      expectedSql: "SELECT * FROM users WHERE name = 'O''Brien'",
+    }));
+
+  it('includeAll variable with simple string (no allValue)', () =>
+    runCase({
+      name: 'includeAll variable with simple string (no allValue)',
+      rawSql: "SELECT * FROM regions WHERE region = '$region'",
+      scopedVars: { region: makeScoped('us-east', makeVariable('region', { includeAll: true })) },
+      expectedSql: "SELECT * FROM regions WHERE region = 'us-east'",
+    }));
 });
