@@ -30,7 +30,6 @@ func TestValidateRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 0,
@@ -42,7 +41,6 @@ func TestValidateRepository(t *testing.T) {
 				m.On("Config").Return(&provisioning.Repository{
 					Spec: provisioning.RepositorySpec{},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -63,7 +61,6 @@ func TestValidateRepository(t *testing.T) {
 						},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -85,7 +82,6 @@ func TestValidateRepository(t *testing.T) {
 						},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -105,7 +101,6 @@ func TestValidateRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -124,7 +119,6 @@ func TestValidateRepository(t *testing.T) {
 						Local: &provisioning.LocalRepositoryConfig{},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -143,7 +137,6 @@ func TestValidateRepository(t *testing.T) {
 						GitHub: &provisioning.GitHubRepositoryConfig{},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -164,7 +157,6 @@ func TestValidateRepository(t *testing.T) {
 						},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -183,7 +175,6 @@ func TestValidateRepository(t *testing.T) {
 						Git:   &provisioning.GitRepositoryConfig{},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -207,7 +198,6 @@ func TestValidateRepository(t *testing.T) {
 						},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 4,
@@ -227,7 +217,6 @@ func TestValidateRepository(t *testing.T) {
 						Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -246,7 +235,6 @@ func TestValidateRepository(t *testing.T) {
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, "invalid"},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -268,7 +256,6 @@ func TestValidateRepository(t *testing.T) {
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,
@@ -290,7 +277,6 @@ func TestValidateRepository(t *testing.T) {
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedErrs: 1,

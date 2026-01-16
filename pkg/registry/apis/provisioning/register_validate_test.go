@@ -21,7 +21,7 @@ import (
 func TestAPIBuilderValidate(t *testing.T) {
 	factory := repository.NewMockFactory(t)
 	mockRepo := repository.NewMockConfigRepository(t)
-	mockRepo.EXPECT().Validate().Return(nil)
+	factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
 	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockRepo, nil)
 	validator := repository.NewValidator(30*time.Second, []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder}, false)
 	b := &APIBuilder{

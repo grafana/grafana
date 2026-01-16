@@ -16,7 +16,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -135,9 +134,8 @@ func TestLocal(t *testing.T) {
 			}, &LocalFolderResolver{PermittedPrefixes: tc.PermittedPrefixes, HomePath: "/home/grafana"})
 
 			assert.Equal(t, tc.ExpectedPath, r.path, "expected path to be resolved")
-			for _, err := range r.Validate() {
-				assert.Fail(t, "unexpected validation failure", "unexpected validation error on field %s: %s", err.Field, err.ErrorBody())
-			}
+			// Validation is now handled by the validator function, not the repository instance
+			// The path resolution test is separate from validation
 		})
 	}
 
@@ -162,13 +160,8 @@ func TestLocal(t *testing.T) {
 
 			require.Empty(t, r.path, "no path should be resolved")
 
-			errs := r.Validate()
-			require.NotEmpty(t, errs, "expected validation errors")
-			for _, err := range errs {
-				if !assert.Equal(t, "spec.local.path", err.Field) {
-					assert.FailNow(t, "unexpected validation failure", "unexpected validation error on field %s: %s", err.Field, err.ErrorBody())
-				}
-			}
+			// Validation is now handled by the validator function, not the repository instance
+			// The path resolution test is separate from validation
 		})
 	}
 }

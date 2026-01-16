@@ -32,7 +32,6 @@ func TestTestRepository(t *testing.T) {
 						// Missing required title
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedCode: http.StatusUnprocessableEntity,
@@ -51,7 +50,6 @@ func TestTestRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				m.On("Test", mock.Anything).Return(&provisioning.TestResults{
 					Code:    http.StatusOK,
 					Success: true,
@@ -70,7 +68,6 @@ func TestTestRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				m.On("Test", mock.Anything).Return(nil, fmt.Errorf("test error"))
 				return m
 			}(),
@@ -85,7 +82,6 @@ func TestTestRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				m.On("Test", mock.Anything).Return(&provisioning.TestResults{
 					Code:    http.StatusBadRequest,
 					Success: false,
@@ -137,7 +133,6 @@ func TestTester_TestRepository(t *testing.T) {
 			Title: "Test Repo",
 		},
 	})
-	repository.On("Validate").Return(field.ErrorList{})
 	repository.On("Test", mock.Anything).Return(&provisioning.TestResults{
 		Code:    http.StatusOK,
 		Success: true,
