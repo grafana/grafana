@@ -23,6 +23,7 @@ describe('FlameGraphHeader', () => {
     const setLeftPaneView = jest.fn();
     const setRightPaneView = jest.fn();
     const setSingleView = jest.fn();
+    const onSwapPanes = jest.fn();
     const onReset = jest.fn();
 
     const renderResult = render(
@@ -39,6 +40,7 @@ describe('FlameGraphHeader', () => {
         setRightPaneView={setRightPaneView}
         singleView={PaneView.FlameGraph}
         setSingleView={setSingleView}
+        onSwapPanes={onSwapPanes}
         containerWidth={1600}
         onReset={onReset}
         showResetButton={true}

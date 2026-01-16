@@ -24,7 +24,7 @@ type Props = {
   search: string;
   compact?: boolean;
   onSearch?: (symbol: string) => void;
-  /** Item indexes of the focused item in the flame graph, to highlight the exact node in the call tree */
+  /** Item indexes of the focused item in the flame graph, to set focus in the call tree */
   highlightedItemIndexes?: number[];
 };
 
@@ -47,7 +47,6 @@ const FlameGraphCallTreeContainer = memo(
     const theme = useTheme2();
 
     const searchMatchRowRef = useRef<HTMLTableRowElement | null>(null);
-    const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
 
     const colorScheme = data.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.PackageBased;
 
@@ -225,9 +224,11 @@ const FlameGraphCallTreeContainer = memo(
       return matchIds;
     }, [searchQuery, nodes]);
 
-    const highlightedNodeId = useMemo(() => {
+    // When highlightedItemIndexes changes (from flame graph focus), set focus mode in the call tree
+    useEffect(() => {
       if (!highlightedItemIndexes || highlightedItemIndexes.length === 0) {
-        return undefined;
+        setFocusedNodeId(undefined);
+        return;
       }
 
       const itemIndexesMatch = (a: number[], b: number[]): boolean => {
@@ -252,17 +253,13 @@ const FlameGraphCallTreeContainer = memo(
         return undefined;
       };
 
-      return findExactMatch(nodes);
-    }, [highlightedItemIndexes, nodes]);
-
-    useEffect(() => {
-      if (highlightedRowRef.current) {
-        highlightedRowRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
+      // Need to search in the full tree, not the potentially filtered nodes
+      const allNodes = buildAllCallTreeNodes(data);
+      const matchedNodeId = findExactMatch(allNodes);
+      if (matchedNodeId) {
+        setFocusedNodeId(matchedNodeId);
       }
-    }, [highlightedNodeId]);
+    }, [highlightedItemIndexes, data]);
 
     const searchResultKey = searchNodes.join(',');
     useEffect(() => {
@@ -362,28 +359,8 @@ const FlameGraphCallTreeContainer = memo(
         }
       }
 
-      if (highlightedNodeId) {
-        const expandPathToHighlightedNode = (nodes: CallTreeNode[], targetId: string): boolean => {
-          for (const node of nodes) {
-            if (node.id === targetId) {
-              return true;
-            }
-            if (node.subRows && node.hasChildren) {
-              const foundInSubtree = expandPathToHighlightedNode(node.subRows, targetId);
-              if (foundInSubtree) {
-                baseExpanded[node.id] = true;
-                return true;
-              }
-            }
-          }
-          return false;
-        };
-
-        expandPathToHighlightedNode(nodes, highlightedNodeId);
-      }
-
       return baseExpanded;
-    }, [nodes, focusedNodeId, callersNodeLabel, callersNode, currentSearchMatchId, highlightedNodeId]);
+    }, [nodes, focusedNodeId, callersNodeLabel, callersNode, currentSearchMatchId]);
 
     const ACTIONS_WIDTH = 30;
     const COLOR_BAR_WIDTH = 200;
@@ -668,8 +645,8 @@ const FlameGraphCallTreeContainer = memo(
     const tableNodes = useMemo(() => {
       return [...nodes];
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [nodes, currentSearchMatchId, highlightedNodeId]);
-    // Note: currentSearchMatchId and highlightedNodeId are intentionally included to force re-render
+    }, [nodes, currentSearchMatchId]);
+    // Note: currentSearchMatchId is intentionally included to force re-render
 
     const tableInstance = useTable<CallTreeNode>(
       {
@@ -836,19 +813,12 @@ const FlameGraphCallTreeContainer = memo(
                         const isFocusedRow = row.original.id === focusedNodeId;
                         const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
                         const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
-                        const isHighlightedRow = highlightedNodeId && row.original.id === highlightedNodeId;
-
-                        const rowRef = isSearchMatchRow
-                          ? searchMatchRowRef
-                          : isHighlightedRow
-                            ? highlightedRowRef
-                            : null;
 
                         return (
                           <tr
                             key={key}
                             {...rowProps}
-                            ref={rowRef}
+                            ref={isSearchMatchRow ? searchMatchRowRef : null}
                             className={cx(
                               styles.tr,
                               (isFocusedRow ||
@@ -856,8 +826,7 @@ const FlameGraphCallTreeContainer = memo(
                                   focusedNodeId.substring(6) === row.original.label)) &&
                                 styles.focusedRow,
                               isCallersTargetRow && styles.callersTargetRow,
-                              isSearchMatchRow && styles.searchMatchRow,
-                              isHighlightedRow && !isSearchMatchRow && styles.highlightedRow
+                              isSearchMatchRow && styles.searchMatchRow
                             )}
                           >
                             {row.cells.map((cell) => {
@@ -1346,14 +1315,6 @@ function getStyles(theme: GrafanaTheme2) {
       fontWeight: theme.typography.fontWeightMedium,
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.warning.transparent, 0.1),
-      },
-    }),
-    highlightedRow: css({
-      backgroundColor: theme.colors.primary.transparent,
-      borderLeft: `3px solid ${theme.colors.primary.main}`,
-      fontWeight: theme.typography.fontWeightMedium,
-      '&:hover': {
-        backgroundColor: theme.colors.emphasize(theme.colors.primary.transparent, 0.1),
       },
     }),
     td: css({

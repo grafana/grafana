@@ -5,7 +5,7 @@ import { useDebounce, usePrevious } from 'react-use';
 
 import { ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { PaneView, SelectedView, ViewMode } from './types';
@@ -23,6 +23,7 @@ type Props = {
   setRightPaneView: (view: PaneView) => void;
   singleView: PaneView;
   setSingleView: (view: PaneView) => void;
+  onSwapPanes: () => void;
   containerWidth: number;
   onReset: () => void;
   showResetButton: boolean;
@@ -47,6 +48,7 @@ const FlameGraphHeader = ({
   setRightPaneView,
   singleView,
   setSingleView,
+  onSwapPanes,
   containerWidth,
   onReset,
   showResetButton,
@@ -96,6 +98,7 @@ const FlameGraphHeader = ({
             onChange={setLeftPaneView}
             className={styles.buttonSpacing}
           />
+          <IconButton name="exchange-alt" size="sm" tooltip="Swap views" onClick={onSwapPanes} />
           <RadioButtonGroup<PaneView>
             size="sm"
             options={paneViewOptions}

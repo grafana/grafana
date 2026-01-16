@@ -109,6 +109,7 @@ const FlameGraphContainer = ({
   const [leftPaneView, setLeftPaneView] = useState<PaneView>(PaneView.TopTable);
   const [rightPaneView, setRightPaneView] = useState<PaneView>(PaneView.FlameGraph);
   const [singleView, setSingleView] = useState<PaneView>(PaneView.FlameGraph);
+  const [panesSwapped, setPanesSwapped] = useState(false);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
   const [resetKey, setResetKey] = useState(0);
   const [viewBeforeNarrow, setViewBeforeNarrow] = useState<SelectedView | null>(null);
@@ -326,13 +327,20 @@ const FlameGraphContainer = ({
       />
     );
 
+    // Use CSS order to visually swap panes while keeping React tree stable
+    // This preserves component state when swapping
     if (vertical) {
       body = (
-        <div>
-          {isSplit && <div className={styles.verticalPaneContainer}>{leftPane}</div>}
+        <div className={styles.verticalContainer}>
+          {isSplit && (
+            <div className={styles.verticalPaneContainer} style={{ order: panesSwapped ? 2 : 1 }}>
+              {leftPane}
+            </div>
+          )}
           <div
             key="right-single-container"
             className={isSplit ? styles.verticalPaneContainer : styles.singlePaneContainer}
+            style={{ order: panesSwapped ? 1 : 2 }}
           >
             {rightSinglePane}
           </div>
@@ -341,10 +349,15 @@ const FlameGraphContainer = ({
     } else {
       body = (
         <div className={styles.horizontalContainer}>
-          {isSplit && <div className={styles.horizontalPaneContainer}>{leftPane}</div>}
+          {isSplit && (
+            <div className={styles.horizontalPaneContainer} style={{ order: panesSwapped ? 2 : 1 }}>
+              {leftPane}
+            </div>
+          )}
           <div
             key="right-single-container"
             className={isSplit ? styles.horizontalPaneContainer : styles.singlePaneContainerHorizontal}
+            style={{ order: panesSwapped ? 1 : 2 }}
           >
             {rightSinglePane}
           </div>
@@ -375,6 +388,7 @@ const FlameGraphContainer = ({
             setRightPaneView={setRightPaneView}
             singleView={singleView}
             setSingleView={setSingleView}
+            onSwapPanes={() => setPanesSwapped((s) => !s)}
             containerWidth={containerWidth}
             onReset={() => {
               setSearch('');
@@ -490,6 +504,12 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'row',
       columnGap: theme.spacing(1),
       width: '100%',
+    }),
+
+    verticalContainer: css({
+      label: 'verticalContainer',
+      display: 'flex',
+      flexDirection: 'column',
     }),
 
     horizontalPaneContainer: css({
