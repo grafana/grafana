@@ -1,6 +1,11 @@
 //go:build enterprise || pro
 // +build enterprise pro
 
+// NOTE: ensure imports below are actually being used in enterprise
+// there is a wrinkle that this approach avoids, as seen in for e.g. go.opentelemetry.io/proto/otlp, which has no imports at root of the module.
+// When referred to directly, it will keep showing up in go.mod as an indirect even when its direct.
+// this doesn't happen if you refer to a subpath such as go.opentelemetry.io/proto/otlp/collector/logs/v1 (which also will happen to be in your enterprise code).
+
 package extensions
 
 import (
@@ -36,7 +41,7 @@ import (
 	_ "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	_ "go.opentelemetry.io/otel/log"
 	_ "go.opentelemetry.io/otel/sdk/log"
-	_ "go.opentelemetry.io/proto/otlp"
+	_ "go.opentelemetry.io/proto/otlp/collector/logs/v1" // @grafana/grafana-operator-experience-squad
 	_ "gocloud.dev/secrets/awskms"
 	_ "gocloud.dev/secrets/azurekeyvault"
 	_ "gocloud.dev/secrets/gcpkms"
