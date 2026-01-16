@@ -13,6 +13,15 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// The plugin description
 	oas.Info.Description = b.pluginJSON.Info.Description
 
+	// Add plugin information
+	info := map[string]any{
+		"id": b.pluginJSON.ID,
+	}
+	if b.pluginJSON.Info.Build.Time > 0 {
+		info["build"] = b.pluginJSON.Info.Build.Time
+	}
+	oas.Info.AddExtension("plugin", info)
+
 	// The root api URL
 	root := "/apis/" + b.datasourceResourceInfo.GroupVersion().String() + "/"
 
