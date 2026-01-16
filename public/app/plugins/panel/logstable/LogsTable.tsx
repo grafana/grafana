@@ -26,7 +26,6 @@ import {
   LogsFrame,
   parseLogsFrame,
 } from '../../../features/logs/logsFrame';
-import { isSetDisplayedFields } from '../logs/types';
 import { TablePanel } from '../table/TablePanel';
 import type { Options as TableOptions } from '../table/panelcfg.gen';
 
@@ -81,7 +80,8 @@ export const LogsTable = ({
   // State
   const [extractedFrame, setExtractedFrame] = useState<DataFrame[] | null>(null);
   const [organizedFrame, setOrganizedFrame] = useState<DataFrame[] | null>(null);
-  const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? defaultDisplayedFields);
+  // const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? defaultDisplayedFields);
+  const displayedFields = options.displayedFields ?? defaultDisplayedFields;
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | null>(null);
   const styles = useStyles2(getStyles, DEFAULT_SIDEBAR_WIDTH, height, width);
   const dataLinksContext = useDataLinksContext();
@@ -92,18 +92,6 @@ export const LogsTable = ({
     ? onOptionsChange
     : undefined;
 
-  const setDisplayedFieldsFn = isSetDisplayedFields(options.setDisplayedFields)
-    ? options.setDisplayedFields
-    : setDisplayedFields;
-
-  // Callbacks
-  const onTableOptionsChange = useCallback(
-    (options: TableOptions) => {
-      onLogsTableOptionsChange?.(options);
-    },
-    [onLogsTableOptionsChange]
-  );
-
   const handleLogsTableOptionsChange = useCallback(
     (options: LogsTableOptions) => {
       onOptionsChange(options);
@@ -113,10 +101,17 @@ export const LogsTable = ({
 
   const handleSetDisplayedFields = useCallback(
     (displayedFields: string[]) => {
-      setDisplayedFieldsFn(displayedFields);
       handleLogsTableOptionsChange({ ...options, displayedFields: displayedFields });
     },
-    [handleLogsTableOptionsChange, options, setDisplayedFieldsFn]
+    [handleLogsTableOptionsChange, options]
+  );
+
+  // Callbacks
+  const onTableOptionsChange = useCallback(
+    (options: TableOptions) => {
+      onLogsTableOptionsChange?.(options);
+    },
+    [onLogsTableOptionsChange]
   );
 
   const handleTableOnFieldConfigChange = useCallback(
@@ -134,6 +129,7 @@ export const LogsTable = ({
    * Extract fields transform
    */
   useEffect(() => {
+    console.log('useEffect:: extract fields');
     // @todo move
     const extractFields = async () => {
       return await lastValueFrom(
@@ -158,6 +154,7 @@ export const LogsTable = ({
    * Organize fields transform
    */
   useEffect(() => {
+    console.log('useEffect:: organize fields');
     // @todo move
     const organizeFields = async (displayedFields: string[]) => {
       if (!extractedFrame) {
