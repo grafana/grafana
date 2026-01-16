@@ -1708,6 +1708,149 @@ func TestV16(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "ID collision prevention: row panels have higher IDs than top-level panels",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "text",
+						"title": "Top Level Panel",
+						"gridPos": map[string]interface{}{
+							"h": 3, "w": 24, "x": 0, "y": 0,
+						},
+					},
+				},
+				"rows": []interface{}{
+					map[string]interface{}{
+						"showTitle": true,
+						"title":     "Row with high ID panels",
+						"height":    250,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   6,
+								"type": "stat",
+								"span": 4,
+							},
+							map[string]interface{}{
+								"id":   7,
+								"type": "stat",
+								"span": 4,
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"type":  "text",
+						"title": "Top Level Panel",
+						"gridPos": map[string]interface{}{
+							"h": 3, "w": 24, "x": 0, "y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id":   6,
+						"type": "stat",
+						"gridPos": map[string]interface{}{
+							"x": 0, "y": 1, "w": 8, "h": 7,
+						},
+					},
+					map[string]interface{}{
+						"id":   7,
+						"type": "stat",
+						"gridPos": map[string]interface{}{
+							"x": 8, "y": 1, "w": 8, "h": 7,
+						},
+					},
+					map[string]interface{}{
+						"id":     8,
+						"type":   "row",
+						"title":  "Row with high ID panels",
+						"repeat": "",
+						"panels": []interface{}{},
+						"gridPos": map[string]interface{}{
+							"x": 0, "y": 0, "w": 24, "h": 7,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "ID collision prevention: assign unique IDs to panels without IDs",
+			input: map[string]interface{}{
+				"schemaVersion": 15,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    10,
+						"type":  "text",
+						"title": "Top Level Panel",
+						"gridPos": map[string]interface{}{
+							"h": 3, "w": 24, "x": 0, "y": 0,
+						},
+					},
+				},
+				"rows": []interface{}{
+					map[string]interface{}{
+						"collapse": true,
+						"height":   250,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type": "stat",
+								"span": 6,
+							},
+							map[string]interface{}{
+								"type": "stat",
+								"span": 6,
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    10,
+						"type":  "text",
+						"title": "Top Level Panel",
+						"gridPos": map[string]interface{}{
+							"h": 3, "w": 24, "x": 0, "y": 0,
+						},
+					},
+					map[string]interface{}{
+						"id":        13,
+						"type":      "row",
+						"title":     "",
+						"collapsed": true,
+						"repeat":    "",
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   11,
+								"type": "stat",
+								"gridPos": map[string]interface{}{
+									"x": 0, "y": 1, "w": 12, "h": 7,
+								},
+							},
+							map[string]interface{}{
+								"id":   12,
+								"type": "stat",
+								"gridPos": map[string]interface{}{
+									"x": 12, "y": 1, "w": 12, "h": 7,
+								},
+							},
+						},
+						"gridPos": map[string]interface{}{
+							"x": 0, "y": 0, "w": 24, "h": 7,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	runMigrationTests(t, tests, schemaversion.V16)
