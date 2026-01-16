@@ -3799,7 +3799,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_few": "",
       "all-failed_many": "",
@@ -5381,6 +5380,7 @@
       },
       "header-hidden-tooltip": "Заголовок строки отображается только в режиме редактирования",
       "name": "Строки",
+      "new-row-title": "",
       "row": {
         "collapse": "Свернуть строку",
         "expand": "Развернуть строку",
@@ -8043,6 +8043,7 @@
     "name-neutral": "Нейтральный",
     "name-show-threshold-labels": "Показывать метки пороговых значений",
     "name-show-threshold-markers": "Показывать маркеры пороговых значений",
+    "neutral": "",
     "placeholder-neutral": "авто",
     "suggestions": {
       "arc": "",
@@ -12678,6 +12679,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12691,6 +12697,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12852,14 +12859,6 @@
       "starred": "Помеченные",
       "view-as-folders": "Просмотр по папкам",
       "view-as-list": "Просмотр в виде списка"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "В алфавитном порядке (прямом)",
-          "alphabetically-za": "В алфавитном порядке (обратном)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Импорт",
