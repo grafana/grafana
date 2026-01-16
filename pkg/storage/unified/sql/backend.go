@@ -41,6 +41,9 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
+const defaultGarbageCollectionInterval = time.Minute
+const defaultGarbageCollectionBatchSize = 100
+const defaultGarbageCollectionMaxAge = 24 * time.Hour
 
 func ProvideStorageBackend(
 	cfg *setting.Cfg,
@@ -183,6 +186,10 @@ func (b *backend) initLocked(ctx context.Context) error {
 	if err := b.initPruner(ctx); err != nil {
 		return fmt.Errorf("failed to create pruner: %w", err)
 	}
+	// TODO put behind config setting
+	if err := b.initGarbageCollection(ctx); err != nil {
+		return fmt.Errorf("failed to initialize garbage collection: %w", err)
+	}
 
 	return nil
 }
@@ -243,20 +250,111 @@ func (b *backend) initPruner(ctx context.Context) error {
 }
 
 func (b *backend) initGarbageCollection(ctx context.Context) error {
-	// TODO
+	b.log.Debug("starting garbage collection loop")
 
-	/*
-		# Garbage collect every minute?
+	go func() {
+		ticker := time.NewTicker(defaultGarbageCollectionInterval)
+		defer ticker.Stop()
 
-		gr = getGroupResources()
-		for each gr in grs:
-		  rows = garbageCollect(gr)
-		  log rows deleted
-		  sleep 1s
-
-	*/
+		for {
+			select {
+			case <-b.done:
+				return
+			case <-ticker.C:
+				b.runGarbageCollection(ctx)
+			}
+		}
+	}()
 
 	return nil
+}
+
+func (b *backend) runGarbageCollection(ctx context.Context) {
+	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
+	defer span.End()
+
+	groupResources, err := b.listLatestRVs(ctx)
+	if err != nil {
+		b.log.Error("failed to list group resources for garbage collection", "error", err)
+		return
+	}
+
+	cutoffTimestamp := time.Now().Add(-defaultGarbageCollectionMaxAge).UnixMicro()
+	// TODO add custom case for dashboards since they have longer retention
+	for group, resources := range groupResources {
+		for resourceName := range resources {
+			totalDeleted := int64(0)
+			for {
+				deleted, err := b.garbageCollectBatch(ctx, group, resourceName, cutoffTimestamp, defaultGarbageCollectionBatchSize)
+				if err != nil {
+					b.log.Error("garbage collection failed",
+						"group", group,
+						"resource", resourceName,
+						"error", err)
+					break
+				}
+				if deleted == 0 {
+					break
+				}
+				totalDeleted += deleted
+				if deleted < int64(defaultGarbageCollectionBatchSize) {
+					break
+				}
+				select {
+				case <-b.done:
+					return
+				case <-time.After(time.Second):
+				}
+			}
+			if totalDeleted > 0 {
+				b.log.Info("garbage collection deleted history",
+					"group", group,
+					"resource", resourceName,
+					"rows", totalDeleted)
+			}
+		}
+	}
+}
+
+func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int) (int64, error) {
+	var rowsAffected int64
+	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		// query will return at most batchSize candidates
+		candidates, err := dbutil.Query(ctx, tx, sqlResourceHistoryGarbageGetCandidates, &sqlGarbageCollectCandidatesRequest{
+			SQLTemplate:     sqltemplate.New(b.dialect),
+			Group:           group,
+			Resource:        resourceName,
+			CutoffTimestamp: cutoffTimestamp,
+			BatchSize:       batchSize,
+			Response:        new(gcCandidateName),
+		})
+		if err != nil {
+			return err
+		}
+		if len(candidates) == 0 {
+			return nil
+		}
+		names := make([]string, 0, len(candidates))
+		for _, candidate := range candidates {
+			names = append(names, candidate.Name)
+		}
+		res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryGCDeleteByNames, &sqlGarbageCollectDeleteByNamesRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Group:       group,
+			Resource:    resourceName,
+			Names:       names,
+		})
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		rowsAffected = rows
+		return nil
+	})
+	return rowsAffected, err
 }
 
 func (b *backend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {

@@ -30,23 +30,25 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlResourceDelete                   = mustTemplate("resource_delete.sql")
-	sqlResourceInsert                   = mustTemplate("resource_insert.sql")
-	sqlResourceUpdate                   = mustTemplate("resource_update.sql")
-	sqlResourceRead                     = mustTemplate("resource_read.sql")
-	sqlResourceStats                    = mustTemplate("resource_stats.sql")
-	sqlResourceList                     = mustTemplate("resource_list.sql")
-	sqlResourceHistoryList              = mustTemplate("resource_history_list.sql")
-	sqlResourceHistoryListModifiedSince = mustTemplate("resource_history_list_since_modified.sql")
-	sqlResourceHistoryRead              = mustTemplate("resource_history_read.sql")
-	sqlResourceHistoryReadLatestRV      = mustTemplate("resource_history_read_latest_rv.sql")
-	sqlResourceHistoryInsert            = mustTemplate("resource_history_insert.sql")
-	sqlResourceHistoryPoll              = mustTemplate("resource_history_poll.sql")
-	sqlResourceHistoryGet               = mustTemplate("resource_history_get.sql")
-	sqlResourceHistoryDelete            = mustTemplate("resource_history_delete.sql")
-	sqlResourceHistoryPrune             = mustTemplate("resource_history_prune.sql")
-	sqlResourceTrash                    = mustTemplate("resource_trash.sql")
-	sqlResourceInsertFromHistory        = mustTemplate("resource_insert_from_history.sql")
+	sqlResourceDelete                      = mustTemplate("resource_delete.sql")
+	sqlResourceInsert                      = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate                      = mustTemplate("resource_update.sql")
+	sqlResourceRead                        = mustTemplate("resource_read.sql")
+	sqlResourceStats                       = mustTemplate("resource_stats.sql")
+	sqlResourceList                        = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList                 = mustTemplate("resource_history_list.sql")
+	sqlResourceHistoryListModifiedSince    = mustTemplate("resource_history_list_since_modified.sql")
+	sqlResourceHistoryRead                 = mustTemplate("resource_history_read.sql")
+	sqlResourceHistoryReadLatestRV         = mustTemplate("resource_history_read_latest_rv.sql")
+	sqlResourceHistoryInsert               = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryPoll                 = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryGet                  = mustTemplate("resource_history_get.sql")
+	sqlResourceHistoryDelete               = mustTemplate("resource_history_delete.sql")
+	sqlResourceHistoryPrune                = mustTemplate("resource_history_prune.sql")
+	sqlResourceHistoryGarbageGetCandidates = mustTemplate("resource_history_gc_get_candidates.sql")
+	sqlResourceHistoryGCDeleteByNames      = mustTemplate("resource_history_gc_delete_by_names.sql")
+	sqlResourceTrash                       = mustTemplate("resource_trash.sql")
+	sqlResourceInsertFromHistory           = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionList = mustTemplate("resource_version_list.sql")
@@ -330,6 +332,84 @@ func (r *sqlPruneHistoryRequest) Validate() error {
 	}
 	if r.Key.Resource == "" {
 		return fmt.Errorf("missing resource")
+	}
+	return nil
+}
+
+type sqlGarbageCollectHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Group           string
+	Resource        string
+	CutoffTimestamp int64
+	BatchSize       int
+}
+
+func (r *sqlGarbageCollectHistoryRequest) Validate() error {
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.CutoffTimestamp <= 0 {
+		return fmt.Errorf("invalid cutoff timestamp")
+	}
+	if r.BatchSize <= 0 {
+		return fmt.Errorf("invalid batch size")
+	}
+	return nil
+}
+
+type gcCandidateName struct {
+	Name string
+}
+
+type sqlGarbageCollectCandidatesRequest struct {
+	sqltemplate.SQLTemplate
+	Group           string
+	Resource        string
+	CutoffTimestamp int64
+	BatchSize       int
+	Response        *gcCandidateName
+}
+
+func (r *sqlGarbageCollectCandidatesRequest) Validate() error {
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.CutoffTimestamp <= 0 {
+		return fmt.Errorf("invalid cutoff timestamp")
+	}
+	if r.BatchSize <= 0 {
+		return fmt.Errorf("invalid batch size")
+	}
+	return nil
+}
+
+func (r *sqlGarbageCollectCandidatesRequest) Results() (*gcCandidateName, error) {
+	x := *r.Response
+	return &x, nil
+}
+
+type sqlGarbageCollectDeleteByNamesRequest struct {
+	sqltemplate.SQLTemplate
+	Group    string
+	Resource string
+	Names    []string
+}
+
+func (r *sqlGarbageCollectDeleteByNamesRequest) Validate() error {
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if len(r.Names) == 0 {
+		return fmt.Errorf("missing names")
 	}
 	return nil
 }
