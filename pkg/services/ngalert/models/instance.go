@@ -20,6 +20,7 @@ type AlertInstance struct {
 	ResolvedAt         *time.Time
 	ResultFingerprint  string
 	EvaluationDuration time.Duration `xorm:"evaluation_duration_ns"`
+	LastError          string        `xorm:"last_error"`
 }
 
 type AlertInstanceKey struct {

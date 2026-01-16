@@ -20,6 +20,7 @@ message AlertInstance {
     google.protobuf.Timestamp fired_at = 11;
     map<string, string> annotations = 12;
     int64 evaluation_duration_ns = 13;
+    string last_error = 14;
 }
 
 message AlertInstances {
