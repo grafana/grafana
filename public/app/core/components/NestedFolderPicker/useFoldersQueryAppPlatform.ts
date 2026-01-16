@@ -136,6 +136,7 @@ export function useFoldersQueryAppPlatform({
 
       // Add virtual "Shared with me" folder under the top-level "Dashboards" root.
       // This is backed by the same search endpoint, using `folder=sharedwithme`.
+      // Should show whatever folders are not accessible by traversing from the general/root folder.
       if (parentUid === rootFolderToken && rootFolderUID === undefined) {
         const folderIsOpen = openFolders[sharedWithMeFolderToken];
         const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
