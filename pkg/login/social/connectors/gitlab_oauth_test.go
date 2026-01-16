@@ -2,6 +2,7 @@ package connectors
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -230,7 +232,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 				SkipOrgRoleSync:         tt.Cfg.SkipOrgRoleSync,
 				OrgMapping:              tt.Cfg.OrgMapping,
 				// OrgAttributePath:        "",
-			}, cfg, orgMapper, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			}, cfg, orgMapper, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
@@ -432,7 +434,8 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				&setting.Cfg{
 					AutoAssignOrgRole: "",
 				}, nil, ssosettingstests.NewFakeService(),
-				featuremgmt.WithFeatures())
+				featuremgmt.WithFeatures(),
+				nil)
 
 			// Test case: successful extraction
 			token := &oauth2.Token{}
@@ -522,7 +525,7 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 	defer mockServer.Close()
 
 	// Create a SocialGitlab instance with the mock server URL
-	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 	// Call getGroups and verify that it returns all groups
 	expectedGroups := []string{"admins", "editors", "viewers", "serveradmins"}
@@ -652,11 +655,55 @@ func TestSocialGitlab_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if validate_id_token is enabled and jwk_set_url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "true",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "succeeds if validate_id_token is enabled and jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "true",
+					"jwk_set_url":       "https://gitlab.com/.well-known/jwks.json",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "false",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false even when jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"validate_id_token": "false",
+					"jwk_set_url":       "https://gitlab.com/.well-known/jwks.json",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -739,7 +786,7 @@ func TestSocialGitlab_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGitLabProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -750,6 +797,115 @@ func TestSocialGitlab_Reload(t *testing.T) {
 
 			require.EqualValues(t, tc.expectedInfo, s.info)
 			require.EqualValues(t, tc.expectedConfig, s.Config)
+		})
+	}
+}
+
+func TestSocialGitlab_extractFromToken_WithIDTokenValidation(t *testing.T) {
+	validKey, validKeyID := createTestRSAKey(t)
+	invalidKey, _ := createTestRSAKey(t)
+
+	// Create a mock JWKS server
+	jwksServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		jwksData := createJWKSResponse(t, validKey, validKeyID)
+		_, _ = w.Write(jwksData)
+	}))
+	defer jwksServer.Close()
+
+	claims := map[string]any{
+		"sub":                "12345678",
+		"email":              "johndoe@example.com",
+		"email_verified":     true,
+		"name":               "John Doe",
+		"preferred_username": "johndoe",
+		"exp":                time.Now().Add(time.Hour).Unix(),
+		"iat":                time.Now().Unix(),
+	}
+
+	tests := []struct {
+		name          string
+		validateToken bool
+		jwkSetURL     string
+		tokenKey      *rsa.PrivateKey
+		tokenKeyID    string
+		wantError     bool
+		wantData      bool
+	}{
+		{
+			name:          "valid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      validKey,
+			tokenKeyID:    validKeyID,
+			wantError:     false,
+			wantData:      true,
+		},
+		{
+			name:          "invalid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantError:     false, // extractFromToken returns nil on validation error, not an error
+			wantData:      false,
+		},
+		{
+			name:          "validation disabled should extract without signature check",
+			validateToken: false,
+			jwkSetURL:     "",
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantError:     false,
+			wantData:      true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			}
+			if tc.validateToken {
+				info.Extra = map[string]string{
+					"validate_id_token": "true",
+					"jwk_set_url":       tc.jwkSetURL,
+				}
+			}
+
+			s := NewGitLabProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+
+			// Sign the token
+			idToken := signJWT(t, tc.tokenKey, tc.tokenKeyID, claims)
+
+			// Create OAuth token with ID token
+			token := &oauth2.Token{
+				AccessToken: "access-token",
+			}
+			token = token.WithExtra(map[string]any{
+				"id_token": idToken,
+			})
+
+			// Create HTTP client
+			client := &http.Client{}
+
+			// Extract from token
+			data, err := s.extractFromToken(context.Background(), client, token)
+
+			if tc.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tc.wantData {
+				require.NotNil(t, data, "Expected user data but got nil")
+				assert.Equal(t, "johndoe@example.com", data.Email)
+				assert.Equal(t, "johndoe", data.Login)
+			} else {
+				require.Nil(t, data, "Expected nil data but got user data")
+			}
 		})
 	}
 }

@@ -131,6 +131,39 @@ Refresh token fetching and access token expiration check is enabled by default f
 The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0. Use the `use_refresh_token` configuration value instead for configuring refresh token fetching and access token expiration check.
 {{< /admonition >}}
 
+### Configure JWT ID token validation
+
+By default, Grafana extracts user information from ID tokens without validating their cryptographic signatures. To enhance security, you can enable JWT signature validation to ensure that ID tokens are authentic and have not been tampered with.
+
+To enable JWT ID token validation:
+
+1. Set `validate_id_token` to `true` in the `[auth.gitlab]` section of the Grafana configuration file.
+2. Configure `jwk_set_url` with the URL of your GitLab instance's JSON Web Key Set (JWKS) endpoint. This endpoint provides the public keys used to verify JWT signatures.
+
+   For GitLab.com, the JWKS endpoint is: `https://gitlab.com/.well-known/jwks.json`
+
+   For self-hosted GitLab instances, the JWKS endpoint is typically: `https://<your-gitlab-domain>/.well-known/jwks.json`
+
+Example configuration:
+
+```ini
+[auth.gitlab]
+enabled = true
+validate_id_token = true
+jwk_set_url = https://gitlab.com/.well-known/jwks.json
+client_id = <client id>
+client_secret = <client secret>
+scopes = openid email profile
+```
+
+{{< admonition type="note" >}}
+When JWT validation is enabled, Grafana caches the JWKS keys to improve performance. The cache respects the `Cache-Control` header from the JWKS endpoint response. If no cache expiration is specified, keys are cached for 5 minutes by default.
+{{< /admonition >}}
+
+{{< admonition type="caution" >}}
+If `validate_id_token` is set to `true`, you must configure `jwk_set_url`. Authentication will fail if the JWK Set URL is not provided or if the ID token signature cannot be verified.
+{{< /admonition >}}
+
 ### Configure allowed groups
 
 To limit access to authenticated users that are members of one or more [GitLab
@@ -285,4 +318,6 @@ If the configuration option requires a JMESPath expression that includes a colon
 | `tls_client_ca`              | No       | No                 | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                      |
 | `use_pkce`                   | No       | Yes                | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `true`                               |
 | `use_refresh_token`          | No       | Yes                | Set to `true` to use refresh token and check access token expiration. The `accessTokenExpirationCheck` feature toggle should also be enabled to use refresh token.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `true`                               |
+| `validate_id_token`          | No       | Yes                | If enabled, Grafana will validate the JWT signature of ID tokens using the JWKS endpoint. This enhances security by ensuring tokens are authentic and have not been tampered with.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `false`                              |
+| `jwk_set_url`                | No       | Yes                | URL of the JSON Web Key Set (JWKS) endpoint used to verify JWT ID token signatures. Required when ID token validation is enabled. For GitLab.com, use `https://gitlab.com/.well-known/jwks.json`. For self-hosted GitLab instances, use `https://<your-gitlab-domain>/.well-known/jwks.json`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |                                      |
 | `signout_redirect_url`       | No       | Yes                | URL to redirect to after the user logs out.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |                                      |

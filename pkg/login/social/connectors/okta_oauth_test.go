@@ -2,6 +2,8 @@ package connectors
 
 import (
 	"context"
+	"crypto/rsa"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
@@ -201,7 +204,8 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 				ProvideOrgRoleMapper(cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				ssosettingstests.NewFakeService(),
-				featuremgmt.WithFeatures())
+				featuremgmt.WithFeatures(),
+				nil)
 
 			// create a oauth2 token with a id_token
 			staticToken := oauth2.Token{
@@ -368,11 +372,67 @@ func TestSocialOkta_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if validate_id_token is enabled and jwk_set_url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"auth_url":          "https://example.com/auth",
+					"token_url":         "https://example.com/token",
+					"api_url":           "https://example.com/api",
+					"validate_id_token": "true",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "succeeds if validate_id_token is enabled and jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"auth_url":          "https://example.com/auth",
+					"token_url":         "https://example.com/token",
+					"api_url":           "https://example.com/api",
+					"validate_id_token": "true",
+					"jwk_set_url":       "https://example.okta.com/oauth2/v1/keys",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"auth_url":          "https://example.com/auth",
+					"token_url":         "https://example.com/token",
+					"api_url":           "https://example.com/api",
+					"validate_id_token": "false",
+					"jwk_set_url":       "",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "succeeds if validate_id_token is false even when jwk_set_url is provided",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":         "client-id",
+					"auth_url":          "https://example.com/auth",
+					"token_url":         "https://example.com/token",
+					"api_url":           "https://example.com/api",
+					"validate_id_token": "false",
+					"jwk_set_url":       "https://example.okta.com/oauth2/v1/keys",
+				},
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewOktaProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewOktaProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -452,7 +512,7 @@ func TestSocialOkta_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewOktaProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewOktaProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -463,6 +523,124 @@ func TestSocialOkta_Reload(t *testing.T) {
 
 			require.EqualValues(t, tc.expectedInfo, s.info)
 			require.EqualValues(t, tc.expectedConfig, s.Config)
+		})
+	}
+}
+
+func TestSocialOkta_UserInfo_WithIDTokenValidation(t *testing.T) {
+	validKey, validKeyID := createTestRSAKey(t)
+	invalidKey, _ := createTestRSAKey(t)
+
+	// Create a mock JWKS server
+	jwksServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		jwksData := createJWKSResponse(t, validKey, validKeyID)
+		_, _ = w.Write(jwksData)
+	}))
+	defer jwksServer.Close()
+
+	// Create a mock userinfo server
+	userInfoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"sub":   "123456789",
+			"email": "test@example.com",
+			"name":  "Test User",
+		})
+	}))
+	defer userInfoServer.Close()
+
+	claims := map[string]any{
+		"sub":   "123456789",
+		"email": "test@example.com",
+		"exp":   time.Now().Add(time.Hour).Unix(),
+		"iat":   time.Now().Unix(),
+	}
+
+	tests := []struct {
+		name          string
+		validateToken bool
+		jwkSetURL     string
+		tokenKey      *rsa.PrivateKey
+		tokenKeyID    string
+		wantError     bool
+		wantUserInfo  bool
+	}{
+		{
+			name:          "valid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      validKey,
+			tokenKeyID:    validKeyID,
+			wantError:     false,
+			wantUserInfo:  true,
+		},
+		{
+			name:          "invalid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantError:     true, // Okta returns an error when validation fails
+			wantUserInfo:  false,
+		},
+		{
+			name:          "validation disabled should extract without signature check",
+			validateToken: false,
+			jwkSetURL:     "",
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantError:     false,
+			wantUserInfo:  true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				ApiUrl:       userInfoServer.URL,
+			}
+			if tc.validateToken {
+				info.Extra = map[string]string{
+					"validate_id_token": "true",
+					"jwk_set_url":       tc.jwkSetURL,
+				}
+			}
+
+			s := NewOktaProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+
+			// Sign the token
+			idToken := signJWT(t, tc.tokenKey, tc.tokenKeyID, claims)
+
+			// Create OAuth token with ID token
+			token := &oauth2.Token{
+				AccessToken: "access-token",
+			}
+			token = token.WithExtra(map[string]any{
+				"id_token": idToken,
+			})
+
+			// Create HTTP client
+			client := &http.Client{}
+
+			// Get user info
+			userInfo, err := s.UserInfo(context.Background(), client, token)
+
+			if tc.wantError {
+				require.Error(t, err)
+				assert.Nil(t, userInfo)
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tc.wantUserInfo {
+				require.NotNil(t, userInfo, "Expected user info but got nil")
+				assert.Equal(t, "test@example.com", userInfo.Email)
+			} else {
+				assert.Nil(t, userInfo, "Expected nil user info but got user info")
+			}
 		})
 	}
 }

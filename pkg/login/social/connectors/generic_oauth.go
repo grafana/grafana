@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -25,6 +26,8 @@ const (
 	nameAttributePathKey    = "name_attribute_path"
 	loginAttributePathKey   = "login_attribute_path"
 	idTokenAttributeNameKey = "id_token_attribute_name" // #nosec G101 not a hardcoded credential
+	validateIDTokenKey      = "validate_id_token"
+	jwkSetURLKey            = "jwk_set_url"
 )
 
 var ExtraGenericOAuthSettingKeys = map[string]ExtraKeyInfo{
@@ -33,6 +36,8 @@ var ExtraGenericOAuthSettingKeys = map[string]ExtraKeyInfo{
 	idTokenAttributeNameKey: {Type: String},
 	teamIdsKey:              {Type: String},
 	allowedOrganizationsKey: {Type: String},
+	validateIDTokenKey:      {Type: Bool, DefaultValue: false},
+	jwkSetURLKey:            {Type: String},
 }
 
 var _ social.SocialConnector = (*SocialGenericOAuth)(nil)
@@ -50,10 +55,12 @@ type SocialGenericOAuth struct {
 	idTokenAttributeName string
 	teamIdsAttributePath string
 	teamIds              []string
+	validateIDToken      bool
+	jwkSetURL            string
 }
 
-func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
-	s := newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg)
+func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGenericOAuth {
+	s := newSocialBaseWithCache(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg, cache)
 
 	teamIds, err := util.SplitStringWithError(info.Extra[teamIdsKey])
 	if err != nil {
@@ -66,7 +73,7 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 	}
 
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:           newSocialBaseWithCache(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg, cache),
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
 		emailAttributePath:   info.EmailAttributePath,
@@ -77,6 +84,8 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		teamIdsAttributePath: info.TeamIdsAttributePath,
 		teamIds:              teamIds,
 		allowedOrganizations: allowedOrganizations,
+		validateIDToken:      MustBool(info.Extra[validateIDTokenKey], ExtraGenericOAuthSettingKeys[validateIDTokenKey].DefaultValue.(bool)),
+		jwkSetURL:            info.Extra[jwkSetURLKey],
 	}
 
 	ssoSettings.RegisterReloadable(social.GenericOAuthProviderName, provider)
@@ -116,6 +125,11 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 
 	if len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups is configured then Groups attribute path must be configured.")
+	}
+
+	validateIDToken := MustBool(info.Extra[validateIDTokenKey], ExtraGenericOAuthSettingKeys[validateIDTokenKey].DefaultValue.(bool))
+	if validateIDToken && info.Extra[jwkSetURLKey] == "" {
+		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
 	}
 
 	return nil
@@ -158,6 +172,8 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.teamIdsAttributePath = newInfo.TeamIdsAttributePath
 	s.teamIds = teamIds
 	s.allowedOrganizations = allowedOrganizations
+	s.validateIDToken = MustBool(newInfo.Extra[validateIDTokenKey], ExtraGenericOAuthSettingKeys[validateIDTokenKey].DefaultValue.(bool))
+	s.jwkSetURL = newInfo.Extra[jwkSetURLKey]
 
 	return nil
 }
@@ -258,7 +274,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 func (s *SocialGenericOAuth) collectUserInfoData(ctx context.Context, client *http.Client, token *oauth2.Token) []*UserInfoJson {
 	dataSources := make([]*UserInfoJson, 0, 3)
 
-	if idTokenData := s.extractFromIDToken(token); idTokenData != nil {
+	if idTokenData := s.extractFromIDToken(ctx, token); idTokenData != nil {
 		dataSources = append(dataSources, idTokenData)
 	}
 	if apiData := s.extractFromAPI(ctx, client); apiData != nil {
@@ -403,7 +419,7 @@ func (s *SocialGenericOAuth) canFetchPrivateEmail(userinfo *social.BasicUserInfo
 	return s.info.ApiUrl != "" && userinfo.Email == ""
 }
 
-func (s *SocialGenericOAuth) extractFromIDToken(token *oauth2.Token) *UserInfoJson {
+func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oauth2.Token) *UserInfoJson {
 	s.log.Debug("Extracting user info from OAuth ID token")
 
 	idTokenAttribute := "id_token"
@@ -414,14 +430,35 @@ func (s *SocialGenericOAuth) extractFromIDToken(token *oauth2.Token) *UserInfoJs
 
 	idToken := token.Extra(idTokenAttribute)
 	if idToken == nil {
-		s.log.Debug("No id_token found", "token", token)
+		s.log.Debug("No id_token found", "token", fmt.Sprintf("%+v", token))
 		return nil
 	}
 
-	rawJSON, err := s.retrieveRawJWTPayload(idToken)
-	if err != nil {
-		s.log.Warn("Error retrieving id_token payload", "error", err, "token", fmt.Sprintf("%+v", token))
+	idTokenString, ok := idToken.(string)
+	if !ok {
+		s.log.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", token))
 		return nil
+	}
+
+	var rawJSON []byte
+	var err error
+
+	// If JWT validation is enabled, validate the signature
+	if s.validateIDToken && s.jwkSetURL != "" {
+		// create a dedicated client for the JWKS retrieval, without a token source
+		JWKSClient := s.Client(ctx, nil)
+		rawJSON, err = s.SocialBase.validateIDTokenSignature(ctx, JWKSClient, idTokenString, s.jwkSetURL)
+		if err != nil {
+			s.log.Warn("Error validating ID token signature", "error", err)
+			return nil
+		}
+	} else {
+		// Otherwise, just extract the payload without signature validation
+		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
+		if err != nil {
+			s.log.Warn("Error retrieving id_token payload", "error", err, "token", fmt.Sprintf("%+v", token))
+			return nil
+		}
 	}
 
 	return s.parseUserInfoFromJSON(rawJSON, "id_token")
@@ -712,6 +749,8 @@ func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
 	fmt.Fprintf(bf, "team_ids_attribute_path = %s\n", s.teamIdsAttributePath)
 	fmt.Fprintf(bf, "team_ids = %v\n", s.teamIds)
 	fmt.Fprintf(bf, "allowed_organizations = %v\n", s.allowedOrganizations)
+	fmt.Fprintf(bf, "validate_id_token = %v\n", s.validateIDToken)
+	fmt.Fprintf(bf, "jwk_set_url = %s\n", s.jwkSetURL)
 	bf.WriteString("```\n\n")
 
 	return s.getBaseSupportBundleContent(bf)

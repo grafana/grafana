@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -25,11 +26,18 @@ const (
 	accessLevelGuest = "10"
 )
 
+var ExtraGitlabSettingKeys = map[string]ExtraKeyInfo{
+	validateIDTokenKey: {Type: Bool, DefaultValue: false},
+	jwkSetURLKey:       {Type: String},
+}
+
 var _ social.SocialConnector = (*SocialGitlab)(nil)
 var _ ssosettings.Reloadable = (*SocialGitlab)(nil)
 
 type SocialGitlab struct {
 	*SocialBase
+	validateIDToken bool
+	jwkSetURL       string
 }
 
 type apiData struct {
@@ -52,9 +60,11 @@ type userData struct {
 	raw           []byte
 }
 
-func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
+func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGitlab {
 	provider := &SocialGitlab{
-		SocialBase: newSocialBase(social.GitlabProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:      newSocialBaseWithCache(social.GitlabProviderName, orgRoleMapper, info, features, cfg, cache),
+		validateIDToken: MustBool(info.Extra[validateIDTokenKey], ExtraGitlabSettingKeys[validateIDTokenKey].DefaultValue.(bool)),
+		jwkSetURL:       info.Extra[jwkSetURLKey],
 	}
 
 	ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
@@ -78,10 +88,20 @@ func (s *SocialGitlab) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 		return err
 	}
 
-	return validation.Validate(info, requester,
+	err = validation.Validate(info, requester,
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"))
+	if err != nil {
+		return err
+	}
+
+	validateIDToken := MustBool(info.Extra[validateIDTokenKey], ExtraGitlabSettingKeys[validateIDTokenKey].DefaultValue.(bool))
+	if validateIDToken && info.Extra[jwkSetURLKey] == "" {
+		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
+	}
+
+	return nil
 }
 
 func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
@@ -94,6 +114,8 @@ func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	defer s.reloadMutex.Unlock()
 
 	s.updateInfo(ctx, social.GitlabProviderName, newInfo)
+	s.validateIDToken = MustBool(newInfo.Extra[validateIDTokenKey], ExtraGitlabSettingKeys[validateIDTokenKey].DefaultValue.(bool))
+	s.jwkSetURL = newInfo.Extra[jwkSetURLKey]
 
 	return nil
 }
@@ -275,10 +297,31 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 		return nil, nil
 	}
 
-	rawJSON, err := s.retrieveRawJWTPayload(idToken)
-	if err != nil {
-		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+	idTokenString, ok := idToken.(string)
+	if !ok {
+		s.log.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", idToken))
 		return nil, nil
+	}
+
+	var rawJSON []byte
+	var err error
+
+	// If JWT validation is enabled, validate the signature
+	if s.validateIDToken && s.jwkSetURL != "" {
+		// create a dedicated client for the JWKS retrieval, without a token source
+		JWKSClient := s.Client(ctx, nil)
+		rawJSON, err = s.SocialBase.validateIDTokenSignature(ctx, JWKSClient, idTokenString, s.jwkSetURL)
+		if err != nil {
+			s.log.Warn("Error validating ID token signature", "error", err)
+			return nil, nil
+		}
+	} else {
+		// Otherwise, just extract the payload without signature validation
+		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
+		if err != nil {
+			s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+			return nil, nil
+		}
 	}
 
 	s.log.Debug("Received id_token", "raw_json", string(rawJSON))

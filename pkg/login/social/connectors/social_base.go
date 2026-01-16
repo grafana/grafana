@@ -12,13 +12,17 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -36,6 +40,8 @@ type SocialBase struct {
 	features      featuremgmt.FeatureToggles
 	orgRoleMapper *OrgRoleMapper
 	orgMappingCfg MappingConfiguration
+	cache         remotecache.CacheStorage
+	providerName  string
 }
 
 func newSocialBase(name string,
@@ -43,6 +49,16 @@ func newSocialBase(name string,
 	info *social.OAuthInfo,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
+) *SocialBase {
+	return newSocialBaseWithCache(name, orgRoleMapper, info, features, cfg, nil)
+}
+
+func newSocialBaseWithCache(name string,
+	orgRoleMapper *OrgRoleMapper,
+	info *social.OAuthInfo,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	cache remotecache.CacheStorage,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
@@ -54,6 +70,8 @@ func newSocialBase(name string,
 		cfg:           cfg,
 		orgRoleMapper: orgRoleMapper,
 		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict),
+		providerName:  name,
+		cache:         cache,
 	}
 }
 
@@ -263,6 +281,146 @@ func (s *SocialBase) retrieveRawJWTPayload(token any) ([]byte, error) {
 	}
 
 	return rawJSON, nil
+}
+
+// getJWKSCacheKeyPrefix returns the cache key prefix for the provider
+func (s *SocialBase) getJWKSCacheKeyPrefix() string {
+	return s.providerName + "_oauth_jwks-"
+}
+
+// getJWKSCacheKey returns the cache key for JWKS
+func (s *SocialBase) getJWKSCacheKey() (string, error) {
+	return s.getJWKSCacheKeyPrefix() + s.ClientID, nil
+}
+
+// retrieveJWKSFromCache retrieves JWKS from cache
+func (s *SocialBase) retrieveJWKSFromCache(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error) {
+	if s.cache == nil {
+		return &keySetJWKS{}, 0, nil
+	}
+
+	cacheKey, err := s.getJWKSCacheKey()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if val, err := s.cache.Get(ctx, cacheKey); err == nil {
+		var jwks keySetJWKS
+		err := json.Unmarshal(val, &jwks)
+		s.log.Debug("Retrieved cached key set", "cacheKey", cacheKey)
+		return &jwks, 0, err
+	}
+	s.log.Debug("Keyset not found in cache")
+
+	return &keySetJWKS{}, 0, nil
+}
+
+// cacheJWKS caches the JWKS
+func (s *SocialBase) cacheJWKS(ctx context.Context, jwks *keySetJWKS, cacheExpiration time.Duration) error {
+	if s.cache == nil {
+		return nil
+	}
+
+	cacheKey, err := s.getJWKSCacheKey()
+	if err != nil {
+		return err
+	}
+
+	var jsonBuf bytes.Buffer
+	if err := json.NewEncoder(&jsonBuf).Encode(jwks); err != nil {
+		return err
+	}
+
+	if err := s.cache.Set(ctx, cacheKey, jsonBuf.Bytes(), cacheExpiration); err != nil {
+		s.log.Warn("Failed to cache key set", "err", err)
+	}
+
+	return nil
+}
+
+// retrieveJWKSFromURL retrieves JWKS from the configured URL
+func (s *SocialBase) retrieveJWKSFromURL(ctx context.Context, client *http.Client, jwkSetURL string) (*keySetJWKS, time.Duration, error) {
+	if jwkSetURL == "" {
+		return nil, 0, fmt.Errorf("JWK Set URL is not configured")
+	}
+
+	resp, err := s.httpGet(ctx, client, jwkSetURL)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	bytesReader := bytes.NewReader(resp.Body)
+	var jwks keySetJWKS
+	if err := json.NewDecoder(bytesReader).Decode(&jwks); err != nil {
+		return nil, 0, err
+	}
+
+	cacheExpiration := getCacheExpiration(resp.Headers.Get("cache-control"))
+	s.log.Debug("Retrieved key set from URL", "url", jwkSetURL, "cacheExpiration", cacheExpiration)
+
+	return &jwks, cacheExpiration, nil
+}
+
+// validateIDTokenSignature validates the JWT signature using JWKS
+func (s *SocialBase) validateIDTokenSignature(ctx context.Context, client *http.Client, idTokenString string, jwkSetURL string) ([]byte, error) {
+	parsedToken, err := jwt.ParseSigned(idTokenString, []jose.SignatureAlgorithm{
+		jose.EdDSA, jose.HS256, jose.HS384, jose.HS512,
+		jose.RS256, jose.RS384, jose.RS512,
+		jose.ES256, jose.ES384, jose.ES512,
+		jose.PS256, jose.PS384, jose.PS512,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse JWT token: %w", err)
+	}
+
+	if len(parsedToken.Headers) == 0 {
+		return nil, fmt.Errorf("JWT token has no headers")
+	}
+
+	keyID := parsedToken.Headers[0].KeyID
+
+	// Try to retrieve JWKS from cache first, then from URL
+	jwksFuncs := []func(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error){
+		s.retrieveJWKSFromCache,
+		func(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error) {
+			return s.retrieveJWKSFromURL(ctx, client, jwkSetURL)
+		},
+	}
+
+	for _, jwksFunc := range jwksFuncs {
+		keyset, expiry, err := jwksFunc(ctx, client)
+		if err != nil {
+			s.log.Warn("Error retrieving JWKS", "error", err)
+			continue
+		}
+
+		keys := keyset.Key(keyID)
+		for _, key := range keys {
+			s.log.Debug("Trying to verify token with key", "kid", key.KeyID)
+			var claims map[string]any
+			if err := parsedToken.Claims(key, &claims); err == nil {
+				// Successfully verified, cache the keyset if we got it from URL
+				if expiry != 0 {
+					s.log.Debug("Caching key set", "kid", key.KeyID, "expiry", expiry)
+					if err := s.cacheJWKS(ctx, keyset, expiry); err != nil {
+						s.log.Warn("Failed to cache key set", "err", err)
+					}
+				}
+
+				// Extract the raw JSON payload from the verified claims
+				rawJSON, err := json.Marshal(claims)
+				if err != nil {
+					return nil, fmt.Errorf("failed to marshal verified claims: %w", err)
+				}
+
+				return rawJSON, nil
+			} else {
+				s.log.Debug("Failed to verify token with key", "kid", key.KeyID, "err", err)
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("signing key not found for kid: %s", keyID)
 }
 
 // match grafana admin role and translate to org role and bool.

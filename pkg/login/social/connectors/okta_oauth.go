@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -20,11 +21,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var ExtraOktaSettingKeys = map[string]ExtraKeyInfo{
+	validateIDTokenKey: {Type: Bool, DefaultValue: false},
+	jwkSetURLKey:       {Type: String},
+}
+
 var _ social.SocialConnector = (*SocialOkta)(nil)
 var _ ssosettings.Reloadable = (*SocialOkta)(nil)
 
 type SocialOkta struct {
 	*SocialBase
+	validateIDToken bool
+	jwkSetURL       string
 }
 
 type OktaUserInfoJson struct {
@@ -46,9 +54,11 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialOkta {
 	provider := &SocialOkta{
-		SocialBase: newSocialBase(social.OktaProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:      newSocialBaseWithCache(social.OktaProviderName, orgRoleMapper, info, features, cfg, cache),
+		validateIDToken: MustBool(info.Extra[validateIDTokenKey], ExtraOktaSettingKeys[validateIDTokenKey].DefaultValue.(bool)),
+		jwkSetURL:       info.Extra[jwkSetURLKey],
 	}
 
 	if info.UseRefreshToken {
@@ -76,10 +86,20 @@ func (s *SocialOkta) Validate(ctx context.Context, newSettings ssoModels.SSOSett
 		return err
 	}
 
-	return validation.Validate(info, requester,
+	err = validation.Validate(info, requester,
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
 		validation.RequiredUrlValidator(info.ApiUrl, "API URL"))
+	if err != nil {
+		return err
+	}
+
+	validateIDToken := MustBool(info.Extra[validateIDTokenKey], ExtraOktaSettingKeys[validateIDTokenKey].DefaultValue.(bool))
+	if validateIDToken && info.Extra[jwkSetURLKey] == "" {
+		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
+	}
+
+	return nil
 }
 
 func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
@@ -92,6 +112,8 @@ func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings)
 	defer s.reloadMutex.Unlock()
 
 	s.updateInfo(ctx, social.OktaProviderName, newInfo)
+	s.validateIDToken = MustBool(newInfo.Extra[validateIDTokenKey], ExtraOktaSettingKeys[validateIDTokenKey].DefaultValue.(bool))
+	s.jwkSetURL = newInfo.Extra[jwkSetURLKey]
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
@@ -115,15 +137,38 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	if idToken == nil {
 		return nil, fmt.Errorf("no id_token found")
 	}
-	parsedToken, err := jwt.ParseSigned(idToken.(string), []jose.SignatureAlgorithm{jose.HS256,
-		jose.HS384, jose.HS512, jose.RS256, jose.RS384, jose.RS512, jose.ES256, jose.ES384, jose.ES512})
-	if err != nil {
-		return nil, fmt.Errorf("error parsing id token: %w", err)
+
+	idTokenString, ok := idToken.(string)
+	if !ok {
+		return nil, fmt.Errorf("id_token is not a string")
 	}
 
 	var claims OktaClaims
-	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, fmt.Errorf("error getting claims from id token: %w", err)
+	var err error
+
+	// If JWT validation is enabled, validate the signature
+	if s.validateIDToken && s.jwkSetURL != "" {
+		// create a dedicated client for the JWKS retrieval, without a token source
+		JWKSClient := s.Client(ctx, nil)
+		rawJSON, err := s.SocialBase.validateIDTokenSignature(ctx, JWKSClient, idTokenString, s.jwkSetURL)
+		if err != nil {
+			return nil, fmt.Errorf("error validating id token signature: %w", err)
+		}
+
+		if err := json.Unmarshal(rawJSON, &claims); err != nil {
+			return nil, fmt.Errorf("error unmarshalling verified claims: %w", err)
+		}
+	} else {
+		// Otherwise, parse without signature validation (existing behavior)
+		parsedToken, parseErr := jwt.ParseSigned(idTokenString, []jose.SignatureAlgorithm{jose.HS256,
+			jose.HS384, jose.HS512, jose.RS256, jose.RS384, jose.RS512, jose.ES256, jose.ES384, jose.ES512})
+		if parseErr != nil {
+			return nil, fmt.Errorf("error parsing id token: %w", parseErr)
+		}
+
+		if err = parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
+			return nil, fmt.Errorf("error getting claims from id token: %w", err)
+		}
 	}
 
 	email := claims.extractEmail()

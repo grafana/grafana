@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -28,7 +29,9 @@ const (
 )
 
 var ExtraGoogleSettingKeys = map[string]ExtraKeyInfo{
-	validateHDKey: {Type: Bool, DefaultValue: true},
+	validateHDKey:      {Type: Bool, DefaultValue: true},
+	validateIDTokenKey: {Type: Bool, DefaultValue: false},
+	jwkSetURLKey:       {Type: String},
 }
 
 var _ social.SocialConnector = (*SocialGoogle)(nil)
@@ -36,7 +39,9 @@ var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
 
 type SocialGoogle struct {
 	*SocialBase
-	validateHD bool
+	validateHD      bool
+	validateIDToken bool
+	jwkSetURL       string
 }
 
 type googleUserData struct {
@@ -48,10 +53,12 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
+func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGoogle {
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, orgRoleMapper, info, features, cfg),
-		validateHD: MustBool(info.Extra[validateHDKey], true),
+		SocialBase:      newSocialBaseWithCache(social.GoogleProviderName, orgRoleMapper, info, features, cfg, cache),
+		validateHD:      MustBool(info.Extra[validateHDKey], true),
+		validateIDToken: MustBool(info.Extra[validateIDTokenKey], ExtraGoogleSettingKeys[validateIDTokenKey].DefaultValue.(bool)),
+		jwkSetURL:       info.Extra[jwkSetURLKey],
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -78,11 +85,21 @@ func (s *SocialGoogle) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 		return err
 	}
 
-	return validation.Validate(info, requester,
+	err = validation.Validate(info, requester,
 		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
 		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		loginPromptValidator)
+	if err != nil {
+		return err
+	}
+
+	validateIDToken := MustBool(info.Extra[validateIDTokenKey], ExtraGoogleSettingKeys[validateIDTokenKey].DefaultValue.(bool))
+	if validateIDToken && info.Extra[jwkSetURLKey] == "" {
+		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
+	}
+
+	return nil
 }
 
 func loginPromptValidator(info *social.OAuthInfo, requester identity.Requester) error {
@@ -107,6 +124,8 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 
 	s.updateInfo(ctx, social.GoogleProviderName, newInfo)
 	s.validateHD = MustBool(newInfo.Extra[validateHDKey], true)
+	s.validateIDToken = MustBool(newInfo.Extra[validateIDTokenKey], ExtraGoogleSettingKeys[validateIDTokenKey].DefaultValue.(bool))
+	s.jwkSetURL = newInfo.Extra[jwkSetURLKey]
 
 	return nil
 }
@@ -236,7 +255,7 @@ func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) 
 	return s.getAuthCodeURL(state, opts...)
 }
 
-func (s *SocialGoogle) extractFromToken(_ context.Context, _ *http.Client, token *oauth2.Token) (*googleUserData, error) {
+func (s *SocialGoogle) extractFromToken(ctx context.Context, _ *http.Client, token *oauth2.Token) (*googleUserData, error) {
 	s.log.Debug("Extracting user info from OAuth token")
 
 	idToken := token.Extra("id_token")
@@ -245,10 +264,31 @@ func (s *SocialGoogle) extractFromToken(_ context.Context, _ *http.Client, token
 		return nil, nil
 	}
 
-	rawJSON, err := s.retrieveRawJWTPayload(idToken)
-	if err != nil {
-		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+	idTokenString, ok := idToken.(string)
+	if !ok {
+		s.log.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", idToken))
 		return nil, nil
+	}
+
+	var rawJSON []byte
+	var err error
+
+	// If JWT validation is enabled, validate the signature
+	if s.validateIDToken && s.jwkSetURL != "" {
+		// create a dedicated client for the JWKS retrieval, without a token source
+		JWKSClient := s.Client(ctx, nil)
+		rawJSON, err = s.SocialBase.validateIDTokenSignature(ctx, JWKSClient, idTokenString, s.jwkSetURL)
+		if err != nil {
+			s.log.Warn("Error validating ID token signature", "error", err)
+			return nil, nil
+		}
+	} else {
+		// Otherwise, just extract the payload without signature validation
+		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
+		if err != nil {
+			s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+			return nil, nil
+		}
 	}
 
 	if s.cfg.Env == setting.Dev {
