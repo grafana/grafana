@@ -126,34 +126,16 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery list all inherited dashboards",
-			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(all),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
 			desc:        "impl=default search for pattern",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery search for pattern",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
-			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
 			desc:        "impl=default search for specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(),
-		},
-		{
-			desc:        "impl=permissionsFilterRemoveSubquery search for specific dashboard",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 	}
 	for _, bm := range benchmarks {
