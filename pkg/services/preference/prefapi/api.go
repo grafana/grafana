@@ -51,18 +51,17 @@ func UpdatePreferencesFor(ctx context.Context,
 	dtoCmd.HomeDashboardID = dashboardID
 
 	saveCmd := pref.SavePreferenceCommand{
-		UserID:            userID,
-		OrgID:             orgID,
-		TeamID:            teamId,
-		Theme:             dtoCmd.Theme,
-		Language:          dtoCmd.Language,
-		Timezone:          dtoCmd.Timezone,
-		WeekStart:         dtoCmd.WeekStart,
-		HomeDashboardID:   dtoCmd.HomeDashboardID,
-		HomeDashboardUID:  dtoCmd.HomeDashboardUID,
-		QueryHistory:      dtoCmd.QueryHistory,
-		CookiePreferences: dtoCmd.Cookies,
-		Navbar:            dtoCmd.Navbar,
+		UserID:           userID,
+		OrgID:            orgID,
+		TeamID:           teamId,
+		Theme:            dtoCmd.Theme,
+		Language:         dtoCmd.Language,
+		Timezone:         dtoCmd.Timezone,
+		WeekStart:        dtoCmd.WeekStart,
+		HomeDashboardID:  dtoCmd.HomeDashboardID,
+		HomeDashboardUID: dtoCmd.HomeDashboardUID,
+		QueryHistory:     dtoCmd.QueryHistory,
+		Navbar:           dtoCmd.Navbar,
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature

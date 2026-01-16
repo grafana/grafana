@@ -1765,7 +1765,8 @@
       "metadata": {
         "name": "individualCookiePreferences",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2023-02-21T10:19:07Z"
+        "creationTimestamp": "2023-02-21T10:19:07Z",
+        "deletionTimestamp": "2026-01-15T16:35:04Z"
       },
       "spec": {
         "description": "Support overriding cookie preferences per user",

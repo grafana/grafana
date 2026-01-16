@@ -55,10 +55,6 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
-	// FlagIndividualCookiePreferences
-	// Support overriding cookie preferences per user
-	FlagIndividualCookiePreferences = "individualCookiePreferences"
-
 	// FlagKubernetesStars
 	// Routes stars requests from /api to the /apis endpoint
 	FlagKubernetesStars = "kubernetesStars"

@@ -93,10 +93,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Support overriding cookie preferences per user
-  */
-  individualCookiePreferences?: boolean;
-  /**
   * Query InfluxDB InfluxQL without the proxy
   * @default true
   */
