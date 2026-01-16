@@ -2677,7 +2677,10 @@
     "rules-group": {
       "deleting": "Deleting",
       "text-federated": "Federated",
-      "text-provisioned": "Provisioned"
+      "text-provisioned": "Provisioned",
+      "ungrouped": "Ungrouped",
+      "ungrouped-suffix": "{{ruleName}} (Ungrouped)",
+      "unknown-rule": "Unknown Rule"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
@@ -5446,11 +5449,7 @@
         "tooltip": "Edit as code"
       },
       "export": {
-        "title": "Export",
-        "unsaved-modal": {
-          "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
-          "title": "Save changes to dashboard?"
-        }
+        "title": "Export"
       },
       "outline": {
         "title": "Outline",
@@ -5590,14 +5589,6 @@
           "arrow": "Share",
           "title": "Share",
           "tooltip": "Copy link"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Discard",
-            "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
-            "title": "Save changes to dashboard?",
-            "yesText": "Save"
-          }
         },
         "unlink-library-panel": "Unlink library panel"
       },
@@ -6498,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+        "title": "Unsaved changes"
+      }
     },
     "support-snapshot-service": {
       "description": {
