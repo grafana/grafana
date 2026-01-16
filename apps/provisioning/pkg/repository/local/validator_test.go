@@ -73,7 +73,7 @@ func TestValidate(t *testing.T) {
 			errorContains: []string{"path"},
 		},
 		{
-			name: "invalid path",
+			name: "invalid path - path traversal",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
@@ -81,11 +81,14 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.LocalRepositoryType,
 					Local: &provisioning.LocalRepositoryConfig{
-						Path: "../invalid",
+						Path: "../../etc/passwd",
 					},
 				},
 			},
-			resolver:      resolver,
+			resolver: &LocalFolderResolver{
+				PermittedPrefixes: []string{"/home/grafana"},
+				HomePath:          safepath.Clean("/home/grafana"),
+			},
 			expectedError: true,
 			errorContains: []string{"path"},
 		},
@@ -105,6 +108,118 @@ func TestValidate(t *testing.T) {
 			resolver:      resolver,
 			expectedError: true,
 			errorContains: []string{"path"},
+		},
+		{
+			name: "no configured paths - nil permitted prefixes",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Local: &provisioning.LocalRepositoryConfig{
+						Path: "invalid/path",
+					},
+				},
+			},
+			resolver: &LocalFolderResolver{
+				PermittedPrefixes: nil,
+				HomePath:          safepath.Clean("/home/grafana"),
+			},
+			expectedError: true,
+			errorContains: []string{"path"},
+		},
+		{
+			name: "unconfigured prefix",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Local: &provisioning.LocalRepositoryConfig{
+						Path: "invalid/path",
+					},
+				},
+			},
+			resolver: &LocalFolderResolver{
+				PermittedPrefixes: []string{"devenv", "/tmp", "test"},
+				HomePath:          safepath.Clean("/home/grafana"),
+			},
+			expectedError: true,
+			errorContains: []string{"path"},
+		},
+		{
+			name: "valid local repository - relative path with /home/grafana prefix",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Local: &provisioning.LocalRepositoryConfig{
+						Path: "devenv/test",
+					},
+				},
+			},
+			resolver: &LocalFolderResolver{
+				PermittedPrefixes: []string{"/home/grafana"},
+				HomePath:          safepath.Clean("/home/grafana"),
+			},
+		},
+		{
+			name: "valid local repository - absolute path with /devenv prefix",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Local: &provisioning.LocalRepositoryConfig{
+						Path: "/devenv/test",
+					},
+				},
+			},
+			resolver: &LocalFolderResolver{
+				PermittedPrefixes: []string{"/devenv"},
+				HomePath:          safepath.Clean("/home/grafana"),
+			},
+		},
+		{
+			name: "valid local repository - relative path with multiple prefixes",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Local: &provisioning.LocalRepositoryConfig{
+						Path: "devenv/test",
+					},
+				},
+			},
+			resolver: &LocalFolderResolver{
+				PermittedPrefixes: []string{"/home/grafana", "/devenv"},
+				HomePath:          safepath.Clean("/home/grafana"),
+			},
+		},
+		{
+			name: "valid local repository - absolute path with multiple prefixes",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Local: &provisioning.LocalRepositoryConfig{
+						Path: "/devenv/test",
+					},
+				},
+			},
+			resolver: &LocalFolderResolver{
+				PermittedPrefixes: []string{"/home/grafana", "/devenv"},
+				HomePath:          safepath.Clean("/home/grafana"),
+			},
 		},
 		{
 			name: "valid local repository",
