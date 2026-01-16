@@ -492,7 +492,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexBasis: '50%',
       maxHeight: 800,
       minWidth: 0,
-      overflow: 'hidden',
+      overflow: 'auto',
     }),
 
     verticalPaneContainer: css({
@@ -511,7 +511,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexBasis: '100%',
       maxHeight: 800,
       minWidth: 0,
-      overflow: 'hidden',
+      overflow: 'auto',
     }),
   };
 }
