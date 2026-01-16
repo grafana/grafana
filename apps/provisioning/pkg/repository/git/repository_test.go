@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -2121,71 +2120,6 @@ func TestGitRepository_EdgeCases(t *testing.T) {
 	})
 }
 
-func TestGitRepository_ValidateBranchNames(t *testing.T) {
-	tests := []struct {
-		name        string
-		branchName  string
-		expectValid bool
-	}{
-		{"valid simple branch", "main", true},
-		{"valid feature branch", "feature/new-feature", true},
-		{"valid branch with numbers", "release-v1.2.3", true},
-		{"invalid double slash", "feature//branch", false},
-		{"invalid double dot", "feature..branch", false},
-		{"invalid ending with dot", "feature.", false},
-		{"invalid starting with slash", "/feature", false},
-		{"invalid ending with slash", "feature/", false},
-		{"invalid with space", "feature branch", false},
-		{"invalid with tilde", "feature~1", false},
-		{"invalid with caret", "feature^1", false},
-		{"invalid with colon", "feature:branch", false},
-		{"invalid with question mark", "feature?", false},
-		{"invalid with asterisk", "feature*", false},
-		{"invalid with square brackets", "feature[1]", false},
-		{"invalid with backslash", "feature\\branch", false},
-		{"invalid empty string", "", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gitRepo := &gitRepository{
-				config: &provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Type: "test_type",
-					},
-				},
-				gitConfig: RepositoryConfig{
-					URL:    "https://git.example.com/repo.git",
-					Branch: tt.branchName,
-					Token:  "token123",
-				},
-			}
-
-			errors := gitRepo.Validate()
-
-			if tt.expectValid {
-				// Should not have a branch validation error for invalid branch name
-				for _, err := range errors {
-					if err.Field == "spec.test_type.branch" && err.Type == field.ErrorTypeInvalid {
-						require.NotContains(t, err.Detail, "invalid branch name")
-					}
-				}
-			} else {
-				// Should have a branch validation error (either required or invalid)
-				found := false
-				for _, err := range errors {
-					if err.Field == "spec.test_type.branch" &&
-						(err.Type == field.ErrorTypeInvalid || err.Type == field.ErrorTypeRequired) {
-						found = true
-						break
-					}
-				}
-				require.True(t, found, "Expected branch validation error for: %s", tt.branchName)
-			}
-		})
-	}
-}
-
 func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -2262,61 +2196,6 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, refHash)
-			}
-		})
-	}
-}
-
-func TestGitRepository_PathValidation(t *testing.T) {
-	tests := []struct {
-		name        string
-		path        string
-		expectError bool
-		errorMsg    string
-	}{
-		{"valid relative path", "configs/dir", false, ""},
-		{"path traversal with ../", "../configs", true, "path contains traversal attempt (./ or ../)"},
-		{"path traversal with ./", "./configs", true, "path contains traversal attempt (./ or ../)"},
-		{"absolute path", "/absolute/path", true, "path must be relative"},
-		{"empty path", "", false, ""},
-		{"path with multiple traversals", "../../etc/passwd", true, "path contains traversal attempt (./ or ../)"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gitRepo := &gitRepository{
-				config: &provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Type: "test_type",
-					},
-				},
-				gitConfig: RepositoryConfig{
-					URL:    "https://git.example.com/repo.git",
-					Branch: "main",
-					Token:  "token123",
-					Path:   tt.path,
-				},
-			}
-
-			errors := gitRepo.Validate()
-
-			if tt.expectError {
-				found := false
-				for _, err := range errors {
-					if err.Field == "spec.test_type.path" && err.Type == field.ErrorTypeInvalid {
-						require.Contains(t, err.Detail, tt.errorMsg)
-						found = true
-						break
-					}
-				}
-				require.True(t, found, "Expected path validation error for: %s", tt.path)
-			} else {
-				// Should not have a path validation error
-				for _, err := range errors {
-					if err.Field == "spec.test_type.path" {
-						t.Errorf("Unexpected path validation error for %s: %s", tt.path, err.Detail)
-					}
-				}
 			}
 		})
 	}

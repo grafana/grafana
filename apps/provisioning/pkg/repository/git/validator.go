@@ -35,21 +35,33 @@ func Validate(_ context.Context, obj runtime.Object) error {
 // validateGitConfig validates the git configuration fields.
 // This is extracted to be reusable by other git-based repository types (github, gitlab, bitbucket).
 func validateGitConfig(repo *provisioning.Repository, cfg *provisioning.GitRepositoryConfig) field.ErrorList {
+	return ValidateGitConfigFields(repo, cfg.URL, cfg.Branch, cfg.Path)
+}
+
+// ValidateGitConfigFields validates common git configuration fields (Branch, Path, token/connection).
+// This can be reused by git-based repository types (github, gitlab, bitbucket).
+// The URL parameter is only used for token/connection validation logic, not for URL format validation
+// (providers handle their own URL format validation).
+func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path string) field.ErrorList {
 	var list field.ErrorList
 
 	t := string(repo.Spec.Type)
-	if cfg.URL == "" {
-		list = append(list, field.Required(field.NewPath("spec", t, "url"), "a git url is required"))
-	} else {
-		if !isValidGitURL(cfg.URL) {
-			list = append(list, field.Invalid(field.NewPath("spec", t, "url"), cfg.URL, "invalid git URL format"))
+	// Note: URL format validation is handled by provider-specific validators.
+	// We only validate URL emptiness here for the generic git repository type.
+	if repo.Spec.Type == provisioning.GitRepositoryType {
+		if url == "" {
+			list = append(list, field.Required(field.NewPath("spec", t, "url"), "a git url is required"))
+		} else {
+			if !isValidGitURL(url) {
+				list = append(list, field.Invalid(field.NewPath("spec", t, "url"), url, "invalid git URL format"))
+			}
 		}
 	}
 
-	if cfg.Branch == "" {
+	if branch == "" {
 		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
-	} else if !IsValidGitBranchName(cfg.Branch) {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
+	} else if !IsValidGitBranchName(branch) {
+		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), branch, "invalid branch name"))
 	}
 
 	// Readonly repositories may not need a token (if public)
@@ -88,12 +100,12 @@ func validateGitConfig(repo *provisioning.Repository, cfg *provisioning.GitRepos
 		}
 	}
 
-	if err := safepath.IsSafe(cfg.Path); err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), cfg.Path, err.Error()))
+	if err := safepath.IsSafe(path); err != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), path, err.Error()))
 	}
 
-	if safepath.IsAbs(cfg.Path) {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), cfg.Path, "path must be relative"))
+	if safepath.IsAbs(path) {
+		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), path, "path must be relative"))
 	}
 
 	return list
