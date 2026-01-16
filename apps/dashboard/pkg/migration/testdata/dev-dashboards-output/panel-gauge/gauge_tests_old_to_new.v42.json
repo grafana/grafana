@@ -995,7 +995,7 @@
       },
       "id": 5,
       "panels": [],
-      "title": "Neutral value (not sure we will implement it yet)",
+      "title": "Neutral value",
       "type": "row"
     },
     {
@@ -1047,6 +1047,7 @@
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
+        "neutral": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1119,6 +1120,7 @@
       "options": {
         "minVizHeight": 75,
         "minVizWidth": 75,
+        "neutral": 47,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
