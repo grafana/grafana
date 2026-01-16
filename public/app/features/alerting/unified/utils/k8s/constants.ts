@@ -4,9 +4,6 @@
  * */
 export const PROVENANCE_ANNOTATION = 'grafana.com/provenance';
 
-/** Value of {@link PROVENANCE_ANNOTATION} given for entities that were not provisioned */
-export const PROVENANCE_NONE = 'none';
-
 export enum K8sAnnotations {
   Provenance = 'grafana.com/provenance',
 

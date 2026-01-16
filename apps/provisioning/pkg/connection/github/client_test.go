@@ -295,3 +295,175 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 		})
 	}
 }
+
+func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
+	tests := []struct {
+		name           string
+		mockHandler    *http.Client
+		installationID string
+		repo           string
+		wantToken      conngh.InstallationToken
+		wantErr        bool
+		errContains    string
+	}{
+		{
+			name: "create installation token successfully",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostAppInstallationsAccessTokensByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						expiresAt := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+						token := &github.InstallationToken{
+							Token:     github.Ptr("ghs_test_token_123456789"),
+							ExpiresAt: &github.Timestamp{Time: expiresAt},
+						}
+						w.WriteHeader(http.StatusCreated)
+						require.NoError(t, json.NewEncoder(w).Encode(token))
+					}),
+				),
+			),
+			installationID: "12345",
+			repo:           "test-repo",
+			wantToken: conngh.InstallationToken{
+				Token:     "ghs_test_token_123456789",
+				ExpiresAt: "2024-01-01 00:00:00 +0000 UTC",
+			},
+			wantErr: false,
+		},
+		{
+			name:           "invalid installation ID",
+			mockHandler:    mockhub.NewMockedHTTPClient(),
+			installationID: "not-a-number",
+			repo:           "test-repo",
+			wantToken:      conngh.InstallationToken{},
+			wantErr:        true,
+			errContains:    "invalid installation ID",
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostAppInstallationsAccessTokensByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			installationID: "12345",
+			repo:           "test-repo",
+			wantToken:      conngh.InstallationToken{},
+			wantErr:        true,
+			errContains:    conngh.ErrServiceUnavailable.Error(),
+		},
+		{
+			name: "installation not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostAppInstallationsAccessTokensByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			installationID: "99999",
+			repo:           "test-repo",
+			wantToken:      conngh.InstallationToken{},
+			wantErr:        true,
+		},
+		{
+			name: "unauthorized error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostAppInstallationsAccessTokensByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnauthorized,
+							},
+							Message: "Bad credentials",
+						}))
+					}),
+				),
+			),
+			installationID: "12345",
+			repo:           "test-repo",
+			wantToken:      conngh.InstallationToken{},
+			wantErr:        true,
+		},
+		{
+			name: "forbidden - no permissions for repository",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostAppInstallationsAccessTokensByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusForbidden,
+							},
+							Message: "Resource not accessible by integration",
+						}))
+					}),
+				),
+			),
+			installationID: "12345",
+			repo:           "private-repo",
+			wantToken:      conngh.InstallationToken{},
+			wantErr:        true,
+		},
+		{
+			name: "internal server error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostAppInstallationsAccessTokensByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			installationID: "12345",
+			repo:           "test-repo",
+			wantToken:      conngh.InstallationToken{},
+			wantErr:        true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ghClient := github.NewClient(tt.mockHandler)
+			client := conngh.NewClient(ghClient)
+
+			token, err := client.CreateInstallationAccessToken(context.Background(), tt.installationID, tt.repo)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.wantToken, token)
+		})
+	}
+}

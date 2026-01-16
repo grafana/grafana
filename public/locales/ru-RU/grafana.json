@@ -813,7 +813,8 @@
       "label-integration": "Интеграция",
       "label-notification-settings": "Параметры уведомлений",
       "label-section": "Дополнительные параметры {{name}}",
-      "test": "Тестирование"
+      "test": "Тестирование",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "ИЗ",
@@ -2192,11 +2193,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Ресурс был подготовлен через {{provenance}} и не может быть изменен через пользовательский интерфейс",
       "badge-tooltip-standard": "Ресурс был подготовлен и не может быть изменен через пользовательский интерфейс",
+      "body-imported": "",
       "body-provisioned": "{{resource}} подготовлен, то есть был создан с помощью конфигурации. Чтобы обновить {{resource}}, обратитесь к администратору сервера.",
+      "title-imported": "",
       "title-provisioned": "Этот {{resource}} невозможно отредактировать через пользовательский интерфейс"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Подготовлено"
       }
     },
@@ -2699,7 +2703,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3796,7 +3799,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_few": "",
       "all-failed_many": "",
@@ -5378,6 +5380,7 @@
       },
       "header-hidden-tooltip": "Заголовок строки отображается только в режиме редактирования",
       "name": "Строки",
+      "new-row-title": "",
       "row": {
         "collapse": "Свернуть строку",
         "expand": "Развернуть строку",
@@ -6424,12 +6427,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Классический",
         "json": "JSON",
         "v1-resource": "Ресурс V1",
         "v2-resource": "Ресурс V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Действительно восстановить дашборд до версии {{version}}? Все несохраненные изменения будут потеряны.",
@@ -7028,6 +7034,7 @@
         "drone-datasource": "Источник данных Drone",
         "git-lab-integration-and-datasource": "Интеграция и источник данных GitLab",
         "honeycomb-integration-and-datasource": "Интеграция и источник данных Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Интеграция и источник данных Jira",
         "logic-monitor-devices-datasource": "Источник данных LogicMonitor Devices",
         "mongo-db-integration-and-data-source": "Интеграция и источник данных MongoDB",
@@ -7890,7 +7897,6 @@
       "export-externally-label": "Экспорт дашборда для использования в другом экземпляре",
       "export-format": "Формат",
       "export-mode": "Модель",
-      "export-remove-ds-refs": "Удалить сведения об использовании",
       "info-text": "Скопируйте или загрузите файл, содержащий параметры вашего дашборда",
       "title": "Экспорт дашборда"
     },
@@ -8037,6 +8043,7 @@
     "name-neutral": "Нейтральный",
     "name-show-threshold-labels": "Показывать метки пороговых значений",
     "name-show-threshold-markers": "Показывать маркеры пороговых значений",
+    "neutral": "",
     "placeholder-neutral": "авто",
     "suggestions": {
       "arc": "",
@@ -11906,7 +11913,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Удалить",
       "confirm-delete-keep-resources": "Вы уверены, что хотите удалить конфигурацию репозитория, но сохранить его ресурсы?",
       "confirm-delete-with-resources": "Вы уверены, что хотите удалить конфигурацию репозитория и все его ресурсы?",
@@ -12174,6 +12227,7 @@
       "jobs": "Задания"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Параметры",
       "source-code": "Исходный код"
     },
@@ -12625,6 +12679,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12638,6 +12697,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12799,14 +12859,6 @@
       "starred": "Помеченные",
       "view-as-folders": "Просмотр по папкам",
       "view-as-list": "Просмотр в виде списка"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "В алфавитном порядке (прямом)",
-          "alphabetically-za": "В алфавитном порядке (обратном)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Импорт",

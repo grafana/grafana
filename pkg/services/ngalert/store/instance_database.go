@@ -118,12 +118,13 @@ func (st InstanceDBStore) SaveAlertInstance(ctx context.Context, alertInstance m
 			nullableTimeToUnix(alertInstance.LastSentAt),
 			alertInstance.ResultFingerprint,
 			annotationsJSON,
+			int64(alertInstance.EvaluationDuration),
 		)
 
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_instance",
 			[]string{"rule_org_id", "rule_uid", "labels_hash"},
-			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time", "fired_at", "resolved_at", "last_sent_at", "result_fingerprint", "annotations"})
+			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time", "fired_at", "resolved_at", "last_sent_at", "result_fingerprint", "annotations", "evaluation_duration_ns"})
 		_, err = sess.SQL(upsertSQL, params...).Query()
 		if err != nil {
 			return err
@@ -364,10 +365,10 @@ func (st InstanceDBStore) insertInstancesBatch(sess *sqlstore.DBSession, batch [
 
 	query := strings.Builder{}
 	placeholders := make([]string, 0, len(batch))
-	args := make([]any, 0, len(batch)*14)
+	args := make([]any, 0, len(batch)*15)
 
 	query.WriteString("INSERT INTO alert_instance ")
-	query.WriteString("(rule_org_id, rule_uid, labels, labels_hash, current_state, current_reason, current_state_since, current_state_end, last_eval_time, fired_at, resolved_at, last_sent_at, result_fingerprint, annotations) VALUES ")
+	query.WriteString("(rule_org_id, rule_uid, labels, labels_hash, current_state, current_reason, current_state_since, current_state_end, last_eval_time, fired_at, resolved_at, last_sent_at, result_fingerprint, annotations, evaluation_duration_ns) VALUES ")
 
 	for _, instance := range batch {
 		if err := models.ValidateAlertInstance(instance); err != nil {
@@ -387,7 +388,7 @@ func (st InstanceDBStore) insertInstancesBatch(sess *sqlstore.DBSession, batch [
 			continue
 		}
 
-		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 		args = append(args,
 			instance.RuleOrgID,
 			instance.RuleUID,
@@ -403,6 +404,7 @@ func (st InstanceDBStore) insertInstancesBatch(sess *sqlstore.DBSession, batch [
 			nullableTimeToUnix(instance.LastSentAt),
 			instance.ResultFingerprint,
 			annotationsJSON,
+			int64(instance.EvaluationDuration),
 		)
 	}
 

@@ -1896,6 +1896,14 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "name": "panelTitleSearch",
+            "in": "query",
+            "description": "[experimental] optionally include matches from panel titles",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
