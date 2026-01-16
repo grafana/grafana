@@ -1,9 +1,10 @@
 module github.com/grafana/grafana/pkg/plugins
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/Machiel/slugify v1.0.1
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/ProtonMail/go-crypto v1.3.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0

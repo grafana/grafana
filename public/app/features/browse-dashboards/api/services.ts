@@ -7,7 +7,7 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { getFolderURL, isSharedWithMe } from '../components/utils';
+import { getFolderURL, isSharedWithMe } from '../utils/dashboards';
 
 export const PAGE_SIZE = 50;
 

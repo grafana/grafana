@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/plugins
 
-go 1.25.5
+go 1.25.6
 
 replace github.com/grafana/grafana => ../..
 
@@ -30,6 +30,7 @@ require (
 require (
 	cel.dev/expr v0.25.1 // indirect
 	github.com/Machiel/slugify v1.0.1 // indirect
+	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect

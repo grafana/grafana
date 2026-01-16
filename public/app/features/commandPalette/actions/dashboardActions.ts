@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/components/utils';
+import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { CommandPaletteAction } from '../types';
