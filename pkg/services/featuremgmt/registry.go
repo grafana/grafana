@@ -2047,6 +2047,7 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+			HideFromDocs: true,
 		},
 		{
 			Name:         "multiPropsVariables",
