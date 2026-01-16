@@ -31,7 +31,7 @@ export function SaveBeforeShareModal({ dashboard, onContinue, onDismiss, title, 
   const onDiscard = useCallback(() => {
     onDismiss();
     dashboard.discardChangesAndKeepEditing();
-    void onContinue();
+    onContinue();
   }, [dashboard, onContinue, onDismiss]);
 
   const onSave = useCallback(() => {
