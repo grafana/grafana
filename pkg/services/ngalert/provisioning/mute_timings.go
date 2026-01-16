@@ -95,36 +95,33 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 	return result, nil
 }
 
-// GetMuteTiming returns a mute timing by name
+// GetMuteTiming returns a mute timing by name or UID
 func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, nameOrUID string, orgID int64) (definitions.MuteTimeInterval, error) {
-	rev, err := svc.configStore.Get(ctx, orgID)
+	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
+	return svc.getMuteTiming(ctx, revision, nameOrUID, orgID)
+}
 
-	mt, found := getMuteTimingByName(rev, nameOrUID)
-	if !found {
-		name, err := legacy_storage.UidToName(nameOrUID)
-		if err == nil {
-			mt, found = getMuteTimingByName(rev, name)
-		}
-	}
-	if !found {
-		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
-	}
-
-	result := definitions.MuteTimeInterval{
-		UID:              legacy_storage.NameToUid(mt.Name),
-		MuteTimeInterval: mt,
-		Version:          calculateMuteTimeIntervalFingerprint(mt),
-	}
-
-	prov, err := svc.provenanceStore.GetProvenance(ctx, &result, orgID)
+func (svc *MuteTimingService) getMuteTiming(ctx context.Context, revision *legacy_storage.ConfigRevision, nameOrUID string, orgID int64) (definitions.MuteTimeInterval, error) {
+	result, found, err := svc.getMuteTimingByName(ctx, revision, orgID, nameOrUID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	result.Provenance = definitions.Provenance(prov)
-	return result, nil
+	if found {
+		return result, nil
+	}
+
+	result, found, err = svc.getMuteTimingByUID(ctx, revision, orgID, nameOrUID)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+	if found {
+		return result, nil
+	}
+
+	return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 }
 
 // CreateMuteTiming adds a new mute timing within the specified org. The created mute timing is returned.
