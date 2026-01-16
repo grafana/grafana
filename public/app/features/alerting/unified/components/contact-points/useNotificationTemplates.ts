@@ -83,30 +83,17 @@ function templateGroupsToTemplates(templateGroups: TemplateGroupList): Notificat
   return templateGroups.items.map((templateGroup) => templateGroupToTemplate(templateGroup));
 }
 
-/**
- * Spec type with the `kind` field that exists in the API response but is missing from the generated types.
- * The generated types in openapi/templatesApi.gen.ts are outdated - the proper types with `kind` are in
- * @grafana/api-clients/rtkq/notifications.alerting/v0alpha1, but we can't use them directly here because
- * the API hooks return the old types. This interface bridges the gap.
- */
-interface TemplateGroupSpecWithKind {
-  content: string;
-  title: string;
-  kind?: TemplateGroupTemplateKind;
-}
-
 function templateGroupToTemplate(templateGroup: TemplateGroup): NotificationTemplate {
   const provenance = getAnnotation(templateGroup, K8sAnnotations.Provenance) ?? KnownProvenance.None;
   // The generated types are missing the `kind` field, but the API returns it.
   // We use a typed variable to safely access it without type assertions.
-  const spec: TemplateGroupSpecWithKind = templateGroup.spec;
   return {
     // K8s entities should always have a metadata.name property. The type is marked as optional because it's also used in other places
-    uid: templateGroup.metadata.name ?? spec.title,
-    title: spec.title,
-    content: spec.content,
+    uid: templateGroup.metadata.name ?? templateGroup.spec.title,
+    title: templateGroup.spec.title,
+    content: templateGroup.spec.content,
     provenance,
-    kind: spec.kind ?? 'grafana',
+    kind: templateGroup.spec.kind ?? 'grafana',
   };
 }
 
