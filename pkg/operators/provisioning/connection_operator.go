@@ -48,11 +48,11 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 	}()
 
 	informerFactory := informer.NewSharedInformerFactoryWithOptions(
-		controllerCfg.provisioningControllerConfig.provisioningClient,
-		controllerCfg.provisioningControllerConfig.resyncInterval,
+		controllerCfg.provisioningClient,
+		controllerCfg.resyncInterval,
 	)
 
-	statusPatcher := appcontroller.NewConnectionStatusPatcher(controllerCfg.provisioningControllerConfig.provisioningClient.ProvisioningV0alpha1())
+	statusPatcher := appcontroller.NewConnectionStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 	connInformer := informerFactory.Provisioning().V0alpha1().Connections()
 
 	// Setup connection factory and tester
@@ -63,7 +63,7 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 	tester := connection.NewSimpleConnectionTester(connectionFactory)
 
 	connController, err := controller.NewConnectionController(
-		controllerCfg.provisioningControllerConfig.provisioningClient.ProvisioningV0alpha1(),
+		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
 		connInformer,
 		statusPatcher,
 		tester,
