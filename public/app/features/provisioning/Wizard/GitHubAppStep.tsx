@@ -76,7 +76,7 @@ export const GitHubAppStep = memo(function GitHubAppStep() {
         <Controller
           name="githubAppMode"
           control={control}
-          render={({ field: { onChange, ...field } }) => (
+          render={({ field: { ref, onChange, ...field } }) => (
             <RadioButtonGroup
               options={modeOptions}
               onChange={(value) => {

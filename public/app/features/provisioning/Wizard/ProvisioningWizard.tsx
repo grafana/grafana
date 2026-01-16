@@ -48,7 +48,7 @@ const getSteps = (type: RepoType, githubAuthType?: GitHubAuthType): Array<Step<W
     if (githubAuthType === 'github-app') {
       steps.push({
         id: 'githubApp',
-        name: t('provisioning.wizard.step-github-app', 'Connect to GitHub'),
+        name: t('provisioning.wizard.step-github-app', 'Connect'),
         title: t('provisioning.wizard.title-github-app', 'Connect to GitHub'),
         submitOnNext: true,
       });
@@ -59,10 +59,13 @@ const getSteps = (type: RepoType, githubAuthType?: GitHubAuthType): Array<Step<W
   steps.push({
     id: 'connection',
     name:
-      type === 'github'
-        ? t('provisioning.wizard.step-connect-github', 'Connect')
+      type === 'github' && githubAuthType === 'github-app'
+        ? t('provisioning.wizard.step-configure-repo', 'Configure repository')
         : t('provisioning.wizard.step-connect', 'Connect'),
-    title: t('provisioning.wizard.title-connect', 'Connect to external storage'),
+    title:
+      type === 'github' && githubAuthType === 'github-app'
+        ? t('provisioning.wizard.title-configure-repo', 'Configure repository')
+        : t('provisioning.wizard.title-connect', 'Connect to external storage'),
     submitOnNext: true,
   });
 
@@ -467,7 +470,16 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         setIsSubmitting(false);
       }
     } else {
-      // proceed if the job was successful or had warnings
+      // Special handling for authType step - validate selection and proceed
+      if (activeStep === 'authType') {
+        const formData = getValues();
+        if (formData.githubAuthType) {
+          handleNext();
+        }
+        return;
+      }
+
+      // For other steps without submission, proceed if the job was successful or had warnings
       if (isStepSuccess || hasStepWarning) {
         handleNext();
       }
@@ -475,6 +487,10 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   };
 
   const isNextButtonDisabled = () => {
+    // AuthType step is always enabled (user just needs to select an option)
+    if (activeStep === 'authType') {
+      return false;
+    }
     // If the step is not on Connect page, we only enable it if the job was successful
     if (activeStep !== 'connection' && hasStepError) {
       return true;

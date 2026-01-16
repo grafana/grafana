@@ -1,4 +1,4 @@
-import { Card, Stack, Text } from '@grafana/ui';
+import { Card, Stack, Text, TextLink } from '@grafana/ui';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
@@ -15,6 +15,7 @@ interface Props {
 export function SelectableConnectionCard({ connection, isSelected, onClick }: Props) {
   const { metadata, spec, status } = connection;
   const name = metadata?.name ?? '';
+  const url = spec?.url;
   const providerType: RepoType = spec?.type ?? 'github';
 
   return (
@@ -28,6 +29,14 @@ export function SelectableConnectionCard({ connection, isSelected, onClick }: Pr
           {status?.state && <ConnectionStatusBadge status={status} />}
         </Stack>
       </Card.Heading>
+
+      {url && (
+        <Card.Meta>
+          <TextLink external href={url}>
+            {url}
+          </TextLink>
+        </Card.Meta>
+      )}
     </Card>
   );
 }
