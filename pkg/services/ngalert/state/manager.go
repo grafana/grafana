@@ -215,6 +215,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				EndsAt:               entry.CurrentStateEnd,
 				FiredAt:              entry.FiredAt,
 				LastEvaluationTime:   entry.LastEvalTime,
+				EvaluationDuration:   entry.EvaluationDuration,
 				Annotations:          annotations,
 				ResultFingerprint:    resultFp,
 				ResolvedAt:           entry.ResolvedAt,

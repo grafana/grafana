@@ -339,18 +339,19 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 					continue
 				}
 				states = append(states, ngModels.AlertInstance{
-					AlertInstanceKey:  key,
-					Labels:            ngModels.InstanceLabels(v2.Labels),
-					Annotations:       v2.Annotations,
-					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
-					CurrentReason:     v2.StateReason,
-					LastEvalTime:      v2.LastEvaluationTime,
-					CurrentStateSince: v2.StartsAt,
-					CurrentStateEnd:   v2.EndsAt,
-					FiredAt:           v2.FiredAt,
-					ResolvedAt:        v2.ResolvedAt,
-					LastSentAt:        v2.LastSentAt,
-					ResultFingerprint: v2.ResultFingerprint.String(),
+					AlertInstanceKey:   key,
+					Labels:             ngModels.InstanceLabels(v2.Labels),
+					Annotations:        v2.Annotations,
+					CurrentState:       ngModels.InstanceStateType(v2.State.String()),
+					CurrentReason:      v2.StateReason,
+					LastEvalTime:       v2.LastEvaluationTime,
+					CurrentStateSince:  v2.StartsAt,
+					CurrentStateEnd:    v2.EndsAt,
+					FiredAt:            v2.FiredAt,
+					ResolvedAt:         v2.ResolvedAt,
+					LastSentAt:         v2.LastSentAt,
+					ResultFingerprint:  v2.ResultFingerprint.String(),
+					EvaluationDuration: v2.EvaluationDuration,
 				})
 			}
 		}
