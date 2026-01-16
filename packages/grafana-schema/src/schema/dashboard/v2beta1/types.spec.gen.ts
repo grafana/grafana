@@ -88,9 +88,13 @@ export const defaultAnnotationEventFieldMapping = (): AnnotationEventFieldMappin
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-export type DashboardCursorSync = "Crosshair" | "Tooltip" | "Off";
+export enum DashboardCursorSync {
+	Crosshair = "Crosshair",
+	Tooltip = "Tooltip",
+	Off = "Off",
+}
 
-export const defaultDashboardCursorSync = (): DashboardCursorSync => ("Off");
+export const defaultDashboardCursorSync = (): DashboardCursorSync => (DashboardCursorSync.Off);
 
 // Supported dashboard elements
 // |* more element types in the future
@@ -230,9 +234,13 @@ export const defaultMatcherConfig = (): MatcherConfig => ({
 
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
-export type DataTopic = "series" | "annotations" | "alertStates";
+export enum DataTopic {
+	Series = "series",
+	Annotations = "annotations",
+	AlertStates = "alertStates",
+}
 
-export const defaultDataTopic = (): DataTopic => ("series");
+export const defaultDataTopic = (): DataTopic => (DataTopic.Series);
 
 export interface QueryOptionsSpec {
 	timeFrom?: string;
@@ -350,6 +358,11 @@ export interface FieldConfig {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: Record<string, any>;
+	// Calculate min max per field
+	fieldMinMax?: boolean;
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode;
 }
 
 export const defaultFieldConfig = (): FieldConfig => ({
@@ -362,13 +375,13 @@ export const defaultValueMapping = (): ValueMapping => (defaultValueMap());
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 export interface ValueMap {
-	type: "value";
+	type: MappingType.Value;
 	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 	options: Record<string, ValueMappingResult>;
 }
 
 export const defaultValueMap = (): ValueMap => ({
-	type: "value",
+	type: MappingType.Value,
 	options: {},
 });
 
@@ -377,9 +390,14 @@ export const defaultValueMap = (): ValueMap => ({
 // `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 // `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 // `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
-export type MappingType = "value" | "range" | "regex" | "special";
+export enum MappingType {
+	Value = "value",
+	Range = "range",
+	Regex = "regex",
+	Special = "special",
+}
 
-export const defaultMappingType = (): MappingType => ("value");
+export const defaultMappingType = (): MappingType => (MappingType.Value);
 
 // Result used as replacement with text and color when the value matches
 export interface ValueMappingResult {
@@ -399,7 +417,7 @@ export const defaultValueMappingResult = (): ValueMappingResult => ({
 // Maps numerical ranges to a display text and color.
 // For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 export interface RangeMap {
-	type: "range";
+	type: MappingType.Range;
 	// Range to match against and the result to apply when the value is within the range
 	options: {
 		// Min value of the range. It can be null which means -Infinity
@@ -412,7 +430,7 @@ export interface RangeMap {
 }
 
 export const defaultRangeMap = (): RangeMap => ({
-	type: "range",
+	type: MappingType.Range,
 	options: {
 	from: 0,
 	to: 0,
@@ -423,7 +441,7 @@ export const defaultRangeMap = (): RangeMap => ({
 // Maps regular expressions to replacement text and a color.
 // For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 export interface RegexMap {
-	type: "regex";
+	type: MappingType.Regex;
 	// Regular expression to match against and the result to apply when the value matches the regex
 	options: {
 		// Regular expression to match against
@@ -434,7 +452,7 @@ export interface RegexMap {
 }
 
 export const defaultRegexMap = (): RegexMap => ({
-	type: "regex",
+	type: MappingType.Regex,
 	options: {
 	pattern: "",
 	result: defaultValueMappingResult(),
@@ -445,7 +463,7 @@ export const defaultRegexMap = (): RegexMap => ({
 // See SpecialValueMatch to see the list of special values.
 // For example, you can configure a special value mapping so that null values appear as N/A.
 export interface SpecialValueMap {
-	type: "special";
+	type: MappingType.Special;
 	options: {
 		// Special value to match against
 		match: SpecialValueMatch;
@@ -455,17 +473,24 @@ export interface SpecialValueMap {
 }
 
 export const defaultSpecialValueMap = (): SpecialValueMap => ({
-	type: "special",
+	type: MappingType.Special,
 	options: {
-	match: "true",
+	match: SpecialValueMatch.True,
 	result: defaultValueMappingResult(),
 },
 });
 
 // Special value types supported by the `SpecialValueMap`
-export type SpecialValueMatch = "true" | "false" | "null" | "nan" | "null+nan" | "empty";
+export enum SpecialValueMatch {
+	True = "true",
+	False = "false",
+	Null = "null",
+	NotANumber = "nan",
+	NullAndNaN = "null+nan",
+	Empty = "empty",
+}
 
-export const defaultSpecialValueMatch = (): SpecialValueMatch => ("true");
+export const defaultSpecialValueMatch = (): SpecialValueMatch => (SpecialValueMatch.True);
 
 export interface ThresholdsConfig {
 	mode: ThresholdsMode;
@@ -473,13 +498,16 @@ export interface ThresholdsConfig {
 }
 
 export const defaultThresholdsConfig = (): ThresholdsConfig => ({
-	mode: "absolute",
+	mode: ThresholdsMode.Absolute,
 	steps: [],
 });
 
-export type ThresholdsMode = "absolute" | "percentage";
+export enum ThresholdsMode {
+	Absolute = "absolute",
+	Percentage = "percentage",
+}
 
-export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
+export const defaultThresholdsMode = (): ThresholdsMode => (ThresholdsMode.Absolute);
 
 export interface Threshold {
 	// Value null means -Infinity
@@ -503,7 +531,7 @@ export interface FieldColor {
 }
 
 export const defaultFieldColor = (): FieldColor => ({
-	mode: "thresholds",
+	mode: FieldColorModeId.Thresholds,
 });
 
 // Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
@@ -529,14 +557,39 @@ export const defaultFieldColor = (): FieldColor => ({
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades";
+export enum FieldColorModeId {
+	Thresholds = "thresholds",
+	PaletteClassic = "palette-classic",
+	PaletteClassicByName = "palette-classic-by-name",
+	ContinuousViridis = "continuous-viridis",
+	ContinuousMagma = "continuous-magma",
+	ContinuousPlasma = "continuous-plasma",
+	ContinuousInferno = "continuous-inferno",
+	ContinuousCividis = "continuous-cividis",
+	ContinuousGrYlRd = "continuous-GrYlRd",
+	ContinuousRdYlGr = "continuous-RdYlGr",
+	ContinuousBlYlRd = "continuous-BlYlRd",
+	ContinuousYlRd = "continuous-YlRd",
+	ContinuousBlPu = "continuous-BlPu",
+	ContinuousYlBl = "continuous-YlBl",
+	ContinuousBlues = "continuous-blues",
+	ContinuousReds = "continuous-reds",
+	ContinuousGreens = "continuous-greens",
+	ContinuousPurples = "continuous-purples",
+	Fixed = "fixed",
+	Shades = "shades",
+}
 
-export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
+export const defaultFieldColorModeId = (): FieldColorModeId => (FieldColorModeId.Thresholds);
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
-export type FieldColorSeriesByMode = "min" | "max" | "last";
+export enum FieldColorSeriesByMode {
+	Min = "min",
+	Max = "max",
+	Last = "last",
+}
 
-export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => ("min");
+export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => (FieldColorSeriesByMode.Min);
 
 export interface Action {
 	type: ActionType;
@@ -552,13 +605,16 @@ export interface Action {
 }
 
 export const defaultAction = (): Action => ({
-	type: "fetch",
+	type: ActionType.Fetch,
 	title: "",
 });
 
-export type ActionType = "fetch" | "infinity";
+export enum ActionType {
+	Fetch = "fetch",
+	Infinity = "infinity",
+}
 
-export const defaultActionType = (): ActionType => ("fetch");
+export const defaultActionType = (): ActionType => (ActionType.Fetch);
 
 export interface FetchOptions {
 	method: HttpRequestMethod;
@@ -572,13 +628,19 @@ export interface FetchOptions {
 }
 
 export const defaultFetchOptions = (): FetchOptions => ({
-	method: "GET",
+	method: HttpRequestMethod.GET,
 	url: "",
 });
 
-export type HttpRequestMethod = "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
+export enum HttpRequestMethod {
+	GET = "GET",
+	PUT = "PUT",
+	POST = "POST",
+	DELETE = "DELETE",
+	PATCH = "PATCH",
+}
 
-export const defaultHttpRequestMethod = (): HttpRequestMethod => ("GET");
+export const defaultHttpRequestMethod = (): HttpRequestMethod => (HttpRequestMethod.GET);
 
 export interface InfinityOptions {
 	method: HttpRequestMethod;
@@ -593,7 +655,7 @@ export interface InfinityOptions {
 }
 
 export const defaultInfinityOptions = (): InfinityOptions => ({
-	method: "GET",
+	method: HttpRequestMethod.GET,
 	url: "",
 	datasourceUid: "",
 });
@@ -612,6 +674,15 @@ export const defaultActionVariable = (): ActionVariable => ({
 
 // Action variable type
 export const ActionVariableType = "string";
+
+// How null values should be handled
+export enum NullValueMode {
+	Null = "null",
+	Connected = "connected",
+	NullAsZero = "null as zero",
+}
+
+export const defaultNullValueMode = (): NullValueMode => (NullValueMode.Null);
 
 export interface DynamicConfigValue {
 	id: string;
@@ -1000,7 +1071,7 @@ export interface DashboardLink {
 
 export const defaultDashboardLink = (): DashboardLink => ({
 	title: "",
-	type: "link",
+	type: DashboardLinkType.Link,
 	icon: "",
 	tooltip: "",
 	tags: [],
@@ -1012,9 +1083,12 @@ export const defaultDashboardLink = (): DashboardLink => ({
 });
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-export type DashboardLinkType = "link" | "dashboards";
+export enum DashboardLinkType {
+	Link = "link",
+	Dashboards = "dashboards",
+}
 
-export const defaultDashboardLinkType = (): DashboardLinkType => ("link");
+export const defaultDashboardLinkType = (): DashboardLinkType => (DashboardLinkType.Link);
 
 // Dashboard Link placement. Defines where the link should be displayed.
 // - "inControlsMenu" renders the link in bottom part of the dashboard controls dropdown menu
@@ -1127,13 +1201,13 @@ export interface QueryVariableSpec {
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	name: "",
 	current: { text: "", value: "", },
-	hide: "dontHide",
-	refresh: "never",
+	hide: VariableHide.DontHide,
+	refresh: VariableRefresh.Never,
 	skipUrlSync: false,
 	query: defaultDataQueryKind(),
 	regex: "",
-	regexApplyTo: "value",
-	sort: "disabled",
+	regexApplyTo: VariableRegexApplyTo.Value,
+	sort: VariableSort.Disabled,
 	options: [],
 	multi: false,
 	includeAll: false,
@@ -1148,6 +1222,8 @@ export interface VariableOption {
 	text: string | string[];
 	// Value of the option
 	value: string | string[];
+	// Additional properties for multi-props variables
+	properties?: Record<string, string>;
 }
 
 export const defaultVariableOption = (): VariableOption => ({
@@ -1157,23 +1233,35 @@ export const defaultVariableOption = (): VariableOption => ({
 
 // Determine if the variable shows on dashboard
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing), `inControlsMenu` (show in a drop-down menu).
-export type VariableHide = "dontHide" | "hideLabel" | "hideVariable" | "inControlsMenu";
+export enum VariableHide {
+	DontHide = "dontHide",
+	HideLabel = "hideLabel",
+	HideVariable = "hideVariable",
+	InControlsMenu = "inControlsMenu",
+}
 
-export const defaultVariableHide = (): VariableHide => ("dontHide");
+export const defaultVariableHide = (): VariableHide => (VariableHide.DontHide);
 
 // Options to config when to refresh a variable
 // `never`: Never refresh the variable
 // `onDashboardLoad`: Queries the data source every time the dashboard loads.
 // `onTimeRangeChanged`: Queries the data source when the dashboard time range changes.
-export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
+export enum VariableRefresh {
+	Never = "never",
+	OnDashboardLoad = "onDashboardLoad",
+	OnTimeRangeChanged = "onTimeRangeChanged",
+}
 
-export const defaultVariableRefresh = (): VariableRefresh => ("never");
+export const defaultVariableRefresh = (): VariableRefresh => (VariableRefresh.Never);
 
 // Determine whether regex applies to variable value or display text
 // Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
-export type VariableRegexApplyTo = "value" | "text";
+export enum VariableRegexApplyTo {
+	Value = "value",
+	Text = "text",
+}
 
-export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value");
+export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => (VariableRegexApplyTo.Value);
 
 // Sort variable options
 // Accepted values are:
@@ -1187,9 +1275,19 @@ export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value")
 // `naturalAsc`: Natural ASC
 // `naturalDesc`: Natural DESC
 // VariableSort enum with default value
-export type VariableSort = "disabled" | "alphabeticalAsc" | "alphabeticalDesc" | "numericalAsc" | "numericalDesc" | "alphabeticalCaseInsensitiveAsc" | "alphabeticalCaseInsensitiveDesc" | "naturalAsc" | "naturalDesc";
+export enum VariableSort {
+	Disabled = "disabled",
+	AlphabeticalAsc = "alphabeticalAsc",
+	AlphabeticalDesc = "alphabeticalDesc",
+	NumericalAsc = "numericalAsc",
+	NumericalDesc = "numericalDesc",
+	AlphabeticalCaseInsensitiveAsc = "alphabeticalCaseInsensitiveAsc",
+	AlphabeticalCaseInsensitiveDesc = "alphabeticalCaseInsensitiveDesc",
+	NaturalAsc = "naturalAsc",
+	NaturalDesc = "naturalDesc",
+}
 
-export const defaultVariableSort = (): VariableSort => ("disabled");
+export const defaultVariableSort = (): VariableSort => (VariableSort.Disabled);
 
 // Text variable kind
 export interface TextVariableKind {
@@ -1217,7 +1315,7 @@ export const defaultTextVariableSpec = (): TextVariableSpec => ({
 	name: "",
 	current: { text: "", value: "", },
 	query: "",
-	hide: "dontHide",
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1247,7 +1345,7 @@ export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
 	name: "",
 	query: "",
 	current: { text: "", value: "", },
-	hide: "dontHide",
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1283,13 +1381,13 @@ export interface DatasourceVariableSpec {
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	name: "",
 	pluginId: "",
-	refresh: "never",
+	refresh: VariableRefresh.Never,
 	regex: "",
 	current: { text: "", value: "", },
 	options: [],
 	multi: false,
 	includeAll: false,
-	hide: "dontHide",
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 	allowCustomValue: true,
 });
@@ -1330,7 +1428,7 @@ export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
 	auto_min: "",
 	auto_count: 0,
 	refresh: "onTimeRangeChanged",
-	hide: "dontHide",
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1369,7 +1467,7 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	options: [],
 	multi: false,
 	includeAll: false,
-	hide: "dontHide",
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 	allowCustomValue: true,
 });
@@ -1408,7 +1506,7 @@ export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	current: { text: "", value: "", },
 	options: [],
 	multi: false,
-	hide: "dontHide",
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1446,7 +1544,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	baseFilters: [],
 	filters: [],
 	defaultKeys: [],
-	hide: "dontHide",
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 	allowCustomValue: true,
 });
@@ -1513,7 +1611,7 @@ export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
 	current: "false",
 	enabledValue: "true",
 	disabledValue: "false",
-	hide: "dontHide",
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1552,7 +1650,7 @@ export interface Spec {
 
 export const defaultSpec = (): Spec => ({
 	annotations: [],
-	cursorSync: "Off",
+	cursorSync: DashboardCursorSync.Off,
 	editable: true,
 	elements: {},
 	layout: defaultGridLayoutKind(),
