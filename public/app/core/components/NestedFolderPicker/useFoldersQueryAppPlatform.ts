@@ -46,6 +46,9 @@ export function useFoldersQueryAppPlatform({
 
   // Set of UIDs for which children were requested but were empty.
   const [emptyFolders, setEmptyFolders] = useState<Set<string>>(new Set());
+  function addEmptyFolder(folderUid: string) {
+    setEmptyFolders((prev) => new Set(prev).add(folderUid));
+  }
 
   // Keep a list of selectors for dynamic state selection
   const [selectors, setSelectors] = useState<
@@ -132,78 +135,48 @@ export function useFoldersQueryAppPlatform({
       let folders = response?.data?.hits ? [...response.data.hits] : [];
       folders.sort((a, b) => collator.compare(a.title, b.title));
 
-      const list: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = [];
-
       // Add virtual "Shared with me" folder under the top-level "Dashboards" root.
       // This is backed by the same search endpoint, using `folder=sharedwithme`.
       // Should show whatever folders are not accessible by traversing from the general/root folder.
       if (parentUid === rootFolderToken && rootFolderUID === undefined) {
-        const folderIsOpen = openFolders[sharedWithMeFolderToken];
-        const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
+        folders = [makeSharedWithMeFolder(), ...folders];
+      }
+
+      const list: DashboardsTreeItem[] = folders.flatMap((item) => {
+        const name = item.name;
+        const folderIsOpen = openFolders[name];
+        const flatItem: DashboardsTreeItem = {
           isOpen: Boolean(folderIsOpen),
-          level,
-          disabled: true, // virtual container; not a real folder UID
+          level: level,
+          disabled: item.name === sharedWithMeFolderToken,
           item: {
             kind: 'folder' as const,
-            title: t('browse-dashboards.folder-picker.shared-with-me', 'Shared with me'),
-            uid: sharedWithMeFolderToken,
-            parentUID: rootFolderToken,
+            title: item.title,
+            // We use resource name as UID because well, not sure what metadata.uid would be used for now as you cannot
+            // query by it.
+            uid: name,
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            managedBy: item.managedBy?.kind as ManagerKind | undefined,
+            parentUID: item.folder,
           },
         };
 
-        list.push(flatItem);
-
-        const childResponse = folderIsOpen && state.responseByParent[sharedWithMeFolderToken];
+        const childResponse = folderIsOpen && state.responseByParent[name];
         if (childResponse) {
-          if (
-            childResponse.data &&
-            childResponse.status !== QueryStatus.pending &&
-            childResponse.data.hits.length === 0
-          ) {
-            setEmptyFolders((prev) => new Set(prev).add(sharedWithMeFolderToken));
+          // If we finished loading and there are no children add folder to empty folders list so we don't show
+          // the caret next to the folder anymore
+          if (isEmptyResponse(childResponse)) {
+            addEmptyFolder(name);
           }
-
-          list.push(...createFlatList(sharedWithMeFolderToken, childResponse, level + 1));
+          const childFlatItems = createFlatList(name, childResponse, level + 1);
+          return [flatItem, ...childFlatItems];
         }
-      }
 
-      list.push(
-        ...folders.flatMap((item) => {
-          const name = item.name;
-          const folderIsOpen = openFolders[name];
-          const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
-            isOpen: Boolean(folderIsOpen),
-            level: level,
-            item: {
-              kind: 'folder' as const,
-              title: item.title,
-              // We use resource name as UID because well, not sure what metadata.uid would be used for now as you cannot
-              // query by it.
-              uid: name,
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              managedBy: item.managedBy?.kind as ManagerKind | undefined,
-              parentUID: item.folder,
-            },
-          };
+        return flatItem;
+      });
 
-          const childResponse = folderIsOpen && state.responseByParent[name];
-          if (childResponse) {
-            // If we finished loading and there are no children add to empty list
-            if (
-              childResponse.data &&
-              childResponse.status !== QueryStatus.pending &&
-              childResponse.data.hits.length === 0
-            ) {
-              setEmptyFolders((prev) => new Set(prev).add(name));
-            }
-            const childFlatItems = createFlatList(name, childResponse, level + 1);
-            return [flatItem, ...childFlatItems];
-          }
-
-          return flatItem;
-        })
-      );
-
+      // We could return early but we are adding the "shared with me" folder statically, so even if response is empty
+      // there could be a folder to process
       if (!response) {
         // The pagination placeholders are what actually triggers the call to the next page. So if there is no response,
         // meaning to request for some children, we add these placeholders, and they will trigger the load.
@@ -225,4 +198,17 @@ export function useFoldersQueryAppPlatform({
     isLoading: state.isLoading,
     requestNextPage,
   };
+}
+
+function makeSharedWithMeFolder() {
+  return {
+    name: sharedWithMeFolderToken,
+    title: t('browse-dashboards.folder-picker.shared-with-me', 'Shared with me'),
+    folder: rootFolderToken,
+    resource: 'folder',
+  };
+}
+
+function isEmptyResponse(response: { data?: { hits: unknown[] }; status: QueryStatus }) {
+  return response.data && response.status !== QueryStatus.pending && response.data.hits.length === 0;
 }
