@@ -101,8 +101,7 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 		}
 	}
 
-	var f PermissionsFilter
-	f = &accessControlDashboardPermissionFilter{
+	f := &accessControlDashboardPermissionFilter{
 		user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
 		features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported, dialect: dialect,
 	}
