@@ -367,7 +367,6 @@ func (s *service) running(ctx context.Context) error {
 		}
 
 		// Now wait for the gRPC server to complete graceful shutdown.
-		// Watch streams should already be closed, so this won't timeout.
 		s.log.Info("Waiting for gRPC server to complete graceful shutdown")
 		err := <-serverErrCh
 		if err != nil && !errors.Is(err, context.Canceled) {
