@@ -2677,7 +2677,10 @@
     "rules-group": {
       "deleting": "Deleting",
       "text-federated": "Federated",
-      "text-provisioned": "Provisioned"
+      "text-provisioned": "Provisioned",
+      "ungrouped": "Ungrouped",
+      "ungrouped-suffix": "{{ruleName}} (Ungrouped)",
+      "unknown-rule": "Unknown Rule"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
