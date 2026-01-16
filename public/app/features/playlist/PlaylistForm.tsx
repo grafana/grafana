@@ -30,13 +30,15 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
 
   const doSubmit = (specUpdates: Playlist['spec']) => {
     setSaving(true);
+    // Strip UI-only properties (dashboards) from items before submission
+    const apiItems = items.map(({ dashboards, ...item }) => item);
     onSubmit({
       ...playlist,
       spec: {
         ...specUpdates,
         interval: specUpdates?.interval ?? '5m',
         title: specUpdates?.title ?? '',
-        items,
+        items: apiItems,
       },
     });
   };

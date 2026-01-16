@@ -1,10 +1,12 @@
 import { SWEDISH_SWEDEN } from '@grafana/i18n';
 import { expect, test } from '@grafana/plugin-e2e';
 
+import { setVisualization } from '../../../../utils/panel-helpers';
+
 test.use({ userPreferences: { language: SWEDISH_SWEDEN } });
 
 test('should display correct translation', async ({ panelEditPage }) => {
-  panelEditPage.setVisualization('Grafana E2ETest Panel');
+  await setVisualization(panelEditPage, 'Grafana E2ETest Panel');
 
   await expect(panelEditPage.panel.locator.getByText('Textalternativ värde:')).toBeVisible();
   const options = panelEditPage.getCustomOptions('Grafana E2ETest Panel');
