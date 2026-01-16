@@ -4281,8 +4281,9 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get data source Id by Name.",
+        "summary": "Get data source Id by Name. This function will be removed in the future.",
         "operationId": "getDataSourceIdByName",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4316,8 +4317,9 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get a single data source by Name.",
+        "summary": "Get a single data source by Name.  This function will be removed in the future.",
         "operationId": "getDataSourceByName",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4346,8 +4348,9 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Delete an existing data source by name.",
+        "summary": "Delete an existing data source by name. This function will be removed in the future.",
         "operationId": "deleteDataSourceByName",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
