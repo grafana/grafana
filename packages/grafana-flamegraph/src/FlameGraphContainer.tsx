@@ -269,6 +269,11 @@ const FlameGraphContainer = ({
     const isSplit = viewMode === ViewMode.Split;
     const rightSinglePaneView = isSplit ? rightPaneView : singleView;
 
+    // Only sync sandwich mode between panes when they show different view types
+    // (e.g., FlameGraph + CallTree). When both panes show the same type,
+    // they should be independent for separate investigation.
+    const shouldSyncSandwich = isSplit && leftPaneView !== rightPaneView;
+
     const leftPane = (
       <FlameGraphPane
         key="left-pane"
@@ -290,8 +295,8 @@ const FlameGraphContainer = ({
         keepFocusOnDataChange={keepFocusOnDataChange}
         highlightedItemIndexes={highlightedItemIndexes}
         setHighlightedItemIndexes={setHighlightedItemIndexes}
-        sharedSandwichItem={sharedSandwichItem}
-        setSharedSandwichItem={setSharedSandwichItem}
+        sharedSandwichItem={shouldSyncSandwich ? sharedSandwichItem : undefined}
+        setSharedSandwichItem={shouldSyncSandwich ? setSharedSandwichItem : undefined}
       />
     );
 
@@ -316,8 +321,8 @@ const FlameGraphContainer = ({
         keepFocusOnDataChange={keepFocusOnDataChange}
         highlightedItemIndexes={highlightedItemIndexes}
         setHighlightedItemIndexes={setHighlightedItemIndexes}
-        sharedSandwichItem={sharedSandwichItem}
-        setSharedSandwichItem={setSharedSandwichItem}
+        sharedSandwichItem={shouldSyncSandwich ? sharedSandwichItem : undefined}
+        setSharedSandwichItem={shouldSyncSandwich ? setSharedSandwichItem : undefined}
       />
     );
 
