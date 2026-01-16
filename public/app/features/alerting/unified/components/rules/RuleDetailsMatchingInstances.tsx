@@ -115,15 +115,7 @@ export function RuleDetailsMatchingInstances(props: Props) {
   // Count All By State is used only when filtering is enabled and we have access to all instances
   const countAllByState = countBy(promRule.alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
 
-  // error state is not a separate state
-  const totalInstancesCount = sum([
-    instanceTotals.alerting,
-    instanceTotals.inactive,
-    instanceTotals.pending,
-    instanceTotals.recovering,
-    instanceTotals.nodata,
-  ]);
-  const hiddenInstancesCount = totalInstancesCount - visibleInstances.length;
+  const totalInstancesCount = sum(Object.values(instanceTotals));
 
   const stats: ShowMoreStats = {
     totalItemsCount: totalInstancesCount,
@@ -141,15 +133,16 @@ export function RuleDetailsMatchingInstances(props: Props) {
 
   const resetFilter = () => setAlertState(undefined);
 
-  const footerRow = hiddenInstancesCount ? (
-    <ShowMoreInstances
-      stats={stats}
-      onClick={enableFiltering ? resetFilter : undefined}
-      href={!enableFiltering ? ruleViewPageLink : undefined}
-      enableFiltering={enableFiltering}
-      alertState={alertState}
-    />
-  ) : undefined;
+  const footerRow =
+    totalInstancesCount > visibleInstances.length ? (
+      <ShowMoreInstances
+        stats={stats}
+        onClick={enableFiltering ? resetFilter : undefined}
+        href={!enableFiltering ? ruleViewPageLink : undefined}
+        enableFiltering={enableFiltering}
+        alertState={alertState}
+      />
+    ) : undefined;
 
   return (
     <>

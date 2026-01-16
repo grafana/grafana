@@ -176,6 +176,54 @@ describe('RuleDetailsMatchingInstances', () => {
       expect(ui.showAllInstances.query()).not.toBeInTheDocument();
     });
   });
+
+  describe('Total count', () => {
+    it('should include error instances in total count', () => {
+      const rule = mockCombinedRule({
+        promRule: mockPromAlertingRule({
+          alerts: [
+            mockPromAlert({ state: GrafanaAlertState.Normal }),
+            mockPromAlert({ state: GrafanaAlertState.Error }),
+          ],
+        }),
+        instanceTotals: {
+          inactive: 1,
+          error: 1,
+        },
+      });
+
+      render(<RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={1} />);
+
+      expect(ui.showAllInstances.get()).toHaveTextContent('Show all 2 alert instances');
+    });
+
+    it('should include all states in total count', () => {
+      const rule = mockCombinedRule({
+        promRule: mockPromAlertingRule({
+          alerts: [
+            mockPromAlert({ state: GrafanaAlertState.Normal }),
+            mockPromAlert({ state: GrafanaAlertState.Alerting }),
+            mockPromAlert({ state: GrafanaAlertState.Pending }),
+            mockPromAlert({ state: GrafanaAlertState.Recovering }),
+            mockPromAlert({ state: GrafanaAlertState.NoData }),
+            mockPromAlert({ state: GrafanaAlertState.Error }),
+          ],
+        }),
+        instanceTotals: {
+          inactive: 1,
+          alerting: 1,
+          pending: 1,
+          recovering: 1,
+          nodata: 1,
+          error: 1,
+        },
+      });
+
+      render(<RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={1} />);
+
+      expect(ui.showAllInstances.get()).toHaveTextContent('Show all 6 alert instances');
+    });
+  });
 });
 
 function mockPromNamespace(): CombinedRuleNamespace {
