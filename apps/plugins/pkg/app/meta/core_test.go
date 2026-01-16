@@ -319,8 +319,6 @@ func TestJsonDataToMeta(t *testing.T) {
 	})
 }
 
-// pluginsPathFunc returns a function that returns the given path.
-// If path is empty, it returns an error.
 func pluginsPathFunc(path string) func() (string, error) {
 	return func() (string, error) {
 		return path, nil
