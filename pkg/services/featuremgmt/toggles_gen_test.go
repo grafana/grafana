@@ -28,112 +28,11 @@ import (
 func TestFeatureToggleFiles(t *testing.T) {
 	t.Run("check registry constraints", func(t *testing.T) {
 		verifyFlagsConfiguration(t)
-		// Now that we know they are valid, update the json database
-		t.Run("update k8s resource list", func(t *testing.T) {
-			created := v1.NewTime(time.Now().UTC())
-			resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
-
-			featuresFile := "toggles_gen.json"
-			current := featuretoggleapi.FeatureList{
-				TypeMeta: v1.TypeMeta{
-					Kind:       "FeatureList",
-					APIVersion: featuretoggleapi.APIVERSION,
-				},
-			}
-			existing := featuretoggleapi.FeatureList{}
-			body, err := os.ReadFile(featuresFile)
-			if err == nil {
-				_ = json.Unmarshal(body, &existing)
-				current.ListMeta = existing.ListMeta
-			}
-
-			lookup := map[string]featuretoggleapi.FeatureSpec{}
-			for _, flag := range standardFeatureFlags {
-				lookup[flag.Name] = featuretoggleapi.FeatureSpec{
-					Description:     flag.Description,
-					Stage:           flag.Stage.String(),
-					Owner:           string(flag.Owner),
-					RequiresDevMode: flag.RequiresDevMode,
-					FrontendOnly:    flag.FrontendOnly,
-					RequiresRestart: flag.RequiresRestart,
-					HideFromDocs:    flag.HideFromDocs,
-					Expression:      flag.Expression,
-				}
-
-				// Replace them all
-				// current.Items = append(current.Items, featuretoggleapi.Feature{
-				// 	ObjectMeta: v1.ObjectMeta{
-				// 		Name:              flag.Name,
-				// 		CreationTimestamp: v1.NewTime(flag.Created),
-				// 		ResourceVersion:   fmt.Sprintf("%d", flag.Created.UnixMilli()),
-				// 	},
-				// 	Spec: lookup[flag.Name],
-				// })
-				// current.ListMeta.ResourceVersion = resourceVersion
-			}
-
-			// Check for changes in any existing values
-			for _, item := range existing.Items {
-				v, ok := lookup[item.Name]
-				if ok {
-					delete(lookup, item.Name)
-					a, e1 := json.Marshal(v)
-					b, e2 := json.Marshal(item.Spec)
-					if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
-						item.ResourceVersion = resourceVersion
-						if item.Annotations == nil {
-							item.Annotations = make(map[string]string)
-						}
-						item.Annotations[utils.AnnoKeyUpdatedTimestamp] = created.String()
-						item.Spec = v // the current value
-					}
-				} else if item.DeletionTimestamp == nil {
-					item.DeletionTimestamp = &created
-					t.Log("mark feature as deleted")
-				}
-				current.Items = append(current.Items, item)
-			}
-
-			// New flags not in the existing list
-			for k, v := range lookup {
-				current.Items = append(current.Items, featuretoggleapi.Feature{
-					ObjectMeta: v1.ObjectMeta{
-						Name:              k,
-						CreationTimestamp: created,
-						ResourceVersion:   fmt.Sprintf("%d", created.UnixMilli()),
-					},
-					Spec: v,
-				})
-			}
-
-			// Set the dates from git history
-			dates := readFlagDateInfo(t)
-			for idx, item := range current.Items {
-				found, ok := dates[item.Name]
-				if ok {
-					// current.Items[idx].ResourceVersion = fmt.Sprintf("%d", found.created.UnixMilli()+int64(idx))
-					current.Items[idx].CreationTimestamp = v1.NewTime(found.created)
-					if found.deleted != nil {
-						tmp := v1.NewTime(*found.deleted)
-						current.Items[idx].DeletionTimestamp = &tmp
-					}
-				}
-			}
-
-			// Sort by name -- will avoid more git conflicts
-			sort.Slice(current.Items, func(i, j int) bool {
-				return current.Items[i].Name < current.Items[j].Name
-			})
-
-			out, err := json.MarshalIndent(current, "", "  ")
-			require.NoError(t, err)
-
-			err = os.WriteFile(featuresFile, out, 0644)
-			require.NoError(t, err, "error writing file")
-		})
 	})
 
 	t.Run("verify files", func(t *testing.T) {
+		lookup := readFeatureList(t)
+
 		// Typescript files
 		verifyAndGenerateFile(t,
 			"../../../packages/grafana-data/src/types/featureToggles.gen.ts",
@@ -155,9 +54,105 @@ func TestFeatureToggleFiles(t *testing.T) {
 		// CSV Analytics
 		verifyAndGenerateFile(t,
 			"toggles_gen.csv",
-			generateCSV(),
+			generateCSV(lookup),
 		)
 	})
+}
+
+func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
+	created := v1.NewTime(time.Now().UTC())
+	resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
+
+	featuresFile := "toggles_gen.json"
+	current := featuretoggleapi.FeatureList{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "FeatureList",
+			APIVersion: featuretoggleapi.APIVERSION,
+		},
+	}
+	existing := featuretoggleapi.FeatureList{}
+	body, err := os.ReadFile(featuresFile)
+	if err == nil {
+		_ = json.Unmarshal(body, &existing)
+		current.ListMeta = existing.ListMeta
+	}
+
+	lookup := map[string]featuretoggleapi.FeatureSpec{}
+	for _, flag := range standardFeatureFlags {
+		lookup[flag.Name] = featuretoggleapi.FeatureSpec{
+			Description:     flag.Description,
+			Stage:           flag.Stage.String(),
+			Owner:           string(flag.Owner),
+			RequiresDevMode: flag.RequiresDevMode,
+			FrontendOnly:    flag.FrontendOnly,
+			RequiresRestart: flag.RequiresRestart,
+			HideFromDocs:    flag.HideFromDocs,
+			Expression:      flag.Expression,
+		}
+	}
+
+	// Check for changes in any existing values
+	for _, item := range existing.Items {
+		v, ok := lookup[item.Name]
+		if ok {
+			delete(lookup, item.Name)
+			a, e1 := json.Marshal(v)
+			b, e2 := json.Marshal(item.Spec)
+			if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
+				item.ResourceVersion = resourceVersion
+				if item.Annotations == nil {
+					item.Annotations = make(map[string]string)
+				}
+				item.Annotations[utils.AnnoKeyUpdatedTimestamp] = created.String()
+				item.Spec = v // the current value
+			}
+		} else if item.DeletionTimestamp == nil {
+			item.DeletionTimestamp = &created
+		}
+		current.Items = append(current.Items, item)
+	}
+
+	// New flags not in the existing list
+	for k, v := range lookup {
+		current.Items = append(current.Items, featuretoggleapi.Feature{
+			ObjectMeta: v1.ObjectMeta{
+				Name:              k,
+				CreationTimestamp: created,
+				ResourceVersion:   fmt.Sprintf("%d", created.UnixMilli()),
+			},
+			Spec: v,
+		})
+	}
+
+	all := make(map[string]featuretoggleapi.Feature, len(current.Items))
+
+	// Set the dates from git history
+	dates := readFlagDateInfo(t)
+	for idx, item := range current.Items {
+		found, ok := dates[item.Name]
+		if ok {
+			// current.Items[idx].ResourceVersion = fmt.Sprintf("%d", found.created.UnixMilli()+int64(idx))
+			current.Items[idx].CreationTimestamp = v1.NewTime(found.created)
+			if found.deleted != nil {
+				tmp := v1.NewTime(*found.deleted)
+				current.Items[idx].DeletionTimestamp = &tmp
+			}
+		}
+		all[item.Name] = item
+	}
+
+	// Sort by name -- will avoid more git conflicts
+	sort.Slice(current.Items, func(i, j int) bool {
+		return current.Items[i].Name < current.Items[j].Name
+	})
+
+	out, err := json.MarshalIndent(current, "", "  ")
+	require.NoError(t, err)
+
+	err = os.WriteFile(featuresFile, out, 0644)
+	require.NoError(t, err, "error writing file")
+
+	return all
 }
 
 // Check if all flags are configured properly
@@ -353,11 +348,12 @@ const (`)
 	return buff.String()
 }
 
-func generateCSV() string {
+func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 	var buf bytes.Buffer
 
 	w := csv.NewWriter(&buf)
 	if err := w.Write([]string{
+		"Created",
 		"Name",
 		"Stage",           //flag.Stage.String(),
 		"Owner",           //string(flag.Owner),
@@ -369,7 +365,10 @@ func generateCSV() string {
 	}
 
 	for _, flag := range standardFeatureFlags {
+		info := lookup[flag.Name]
+
 		if err := w.Write([]string{
+			info.GetCreationTimestamp().Format("2006-01-02"),
 			flag.Name,
 			flag.Stage.String(),
 			string(flag.Owner),
