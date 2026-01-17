@@ -69,12 +69,11 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
   partial: Partial<DataSourceInstanceSettings<T>> = {},
   meta: Partial<DataSourcePluginMeta> = {}
 ): DataSourceInstanceSettings<T> {
-  const id = partial.id ?? nextDataSourceId++;
+  const id = nextDataSourceId++;
 
-  const uid = partial.uid ?? `mock-ds-${nextDataSourceId}`;
+  const uid = partial.uid ?? `mock-ds-${id}`;
 
   return {
-    id,
     uid,
     type: 'prometheus',
     name: `Prometheus-${id}`,

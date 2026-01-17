@@ -36,7 +36,6 @@ import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 import migrateAnnotation from '../utils/migration';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
-  id: number;
   responseParser: ResponseParser;
   name: string;
   interval: string;
@@ -50,7 +49,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     super(instanceSettings);
     this.name = instanceSettings.name;
     this.responseParser = new ResponseParser();
-    this.id = instanceSettings.id;
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
@@ -65,7 +63,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     };
   }
 
-  abstract getDB(dsID?: number): DB;
+  abstract getDB(dsUID?: string): DB;
 
   abstract getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): SqlQueryModel;
 

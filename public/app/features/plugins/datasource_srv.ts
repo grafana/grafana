@@ -35,7 +35,6 @@ export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
-  private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
   private runtimeDataSources: Record<string, RuntimeDataSource> = {}; //
   private defaultName = ''; // actually UID
 
@@ -53,7 +52,6 @@ export class DatasourceSrv implements DataSourceService {
       }
 
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
-      this.settingsMapById[dsSettings.id] = dsSettings;
     }
 
     for (const ds of Object.values(this.runtimeDataSources)) {
@@ -145,7 +143,7 @@ export class DatasourceSrv implements DataSourceService {
       };
     }
 
-    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid];
+    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
   }
 
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
@@ -233,7 +231,6 @@ export class DatasourceSrv implements DataSourceService {
       if (!(instance instanceof DataSourceApi)) {
         const anyInstance: any = instance;
         anyInstance.name = instanceSettings.name;
-        anyInstance.id = instanceSettings.id;
         anyInstance.type = instanceSettings.type;
         anyInstance.meta = instanceSettings.meta;
         anyInstance.uid = instanceSettings.uid;
