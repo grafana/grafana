@@ -12,7 +12,7 @@ export const buildMockDB = (): DB => ({
   validateQuery: jest.fn((_query: SQLQuery, _range?: TimeRange) =>
     Promise.resolve<ValidationResults>({ query: { refId: '123' }, error: '', isError: false, isValid: true })
   ),
-  dsUID: jest.fn(() => `1234`),
+  dsID: jest.fn(() => 1234),
   functions: jest.fn(() => []),
   getEditorLanguageDefinition: jest.fn(() => ({ id: '4567' })),
   toRawSql: (_query: SQLQuery) => '',
@@ -21,6 +21,7 @@ export const buildMockDB = (): DB => ({
 // This data is of type `SqlDatasource`
 export const buildMockDatasource = (hasDefaultDatabaseConfigured?: boolean) => {
   return {
+    id: Infinity,
     type: '',
     name: '',
     uid: '',
