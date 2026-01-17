@@ -18,19 +18,6 @@ const withDefaults = (
         }
       },
     },
-    // styles: [{
-    //   name: t('gauge.suggestions.style.circular', 'Glowing'),
-    //   options: {
-    //     effects: {
-    //       rounded: true,
-    //       barGlow: true,
-    //       centerGlow: true,
-    //       spotlight: true,
-    //     },
-    //   },
-    // }, {
-    //   name: t('gauge.suggestions.style.simple', 'Simple'),
-    // }]
   } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
 
 const MAX_GAUGES = 10;

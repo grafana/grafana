@@ -69,7 +69,25 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "align": "auto",
+                        "pattern": "Time",
+                        "type": "number"
+                      },
+                      {
+                        "align": "auto",
+                        "pattern": "Value",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

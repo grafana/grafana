@@ -723,6 +723,11 @@
       "placeholder-value-input": "",
       "placeholder-value-input-default": "Inserisci il contenuto dell'annotazione personalizzata..."
     },
+    "backtest": {
+      "error-title": "",
+      "loading": "",
+      "panel-title": ""
+    },
     "bulk-actions": {
       "delete": {
         "success": "Regole eliminate dalla cartella"
@@ -802,7 +807,8 @@
       "label-integration": "Integrazione",
       "label-notification-settings": "Impostazioni delle notifiche",
       "label-section": "Impostazioni {{name}} facoltative",
-      "test": "Prova"
+      "test": "Prova",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DI",
@@ -2171,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Questa risorsa è stata sottoposta a provisioning tramite {{provenance}} e non può essere modificata tramite l'interfaccia utente",
       "badge-tooltip-standard": "Questa risorsa è stata sottoposta a provisioning e non può essere modificata tramite l'interfaccia utente",
+      "body-imported": "",
       "body-provisioned": "Questa {{resource}} è stata sottoposta a provisioning, il che significa che è stata creata tramite configurazione. Contatta l'amministratore del server per aggiornare questa {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Questa {{resource}} non può essere modificata tramite l'interfaccia utente"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Fornito"
       }
     },
@@ -2203,11 +2212,15 @@
       "min-interval": "Min Intervallo = {{minInterval}}"
     },
     "queryAndExpressionsStep": {
+      "custom": "",
       "disableAdvancedOptions": {
         "text": "Le query e le espressioni selezionate non possono essere convertite in predefinite. Se disattivi le opzioni avanzate, la query e la condizione verranno ripristinate alle impostazioni predefinite."
       },
+      "last15m": "",
+      "last1h": "",
       "preview": "Anteprima",
-      "previewCondition": "Anteprima condizione regola di avviso"
+      "previewCondition": "Anteprima condizione regola di avviso",
+      "testRule": ""
     },
     "receiver-filter": {
       "aria-label-contact-points": "Filtra per punti di contatto",
@@ -2231,6 +2244,13 @@
     },
     "receiver-metadata-badge": {
       "aria-label-open-external-link": "Apri collegamento esterno"
+    },
+    "receivers": {
+      "protected": {
+        "field": {
+          "description": ""
+        }
+      }
     },
     "receivers-section": {
       "button-more": "Altro",
@@ -2335,7 +2355,9 @@
     },
     "rule-details-matching-instances": {
       "button-show-all": "",
-      "showing-count": ""
+      "button-show-all-instances": "",
+      "showing-count": "",
+      "showing-count-with-state": ""
     },
     "rule-editor": {
       "get-content": {
@@ -2656,6 +2678,34 @@
       "deleting": "Eliminazione",
       "text-federated": "Federato",
       "text-provisioned": "Fornito"
+    },
+    "saved-searches": {
+      "actions-aria-label": "",
+      "apply-tooltip": "",
+      "button-label": "",
+      "cancel": "",
+      "default-indicator": "",
+      "delete": "",
+      "delete-button": "",
+      "dropdown-aria-label": "",
+      "empty-state": "",
+      "error-load-description": "",
+      "error-load-title": "",
+      "error-name-duplicate": "",
+      "error-name-required": "",
+      "error-rename-description": "",
+      "error-rename-title": "",
+      "error-save-description": "",
+      "error-save-title": "",
+      "list-aria-label": "",
+      "name-placeholder": "",
+      "remove-default": "",
+      "rename": "",
+      "rename-button": "",
+      "save-button": "",
+      "save-current-search": "",
+      "save-disabled-tooltip": "",
+      "set-default": ""
     },
     "search": {
       "property": {
@@ -3088,9 +3138,12 @@
       "table": "Tabella"
     },
     "welcome-header": {
+      "description-alert-activity": "",
       "description-alert-rules": "Definisci la condizione che deve essere soddisfatta prima che venga attivata una regola di avviso",
       "description-configure-firing-alert-instances-routed-contact": "Configura il modo in cui le istanze di avviso attivate vengono instradate ai punti di contatto",
       "description-configure-receives-notifications": "Configura chi riceve le notifiche e come vengono inviate",
+      "href-text-alert-activity": "",
+      "title-alert-activity": "",
       "title-alert-rules": "Regole di avviso",
       "title-contact-points": "Punti di contatto",
       "title-notification-policies": "Politiche di notifica"
@@ -3320,6 +3373,7 @@
       "login-attribute-path-label": "Percorso attributo di accesso",
       "login-prompt-consent": "Consenso",
       "login-prompt-description": "Indica il tipo di interazione dell'utente quando accede con l'IdP.",
+      "login-prompt-description-google": "",
       "login-prompt-label": "Richiesta di accesso",
       "login-prompt-login": "Accedi",
       "login-prompt-select-account": "Seleziona account",
@@ -3377,6 +3431,7 @@
       "use-pkce-description": "Se abilitato, Grafana utilizzerà <2>Proof Key for Code Exchange (PKCE)</2> con il codice di autorizzazione OAuth2.",
       "use-pkce-label": "Usa PKCE",
       "use-refresh-token-description": "Se abilitata, Grafana recupererà un nuovo token di accesso utilizzando il token di aggiornamento fornito dal provider OAuth2.",
+      "use-refresh-token-description-google": "",
       "use-refresh-token-label": "Usa token di aggiornamento",
       "validate-hosted-domain-description": "Se abilitata, Grafana abbinerà il dominio ospitato recuperato dal token ID Google all'elenco \"{{ allowedDomainsLabel }}\" specificato dall'utente.",
       "validate-hosted-domain-label": "Convalida dominio ospitato",
@@ -3705,8 +3760,13 @@
       "clear": "Cancella ricerca e filtri",
       "text": "Nessun risultato trovato per la ricerca"
     },
+    "recently-viewed": {
+      "clear": "",
+      "error": "",
+      "retry": "",
+      "title": ""
+    },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -4357,6 +4417,7 @@
       },
       "no-properties-changed": "Nessuna proprietà rilevante modificata",
       "table": {
+        "notes": "",
         "updated": "Data",
         "updatedBy": "Aggiornato da",
         "version": "Versione"
@@ -4555,6 +4616,7 @@
     },
     "canvas-actions": {
       "add-panel": "Aggiungi pannello",
+      "disabled-child-contains-tabs": "",
       "disabled-nested-grouping": "",
       "disabled-nested-tabs": "",
       "group-into-row": "Raggruppa in riga",
@@ -5091,6 +5153,14 @@
         "layout": "Layout"
       },
       "continue": "",
+      "panel": {
+        "modal": {
+          "body": "",
+          "confirm": "",
+          "dismiss": "",
+          "title": ""
+        }
+      },
       "ungroup-nested-text": "",
       "ungroup-nested-title": ""
     },
@@ -5119,6 +5189,7 @@
       "empty-state-message": "",
       "menu-open-panel-editor": "Configura",
       "menu-use-library-panel": "Usa il pannello della libreria",
+      "missing-config": "",
       "suggestions": {
         "empty-state-message": ""
       }
@@ -5269,6 +5340,7 @@
       },
       "header-hidden-tooltip": "Intestazione di riga visibile solo in modalità di modifica",
       "name": "Righe",
+      "new-row-title": "",
       "row": {
         "collapse": "Riduci riga",
         "expand": "Espandi riga",
@@ -5463,6 +5535,12 @@
         "label": "Modifica",
         "tooltip": "Entra in modalità di modifica"
       },
+      "edit-button": {
+        "enter": "",
+        "enter-tooltip": "",
+        "exit": "",
+        "exit-tooltip": ""
+      },
       "enter-edit-mode": {
         "label": "Rendi modificabile",
         "tooltip": "Questo dashboard è stato contrassegnato come di sola lettura"
@@ -5483,14 +5561,6 @@
         "discard-panel-new": "Annulla il pannello",
         "edit-dashboard-v2-schema": {
           "tooltip": "Modifica lo schema v2 della dashboard"
-        },
-        "edit-toggle": {
-          "enter": {
-            "label": "Entra in modalità di modifica"
-          },
-          "exit": {
-            "label": "Esci dalla modalità di modifica"
-          }
         },
         "enter-edit-mode": {
           "label": "Rendi modificabile",
@@ -5629,6 +5699,7 @@
     "validation": {
       "invalid-dashboard-id": "Impossibile trovare un ID Grafana.com valido",
       "invalid-json": "JSON non valido",
+      "tag-too-long": "",
       "tags-expected-array": "array con tag previsti",
       "tags-expected-strings": "array di stringhe con tag previsti"
     },
@@ -5734,6 +5805,7 @@
     "community-empty-title": "",
     "community-empty-title-with-datasource": "",
     "community-error": "",
+    "community-error-description": "",
     "community-error-title": "",
     "community-mapping-form": {
       "back": "",
@@ -5902,8 +5974,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Opzioni personalizzate",
+      "json-values-tooltip": "",
+      "name-csv-values": "",
+      "name-json-values": "",
       "name-values-separated-comma": "Valori separati da virgola",
       "selection-options": "Seleziona opzioni"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Torna all'elenco",
@@ -5942,13 +6020,25 @@
       "title-error-loading-dashboard": "Errore durante il caricamento del dashboard"
     },
     "dashboard-scene": {
+      "modal": {
+        "cancel": "",
+        "discard": "",
+        "save": "",
+        "text": {
+          "save-changes-question": ""
+        },
+        "title": {
+          "unsaved-changes": ""
+        }
+      },
       "text": {
         "edit-panel": "Modifica pannello",
         "view-panel": "Visualizza pannello"
       },
       "title": {
         "dashboard": "Dashboard",
-        "discard-changes-to-dashboard": "Annullare le modifiche alla dashboard?"
+        "discard-changes-to-dashboard": "Annullare le modifiche alla dashboard?",
+        "unsaved-changes-question": ""
       }
     },
     "dashboard-scene-page-state-manager": {
@@ -6121,7 +6211,10 @@
       "no-data-found": "Nessun dato trovato"
     },
     "inspect-json-tab": {
-      "apply": "Applica"
+      "apply": "Applica",
+      "error-invalid-json": "",
+      "error-invalid-v2-panel": "",
+      "validation-error": ""
     },
     "interval-variable-form": {
       "description-auto-option": "Calcola dinamicamente l'intervallo dividendo l'intervallo di tempo per il conteggio specificato",
@@ -6144,7 +6237,7 @@
         "title-someone-else-has-updated-this-dashboard": "Qualcun altro ha aggiornato questa dashboard",
         "would-still-dashboard": "Desideri comunque salvare questa dashboard?"
       },
-      "save-and-overwrite": "\"Salva e sovrascrivi\""
+      "save-and-overwrite": ""
     },
     "library-viz-panel-info": {
       "last-edited": "",
@@ -6290,12 +6383,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Classico",
         "json": "JSON",
         "v1-resource": "Risorsa V1",
         "v2-resource": "Risorsa V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Desideri davvero ripristinare la dashboard alla versione {{version}}? Tutte le modifiche non salvate andranno perse.",
@@ -6471,6 +6567,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": ""
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
     },
@@ -6494,6 +6595,7 @@
           "label": ""
         },
         "hidden": {
+          "description": "",
           "label": ""
         },
         "hidden-label": {
@@ -6553,8 +6655,9 @@
       "tooltip-show-usages": "Mostra utilizzi"
     },
     "variable-values-preview": {
-      "preview-of-values": "Anteprima dei valori",
-      "show-more": "Mostra di più"
+      "show-more": "Mostra di più",
+      "preview-of-values_one": "",
+      "preview-of-values_other": ""
     },
     "version-history": {
       "comparison": {
@@ -6883,6 +6986,7 @@
         "drone-datasource": "Origine dati Drone",
         "git-lab-integration-and-datasource": "Integrazione e origine dati GitLab",
         "honeycomb-integration-and-datasource": "Integrazione e origine dati Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integrazione e origine dati Jira",
         "logic-monitor-devices-datasource": "Origine dati dispositivi LogicMonitor",
         "mongo-db-integration-and-data-source": "Integrazione e origine dati MongoDB",
@@ -7128,6 +7232,9 @@
       "time-range-description": "Modifica l'intervallo di tempo relativo corrente in un intervallo di tempo assoluto",
       "time-range-label": "Blocca intervallo di tempo"
     }
+  },
+  "embedded-panel": {
+    "powered-by": ""
   },
   "empty-list-cta": {
     "pro-tip": "Suggerimento pro: {{proTip}} "
@@ -7605,39 +7712,6 @@
       },
       "share-span": "Condividi"
     },
-    "span-filters": {
-      "aria-label-select-max-span-operator": "Seleziona l'operatore di intervallo massimo",
-      "aria-label-select-min-span-operator": "Seleziona operatore di intervallo minimo",
-      "aria-label-select-service-name": "Seleziona nome servizio",
-      "aria-label-select-service-name-operator": "Seleziona operatore nome servizio",
-      "aria-label-select-span-name": "Seleziona nome intervallo",
-      "aria-label-select-span-name-operator": "Seleziona l'operatore del nome dell'intervallo",
-      "ariaLabel-select-max-span-duration": "Seleziona la durata dell'intervallo massimo",
-      "ariaLabel-select-min-span-duration": "Seleziona la durata dell'intervallo minimo",
-      "label-collapse": "Filtri intervallo",
-      "label-duration": "Durata",
-      "label-service-name": "Nome del servizio",
-      "label-span-name": "Nome intervallo",
-      "label-tags": "Tag",
-      "placeholder-all-service-names": "Tutti i nomi dei servizi",
-      "placeholder-all-span-names": "Tutti i nomi degli intervalli",
-      "tooltip-collapse": "Filtra i tuoi intervalli qui sotto. Puoi continuare ad applicare i filtri fino a quando non avrai ristretto gli intervalli risultanti ai pochi selezionati a cui sei più interessato.",
-      "tooltip-duration": "Filtra per durata. Le unità accettate sono {{units}}",
-      "tooltip-tags": "Filtra per tag, tag di processo o campi di registro nei tuoi intervalli."
-    },
-    "span-filters-tags": {
-      "aria-label-add-tag": "Aggiungi tag",
-      "aria-label-input-tag-value": "Valore del tag di inserimento",
-      "aria-label-remove-tag": "Rimuovi tag",
-      "aria-label-select-tag-key": "Seleziona chiave tag",
-      "aria-label-select-tag-operator": "Seleziona operatore tag",
-      "aria-label-select-tag-value": "Seleziona valore tag",
-      "placeholder-select-tag": "Seleziona tag",
-      "placeholder-select-value": "Seleziona valore",
-      "placeholder-tag-value": "Valore del tag",
-      "tooltip-add-tag": "Aggiungi tag",
-      "tooltip-remove-tag": "Rimuovi tag"
-    },
     "span-flame-graph": {
       "flame-graph": "Grafico a fiamma"
     },
@@ -7771,7 +7845,6 @@
       "export-externally-label": "Esporta il dashboard da utilizzare in un'altra istanza",
       "export-format": "Formato",
       "export-mode": "Modello",
-      "export-remove-ds-refs": "Rimuovi i dettagli della distribuzione",
       "info-text": "Copia o scarica un file contenente la definizione della tua dashboard",
       "title": "Esporta dashboard"
     },
@@ -7836,23 +7909,18 @@
       "label-upsample": "Aumenta campionamento",
       "tooltip-s-m-h": "10 s, 1 m, 30 m, 1 h"
     },
-    "schema-inspector-panel": {
-      "aria-label-close-schema-inspector": ""
-    },
     "sql-expr": {
       "button-run-query": "Esegui query",
-      "modal-title": "Editor SQL",
       "tooltip-experimental": "L'integrazione LLM delle Espressioni SQL è sperimentale. Segnala eventuali problemi al team Grafana."
     },
     "sql-schema": {
-      "close-schema-inspector": "",
       "error-title": "",
-      "inspect-button": "",
       "loading": "",
       "no-data-title": "",
       "no-fields-desc": "",
       "no-fields-title": "",
-      "query-error-title": ""
+      "query-error-title": "",
+      "schema-inspector": ""
     },
     "threshold": {
       "label-input": "Inserisci"
@@ -7923,15 +7991,12 @@
     "name-neutral": "Normale",
     "name-show-threshold-labels": "Mostra etichette di soglia",
     "name-show-threshold-markers": "Mostra indicatori di soglia",
+    "neutral": "",
     "placeholder-neutral": "automatico",
     "suggestions": {
       "arc": "",
       "circular": "",
-      "no-thresholds": "",
-      "style": {
-        "circular": "",
-        "simple": ""
-      }
+      "no-thresholds": ""
     },
     "threshold": ""
   },
@@ -9197,7 +9262,8 @@
     "tags-input": {
       "add": "Aggiungi",
       "placeholder-new-tag": "Nuovo tag (inserisci chiave da aggiungere)",
-      "remove": "Rimuovi tag: {{name}}"
+      "remove": "Rimuovi tag: {{name}}",
+      "tag-too-long": ""
     },
     "time-sync-button": {
       "aria-label-sync": "Sincronizza orari",
@@ -9357,6 +9423,7 @@
     "name-unit": "Unità",
     "name-value-name": "Nome del valore",
     "name-y-axis-scale": "Scala asse Y",
+    "name-y-bucket-scale": "",
     "placeholder-axis-label": "Automatico",
     "placeholder-axis-width": "Automatico",
     "placeholder-decimals": "Automatico",
@@ -9386,6 +9453,18 @@
       "label-all": "Tutti",
       "label-hidden": "Nascosto",
       "label-single": "Singolo"
+    },
+    "y-bucket-scale-editor": {
+      "linear-threshold-description": "",
+      "linear-threshold-label": "",
+      "linear-threshold-placeholder": "",
+      "log-base-label": "",
+      "scale-options": {
+        "label-auto": "",
+        "label-linear": "",
+        "label-log": "",
+        "label-symlog": ""
+      }
     }
   },
   "help-modal": {
@@ -10147,7 +10226,8 @@
       "copy": "Copia la selezione",
       "disable-menu": "Disabilita menu",
       "line-contains": "Aggiungi come riga contenente filtro",
-      "line-contains-not": "Aggiungi come riga non contenente filtro"
+      "line-contains-not": "Aggiungi come riga non contenente filtro",
+      "search-text": ""
     },
     "show-log-attributes": "",
     "timestamp-format": "Risoluzione marca temporale",
@@ -10650,18 +10730,6 @@
     "help/documentation": "Documentazione",
     "help/keyboard-shortcuts": "Scelte rapide da tastiera",
     "help/support": "Servizio Clienti",
-    "history-container": {
-      "drawer-tittle": "Cronologia"
-    },
-    "history-wrapper": {
-      "collapse": "Riduci",
-      "expand": "Espandi",
-      "icon-selected": "Voce selezionata",
-      "icon-unselected": "Ingresso normale",
-      "show-more": "Mostra di più",
-      "today": "Oggi",
-      "yesterday": "Ieri"
-    },
     "home": {
       "title": "Home"
     },
@@ -10704,7 +10772,6 @@
       "title": "Nuovo"
     },
     "new-dashboard": {
-      "empty-title": "",
       "title": "Nuovo dashboard"
     },
     "new-folder": {
@@ -11167,9 +11234,14 @@
     },
     "visualization-suggestions": {
       "apply-suggestion-aria-label": "",
+      "error-loading-some-suggestions": {
+        "message": ""
+      },
       "error-loading-suggestions": {
         "message": "",
-        "title": ""
+        "plugin-failed": "",
+        "title": "",
+        "try-again-button": ""
       },
       "unknown-viz-type": "",
       "use-this-suggestion": ""
@@ -11386,6 +11458,12 @@
         "latestReleaseDate": "Data dell'ultima versione:",
         "latestVersion": "Versione più recente",
         "license": "Licenza",
+        "moreDetails": "",
+        "pluginInsights": {
+          "header": ""
+        },
+        "pluginInsightsSuccessTooltip": "",
+        "pluginInsightsWarningTooltip": "",
         "raiseAnIssue": "Segnala un problema",
         "reportAbuse": "",
         "reportAbuseTooltip": "Segnala i problemi relativi a plug-in dannosi o pericolosi direttamente a Grafana Labs.",
@@ -11735,7 +11813,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Elimina",
       "confirm-delete-keep-resources": "Vuoi davvero eliminare la configurazione del repository ma conservarne le risorse?",
       "confirm-delete-with-resources": "Vuoi davvero eliminare la configurazione del repository e tutte le sue risorse?",
@@ -11832,23 +11956,20 @@
       }
     },
     "getting-started": {
-      "alert-temporary-outage": "Quando colleghi l'intera istanza, le dashboard non saranno disponibili durante l'esecuzione della migrazione. Ti consigliamo di avvisare gli utenti prima di avviare il processo.",
       "modal-description-public-access": "Configura l'accesso pubblico alla tua istanza Grafana per abilitare l'integrazione con GitHub",
       "modal-description-required-features": "Abilita le funzionalità Grafana necessarie per il provisioning",
       "modal-title-set-up-public-access": "Configura l'accesso pubblico",
       "modal-title-set-up-required-features": "Configura le funzionalità necessarie",
       "step-description-copy-url": "Dall'output di ngrok, copia l'URL di inoltro https:// simile al seguente:",
-      "step-description-enable-feature-toggles": "Aggiungi queste impostazioni al tuo file custom.ini per abilitare le funzionalità necessarie:",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Esegui questo comando per creare un tunnel sicuro per il tuo Grafana locale:",
       "step-description-update-grafana-config": "Aggiungi questo al tuo file custom.ini, sostituendo l'URL con il tuo URL ngrok effettivo:",
       "step-title-copy-url": "Copia il tuo URL pubblico",
       "step-title-enable-feature-toggles": "Abilita i toggle della funzionalità richieste",
       "step-title-start-ngrok": "Avvia ngrok per l'accesso pubblico temporaneo",
-      "step-title-update-grafana-config": "Aggiorna la configurazione di Grafana",
-      "title-setting-connection-could-cause-temporary-outage": "La configurazione di questa connessione potrebbe causare un'interruzione temporanea"
+      "step-title-update-grafana-config": "Aggiorna la configurazione di Grafana"
     },
     "getting-started-page": {
-      "header": "Provisioning",
       "subtitle-provisioning-feature": "Visualizza e gestisci le connessioni di provisioning"
     },
     "git": {
@@ -11915,18 +12036,15 @@
     },
     "home-page": {
       "button-delete-repositories": "Elimina repository",
-      "configured-repositories-while-running-legacy-storage": "I repository configurati non funzioneranno durante l'esecuzione della memoria esistente.",
       "confirm-delete-repositories": "Desideri davvero eliminare tutti i repository configurati? Quest'azione non può essere annullata.",
       "error-delete-all-repositories": "Impossibile eliminare tutti i repository",
-      "remove-all-configured-repositories": "Rimuovi tutti i repository configurati",
       "subtitle": "Visualizza e gestisci i repository configurati",
       "success-all-repositories-deleted": "Tutti i repository configurati sono stati eliminati",
       "tab-getting-started": "Come iniziare",
       "tab-getting-started-title": "Come iniziare",
       "tab-repositories": "Repository",
       "tab-repositories-title": "Elenco dei repository",
-      "title-delete-all-configured-repositories": "Elimina tutti i repository configurati",
-      "title-legacy-storage-detected": "Rilevata memoria esistente"
+      "title-delete-all-configured-repositories": "Elimina tutti i repository configurati"
     },
     "http-utils": {
       "access-denied": "",
@@ -11936,7 +12054,10 @@
       "resource-not-found": "",
       "unsupported-repository-type": ""
     },
-    "inline-secure-values-warning": "",
+    "instance-sync-deprecation": {
+      "message": "",
+      "title": ""
+    },
     "job-status": {
       "label-view-details": "Visualizza dettagli",
       "loading-finished-job": "Caricamento attività terminata in corso...",
@@ -11966,7 +12087,6 @@
     "mode-options": {
       "disabled": {
         "folder-connected": "",
-        "legacy-storage": "",
         "not-allowed": "",
         "not-supported": ""
       },
@@ -12003,6 +12123,7 @@
       "jobs": "Attività"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Impostazioni",
       "source-code": "Codice sorgente"
     },
@@ -12043,10 +12164,12 @@
       "webhook-last-event": "Ultimo evento:",
       "webhook-url": "Visualizza webhook"
     },
+    "repository-status": {
+      "error": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Torna ai repository",
       "cleaning-up-resources": "Pulizia delle risorse del repository",
-      "legacy-storage-message": "L'istanza non esegue ancora l'archiviazione unificata: richiede la procedura guidata di migrazione",
       "not-found": "non trovato",
       "not-found-message": "Repository non trovato",
       "repository-config-exists-configuration": "Assicurati che la configurazione del repository esista nel file di configurazione.",
@@ -12055,7 +12178,6 @@
       "tab-resources": "Risorse",
       "tab-resources-title": "",
       "title": "Stato del repository",
-      "title-legacy-storage": "Memoria esistente",
       "title-queued-for-deletion": "In coda per l'eliminazione"
     },
     "repository-type-cards": {
@@ -12149,11 +12271,12 @@
       "tooltip-unhealthy-repository": "Impossibile eseguire il pull di un repository non integro"
     },
     "synchronize-step": {
+      "instance-migrate-resources-description": "",
+      "migrate-resources-description": "",
+      "options": "",
       "repository-error": "",
       "repository-error-message": "",
-      "repository-unhealthy": "",
-      "synchronization-description": "Includi commit per ogni valore storico",
-      "synchronization-options": "Opzioni di sincronizzazione"
+      "repository-unhealthy": ""
     },
     "token-permissions-info": {
       "and-click": "e fare clic",
@@ -12170,11 +12293,16 @@
     },
     "warning-title-default": "Attenzione",
     "wizard": {
-      "alert-point-1": "Le risorse non potranno essere create, modificate o eliminate durante questo processo. Nell'ultimo passaggio, scompariranno.",
-      "alert-point-2": "Una volta completato il provisioning, le risorse riappariranno e verranno gestite tramite la memoria esterna.",
+      "alert-intro": "",
+      "alert-point-1": "",
       "alert-point-3": "La durata di questo processo dipende dal numero di risorse coinvolte.",
-      "alert-point-4": "Gli amministratori dell'istanza aziendale possono mostrare un banner di annuncio agli utenti. Consulta <2>questa guida</2> per istruzioni dettagliate.",
-      "alert-title": "Importante: nessun dato o configurazione andrà perso, ma le dashboard non saranno disponibili per alcuni minuti.",
+      "alert-point-4": "",
+      "alert-point-folder-cleanup": "",
+      "alert-point-folder-structure": "",
+      "alert-point-instance-alerts": "",
+      "alert-point-permissions": "",
+      "alert-point-unsupported": "",
+      "alert-title": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Fine",
@@ -12192,7 +12320,7 @@
       "step-finish": "Scegli impostazioni aggiuntive",
       "step-synchronize": "Sincronizza con la memoria esterna",
       "sync-description": "Sincronizza le risorse con la memoria esterna. Dopo questo passaggio una tantum, tutti gli aggiornamenti futuri verranno salvati automaticamente nel repository e ripristinati nell'istanza.",
-      "sync-option-history": "Cronologia",
+      "sync-option-migrate-resources": "",
       "title-bootstrap": "Scegli cosa sincronizzare",
       "title-connect": "Connetti a una memoria esterna",
       "title-finish": "Scegli impostazioni aggiuntive",
@@ -12430,15 +12558,25 @@
   },
   "radialbar": {
     "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
       "bar-width": "",
       "effects": {
         "bar-glow": "",
         "center-glow": "",
         "gradient": "",
-        "label": "",
-        "rounded-bars": "",
-        "spotlight": "",
-        "spotlight-tooltip": ""
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
       },
       "segment-count": "",
       "segment-spacing": "",
@@ -12446,7 +12584,14 @@
       "shape-circle": "",
       "shape-gauge": "",
       "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12605,16 +12750,7 @@
       "view-as-folders": "Visualizza per cartelle",
       "view-as-list": "Mostra come elenco"
     },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "In ordine alfabetico (A-Z)",
-          "alphabetically-za": "In ordine alfabetico (Z-A)"
-        }
-      }
-    },
     "dashboard-actions": {
-      "empty-dashboard": "",
       "import": "Importa",
       "new": "Nuovo",
       "new-dashboard": "Nuovo dashboard",
@@ -14316,6 +14452,17 @@
       },
       "name": {
         "series-to-rows": "Serie a righe"
+      }
+    },
+    "smoothing": {
+      "description": "",
+      "effective-resolution": "",
+      "effective-resolution-tooltip": "",
+      "is-applicable-description": "",
+      "name": "",
+      "resolution": {
+        "label": "",
+        "tooltip": ""
       }
     },
     "sort-by-transformer-editor": {

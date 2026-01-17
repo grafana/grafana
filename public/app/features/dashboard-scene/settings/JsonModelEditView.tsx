@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
@@ -11,8 +11,10 @@ import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
+import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
+import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import {
   NameAlreadyExistsError,
   isNameExistsError,
@@ -105,12 +107,21 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const [isSaving, setIsSaving] = useState(false);
 
   const dashboard = model.getDashboard();
+  const isProvisionedNG = useIsProvisionedNG(dashboard);
 
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const canSave = dashboard.useState().meta.canSave;
   const { jsonText } = model.useState();
 
   const onSave = async (overwrite: boolean) => {
+    if (isProvisionedNG) {
+      const drawer = new SaveDashboardDrawer({
+        dashboardRef: new SceneObjectRef(dashboard),
+      });
+      dashboard.setState({ overlay: drawer });
+      return;
+    }
+
     const result = await onSaveDashboard(dashboard, {
       folderUid: dashboard.state.meta.folderUid,
       overwrite,
@@ -136,7 +147,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       variant={overwrite ? 'destructive' : 'primary'}
     >
       {overwrite ? (
-        <Trans i18nKey="dashboard-scene.json-model-edit-view.save-and-overwrite">'Save and overwrite'</Trans>
+        <Trans i18nKey="dashboard-scene.json-model-edit-view.save-and-overwrite">Save and overwrite</Trans>
       ) : (
         <Trans i18nKey="dashboard-settings.json-editor.save-button">Save changes</Trans>
       )}

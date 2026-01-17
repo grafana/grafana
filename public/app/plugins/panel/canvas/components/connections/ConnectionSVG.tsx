@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { DirectionDimensionConfig, DirectionDimensionMode, ConnectionDirection } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionCoordinates } from '../../panelcfg.gen';

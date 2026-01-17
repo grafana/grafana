@@ -65,6 +65,9 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "uid": "$datasource"
+        },
         "description": "### Versions running\nShows the versions reported by each running pod.\n\nThe rollout will fail if any pod is not running the expected version.\n\nPods in green are running the expected version, while pods running other versions are shown in orange.\n\n",
         "fieldConfig": {
           "defaults": {
@@ -185,6 +188,9 @@
         "type": "barchart"
       },
       {
+        "datasource": {
+          "uid": "$datasource"
+        },
         "description": "### Deployment rollout progress\nShows the number of pods for each `Deployment` that match the desired configuration, as a proportion of the desired number of pods.\n\nThe rollout will fail if insufficient pods match the desired configuration for any `Deployment`.\n\nPods in green match the desired configuration, while pods that do not match the desired configuration are shown in orange.\n\n",
         "fieldConfig": {
           "defaults": {
@@ -286,6 +292,9 @@
         "type": "barchart"
       },
       {
+        "datasource": {
+          "uid": "$datasource"
+        },
         "description": "### StatefulSet rollout progress\nShows the number of pods for each `StatefulSet` that match the desired configuration, as a proportion of the desired number of pods.\n\nThe rollout will fail if insufficient pods match the desired configuration for any `StatefulSet`.\n\nPods in green match the desired configuration, while pods that do not match the desired configuration are shown in orange.\n\n",
         "fieldConfig": {
           "defaults": {
@@ -399,6 +408,9 @@
         "type": "row"
       },
       {
+        "datasource": {
+          "uid": "$datasource"
+        },
         "description": "### Aggregator lag\nShows the consumption lag of each aggregator pod.\n\nThis panel may show no data if aggregators are not deployed to this cell.\n\nThe rollout will fail if any pod's consumption lag is both:\n* greater than 30s (red area on graph), and\n* trending upwards compared to 1 minute earlier\n\n",
         "fieldConfig": {
           "defaults": {
@@ -468,6 +480,9 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "uid": "$datasource"
+        },
         "description": "### Unhealthy Deployment replicas\nShows the number of unavailable pods for each `Deployment`.\n\nThe rollout will fail if any `Deployment` has an unavailable pod.\n\nBoth this panel and the rollout check ignore any `Deployment`s that require spot nodes, as these are expected to be unavailable from time to time.\n\n`Deployment`s shown in green do not have any unavailable pods, while `Deployment`s shown in orange have one or more unavailable pods.\n\n",
         "fieldConfig": {
           "defaults": {
@@ -569,6 +584,9 @@
         "type": "barchart"
       },
       {
+        "datasource": {
+          "uid": "$datasource"
+        },
         "description": "### Unhealthy StatefulSet replicas\nShows the number of pods for each `StatefulSet` that are not ready.\n\nThe rollout will fail if any `StatefulSet` has fewer ready pods than requested.\n\nBoth this panel and the rollout check ignore any `StatefulSets`s that require spot nodes, as these are expected to be unavailable from time to time.\n\n`StatefulSets`s shown in green do not have any pods that are not ready, while `StatefulSet`s shown in orange have one or more pods that are not ready.\n\n",
         "fieldConfig": {
           "defaults": {

@@ -30,8 +30,10 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
@@ -39,6 +41,7 @@ import { historySrv } from '../settings/version-history/HistorySrv';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
@@ -143,6 +146,43 @@ describe('DashboardScene', () => {
         expect(locationService.getLocation().pathname).toBe('/d/dash-1');
       });
 
+      it('Can discard changes and keep editing', () => {
+        // @ts-expect-error private property used for unit test
+        const changeTracker = scene._changeTracker;
+        const stopSpy = jest.spyOn(changeTracker, 'stopTrackingChanges');
+        const startSpy = jest.spyOn(changeTracker, 'startTrackingChanges');
+
+        // Make a change
+        scene.setState({ title: 'Updated title' });
+        expect(scene.state.isDirty).toBe(true);
+
+        // Put the scene into panel edit to verify we clear it
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        const editPanel = buildPanelEditScene(panel);
+        scene.setState({ editPanel });
+
+        // Add an overlay as well to verify it is cleared
+        scene.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: scene.getRef() }) });
+        expect(scene.state.overlay).toBeDefined();
+
+        scene.discardChangesAndKeepEditing();
+
+        // Still editing, but no longer dirty
+        expect(scene.state.isEditing).toBe(true);
+        expect(scene.state.isDirty).toBe(false);
+
+        // Restored state from when edit mode started
+        expect(scene.state.title).toBe('hello');
+
+        // Clears edit-panel related state
+        expect(scene.state.editPanel).toBeUndefined();
+        expect(scene.state.overlay).toBeUndefined();
+
+        // Resets tracking
+        expect(stopSpy).toHaveBeenCalled();
+        expect(startSpy).toHaveBeenCalled();
+      });
+
       it('Exiting already saved dashboard should not restore initial state', () => {
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
@@ -160,6 +200,38 @@ describe('DashboardScene', () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.title).toEqual('Updated title');
         expect(scene.state.meta.version).toEqual(2);
+      });
+
+      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', () => {
+        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
+        config.featureToggles.dashboardNewLayouts = true;
+
+        const publishSpy = jest.spyOn(appEvents, 'publish');
+        const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
+
+        scene.setState({ title: 'Updated title' });
+        expect(scene.state.isDirty).toBe(true);
+        scene.exitEditMode({ skipConfirm: false });
+
+        const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
+        expect(modalCall).toBeDefined();
+
+        const modalEvent = modalCall![0] as ShowConfirmModalEvent;
+        expect(modalEvent.payload.altActionText).toBeDefined();
+
+        modalEvent.payload.onAltAction?.();
+
+        expect(scene.state.overlay).toBeDefined();
+
+        const overlay = scene.state.overlay as SaveDashboardDrawer;
+        expect(overlay.state.onSaveSuccess).toBeDefined();
+
+        overlay.state.onSaveSuccess!();
+        expect(scene.state.isEditing).toBe(false);
+
+        publishSpy.mockRestore();
+        hasActualSaveChangesSpy.mockRestore();
+        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
       });
 
       it('Should start the detect changes worker', () => {

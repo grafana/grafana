@@ -14,7 +14,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -150,22 +149,15 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: check if lister could list too many repositories or resources
-	all, err := GetRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()), b.store)
+	all, err := GetRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()), b.repoStore)
 	if err != nil {
 		errhttp.Write(r.Context(), err, w)
 		return
 	}
 
-	legacyStorage := false
-	if b.storageStatus != nil {
-		legacyStorage = dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus)
-	}
-
 	settings := provisioning.RepositoryViewList{
-		Items:          make([]provisioning.RepositoryView, len(all)),
-		AllowedTargets: b.allowedTargets,
-		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
-		LegacyStorage:            legacyStorage,
+		Items:                    make([]provisioning.RepositoryView, len(all)),
+		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
 		AllowImageRendering:      b.allowImageRendering,
 	}

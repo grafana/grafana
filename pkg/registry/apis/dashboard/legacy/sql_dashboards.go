@@ -113,6 +113,7 @@ func ProvideMigratorDashboardAccessor(
 		dashboardPermissionSvc: nil, // not needed for migration
 		libraryPanelSvc:        nil, // not needed for migration
 		accessControl:          accessControl,
+		log:                    log.New("legacy.dashboard.migrator.accessor"),
 	}
 }
 
@@ -136,6 +137,7 @@ func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 		dashboardPermissionSvc: dashboardPermissionSvc,
 		libraryPanelSvc:        libraryPanelSvc,
 		accessControl:          accessControl,
+		log:                    log.New("legacy.dashboard.accessor"),
 	}
 }
 
@@ -153,12 +155,6 @@ func (a *dashboardSqlAccess) executeQuery(ctx context.Context, helper *legacysql
 		tx = coreTx.Tx
 		return nil
 	})
-
-	// Use transaction from unified storage if available in the context.
-	// This allows us to run migrations in a transaction which is specifically required for SQLite.
-	if tx == nil {
-		tx = resource.TransactionFromContext(ctx)
-	}
 
 	if tx != nil {
 		return tx.QueryContext(ctx, query, args...)
@@ -228,7 +224,7 @@ func (a *dashboardSqlAccess) CountResources(ctx context.Context, opts MigrateOpt
 			case "folder.grafana.app/folders":
 				summary := &resourcepb.BulkResponse_Summary{}
 				summary.Group = folders.GROUP
-				summary.Group = folders.RESOURCE
+				summary.Resource = folders.RESOURCE
 				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
 					" WHERE is_folder=TRUE AND org_id=?", orgId).Get(&summary.Count)
 				rsp.Summary = append(rsp.Summary, summary)
@@ -507,7 +503,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 		return nil, err
 	}
 
-	// Group playlist items by playlist ID
+	// Group playlist items by playlist ID while preserving order
 	type playlistData struct {
 		id        int64
 		uid       string
@@ -518,7 +514,8 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 		updatedAt int64
 	}
 
-	playlists := make(map[int64]*playlistData)
+	playlistIndex := make(map[int64]int) // maps playlist ID to index in playlists slice
+	playlists := []*playlistData{}
 	var currentID int64
 	var orgID int64
 	var uid, name, interval string
@@ -533,7 +530,8 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 		}
 
 		// Get or create playlist entry
-		pl, exists := playlists[currentID]
+		idx, exists := playlistIndex[currentID]
+		var pl *playlistData
 		if !exists {
 			pl = &playlistData{
 				id:        currentID,
@@ -544,7 +542,10 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 				createdAt: createdAt,
 				updatedAt: updatedAt,
 			}
-			playlists[currentID] = pl
+			playlistIndex[currentID] = len(playlists)
+			playlists = append(playlists, pl)
+		} else {
+			pl = playlists[idx]
 		}
 
 		// Add item if it exists (LEFT JOIN can return NULL for playlists without items)
@@ -560,7 +561,7 @@ func (a *dashboardSqlAccess) MigratePlaylists(ctx context.Context, orgId int64, 
 		return nil, err
 	}
 
-	// Convert to K8s objects and send to stream
+	// Convert to K8s objects and send to stream (order is preserved)
 	for _, pl := range playlists {
 		playlist := &playlistv0.Playlist{
 			TypeMeta: metav1.TypeMeta{

@@ -132,17 +132,35 @@ To connect your GitHub repository:
 
 ### Choose what to synchronize
 
-In this step, you can decide which elements to synchronize. The available options depend on the status of your Grafana instance:
-
-- If the instance contains resources in an incompatible data format, you'll have to migrate all the data using instance sync. Folder sync won't be supported.
-- If there's already another connection using folder sync, instance sync won't be offered.
+You can sync external resources into a new folder without affecting the rest of your instance.
 
 To set up synchronization:
 
-- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
-- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+1. Select which resources you want to sync.
 
-Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI. Click **Synchronize** to continue.
+1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+
+1. Click **Synchronize** to continue.
+
+1. You can repeat this process for up to 10 connections.
+
+{{< admonition type="note" >}}
+
+Optionally, you can export any unmanaged resources into the provisioned folder. See how in [Synchronize with external storage](#synchronize-with-external-storage).
+
+{{< /admonition >}}
+
+#### Full instance sync
+
+Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
+
+To have access to this option you must enable experimental instance sync on purpose.
+
+### Synchronize with external storage
+
+After this one time step, all future updates are automatically saved to the Git repository and provisioned back to the instance.
+
+Check the **Migrate existing resources** box to migrate your unmanaged dashboards to the provisioned folder.
 
 ### Choose additional settings
 
@@ -367,5 +385,6 @@ To learn more about using Git Sync:
 
 - [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
 - [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/)
+- [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios)
 - [Export resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
 - [grafanactl documentation](https://grafana.github.io/grafanactl/)

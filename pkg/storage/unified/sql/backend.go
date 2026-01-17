@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
@@ -126,7 +127,7 @@ type backend struct {
 	notifier        eventNotifier
 
 	// resource version manager
-	rvManager *resourceVersionManager
+	rvManager *rvmanager.ResourceVersionManager
 
 	// testing
 	simulatedNetworkLatency time.Duration
@@ -163,7 +164,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 
 	// Initialize ResourceVersionManager
-	rvManager, err := NewResourceVersionManager(ResourceManagerOptions{
+	rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 		Dialect: b.dialect,
 		DB:      b.db,
 	})
@@ -660,14 +661,12 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 		}
 	}
 
-	// If latest RV is the same as request RV, there's nothing to report, and we can avoid running another query.
-	if latestRv == sinceRv {
+	// If latest RV equal or older than request RV, there's nothing to report, and we can avoid running another query.
+	if latestRv <= sinceRv {
 		return latestRv, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
 	}
 
-	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
-	lastSeen := ""
-
+	seen := make(map[string]struct{})
 	seq := func(yield func(*resource.ModifiedResource, error) bool) {
 		query := sqlResourceListModifiedSinceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -701,12 +700,11 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 			}
 
 			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
-			if mr.Key.Name == lastSeen {
+			if _, ok := seen[mr.Key.Name]; ok {
 				continue
 			}
 
-			lastSeen = mr.Key.Name
-
+			seen[mr.Key.Name] = struct{}{}
 			if !yield(mr, nil) {
 				return
 			}
@@ -928,12 +926,12 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.fetchLatestRV")
 	defer span.End()
-	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+	res, err := dbutil.QueryRow(ctx, x, rvmanager.SqlResourceVersionGet, rvmanager.SqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       group,
 		Resource:    resource,
 		ReadOnly:    true,
-		Response:    new(resourceVersionResponse),
+		Response:    new(rvmanager.ResourceVersionResponse),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 1, nil

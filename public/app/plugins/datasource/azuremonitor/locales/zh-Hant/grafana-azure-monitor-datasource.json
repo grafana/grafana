@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure 紀錄會啟動您的查詢按鈕",
       "body-switching-to-builder": "切換到建立器將捨棄您目前的 KQL 查詢並清除 KQL 編輯器。您確定嗎？",
-      "body-switching-to-kql": "切換到 KQL 將捨棄您目前的建立器設定。您確定嗎？",
       "button-kick-start-your-query": "啟動您的查詢",
       "button-run-query": "執行查詢",
       "confirmText-switch-to": "切換到 {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "時間欄",
       "label-time-range": "Time-range",
       "tooltip-time-column": "<0>指定用於篩選的時間欄。預設為第一個表格 <1>timeSpan</1> 欄、第一個找到的 <3>datetime</3> 欄或 <5>TimeGenerated</5>。</0>",
-      "tooltip-time-range": "<0>指定用於查詢的時間範圍。<1>查詢</1>選項僅會使用查詢中指定的時間範圍。<3>儀表板</3>僅會使用 Grafana 時間範圍。在紀錄建立器模式下，僅會使用儀表板時間。</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "頂端"

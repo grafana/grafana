@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
@@ -55,10 +56,15 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamBindingLegacyStore      *teambinding.LegacyBindingStore
 	ssoLegacyStore              *sso.LegacyStore
 	coreRolesStorage            CoreRoleStorageBackend
-	rolesStorage                RoleStorageBackend
+	roleApiInstaller            RoleApiInstaller
+	globalRoleApiInstaller      GlobalRoleApiInstaller
 	resourcePermissionsStorage  resource.StorageBackend
 	roleBindingsStorage         RoleBindingStorageBackend
 	externalGroupMappingStorage ExternalGroupMappingStorageBackend
+
+	// Required for resource permissions authorization
+	// fetches resources parent folders
+	resourceParentProvider iamauthorizer.ParentProvider
 
 	// Access Control
 	authorizer authorizer.Authorizer

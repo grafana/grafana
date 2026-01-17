@@ -30,7 +30,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "GlobalRole",
 					Plural:     "GlobalRoles",
-					Scope:      "Namespaced",
+					Scope:      "Cluster",
 					Conversion: false,
 				},
 
@@ -147,6 +147,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "TeamBindings",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SelectableFields: []string{
+						"spec.teamRef.name",
+						"spec.subject.name",
+					},
 				},
 
 				{
@@ -172,6 +176,36 @@ var appManifestData = app.ManifestData{
 								OperationId: "getSearchTeams",
 
 								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "limit",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "offset",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "page",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{},
+											},
+										},
+									},
 
 									{
 										ParameterProps: spec3.ParameterProps{

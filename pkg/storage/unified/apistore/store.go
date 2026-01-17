@@ -57,6 +57,8 @@ type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.Resourc
 
 // Optional settings that apply to a single resource
 type StorageOptions struct {
+	Scheme *runtime.Scheme
+
 	// ????: should we constrain this to only dashboards for now?
 	// Not yet clear if this is a good general solution, or just a stop-gap
 	LargeObjectSupport LargeObjectSupport
