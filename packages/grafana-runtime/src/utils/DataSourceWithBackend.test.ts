@@ -106,7 +106,6 @@ describe('DataSourceWithBackend', () => {
                 "type": "dummy",
                 "uid": "abc",
               },
-              "datasourceId": 1234,
               "filters": [
                 {
                   "key": "key1",
@@ -124,7 +123,6 @@ describe('DataSourceWithBackend', () => {
                 "type": "sample",
                 "uid": "<mockuid>",
               },
-              "datasourceId": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "queryCachingTTL": undefined,
@@ -184,7 +182,6 @@ describe('DataSourceWithBackend', () => {
                 "type": "dummy",
                 "uid": "abc",
               },
-              "datasourceId": 1234,
               "filters": [
                 {
                   "key": "key1",
@@ -202,7 +199,6 @@ describe('DataSourceWithBackend', () => {
                 "type": "sample",
                 "uid": "<mockuid>",
               },
-              "datasourceId": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "queryCachingTTL": undefined,
@@ -254,7 +250,6 @@ describe('DataSourceWithBackend', () => {
                 "type": "dummy",
                 "uid": "abc",
               },
-              "datasourceId": 1234,
               "filters": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
@@ -306,7 +301,6 @@ describe('DataSourceWithBackend', () => {
                 "type": "dummy",
                 "uid": "abc",
               },
-              "datasourceId": 1234,
               "filters": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
@@ -380,7 +374,6 @@ describe('DataSourceWithBackend', () => {
                 "type": "dummy",
                 "uid": "abc",
               },
-              "datasourceId": 1234,
               "filters": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
@@ -392,7 +385,6 @@ describe('DataSourceWithBackend', () => {
                 "type": "sample",
                 "uid": "<mockuid>",
               },
-              "datasourceId": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "queryCachingTTL": undefined,
@@ -522,7 +514,6 @@ describe('DataSourceWithBackend', () => {
                 "type": "dummy",
                 "uid": "abc",
               },
-              "datasourceId": 1234,
               "filters": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
@@ -611,7 +602,6 @@ describe('DataSourceWithBackend', () => {
 function createMockDatasource() {
   const settings = {
     name: 'test',
-    id: 1234,
     uid: 'abc',
     type: 'dummy',
     jsonData: {},

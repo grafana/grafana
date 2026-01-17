@@ -24,7 +24,6 @@ export interface DashboardInfo {
 export interface DataRequestInfo extends Partial<DashboardInfo> {
   source?: CoreApp | string;
   datasourceName: string;
-  datasourceId: number;
   datasourceUid: string;
   datasourceType: string;
   panelId?: number;
