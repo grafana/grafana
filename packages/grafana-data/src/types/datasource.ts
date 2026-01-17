@@ -219,7 +219,7 @@ abstract class DataSourceApi<
    *
    * @deprecated
    */
-  readonly id: number | undefined | null;
+  readonly id?: number;
 
   /**
    *  Set in constructor
@@ -737,7 +737,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   /**
    * @deprecated will be removed in G13
    */
-  id: number | undefined | null;
+  id?: number;
   uid: string;
   type: string;
   name: string;
