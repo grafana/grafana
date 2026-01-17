@@ -146,6 +146,7 @@ class DataSourceWithBackend<
     const dsUIDs = new Set<string>();
     const queries: DataQuery[] = targets.map((q) => {
       let datasource = this.getRef();
+      let datasourceId = this.id;
       let shouldApplyTemplateVariables = true;
 
       if (isExpressionReference(q.datasource)) {
@@ -164,8 +165,10 @@ class DataSourceWithBackend<
         }
 
         const dsRef = ds.rawRef ?? getDataSourceRef(ds);
-        if (dsRef.uid !== datasource.uid) {
+        const dsId = ds.id;
+        if (dsRef.uid !== datasource.uid || datasourceId !== dsId) {
           datasource = dsRef;
+          datasourceId = dsId;
           // If the query is using a different datasource, we would need to retrieve the datasource
           // instance (async) and apply the template variables but it seems it's not necessary for now.
           shouldApplyTemplateVariables = false;
@@ -181,6 +184,7 @@ class DataSourceWithBackend<
       return {
         ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
         datasource,
+        datasourceId, // deprecated!
         intervalMs,
         maxDataPoints,
         queryCachingTTL,

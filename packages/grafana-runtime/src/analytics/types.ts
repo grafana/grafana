@@ -24,6 +24,10 @@ export interface DashboardInfo {
 export interface DataRequestInfo extends Partial<DashboardInfo> {
   source?: CoreApp | string;
   datasourceName: string;
+  /**
+   * @deprecated will be removed in G13
+   */
+  datasourceId?: number;
   datasourceUid: string;
   datasourceType: string;
   panelId?: number;
