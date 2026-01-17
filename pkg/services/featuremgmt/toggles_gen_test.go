@@ -33,29 +33,33 @@ func TestFeatureToggleFiles(t *testing.T) {
 	t.Run("verify files", func(t *testing.T) {
 		lookup := readFeatureList(t)
 
-		// Typescript files
-		verifyAndGenerateFile(t,
-			"../../../packages/grafana-data/src/types/featureToggles.gen.ts",
-			generateTypeScript(),
-		)
+		t.Run("typescript", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"../../../packages/grafana-data/src/types/featureToggles.gen.ts",
+				generateTypeScript(),
+			)
+		})
 
-		// Golang files
-		verifyAndGenerateFile(t,
-			"toggles_gen.go",
-			generateRegistry(t),
-		)
+		t.Run("golang", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"toggles_gen.go",
+				generateRegistry(t),
+			)
+		})
 
-		// Docs files
-		verifyAndGenerateFile(t,
-			"../../../docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md",
-			generateDocsMD(),
-		)
+		t.Run("docs", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"../../../docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md",
+				generateDocsMD(),
+			)
+		})
 
-		// CSV Analytics
-		verifyAndGenerateFile(t,
-			"toggles_gen.csv",
-			generateCSV(lookup),
-		)
+		t.Run("CSV Report", func(t *testing.T) {
+			verifyAndGenerateFile(t,
+				"toggles_gen.csv",
+				generateCSV(lookup),
+			)
+		})
 	})
 }
 
