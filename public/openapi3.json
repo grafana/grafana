@@ -1905,7 +1905,10 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SearchTeamGroupsQueryResult"
+              "items": {
+                "$ref": "#/components/schemas/SearchTeamGroupsQueryResult"
+              },
+              "type": "array"
             }
           }
         },
@@ -4016,9 +4019,6 @@
           }
         },
         "type": "object"
-      },
-      "CookieType": {
-        "type": "string"
       },
       "Correlation": {
         "description": "Correlation is the model for correlations definitions",
@@ -8018,6 +8018,10 @@
           "avatarUrl": {
             "type": "string"
           },
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
           "email": {
             "type": "string"
           },
@@ -8229,12 +8233,6 @@
       },
       "PatchPrefsCmd": {
         "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
@@ -8264,10 +8262,7 @@
             "type": "string"
           },
           "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
+            "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
             "type": "string"
           },
           "weekStart": {
@@ -8885,15 +8880,6 @@
         },
         "type": "object"
       },
-      "PreferencesCookiePreferences": {
-        "description": "+k8s:openapi-gen=true",
-        "properties": {
-          "analytics": {},
-          "functional": {},
-          "performance": {}
-        },
-        "type": "object"
-      },
       "PreferencesNavbarPreference": {
         "description": "+k8s:openapi-gen=true",
         "properties": {
@@ -8919,9 +8905,6 @@
       "PreferencesSpec": {
         "description": "+k8s:openapi-gen=true",
         "properties": {
-          "cookiePreferences": {
-            "$ref": "#/components/schemas/PreferencesCookiePreferences"
-          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"
@@ -10039,6 +10022,9 @@
       },
       "ReportOptions": {
         "properties": {
+          "csvEncoding": {
+            "type": "string"
+          },
           "layout": {
             "type": "string"
           },
@@ -12615,12 +12601,6 @@
       },
       "UpdatePrefsCmd": {
         "properties": {
-          "cookies": {
-            "items": {
-              "$ref": "#/components/schemas/CookieType"
-            },
-            "type": "array"
-          },
           "homeDashboardId": {
             "default": 0,
             "description": "The numerical :id of a favorited dashboard",
@@ -12651,10 +12631,7 @@
             "type": "string"
           },
           "timezone": {
-            "enum": [
-              "utc",
-              "browser"
-            ],
+            "description": "Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string",
             "type": "string"
           },
           "weekStart": {
@@ -12939,6 +12916,10 @@
             "type": "array"
           },
           "avatarUrl": {
+            "type": "string"
+          },
+          "created": {
+            "format": "date-time",
             "type": "string"
           },
           "email": {
@@ -18372,6 +18353,8 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
+        "deprecated": true,
+        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "operationId": "restoreDashboardVersionByUID",
         "parameters": [
           {
@@ -18644,6 +18627,7 @@
     },
     "/datasources/id/{name}": {
       "get": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "operationId": "getDataSourceIdByName",
         "parameters": [
@@ -18673,7 +18657,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get data source Id by Name.",
+        "summary": "Get data source Id by Name. This function will be removed in the future.",
         "tags": [
           "datasources"
         ]
@@ -18681,6 +18665,7 @@
     },
     "/datasources/name/{name}": {
       "delete": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "operationId": "deleteDataSourceByName",
         "parameters": [
@@ -18710,12 +18695,13 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Delete an existing data source by name.",
+        "summary": "Delete an existing data source by name. This function will be removed in the future.",
         "tags": [
           "datasources"
         ]
       },
       "get": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
         "operationId": "getDataSourceByName",
         "parameters": [
@@ -18742,7 +18728,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get a single data source by Name.",
+        "summary": "Get a single data source by Name.  This function will be removed in the future.",
         "tags": [
           "datasources"
         ]
@@ -20724,9 +20710,17 @@
             }
           },
           {
-            "description": "A comma separated list of folder ID(s) to filter the elements by.",
+            "description": "A comma separated list of folder ID(s) to filter the elements by.\nDeprecated: Use FolderFilterUIDs instead.",
             "in": "query",
             "name": "folderFilter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A comma separated list of folder UID(s) to filter the elements by.",
+            "in": "query",
+            "name": "folderFilterUIDs",
             "schema": {
               "type": "string"
             }

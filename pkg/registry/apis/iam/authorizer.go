@@ -23,6 +23,7 @@ func newIAMAuthorizer(
 	accessClient authlib.AccessClient,
 	legacyAccessClient authlib.AccessClient,
 	roleApiInstaller RoleApiInstaller,
+	globalRoleApiInstaller GlobalRoleApiInstaller,
 ) authorizer.Authorizer {
 	resourceAuthorizer := make(map[string]authorizer.Authorizer)
 
@@ -42,7 +43,6 @@ func newIAMAuthorizer(
 
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
-	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = legacyAuthorizer
 	resourceAuthorizer["display"] = legacyAuthorizer
 
 	// Access specific resources
@@ -53,10 +53,13 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
-	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = allowAuthorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = allowAuthorizer
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
+
+	resourceAuthorizer[iamv0.GlobalRoleInfo.GetName()] = globalRoleApiInstaller.GetAuthorizer()
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }

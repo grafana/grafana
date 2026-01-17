@@ -246,10 +246,13 @@ const injectedRtkApi = api
             facetLimit: queryArg.facetLimit,
             tags: queryArg.tags,
             libraryPanel: queryArg.libraryPanel,
+            panelType: queryArg.panelType,
+            dataSourceType: queryArg.dataSourceType,
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
             explain: queryArg.explain,
+            panelTitleSearch: queryArg.panelTitleSearch,
           },
         }),
         providesTags: ['Search'],
@@ -674,6 +677,10 @@ export type SearchDashboardsAndFoldersApiArg = {
   tags?: string[];
   /** find dashboards that reference a given libraryPanel */
   libraryPanel?: string;
+  /** find dashboards using panels of a given plugin type */
+  panelType?: string;
+  /** find dashboards using datasources of a given plugin type */
+  dataSourceType?: string;
   /** permission needed for the resource (view, edit, admin) */
   permission?: 'view' | 'edit' | 'admin';
   /** sortable field */
@@ -682,6 +689,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   limit?: number;
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
+  /** [experimental] optionally include matches from panel titles */
+  panelTitleSearch?: boolean;
 };
 export type GetSortableFieldsApiResponse = /** status 200 undefined */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

@@ -1,0 +1,107 @@
+name: Deploy Storybook
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [released]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  detect-changes:
+    # Only run in grafana/grafana
+    if: github.repository == 'grafana/grafana'
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/deploy-storybook.yml
+  deploy-storybook:
+    name: Deploy Storybook
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    # Only run in grafana/grafana
+    if: github.repository == 'grafana/grafana' && (needs.detect-changes.outputs.changed-frontend-packages == 'true' || github.event_name == 'release')
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      BUCKET_NAME: grafana-storybook
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build storybook
+        run: yarn storybook:build
+
+      # Create the GCS folder name
+      # "latest" when triggered from the latest release
+      # "canary" on pushes to main
+      - name: Create deploy name
+        id: create-deploy-name
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            LATEST_RELEASE_TAG=$(curl -s "https://api.github.com/repos/grafana/grafana/releases/latest" | jq -r '.tag_name')
+            if [[ "$RELEASE_TAG" == "$LATEST_RELEASE_TAG" ]]; then
+              echo "deploy-name=latest" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "This is a release but not the latest release; skipping storybook deploy"
+            exit 1
+          fi
+
+          echo "deploy-name=canary" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GCS
+        id: login-to-gcs
+        uses: grafana/shared-workflows/actions/login-to-gcs@main
+        with:
+          environment: prod
+          service_account: github-gf-storybook-deploy@grafanalabs-workload-identity.iam.gserviceaccount.com
+
+      - name: Cleanup old storybook
+        id: cleanup-old-storybook
+        run: |
+          gcloud storage rm "gs://${{ env.BUCKET_NAME }}/${{ steps.create-deploy-name.outputs.deploy-name }}/**" || echo "No existing files to delete"
+
+      - name: Upload new storybook
+        id: upload-new-storybook
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        with:
+          environment: prod
+          bucket: ${{ env.BUCKET_NAME }}
+          bucket_path: ${{ steps.create-deploy-name.outputs.deploy-name }}
+          path: packages/grafana-ui/dist/storybook
+          service_account: github-gf-storybook-deploy@grafanalabs-workload-identity.iam.gserviceaccount.com
+          parent: false
+          # need to unset this as the default doesn't work on a bucket with uniform bucket-level access
+          predefinedAcl: ''

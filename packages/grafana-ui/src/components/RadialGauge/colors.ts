@@ -175,7 +175,7 @@ export function getGradientCss(gradientStops: GradientStop[], shape: RadialShape
 const GRAY_05 = '#111217';
 const GRAY_90 = '#fbfbfb';
 const CONTRAST_THRESHOLD_MAX = 4.5;
-const getGuideDotColor = (color: string): string => {
+export const getGuideDotColor = (color: string): string => {
   const darkColor = GRAY_05;
   const lightColor = GRAY_90;
   return colorManipulator.getContrastRatio(darkColor, color) >= CONTRAST_THRESHOLD_MAX ? darkColor : lightColor;
