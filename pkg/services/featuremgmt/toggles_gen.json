@@ -3314,11 +3314,9 @@
     {
       "metadata": {
         "name": "permissionsFilterRemoveSubquery",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1764664939750",
         "creationTimestamp": "2023-08-02T07:39:25Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
-        }
+        "deletionTimestamp": "2026-01-16T09:04:04Z"
       },
       "spec": {
         "description": "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",

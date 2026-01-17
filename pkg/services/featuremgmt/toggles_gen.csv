@@ -36,7 +36,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-12-06,grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
 2025-08-29,queryCacheRequestDeduplication,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-2023-08-02,permissionsFilterRemoveSubquery,experimental,@grafana/search-and-storage,false,false,false
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 2023-08-30,dashgpt,GA,@grafana/dashboards-squad,false,false,true
 2024-03-05,aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true

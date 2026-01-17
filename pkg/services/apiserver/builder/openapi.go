@@ -175,7 +175,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						}
 					}
 
-					// Replace any */* media types with json+yaml (protobuf?)
+					// Replace any */* media types with json+yaml
 					ops := []*spec3.Operation{v.Delete, v.Put, v.Post}
 					for _, op := range ops {
 						if op == nil || op.RequestBody == nil || len(op.RequestBody.Content) != 1 {
@@ -184,9 +184,8 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						content, ok := op.RequestBody.Content["*/*"]
 						if ok {
 							op.RequestBody.Content = map[string]*spec3.MediaType{
-								"application/json":                    content,
-								"application/yaml":                    content,
-								"application/vnd.kubernetes.protobuf": content,
+								"application/json": content,
+								"application/yaml": content,
 							}
 						}
 					}
@@ -242,7 +241,40 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						}
 					}
 				}
-				return addBuilderRoutes(gv, &copy, builders, apiResourceConfig)
+				result, err := addBuilderRoutes(gv, &copy, builders, apiResourceConfig)
+				if err != nil {
+					return nil, err
+				}
+				// Remove protobuf from all paths (including routes added by addBuilderRoutes)
+				for _, path := range result.Paths.Paths {
+					allOps := GetPathOperations(path)
+					for _, op := range allOps {
+						if op == nil {
+							continue
+						}
+						// Remove protobuf from request body content types
+						if op.RequestBody != nil && op.RequestBody.Content != nil {
+							delete(op.RequestBody.Content, "application/vnd.kubernetes.protobuf")
+						}
+						// Remove protobuf from response content types
+						if op.Responses != nil {
+							if op.Responses.StatusCodeResponses != nil {
+								for _, response := range op.Responses.StatusCodeResponses {
+									if response.Content != nil {
+										delete(response.Content, "application/vnd.kubernetes.protobuf")
+										delete(response.Content, "application/vnd.kubernetes.protobuf;stream=watch")
+									}
+								}
+							}
+							// Handle default response
+							if op.Responses.Default != nil && op.Responses.Default.Content != nil {
+								delete(op.Responses.Default.Content, "application/vnd.kubernetes.protobuf")
+								delete(op.Responses.Default.Content, "application/vnd.kubernetes.protobuf;stream=watch")
+							}
+						}
+					}
+				}
+				return result, nil
 			}
 		}
 		return s, nil
