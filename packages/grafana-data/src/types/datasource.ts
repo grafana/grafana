@@ -217,11 +217,6 @@ abstract class DataSourceApi<
   /**
    *  Set in constructor
    */
-  readonly id: number;
-
-  /**
-   *  Set in constructor
-   */
   readonly type: string;
 
   /**
@@ -246,7 +241,6 @@ abstract class DataSourceApi<
 
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
-    this.id = instanceSettings.id;
     this.type = instanceSettings.type;
     this.meta = instanceSettings.meta;
     this.cachingConfig = instanceSettings.cachingConfig;
@@ -732,7 +726,6 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  * in bootData (on page load), or from: /api/frontend/settings
  */
 export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
-  id: number;
   uid: string;
   type: string;
   name: string;
