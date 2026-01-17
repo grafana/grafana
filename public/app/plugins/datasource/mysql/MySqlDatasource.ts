@@ -109,7 +109,6 @@ export class MySqlDatasource extends SqlDatasource {
       fields: (query: SQLQuery) => this.fetchFields(query),
       validateQuery: (query: SQLQuery, _range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
-      dsUID: () => this.uid,
       toRawSql,
       functions: () => this.getFunctions(),
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(),

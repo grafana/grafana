@@ -144,7 +144,6 @@ export class FlightSQLDatasource extends SqlDatasource {
       fields: (query: SQLQuery) => this.fetchFields(query),
       validateQuery: (query: SQLQuery, range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
-      dsUID: () => this.uid,
       toRawSql,
       functions: () => this.getFunctions(),
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(),

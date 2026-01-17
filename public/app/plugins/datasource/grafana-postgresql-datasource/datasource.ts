@@ -143,7 +143,6 @@ export class PostgresDatasource extends SqlDatasource {
       },
       validateQuery: (query) =>
         Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
-      dsUID: () => this.uid,
       toRawSql,
       functions: () => this.getFunctions(),
       lookup: async () => {
