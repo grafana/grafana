@@ -10,7 +10,7 @@ import {
   useDataLinksContext,
   FieldType,
 } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {
   EventBusPlugin,
@@ -21,7 +21,6 @@ import {
 } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
-import { config } from 'app/core/config';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { Options } from './panelcfg.gen';
@@ -145,7 +144,7 @@ export const TimeSeriesPanel = ({
       {(uplotConfig, alignedFrame) => {
         return (
           <>
-            <KeyboardPlugin config={uplotConfig} />
+            {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
             )}

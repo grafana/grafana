@@ -15,16 +15,16 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	v1beta1 "github.com/grafana/grafana/apps/live/pkg/apis/live/v1beta1"
+	v1alpha1 "github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1"
 )
 
 var appManifestData = app.ManifestData{
 	AppName:          "live",
 	Group:            "live.grafana.app",
-	PreferredVersion: "v1beta1",
+	PreferredVersion: "v1alpha1",
 	Versions: []app.ManifestVersion{
 		{
-			Name:   "v1beta1",
+			Name:   "v1alpha1",
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
@@ -52,7 +52,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Channel/v1beta1": v1beta1.ChannelKind(),
+	"Channel/v1alpha1": v1alpha1.ChannelKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

@@ -3,6 +3,7 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -28,18 +29,24 @@ import (
 var WireSetExts = wire.NewSet(
 	noopstorage.ProvideStorageBackend,
 	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
-	wire.Bind(new(iam.RoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	iam.ProvideNoopRoleApiInstaller,
+	iam.ProvideNoopGlobalRoleApiInstaller,
 	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	wire.Bind(new(iam.ExternalGroupMappingStorageBackend), new(*noopstorage.StorageBackendImpl)),
 
 	externalgroupmapping.ProvideNoopTeamGroupsREST,
 	wire.Bind(new(externalgroupmapping.TeamGroupsHandler), new(*externalgroupmapping.NoopTeamGroupsREST)),
+
+	// Auditing Options
+	auditing.ProvideNoopBackend,
+	auditing.ProvideNoopPolicyRuleProvider,
 )
 
 var provisioningExtras = wire.NewSet(
 	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
 	extras.ProvideFactoryFromConfig,
+	extras.ProvideConnectionFactoryFromConfig,
 	extras.ProvideProvisioningExtraAPIs,
 	extras.ProvideExtraWorkers,
 )

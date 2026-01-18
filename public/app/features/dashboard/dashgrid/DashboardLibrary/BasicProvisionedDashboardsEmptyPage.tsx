@@ -39,6 +39,17 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
     }
 
     const dashboards = await fetchProvisionedDashboards(ds.type);
+
+    if (dashboards.length > 0) {
+      DashboardLibraryInteractions.loaded({
+        numberOfItems: dashboards.length,
+        contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
+        datasourceTypes: [ds.type],
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+      });
+    }
+
     return dashboards;
   }, [datasourceUid]);
 
@@ -67,6 +78,7 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
       sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
       libraryItemId: dashboard.uid,
       creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
 
     const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;

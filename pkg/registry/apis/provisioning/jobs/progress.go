@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // maybeNotifyProgress will only notify if a certain amount of time has passed
@@ -35,12 +38,13 @@ func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
 
 // FIXME: ProgressRecorder should be initialized in the queue
 type JobResourceResult struct {
-	Name   string
-	Group  string
-	Kind   string
-	Path   string
-	Action repository.FileAction
-	Error  error
+	Name    string
+	Group   string
+	Kind    string
+	Path    string
+	Action  repository.FileAction
+	Error   error
+	Warning error
 }
 
 type jobProgressRecorder struct {
@@ -57,6 +61,8 @@ type jobProgressRecorder struct {
 	notifyImmediatelyFn ProgressFn
 	maybeNotifyFn       ProgressFn
 	summaries           map[string]*provisioning.JobResourceSummary
+	failedCreations     []string // Tracks folder paths that failed to be created
+	failedDeletions     []string // Tracks resource paths that failed to be deleted
 }
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
@@ -83,10 +89,26 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	if result.Error != nil {
 		shouldLogError = true
 		logErr = result.Error
-		if len(r.errors) < 20 {
-			r.errors = append(r.errors, result.Error.Error())
+
+		// Don't count ignored actions as errors in error count or error list
+		if result.Action != repository.FileActionIgnored {
+			if len(r.errors) < 20 {
+				r.errors = append(r.errors, result.Error.Error())
+			}
+			r.errorCount++
 		}
-		r.errorCount++
+
+		// Automatically track failed operations based on error type and action
+		// Check if this is a PathCreationError (folder creation failure)
+		var pathErr *resources.PathCreationError
+		if errors.As(result.Error, &pathErr) {
+			r.failedCreations = append(r.failedCreations, pathErr.Path)
+		}
+
+		// Track failed deletions, any deletion will stop the deletion of the parent folder (as it won't be empty)
+		if result.Action == repository.FileActionDeleted {
+			r.failedDeletions = append(r.failedDeletions, result.Path)
+		}
 	}
 
 	r.updateSummary(result)
@@ -111,6 +133,8 @@ func (r *jobProgressRecorder) ResetResults() {
 	r.errorCount = 0
 	r.errors = nil
 	r.summaries = make(map[string]*provisioning.JobResourceSummary)
+	r.failedCreations = nil
+	r.failedDeletions = nil
 }
 
 func (r *jobProgressRecorder) SetMessage(ctx context.Context, msg string) {
@@ -193,6 +217,10 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 		errorMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Error.Error(), result.Path, result.Name, result.Action)
 		summary.Errors = append(summary.Errors, errorMsg)
 		summary.Error++
+	} else if result.Warning != nil {
+		warningMsg := fmt.Sprintf("%s (file: %s, name: %s, action: %s)", result.Warning.Error(), result.Path, result.Name, result.Action)
+		summary.Warnings = append(summary.Warnings, warningMsg)
+		summary.Warning++
 	} else {
 		switch result.Action {
 		case repository.FileActionDeleted:
@@ -266,8 +294,17 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 		jobStatus.Message = err.Error()
 	}
 
-	jobStatus.Summary = r.summary()
+	summaries := r.summary()
+	jobStatus.Summary = summaries
 	jobStatus.Errors = r.errors
+
+	// Extract warnings from summaries
+	warnings := make([]string, 0)
+	for _, summary := range summaries {
+		warnings = append(warnings, summary.Warnings...)
+	}
+	jobStatus.Warnings = warnings
+
 	jobStatus.URLs = r.refURLs
 
 	tooManyErrors := r.maxErrors > 0 && r.errorCount >= r.maxErrors
@@ -283,6 +320,9 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 			jobStatus.Message = "completed with errors"
 			jobStatus.State = provisioning.JobStateWarning
 		}
+	} else if len(jobStatus.Warnings) > 0 {
+		jobStatus.State = provisioning.JobStateWarning
+		jobStatus.Message = "completed with warnings"
 	}
 
 	// Override message if progress have a more explicit message
@@ -291,4 +331,30 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	return jobStatus
+}
+
+// HasDirPathFailedCreation checks if a path is nested under any failed folder creation
+func (r *jobProgressRecorder) HasDirPathFailedCreation(path string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedCreation := range r.failedCreations {
+		if safepath.InDir(path, failedCreation) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasDirPathFailedDeletion checks if any resource deletions failed under a folder path
+func (r *jobProgressRecorder) HasDirPathFailedDeletion(folderPath string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedDeletion := range r.failedDeletions {
+		if safepath.InDir(failedDeletion, folderPath) {
+			return true
+		}
+	}
+	return false
 }

@@ -91,10 +91,12 @@ export class RowItem
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
+    const isHidden = !this.state.conditionalRendering?.state.result;
     return {
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'list-ul',
+      isHidden,
     };
   }
 
@@ -191,8 +193,23 @@ export class RowItem
     if (gridItem instanceof DashboardGridItem || gridItem instanceof AutoGridItem) {
       const layout = gridItem.parent;
       if (gridItem instanceof DashboardGridItem && layout instanceof SceneGridLayout) {
+        // Toggle isDraggable off to force react-grid-layout to exit drag mode
+        // This clears react-grid-layout's internal drag state
+        // This is a workaround until we upgrade to react-grid-layout 2.x.x
+        const wasDraggable = layout.state.isDraggable;
+        if (wasDraggable) {
+          layout.setState({ isDraggable: false });
+        }
+
         const newChildren = layout.state.children.filter((child) => child !== gridItem);
         layout.setState({ children: newChildren });
+
+        // Restore isDraggable after a microtask to ensure react-grid-layout processes the change
+        if (wasDraggable) {
+          queueMicrotask(() => {
+            layout.setState({ isDraggable: true });
+          });
+        }
       } else if (gridItem instanceof AutoGridItem && layout instanceof AutoGridLayout) {
         const newChildren = layout.state.children.filter((child) => child !== gridItem);
         layout.setState({ children: newChildren });

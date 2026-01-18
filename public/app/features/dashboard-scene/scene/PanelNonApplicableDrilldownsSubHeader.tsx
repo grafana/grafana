@@ -79,16 +79,8 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     };
 
     fetchApplicability();
-  }, [
-    filterKey,
-    groupByKey,
-    filtersVar,
-    groupByVar,
-    queryRunner,
-    filtersState?.filters,
-    groupByState?.value,
-    filtersState?.originFilters,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterKey, groupByKey, filtersVar, groupByVar, queryRunner]);
 
   useLayoutEffect(() => {
     if (!nonApplicable.length) {

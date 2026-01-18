@@ -68,7 +68,20 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graphite",
+                  "originalOptions": {
+                    "grid": {
+                      "max": 100,
+                      "min": 0
+                    },
+                    "legend": true,
+                    "y2_format": "short",
+                    "y_format": "percent"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -114,7 +127,18 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "grid": {
+                      "min": 0
+                    },
+                    "legend": false,
+                    "y_format": "bytes"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -158,7 +182,20 @@
             "kind": "table",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table",
+                  "originalOptions": {
+                    "grid": {
+                      "max": 100,
+                      "min": 0
+                    },
+                    "legend": true,
+                    "y2_format": "bytes",
+                    "y_format": "short"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -204,7 +241,15 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graphite",
+                  "originalOptions": {
+                    "legend": true,
+                    "y2_format": "Bps"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

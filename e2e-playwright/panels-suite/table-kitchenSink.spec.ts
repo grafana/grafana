@@ -82,9 +82,9 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
     // click cell inspect, check that cell inspection pops open in the side as we'd expect.
-    await loremIpsumCell.getByLabel('Inspect value').click();
     const loremIpsumText = await loremIpsumCell.textContent();
     expect(loremIpsumText).toBeDefined();
+    await loremIpsumCell.getByLabel('Inspect value').click();
     await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
   });
 
@@ -341,6 +341,33 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // add an Action to the whole table and check that the action button is added to the tooltip.
     // TODO -- saving for another day.
+  });
+
+  test('Tests nested table expansion', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '4' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Nested tables'))
+    ).toBeVisible();
+
+    await waitForTableLoad(page);
+
+    await expect(page.locator('[role="row"]')).toHaveCount(3); // header + 2 rows
+
+    const firstRowExpander = dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+      .first();
+
+    await firstRowExpander.click();
+    await expect(page.locator('[role="row"]')).not.toHaveCount(3); // more rows are present now, it is dynamic tho.
+
+    // TODO: test sorting
+
+    await firstRowExpander.click();
+    await expect(page.locator('[role="row"]')).toHaveCount(3); // back to original state
   });
 
   test('Tests tooltip interactions', async ({ gotoDashboardPage, selectors }) => {

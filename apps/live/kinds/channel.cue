@@ -1,13 +1,19 @@
 package live
 
-liveV1beta1: {
+channelV1alpha1: {
 	kind:       "Channel"
 	pluralName: "Channels"
 
   schema: {
 		spec: {
-			title:    string
-			description?: string
+			// The Channel path
+			path: string
+
+			// The message count in the last min
+			minute_rate:    int
+
+			// DataFrame schema
+			data: [string]: _
 		}
 	}
 }

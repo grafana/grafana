@@ -10,7 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	authlib "github.com/grafana/authlib/types"
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	liveV1 "github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -53,12 +53,12 @@ func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
-	return preferences.GroupVersion
+	return liveV1.GroupVersion
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	gv := preferences.GroupVersion
-	err := preferences.AddToScheme(scheme)
+	gv := liveV1.GroupVersion
+	err := liveV1.AddToScheme(scheme)
 	if err != nil {
 		return err
 	}
@@ -70,10 +70,9 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	// prefs := preferences.PreferencesResourceInfo
-	// storage[prefs.StoragePath()] = b.legacyPrefs
+	storage["channel"] = &channelStore{}
 
-	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[liveV1.APIVersion] = storage
 	return nil
 }
 
@@ -82,5 +81,5 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return preferences.GetOpenAPIDefinitions
+	return liveV1.GetOpenAPIDefinitions
 }

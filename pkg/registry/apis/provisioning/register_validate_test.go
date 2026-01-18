@@ -8,6 +8,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
@@ -20,15 +21,13 @@ import (
 
 func TestAPIBuilderValidate(t *testing.T) {
 	factory := repository.NewMockFactory(t)
-	mockRepo := repository.NewMockConfigRepository(t)
-	mockRepo.EXPECT().Validate().Return(nil)
-	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockRepo, nil)
-	validator := repository.NewValidator(30*time.Second, []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder}, false)
+	factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+	validator := repository.NewValidator(30*time.Second, []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder}, false, factory)
 	b := &APIBuilder{
 		repoFactory:         factory,
 		allowedTargets:      []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder},
 		allowImageRendering: false,
-		validator:           validator,
+		repoValidator:       validator,
 	}
 
 	t.Run("min sync interval is less than 10 seconds", func(t *testing.T) {
@@ -39,7 +38,6 @@ func TestAPIBuilderValidate(t *testing.T) {
 				Sync:  v0alpha1.SyncOptions{Enabled: true, Target: v0alpha1.SyncTargetTypeFolder, IntervalSeconds: 5},
 			},
 		}
-		mockRepo.EXPECT().Config().Return(cfg)
 
 		obj := newRepoObj("repo1", "default", cfg.Spec, v0alpha1.RepositoryStatus{})
 		err := b.Validate(context.Background(), newAttributes(obj, nil, admission.Create), nil)
@@ -56,7 +54,6 @@ func TestAPIBuilderValidate(t *testing.T) {
 				GitHub: &v0alpha1.GitHubRepositoryConfig{URL: "https://github.com/acme/repo", Branch: "main", GenerateDashboardPreviews: true},
 			},
 		}
-		mockRepo.EXPECT().Config().Return(cfg2)
 
 		obj := newRepoObj("repo2", "default", cfg2.Spec, v0alpha1.RepositoryStatus{})
 		err := b.Validate(context.Background(), newAttributes(obj, nil, admission.Create), nil)
@@ -72,7 +69,6 @@ func TestAPIBuilderValidate(t *testing.T) {
 				Sync:  v0alpha1.SyncOptions{Enabled: true, Target: v0alpha1.SyncTargetTypeInstance},
 			},
 		}
-		mockRepo.EXPECT().Config().Return(cfg3)
 
 		obj := newRepoObj("repo3", "default", cfg3.Spec, v0alpha1.RepositoryStatus{})
 		err := b.Validate(context.Background(), newAttributes(obj, nil, admission.Create), nil)
