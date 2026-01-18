@@ -27,7 +27,7 @@ const FieldMapping = (props: SQLVariableQueryEditorProps) => {
   const [choices, setChoices] = useState<ComboboxOption[]>([]);
   useEffect(() => {
     let isActive = true;
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const subscription = datasource.query({ targets: [query] } as DataQueryRequest<SQLQuery>).subscribe({
       next: (response) => {
         if (!isActive) {
