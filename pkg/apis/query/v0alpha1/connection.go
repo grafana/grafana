@@ -17,14 +17,19 @@ type DataSourceConnection struct {
 	// The configured display name
 	Title string `json:"title"`
 
-	// Reference to the kubernets datasource
+	// Reference to the kubernetes datasource
 	Datasource DataSourceConnectionRef `json:"datasource"`
 }
 
 type DataSourceConnectionRef struct {
-	Group   string `json:"group"`
+	// The plugin identifier
+	Plugin string `json:"plugin"`
+	// The plugin API group
+	Group string `json:"group"`
+	// The API version (eg, v1beta1)
 	Version string `json:"version"`
-	Name    string `json:"name"`
+	// The datasource identifier
+	Name string `json:"name"`
 }
 
 // The valid connection name for a group + identifier

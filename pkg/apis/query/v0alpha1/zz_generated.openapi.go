@@ -187,7 +187,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref common.ReferenceCal
 					},
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Reference to the kubernets datasource",
+							Description: "Reference to the kubernetes datasource",
 							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionRef"),
 						},
@@ -256,29 +256,40 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnectionRef(ref common.Reference
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"plugin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The plugin identifier",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"group": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The plugin API group",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"version": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The API version (eg, v1beta1)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The datasource identifier",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
-				Required: []string{"group", "version", "name"},
+				Required: []string{"plugin", "group", "version", "name"},
 			},
 		},
 	}

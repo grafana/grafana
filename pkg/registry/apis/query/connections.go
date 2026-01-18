@@ -7,6 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -74,7 +76,45 @@ func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.connections.ListConnections(ctx, request.NamespaceValue(ctx))
+	if !options.LabelSelector.Empty() {
+		return nil, fmt.Errorf("label selector is not yet supported")
+	}
+	ns := request.NamespaceValue(ctx)
+	if !options.FieldSelector.Empty() {
+		requirements := options.FieldSelector.Requirements()
+		if len(requirements) > 1 {
+			return nil, fmt.Errorf("only a single field selector is supported")
+		}
+
+		obj := &queryV0.DataSourceConnectionList{}
+		for _, requirement := range requirements {
+			if requirement.Operator != selection.Equals {
+				return nil, fmt.Errorf("only the equals field selector operation is supported")
+			}
+			switch requirement.Field {
+			case "metadata.name":
+				v, _ := s.connections.GetConnection(ctx, ns, requirement.Value)
+				if v != nil { // ignore error + not found
+					obj.Items = []queryV0.DataSourceConnection{*v}
+				}
+			case "datasource.name":
+				all, err := s.connections.ListConnections(ctx, ns)
+				if err != nil {
+					return nil, err
+				}
+				for _, v := range all.Items {
+					if v.Datasource.Name == requirement.Value {
+						obj.Items = append(obj.Items, v)
+					}
+				}
+			default:
+				return nil, fmt.Errorf("invalid field selector")
+			}
+		}
+		return obj, nil
+	}
+
+	return s.connections.ListConnections(ctx, ns)
 }
 
 type connectionsProvider struct {
@@ -99,8 +139,9 @@ func (q *connectionsProvider) GetConnection(ctx context.Context, namespace strin
 		return nil, err
 	}
 
+	v := q.asConnection(ds, namespace)
 	// TODO... access control?
-	return q.asConnection(ds, namespace)
+	return &v, nil
 }
 
 func (q *connectionsProvider) ListConnections(ctx context.Context, namespace string) (*queryV0.DataSourceConnectionList, error) {
@@ -120,22 +161,25 @@ func (q *connectionsProvider) ListConnections(ctx context.Context, namespace str
 		Items: []queryV0.DataSourceConnection{},
 	}
 	for _, ds := range dss {
-		v, err := q.asConnection(ds, namespace)
-		if err != nil {
-			return nil, err
-		}
-		result.Items = append(result.Items, *v)
+		result.Items = append(result.Items, q.asConnection(ds, namespace))
 	}
 	return result, nil
 }
 
-func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string) (v *queryV0.DataSourceConnection, err error) {
+func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string) queryV0.DataSourceConnection {
 	gv, err := q.registry.GetDatasourceGroupVersion(ds.Type)
 	if err != nil {
-		return nil, fmt.Errorf("datasource type %q does not map to an apiserver %w", ds.Type, err)
+		// This happens for grafana-e2etest-datasource!
+		gv = schema.GroupVersion{
+			Group:   "",
+			Version: "",
+		}
+	}
+	if ds.APIVersion != "" {
+		gv.Version = ds.APIVersion
 	}
 
-	v = &queryV0.DataSourceConnection{
+	v := queryV0.DataSourceConnection{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              queryV0.DataSourceConnectionName(gv.Group, ds.UID),
 			Namespace:         ns,
@@ -150,12 +194,12 @@ func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string
 			Name:    ds.UID,
 		},
 	}
-	v.UID = gapiutil.CalculateClusterWideUID(v) // UID is unique across all groups
+	v.UID = gapiutil.CalculateClusterWideUID(&v) // UID is unique across all groups
 	if !ds.Updated.IsZero() {
 		meta, err := utils.MetaAccessor(v)
-		if err != nil {
+		if err == nil {
 			meta.SetUpdatedTimestamp(&ds.Updated)
 		}
 	}
-	return v, err
+	return v
 }
