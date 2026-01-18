@@ -9,6 +9,7 @@ import {
   QueryEditorProps,
   Field,
   DataFrame,
+  FieldType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorMode, EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
@@ -142,14 +143,32 @@ export const convertOriginalFieldsToVariableFields = (original_fields: Field[], 
   if (original_fields.length < 1) {
     throw new Error('at least one field expected for variable');
   }
+  if (meta) {
+    let tf = meta.textField ? original_fields.find((f) => f.name === meta.textField) : undefined;
+    let vf = meta.valueField ? original_fields.find((f) => f.name === meta.valueField) : undefined;
+    const textField = tf || vf || original_fields[0];
+    const valueField = vf || tf || original_fields[0];
+    const otherFields = original_fields.filter((f: Field) => f.name !== 'value' && f.name !== 'text');
+    return [{ ...textField, name: 'text' }, { ...valueField, name: 'value' }, ...otherFields];
+  }
   let tf = original_fields.find((f) => f.name === '__text');
   let vf = original_fields.find((f) => f.name === '__value');
-  if (meta) {
-    tf = meta.textField ? original_fields.find((f) => f.name === meta.textField) : undefined;
-    vf = meta.valueField ? original_fields.find((f) => f.name === meta.valueField) : undefined;
+  if (tf && vf) {
+    const otherFields = original_fields.filter((f: Field) => f.name !== '__text' && f.name !== '__value');
+    return [
+      { ...tf, name: 'text', values: tf.values.map((v) => '' + v) },
+      { ...vf, name: 'value', values: vf.values.map((v) => '' + v) },
+      ...otherFields,
+    ];
   }
-  const textField = tf || vf || original_fields[0];
-  const valueField = vf || tf || original_fields[0];
-  const otherFields = original_fields.filter((f: Field) => f.name !== 'value' && f.name !== 'text');
-  return [{ ...textField, name: 'text' }, { ...valueField, name: 'value' }, ...otherFields];
+  const values: string[] = [];
+  for (const field of original_fields) {
+    for (const value of field.values) {
+      values.push(value);
+    }
+  }
+  return [
+    { name: 'text', type: FieldType.string, config: {}, values },
+    { name: 'value', type: FieldType.string, config: {}, values },
+  ];
 };
