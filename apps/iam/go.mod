@@ -32,6 +32,8 @@ replace github.com/grafana/grafana/apps/plugins => ../plugins
 
 replace github.com/grafana/grafana/apps/preferences => ../preferences
 
+replace github.com/grafana/grafana/apps/live => ../live
+
 replace github.com/grafana/grafana/apps/scope => ../scope
 
 replace github.com/grafana/grafana/apps/shorturl => ../shorturl

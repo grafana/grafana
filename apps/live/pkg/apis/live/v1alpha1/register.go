@@ -1,8 +1,34 @@
 package v1alpha1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+)
+
+var ChannelResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
+	"preferences", "preferences", "Preferences",
+	func() runtime.Object { return &Channel{} },
+	func() runtime.Object { return &ChannelList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]any, error) {
+			p, ok := obj.(*Channel)
+			if ok && p != nil {
+				return []any{
+					// p.Name,
+					// p.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			}
+			return nil, fmt.Errorf("expected preferences")
+		},
+	},
 )
 
 var (
