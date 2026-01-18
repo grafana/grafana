@@ -9,8 +9,20 @@ package v1alpha1
 
 import (
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-	return map[string]common.OpenAPIDefinition{}
+	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1.Channel":     schema_pkg_dummy(ref),
+		"github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1.ChannelList": schema_pkg_dummy(ref),
+	}
+}
+
+func schema_pkg_dummy(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{},
+		},
+	}
 }

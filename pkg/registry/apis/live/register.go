@@ -4,7 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -73,10 +72,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage["channel"] = &channelStore{}
 
 	apiGroupInfo.VersionedResourcesStorageMap[liveV1.APIVersion] = storage
-	return nil
-}
-
-func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil
 }
 
