@@ -1,7 +1,7 @@
 import { Field, FieldType } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 
-import { migrateVariableQuery, convertOriginalFieldsToVariableFields } from './SQLVariableSupport';
+import { migrateVariableQuery, convertFieldsToVariableFields } from './SQLVariableUtils';
 import { QueryFormat, SQLQuery, SQLQueryMeta } from './types';
 
 const refId = 'SQLVariableQueryEditor-VariableQuery';
@@ -52,30 +52,23 @@ describe('migrateVariableQuery', () => {
   });
 });
 
-const field = (name: string, type: FieldType = FieldType.string, values: unknown[] = [1, 2, 3]): Field => ({
-  name,
-  type,
-  values,
-  config: {},
-});
-
 describe('convertOriginalFieldsToVariableFields', () => {
   describe('no fields available', () => {
     it('should throw error when no fields provided', () => {
-      expect(() => convertOriginalFieldsToVariableFields([])).toThrow('at least one field expected for variable');
+      expect(() => convertFieldsToVariableFields([])).toThrow('at least one field expected for variable');
     });
   });
   describe('when meta fields available', () => {
     it('should respect meta.textField and meta.valueField', () => {
       const fields = [field('id', FieldType.number, [3, 4]), field('display_name'), field('category')];
       const meta: SQLQueryMeta = { textField: 'display_name', valueField: 'id' };
-      const result = convertOriginalFieldsToVariableFields(fields, meta);
+      const result = convertFieldsToVariableFields(fields, meta);
       expect(result.map((r) => r.name)).toStrictEqual(['text', 'value', 'id', 'display_name', 'category']);
     });
     it('should handle meta with non-existent field names', () => {
       const fields = [field('id'), field('name')];
       const meta: SQLQueryMeta = { textField: 'non_existent_field', valueField: 'also_non_existent' };
-      const result = convertOriginalFieldsToVariableFields(fields, meta);
+      const result = convertFieldsToVariableFields(fields, meta);
       expect(result.map((r) => r.name)).toStrictEqual(['text', 'value', 'id', 'name']);
       expect(result[0]).toStrictEqual({ ...fields[0], name: 'text' });
       expect(result[1]).toStrictEqual({ ...fields[0], name: 'value' });
@@ -83,13 +76,13 @@ describe('convertOriginalFieldsToVariableFields', () => {
     it('should handle partial meta (only textField)', () => {
       const fields = [field('id'), field('label'), field('description')];
       const meta: SQLQueryMeta = { textField: 'label' };
-      const result = convertOriginalFieldsToVariableFields(fields, meta);
+      const result = convertFieldsToVariableFields(fields, meta);
       expect(result.map((r) => r.name)).toStrictEqual(['text', 'value', 'id', 'label', 'description']);
     });
     it('should handle partial meta (only valueField)', () => {
       const fields = [field('name'), field('id', FieldType.number), field('type')];
       const meta: SQLQueryMeta = { valueField: 'id' };
-      const result = convertOriginalFieldsToVariableFields(fields, meta);
+      const result = convertFieldsToVariableFields(fields, meta);
       expect(result.map((r) => r.name)).toStrictEqual(['text', 'value', 'name', 'id', 'type']);
     });
     it('should preserve field types and configurations', () => {
@@ -98,7 +91,7 @@ describe('convertOriginalFieldsToVariableFields', () => {
         { name: 'name', type: FieldType.string, config: { displayName: 'Name' }, values: ['A', 'B', 'C'] },
       ];
       const meta: SQLQueryMeta = { textField: 'name', valueField: 'id' };
-      const result = convertOriginalFieldsToVariableFields(fields, meta);
+      const result = convertFieldsToVariableFields(fields, meta);
       expect(result[0]).toStrictEqual({
         name: 'text',
         type: FieldType.string,
@@ -116,20 +109,16 @@ describe('convertOriginalFieldsToVariableFields', () => {
   describe('when __text or __value fields present', () => {
     it('should handle fields with __text and __value names', () => {
       const fields = [field('__text'), field('__value'), field('other_field')];
-      expect(convertOriginalFieldsToVariableFields(fields).map((r) => r.name)).toStrictEqual([
-        'text',
-        'value',
-        'other_field',
-      ]);
+      expect(convertFieldsToVariableFields(fields).map((r) => r.name)).toStrictEqual(['text', 'value', 'other_field']);
     });
     describe('should handle as legacy support', () => {
       it('should handle fields with only __text', () => {
         const fields = [field('__text'), field('other_field')];
-        expect(convertOriginalFieldsToVariableFields(fields).map((r) => r.name)).toStrictEqual(['text', 'value']);
+        expect(convertFieldsToVariableFields(fields).map((r) => r.name)).toStrictEqual(['text', 'value']);
       });
       it('should handle fields with only __value', () => {
         const fields = [field('__value'), field('other_field')];
-        expect(convertOriginalFieldsToVariableFields(fields).map((r) => r.name)).toStrictEqual(['text', 'value']);
+        expect(convertFieldsToVariableFields(fields).map((r) => r.name)).toStrictEqual(['text', 'value']);
       });
     });
   });
@@ -140,13 +129,20 @@ describe('convertOriginalFieldsToVariableFields', () => {
         field('name', FieldType.string, ['D', 'D']),
         field('category', FieldType.string, ['F', 'G', 'H']),
       ];
-      let out = convertOriginalFieldsToVariableFields(fields);
+      let out = convertFieldsToVariableFields(fields);
       expect(out.map((r) => r.name)).toStrictEqual(['text', 'value']);
       expect(out[0].values.length).toStrictEqual(8);
     });
     it('should not include duplicate "value" or "text" fields in otherFields', () => {
       const fields = [field('value'), field('text'), field('other')];
-      expect(convertOriginalFieldsToVariableFields(fields).map((r) => r.name)).toStrictEqual(['text', 'value']);
+      expect(convertFieldsToVariableFields(fields).map((r) => r.name)).toStrictEqual(['text', 'value']);
     });
   });
+});
+
+const field = (name: string, type: FieldType = FieldType.string, values: unknown[] = [1, 2, 3]): Field => ({
+  name,
+  type,
+  values,
+  config: {},
 });

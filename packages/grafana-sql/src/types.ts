@@ -64,6 +64,8 @@ export interface SQLQuery extends DataQuery {
   meta?: SQLQueryMeta;
 }
 
+export type SQLVariableQuery = { query: string } & SQLQuery;
+
 export interface NameValue {
   name: string;
   value: string;
