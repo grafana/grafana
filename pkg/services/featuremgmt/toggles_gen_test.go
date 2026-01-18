@@ -54,7 +54,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 		})
 
 		t.Run("CSV Report", func(t *testing.T) {
-			verifyAndGenerateFile(t,
+			generateFile(t,
 				"toggles_gen.csv",
 				generateCSV(lookup),
 			)
@@ -245,13 +245,17 @@ func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
 	}
 
 	if err != nil {
-		e2 := os.WriteFile(fpath, []byte(gen), 0644)
-		if e2 != nil {
-			t.Errorf("error writing file: %s", e2.Error())
-		}
+		generateFile(t, fpath, gen)
 		abs, _ := filepath.Abs(fpath)
 		t.Errorf("feature toggle do not match: %s (%s)", err.Error(), abs)
 		t.Fail()
+	}
+}
+
+func generateFile(t *testing.T, fpath string, gen string) {
+	e2 := os.WriteFile(fpath, []byte(gen), 0644)
+	if e2 != nil {
+		t.Errorf("error writing file: %s", e2.Error())
 	}
 }
 
