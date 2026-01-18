@@ -766,15 +766,6 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 }
 
 /**
- * @deprecated -- use {@link DataSourceInstanceSettings} instead
- */
-export interface DataSourceSelectItem {
-  name: string;
-  value: string | null;
-  meta: DataSourcePluginMeta;
-}
-
-/**
  * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
  *
  * @deprecated -- use {@link AnnotationSupport}

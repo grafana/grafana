@@ -686,7 +686,6 @@ export {
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
-  type DataSourceSelectItem,
   type AnnotationQueryRequest,
   type HistoryItem,
   type GetTagResponse,
