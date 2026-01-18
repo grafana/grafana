@@ -24,7 +24,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
-import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions'; 
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
