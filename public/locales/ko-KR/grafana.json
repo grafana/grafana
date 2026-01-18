@@ -2666,7 +2666,10 @@
     "rules-group": {
       "deleting": "삭제 중",
       "text-federated": "연합됨",
-      "text-provisioned": "프로비저닝됨"
+      "text-provisioned": "프로비저닝됨",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5426,11 +5429,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5569,6 @@
           "arrow": "공유",
           "title": "공유",
           "tooltip": "링크 복사"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "무시",
-            "text": "이 대시보드에 대한 변경 사항이 저장되지 않았습니다. 변경 사항을 공유하기 전에 저장해야 합니다.",
-            "title": "변경 사항을 대시보드에 저장할까요?",
-            "yesText": "저장"
-          }
         },
         "unlink-library-panel": "라이브러리 패널 연결 해제"
       },
@@ -6475,6 +6466,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "공유 메뉴 토글"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
