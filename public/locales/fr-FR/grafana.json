@@ -2677,7 +2677,10 @@
     "rules-group": {
       "deleting": "Suppression",
       "text-federated": "Fédéré",
-      "text-provisioned": "Mis en service"
+      "text-provisioned": "Mis en service",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5446,11 +5449,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5589,6 @@
           "arrow": "Partager",
           "title": "Partager",
           "tooltip": "Copier le lien"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Abandonner",
-            "text": "Vous avez des modifications non enregistrées dans ce tableau de bord. Vous devez les enregistrer avant de pouvoir les partager.",
-            "title": "Enregistrer les modifications dans le tableau de bord ?",
-            "yesText": "Enregistrer"
-          }
         },
         "unlink-library-panel": "Dissocier le panneau Bibliothèque"
       },
@@ -6498,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Basculer le menu de partage"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
