@@ -55,7 +55,6 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
     label: string;
     type: 'panel' | 'row';
   };
-  isDraggingNewPanel?: boolean;
 }
 
 export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayoutOrchestratorState> {
@@ -101,8 +100,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _activationHandler() {
     return () => {
       document.body.removeEventListener('pointermove', this._onPointerMove);
+      document.body.removeEventListener('pointermove', this._onNewPanelPointerMove, true);
       document.body.removeEventListener('pointermove', this._onRowDragPointerMove);
       document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
+      document.body.removeEventListener('pointerup', this._dropNewPanel, true);
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp, true);
       this._clearTabActivationTimer();
       this._clearDragPreview();
@@ -147,10 +148,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   public startDraggingNewPanel(): void {
-    document.body.addEventListener('pointermove', this._onPointerMove);
-    document.body.addEventListener('pointerup', this._stopDraggingSync, true);
-
-    this.setState({ isDraggingNewPanel: true });
+    document.body.addEventListener('pointermove', this._onNewPanelPointerMove);
+    document.body.addEventListener('pointerup', this._dropNewPanel, true);
   }
 
   private _stopDraggingSync(evt: PointerEvent) {
@@ -161,78 +160,74 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const lastDropTarget = this._lastDropTarget;
     const dropPosition = this._currentDropPosition;
 
-    if (this.state.isDraggingNewPanel) {
-      this._dropNewPanel(evt);
+    // Check if there's a valid drop target under the mouse
+    // (tab headers and other non-drop areas return null)
+    const validDropTargetUnderMouse = this._getDropTargetUnderMouse(evt);
+
+    // If item was detached (cross-tab drag started) but there's no valid drop target under mouse,
+    // drop into the current tab if lastDropTarget is a TabItem (e.g., dropped on tab header)
+    const noTargetUnderMouse = wasDetached && !validDropTargetUnderMouse && gridItem;
+    const canDropIntoCurrentTab = noTargetUnderMouse && lastDropTarget instanceof TabItem;
+
+    if (canDropIntoCurrentTab) {
+      // Drop into the current tab's layout
+      setTimeout(() => {
+        lastDropTarget.draggedGridItemInside?.(gridItem);
+        // Clean up source grid state
+        if (sourceDropTarget instanceof AutoGridLayoutManager) {
+          sourceDropTarget.state.layout.endExternalDrag();
+        }
+      });
     } else {
-      // Check if there's a valid drop target under the mouse
-      // (tab headers and other non-drop areas return null)
-      const validDropTargetUnderMouse = this._getDropTargetUnderMouse(evt);
+      const isCrossLayoutDrop = sourceDropTarget !== lastDropTarget || wasDetached;
 
-      // If item was detached (cross-tab drag started) but there's no valid drop target under mouse,
-      // drop into the current tab if lastDropTarget is a TabItem (e.g., dropped on tab header)
-      const noTargetUnderMouse = wasDetached && !validDropTargetUnderMouse && gridItem;
-      const canDropIntoCurrentTab = noTargetUnderMouse && lastDropTarget instanceof TabItem;
-
-      if (canDropIntoCurrentTab) {
-        // Drop into the current tab's layout
+      // Handle cross-layout or cross-tab drop
+      if (isCrossLayoutDrop) {
+        // Wrapped in setTimeout to ensure that any event handlers are called
+        // Useful for allowing react-grid-layout to remove placeholders, etc.
         setTimeout(() => {
-          lastDropTarget.draggedGridItemInside?.(gridItem);
-          // Clean up source grid state
-          if (sourceDropTarget instanceof AutoGridLayoutManager) {
-            sourceDropTarget.state.layout.endExternalDrag();
+          if (gridItem) {
+            // Only remove from source if not already detached during tab switch
+            if (!wasDetached) {
+              sourceDropTarget?.draggedGridItemOutside?.(gridItem);
+            }
+            // Pass drop position for precise placement (AutoGrid uses this)
+            // Note: draggedGridItemInside also clears isDropTarget and dropPosition
+            lastDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
+
+            // Clean up source grid's drag state (CSS variables and draggingKey) after item is moved.
+            // This is done here (after movement) to prevent flickering where the item
+            // would momentarily appear at wrong position (CSS vars cleared but draggingKey set
+            // = absolute positioning with no valid position values).
+            if (sourceDropTarget instanceof AutoGridLayoutManager) {
+              sourceDropTarget.state.layout.endExternalDrag();
+            }
+          } else {
+            const warningMessage = 'No grid item to drag';
+            console.warn(warningMessage);
+            logWarning(warningMessage);
           }
         });
       } else {
-        const isCrossLayoutDrop = sourceDropTarget !== lastDropTarget || wasDetached;
-
-        // Handle cross-layout or cross-tab drop
-        if (isCrossLayoutDrop) {
-          // Wrapped in setTimeout to ensure that any event handlers are called
-          // Useful for allowing react-grid-layout to remove placeholders, etc.
-          setTimeout(() => {
-            if (gridItem) {
-              // Only remove from source if not already detached during tab switch
-              if (!wasDetached) {
-                sourceDropTarget?.draggedGridItemOutside?.(gridItem);
-              }
-              // Pass drop position for precise placement (AutoGrid uses this)
-              // Note: draggedGridItemInside also clears isDropTarget and dropPosition
-              lastDropTarget?.draggedGridItemInside?.(gridItem, dropPosition ?? undefined);
-
-              // Clean up source grid's drag state (CSS variables and draggingKey) after item is moved.
-              // This is done here (after movement) to prevent flickering where the item
-              // would momentarily appear at wrong position (CSS vars cleared but draggingKey set
-              // = absolute positioning with no valid position values).
-              if (sourceDropTarget instanceof AutoGridLayoutManager) {
-                sourceDropTarget.state.layout.endExternalDrag();
-              }
-            } else {
-              const warningMessage = 'No grid item to drag';
-              console.warn(warningMessage);
-              logWarning(warningMessage);
-            }
-          });
-        } else {
-          // For same-layout drops, clear drop position state synchronously
-          this._clearDropPosition();
-          this._lastDropTarget?.setIsDropTarget?.(false);
-        }
+        // For same-layout drops, clear drop position state synchronously
+        this._clearDropPosition();
+        this._lastDropTarget?.setIsDropTarget?.(false);
       }
-
-      document.body.removeEventListener('pointermove', this._onPointerMove);
-      document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
-
-      this._clearTabActivationTimer();
-      this._clearDragPreview();
-
-      // Clear internal tracking state (but not the visual state on the target for cross-layout drops)
-      this._currentDropPosition = null;
-      this._lastHoveredAutoGridItemKey = null;
-      this._lastDropTarget = null;
-      this._sourceDropTarget = null;
-      this._itemDetachedFromSource = false;
-      this.setState({ draggingGridItem: undefined, sourceTabKey: undefined, hoverTabKey: undefined });
     }
+
+    document.body.removeEventListener('pointermove', this._onPointerMove);
+    document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
+
+    this._clearTabActivationTimer();
+    this._clearDragPreview();
+
+    // Clear internal tracking state (but not the visual state on the target for cross-layout drops)
+    this._currentDropPosition = null;
+    this._lastHoveredAutoGridItemKey = null;
+    this._lastDropTarget = null;
+    this._sourceDropTarget = null;
+    this._itemDetachedFromSource = false;
+    this.setState({ draggingGridItem: undefined, sourceTabKey: undefined, hoverTabKey: undefined });
   }
 
   /**
@@ -302,35 +297,45 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
     // If not detached, stopRowDrag from hello-pangea/dnd will handle cleanup
   };
-  private _dropNewPanel(evt: PointerEvent) {
+
+  private _dropNewPanel = (evt: PointerEvent): void => {
+    const lastDropTarget = this._lastDropTarget;
     const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
 
     // if the cursor is in the sidebar, don't add panel
-    const isInSidebar = elementsUnderPoint.some(
-      (el) => el.closest('[data-testid="dashboard-edit-pane-sidebar"]') !== null
-    );
+    const isInSidebar = elementsUnderPoint.some((el) => el.getAttribute('data-testid') === 'sidebar-container');
 
     if (isInSidebar) {
       return;
     }
+
     const panel = getDefaultVizPanel();
-    if (!this._lastDropTarget) {
+
+    if (lastDropTarget) {
+      this._addPanelToLayout(lastDropTarget, panel);
+    } else {
       // if no lastDropTarget and not in Sidebar, treat the dashboard itself as the drop target
       this._getDashboard().addPanel(panel);
     }
 
-    if (this._lastDropTarget instanceof RowItem || this._lastDropTarget instanceof TabItem) {
-      this._lastDropTarget.getLayout().addPanel(panel);
-    }
-    document.body.removeEventListener('pointermove', this._onPointerMove);
-    document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
+    document.body.removeEventListener('pointermove', this._onNewPanelPointerMove);
+    document.body.removeEventListener('pointerup', this._dropNewPanel, true);
+    this._lastDropTarget = null;
+    DashboardInteractions.trackAddPanelClick('sidebar', lastDropTarget ? getLayoutType(lastDropTarget) : 'dashboard');
+  };
 
-    DashboardInteractions.trackAddPanelClick(
-      'sidebar',
-      this._lastDropTarget ? getLayoutType(this._lastDropTarget) : 'dashboard'
+  private _addPanelToLayout = (dropTarget: DashboardDropTarget, panel: VizPanel) => {
+    const dropTargetRowOrTab = sceneGraph.findObject(
+      dropTarget,
+      (currentSceneObject) => currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
     );
-    this.setState({ isDraggingNewPanel: false });
-  }
+    if (dropTargetRowOrTab instanceof RowItem || dropTargetRowOrTab instanceof TabItem) {
+      dropTargetRowOrTab.getLayout().addPanel(panel);
+    } else {
+      // if no root row or layout element, add the item into the dashboard directly
+      this._getDashboard().addPanel(panel);
+    }
+  };
 
   /**
    * Called when a row drag ends (from RowsLayoutManagerRenderer)
@@ -615,6 +620,23 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
     return undefined;
   }
+
+  private _onNewPanelPointerMove = (evt: PointerEvent): void => {
+    const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;
+
+    if (!dropTarget) {
+      return;
+    }
+
+    if (dropTarget !== this._lastDropTarget) {
+      this._lastDropTarget?.setIsDropTarget?.(false);
+      this._lastDropTarget = dropTarget;
+
+      if (dropTarget !== this._sourceDropTarget) {
+        dropTarget.setIsDropTarget?.(true);
+      }
+    }
+  };
 
   private _onPointerMove(evt: PointerEvent) {
     // Store cursor position early so it's available for immediate preview on tab switch
