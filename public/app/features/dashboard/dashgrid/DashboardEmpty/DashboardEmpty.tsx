@@ -42,108 +42,14 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
               !dashboardLibraryDatasourceUid,
           })}
         >
-          {config.featureToggles.dashboardNewLayouts ? (
-            <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
-              <Box padding={4}>
-                <Box marginBottom={2} paddingX={4} display="flex" justifyContent="center">
-                  <Icon name="apps" size="xxl" className={styles.appsIcon} />
-                </Box>
-                <Text element="h1" textAlignment="center" weight="medium">
-                  <Trans i18nKey="dashboard.empty.title">New dashboard</Trans>
-                </Text>
-                <Box marginTop={3} paddingX={4}>
-                  <Text element="p" textAlignment="center" color="secondary">
-                    <Trans i18nKey="dashboard.empty.description">Add a panel to visualize your data</Trans>
-                  </Text>
-                </Box>
-              </Box>
-              <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
-            </Stack>
-          ) : (
-            <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
-              <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
-                <Stack direction="column" alignItems="center" gap={2}>
-                  <Text element="h1" textAlignment="center" weight="medium">
-                    <Trans i18nKey="dashboard.empty.add-visualization-header">
-                      Start your new dashboard by adding a visualization
-                    </Trans>
-                  </Text>
-                  <Box marginBottom={2} paddingX={4}>
-                    <Text element="p" textAlignment="center" color="secondary">
-                      <Trans i18nKey="dashboard.empty.add-visualization-body">
-                        Select a data source and then query and visualize your data with charts, stats and tables or
-                        create lists, markdowns and other widgets.
-                      </Trans>
-                    </Text>
-                  </Box>
-                  <Button
-                    size="lg"
-                    icon="plus"
-                    data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-                    onClick={onAddVisualization}
-                    disabled={!onAddVisualization}
-                  >
-                    <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
-                  </Button>
-                </Stack>
-              </Box>
-
-              <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
-
-              <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
-                <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
-                  <Stack direction="column" alignItems="center" gap={1}>
-                    <Text element="h3" textAlignment="center" weight="medium">
-                      <Trans i18nKey="dashboard.empty.add-library-panel-header">Import panel</Trans>
-                    </Text>
-                    <Box marginBottom={2}>
-                      <Text element="p" textAlignment="center" color="secondary">
-                        <Trans i18nKey="dashboard.empty.add-library-panel-body">
-                          Add visualizations that are shared with other dashboards.
-                        </Trans>
-                      </Text>
-                    </Box>
-                    <Button
-                      icon="plus"
-                      fill="outline"
-                      data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
-                      onClick={onAddLibraryPanel}
-                      disabled={!onAddLibraryPanel}
-                    >
-                      <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
-                    </Button>
-                  </Stack>
-                </Box>
-                <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
-                  <Stack direction="column" alignItems="center" gap={1}>
-                    <Text element="h3" textAlignment="center" weight="medium">
-                      <Trans i18nKey="dashboard.empty.import-a-dashboard-header">Import a dashboard</Trans>
-                    </Text>
-                    <Box marginBottom={2}>
-                      <Text element="p" textAlignment="center" color="secondary">
-                        <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                          Import dashboards from files or{' '}
-                          <TextLink external href="https://grafana.com/grafana/dashboards/">
-                            grafana.com
-                          </TextLink>
-                          .
-                        </Trans>
-                      </Text>
-                    </Box>
-                    <Button
-                      icon="upload"
-                      fill="outline"
-                      data-testid={selectors.pages.AddDashboard.itemButton('Import dashboard button')}
-                      onClick={onImportDashboard}
-                      disabled={!onImportDashboard}
-                    >
-                      <Trans i18nKey="dashboard.empty.import-dashboard-button">Import dashboard</Trans>
-                    </Button>
-                  </Stack>
-                </Box>
-              </Stack>
-            </Stack>
-          )}
+          {config.featureToggles.dashboardNewLayouts
+            ? renderNewLayoutEmpty({ styles, dashboardLibraryDatasourceUid })
+            : renderOldLayoutEmpty({
+                dashboardLibraryDatasourceUid,
+                onAddVisualization,
+                onAddLibraryPanel,
+                onImportDashboard,
+              })}
         </div>
       </Stack>
     </>
@@ -168,6 +74,131 @@ const DashboardExtensionsComponents = ({
         <BasicProvisionedDashboardsEmptyPage datasourceUid={dashboardLibraryDatasourceUid} />
       )}
   </>
+);
+
+const renderNewLayoutEmpty = ({
+  styles,
+  dashboardLibraryDatasourceUid,
+}: {
+  styles: {
+    wrapper: string;
+    wrapperMaxWidth: string;
+    appsIcon: string;
+  };
+  dashboardLibraryDatasourceUid: string | null;
+}) => (
+  <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
+    <Box padding={4}>
+      <Box marginBottom={2} paddingX={4} display="flex" justifyContent="center">
+        <Icon name="apps" size="xxl" className={styles.appsIcon} />
+      </Box>
+      <Text element="h1" textAlignment="center" weight="medium">
+        <Trans i18nKey="dashboard.empty.title">New dashboard</Trans>
+      </Text>
+      <Box marginTop={3} paddingX={4}>
+        <Text element="p" textAlignment="center" color="secondary">
+          <Trans i18nKey="dashboard.empty.description">Add a panel to visualize your data</Trans>
+        </Text>
+      </Box>
+    </Box>
+    <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
+  </Stack>
+);
+
+const renderOldLayoutEmpty = ({
+  dashboardLibraryDatasourceUid,
+  onAddVisualization,
+  onAddLibraryPanel,
+  onImportDashboard,
+}: {
+  dashboardLibraryDatasourceUid: string | null;
+  onAddVisualization?: () => void;
+  onAddLibraryPanel?: () => void;
+  onImportDashboard?: () => void;
+}) => (
+  <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
+    <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
+      <Stack direction="column" alignItems="center" gap={2}>
+        <Text element="h1" textAlignment="center" weight="medium">
+          <Trans i18nKey="dashboard.empty.add-visualization-header">
+            Start your new dashboard by adding a visualization
+          </Trans>
+        </Text>
+        <Box marginBottom={2} paddingX={4}>
+          <Text element="p" textAlignment="center" color="secondary">
+            <Trans i18nKey="dashboard.empty.add-visualization-body">
+              Select a data source and then query and visualize your data with charts, stats and tables or create lists,
+              markdowns and other widgets.
+            </Trans>
+          </Text>
+        </Box>
+        <Button
+          size="lg"
+          icon="plus"
+          data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+          onClick={onAddVisualization}
+          disabled={!onAddVisualization}
+        >
+          <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
+        </Button>
+      </Stack>
+    </Box>
+
+    <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
+
+    <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
+      <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+        <Stack direction="column" alignItems="center" gap={1}>
+          <Text element="h3" textAlignment="center" weight="medium">
+            <Trans i18nKey="dashboard.empty.add-library-panel-header">Import panel</Trans>
+          </Text>
+          <Box marginBottom={2}>
+            <Text element="p" textAlignment="center" color="secondary">
+              <Trans i18nKey="dashboard.empty.add-library-panel-body">
+                Add visualizations that are shared with other dashboards.
+              </Trans>
+            </Text>
+          </Box>
+          <Button
+            icon="plus"
+            fill="outline"
+            data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
+            onClick={onAddLibraryPanel}
+            disabled={!onAddLibraryPanel}
+          >
+            <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
+          </Button>
+        </Stack>
+      </Box>
+      <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
+        <Stack direction="column" alignItems="center" gap={1}>
+          <Text element="h3" textAlignment="center" weight="medium">
+            <Trans i18nKey="dashboard.empty.import-a-dashboard-header">Import a dashboard</Trans>
+          </Text>
+          <Box marginBottom={2}>
+            <Text element="p" textAlignment="center" color="secondary">
+              <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
+                Import dashboards from files or{' '}
+                <TextLink external href="https://grafana.com/grafana/dashboards/">
+                  grafana.com
+                </TextLink>
+                .
+              </Trans>
+            </Text>
+          </Box>
+          <Button
+            icon="upload"
+            fill="outline"
+            data-testid={selectors.pages.AddDashboard.itemButton('Import dashboard button')}
+            onClick={onImportDashboard}
+            disabled={!onImportDashboard}
+          >
+            <Trans i18nKey="dashboard.empty.import-dashboard-button">Import dashboard</Trans>
+          </Button>
+        </Stack>
+      </Box>
+    </Stack>
+  </Stack>
 );
 
 export interface Props {
