@@ -2677,7 +2677,10 @@
     "rules-group": {
       "deleting": "Wird gelöscht",
       "text-federated": "Verbunden",
-      "text-provisioned": "Bereitgestellt"
+      "text-provisioned": "Bereitgestellt",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5446,11 +5449,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5589,6 @@
           "arrow": "Teilen",
           "title": "Teilen",
           "tooltip": "Link kopieren"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Verwerfen",
-            "text": "Einige Änderungen an diesem Dashboard wurden nicht gespeichert. Sie müssen sie speichern, bevor Sie es freigeben können.",
-            "title": "Änderungen am Dashboard speichern?",
-            "yesText": "Speichern"
-          }
         },
         "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben"
       },
@@ -6498,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Freigabe-Menü umschalten"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {

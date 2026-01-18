@@ -2677,7 +2677,10 @@
     "rules-group": {
       "deleting": "Siliniyor",
       "text-federated": "Şirket dışı",
-      "text-provisioned": "Sağlanan"
+      "text-provisioned": "Sağlanan",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5446,11 +5449,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5589,6 @@
           "arrow": "Paylaş",
           "title": "Paylaş",
           "tooltip": "Bağlantıyı kopyala"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Vazgeç",
-            "text": "Bu panoda kaydedilmemiş değişiklikleriniz var. Paylaşmadan önce onları kaydetmeniz gerekir.",
-            "title": "Değişiklikler panoya kaydedilsin mi?",
-            "yesText": "Kaydet"
-          }
         },
         "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır"
       },
@@ -6498,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Paylaşım menüsünü aç/kapat"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
