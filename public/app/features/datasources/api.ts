@@ -25,13 +25,6 @@ export const getDataSourceByUid = async (uid: string) => {
   throw Error(`Could not find data source by UID: "${uid}"`);
 };
 
-/**
- * @deprecated Use `getDataSourceByUid` instead.
- */
-export const getDataSourceByIdOrUid = async (idOrUid: string) => {
-  return getDataSourceByUid(idOrUid);
-};
-
 export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
   getBackendSrv().post('/api/datasources', dataSource);
 
