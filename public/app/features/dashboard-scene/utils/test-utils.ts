@@ -4,6 +4,7 @@ import {
   DeepPartial,
   EmbeddedScene,
   SceneDeactivationHandler,
+  sceneGraph,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
@@ -19,6 +20,7 @@ import {
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { DashboardDTO } from 'app/types/dashboard';
 
@@ -32,8 +34,6 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { DashboardLayoutGrid } from '../scene/types/DashboardLayoutGrid';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
-
-import { getRowOrTabForSceneObject } from './utils';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
@@ -320,9 +320,13 @@ export function getTestDashboardSceneFromSaveModel(spec?: Partial<DashboardV2Spe
 
 // returns e.g. data-testid Layout container row Row title
 export function getTestIdForLayout(model: AutoGridLayout | DashboardLayoutGrid) {
-  const parentRowOrTab = getRowOrTabForSceneObject(model);
-  const parentType = parentRowOrTab instanceof TabItem ? 'tab' : parentRowOrTab instanceof RowItem ? 'row' : '';
-  const parentTitle =
-    parentRowOrTab instanceof TabItem || parentRowOrTab instanceof RowItem ? parentRowOrTab.state.title : '';
-  return `${parentType} ${parentTitle}`;
+  const parentRowOrTab = sceneGraph.findObject(
+    model,
+    (currentSceneObject) => currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
+  );
+  if (parentRowOrTab instanceof TabItem || parentRowOrTab instanceof RowItem) {
+    return `${getLayoutType(parentRowOrTab)} ${parentRowOrTab.state.title}`;
+  }
+
+  return '';
 }

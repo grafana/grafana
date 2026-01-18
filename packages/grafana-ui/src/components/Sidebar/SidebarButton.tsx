@@ -5,6 +5,7 @@ import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { IconSize } from '../../types/icon';
 import { getActiveButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -16,11 +17,12 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
   tooltip?: string;
   title: string;
-  isAddButton?: boolean;
+  iconSize?: IconSize;
+  iconColor?: string;
 }
 
 export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ icon, active, onClick, title, tooltip, isAddButton, ...restProps }, ref) => {
+  ({ icon, active, onClick, title, tooltip, iconSize, iconColor, ...restProps }, ref) => {
     const styles = useStyles2(getStyles);
     const context = useContext(SidebarContext);
 
@@ -33,7 +35,7 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
       context.compact && styles.compact,
       active && styles.active,
       context.position === 'left' && styles.leftButton,
-      isAddButton && 'addButton'
+      iconColor
     );
 
     return (
@@ -46,7 +48,7 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
           onClick={onClick}
           {...restProps}
         >
-          <div>{renderIcon(icon, isAddButton)}</div>
+          <div>{renderIcon(icon, iconSize)}</div>
           {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
         </button>
       </Tooltip>
@@ -56,13 +58,13 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
 
 SidebarButton.displayName = 'SidebarButton';
 
-function renderIcon(icon: IconName | React.ReactNode, isAddButton?: boolean) {
+function renderIcon(icon: IconName | React.ReactNode, size?: IconSize) {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={isAddButton ? 'xl' : 'lg'} />;
+    return <Icon name={icon} size={size || 'lg'} />;
   }
 
   return icon;
@@ -85,7 +87,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: `none`,
-      '&.addButton': css({
+      '&.primary': css({
         svg: {
           backgroundColor: theme.colors.primary.main,
           color: theme.colors.getContrastText(theme.colors.primary.main),

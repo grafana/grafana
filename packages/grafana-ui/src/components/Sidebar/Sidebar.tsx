@@ -46,7 +46,7 @@ export function SidebarComp({ children, contextValue }: Props) {
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      <div ref={ref} className={className} style={style} data-testid="dashboard-edit-pane-sidebar">
+      <div ref={ref} className={className} style={style} data-testid="sidebar-container">
         {!tabsMode && <SidebarResizer />}
         {children}
       </div>

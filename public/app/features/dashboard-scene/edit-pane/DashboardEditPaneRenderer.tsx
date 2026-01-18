@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneObject, SceneObjectState, useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneObject, SceneObjectState, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -14,7 +14,7 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
-import { getDefaultVizPanel, getRowOrTabForSceneObject } from '../utils/utils';
+import { getDefaultVizPanel } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
@@ -52,7 +52,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
   const onSetLayoutElement = (obj: SceneObject<SceneObjectState> | undefined) => {
     if (obj) {
-      setSelectedLayoutElement(getRowOrTabForSceneObject(obj) || dashboard);
+      // find the closest row or tab to add the new panel to
+      // if the selected element is not inside a row or tab, add to dashboard root
+      setSelectedLayoutElement(
+        sceneGraph.findObject(
+          obj,
+          (currentSceneObject: SceneObject<SceneObjectState>) =>
+            currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
+        ) || dashboard
+      );
     } else {
       setSelectedLayoutElement(dashboard);
     }
@@ -106,7 +114,8 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             )}
             <Sidebar.Button
               icon="plus"
-              isAddButton
+              iconColor="primary"
+              iconSize="xl"
               onClick={() => {
                 onSetLayoutElement(selectedObject);
                 editPane.openPane('add');

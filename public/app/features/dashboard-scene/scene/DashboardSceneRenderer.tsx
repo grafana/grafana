@@ -103,7 +103,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         {!editPanel && (
           <DashboardEditPaneSplitter
             dashboard={model}
-            isNewEmptyDashboard={!model.state.uid}
             isEditing={isEditing}
             controls={controls && <controls.Component model={controls} />}
             body={renderBody()}

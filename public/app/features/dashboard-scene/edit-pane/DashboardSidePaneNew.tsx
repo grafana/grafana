@@ -36,7 +36,7 @@ export function DashboardSidePaneNew({
             <Sidebar.PaneHeader title={t('dashboard.add.pane-header', 'Add')} />
             <div className={styles.sidePanelContainer}>
               <Text weight="medium">{t('dashboard.add.new-panel.title', 'Panel')}</Text>
-              <Text variant="bodySmall">
+              <Text element="p" variant="bodySmall">
                 {t('dashboard.add.new-panel.description', 'Drag or click to add a panel')}
               </Text>
               <div className={styles.dragContainer}>
@@ -84,9 +84,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     sidePanelContainer: css({
       padding: theme.spacing(2),
-      span: {
-        display: 'block',
-      },
     }),
     dragContainer: css({
       height: 150,

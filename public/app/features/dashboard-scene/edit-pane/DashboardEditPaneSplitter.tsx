@@ -20,28 +20,21 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
-
 interface Props {
   dashboard: DashboardScene;
   isEditing?: boolean;
   body?: React.ReactNode;
   controls?: React.ReactNode;
-  isNewEmptyDashboard?: boolean;
 }
 
-export function DashboardEditPaneSplitter({
-  dashboard,
-  isEditing,
-  body,
-  controls,
-  isNewEmptyDashboard = false,
-}: Props) {
+export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
+  const isNewEmptyDashboard = !dashboard.state.uid;
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
