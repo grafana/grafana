@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -353,10 +352,19 @@ const (`)
 }
 
 func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
-	var buf bytes.Buffer
+	var sb strings.Builder
 
-	w := csv.NewWriter(&buf)
-	if err := w.Write([]string{
+	write := func(vals []string) {
+		for i, v := range vals {
+			if i > 0 {
+				_, _ = sb.WriteString(",")
+			}
+			_, _ = sb.WriteString(v)
+		}
+		_, _ = sb.WriteString("\n")
+	}
+
+	write([]string{
 		"Created",
 		"Name",
 		"Stage",           //flag.Stage.String(),
@@ -364,14 +372,11 @@ func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
 		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
 		"FrontendOnly",    //strconv.FormatBool(flag.FrontendOnly),
-	}); err != nil {
-		log.Fatalln("error writing record to csv:", err)
-	}
+	})
 
 	for _, flag := range standardFeatureFlags {
 		info := lookup[flag.Name]
-
-		if err := w.Write([]string{
+		write([]string{
 			info.GetCreationTimestamp().Format("2006-01-02"),
 			flag.Name,
 			flag.Stage.String(),
@@ -379,13 +384,10 @@ func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 			strconv.FormatBool(flag.RequiresDevMode),
 			strconv.FormatBool(flag.RequiresRestart),
 			strconv.FormatBool(flag.FrontendOnly),
-		}); err != nil {
-			log.Fatalln("error writing record to csv:", err)
-		}
+		})
 	}
 
-	w.Flush()
-	return buf.String()
+	return sb.String()
 }
 
 func generateDocsMD() string {
