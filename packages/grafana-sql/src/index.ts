@@ -6,6 +6,7 @@ export type {
   SQLQuery,
   SqlQueryModel,
   SQLSelectableValue,
+  SQLDialect,
   Func,
   FuncParameter,
 } from './types';

@@ -1,3 +1,5 @@
+import { uniq } from 'lodash';
+
 import { Field, FieldType } from '@grafana/data';
 import { EditorMode } from '@grafana/plugin-ui';
 
@@ -25,9 +27,11 @@ export const migrateVariableQuery = (rawQuery: string | SQLQuery): SQLVariableQu
 };
 
 export const convertFieldsToVariableFields = (original_fields: Field[], meta?: SQLQueryMeta): Field[] => {
+  // scenario 1 : If no fields found, throw error
   if (original_fields.length < 1) {
     throw new Error('at least one field expected for variable');
   }
+  // scenario 2 : If meta field found, use and return ( at least one text field / value field exist / or first field )
   if (meta) {
     let tf = meta.textField ? original_fields.find((f) => f.name === meta.textField) : undefined;
     let vf = meta.valueField ? original_fields.find((f) => f.name === meta.valueField) : undefined;
@@ -36,6 +40,7 @@ export const convertFieldsToVariableFields = (original_fields: Field[], meta?: S
     const otherFields = original_fields.filter((f: Field) => f.name !== 'value' && f.name !== 'text');
     return [{ ...textField, name: 'text' }, { ...valueField, name: 'value' }, ...otherFields];
   }
+  // scenario 3 : If both  __text field & __value field found
   let tf = original_fields.find((f) => f.name === '__text');
   let vf = original_fields.find((f) => f.name === '__value');
   if (tf && vf) {
@@ -46,12 +51,16 @@ export const convertFieldsToVariableFields = (original_fields: Field[], meta?: S
       ...otherFields,
     ];
   }
-  const values: string[] = [];
+  // scenario 4 : fallback scenario / legacy scenario where return all fields into a single field.
+  let values: string[] = [];
   for (const field of original_fields) {
     for (const value of field.values) {
-      value === null || value === undefined ? values.push('') : values.push('' + value);
+      if (value !== null && value !== undefined) {
+        values.push('' + value);
+      }
     }
   }
+  values = uniq(values);
   return [
     { name: 'text', type: FieldType.string, config: {}, values },
     { name: 'value', type: FieldType.string, config: {}, values },

@@ -1,22 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { QueryEditorProps, DataQueryRequest, Field } from '@grafana/data';
+import { DataQueryRequest, Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { migrateVariableQuery } from './SQLVariableUtils';
+import { SqlQueryEditorProps } from './components/QueryEditor';
 import { SqlQueryEditorLazy } from './components/QueryEditorLazy';
-import { SqlDatasource } from './datasource/SqlDatasource';
-import { type SQLQuery, type SQLOptions, type SQLQueryMeta } from './types';
+import { type SQLQuery, type SQLQueryMeta, SQLDialect } from './types';
 
-type SQLVariableQueryEditorProps = QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions>;
+type SQLVariableQueryEditorProps = SqlQueryEditorProps;
 
-export const SQLVariablesQueryEditor = (props: SQLVariableQueryEditorProps) => {
-  const query = migrateVariableQuery(props.query);
+export const SQLVariablesQueryEditor = <T extends SQLDialect>(props: SQLVariableQueryEditorProps) => {
+  const query = useMemo(() => migrateVariableQuery(props.query), [props.query]);
+  const dialect = props.queryHeaderProps?.dialect ?? props.datasource.dialect ?? 'other';
   return (
     <>
-      <SqlQueryEditorLazy {...props} query={query} />
+      <SqlQueryEditorLazy
+        {...props}
+        query={query}
+        queryHeaderProps={{ hideFormatSelector: true, hideRunButton: true, dialect }}
+      />
       <FieldMapping {...props} query={query} />
     </>
   );
@@ -25,10 +30,18 @@ export const SQLVariablesQueryEditor = (props: SQLVariableQueryEditorProps) => {
 const FieldMapping = (props: SQLVariableQueryEditorProps) => {
   const { query, datasource, onChange } = props;
   const [choices, setChoices] = useState<ComboboxOption[]>([]);
+
+  // Track the actual SQL content to avoid re-querying when only meta changes
+  const queryRef = useRef(query);
+  queryRef.current = query;
+
+  // Only re-run the query when the SQL content changes, not when meta (valueField/textField) changes
+  const queryKey = useMemo(() => JSON.stringify({ rawSql: query.rawSql, sql: query.sql }), [query.rawSql, query.sql]);
+
   useEffect(() => {
     let isActive = true;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const subscription = datasource.query({ targets: [query] } as DataQueryRequest<SQLQuery>).subscribe({
+    const subscription = datasource.query({ targets: [queryRef.current] } as DataQueryRequest<SQLQuery>).subscribe({
       next: (response) => {
         if (!isActive) {
           return;
@@ -46,7 +59,7 @@ const FieldMapping = (props: SQLVariableQueryEditorProps) => {
       isActive = false;
       subscription.unsubscribe();
     };
-  }, [datasource, query]);
+  }, [datasource, queryKey]);
   const onMetaPropChange = <Key extends keyof SQLQueryMeta, Value extends SQLQueryMeta[Key]>(
     key: Key,
     value: Value,

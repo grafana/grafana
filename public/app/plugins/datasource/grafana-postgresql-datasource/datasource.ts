@@ -26,6 +26,7 @@ export class PostgresDatasource extends SqlDatasource {
 
   constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>) {
     super(instanceSettings);
+    this.dialect = 'postgres';
     this.variables = new SQLVariableSupport(this);
   }
 

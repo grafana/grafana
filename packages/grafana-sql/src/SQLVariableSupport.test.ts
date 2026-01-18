@@ -131,7 +131,7 @@ describe('convertOriginalFieldsToVariableFields', () => {
       ];
       let out = convertFieldsToVariableFields(fields);
       expect(out.map((r) => r.name)).toStrictEqual(['text', 'value']);
-      expect(out[0].values.length).toStrictEqual(8);
+      expect(out[0].values.length).toStrictEqual(7);
     });
     it('should not include duplicate "value" or "text" fields in otherFields', () => {
       const fields = [field('value'), field('text'), field('other')];
