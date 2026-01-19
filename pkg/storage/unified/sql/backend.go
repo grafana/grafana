@@ -334,15 +334,11 @@ func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName s
 		if len(candidates) == 0 {
 			return nil
 		}
-		names := make([]string, 0, len(candidates))
-		for _, candidate := range candidates {
-			names = append(names, candidate.Name)
-		}
 		res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryGCDeleteByNames, &sqlGarbageCollectDeleteByNamesRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Group:       group,
 			Resource:    resourceName,
-			Names:       names,
+			Candidates:  candidates,
 		})
 		if err != nil {
 			return err

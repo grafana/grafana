@@ -361,7 +361,8 @@ func (r *sqlGarbageCollectHistoryRequest) Validate() error {
 }
 
 type gcCandidateName struct {
-	Name string
+	Namespace string
+	Name      string
 }
 
 type sqlGarbageCollectCandidatesRequest struct {
@@ -389,16 +390,16 @@ func (r *sqlGarbageCollectCandidatesRequest) Validate() error {
 	return nil
 }
 
-func (r *sqlGarbageCollectCandidatesRequest) Results() (*gcCandidateName, error) {
+func (r *sqlGarbageCollectCandidatesRequest) Results() (gcCandidateName, error) {
 	x := *r.Response
-	return &x, nil
+	return x, nil
 }
 
 type sqlGarbageCollectDeleteByNamesRequest struct {
 	sqltemplate.SQLTemplate
-	Group    string
-	Resource string
-	Names    []string
+	Group      string
+	Resource   string
+	Candidates []gcCandidateName
 }
 
 func (r *sqlGarbageCollectDeleteByNamesRequest) Validate() error {
@@ -408,8 +409,8 @@ func (r *sqlGarbageCollectDeleteByNamesRequest) Validate() error {
 	if r.Resource == "" {
 		return fmt.Errorf("missing resource")
 	}
-	if len(r.Names) == 0 {
-		return fmt.Errorf("missing names")
+	if len(r.Candidates) == 0 {
+		return fmt.Errorf("missing candidates")
 	}
 	return nil
 }

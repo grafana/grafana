@@ -1,6 +1,6 @@
--- Find the names of resources that have been deleted before the cutoff timestamp
--- TODO are names unique enough across namespaces for a given group/resource?
-SELECT DISTINCT({{ .Ident "name" }})
+{{/* Find resources that have been deleted before the cutoff timestamp. */}}
+SELECT DISTINCT {{ .Ident "namespace" | .Into .Response.Namespace }},
+                {{ .Ident "name" | .Into .Response.Name }}
 FROM {{ .Ident "resource_history" }} h
 WHERE h.{{ .Ident "group" }} = {{ .Arg .Group }}
   AND h.{{ .Ident "resource" }} = {{ .Arg .Resource }}
