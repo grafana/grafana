@@ -80,6 +80,10 @@ export { FilterPill } from './components/FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
+export {
+  CodeMirrorQueryField,
+  type CodeMirrorQueryFieldProps,
+} from './components/QueryField/CodeMirrorQueryField';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
 export {
