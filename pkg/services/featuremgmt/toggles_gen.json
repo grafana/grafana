@@ -3166,6 +3166,7 @@
         "name": "queryWithAssistant",
         "resourceVersion": "1768480904087",
         "creationTimestamp": "2026-01-15T12:40:17Z",
+        "deletionTimestamp": "2026-01-19T14:25:13Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 12:41:44.087258 +0000 UTC"
         }
