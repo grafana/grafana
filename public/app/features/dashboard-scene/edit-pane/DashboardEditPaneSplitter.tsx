@@ -27,7 +27,30 @@ interface Props {
   controls?: React.ReactNode;
 }
 
-export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
+export function DashboardEditPaneSplitter(props: Props) {
+  if (!config.featureToggles.dashboardNewLayouts) {
+    return <DashboardEditPaneSplitterLegacy {...props} />;
+  } else {
+    return <DashboardEditPaneSplitterNewLayouts {...props} />;
+  }
+}
+
+function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
+  const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, headerHeight ?? 0);
+
+  return (
+    <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
+      <div className={styles.canvasWrappperOld}>
+        <NavToolbarActions dashboard={dashboard} />
+        <div className={styles.controlsWrapperSticky}>{controls}</div>
+        <div className={styles.body}>{body}</div>
+      </div>
+    </NativeScrollbar>
+  );
+}
+
+function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
@@ -35,18 +58,6 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
   const isNewEmptyDashboard = !dashboard.state.uid;
-
-  if (!config.featureToggles.dashboardNewLayouts) {
-    return (
-      <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
-        <div className={styles.canvasWrappperOld}>
-          <NavToolbarActions dashboard={dashboard} />
-          <div className={styles.controlsWrapperSticky}>{controls}</div>
-          <div className={styles.body}>{body}</div>
-        </div>
-      </NativeScrollbar>
-    );
-  }
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
