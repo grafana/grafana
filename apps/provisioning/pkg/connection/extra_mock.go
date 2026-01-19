@@ -6,6 +6,8 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
+	field "k8s.io/apimachinery/pkg/util/validation/field"
+
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -171,6 +173,55 @@ func (_c *MockExtra_Type_Call) Return(_a0 v0alpha1.ConnectionType) *MockExtra_Ty
 }
 
 func (_c *MockExtra_Type_Call) RunAndReturn(run func() v0alpha1.ConnectionType) *MockExtra_Type_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Validate provides a mock function with given fields: ctx, obj
+func (_m *MockExtra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	ret := _m.Called(ctx, obj)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Validate")
+	}
+
+	var r0 field.ErrorList
+	if rf, ok := ret.Get(0).(func(context.Context, runtime.Object) field.ErrorList); ok {
+		r0 = rf(ctx, obj)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(field.ErrorList)
+		}
+	}
+
+	return r0
+}
+
+// MockExtra_Validate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Validate'
+type MockExtra_Validate_Call struct {
+	*mock.Call
+}
+
+// Validate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - obj runtime.Object
+func (_e *MockExtra_Expecter) Validate(ctx interface{}, obj interface{}) *MockExtra_Validate_Call {
+	return &MockExtra_Validate_Call{Call: _e.mock.On("Validate", ctx, obj)}
+}
+
+func (_c *MockExtra_Validate_Call) Run(run func(ctx context.Context, obj runtime.Object)) *MockExtra_Validate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(runtime.Object))
+	})
+	return _c
+}
+
+func (_c *MockExtra_Validate_Call) Return(_a0 field.ErrorList) *MockExtra_Validate_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockExtra_Validate_Call) RunAndReturn(run func(context.Context, runtime.Object) field.ErrorList) *MockExtra_Validate_Call {
 	_c.Call.Return(run)
 	return _c
 }

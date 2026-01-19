@@ -25,7 +25,7 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Re
 		return NameToUid(r.Name) == receiver.GetUID()
 	})
 	if exists {
-		return nil, ErrReceiverExists.Errorf("")
+		return nil, models.ErrReceiverExists.Errorf("")
 	}
 
 	if err := validateAndSetIntegrationUIDs(receiver); err != nil {
@@ -51,7 +51,7 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Re
 		return NameToUid(postable.GetName()) == receiver.GetUID()
 	})
 	if existingIdx < 0 {
-		return nil, ErrReceiverNotFound.Errorf("")
+		return nil, models.ErrReceiverNotFound.Errorf("")
 	}
 
 	if err := validateAndSetIntegrationUIDs(receiver); err != nil {
@@ -95,7 +95,7 @@ func (rev *ConfigRevision) GetReceiver(uid string, prov provenances) (*models.Re
 		}
 		return recv, nil
 	}
-	return nil, ErrReceiverNotFound.Errorf("")
+	return nil, models.ErrReceiverNotFound.Errorf("")
 }
 
 func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances) ([]*models.Receiver, error) {
@@ -138,7 +138,7 @@ func (rev *ConfigRevision) validateReceiver(p *definitions.PostableApiReceiver) 
 	uids := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
 	for _, integrations := range p.GrafanaManagedReceivers {
 		if _, exists := uids[integrations.UID]; exists {
-			return MakeErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", integrations.UID))
+			return models.ErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", integrations.UID))
 		}
 		uids[integrations.UID] = struct{}{}
 	}
@@ -149,12 +149,12 @@ func (rev *ConfigRevision) validateReceiver(p *definitions.PostableApiReceiver) 
 			continue
 		}
 		if r.GetName() == p.GetName() {
-			return MakeErrReceiverInvalid(fmt.Errorf("name %q already exists", r.GetName()))
+			return models.ErrReceiverInvalid(fmt.Errorf("name %q already exists", r.GetName()))
 		}
 
 		for _, gr := range r.GrafanaManagedReceivers {
 			if _, exists := uids[gr.UID]; exists {
-				return MakeErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", gr.UID))
+				return models.ErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", gr.UID))
 			}
 		}
 	}
@@ -209,7 +209,7 @@ func validateAndSetIntegrationUIDs(receiver *models.Receiver) error {
 		if integration.UID == "" {
 			integration.UID = util.GenerateShortUID()
 		} else if err := util.ValidateUID(integration.UID); err != nil {
-			return MakeErrReceiverInvalid(fmt.Errorf("integration UID %q is invalid: %w", integration.UID, err))
+			return models.ErrReceiverInvalid(fmt.Errorf("integration UID %q is invalid: %w", integration.UID, err))
 		}
 	}
 	return nil

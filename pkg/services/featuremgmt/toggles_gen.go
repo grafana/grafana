@@ -119,10 +119,6 @@ const (
 	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
 	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
 
-	// FlagPermissionsFilterRemoveSubquery
-	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
-	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
-
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"

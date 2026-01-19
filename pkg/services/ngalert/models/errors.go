@@ -14,6 +14,36 @@ var (
 	ErrConditionNotExistBase        = errutil.BadRequest("alerting.alert-rule.conditionNotExist").MustTemplate("Condition {{ .Public.Given }} does not exist, must be one of {{ .Public.Existing }}")
 )
 
+var (
+	ErrReceiverInUse = errutil.Conflict("alerting.notifications.receivers.used").MustTemplate(
+		"Receiver is used by '{{ .Public.UsedBy }}'",
+		errutil.WithPublic("Receiver is used by {{ .Public.UsedBy }}"),
+	)
+	ErrReceiverVersionConflict = errutil.Conflict("alerting.notifications.receivers.conflict").MustTemplate(
+		"Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",
+		errutil.WithPublic("Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'"),
+	)
+
+	ErrReceiverDependentResourcesProvenance = errutil.Conflict("alerting.notifications.receivers.usedProvisioned").MustTemplate(
+		"Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
+		errutil.WithPublic(`Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
+	)
+
+	ErrReceiverOrigin = errutil.BadRequest("alerting.notifications.receivers.originInvalid").MustTemplate(
+		"Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+	)
+
+	ErrReceiverNotFound = errutil.NotFound("alerting.notifications.receivers.notFound", errutil.WithPublicMessage("Receiver not found"))
+
+	ErrReceiverExists = errutil.Conflict("alerting.notifications.receivers.exists", errutil.WithPublicMessage("Receiver with this name already exists. Use a different name or update an existing one."))
+
+	ErrReceiverInvalidBase = errutil.BadRequest("alerting.notifications.receivers.invalid").MustTemplate(
+		"Invalid receiver: '{{ .Public.Reason }}'",
+		errutil.WithPublic("Invalid receiver: '{{ .Public.Reason }}'"),
+	)
+)
+
 func ErrAlertRuleConflict(ruleUID string, orgID int64, err error) error {
 	return ErrAlertRuleConflictBase.Build(errutil.TemplateData{Public: map[string]any{"RuleUID": ruleUID, "OrgID": orgID, "Error": err.Error()}, Error: err})
 }
@@ -24,4 +54,14 @@ func ErrInvalidRelativeTimeRange(refID string, rtr RelativeTimeRange) error {
 
 func ErrConditionNotExist(given string, existing []string) error {
 	return ErrConditionNotExistBase.Build(errutil.TemplateData{Public: map[string]any{"Given": given, "Existing": fmt.Sprintf("%v", existing)}})
+}
+
+func ErrReceiverInvalid(err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"Reason": err.Error(),
+		},
+		Error: err,
+	}
+	return ErrReceiverInvalidBase.Build(data)
 }
