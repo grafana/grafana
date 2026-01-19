@@ -31,13 +31,14 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
 
   switch (data.type) {
     case 'github':
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       spec.github = {
         ...baseConfig,
         generateDashboardPreviews: data.generateDashboardPreviews,
-        // Add connection reference if using GitHub App
-        ...(connectionName && { connection: { name: connectionName } }),
-      } as RepositorySpec['github'];
+      };
+      // Add connection reference at spec level if using GitHub App
+      if (connectionName) {
+        spec.connection = { name: connectionName };
+      }
       break;
     case 'gitlab':
       spec.gitlab = baseConfig;
