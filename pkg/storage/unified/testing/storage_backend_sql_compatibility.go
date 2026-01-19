@@ -13,9 +13,11 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -75,6 +77,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 		{"sql backend fields compatibility", runTestSQLBackendFieldsCompatibility},
 		{"cross backend consistency", runTestCrossBackendConsistency},
 		{"concurrent operations stress", runTestConcurrentOperationsStress},
+		{"search operations compatibility", runTestSearchOperationsCompatibility},
 	}
 
 	for _, tc := range cases {
@@ -86,9 +89,11 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 			kvbackend, db := newKvBackend(t.Context())
 			sqlbackend, _ := newSqlBackend(t.Context())
 
-			// Skip on SQLite due to concurrency limitations
+			// Skip certain tests on SQLite due to concurrency limitations
 			if db.DriverName() == "sqlite3" {
-				t.Skip("Skipping concurrent operations stress test on SQLite")
+				if tc.name == "concurrent operations stress" || tc.name == "search operations compatibility" {
+					t.Skip("Skipping test on SQLite")
+				}
 			}
 
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
@@ -1269,4 +1274,345 @@ func deletePlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 	require.Greater(t, deleted.ResourceVersion, int64(0))
 
 	return deleted
+}
+
+// NewTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
+func NewTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend, db sqldb.DB, namespace string) resource.ResourceServer {
+	t.Helper()
+
+	// Create test config
+	cfg := setting.NewCfg()
+	cfg.EnableSearch = true
+	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
+	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
+
+	// Initialize document builders for playlists
+	docBuilders := &resource.TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"playlist.grafana.app": "playlists",
+		},
+	}
+
+	// Create search options
+	features := featuremgmt.WithFeatures()
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	require.NoError(t, err)
+
+	// Create ResourceServer with search enabled
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+		Search:       searchOpts,
+		Reg:          nil,
+	})
+	require.NoError(t, err)
+
+	return server
+}
+
+// createStorageServer creates a ResourceServer without search enabled (storage-api only)
+func createStorageServer(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
+	t.Helper()
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+	return server
+}
+
+// verifySearchServerStats verifies GetStats returns expected count from search server
+func verifySearchServerStats(t *testing.T, searchServer resource.ResourceServer, namespace string, expectedCount int64) {
+	t.Helper()
+	ctx := testutil.NewDefaultTestContext(t)
+
+	stats, err := searchServer.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: namespace,
+	})
+	require.NoError(t, err)
+	require.Nil(t, stats.Error, "GetStats returned error: %v", stats.Error)
+
+	// GetStats returns aggregate stats per group/resource
+	// Since we only create playlists, we expect 1 stat entry
+	require.Len(t, stats.Stats, 1, "Expected 1 stat entry for playlist.grafana.app/playlists")
+	require.Equal(t, expectedCount, stats.Stats[0].Count, "Resource count mismatch")
+
+	t.Logf("GetStats OK: %d resources in namespace %s", expectedCount, namespace)
+}
+
+// verifySearchServerResults verifies Search returns expected results from search server
+func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServer, namespace string, query string, expectedHits int, expectedNames []string) {
+	t.Helper()
+	ctx := testutil.NewDefaultTestContext(t)
+
+	searchReq := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: namespace,
+			},
+		},
+		Query: query,
+		Limit: 100, // high enough to get all results
+	}
+
+	searchResp, err := searchServer.Search(ctx, searchReq)
+	require.NoError(t, err)
+	require.Nil(t, searchResp.Error, "Search returned error: %v", searchResp.Error)
+
+	// Verify total hits
+	require.Equal(t, int64(expectedHits), searchResp.TotalHits, "Search hits mismatch")
+
+	// Verify result names match expected (order-agnostic)
+	actualNames := make([]string, 0, len(searchResp.Results.Rows))
+	for _, row := range searchResp.Results.Rows {
+		actualNames = append(actualNames, row.Key.Name)
+	}
+	require.ElementsMatch(t, expectedNames, actualNames, "Search result names mismatch")
+
+	// Log for debugging
+	queryDesc := query
+	if queryDesc == "" {
+		queryDesc = "(all)"
+	}
+	t.Logf("Search OK: query=%s, hits=%d", queryDesc, expectedHits)
+}
+
+// runTestSearchOperationsCompatibility tests search-api with different backend combinations
+// Simulates production rollout: Phase 1 (search=sql, storage=mixed) -> Phase 2 (search=kv, storage=kv)
+func runTestSearchOperationsCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := testutil.NewDefaultTestContext(t)
+
+	// Test 1: Phase 1 Rollout - Search server uses SQL backend, Storage servers use both
+	// This simulates the transitional state where storage-api migrates to sqlkv
+	// while search-api continues using sqlbackend
+	t.Run("Search with SQL backend, Storage mixed", func(t *testing.T) {
+		namespace := nsPrefix + "-search-sql"
+
+		// Create search server with SQL backend (search-api)
+		searchServer := NewTestResourceServerWithSearch(t, sqlBackend, db, namespace)
+
+		// Create storage servers WITHOUT search (storage-api)
+		storageSql := createStorageServer(t, sqlBackend)
+		storageKv := createStorageServer(t, kvBackend)
+
+		// Phase A: SQL storage creates resources with "Alpha" prefix
+		t.Run("Phase A: SQL storage creates Alpha resources", func(t *testing.T) {
+			// Create 4 playlists with Alpha prefix
+			for i := 1; i <= 4; i++ {
+				createPlaylistResource(t, storageSql, ctx, PlaylistResourceOptions{
+					Name:       fmt.Sprintf("sql-playlist-alpha-%d", i),
+					Namespace:  namespace,
+					UID:        fmt.Sprintf("sql-uid-alpha-%d", i),
+					Generation: 1,
+					Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+					Folder:     "",
+				})
+			}
+
+			// Verify search server sees them
+			expectedNames := []string{
+				"sql-playlist-alpha-1", "sql-playlist-alpha-2",
+				"sql-playlist-alpha-3", "sql-playlist-alpha-4",
+			}
+			verifySearchServerStats(t, searchServer, namespace, 4)
+			verifySearchServerResults(t, searchServer, namespace, "", 4, expectedNames)
+			verifySearchServerResults(t, searchServer, namespace, "Alpha", 4, expectedNames)
+		})
+
+		// Phase B: KV storage creates resources with "Beta" prefix
+		t.Run("Phase B: KV storage creates Beta resources", func(t *testing.T) {
+			// Create 4 playlists with Beta prefix
+			for i := 1; i <= 4; i++ {
+				createPlaylistResource(t, storageKv, ctx, PlaylistResourceOptions{
+					Name:       fmt.Sprintf("kv-playlist-beta-%d", i),
+					Namespace:  namespace,
+					UID:        fmt.Sprintf("kv-uid-beta-%d", i),
+					Generation: 1,
+					Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+					Folder:     "",
+				})
+			}
+
+			// Verify search server sees all 8 (4 Alpha + 4 Beta)
+			allNames := []string{
+				"sql-playlist-alpha-1", "sql-playlist-alpha-2", "sql-playlist-alpha-3", "sql-playlist-alpha-4",
+				"kv-playlist-beta-1", "kv-playlist-beta-2", "kv-playlist-beta-3", "kv-playlist-beta-4",
+			}
+			alphaNames := []string{"sql-playlist-alpha-1", "sql-playlist-alpha-2", "sql-playlist-alpha-3", "sql-playlist-alpha-4"}
+			betaNames := []string{"kv-playlist-beta-1", "kv-playlist-beta-2", "kv-playlist-beta-3", "kv-playlist-beta-4"}
+
+			verifySearchServerStats(t, searchServer, namespace, 8)
+			verifySearchServerResults(t, searchServer, namespace, "", 8, allNames)
+			verifySearchServerResults(t, searchServer, namespace, "Alpha", 4, alphaNames)
+			verifySearchServerResults(t, searchServer, namespace, "Beta", 4, betaNames)
+		})
+
+		// Phase C: SQL storage creates more Alpha resources
+		t.Run("Phase C: SQL storage creates more Alpha resources", func(t *testing.T) {
+			// Create 3 more playlists with Alpha prefix
+			for i := 5; i <= 7; i++ {
+				createPlaylistResource(t, storageSql, ctx, PlaylistResourceOptions{
+					Name:       fmt.Sprintf("sql-playlist-alpha-%d", i),
+					Namespace:  namespace,
+					UID:        fmt.Sprintf("sql-uid-alpha-%d", i),
+					Generation: 1,
+					Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+					Folder:     "",
+				})
+			}
+
+			// Verify search server sees all 11 (7 Alpha + 4 Beta)
+			alphaNames := []string{
+				"sql-playlist-alpha-1", "sql-playlist-alpha-2", "sql-playlist-alpha-3", "sql-playlist-alpha-4",
+				"sql-playlist-alpha-5", "sql-playlist-alpha-6", "sql-playlist-alpha-7",
+			}
+			verifySearchServerStats(t, searchServer, namespace, 11)
+			verifySearchServerResults(t, searchServer, namespace, "Alpha", 7, alphaNames)
+		})
+
+		// Phase D: KV storage creates more Beta resources
+		t.Run("Phase D: KV storage creates more Beta resources", func(t *testing.T) {
+			// Create 3 more playlists with Beta prefix
+			for i := 5; i <= 7; i++ {
+				createPlaylistResource(t, storageKv, ctx, PlaylistResourceOptions{
+					Name:       fmt.Sprintf("kv-playlist-beta-%d", i),
+					Namespace:  namespace,
+					UID:        fmt.Sprintf("kv-uid-beta-%d", i),
+					Generation: 1,
+					Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+					Folder:     "",
+				})
+			}
+
+			// Verify search server sees all 14 (7 Alpha + 7 Beta)
+			betaNames := []string{
+				"kv-playlist-beta-1", "kv-playlist-beta-2", "kv-playlist-beta-3", "kv-playlist-beta-4",
+				"kv-playlist-beta-5", "kv-playlist-beta-6", "kv-playlist-beta-7",
+			}
+			verifySearchServerStats(t, searchServer, namespace, 14)
+			verifySearchServerResults(t, searchServer, namespace, "Beta", 7, betaNames)
+		})
+	})
+
+	// Test 2: Phase 2 Final State - All servers use KV backend
+	// This simulates the final state after complete migration to sqlkv
+	t.Run("Search with KV backend, Storage KV", func(t *testing.T) {
+		namespace := nsPrefix + "-search-kv"
+
+		// Create search server with KV backend (search-api)
+		searchServer := NewTestResourceServerWithSearch(t, kvBackend, db, namespace)
+
+		// Create two storage servers with KV backend (storage-api)
+		storageKv1 := createStorageServer(t, kvBackend)
+		storageKv2 := createStorageServer(t, kvBackend)
+
+		// Phase A: First KV storage creates resources with "Alpha" prefix
+		t.Run("Phase A: KV storage 1 creates Alpha resources", func(t *testing.T) {
+			// Create 4 playlists with Alpha prefix
+			for i := 1; i <= 4; i++ {
+				createPlaylistResource(t, storageKv1, ctx, PlaylistResourceOptions{
+					Name:       fmt.Sprintf("kv1-playlist-alpha-%d", i),
+					Namespace:  namespace,
+					UID:        fmt.Sprintf("kv1-uid-alpha-%d", i),
+					Generation: 1,
+					Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+					Folder:     "",
+				})
+			}
+
+			// Verify search server sees them
+			expectedNames := []string{
+				"kv1-playlist-alpha-1", "kv1-playlist-alpha-2",
+				"kv1-playlist-alpha-3", "kv1-playlist-alpha-4",
+			}
+			verifySearchServerStats(t, searchServer, namespace, 4)
+			verifySearchServerResults(t, searchServer, namespace, "", 4, expectedNames)
+			verifySearchServerResults(t, searchServer, namespace, "Alpha", 4, expectedNames)
+		})
+
+		// Phase B: Second KV storage creates resources with "Beta" prefix
+		t.Run("Phase B: KV storage 2 creates Beta resources", func(t *testing.T) {
+			// Create 4 playlists with Beta prefix
+			for i := 1; i <= 4; i++ {
+				createPlaylistResource(t, storageKv2, ctx, PlaylistResourceOptions{
+					Name:       fmt.Sprintf("kv2-playlist-beta-%d", i),
+					Namespace:  namespace,
+					UID:        fmt.Sprintf("kv2-uid-beta-%d", i),
+					Generation: 1,
+					Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+					Folder:     "",
+				})
+			}
+
+			// Verify search server sees all 8 (4 Alpha + 4 Beta)
+			allNames := []string{
+				"kv1-playlist-alpha-1", "kv1-playlist-alpha-2", "kv1-playlist-alpha-3", "kv1-playlist-alpha-4",
+				"kv2-playlist-beta-1", "kv2-playlist-beta-2", "kv2-playlist-beta-3", "kv2-playlist-beta-4",
+			}
+			alphaNames := []string{"kv1-playlist-alpha-1", "kv1-playlist-alpha-2", "kv1-playlist-alpha-3", "kv1-playlist-alpha-4"}
+			betaNames := []string{"kv2-playlist-beta-1", "kv2-playlist-beta-2", "kv2-playlist-beta-3", "kv2-playlist-beta-4"}
+
+			verifySearchServerStats(t, searchServer, namespace, 8)
+			verifySearchServerResults(t, searchServer, namespace, "", 8, allNames)
+			verifySearchServerResults(t, searchServer, namespace, "Alpha", 4, alphaNames)
+			verifySearchServerResults(t, searchServer, namespace, "Beta", 4, betaNames)
+		})
+
+		// Phase C: First KV storage creates more Alpha resources
+		t.Run("Phase C: KV storage 1 creates more Alpha resources", func(t *testing.T) {
+			// Create 3 more playlists with Alpha prefix
+			for i := 5; i <= 7; i++ {
+				createPlaylistResource(t, storageKv1, ctx, PlaylistResourceOptions{
+					Name:       fmt.Sprintf("kv1-playlist-alpha-%d", i),
+					Namespace:  namespace,
+					UID:        fmt.Sprintf("kv1-uid-alpha-%d", i),
+					Generation: 1,
+					Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+					Folder:     "",
+				})
+			}
+
+			// Verify search server sees all 11 (7 Alpha + 4 Beta)
+			alphaNames := []string{
+				"kv1-playlist-alpha-1", "kv1-playlist-alpha-2", "kv1-playlist-alpha-3", "kv1-playlist-alpha-4",
+				"kv1-playlist-alpha-5", "kv1-playlist-alpha-6", "kv1-playlist-alpha-7",
+			}
+			verifySearchServerStats(t, searchServer, namespace, 11)
+			verifySearchServerResults(t, searchServer, namespace, "Alpha", 7, alphaNames)
+		})
+
+		// Phase D: Second KV storage creates more Beta resources
+		t.Run("Phase D: KV storage 2 creates more Beta resources", func(t *testing.T) {
+			// Create 3 more playlists with Beta prefix
+			for i := 5; i <= 7; i++ {
+				createPlaylistResource(t, storageKv2, ctx, PlaylistResourceOptions{
+					Name:       fmt.Sprintf("kv2-playlist-beta-%d", i),
+					Namespace:  namespace,
+					UID:        fmt.Sprintf("kv2-uid-beta-%d", i),
+					Generation: 1,
+					Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+					Folder:     "",
+				})
+			}
+
+			// Verify search server sees all 14 (7 Alpha + 7 Beta)
+			betaNames := []string{
+				"kv2-playlist-beta-1", "kv2-playlist-beta-2", "kv2-playlist-beta-3", "kv2-playlist-beta-4",
+				"kv2-playlist-beta-5", "kv2-playlist-beta-6", "kv2-playlist-beta-7",
+			}
+			verifySearchServerStats(t, searchServer, namespace, 14)
+			verifySearchServerResults(t, searchServer, namespace, "Beta", 7, betaNames)
+		})
+	})
+}
+
+// numberToWord converts numbers 1-8 to words for test data variety
+func numberToWord(n int) string {
+	words := []string{"Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"}
+	if n >= 0 && n < len(words) {
+		return words[n]
+	}
+	return fmt.Sprintf("%d", n)
 }
