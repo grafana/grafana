@@ -334,21 +334,22 @@ func (svc *MuteTimingService) getMuteTimingBy(ctx context.Context, revision *leg
 	return definitions.MuteTimeInterval{}, false, nil
 }
 
-func (svc *MuteTimingService) getImportedTimeIntervals(rev *legacy_storage.ConfigRevision) (result []config.MuteTimeInterval) {
-	if svc.includeImported && len(rev.Config.ExtraConfigs) > 0 {
-		mimirCfg := rev.Config.ExtraConfigs[0]
-		cfg, err := mimirCfg.GetAlertmanagerConfig()
-		if err == nil {
-			result = make([]config.MuteTimeInterval, 0, len(cfg.GetMuteTimeIntervals())+len(cfg.GetTimeIntervals()))
-
-			result = append(result, cfg.GetMuteTimeIntervals()...)
-			for _, ti := range cfg.GetTimeIntervals() {
-				result = append(result, config.MuteTimeInterval(ti))
-			}
-		}
+func (svc *MuteTimingService) getImportedTimeIntervals(rev *legacy_storage.ConfigRevision) []config.MuteTimeInterval {
+	if !svc.includeImported {
+		return nil
 	}
 
-	return
+	imported, err := rev.Imported()
+	if err != nil {
+		return nil
+	}
+
+	intervals, err := imported.GetMuteTimeIntervals()
+	if err != nil {
+		return nil
+	}
+
+	return intervals
 }
 
 func findByName(name string) func(config.MuteTimeInterval) bool {
