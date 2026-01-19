@@ -58,36 +58,11 @@ export function createRunQueryKeymap(onRunQuery: () => void): Extension {
 }
 
 /**
- * Converts a Slate-based CompletionItem to a CodeMirror Completion
- */
-function convertCompletionItem(item: CompletionItem): Completion {
-  return {
-    label: item.label,
-    type: item.kind,
-    detail: item.detail,
-    info: item.documentation,
-    apply: item.insertText || item.label,
-    // If deleteBackwards is specified, we need custom apply logic
-    ...(item.deleteBackwards || item.move
-      ? {
-          apply: (view: EditorView, completion: Completion, from: number, to: number) => {
-            const insertText = item.insertText || item.label;
-            const deleteFrom = item.deleteBackwards ? from - item.deleteBackwards : from;
-            const cursorPos = deleteFrom + insertText.length + (item.move || 0);
-
-            view.dispatch({
-              changes: { from: deleteFrom, to, insert: insertText },
-              selection: { anchor: cursorPos },
-            });
-          },
-        }
-      : {}),
-  };
-}
-
-/**
  * Creates an autocompletion source function that uses the legacy onTypeahead callback
  * This bridges the old Slate-based typeahead system with CodeMirror's autocompletion
+ *
+ * @deprecated Use CodeMirror's native autocompletion API for new code
+ * After migration this will be removed. Prefer CodeMirror's native autocompletion API.
  */
 export function createTypeaheadAutocompletion(
   onTypeahead: (input: TypeaheadInput) => Promise<TypeaheadOutput>
@@ -168,7 +143,55 @@ export function createTypeaheadAutocompletion(
 }
 
 /**
- * Creates an autocompletion extension configured for query fields
+ * Converts a Slate-based CompletionItem to a CodeMirror Completion
+ */
+function convertCompletionItem(item: CompletionItem): Completion {
+  return {
+    label: item.label,
+    type: item.kind,
+    detail: item.detail,
+    info: item.documentation,
+    apply: item.insertText || item.label,
+    // If deleteBackwards is specified, we need custom apply logic
+    ...(item.deleteBackwards || item.move
+      ? {
+          apply: (view: EditorView, completion: Completion, from: number, to: number) => {
+            const insertText = item.insertText || item.label;
+            const deleteFrom = item.deleteBackwards ? from - item.deleteBackwards : from;
+            const cursorPos = deleteFrom + insertText.length + (item.move || 0);
+
+            view.dispatch({
+              changes: { from: deleteFrom, to, insert: insertText },
+              selection: { anchor: cursorPos },
+            });
+          },
+        }
+      : {}),
+  };
+}
+
+/**
+ * Creates an autocompletion extension configured for query fields using the legacy onTypeahead callback
+ *
+ * @deprecated Use CodeMirror's native autocompletion API for new code.
+ * This utility is provided for backward compatibility during migration.
+ * After migration this will be removed.
+ *
+ * @example
+ * ```tsx
+ * import { createQueryFieldAutocompletion } from '@grafana/ui';
+ *
+ * const autocompletion = useMemo(
+ *   () => createQueryFieldAutocompletion(handleTypeahead),
+ *   [handleTypeahead]
+ * );
+ *
+ * <CodeMirrorQueryField
+ *   query={query}
+ *   onChange={setQuery}
+ *   autocompletion={autocompletion}
+ * />
+ * ```
  */
 export function createQueryFieldAutocompletion(
   onTypeahead: (input: TypeaheadInput) => Promise<TypeaheadOutput>

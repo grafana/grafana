@@ -84,6 +84,11 @@ export {
   CodeMirrorQueryField,
   type CodeMirrorQueryFieldProps,
 } from './components/QueryField/CodeMirrorQueryField';
+// Bridge utilities for migrating from onTypeahead to CodeMirror autocompletion
+export {
+  createQueryFieldAutocompletion,
+  createTypeaheadAutocompletion,
+} from './components/QueryField/codemirrorQueryFieldUtils';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
 export {

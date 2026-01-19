@@ -1,8 +1,8 @@
+import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import { useState, useId } from 'react';
+import { useState, useId, useMemo } from 'react';
 
-import { CompletionItemGroup, TypeaheadInput } from '../../types/completion';
 import { Field } from '../Forms/Field';
 import { Label } from '../Forms/Label';
 
@@ -14,7 +14,7 @@ const meta: Meta<typeof CodeMirrorQueryField> = {
   parameters: {
     controls: {
       exclude: [
-        'onTypeahead',
+        'autocompletion',
         'onChange',
         'onBlur',
         'onRunQuery',
@@ -93,49 +93,48 @@ Basic.args = {
 };
 
 /**
- * With autocompletion (typeahead)
+ * With autocompletion using CodeMirror's autocompletion() function
  */
 export const WithAutocompletion: StoryFn<typeof CodeMirrorQueryField> = (args) => {
   const [query, setQuery] = useState('SELECT ');
   const id = useId();
 
-  // Mock typeahead function that provides SQL keyword suggestions
-  const handleTypeahead = async (input: TypeaheadInput): Promise<{ suggestions: CompletionItemGroup[] }> => {
-    const suggestions: CompletionItemGroup[] = [
-      {
-        label: 'Keywords',
-        items: [
-          { label: 'SELECT', kind: 'keyword', documentation: 'Select data from a table' },
-          { label: 'FROM', kind: 'keyword', documentation: 'Specify the table' },
-          { label: 'WHERE', kind: 'keyword', documentation: 'Filter results' },
-          { label: 'JOIN', kind: 'keyword', documentation: 'Join tables' },
-          { label: 'GROUP BY', kind: 'keyword', documentation: 'Group results' },
-          { label: 'ORDER BY', kind: 'keyword', documentation: 'Sort results' },
-          { label: 'LIMIT', kind: 'keyword', documentation: 'Limit number of results' },
-        ],
-      },
-      {
-        label: 'Tables',
-        items: [
-          { label: 'users', kind: 'table', documentation: 'User information table' },
-          { label: 'orders', kind: 'table', documentation: 'Order data table' },
-          { label: 'products', kind: 'table', documentation: 'Product catalog table' },
-        ],
-      },
-      {
-        label: 'Functions',
-        items: [
-          { label: 'COUNT()', kind: 'function', documentation: 'Count rows' },
-          { label: 'SUM()', kind: 'function', documentation: 'Sum values' },
-          { label: 'AVG()', kind: 'function', documentation: 'Average values' },
-          { label: 'MAX()', kind: 'function', documentation: 'Maximum value' },
-          { label: 'MIN()', kind: 'function', documentation: 'Minimum value' },
-        ],
-      },
-    ];
+  // Create autocompletion extension using CodeMirror's autocompletion() function
+  const autocompletionExtension = useMemo(
+    () =>
+      autocompletion({
+        override: [
+          (context: CompletionContext) => {
+            const word = context.matchBefore(/\w*/);
+            if (!word || (word.from === word.to && !context.explicit)) {
+              return null;
+            }
 
-    return { suggestions };
-  };
+            return {
+              from: word.from,
+              options: [
+                { label: 'SELECT', type: 'keyword', info: 'Select data from a table' },
+                { label: 'FROM', type: 'keyword', info: 'Specify the table' },
+                { label: 'WHERE', type: 'keyword', info: 'Filter results' },
+                { label: 'JOIN', type: 'keyword', info: 'Join tables' },
+                { label: 'GROUP BY', type: 'keyword', info: 'Group results' },
+                { label: 'ORDER BY', type: 'keyword', info: 'Sort results' },
+                { label: 'LIMIT', type: 'keyword', info: 'Limit number of results' },
+                { label: 'users', type: 'class', info: 'User information table' },
+                { label: 'orders', type: 'class', info: 'Order data table' },
+                { label: 'products', type: 'class', info: 'Product catalog table' },
+                { label: 'COUNT()', type: 'function', info: 'Count rows' },
+                { label: 'SUM()', type: 'function', info: 'Sum values' },
+                { label: 'AVG()', type: 'function', info: 'Average values' },
+                { label: 'MAX()', type: 'function', info: 'Maximum value' },
+                { label: 'MIN()', type: 'function', info: 'Minimum value' },
+              ],
+            };
+          },
+        ],
+      }),
+    []
+  );
 
   return (
     <div>
@@ -153,7 +152,7 @@ export const WithAutocompletion: StoryFn<typeof CodeMirrorQueryField> = (args) =
           onRunQuery={() => {
             action('onRunQuery')(query);
           }}
-          onTypeahead={handleTypeahead}
+          autocompletion={autocompletionExtension}
           aria-labelledby={id}
         />
       </Field>

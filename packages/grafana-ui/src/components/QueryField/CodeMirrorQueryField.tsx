@@ -6,14 +6,10 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { TypeaheadInput, TypeaheadOutput } from '../../types/completion';
 import { CodeMirrorEditor } from '../CodeMirror/CodeMirrorEditor';
+import { SyntaxHighlightConfig } from '../CodeMirror/types';
 
-import {
-  createQueryFieldAutocompletion,
-  createRunQueryKeymap,
-  createTabSpacesKeymap,
-} from './codemirrorQueryFieldUtils';
+import { createRunQueryKeymap, createTabSpacesKeymap } from './codemirrorQueryFieldUtils';
 
 export interface CodeMirrorQueryFieldProps {
   /**
@@ -35,11 +31,6 @@ export interface CodeMirrorQueryFieldProps {
    * Called when the editor loses focus
    */
   onBlur?: () => void;
-
-  /**
-   * Typeahead callback for providing autocompletion suggestions
-   */
-  onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
 
   /**
    * Placeholder text to display when the editor is empty
@@ -64,12 +55,18 @@ export interface CodeMirrorQueryFieldProps {
   /**
    * Custom highlighter factory function
    */
-  highlighterFactory?: (config?: any) => Extension;
+  highlighterFactory?: (config?: SyntaxHighlightConfig) => Extension;
 
   /**
    * Configuration for the highlighter
    */
-  highlightConfig?: any;
+  highlightConfig?: SyntaxHighlightConfig;
+
+  /**
+   * CodeMirror autocompletion extension
+   * Use autocompletion() from @codemirror/autocomplete to create this
+   */
+  autocompletion?: Extension;
 
   /**
    * Additional CodeMirror extensions
@@ -134,7 +131,7 @@ export interface CodeMirrorQueryFieldProps {
  * CodeMirrorQueryField is a modern replacement for the deprecated QueryField component.
  * It uses CodeMirror 6 instead of Slate and provides the same functionality:
  * - Syntax highlighting
- * - Autocompletion via onTypeahead
+ * - Autocompletion via CodeMirror extensions
  * - Query execution on Shift+Enter or Ctrl+Enter
  * - Debounced onChange
  * - Run query on blur if query changed
@@ -145,13 +142,13 @@ export const CodeMirrorQueryField = memo((props: CodeMirrorQueryFieldProps) => {
     onChange,
     onRunQuery,
     onBlur,
-    onTypeahead,
     placeholder = '',
     disabled = false,
     'aria-labelledby': ariaLabelledby,
     themeFactory,
     highlighterFactory,
     highlightConfig,
+    autocompletion,
     extensions = [],
     showLineNumbers = false,
     lineWrapping = true,
@@ -265,14 +262,6 @@ export const CodeMirrorQueryField = memo((props: CodeMirrorQueryFieldProps) => {
     return exts;
   }, [extensions, onRunQuery, handleRunQuery, handleBlur, disabled, enableTabIndentation, tabSpaces]);
 
-  // Build autocompletion extension
-  const autocompletionExtension = useMemo(() => {
-    if (onTypeahead) {
-      return createQueryFieldAutocompletion(onTypeahead);
-    }
-    return undefined;
-  }, [onTypeahead]);
-
   // Update local value when prop changes
   useEffect(() => {
     setLocalValue(query);
@@ -286,7 +275,7 @@ export const CodeMirrorQueryField = memo((props: CodeMirrorQueryFieldProps) => {
       themeFactory={themeFactory}
       highlighterFactory={highlighterFactory}
       highlightConfig={highlightConfig}
-      autocompletion={autocompletionExtension}
+      autocompletion={autocompletion}
       extensions={allExtensions}
       showLineNumbers={showLineNumbers}
       lineWrapping={lineWrapping}
