@@ -217,6 +217,20 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	if err != nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
 	}
+
+	for _, owner := range obj.GetOwnerReferences() {
+		gv, err := schema.ParseGroupVersion(owner.APIVersion)
+		if err == nil && gv.Group != "" {
+			doc.References = append(doc.References, ResourceReference{
+				Relation: "owner", // ownerReference
+				Group:    gv.Group,
+				Version:  gv.Version,
+				Kind:     owner.Kind,
+				Name:     owner.Name,
+			})
+		}
+	}
+
 	return doc.UpdateCopyFields()
 }
 
