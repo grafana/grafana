@@ -336,30 +336,6 @@ func (r *sqlPruneHistoryRequest) Validate() error {
 	return nil
 }
 
-type sqlGarbageCollectHistoryRequest struct {
-	sqltemplate.SQLTemplate
-	Group           string
-	Resource        string
-	CutoffTimestamp int64
-	BatchSize       int
-}
-
-func (r *sqlGarbageCollectHistoryRequest) Validate() error {
-	if r.Group == "" {
-		return fmt.Errorf("missing group")
-	}
-	if r.Resource == "" {
-		return fmt.Errorf("missing resource")
-	}
-	if r.CutoffTimestamp <= 0 {
-		return fmt.Errorf("invalid cutoff timestamp")
-	}
-	if r.BatchSize <= 0 {
-		return fmt.Errorf("invalid batch size")
-	}
-	return nil
-}
-
 type gcCandidateName struct {
 	Namespace string
 	Name      string
