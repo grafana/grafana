@@ -124,7 +124,8 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
   const isFinishWithSyncCompleted =
     activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
-  const shouldUseCancelBehavior = activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
+  const shouldUseCancelBehavior =
+    activeStep === 'authType' || activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
 
   const navigate = useNavigate();
   const styles = useStyles2(getStyles);
@@ -161,6 +162,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   ]);
 
   const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
+  const visibleSteps = useMemo(() => steps.filter((s) => s.id !== 'authType'), [steps]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
   const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget);
@@ -505,17 +507,25 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   return (
     <FormProvider {...methods}>
       <Stack gap={6} direction="row" alignItems="flex-start">
-        <Stepper steps={steps} activeStep={activeStep} visitedSteps={completedSteps} />
-        <div className={styles.divider} />
+        {activeStep === 'authType' ? (
+          <div className={styles.stepperSpacer} />
+        ) : (
+          <>
+            <Stepper steps={visibleSteps} activeStep={activeStep} visitedSteps={completedSteps} />
+            <div className={styles.divider} />
+          </>
+        )}
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <FormPrompt
             onDiscard={onDiscard}
-            confirmRedirect={isDirty && !['connection', 'finish'].includes(activeStep) && !isCancelling}
+            confirmRedirect={isDirty && !['authType', 'connection', 'finish'].includes(activeStep) && !isCancelling}
           />
           <Stack direction="column">
             <Box marginBottom={2}>
               <Text element="h2">
-                {currentStepIndex + 1}. {currentStepConfig?.title}
+                {activeStep === 'authType'
+                  ? currentStepConfig?.title
+                  : `${currentStepIndex + 1}. ${currentStepConfig?.title}`}
               </Text>
             </Box>
 
@@ -578,6 +588,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.border.weak,
     // align with the button row
     marginBottom: theme.spacing(13),
+  }),
+  stepperSpacer: css({
+    width: 201, // Stepper width (200px) + divider width (1px)
   }),
   content: css({
     borderBottom: `1px solid ${theme.colors.border.weak}`,

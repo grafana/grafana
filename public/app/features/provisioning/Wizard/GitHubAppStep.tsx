@@ -39,39 +39,6 @@ export const GitHubAppStep = memo(function GitHubAppStep() {
 
   return (
     <Stack direction="column" gap={2}>
-      <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="provisioning.wizard.github-app-subtitle">
-          Create a GitHub APP following this{' '}
-          <a href="https://github.com/settings/apps/new" target="_blank" rel="noopener noreferrer">
-            documentation
-          </a>{' '}
-          and then follow the instructions in the{' '}
-          <a
-            href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana-application-integrations/git-integration/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Grafana Docs
-          </a>{' '}
-          to authenticate. Make sure the App had the following permissions
-        </Trans>
-      </Text>
-
-      <Stack direction="column" gap={0.5}>
-        <Text variant="bodySmall">
-          <Trans i18nKey="provisioning.wizard.github-app-permissions-content">Content: Read and write</Trans>
-        </Text>
-        <Text variant="bodySmall">
-          <Trans i18nKey="provisioning.wizard.github-app-permissions-metadata">Metadata: Read only</Trans>
-        </Text>
-        <Text variant="bodySmall">
-          <Trans i18nKey="provisioning.wizard.github-app-permissions-prs">Pull requests: Read and write</Trans>
-        </Text>
-        <Text variant="bodySmall">
-          <Trans i18nKey="provisioning.wizard.github-app-permissions-webhooks">Webhooks: Read and write</Trans>
-        </Text>
-      </Stack>
-
       <Field noMargin label={t('provisioning.wizard.github-app-mode-label', 'GitHub App configuration')}>
         <Controller
           name="githubAppMode"
@@ -121,7 +88,7 @@ export const GitHubAppStep = memo(function GitHubAppStep() {
               rules={{
                 required:
                   githubAppMode === 'existing'
-                    ? t('provisioning.wizard.github-app-error-required', 'Please select a connection')
+                    ? t('provisioning.wizard.github-app-error-required', 'This field is required')
                     : false,
               }}
               render={({ field: { onChange, value } }) => (
