@@ -222,7 +222,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
               <div className={styles.fixedControlsNewLayout}>
                 <timePicker.Component model={timePicker} />
                 <refreshPicker.Component model={refreshPicker} />
-                <CancelStreamingButton dashboard={dashboard} />
               </div>
             )}
             {config.featureToggles.dashboardNewLayouts && (
@@ -257,7 +256,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
-            <CancelStreamingButton dashboard={dashboard} />
+            {/* <CancelStreamingButton dashboard={dashboard} /> */}
           </div>
         )}
         {config.featureToggles.dashboardNewLayouts && (
