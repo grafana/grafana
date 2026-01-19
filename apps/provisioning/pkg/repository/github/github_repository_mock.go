@@ -5,10 +5,8 @@ package github
 import (
 	context "context"
 
-	mock "github.com/stretchr/testify/mock"
-	field "k8s.io/apimachinery/pkg/util/validation/field"
-
 	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	mock "github.com/stretchr/testify/mock"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -993,53 +991,6 @@ func (_c *MockGithubRepository_Update_Call) Return(_a0 error) *MockGithubReposit
 }
 
 func (_c *MockGithubRepository_Update_Call) RunAndReturn(run func(context.Context, string, string, []byte, string) error) *MockGithubRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Validate provides a mock function with no fields
-func (_m *MockGithubRepository) Validate() field.ErrorList {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Validate")
-	}
-
-	var r0 field.ErrorList
-	if rf, ok := ret.Get(0).(func() field.ErrorList); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(field.ErrorList)
-		}
-	}
-
-	return r0
-}
-
-// MockGithubRepository_Validate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Validate'
-type MockGithubRepository_Validate_Call struct {
-	*mock.Call
-}
-
-// Validate is a helper method to define mock.On call
-func (_e *MockGithubRepository_Expecter) Validate() *MockGithubRepository_Validate_Call {
-	return &MockGithubRepository_Validate_Call{Call: _e.mock.On("Validate")}
-}
-
-func (_c *MockGithubRepository_Validate_Call) Run(run func()) *MockGithubRepository_Validate_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockGithubRepository_Validate_Call) Return(_a0 field.ErrorList) *MockGithubRepository_Validate_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockGithubRepository_Validate_Call) RunAndReturn(run func() field.ErrorList) *MockGithubRepository_Validate_Call {
 	_c.Call.Return(run)
 	return _c
 }

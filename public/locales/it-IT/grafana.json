@@ -2677,7 +2677,10 @@
     "rules-group": {
       "deleting": "Eliminazione",
       "text-federated": "Federato",
-      "text-provisioned": "Fornito"
+      "text-provisioned": "Fornito",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5446,11 +5449,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5589,6 @@
           "arrow": "Condividi",
           "title": "Condividi",
           "tooltip": "Copia link"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Annulla",
-            "text": "Sono presenti modifiche non salvate in questa dashboard. È necessario salvarle prima di poterle condividere.",
-            "title": "Desideri salvare le modifiche nella dashboard?",
-            "yesText": "Salva"
-          }
         },
         "unlink-library-panel": "Scollega pannello della libreria"
       },
@@ -6498,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Attiva/disattiva il menu di condivisione"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {

@@ -199,6 +199,7 @@ func alertInstanceModelToProto(modelInstance models.AlertInstance) *pb.AlertInst
 		ResolvedAt:           nullableTimeToTimestamp(modelInstance.ResolvedAt),
 		ResultFingerprint:    modelInstance.ResultFingerprint,
 		EvaluationDurationNs: int64(modelInstance.EvaluationDuration),
+		LastError:            truncate(modelInstance.LastError, maxLastErrorLength),
 	}
 }
 
@@ -268,6 +269,7 @@ func alertInstanceProtoToModel(ruleUID string, ruleOrgID int64, protoInstance *p
 		ResolvedAt:         nullableTimestampToTime(protoInstance.ResolvedAt),
 		ResultFingerprint:  protoInstance.ResultFingerprint,
 		EvaluationDuration: time.Duration(protoInstance.EvaluationDurationNs),
+		LastError:          protoInstance.LastError,
 	}
 }
 
