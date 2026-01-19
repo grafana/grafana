@@ -142,6 +142,7 @@ export const getPluginExtensions: GetExtensions = ({
         path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
         category: overrides?.category || addedLink.category,
         openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
+        prefix: overrides?.prefix || addedLink.prefix || overrides?.icon || addedLink.icon,
       };
 
       extensions.push(extension);
