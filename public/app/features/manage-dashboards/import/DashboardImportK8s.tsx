@@ -187,7 +187,6 @@ export function DashboardImportK8s({ queryParams }: Props) {
             inputs={state.inputs}
             meta={state.meta}
             source={state.source}
-            model={state.model}
             onCancel={handleCancel}
           />
         )}

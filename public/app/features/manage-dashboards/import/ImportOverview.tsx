@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
@@ -16,7 +15,7 @@ import { DashboardInputs, DashboardSource, ImportDashboardDTO, LibraryPanelInput
 
 import { GcomDashboardInfo } from './components/GcomDashboardInfo';
 import { ImportForm } from './components/ImportForm';
-import { ImportModel, isV1Dashboard, isV2Dashboard } from './detect';
+import { isDashboardV1Spec, isDashboardV2Spec } from './detect';
 import { applyV1DatasourceInputs, applyV2DatasourceInputs } from './transform';
 import { ImportFormDataV2 } from './types';
 
@@ -27,11 +26,10 @@ type Props = {
   inputs: DashboardInputs;
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
-  model: ImportModel;
   onCancel: () => void;
 };
 
-export function ImportOverview({ dashboard, inputs, meta, source, model, onCancel }: Props) {
+export function ImportOverview({ dashboard, inputs, meta, source, onCancel }: Props) {
   const [uidReset, setUidReset] = useState(false);
   const searchObj = locationService.getSearchObject();
   const folder = searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' };
@@ -39,14 +37,12 @@ export function ImportOverview({ dashboard, inputs, meta, source, model, onCance
   async function onSubmitV1(form: ImportDashboardDTO) {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const typedDashboard = dashboard as Dashboard | DashboardV2Spec;
-    if (!isV1Dashboard(model, typedDashboard)) {
+    if (!isDashboardV1Spec(dashboard)) {
       return;
     }
 
     try {
-      const dashboardWithDataSources = applyV1DatasourceInputs(typedDashboard, inputs, form);
+      const dashboardWithDataSources = applyV1DatasourceInputs(dashboard, inputs, form);
 
       const newLibraryPanels = inputs.libraryPanels.filter((lp) => lp.state === LibraryPanelInputState.New);
       for (const lp of newLibraryPanels) {
@@ -94,15 +90,13 @@ export function ImportOverview({ dashboard, inputs, meta, source, model, onCance
   async function onSubmitV2(form: ImportFormDataV2) {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const typedDashboard = dashboard as Dashboard | DashboardV2Spec;
-    if (!isV2Dashboard(model, typedDashboard)) {
+    if (!isDashboardV2Spec(dashboard)) {
       return;
     }
 
     try {
       const dashboardWithDataSources = {
-        ...applyV2DatasourceInputs(typedDashboard, form),
+        ...applyV2DatasourceInputs(dashboard, form),
         title: form.dashboard.title,
       };
 
@@ -121,11 +115,9 @@ export function ImportOverview({ dashboard, inputs, meta, source, model, onCance
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const typedDashboard = dashboard as Dashboard | DashboardV2Spec;
-  const gnetId = getGnetId(model, typedDashboard);
+  const gnetId = isDashboardV1Spec(dashboard) ? dashboard.gnetId : undefined;
 
-  if (isV2Dashboard(model, typedDashboard)) {
+  if (isDashboardV2Spec(dashboard)) {
     return (
       <>
         {source === DashboardSource.Gcom && (
@@ -134,7 +126,7 @@ export function ImportOverview({ dashboard, inputs, meta, source, model, onCance
         <Form<ImportFormDataV2>
           onSubmit={onSubmitV2}
           defaultValues={{
-            dashboard: typedDashboard,
+            dashboard: dashboard,
             folderUid: folder.uid,
             k8s: { annotations: { 'grafana.app/folder': folder.uid } },
           }}
@@ -158,8 +150,9 @@ export function ImportOverview({ dashboard, inputs, meta, source, model, onCance
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const v1Dashboard = typedDashboard as Dashboard;
+  if (!isDashboardV1Spec(dashboard)) {
+    return null;
+  }
 
   return (
     <>
@@ -168,7 +161,7 @@ export function ImportOverview({ dashboard, inputs, meta, source, model, onCance
       )}
       <Form
         onSubmit={onSubmitV1}
-        defaultValues={{ ...v1Dashboard, constants: [], dataSources: [], elements: [], folder }}
+        defaultValues={{ ...dashboard, constants: [], dataSources: [], elements: [], folder }}
         validateOnMount
         validateFieldsOnMount={['title', 'uid']}
         validateOn="onChange"
@@ -190,12 +183,4 @@ export function ImportOverview({ dashboard, inputs, meta, source, model, onCance
       </Form>
     </>
   );
-}
-
-function getGnetId(model: ImportModel, dashboard: Dashboard | DashboardV2Spec) {
-  if (isV1Dashboard(model, dashboard)) {
-    return dashboard.gnetId;
-  }
-
-  return undefined;
 }

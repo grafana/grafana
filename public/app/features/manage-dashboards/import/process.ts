@@ -12,7 +12,7 @@ import {
   LibraryPanelInputState,
 } from '../state/reducers';
 
-import { isV2Spec } from './detect';
+import { isDashboardV2Spec } from './detect';
 
 /**
  * Process inputs from a v1/classic dashboard JSON
@@ -80,7 +80,7 @@ export function processV2Inputs(dashboard: unknown): DashboardInputs {
     libraryPanels: [],
   };
 
-  if (!isV2Spec(dashboard)) {
+  if (!isDashboardV2Spec(dashboard)) {
     return inputs;
   }
 
