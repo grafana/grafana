@@ -252,7 +252,7 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 			for i, id := range logGroupIdentifiers {
 				quoted[i] = fmt.Sprintf("'%s'", id)
 			}
-			replacement := fmt.Sprintf("`logGroups(logGroupIdentifier: [%s])`", strings.Join(quoted, ", "))
+			replacement := fmt.Sprintf("logGroups(logGroupIdentifier: [%s])", strings.Join(quoted, ", "))
 			finalQueryString = strings.Replace(finalQueryString, logGroupsMacro, replacement, 1)
 		}
 	}

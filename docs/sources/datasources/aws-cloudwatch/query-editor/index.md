@@ -274,7 +274,7 @@ When querying log groups with OpenSearch SQL, you can use the `$__logGroups` mac
 
 ```sql
 SELECT window.start, COUNT(*) AS exceptionCount
-FROM $__logGroups
+FROM `$__logGroups`
 WHERE `@message` LIKE '%Exception%'
 ```
 

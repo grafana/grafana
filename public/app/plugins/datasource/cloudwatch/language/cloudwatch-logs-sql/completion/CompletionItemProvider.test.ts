@@ -99,7 +99,7 @@ describe('LogsSQLCompletionItemProvider', () => {
       expect(suggestionLabels).toEqual(
         expect.arrayContaining([
           FROM,
-          `${FROM} $__logGroups`,
+          `${FROM} \`$__logGroups\``,
           `${FROM} \`logGroups(logGroupIdentifier: [...])\``,
           CASE,
           ...ALL_FUNCTIONS,
@@ -111,7 +111,7 @@ describe('LogsSQLCompletionItemProvider', () => {
       const suggestions = await getSuggestions(singleLineFullQuery.query, { lineNumber: 1, column: 108 });
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(
-        expect.arrayContaining(['$__logGroups', '`logGroups(logGroupIdentifier: [...])`'])
+        expect.arrayContaining(['`$__logGroups`', '`logGroups(logGroupIdentifier: [...])`'])
       );
     });
 

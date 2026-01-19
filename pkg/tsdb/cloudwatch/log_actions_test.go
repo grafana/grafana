@@ -899,7 +899,7 @@ func Test_expandLogGroupsMacro(t *testing.T) {
 						"type":    "logAction",
 						"subtype": "StartQuery",
 						"queryLanguage": "SQL",
-						"queryString":"SELECT * FROM $__logGroups",
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `",
 						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1", "name": "group1"}, {"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group2", "name": "group2"}]
 					}`),
 				},
@@ -927,7 +927,7 @@ func Test_expandLogGroupsMacro(t *testing.T) {
 						"type":    "logAction",
 						"subtype": "StartQuery",
 						"queryLanguage": "SQL",
-						"queryString":"SELECT * FROM $__logGroups",
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `",
 						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1", "name": "group1"}, {"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group2", "name": "group2"}],
 						"region": "us-east-1"
 					}`),
@@ -956,7 +956,7 @@ func Test_expandLogGroupsMacro(t *testing.T) {
 						"type":    "logAction",
 						"subtype": "StartQuery",
 						"queryLanguage": "SQL",
-						"queryString":"SELECT * FROM $__logGroups",
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `",
 						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:group1*", "name": "group1"}],
 						"region": "us-east-1"
 					}`),
@@ -983,7 +983,7 @@ func Test_expandLogGroupsMacro(t *testing.T) {
 						"type":    "logAction",
 						"subtype": "StartQuery",
 						"queryLanguage": "SQL",
-						"queryString":"SELECT * FROM $__logGroups"
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `"
 					}`),
 				},
 			},
@@ -1058,7 +1058,7 @@ func Test_expandLogGroupsMacro(t *testing.T) {
 						"type":    "logAction",
 						"subtype": "StartQuery",
 						"queryLanguage": "SQL",
-						"queryString":"SELECT * FROM $__logGroups",
+						"queryString":"SELECT * FROM ` + "`$__logGroups`" + `",
 						"logGroups":[{"arn": "arn:aws:logs:us-east-1:123456789012:log-group:single-group", "name": "single-group"}]
 					}`),
 				},

@@ -142,8 +142,8 @@ export class LogsSQLCompletionItemProvider extends CompletionItemProvider {
             command: TRIGGER_SUGGEST,
             sortText: CompletionItemPriority.MediumHigh,
           });
-          addSuggestion(`${FROM} $__logGroups`, {
-            insertText: `${FROM} $__logGroups`,
+          addSuggestion(`${FROM} \`$__logGroups\``, {
+            insertText: `${FROM} \`$__logGroups\``,
             kind: monaco.languages.CompletionItemKind.Snippet,
             sortText: CompletionItemPriority.High,
             detail: 'Use selected log groups from the selector',
@@ -158,8 +158,8 @@ export class LogsSQLCompletionItemProvider extends CompletionItemProvider {
           break;
 
         case SuggestionKind.AfterFromKeyword:
-          addSuggestion('$__logGroups', {
-            insertText: '$__logGroups',
+          addSuggestion('`$__logGroups`', {
+            insertText: '`$__logGroups`',
             kind: monaco.languages.CompletionItemKind.Variable,
             sortText: CompletionItemPriority.High,
             detail: 'Expands to selected log groups',

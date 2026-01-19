@@ -562,7 +562,9 @@ export const language: CloudWatchLanguage = {
     ],
     complexIdentifiers: [[/`/, { token: 'identifier', next: '@quotedIdentifier' }]],
     quotedIdentifier: [
-      [/[^`]+/, 'identifier'],
+      [/\$__[a-zA-Z0-9_]+/, 'type'],
+      [/[^`$]+/, 'identifier'],
+      [/\$(?!__)/, 'identifier'],
       [/``/, 'identifier'],
       [/`/, { token: 'identifier', next: '@pop' }],
     ],
