@@ -121,137 +121,6 @@ export function buildAllCallTreeNodes(data: FlameGraphDataContainer): CallTreeNo
 }
 
 /**
- * Build call tree nodes from an array of levels (from mergeParentSubtrees).
- * This is used for the callers view where we get LevelItem[][] from getSandwichLevels.
- * Unlike buildCallTreeNode which recursively processes children, this function
- * processes pre-organized levels and builds the hierarchy from them.
- */
-export function buildCallTreeFromLevels(
-  levels: LevelItem[][],
-  data: FlameGraphDataContainer,
-  rootTotal: number
-): CallTreeNode[] {
-  if (levels.length === 0 || levels[0].length === 0) {
-    return [];
-  }
-
-  const levelItemToNode = new Map<LevelItem, CallTreeNode>();
-
-  levels.forEach((level, levelIndex) => {
-    level.forEach((levelItem, itemIndex) => {
-      const itemDataIndex = levelItem.itemIndexes[0];
-      const label = data.getLabel(itemDataIndex);
-      const self = data.getSelf(itemDataIndex);
-      const total = data.getValue(itemDataIndex);
-      const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
-      const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
-
-      let selfRight: number | undefined;
-      let totalRight: number | undefined;
-      let selfPercentRight: number | undefined;
-      let totalPercentRight: number | undefined;
-      let diffPercent: number | undefined;
-
-      if (data.isDiffFlamegraph()) {
-        selfRight = data.getSelfRight(itemDataIndex);
-        totalRight = data.getValueRight(itemDataIndex);
-        selfPercentRight = rootTotal > 0 ? (selfRight / rootTotal) * 100 : 0;
-        totalPercentRight = rootTotal > 0 ? (totalRight / rootTotal) * 100 : 0;
-
-        if (self > 0) {
-          diffPercent = ((selfRight - self) / self) * 100;
-        } else if (selfRight > 0) {
-          diffPercent = Infinity;
-        } else {
-          diffPercent = 0;
-        }
-      }
-
-      let parentId: string | undefined;
-      let depth = levelIndex;
-
-      if (levelItem.parents && levelItem.parents.length > 0) {
-        const parentNode = levelItemToNode.get(levelItem.parents[0]);
-        if (parentNode) {
-          parentId = parentNode.id;
-          depth = parentNode.depth + 1;
-        }
-      }
-
-      let nodeId: string;
-      if (!parentId) {
-        nodeId = `${itemIndex}`;
-      } else {
-        const parent = levelItemToNode.get(levelItem.parents![0]);
-        const siblingIndex = parent?.subRows?.length || 0;
-        nodeId = `${parentId}.${siblingIndex}`;
-      }
-
-      const node: CallTreeNode = {
-        id: nodeId,
-        label,
-        self,
-        total,
-        selfPercent,
-        totalPercent,
-        depth,
-        parentId,
-        hasChildren: levelItem.children.length > 0,
-        childCount: levelItem.children.length,
-        subtreeSize: 0,
-        levelItem,
-        subRows: undefined,
-        isLastChild: false,
-        selfRight,
-        totalRight,
-        selfPercentRight,
-        totalPercentRight,
-        diffPercent,
-      };
-
-      levelItemToNode.set(levelItem, node);
-
-      if (levelItem.parents && levelItem.parents.length > 0) {
-        const parentNode = levelItemToNode.get(levelItem.parents[0]);
-        if (parentNode) {
-          if (!parentNode.subRows) {
-            parentNode.subRows = [];
-          }
-          parentNode.subRows.push(node);
-          const isLastChild = parentNode.subRows.length === parentNode.childCount;
-          node.isLastChild = isLastChild;
-        }
-      }
-    });
-  });
-
-  const calculateSubtreeSize = (node: CallTreeNode): number => {
-    if (!node.subRows || node.subRows.length === 0) {
-      node.subtreeSize = 0;
-      return 0;
-    }
-
-    const size = node.subRows.reduce((sum, child) => {
-      return sum + calculateSubtreeSize(child) + 1;
-    }, 0);
-
-    node.subtreeSize = size;
-    return size;
-  };
-
-  const rootNodes: CallTreeNode[] = [];
-  levels[0].forEach((levelItem) => {
-    const node = levelItemToNode.get(levelItem);
-    if (node) {
-      calculateSubtreeSize(node);
-      rootNodes.push(node);
-    }
-  });
-
-  return rootNodes;
-}
-
-/**
  * Recursively collect expanded state for nodes up to a certain depth.
  */
 function collectExpandedByDepth(node: CallTreeNode, levelsToExpand: number, expanded: Record<string, boolean>): void {
@@ -276,127 +145,6 @@ export function getInitialExpandedState(nodes: CallTreeNode[], levelsToExpand = 
   });
 
   return expanded;
-}
-
-/**
- * Restructure the callers tree to show a specific target node at the root.
- * In the callers view, we want to show the target function with its callers as children.
- * This function finds the target node and collects all paths that lead to it,
- * then restructures them so the target is at the root.
- */
-export function restructureCallersTree(
-  nodes: CallTreeNode[],
-  targetLabel: string
-): { restructuredTree: CallTreeNode[]; targetNode: CallTreeNode | undefined } {
-  const findPathsToTarget = (
-    nodes: CallTreeNode[],
-    targetLabel: string,
-    currentPath: CallTreeNode[] = []
-  ): CallTreeNode[][] => {
-    const paths: CallTreeNode[][] = [];
-
-    for (const node of nodes) {
-      const newPath = [...currentPath, node];
-
-      if (node.label === targetLabel) {
-        paths.push(newPath);
-      }
-
-      if (node.subRows && node.subRows.length > 0) {
-        const childPaths = findPathsToTarget(node.subRows, targetLabel, newPath);
-        paths.push(...childPaths);
-      }
-    }
-
-    return paths;
-  };
-
-  const paths = findPathsToTarget(nodes, targetLabel);
-
-  if (paths.length === 0) {
-    return { restructuredTree: nodes, targetNode: undefined };
-  }
-
-  const targetNode = paths[0][paths[0].length - 1];
-
-  const buildInvertedChildren = (paths: CallTreeNode[][]): CallTreeNode[] => {
-    const callerGroups = new Map<string, CallTreeNode[][]>();
-
-    for (const path of paths) {
-      if (path.length <= 1) {
-        continue;
-      }
-
-      const immediateCaller = path[path.length - 2];
-      const callerKey = immediateCaller.label;
-
-      if (!callerGroups.has(callerKey)) {
-        callerGroups.set(callerKey, []);
-      }
-      callerGroups.get(callerKey)!.push(path);
-    }
-
-    const callerNodes: CallTreeNode[] = [];
-    let callerIndex = 0;
-
-    for (const [, callerPaths] of callerGroups.entries()) {
-      const immediateCallerNode = callerPaths[0][callerPaths[0].length - 2];
-
-      const remainingPaths = callerPaths.map((path) => path.slice(0, -1));
-      const grandCallers = buildInvertedChildren(remainingPaths);
-
-      const newCallerId = `0.${callerIndex}`;
-      const callerNode: CallTreeNode = {
-        ...immediateCallerNode,
-        id: newCallerId,
-        depth: 1,
-        parentId: '0',
-        subRows: grandCallers.length > 0 ? grandCallers : undefined,
-        hasChildren: grandCallers.length > 0,
-        childCount: grandCallers.length,
-        isLastChild: callerIndex === callerGroups.size - 1,
-      };
-
-      if (grandCallers.length > 0) {
-        grandCallers.forEach((grandCaller, idx) => {
-          updateNodeIds(grandCaller, newCallerId, idx);
-        });
-      }
-
-      callerNodes.push(callerNode);
-      callerIndex++;
-    }
-
-    return callerNodes;
-  };
-
-  const updateNodeIds = (node: CallTreeNode, parentId: string, index: number) => {
-    node.id = `${parentId}.${index}`;
-    node.parentId = parentId;
-    node.depth = parentId.split('.').length;
-
-    if (node.subRows) {
-      node.subRows.forEach((child, idx) => {
-        updateNodeIds(child, node.id, idx);
-      });
-    }
-  };
-
-  const invertedChildren = buildInvertedChildren(paths);
-
-  const restructuredTarget: CallTreeNode = {
-    ...targetNode,
-    id: '0',
-    depth: 0,
-    parentId: undefined,
-    subRows: invertedChildren.length > 0 ? invertedChildren : undefined,
-    hasChildren: invertedChildren.length > 0,
-    childCount: invertedChildren.length,
-    subtreeSize: invertedChildren.reduce((sum, child) => sum + child.subtreeSize + 1, 0),
-    isLastChild: false,
-  };
-
-  return { restructuredTree: [restructuredTarget], targetNode: restructuredTarget };
 }
 
 /**
@@ -458,8 +206,13 @@ export function buildCallersTreeFromLevels(
   ): CallTreeNode => {
     const itemIdx = item.itemIndexes[0];
     const label = data.getLabel(itemIdx);
-    const self = data.getSelf(itemIdx);
-    const total = data.getValue(itemIdx);
+    // Use item.value from the sandwich transformation, not original data frame values.
+    // The sandwich transformation modifies values to represent only the portion
+    // that flowed through each call path to the target function.
+    const total = item.value;
+    // For self, sum across all merged item indexes since itemIndexes can contain multiple
+    // indices when same-label items are merged.
+    const self = item.itemIndexes.reduce((sum, idx) => sum + data.getSelf(idx), 0);
     const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
     const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
 
@@ -470,8 +223,9 @@ export function buildCallersTreeFromLevels(
     let diffPercent: number | undefined;
 
     if (data.isDiffFlamegraph()) {
-      selfRight = data.getSelfRight(itemIdx);
-      totalRight = data.getValueRight(itemIdx);
+      // Use item.valueRight from the sandwich transformation for consistency with total
+      totalRight = item.valueRight || 0;
+      selfRight = item.itemIndexes.reduce((sum, idx) => sum + data.getSelfRight(idx), 0);
       selfPercentRight = rootTotal > 0 ? (selfRight / rootTotal) * 100 : 0;
       totalPercentRight = rootTotal > 0 ? (totalRight / rootTotal) * 100 : 0;
 
