@@ -167,6 +167,15 @@ func TestMutator(t *testing.T) {
 					GitHub: nil,
 				},
 			},
+			expectedObj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: nil,
+				},
+			},
 		},
 		{
 			name: "empty token",
@@ -179,10 +188,20 @@ func TestMutator(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{},
 				},
 			},
+			expectedObj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{},
+				},
+			},
 		},
 		{
-			name: "non-repository object",
-			obj:  &runtime.Unknown{},
+			name:        "non-repository object",
+			obj:         &runtime.Unknown{},
+			expectedObj: &runtime.Unknown{},
 		},
 	}
 
