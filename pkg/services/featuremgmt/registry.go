@@ -2085,13 +2085,6 @@ var (
 			RequiresRestart: true,
 			HideFromDocs:    true,
 		},
-		{
-			Name:         "queryWithAssistant",
-			Description:  "Enables the Query with Assistant button in the query editor",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaOSSBigTent,
-		},
 	}
 )
 
