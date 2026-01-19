@@ -6,6 +6,11 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1";
 
+message LastResult {
+    map<string, double> values = 1;
+    string condition = 2;
+}
+
 message AlertInstance {
     string labels_hash = 1;
     map<string, string> labels = 2;
@@ -20,6 +25,8 @@ message AlertInstance {
     google.protobuf.Timestamp fired_at = 11;
     map<string, string> annotations = 12;
     int64 evaluation_duration_ns = 13;
+    string last_error = 14;
+    LastResult last_result = 15;
 }
 
 message AlertInstances {

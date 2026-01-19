@@ -2677,7 +2677,10 @@
     "rules-group": {
       "deleting": "Eliminando",
       "text-federated": "Federado",
-      "text-provisioned": "Provisionado"
+      "text-provisioned": "Provisionado",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5446,11 +5449,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5589,6 @@
           "arrow": "Compartir",
           "title": "Compartir",
           "tooltip": "Copiar enlace"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Descartar",
-            "text": "Hay cambios no guardados en este dashboard. Debes guardarlos antes de poder compartirlo.",
-            "title": "¿Guardar los cambios en el dashboard?",
-            "yesText": "Guardar"
-          }
         },
         "unlink-library-panel": "Desvincular panel de librería"
       },
@@ -6498,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alternar menú de compartir"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {

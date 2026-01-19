@@ -393,7 +393,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	client, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	receiver := "grafana-default-email"
+	receiver := "empty"
 	timeInterval := "test-time-interval"
 	createRoute := func(t *testing.T, route definitions.Route) {
 		t.Helper()
