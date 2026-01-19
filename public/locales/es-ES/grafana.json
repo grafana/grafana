@@ -2677,7 +2677,10 @@
     "rules-group": {
       "deleting": "Eliminando",
       "text-federated": "Federado",
-      "text-provisioned": "Provisionado"
+      "text-provisioned": "Provisionado",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3767,7 +3770,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5341,6 +5343,7 @@
       },
       "header-hidden-tooltip": "El encabezado de la fila solo es visible en el modo de edición",
       "name": "Filas",
+      "new-row-title": "",
       "row": {
         "collapse": "Contraer fila",
         "expand": "Expandir fila",
@@ -5446,11 +5449,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5589,6 @@
           "arrow": "Compartir",
           "title": "Compartir",
           "tooltip": "Copiar enlace"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Descartar",
-            "text": "Hay cambios no guardados en este dashboard. Debes guardarlos antes de poder compartirlo.",
-            "title": "¿Guardar los cambios en el dashboard?",
-            "yesText": "Guardar"
-          }
         },
         "unlink-library-panel": "Desvincular panel de librería"
       },
@@ -6498,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alternar menú de compartir"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -7991,6 +7988,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Mostrar etiquetas de umbral",
     "name-show-threshold-markers": "Mostrar marcadores de umbral",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -12572,6 +12570,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12585,6 +12588,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12742,14 +12746,6 @@
       "starred": "Destacado",
       "view-as-folders": "Ver por carpetas",
       "view-as-list": "Ver como lista"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabéticamente (A-Z)",
-          "alphabetically-za": "Alfabéticamente (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importar",
