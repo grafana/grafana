@@ -28,10 +28,10 @@ interface Props {
 }
 
 export function DashboardEditPaneSplitter(props: Props) {
-  if (!config.featureToggles.dashboardNewLayouts) {
-    return <DashboardEditPaneSplitterLegacy {...props} />;
-  } else {
+  if (config.featureToggles.dashboardNewLayouts) {
     return <DashboardEditPaneSplitterNewLayouts {...props} />;
+  } else {
+    return <DashboardEditPaneSplitterLegacy {...props} />;
   }
 }
 
