@@ -208,6 +208,17 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 			if entry.LastError != "" {
 				stateError = errors.New(entry.LastError)
 			}
+			var values map[string]float64
+			var latestResult *Evaluation
+			if len(entry.LastResult.Values) > 0 || entry.LastResult.Condition != "" {
+				values = entry.LastResult.Values
+				latestResult = &Evaluation{
+					EvaluationTime:  entry.LastEvalTime,
+					EvaluationState: translateInstanceState(entry.CurrentState),
+					Values:          values,
+					Condition:       entry.LastResult.Condition,
+				}
+			}
 			state := &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
@@ -226,6 +237,8 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
 				Error:                stateError,
+				Values:               values,
+				LatestResult:         latestResult,
 			}
 			st.cache.set(state)
 			statesCount++

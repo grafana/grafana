@@ -985,6 +985,12 @@ func (a AlertInstanceMutators) WithLastError(lastError string) AlertInstanceMuta
 	}
 }
 
+func (a AlertInstanceMutators) WithLastResult(lastResult LastResult) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LastResult = lastResult
+	}
+}
+
 type Mutator[T any] func(*T)
 
 // CopyNotificationSettings creates a deep copy of NotificationSettings.
