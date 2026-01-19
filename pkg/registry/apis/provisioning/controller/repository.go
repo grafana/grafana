@@ -644,7 +644,7 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 
 	return obj.Spec.Connection != nil &&
 		obj.Spec.Connection.Name != "" &&
-		healthStatus.Healthy &&
+		!healthStatus.Healthy &&
 		healthStatus.Error == provisioning.HealthFailureHealth &&
 		slices.Contains(healthStatus.Message, tokenInvalidErrorMessage)
 }
