@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
-import { useAsyncFn } from 'react-use';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useMemo } from 'react';
 
+import { useFetchTeamRolesQuery, useUpdateTeamRolesMutation } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 
 import { RolePicker } from './RolePicker';
-import { fetchTeamRoles, updateTeamRoles } from './api';
 
 export interface Props {
   teamId: number;
@@ -44,36 +44,36 @@ export const TeamRolePicker = ({
   width,
   isLoading,
 }: Props) => {
-  const [{ loading, value: appliedRoles = roles || [] }, getTeamRoles] = useAsyncFn(
-    async (force = false) => {
-      try {
-        if (!force && roles) {
-          return roles;
-        }
-        if (!force && apply && Boolean(pendingRoles?.length)) {
-          return pendingRoles;
-        }
-        if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) && teamId > 0) {
-          return await fetchTeamRoles(teamId);
-        }
-      } catch (e) {
-        console.error('Error fetching roles', e);
+  const hasPermission = contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) && teamId > 0;
+
+  // Only fetch if we don't have roles prop, not in apply mode with pendingRoles, and have permission
+  const shouldFetch = !roles && !(apply && Boolean(pendingRoles?.length)) && hasPermission;
+
+  const { data: fetchedRoles, isLoading: isFetching } = useFetchTeamRolesQuery(shouldFetch ? { teamId } : skipToken);
+
+  const [updateTeamRoles, { isLoading: isUpdating }] = useUpdateTeamRolesMutation();
+
+  const appliedRoles =
+    useMemo(() => {
+      if (roles) {
+        return roles;
       }
-      return [];
-    },
-    [teamId, pendingRoles, roles]
-  );
 
-  useEffect(() => {
-    getTeamRoles();
-  }, [getTeamRoles]);
+      if (apply && Boolean(pendingRoles?.length)) {
+        return pendingRoles;
+      }
+      return fetchedRoles || [];
+    }, [roles, pendingRoles, fetchedRoles, apply]) || [];
 
-  const onRolesChange = async (roles: Role[]) => {
+  const onRolesChange = async (newRoles: Role[]) => {
     if (!apply) {
-      await updateTeamRoles(roles, teamId);
-      await getTeamRoles(true); // Force fetch from backend after update
+      try {
+        await updateTeamRoles({ teamId, roles: newRoles }).unwrap();
+      } catch (error) {
+        console.error('Error updating team roles', error);
+      }
     } else if (onApplyRoles) {
-      onApplyRoles(roles);
+      onApplyRoles(newRoles);
     }
   };
 
@@ -88,7 +88,7 @@ export const TeamRolePicker = ({
       onRolesChange={onRolesChange}
       roleOptions={roleOptions}
       appliedRoles={appliedRoles}
-      isLoading={loading || isLoading}
+      isLoading={isFetching || isUpdating || isLoading}
       disabled={disabled}
       basicRoleDisabled={true}
       canUpdateRoles={canUpdateRoles}

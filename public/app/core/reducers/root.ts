@@ -3,6 +3,7 @@ import { AnyAction, combineReducers } from 'redux';
 
 import { allReducers as allApiClientReducers } from '@grafana/api-clients/rtkq';
 import { generatedAPI as legacyAPI } from '@grafana/api-clients/rtkq/legacy';
+import { rolesAPI } from 'app/api/clients/roles';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
@@ -54,6 +55,7 @@ const rootReducers = {
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [scopeAPIv0alpha1.reducerPath]: scopeAPIv0alpha1.reducer,
+  [rolesAPI.reducerPath]: rolesAPI.reducer,
   ...allApiClientReducers,
 };
 
