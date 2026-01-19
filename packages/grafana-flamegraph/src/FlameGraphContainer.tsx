@@ -382,10 +382,10 @@ const FlameGraphContainer = ({
             }}
             viewMode={viewMode}
             setViewMode={setViewMode}
-            leftPaneView={leftPaneView}
-            setLeftPaneView={setLeftPaneView}
-            rightPaneView={rightPaneView}
-            setRightPaneView={setRightPaneView}
+            leftPaneView={panesSwapped ? rightPaneView : leftPaneView}
+            setLeftPaneView={panesSwapped ? setRightPaneView : setLeftPaneView}
+            rightPaneView={panesSwapped ? leftPaneView : rightPaneView}
+            setRightPaneView={panesSwapped ? setLeftPaneView : setRightPaneView}
             singleView={singleView}
             setSingleView={setSingleView}
             onSwapPanes={() => setPanesSwapped((s) => !s)}
