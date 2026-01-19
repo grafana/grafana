@@ -924,6 +924,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "savedQueriesRBAC",
+			Description:  "Enables Saved queries (query library) RBAC permissions",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardLibrary",
 			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,

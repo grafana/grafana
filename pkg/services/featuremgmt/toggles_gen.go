@@ -351,6 +351,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagSavedQueriesRBAC
+	// Enables Saved queries (query library) RBAC permissions
+	FlagSavedQueriesRBAC = "savedQueriesRBAC"
+
 	// FlagDashboardLibrary
 	// Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagDashboardLibrary = "dashboardLibrary"

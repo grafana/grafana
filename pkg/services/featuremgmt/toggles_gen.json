@@ -3903,6 +3903,19 @@
     },
     {
       "metadata": {
+        "name": "savedQueriesRBAC",
+        "resourceVersion": "1768828040599",
+        "creationTimestamp": "2026-01-19T13:07:20Z"
+      },
+      "spec": {
+        "description": "Enables Saved queries (query library) RBAC permissions",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "scanRowInvalidDashboardParseFallbackEnabled",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-07-30T14:18:38Z",
