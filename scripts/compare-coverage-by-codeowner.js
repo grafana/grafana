@@ -56,6 +56,22 @@ function getOverallStatus(mainSummary, prSummary) {
 }
 
 /**
+ * Calculates the difference between PR and main coverage
+ * @param {number} prValue - PR coverage percentage
+ * @param {number} mainValue - Main coverage percentage
+ * @returns {string} Formatted delta (e.g., "+1.2%" or "-0.5%")
+ */
+function formatDelta(prValue, mainValue) {
+  const delta = prValue - mainValue;
+  if (delta > 0) {
+    return `+${delta.toFixed(1)}%`;
+  } else if (delta < 0) {
+    return `${delta.toFixed(1)}%`;
+  }
+  return '—';
+}
+
+/**
  * Generates markdown report comparing main and PR coverage
  * @param {Object} mainCoverage - Main branch coverage data
  * @param {Object} prCoverage - PR branch coverage data
@@ -94,28 +110,28 @@ function generateMarkdown(mainCoverage, prCoverage) {
   const tableRows = rows
     .map((row) => {
       const status = getStatusIcon(row.main, row.pr);
-      return `| ${row.metric} | ${formatPercentage(row.main)} | ${formatPercentage(row.pr)} | ${status} |`;
+      const delta = formatDelta(row.pr, row.main);
+      return `| ${row.metric} | ${formatPercentage(row.main)} | ${formatPercentage(row.pr)} | ${delta} | ${status} |`;
     })
     .join('\n');
 
   const overallStatus = overallPass ? '✅ Pass' : '❌ Fail';
-  const overallMessage = overallPass ? 'Coverage maintained or improved' : 'Coverage decreased in one or more metrics';
 
-  return `## Test Coverage Report - ${teamName}
+  return `## Test Coverage Checks ${overallStatus} for ${teamName}
 
-| Metric | Main Branch | PR Branch | Status |
-|--------|-------------|-----------|--------|
+| Metric | Main | PR | Change | Status |
+|--------|------|----|----|--------|
 ${tableRows}
 
-**Overall: ${overallStatus}** - ${overallMessage}
+**Run locally:** 💻 \`yarn test:coverage:by-codeowner ${teamName}\`
 
-<details>
-<summary>Coverage Details</summary>
+**Break glass:** 🚨 In case of emergency, adding the \`no-check-frontend-test-coverage\` label to this PR will skip checks.
 
-- **PR Branch**: \`${prCoverage.commit.substring(0, 7)}\` (${prCoverage.timestamp})
-- **Main Branch**: \`${mainCoverage.commit.substring(0, 7)}\` (${mainCoverage.timestamp})
+**Compared:**
 
-</details>
+- PR: \`${prCoverage.commit.substring(0, 7)}\` (${prCoverage.timestamp})
+- Main: \`${mainCoverage.commit.substring(0, 7)}\` (${mainCoverage.timestamp})
+
 `;
 }
 
