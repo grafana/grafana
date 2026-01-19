@@ -7,10 +7,9 @@ import {
   getFieldDisplayValues,
   PanelProps,
 } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
-import { config } from 'app/core/config';
 
 import { Options } from './panelcfg.gen';
 
@@ -33,25 +32,27 @@ export function RadialBarPanel({
 
     return (
       <RadialGauge
-        values={[value]}
-        width={width}
-        height={height}
+        alignmentFactors={valueProps.alignmentFactors}
         barWidthFactor={options.barWidthFactor}
-        gradient={options.effects?.gradient}
+        endpointMarker={options.endpointMarker !== 'none' ? options.endpointMarker : undefined}
         glowBar={options.effects?.barGlow}
         glowCenter={options.effects?.centerGlow}
+        gradient={options.effects?.gradient}
+        height={height}
+        nameManualFontSize={options.text?.titleSize}
+        neutral={options.neutral}
+        onClick={menuProps.openMenu}
         roundedBars={options.barShape === 'rounded'}
-        vizCount={valueProps.count}
-        shape={options.shape}
         segmentCount={options.segmentCount}
         segmentSpacing={options.segmentSpacing}
-        thresholdsBar={options.showThresholdMarkers}
+        shape={options.shape}
         showScaleLabels={options.showThresholdLabels}
-        alignmentFactors={valueProps.alignmentFactors}
+        textMode={options.textMode}
+        thresholdsBar={options.showThresholdMarkers}
         valueManualFontSize={options.text?.valueSize}
-        nameManualFontSize={options.text?.titleSize}
-        endpointMarker={options.endpointMarker !== 'none' ? options.endpointMarker : undefined}
-        onClick={menuProps.openMenu}
+        values={[value]}
+        vizCount={valueProps.count}
+        width={width}
       />
     );
   }
@@ -65,9 +66,7 @@ export function RadialBarPanel({
     if (hasLinks && getLinks) {
       return (
         <DataLinksContextMenu links={getLinks} style={{ flexGrow: 1 }}>
-          {(api) => {
-            return renderComponent(valueProps, api);
-          }}
+          {(api) => renderComponent(valueProps, api)}
         </DataLinksContextMenu>
       );
     }
@@ -87,9 +86,6 @@ export function RadialBarPanel({
     });
   }
 
-  const minVizHeight = 60;
-  const minVizWidth = 60;
-
   if (getValues()[0]?.display?.text === 'No data') {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} needsNumberField />;
   }
@@ -106,8 +102,8 @@ export function RadialBarPanel({
         itemSpacing={16}
         renderCounter={renderCounter}
         orientation={options.orientation}
-        minVizHeight={minVizHeight}
-        minVizWidth={minVizWidth}
+        minVizHeight={options.sizing === 'auto' ? 0 : options.minVizHeight}
+        minVizWidth={options.sizing === 'auto' ? 0 : options.minVizWidth}
         getAlignmentFactors={getDisplayValueAlignmentFactors}
       />
     </Stack>

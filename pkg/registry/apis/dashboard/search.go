@@ -144,6 +144,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "panelType",
+										In:          "query",
+										Description: "find dashboards using panels of a given plugin type",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "dataSourceType",
+										In:          "query",
+										Description: "find dashboards using datasources of a given plugin type",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "permission",
 										In:          "query",
 										Description: "permission needed for the resource (view, edit, admin)",
@@ -195,6 +213,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Name:        "explain",
 										In:          "query",
 										Description: "add debugging info that may help explain why the result matched",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "panelTitleSearch",
+										In:          "query",
+										Description: "[experimental] optionally include matches from panel titles",
 										Required:    false,
 										Schema:      spec.BoolProperty(),
 									},
@@ -286,6 +313,32 @@ const rootFolder = "general"
 
 var errEmptyResults = fmt.Errorf("empty results")
 
+func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
+	switch p {
+	case dashboardaccess.PERMISSION_EDIT:
+		return dashboards.ActionDashboardsWrite, dashboards.ActionFoldersWrite
+	case dashboardaccess.PERMISSION_ADMIN:
+		return dashboards.ActionDashboardsPermissionsWrite, dashboards.ActionFoldersPermissionsWrite
+	case dashboardaccess.PERMISSION_VIEW:
+		fallthrough
+	default:
+		return dashboards.ActionDashboardsRead, dashboards.ActionFoldersRead
+	}
+}
+
+func permissionFromQueryParams(queryParams url.Values) dashboardaccess.PermissionType {
+	switch strings.ToLower(queryParams.Get("permission")) {
+	case "edit":
+		return dashboardaccess.PERMISSION_EDIT
+	case "view":
+		return dashboardaccess.PERMISSION_VIEW
+	case "admin":
+		return dashboardaccess.PERMISSION_ADMIN
+	default:
+		return 0
+	}
+}
+
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -302,8 +355,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func() ([]string, error) {
-		return s.getDashboardsUIDsSharedWithUser(ctx, user)
+	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
 	if err != nil {
 		if errors.Is(err, errEmptyResults) {
@@ -346,7 +399,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
 // nolint:gocyclo
-func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func() ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
+func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
 	facetLimit := 50
@@ -383,14 +436,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 	searchRequest.Fields = fields
-
-	switch strings.ToLower(queryParams.Get("permission")) {
-	case "edit":
-		searchRequest.Permission = int64(dashboardaccess.PERMISSION_EDIT)
-	case "view":
-		searchRequest.Permission = int64(dashboardaccess.PERMISSION_VIEW)
-	case "admin":
-		searchRequest.Permission = int64(dashboardaccess.PERMISSION_ADMIN)
+	accessPermission := permissionFromQueryParams(queryParams)
+	if accessPermission > 0 {
+		searchRequest.Permission = int64(accessPermission)
 	}
 
 	// A search request can include multiple types, we need to acces the slice directly.
@@ -430,14 +478,11 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 
-	// The facet term fields
+	// Apply facet terms
 	if facets, ok := queryParams["facet"]; ok {
 		if queryParams.Has("facetLimit") {
 			if parsed, err := strconv.Atoi(queryParams.Get("facetLimit")); err == nil && parsed > 0 {
-				facetLimit = parsed
-				if facetLimit > 1000 {
-					facetLimit = 1000
-				}
+				facetLimit = min(parsed, 1000)
 			}
 		}
 		searchRequest.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
@@ -449,22 +494,65 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 
-	// The tags filter
-	if tags, ok := queryParams["tag"]; ok {
+	if v, ok := queryParams["tag"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "tags",
 			Operator: "=",
-			Values:   tags,
+			Values:   v,
 		})
 	}
 
-	// The libraryPanel filter
-	if libraryPanel, ok := queryParams["libraryPanel"]; ok {
+	if v, ok := queryParams["panelType"]; ok {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TYPES,
+			Operator: "=",
+			Values:   v,
+		})
+	}
+
+	if v, ok := queryParams["dataSourceType"]; ok {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_DS_TYPES,
+			Operator: "=",
+			Values:   v,
+		})
+	}
+
+	if v, ok := queryParams["libraryPanel"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
-			Values:   libraryPanel,
+			Values:   v,
 		})
+	}
+
+	if searchRequest.Query == "*" {
+		searchRequest.Query = "" // will match everything
+	} else if searchRequest.Query != "" {
+		// Explicitly configure the query for dashboard+folder matching.
+		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+			{
+				Name:  resource.SEARCH_FIELD_TITLE,
+				Type:  resourcepb.QueryFieldType_KEYWORD,
+				Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE,
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 2, // standard analyzer (with ngrams!)
+			}, {
+				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 5, // standard analyzer
+			},
+		}
+
+		if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
+			searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
+				Name:  resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE, // fields.panel_title
+				Type:  resourcepb.QueryFieldType_TEXT,
+				Boost: 5,
+			})
+		}
 	}
 
 	// The names filter
@@ -473,7 +561,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")
 	if folder == foldermodel.SharedWithMeFolderUID {
-		dashboardUIDs, err := getDashboardsUIDsSharedWithUser()
+		dashboardUIDs, err := getDashboardsUIDsSharedWithUser(accessPermission)
 		if err != nil {
 			return nil, err
 		}
@@ -519,10 +607,15 @@ func asResourceKey(ns string, k string) (*resourcepb.ResourceKey, error) {
 	return key, nil
 }
 
-func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester) ([]string, error) {
-	// gets dashboards that the user was granted read access to
+// getDashboardsUIDsSharedWithUser gets dashboards/folders that the user was granted access to, but does not have access
+// to their parent folder. This powers the virtual "Shared with me" folder.
+// With the requestedPermission argument you can define what "access" means. So, for example, you can still get all the
+// folders that user would not be able to get to from the root if they were filtered by edit permissions.
+func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, user identity.Requester, requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+	dashboardAction, folderAction := permissionToActions(requestedPermission)
 	permissions := user.GetPermissions()
-	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
+	dashboardPermissions := permissions[dashboardAction]
+	folderPermissions := permissions[folderAction]
 	dashboardUids := make([]string, 0)
 	sharedDashboards := make([]string, 0)
 
@@ -530,6 +623,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		if dashboardUid, found := strings.CutPrefix(dashboardPermission, dashboards.ScopeDashboardsPrefix); found {
 			if !slices.Contains(dashboardUids, dashboardUid) {
 				dashboardUids = append(dashboardUids, dashboardUid)
+			}
+		}
+	}
+	for _, folderPermission := range folderPermissions {
+		if folderUid, found := strings.CutPrefix(folderPermission, dashboards.ScopeFoldersPrefix); found {
+			if !slices.Contains(dashboardUids, folderUid) && folderUid != foldermodel.SharedWithMeFolderUID && folderUid != foldermodel.GeneralFolderUID {
+				dashboardUids = append(dashboardUids, folderUid)
 			}
 		}
 	}
@@ -543,9 +643,16 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
+	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
+	if err != nil {
+		return sharedDashboards, err
+	}
+
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields: []string{"folder"},
-		Limit:  int64(len(dashboardUids)),
+		Federated:  []*resourcepb.ResourceKey{folderKey},
+		Fields:     []string{"folder"},
+		Limit:      int64(len(dashboardUids)),
+		Permission: int64(requestedPermission),
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{{
@@ -581,15 +688,10 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 
-	// only folders the user has access to will be returned here
-	folderKey, err := asResourceKey(user.GetNamespace(), folders.RESOURCE)
-	if err != nil {
-		return sharedDashboards, err
-	}
-
 	folderSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields: []string{"folder"},
-		Limit:  int64(len(allFolders)),
+		Fields:     []string{"folder"},
+		Limit:      int64(len(allFolders)),
+		Permission: int64(requestedPermission),
 		Options: &resourcepb.ListOptions{
 			Key: folderKey,
 			Fields: []*resourcepb.Requirement{{
@@ -599,6 +701,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
+	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
 	if err != nil {
 		return sharedDashboards, err

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/extensions"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -149,10 +150,19 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				}
 			}
 
-			assert.ElementsMatch(collect, []provisioning.RepositoryType{
-				provisioning.LocalRepositoryType,
-				provisioning.GitHubRepositoryType,
-			}, settings.AvailableRepositoryTypes)
+			if extensions.IsEnterprise {
+				assert.ElementsMatch(collect, []provisioning.RepositoryType{
+					provisioning.LocalRepositoryType,
+					provisioning.GitHubRepositoryType,
+					provisioning.BitbucketRepositoryType,
+					provisioning.GitLabRepositoryType,
+				}, settings.AvailableRepositoryTypes)
+			} else {
+				assert.ElementsMatch(collect, []provisioning.RepositoryType{
+					provisioning.LocalRepositoryType,
+					provisioning.GitHubRepositoryType,
+				}, settings.AvailableRepositoryTypes)
+			}
 		}, time.Second*10, time.Millisecond*100, "Expected settings to match")
 	})
 
@@ -216,6 +226,39 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				return localTmp
 			}(),
 			expectedErr: "cannot have both remove and release orphan resources finalizers",
+		},
+		{
+			name: "should succeed with repository with no token but referencing Connection",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "repo-with-connection",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Repo With Connection",
+					"type":  "github",
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"github": map[string]any{
+						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+						"branch": "integration-test",
+					},
+					"connection": map[string]any{
+						"name": "a-connection",
+					},
+					// Having workflows would normally trigger a secure.token check
+					// But we should not do that as a connection is referenced
+					"workflows": []string{
+						string(provisioning.WriteWorkflow),
+						string(provisioning.BranchWorkflow),
+					},
+				},
+				// Missing secure.token
+			}},
 		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {

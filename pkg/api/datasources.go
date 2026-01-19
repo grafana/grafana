@@ -204,7 +204,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Response {
 	start := time.Now()
 	defer func() {
-		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "GetDataSourceByUID"), time.Since(start).Seconds())
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("GetDataSourceByUID"), time.Since(start).Seconds())
 	}()
 
 	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.GetOrgID())
@@ -240,7 +240,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Re
 func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response.Response {
 	start := time.Now()
 	defer func() {
-		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "DeleteDataSourceByUID"), time.Since(start).Seconds())
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("DeleteDataSourceByUID"), time.Since(start).Seconds())
 	}()
 
 	uid := web.Params(c.Req)[":uid"]
@@ -278,10 +278,12 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 
 // swagger:route DELETE /datasources/name/{name} datasources deleteDataSourceByName
 //
-// Delete an existing data source by name.
+// Delete an existing data source by name. This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: deleteDataSourceByNameResponse
@@ -375,7 +377,7 @@ func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
 func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Response {
 	start := time.Now()
 	defer func() {
-		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "AddDataSource"), time.Since(start).Seconds())
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("AddDataSource"), time.Since(start).Seconds())
 	}()
 
 	cmd := datasources.AddDataSourceCommand{}
@@ -497,7 +499,7 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response.Response {
 	start := time.Now()
 	defer func() {
-		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("legacy", "UpdateDataSourceByUID"), time.Since(start).Seconds())
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("UpdateDataSourceByUID"), time.Since(start).Seconds())
 	}()
 	cmd := datasources.UpdateDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -597,10 +599,12 @@ func (hs *HTTPServer) getRawDataSourceByUID(ctx context.Context, uid string, org
 
 // swagger:route GET /datasources/name/{name} datasources getDataSourceByName
 //
-// Get a single data source by Name.
+// Get a single data source by Name.  This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDataSourceResponse
@@ -624,10 +628,12 @@ func (hs *HTTPServer) GetDataSourceByName(c *contextmodel.ReqContext) response.R
 
 // swagger:route GET /datasources/id/{name} datasources getDataSourceIdByName
 //
-// Get data source Id by Name.
+// Get data source Id by Name. This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDataSourceIDResponse

@@ -1,6 +1,8 @@
 import { DataFrameType, Field, FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui';
+import { setTemplateSrv } from '@grafana/runtime';
 import { ExploreFieldLinkModel, getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { getAllFields, createLogLineLinks, FieldDef, getDataframeFields } from './logParser';
@@ -466,6 +468,10 @@ describe('logParser', () => {
   });
 
   describe('getDataframeFields', () => {
+    beforeEach(() => {
+      setTemplateSrv(new TemplateSrv());
+    });
+
     it('should add row labels as variables for links', () => {
       const row = createLogRow({
         labels: { service_name: 'checkout', service_namespace: 'prod' },
