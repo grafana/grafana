@@ -43,9 +43,9 @@ const mockQueries: DataQuery[] = [mockQuery];
 const defaultProps = {
   query: mockQuery,
   queries: mockQueries,
-  dataSourceInstance: mockDataSourceInstance,
+  dataSourceInstanceSettings: mockDataSourceInstance,
   app: CoreApp.Explore,
-  datasource: null,
+  datasourceApi: null,
 };
 
 describe('QueryActionAssistantButton', () => {

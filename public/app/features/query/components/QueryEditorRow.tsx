@@ -484,8 +484,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             <QueryActionAssistantButton
               query={query}
               queries={queries}
-              dataSourceInstance={this.props.dataSource}
-              datasource={datasource}
+              dataSourceInstanceSettings={this.props.dataSource}
+              datasourceApi={datasource}
               app={app}
             />
             {renderHeaderExtras && renderHeaderExtras()}

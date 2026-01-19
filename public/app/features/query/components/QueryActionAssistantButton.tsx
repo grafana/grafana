@@ -9,17 +9,17 @@ import { queryIsEmpty } from 'app/core/utils/query';
 interface QueryActionAssistantButtonProps<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
   queries: TQuery[];
-  dataSourceInstance: DataSourceInstanceSettings;
+  dataSourceInstanceSettings: DataSourceInstanceSettings;
   app?: CoreApp;
-  datasource: DataSourceApi<TQuery, DataSourceJsonData, {}> | null;
+  datasourceApi: DataSourceApi<TQuery, DataSourceJsonData, {}> | null;
 }
 
 export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>({
   query,
   queries,
-  dataSourceInstance,
+  dataSourceInstanceSettings,
   app,
-  datasource,
+  datasourceApi,
 }: QueryActionAssistantButtonProps<TQuery>) {
   const { isAvailable, openAssistant } = useAssistant();
 
@@ -38,7 +38,7 @@ export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>
   }
 
   // Only show for loki and prometheus datasources
-  const pluginId = dataSourceInstance.type;
+  const pluginId = dataSourceInstanceSettings.type;
   if (pluginId !== 'loki' && pluginId !== 'prometheus') {
     return null;
   }
@@ -51,7 +51,7 @@ export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>
   // Build context items
   const context = [
     createAssistantContextItem('datasource', {
-      datasourceUid: dataSourceInstance.uid,
+      datasourceUid: dataSourceInstanceSettings.uid,
     }),
   ];
 
@@ -79,7 +79,7 @@ export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>
 
   // Get query display text to determine if we're creating or updating
   const queryDisplayText =
-    hasCurrentQuery && datasource?.getQueryDisplayText ? datasource.getQueryDisplayText(query) : null;
+    hasCurrentQuery && datasourceApi?.getQueryDisplayText ? datasourceApi.getQueryDisplayText(query) : null;
 
   // Determine if we're creating or updating based on queryDisplayText
   const isUpdating = !!queryDisplayText;
@@ -109,7 +109,7 @@ export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>
   }
 
   codeBlockLines.push(
-    t('query-operation.header.selected-datasource-label', 'Selected data source:') + ` ${dataSourceInstance.name}`
+    t('query-operation.header.selected-datasource-label', 'Selected data source:') + ` ${dataSourceInstanceSettings.name}`
   );
 
   if (appName) {
