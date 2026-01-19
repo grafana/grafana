@@ -1375,6 +1375,12 @@ func convertQueryVariableToV1(variable *dashv2alpha1.DashboardQueryVariableKind)
 		varMap["regexApplyTo"] = string(*spec.RegexApplyTo)
 	}
 	varMap["allowCustomValue"] = spec.AllowCustomValue
+	if len(spec.StaticOptions) > 0 {
+		varMap["staticOptions"] = convertVariableOptionsToV1(spec.StaticOptions)
+	}
+	if spec.StaticOptionsOrder != nil {
+		varMap["staticOptionsOrder"] = string(*spec.StaticOptionsOrder)
+	}
 
 	// Convert query - handle LEGACY_STRING_VALUE_KEY
 	querySpec := spec.Query.Spec
