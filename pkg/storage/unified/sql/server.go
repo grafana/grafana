@@ -145,11 +145,12 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			serverOptions.Diagnostics = kvBackend
 		} else {
 			backend, err := NewBackend(BackendOptions{
-				DBProvider:           eDB,
-				Reg:                  opts.Reg,
-				IsHA:                 isHA,
-				storageMetrics:       opts.StorageMetrics,
-				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+				DBProvider:              eDB,
+				Reg:                     opts.Reg,
+				IsHA:                    isHA,
+				storageMetrics:          opts.StorageMetrics,
+				LastImportTimeMaxAge:    opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+				EnableGarbageCollection: opts.Cfg.EnableGarbageCollection,
 			})
 			if err != nil {
 				return nil, err

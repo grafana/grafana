@@ -41,9 +41,10 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
-const defaultGarbageCollectionInterval = time.Minute
+const defaultGarbageCollectionInterval = 15 * time.Minute
 const defaultGarbageCollectionBatchSize = 100
 const defaultGarbageCollectionMaxAge = 24 * time.Hour
+const dashboardsGarbageCollectionMaxAge = 365 * 24 * time.Hour
 
 func ProvideStorageBackend(
 	cfg *setting.Cfg,
@@ -60,12 +61,13 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider      db.DBProvider
-	Reg             prometheus.Registerer
-	PollingInterval time.Duration
-	WatchBufferSize int
-	IsHA            bool
-	storageMetrics  *resource.StorageMetrics
+	DBProvider              db.DBProvider
+	Reg                     prometheus.Registerer
+	PollingInterval         time.Duration
+	WatchBufferSize         int
+	IsHA                    bool
+	storageMetrics          *resource.StorageMetrics
+	EnableGarbageCollection bool
 
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
@@ -99,6 +101,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
+		enableGarbageCollection: opts.EnableGarbageCollection,
 	}, nil
 }
 
@@ -139,6 +142,7 @@ type backend struct {
 
 	lastImportTimeMaxAge       time.Duration
 	lastImportTimeDeletionTime atomic.Time
+	enableGarbageCollection    bool
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -186,9 +190,10 @@ func (b *backend) initLocked(ctx context.Context) error {
 	if err := b.initPruner(ctx); err != nil {
 		return fmt.Errorf("failed to create pruner: %w", err)
 	}
-	// TODO put behind config setting
-	if err := b.initGarbageCollection(ctx); err != nil {
-		return fmt.Errorf("failed to initialize garbage collection: %w", err)
+	if b.enableGarbageCollection {
+		if err := b.initGarbageCollection(ctx); err != nil {
+			return fmt.Errorf("failed to initialize garbage collection: %w", err)
+		}
 	}
 
 	return nil
@@ -250,7 +255,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 }
 
 func (b *backend) initGarbageCollection(ctx context.Context) error {
-	b.log.Debug("starting garbage collection loop")
+	b.log.Info("starting garbage collection loop")
 
 	go func() {
 		ticker := time.NewTicker(defaultGarbageCollectionInterval)
@@ -261,7 +266,8 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 			case <-b.done:
 				return
 			case <-ticker.C:
-				b.runGarbageCollection(ctx)
+				cutoffTimestamp := time.Now().Add(-defaultGarbageCollectionMaxAge).UnixMicro()
+				_ = b.runGarbageCollection(ctx, cutoffTimestamp)
 			}
 		}
 	}()
@@ -269,23 +275,26 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 	return nil
 }
 
-func (b *backend) runGarbageCollection(ctx context.Context) {
+func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
 	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
 	defer span.End()
+
+	deletedByKey := map[string]int64{}
 
 	groupResources, err := b.listLatestRVs(ctx)
 	if err != nil {
 		b.log.Error("failed to list group resources for garbage collection", "error", err)
-		return
+		return deletedByKey
 	}
 
-	cutoffTimestamp := time.Now().Add(-defaultGarbageCollectionMaxAge).UnixMicro()
 	// TODO add custom case for dashboards since they have longer retention
 	for group, resources := range groupResources {
 		for resourceName := range resources {
+			resourceKey := group + "/" + resourceName
+			resourceCutoff := garbageCollectionCutoffTimestamp(group, resourceName, cutoffTimeStamp)
 			totalDeleted := int64(0)
 			for {
-				deleted, err := b.garbageCollectBatch(ctx, group, resourceName, cutoffTimestamp, defaultGarbageCollectionBatchSize)
+				deleted, err := b.garbageCollectBatch(ctx, group, resourceName, resourceCutoff, defaultGarbageCollectionBatchSize)
 				if err != nil {
 					b.log.Error("garbage collection failed",
 						"group", group,
@@ -302,7 +311,7 @@ func (b *backend) runGarbageCollection(ctx context.Context) {
 				}
 				select {
 				case <-b.done:
-					return
+					return deletedByKey
 				case <-time.After(time.Second):
 				}
 			}
@@ -311,9 +320,19 @@ func (b *backend) runGarbageCollection(ctx context.Context) {
 					"group", group,
 					"resource", resourceName,
 					"rows", totalDeleted)
+				deletedByKey[resourceKey] += totalDeleted
 			}
 		}
 	}
+
+	return deletedByKey
+}
+
+func garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
+	if group == "dashboard.grafana.app" && resourceName == "dashboards" {
+		return time.Now().Add(-dashboardsGarbageCollectionMaxAge).UnixMicro()
+	}
+	return defaultCutoff
 }
 
 func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int) (int64, error) {

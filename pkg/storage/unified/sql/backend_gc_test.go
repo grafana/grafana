@@ -249,6 +249,82 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 	})
 }
 
+func TestIntegrationGarbageCollectionLoop(t *testing.T) {
+	t.Run("can delete eligble resources", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+		t.Cleanup(db.CleanupTestDB)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
+
+		storageBackend, _ := newTestBackend(t)
+		b := storageBackend.(*backend)
+
+		_, err := resource.NewResourceServer(resource.ResourceServerOptions{
+			Backend: storageBackend,
+		})
+		require.NoError(t, err)
+
+		rv1, err := test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		_, err = test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED, test.WithNamespaceAndRV("namespace", rv1))
+		require.NoError(t, err)
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		results := b.runGarbageCollection(ctx, cutoffTimestamp)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), results["group/resource"])
+	})
+
+	t.Run("will respect custom resource retention settings", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+		t.Cleanup(db.CleanupTestDB)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
+
+		storageBackend, _ := newTestBackend(t)
+		b := storageBackend.(*backend)
+
+		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+			Backend: storageBackend,
+		})
+		require.NoError(t, err)
+
+		rv1, err := test.WriteEvent(ctx, storageBackend, "dashboard1", resourcepb.WatchEvent_ADDED,
+			test.WithGroup("dashboard.grafana.app"),
+			test.WithResource("dashboards"))
+		require.NoError(t, err)
+		_, err = test.WriteEvent(ctx, storageBackend, "dashboard1", resourcepb.WatchEvent_DELETED,
+			test.WithNamespaceAndRV("namespace", rv1),
+			test.WithGroup("dashboard.grafana.app"),
+			test.WithResource("dashboards"))
+		require.NoError(t, err)
+
+		rv2, err := test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		_, err = test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED, test.WithNamespaceAndRV("namespace", rv2))
+		require.NoError(t, err)
+
+		cutoffTimestamp := time.Now().Add(1 * time.Hour).UnixMicro() // everything eligible for deletion (except dashboards)
+		results := b.runGarbageCollection(ctx, cutoffTimestamp)
+		require.Equal(t, int64(2), results["group/resource"])
+		require.Zero(t, results["dashboard.grafana.app/dashboards"])
+
+		trashResp, err := server.List(ctx, &resourcepb.ListRequest{
+			Source: resourcepb.ListRequest_TRASH,
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "namespace",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, trashResp.Error)
+		require.Len(t, trashResp.Items, 1)
+	})
+}
+
 func newTestBackend(t *testing.T) (resource.StorageBackend, sqldb.DB) {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
