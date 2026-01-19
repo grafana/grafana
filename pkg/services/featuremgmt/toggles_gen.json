@@ -3710,6 +3710,24 @@
     },
     {
       "metadata": {
+        "name": "queryWithAssistant",
+        "resourceVersion": "1768832883692",
+        "creationTimestamp": "2026-01-15T12:40:17Z",
+        "deletionTimestamp": "2026-01-19T14:25:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-19 14:28:03.692934 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the Query with Assistant button in the query editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "recentlyViewedDashboards",
         "resourceVersion": "1765227168175",
         "creationTimestamp": "2025-12-10T16:28:19Z",
