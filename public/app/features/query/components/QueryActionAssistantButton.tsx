@@ -109,7 +109,8 @@ export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>
   }
 
   codeBlockLines.push(
-    t('query-operation.header.selected-datasource-label', 'Selected data source:') + ` ${dataSourceInstanceSettings.name}`
+    t('query-operation.header.selected-datasource-label', 'Selected data source:') +
+      ` ${dataSourceInstanceSettings.name}`
   );
 
   if (appName) {
