@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -29,20 +30,49 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+// testMode represents a feature flag configuration for testing
+type testMode struct {
+	name           string
+	featureToggles []string
+}
 
-func TestIntegrationDataSourceByUID(t *testing.T) {
+// getTestModes returns the test configurations to run tests against
+func getTestModes() []testMode {
+	return []testMode{
+		{name: "legacy", featureToggles: nil},
+		{name: "k8s-reroute", featureToggles: []string{
+			"datasourcesRerouteLegacyCRUDAPIs",
+			"queryService",                // Required for QueryAPI registration
+			"queryServiceWithConnections", // Required for connections endpoint
+		}},
+	}
+}
+
+// TestIntegrationDataSourceGetByUID tests the GET /api/datasources/uid/:uid endpoint
+// with both legacy and K8s-reroute feature flag modes.
+func TestIntegrationDataSourceGetByUID(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
-	})
-	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
-	ctx := context.Background()
-	store := testEnv.SQLStore
-	cfg := testEnv.Cfg
+	for _, mode := range getTestModes() {
+		t.Run(mode.name, func(t *testing.T) {
+			dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+				DisableAnonymous:     true,
+				EnableFeatureToggles: mode.featureToggles,
+			})
+			grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
+			ctx := context.Background()
+			store := testEnv.SQLStore
+			cfg := testEnv.Cfg
 
+			runGetTests(t, ctx, grafanaListeningAddr, testEnv, store, cfg, mode.name)
+		})
+	}
+}
+
+// runGetTests runs all GET endpoint tests
+func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string, testEnv *server.TestEnv, store db.DB, cfg *setting.Cfg, modePrefix string) {
 	t.Run("GET - succeeds", func(t *testing.T) {
-		uid := "test-prometheus-get"
+		uid := fmt.Sprintf("%s-prometheus-get", modePrefix)
 		jsonData := simplejson.NewFromAny(map[string]any{
 			"httpMethod": "POST",
 			"customKey":  "customValue",
@@ -93,7 +123,7 @@ func TestIntegrationDataSourceByUID(t *testing.T) {
 	})
 
 	t.Run("GET - not found", func(t *testing.T) {
-		url := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/nonexistent-get", grafanaListeningAddr)
+		url := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/%s-nonexistent-get", grafanaListeningAddr, modePrefix)
 		resp, err := http.Get(url)
 		require.NoError(t, err)
 		defer resp.Body.Close()
@@ -101,82 +131,90 @@ func TestIntegrationDataSourceByUID(t *testing.T) {
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
-	t.Run("GET - specific UID scope granted", func(t *testing.T) {
-		dsUID := "test-ds-get-perms-0"
-		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for GET Permissions 0")
+	// Note: Resource-scoped permission tests are skipped in k8s-reroute mode because
+	// K8s APIs use a different authorization model (RBAC) that doesn't support
+	// Grafana's fine-grained resource permissions (e.g., datasources:read:uid:specific-uid).
+	// Role-based access (Admin, Editor, Viewer) works correctly in both modes.
+	if modePrefix == "legacy" {
+		t.Run("GET - specific UID scope granted", func(t *testing.T) {
+			dsUID := fmt.Sprintf("%s-ds-get-perms-0", modePrefix)
+			createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for GET Permissions 0")
 
-		login := "user-get-0"
-		createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
-			{
-				Actions:           []string{datasources.ActionRead},
-				Resource:          "datasources",
-				ResourceAttribute: "uid",
-				ResourceID:        dsUID,
-			},
-		})
-
-		url := fmt.Sprintf("http://%s:testpass@%s/api/datasources/uid/%s", login, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-	})
-
-	t.Run("GET - wildcard UID scope granted", func(t *testing.T) {
-		dsUID := "test-ds-get-perms-1"
-		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
-			&datasources.AddDataSourceCommand{
-				OrgID:  1,
-				Access: datasources.DS_ACCESS_PROXY,
-				Name:   "Test DS for GET Permissions 1",
-				Type:   datasources.DS_PROMETHEUS,
-				UID:    dsUID,
-				URL:    "http://localhost:9090",
+			login := fmt.Sprintf("%s-user-get-0", modePrefix)
+			createUserWithPermissions(t, ctx, store, cfg, grafanaListeningAddr, login, []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{datasources.ActionRead},
+					Resource:          "datasources",
+					ResourceAttribute: "uid",
+					ResourceID:        dsUID,
+				},
 			})
-		require.NoError(t, err)
 
-		login := "user-get-1"
-		password := "testpass"
-		testUserId := tests.CreateUser(t, store, cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleNone),
-			Password:       user.Password(password),
-			Login:          login,
-			OrgID:          1,
+			url := fmt.Sprintf("http://%s:testpass@%s/api/datasources/uid/%s", login, grafanaListeningAddr, dsUID)
+			resp, err := http.Get(url)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			require.Equal(t, http.StatusOK, resp.StatusCode)
 		})
+	}
 
-		permissionsStore := resourcepermissions.NewStore(cfg, store, featuremgmt.WithFeatures())
-		_, err = permissionsStore.SetUserResourcePermission(
-			ctx,
-			1,
-			accesscontrol.User{ID: testUserId},
-			resourcepermissions.SetResourcePermissionCommand{
-				Actions:           []string{datasources.ActionRead},
-				Resource:          "datasources",
-				ResourceAttribute: "uid",
-				ResourceID:        "*",
-			},
-			nil,
-		)
-		require.NoError(t, err)
+	if modePrefix == "legacy" {
+		t.Run("GET - wildcard UID scope granted", func(t *testing.T) {
+			dsUID := fmt.Sprintf("%s-ds-get-perms-1", modePrefix)
+			_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
+				&datasources.AddDataSourceCommand{
+					OrgID:  1,
+					Access: datasources.DS_ACCESS_PROXY,
+					Name:   "Test DS for GET Permissions 1",
+					Type:   datasources.DS_PROMETHEUS,
+					UID:    dsUID,
+					URL:    "http://localhost:9090",
+				})
+			require.NoError(t, err)
 
-		cacheURL := fmt.Sprintf("http://%s:%s@%s/api/access-control/user/permissions?reloadcache=true",
-			login, password, grafanaListeningAddr)
-		cacheResp, err := http.Get(cacheURL)
-		require.NoError(t, err)
-		cacheResp.Body.Close()
+			login := fmt.Sprintf("%s-user-get-1", modePrefix)
+			password := "testpass"
+			testUserId := tests.CreateUser(t, store, cfg, user.CreateUserCommand{
+				DefaultOrgRole: string(org.RoleNone),
+				Password:       user.Password(password),
+				Login:          login,
+				OrgID:          1,
+			})
 
-		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s",
-			login, password, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
-		require.NoError(t, err)
-		defer resp.Body.Close()
+			permissionsStore := resourcepermissions.NewStore(cfg, store, featuremgmt.WithFeatures())
+			_, err = permissionsStore.SetUserResourcePermission(
+				ctx,
+				1,
+				accesscontrol.User{ID: testUserId},
+				resourcepermissions.SetResourcePermissionCommand{
+					Actions:           []string{datasources.ActionRead},
+					Resource:          "datasources",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+				nil,
+			)
+			require.NoError(t, err)
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-	})
+			cacheURL := fmt.Sprintf("http://%s:%s@%s/api/access-control/user/permissions?reloadcache=true",
+				login, password, grafanaListeningAddr)
+			cacheResp, err := http.Get(cacheURL)
+			require.NoError(t, err)
+			cacheResp.Body.Close()
+
+			url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s",
+				login, password, grafanaListeningAddr, dsUID)
+			resp, err := http.Get(url)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+		})
+	}
 
 	t.Run("GET - permission denied (wrong UID scope)", func(t *testing.T) {
-		dsUID := "test-ds-get-perms-2"
+		dsUID := fmt.Sprintf("%s-ds-get-perms-2", modePrefix)
 		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
 			&datasources.AddDataSourceCommand{
 				OrgID:  1,
@@ -188,7 +226,7 @@ func TestIntegrationDataSourceByUID(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		login := "user-get-2"
+		login := fmt.Sprintf("%s-user-get-2", modePrefix)
 		password := "testpass"
 		testUserId := tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleNone),
@@ -228,7 +266,7 @@ func TestIntegrationDataSourceByUID(t *testing.T) {
 	})
 
 	t.Run("GET - permission denied (no permissions)", func(t *testing.T) {
-		dsUID := "test-ds-get-perms-3"
+		dsUID := fmt.Sprintf("%s-ds-get-perms-3", modePrefix)
 		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
 			&datasources.AddDataSourceCommand{
 				OrgID:  1,
@@ -240,7 +278,7 @@ func TestIntegrationDataSourceByUID(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		login := "user-get-3"
+		login := fmt.Sprintf("%s-user-get-3", modePrefix)
 		password := "testpass"
 		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
 			DefaultOrgRole: string(org.RoleNone),
@@ -263,6 +301,84 @@ func TestIntegrationDataSourceByUID(t *testing.T) {
 
 		require.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
+
+	// Role-based access GET tests
+	t.Run("GET - Admin role succeeds", func(t *testing.T) {
+		dsUID := fmt.Sprintf("%s-ds-role-admin-get", modePrefix)
+		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Admin GET")
+
+		login := fmt.Sprintf("%s-admin-user-get", modePrefix)
+		password := "testpass"
+		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleAdmin),
+			Password:       user.Password(password),
+			Login:          login,
+			OrgID:          1,
+		})
+
+		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
+		resp, err := http.Get(url)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("GET - Editor role succeeds", func(t *testing.T) {
+		dsUID := fmt.Sprintf("%s-ds-role-editor-get", modePrefix)
+		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Editor GET")
+
+		login := fmt.Sprintf("%s-editor-user-get", modePrefix)
+		password := "testpass"
+		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
+			Password:       user.Password(password),
+			Login:          login,
+			OrgID:          1,
+		})
+
+		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
+		resp, err := http.Get(url)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("GET - Viewer role succeeds", func(t *testing.T) {
+		dsUID := fmt.Sprintf("%s-ds-role-viewer-get", modePrefix)
+		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Viewer GET")
+
+		login := fmt.Sprintf("%s-viewer-user-get", modePrefix)
+		password := "testpass"
+		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleViewer),
+			Password:       user.Password(password),
+			Login:          login,
+			OrgID:          1,
+		})
+
+		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
+		resp, err := http.Get(url)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+}
+
+// TestIntegrationDataSourcePutByUID tests the PUT /api/datasources/uid/:uid endpoint.
+// Currently only runs with legacy mode as K8s PUT handler is not yet implemented.
+func TestIntegrationDataSourcePutByUID(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
+	ctx := context.Background()
+	store := testEnv.SQLStore
+	cfg := testEnv.Cfg
 
 	t.Run("PUT - succeeds", func(t *testing.T) {
 		uid := "test-update-ds"
@@ -634,6 +750,117 @@ func TestIntegrationDataSourceByUID(t *testing.T) {
 		require.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
+	// Role-based PUT tests
+	t.Run("PUT - Admin role succeeds", func(t *testing.T) {
+		dsUID := "test-ds-role-admin-put"
+		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Admin PUT")
+
+		login := "admin-user-put"
+		password := "testpass"
+		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleAdmin),
+			Password:       user.Password(password),
+			Login:          login,
+			OrgID:          1,
+		})
+
+		updatePayload := map[string]any{
+			"name":   "Updated by Admin",
+			"type":   "prometheus",
+			"url":    "http://localhost:9091",
+			"access": "proxy",
+		}
+		body, _ := json.Marshal(updatePayload)
+
+		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
+		req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("PUT - Editor role denied", func(t *testing.T) {
+		dsUID := "test-ds-role-editor-put"
+		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Editor PUT")
+
+		login := "editor-user-put"
+		password := "testpass"
+		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
+			Password:       user.Password(password),
+			Login:          login,
+			OrgID:          1,
+		})
+
+		updatePayload := map[string]any{
+			"name":   "Updated by Editor",
+			"type":   "prometheus",
+			"url":    "http://localhost:9091",
+			"access": "proxy",
+		}
+		body, _ := json.Marshal(updatePayload)
+
+		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
+		req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("PUT - Viewer role denied", func(t *testing.T) {
+		dsUID := "test-ds-role-viewer-put"
+		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Viewer PUT")
+
+		login := "viewer-user-put"
+		password := "testpass"
+		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleViewer),
+			Password:       user.Password(password),
+			Login:          login,
+			OrgID:          1,
+		})
+
+		updatePayload := map[string]any{
+			"name":   "Updated by Viewer",
+			"type":   "prometheus",
+			"url":    "http://localhost:9091",
+			"access": "proxy",
+		}
+		body, _ := json.Marshal(updatePayload)
+
+		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
+		req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+}
+
+// TestIntegrationDataSourceDeleteByUID tests the DELETE /api/datasources/uid/:uid endpoint.
+// Currently only runs with legacy mode as K8s DELETE handler is not yet implemented.
+func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
+	ctx := context.Background()
+	store := testEnv.SQLStore
+	cfg := testEnv.Cfg
+
 	t.Run("DELETE - succeeds", func(t *testing.T) {
 		uid := "test-delete-ds"
 		_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx,
@@ -929,166 +1156,7 @@ func TestIntegrationDataSourceByUID(t *testing.T) {
 		require.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
-	// Role-based access tests
-	t.Run("GET - Admin role succeeds", func(t *testing.T) {
-		dsUID := "test-ds-role-admin-get"
-		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Admin GET")
-
-		login := "admin-user-get"
-		password := "testpass"
-		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       user.Password(password),
-			Login:          login,
-			OrgID:          1,
-		})
-
-		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-	})
-
-	t.Run("GET - Editor role succeeds", func(t *testing.T) {
-		dsUID := "test-ds-role-editor-get"
-		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Editor GET")
-
-		login := "editor-user-get"
-		password := "testpass"
-		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleEditor),
-			Password:       user.Password(password),
-			Login:          login,
-			OrgID:          1,
-		})
-
-		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-	})
-
-	t.Run("GET - Viewer role succeeds", func(t *testing.T) {
-		dsUID := "test-ds-role-viewer-get"
-		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Viewer GET")
-
-		login := "viewer-user-get"
-		password := "testpass"
-		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleViewer),
-			Password:       user.Password(password),
-			Login:          login,
-			OrgID:          1,
-		})
-
-		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
-		resp, err := http.Get(url)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-	})
-
-	t.Run("PUT - Admin role succeeds", func(t *testing.T) {
-		dsUID := "test-ds-role-admin-put"
-		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Admin PUT")
-
-		login := "admin-user-put"
-		password := "testpass"
-		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleAdmin),
-			Password:       user.Password(password),
-			Login:          login,
-			OrgID:          1,
-		})
-
-		updatePayload := map[string]any{
-			"name":   "Updated by Admin",
-			"type":   "prometheus",
-			"url":    "http://localhost:9091",
-			"access": "proxy",
-		}
-		body, _ := json.Marshal(updatePayload)
-
-		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
-		req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-	})
-
-	t.Run("PUT - Editor role denied", func(t *testing.T) {
-		dsUID := "test-ds-role-editor-put"
-		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Editor PUT")
-
-		login := "editor-user-put"
-		password := "testpass"
-		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleEditor),
-			Password:       user.Password(password),
-			Login:          login,
-			OrgID:          1,
-		})
-
-		updatePayload := map[string]any{
-			"name":   "Updated by Editor",
-			"type":   "prometheus",
-			"url":    "http://localhost:9091",
-			"access": "proxy",
-		}
-		body, _ := json.Marshal(updatePayload)
-
-		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
-		req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
-	})
-
-	t.Run("PUT - Viewer role denied", func(t *testing.T) {
-		dsUID := "test-ds-role-viewer-put"
-		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Viewer PUT")
-
-		login := "viewer-user-put"
-		password := "testpass"
-		_ = tests.CreateUser(t, store, cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(org.RoleViewer),
-			Password:       user.Password(password),
-			Login:          login,
-			OrgID:          1,
-		})
-
-		updatePayload := map[string]any{
-			"name":   "Updated by Viewer",
-			"type":   "prometheus",
-			"url":    "http://localhost:9091",
-			"access": "proxy",
-		}
-		body, _ := json.Marshal(updatePayload)
-
-		url := fmt.Sprintf("http://%s:%s@%s/api/datasources/uid/%s", login, password, grafanaListeningAddr, dsUID)
-		req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(body))
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-
-		require.Equal(t, http.StatusForbidden, resp.StatusCode)
-	})
-
+	// Role-based DELETE tests
 	t.Run("DELETE - Admin role succeeds", func(t *testing.T) {
 		dsUID := "test-ds-role-admin-delete"
 		createTestDataSource(t, ctx, testEnv.Server.HTTPServer.DataSourcesService, dsUID, "Test DS for Admin DELETE")

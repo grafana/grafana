@@ -1461,19 +1461,14 @@
     },
     {
       "metadata": {
-        "name": "datasourceRemoveDeprecatedIdApi",
-        "resourceVersion": "1769095435732",
-        "creationTimestamp": "2026-01-22T15:23:04Z",
-        "deletionTimestamp": "2026-01-22T15:24:49Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-22 15:23:55.732998 +0000 UTC"
-        }
+        "name": "datasourcesRerouteLegacyCRUDAPIs",
+        "resourceVersion": "1768836802577",
+        "creationTimestamp": "2026-01-19T15:33:22Z"
       },
       "spec": {
-        "description": "Does not registers datasource apis that use the numeric id",
+        "description": "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
-        "requiresRestart": true,
         "expression": "false"
       }
     },
