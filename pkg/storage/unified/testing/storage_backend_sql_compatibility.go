@@ -1390,406 +1390,26 @@ func runTestSearchOperationsCompatibility(t *testing.T, sqlBackend, kvBackend re
 	// This simulates the transitional state where storage-api migrates to sqlkv
 	// while search-api continues using sqlbackend
 	t.Run("Search with SQL backend, Storage mixed", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
-		namespace := nsPrefix + "-search-sql"
-
-		// Create search server with SQL backend (search-api)
-		searchServer := NewTestResourceServerWithSearch(t, sqlBackend)
-
-		// Create storage servers WITHOUT search (storage-api)
-		storageSql := createStorageServer(t, sqlBackend)
-		storageKv := createStorageServer(t, kvBackend)
-
-		// Track resource versions for update/delete phases
-		resourceVersions := make(map[string]int64)
-
-		// Phase A: SQL storage creates resources with "Alpha" prefix
-		t.Run("Phase A: SQL storage creates Alpha resources", func(t *testing.T) {
-			// Create 4 playlists with Alpha prefix
-			for i := 1; i <= 4; i++ {
-				name := fmt.Sprintf("sql-playlist-alpha-%d", i)
-				created := createPlaylistResource(t, storageSql, ctx, PlaylistResourceOptions{
-					Name:       name,
-					Namespace:  namespace,
-					UID:        fmt.Sprintf("sql-uid-alpha-%d", i),
-					Generation: 1,
-					Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
-					Folder:     "",
-				})
-				resourceVersions[name] = created.ResourceVersion
-			}
-
-			// Verify search server sees them
-			expectedNames := []string{
-				"sql-playlist-alpha-1", "sql-playlist-alpha-2",
-				"sql-playlist-alpha-3", "sql-playlist-alpha-4",
-			}
-			verifySearchServerStats(t, searchServer, namespace, 4)
-			verifySearchServerResults(t, searchServer, namespace, "", 4, expectedNames)
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 4, expectedNames)
-		})
-
-		// Phase B: KV storage creates resources with "Beta" prefix
-		t.Run("Phase B: KV storage creates Beta resources", func(t *testing.T) {
-			// Create 4 playlists with Beta prefix
-			for i := 1; i <= 4; i++ {
-				name := fmt.Sprintf("kv-playlist-beta-%d", i)
-				created := createPlaylistResource(t, storageKv, ctx, PlaylistResourceOptions{
-					Name:       name,
-					Namespace:  namespace,
-					UID:        fmt.Sprintf("kv-uid-beta-%d", i),
-					Generation: 1,
-					Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
-					Folder:     "",
-				})
-				resourceVersions[name] = created.ResourceVersion
-			}
-
-			// Verify search server sees all 8 (4 Alpha + 4 Beta)
-			allNames := []string{
-				"sql-playlist-alpha-1", "sql-playlist-alpha-2", "sql-playlist-alpha-3", "sql-playlist-alpha-4",
-				"kv-playlist-beta-1", "kv-playlist-beta-2", "kv-playlist-beta-3", "kv-playlist-beta-4",
-			}
-			alphaNames := []string{"sql-playlist-alpha-1", "sql-playlist-alpha-2", "sql-playlist-alpha-3", "sql-playlist-alpha-4"}
-			betaNames := []string{"kv-playlist-beta-1", "kv-playlist-beta-2", "kv-playlist-beta-3", "kv-playlist-beta-4"}
-
-			verifySearchServerStats(t, searchServer, namespace, 8)
-			verifySearchServerResults(t, searchServer, namespace, "", 8, allNames)
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 4, alphaNames)
-			verifySearchServerResults(t, searchServer, namespace, "Beta", 4, betaNames)
-		})
-
-		// Phase C: SQL storage creates more Alpha resources
-		t.Run("Phase C: SQL storage creates more Alpha resources", func(t *testing.T) {
-			// Create 3 more playlists with Alpha prefix
-			for i := 5; i <= 7; i++ {
-				name := fmt.Sprintf("sql-playlist-alpha-%d", i)
-				created := createPlaylistResource(t, storageSql, ctx, PlaylistResourceOptions{
-					Name:       name,
-					Namespace:  namespace,
-					UID:        fmt.Sprintf("sql-uid-alpha-%d", i),
-					Generation: 1,
-					Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
-					Folder:     "",
-				})
-				resourceVersions[name] = created.ResourceVersion
-			}
-
-			// Verify search server sees all 11 (7 Alpha + 4 Beta)
-			alphaNames := []string{
-				"sql-playlist-alpha-1", "sql-playlist-alpha-2", "sql-playlist-alpha-3", "sql-playlist-alpha-4",
-				"sql-playlist-alpha-5", "sql-playlist-alpha-6", "sql-playlist-alpha-7",
-			}
-			verifySearchServerStats(t, searchServer, namespace, 11)
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 7, alphaNames)
-		})
-
-		// Phase D: KV storage creates more Beta resources
-		t.Run("Phase D: KV storage creates more Beta resources", func(t *testing.T) {
-			// Create 3 more playlists with Beta prefix
-			for i := 5; i <= 7; i++ {
-				name := fmt.Sprintf("kv-playlist-beta-%d", i)
-				created := createPlaylistResource(t, storageKv, ctx, PlaylistResourceOptions{
-					Name:       name,
-					Namespace:  namespace,
-					UID:        fmt.Sprintf("kv-uid-beta-%d", i),
-					Generation: 1,
-					Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
-					Folder:     "",
-				})
-				resourceVersions[name] = created.ResourceVersion
-			}
-
-			// Verify search server sees all 14 (7 Alpha + 7 Beta)
-			betaNames := []string{
-				"kv-playlist-beta-1", "kv-playlist-beta-2", "kv-playlist-beta-3", "kv-playlist-beta-4",
-				"kv-playlist-beta-5", "kv-playlist-beta-6", "kv-playlist-beta-7",
-			}
-			verifySearchServerStats(t, searchServer, namespace, 14)
-			verifySearchServerResults(t, searchServer, namespace, "Beta", 7, betaNames)
-		})
-
-		// Phase E: Update resources and verify search reflects changes
-		t.Run("Phase E: Update resources and verify search", func(t *testing.T) {
-			// Update sql-playlist-alpha-1 with new title containing "Updated"
-			name := "sql-playlist-alpha-1"
-			updated := updatePlaylistResource(t, storageSql, ctx, PlaylistResourceOptions{
-				Name:       name,
-				Namespace:  namespace,
-				UID:        "sql-uid-alpha-1",
-				Generation: 2,
-				Title:      "Updated Alpha Playlist One",
-				Folder:     "",
-			}, resourceVersions[name])
-			resourceVersions[name] = updated.ResourceVersion
-
-			// Update kv-playlist-beta-1 with new title containing "Updated"
-			name = "kv-playlist-beta-1"
-			updated = updatePlaylistResource(t, storageKv, ctx, PlaylistResourceOptions{
-				Name:       name,
-				Namespace:  namespace,
-				UID:        "kv-uid-beta-1",
-				Generation: 2,
-				Title:      "Updated Beta Playlist One",
-				Folder:     "",
-			}, resourceVersions[name])
-			resourceVersions[name] = updated.ResourceVersion
-
-			// Verify total count remains 14
-			verifySearchServerStats(t, searchServer, namespace, 14)
-
-			// Verify search for "Updated" returns 2 results
-			verifySearchServerResults(t, searchServer, namespace, "Updated", 2, []string{
-				"sql-playlist-alpha-1", "kv-playlist-beta-1",
-			})
-
-			// Verify Alpha and Beta counts remain correct
-			alphaNames := []string{
-				"sql-playlist-alpha-1", "sql-playlist-alpha-2", "sql-playlist-alpha-3", "sql-playlist-alpha-4",
-				"sql-playlist-alpha-5", "sql-playlist-alpha-6", "sql-playlist-alpha-7",
-			}
-			betaNames := []string{
-				"kv-playlist-beta-1", "kv-playlist-beta-2", "kv-playlist-beta-3", "kv-playlist-beta-4",
-				"kv-playlist-beta-5", "kv-playlist-beta-6", "kv-playlist-beta-7",
-			}
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 7, alphaNames)
-			verifySearchServerResults(t, searchServer, namespace, "Beta", 7, betaNames)
-		})
-
-		// Phase F: Delete resources and verify search reflects removal
-		t.Run("Phase F: Delete resources and verify search", func(t *testing.T) {
-			// Delete sql-playlist-alpha-7 (last Alpha created by SQL)
-			name := "sql-playlist-alpha-7"
-			deletePlaylistResource(t, storageSql, ctx, namespace, name, resourceVersions[name])
-
-			// Delete kv-playlist-beta-7 (last Beta created by KV)
-			name = "kv-playlist-beta-7"
-			deletePlaylistResource(t, storageKv, ctx, namespace, name, resourceVersions[name])
-
-			// Verify total count is now 12 (14 - 2 deleted)
-			verifySearchServerStats(t, searchServer, namespace, 12)
-
-			// Verify Alpha count is now 6 (7 - 1 deleted)
-			alphaNames := []string{
-				"sql-playlist-alpha-1", "sql-playlist-alpha-2", "sql-playlist-alpha-3", "sql-playlist-alpha-4",
-				"sql-playlist-alpha-5", "sql-playlist-alpha-6",
-			}
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 6, alphaNames)
-
-			// Verify Beta count is now 6 (7 - 1 deleted)
-			betaNames := []string{
-				"kv-playlist-beta-1", "kv-playlist-beta-2", "kv-playlist-beta-3", "kv-playlist-beta-4",
-				"kv-playlist-beta-5", "kv-playlist-beta-6",
-			}
-			verifySearchServerResults(t, searchServer, namespace, "Beta", 6, betaNames)
-
-			// Verify "Updated" search still returns 2 results (updated resources weren't deleted)
-			verifySearchServerResults(t, searchServer, namespace, "Updated", 2, []string{
-				"sql-playlist-alpha-1", "kv-playlist-beta-1",
-			})
+		runSearchCompatibilityScenario(t, searchCompatibilityTestConfig{
+			namespace:     nsPrefix + "-search-sql",
+			searchBackend: sqlBackend,
+			alphaStorage:  createStorageServer(t, sqlBackend),
+			betaStorage:   createStorageServer(t, kvBackend),
+			alphaPrefix:   "sql",
+			betaPrefix:    "kv",
 		})
 	})
 
 	// Test 2: Phase 2 Final State - All servers use KV backend
 	// This simulates the final state after complete migration to sqlkv
 	t.Run("Search with KV backend, Storage KV", func(t *testing.T) {
-		ctx := testutil.NewDefaultTestContext(t)
-		namespace := nsPrefix + "-search-kv"
-
-		// Create search server with KV backend (search-api)
-		searchServer := NewTestResourceServerWithSearch(t, kvBackend)
-
-		// Create two storage servers with KV backend (storage-api)
-		storageKv1 := createStorageServer(t, kvBackend)
-		storageKv2 := createStorageServer(t, kvBackend)
-
-		// Track resource versions for update/delete phases
-		resourceVersions := make(map[string]int64)
-
-		// Phase A: First KV storage creates resources with "Alpha" prefix
-		t.Run("Phase A: KV storage 1 creates Alpha resources", func(t *testing.T) {
-			// Create 4 playlists with Alpha prefix
-			for i := 1; i <= 4; i++ {
-				name := fmt.Sprintf("kv1-playlist-alpha-%d", i)
-				created := createPlaylistResource(t, storageKv1, ctx, PlaylistResourceOptions{
-					Name:       name,
-					Namespace:  namespace,
-					UID:        fmt.Sprintf("kv1-uid-alpha-%d", i),
-					Generation: 1,
-					Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
-					Folder:     "",
-				})
-				resourceVersions[name] = created.ResourceVersion
-			}
-
-			// Verify search server sees them
-			expectedNames := []string{
-				"kv1-playlist-alpha-1", "kv1-playlist-alpha-2",
-				"kv1-playlist-alpha-3", "kv1-playlist-alpha-4",
-			}
-			verifySearchServerStats(t, searchServer, namespace, 4)
-			verifySearchServerResults(t, searchServer, namespace, "", 4, expectedNames)
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 4, expectedNames)
-		})
-
-		// Phase B: Second KV storage creates resources with "Beta" prefix
-		t.Run("Phase B: KV storage 2 creates Beta resources", func(t *testing.T) {
-			// Create 4 playlists with Beta prefix
-			for i := 1; i <= 4; i++ {
-				name := fmt.Sprintf("kv2-playlist-beta-%d", i)
-				created := createPlaylistResource(t, storageKv2, ctx, PlaylistResourceOptions{
-					Name:       name,
-					Namespace:  namespace,
-					UID:        fmt.Sprintf("kv2-uid-beta-%d", i),
-					Generation: 1,
-					Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
-					Folder:     "",
-				})
-				resourceVersions[name] = created.ResourceVersion
-			}
-
-			// Verify search server sees all 8 (4 Alpha + 4 Beta)
-			allNames := []string{
-				"kv1-playlist-alpha-1", "kv1-playlist-alpha-2", "kv1-playlist-alpha-3", "kv1-playlist-alpha-4",
-				"kv2-playlist-beta-1", "kv2-playlist-beta-2", "kv2-playlist-beta-3", "kv2-playlist-beta-4",
-			}
-			alphaNames := []string{"kv1-playlist-alpha-1", "kv1-playlist-alpha-2", "kv1-playlist-alpha-3", "kv1-playlist-alpha-4"}
-			betaNames := []string{"kv2-playlist-beta-1", "kv2-playlist-beta-2", "kv2-playlist-beta-3", "kv2-playlist-beta-4"}
-
-			verifySearchServerStats(t, searchServer, namespace, 8)
-			verifySearchServerResults(t, searchServer, namespace, "", 8, allNames)
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 4, alphaNames)
-			verifySearchServerResults(t, searchServer, namespace, "Beta", 4, betaNames)
-		})
-
-		// Phase C: First KV storage creates more Alpha resources
-		t.Run("Phase C: KV storage 1 creates more Alpha resources", func(t *testing.T) {
-			// Create 3 more playlists with Alpha prefix
-			for i := 5; i <= 7; i++ {
-				name := fmt.Sprintf("kv1-playlist-alpha-%d", i)
-				created := createPlaylistResource(t, storageKv1, ctx, PlaylistResourceOptions{
-					Name:       name,
-					Namespace:  namespace,
-					UID:        fmt.Sprintf("kv1-uid-alpha-%d", i),
-					Generation: 1,
-					Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
-					Folder:     "",
-				})
-				resourceVersions[name] = created.ResourceVersion
-			}
-
-			// Verify search server sees all 11 (7 Alpha + 4 Beta)
-			alphaNames := []string{
-				"kv1-playlist-alpha-1", "kv1-playlist-alpha-2", "kv1-playlist-alpha-3", "kv1-playlist-alpha-4",
-				"kv1-playlist-alpha-5", "kv1-playlist-alpha-6", "kv1-playlist-alpha-7",
-			}
-			verifySearchServerStats(t, searchServer, namespace, 11)
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 7, alphaNames)
-		})
-
-		// Phase D: Second KV storage creates more Beta resources
-		t.Run("Phase D: KV storage 2 creates more Beta resources", func(t *testing.T) {
-			// Create 3 more playlists with Beta prefix
-			for i := 5; i <= 7; i++ {
-				name := fmt.Sprintf("kv2-playlist-beta-%d", i)
-				created := createPlaylistResource(t, storageKv2, ctx, PlaylistResourceOptions{
-					Name:       name,
-					Namespace:  namespace,
-					UID:        fmt.Sprintf("kv2-uid-beta-%d", i),
-					Generation: 1,
-					Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
-					Folder:     "",
-				})
-				resourceVersions[name] = created.ResourceVersion
-			}
-
-			// Verify search server sees all 14 (7 Alpha + 7 Beta)
-			betaNames := []string{
-				"kv2-playlist-beta-1", "kv2-playlist-beta-2", "kv2-playlist-beta-3", "kv2-playlist-beta-4",
-				"kv2-playlist-beta-5", "kv2-playlist-beta-6", "kv2-playlist-beta-7",
-			}
-			verifySearchServerStats(t, searchServer, namespace, 14)
-			verifySearchServerResults(t, searchServer, namespace, "Beta", 7, betaNames)
-		})
-
-		// Phase E: Update resources and verify search reflects changes
-		t.Run("Phase E: Update resources and verify search", func(t *testing.T) {
-			// Update kv1-playlist-alpha-1 with new title containing "Updated"
-			name := "kv1-playlist-alpha-1"
-			updated := updatePlaylistResource(t, storageKv1, ctx, PlaylistResourceOptions{
-				Name:       name,
-				Namespace:  namespace,
-				UID:        "kv1-uid-alpha-1",
-				Generation: 2,
-				Title:      "Updated Alpha Playlist One",
-				Folder:     "",
-			}, resourceVersions[name])
-			resourceVersions[name] = updated.ResourceVersion
-
-			// Update kv2-playlist-beta-1 with new title containing "Updated"
-			name = "kv2-playlist-beta-1"
-			updated = updatePlaylistResource(t, storageKv2, ctx, PlaylistResourceOptions{
-				Name:       name,
-				Namespace:  namespace,
-				UID:        "kv2-uid-beta-1",
-				Generation: 2,
-				Title:      "Updated Beta Playlist One",
-				Folder:     "",
-			}, resourceVersions[name])
-			resourceVersions[name] = updated.ResourceVersion
-
-			// Verify total count remains 14
-			verifySearchServerStats(t, searchServer, namespace, 14)
-
-			// Verify search for "Updated" returns 2 results
-			verifySearchServerResults(t, searchServer, namespace, "Updated", 2, []string{
-				"kv1-playlist-alpha-1", "kv2-playlist-beta-1",
-			})
-
-			// Verify Alpha and Beta counts remain correct
-			alphaNames := []string{
-				"kv1-playlist-alpha-1", "kv1-playlist-alpha-2", "kv1-playlist-alpha-3", "kv1-playlist-alpha-4",
-				"kv1-playlist-alpha-5", "kv1-playlist-alpha-6", "kv1-playlist-alpha-7",
-			}
-			betaNames := []string{
-				"kv2-playlist-beta-1", "kv2-playlist-beta-2", "kv2-playlist-beta-3", "kv2-playlist-beta-4",
-				"kv2-playlist-beta-5", "kv2-playlist-beta-6", "kv2-playlist-beta-7",
-			}
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 7, alphaNames)
-			verifySearchServerResults(t, searchServer, namespace, "Beta", 7, betaNames)
-		})
-
-		// Phase F: Delete resources and verify search reflects removal
-		t.Run("Phase F: Delete resources and verify search", func(t *testing.T) {
-			// Delete kv1-playlist-alpha-7 (last Alpha created by KV1)
-			name := "kv1-playlist-alpha-7"
-			deletePlaylistResource(t, storageKv1, ctx, namespace, name, resourceVersions[name])
-
-			// Delete kv2-playlist-beta-7 (last Beta created by KV2)
-			name = "kv2-playlist-beta-7"
-			deletePlaylistResource(t, storageKv2, ctx, namespace, name, resourceVersions[name])
-
-			// Verify total count is now 12 (14 - 2 deleted)
-			verifySearchServerStats(t, searchServer, namespace, 12)
-
-			// Verify Alpha count is now 6 (7 - 1 deleted)
-			alphaNames := []string{
-				"kv1-playlist-alpha-1", "kv1-playlist-alpha-2", "kv1-playlist-alpha-3", "kv1-playlist-alpha-4",
-				"kv1-playlist-alpha-5", "kv1-playlist-alpha-6",
-			}
-			verifySearchServerResults(t, searchServer, namespace, "Alpha", 6, alphaNames)
-
-			// Verify Beta count is now 6 (7 - 1 deleted)
-			betaNames := []string{
-				"kv2-playlist-beta-1", "kv2-playlist-beta-2", "kv2-playlist-beta-3", "kv2-playlist-beta-4",
-				"kv2-playlist-beta-5", "kv2-playlist-beta-6",
-			}
-			verifySearchServerResults(t, searchServer, namespace, "Beta", 6, betaNames)
-
-			// Verify "Updated" search still returns 2 results (updated resources weren't deleted)
-			verifySearchServerResults(t, searchServer, namespace, "Updated", 2, []string{
-				"kv1-playlist-alpha-1", "kv2-playlist-beta-1",
-			})
+		runSearchCompatibilityScenario(t, searchCompatibilityTestConfig{
+			namespace:     nsPrefix + "-search-kv",
+			searchBackend: kvBackend,
+			alphaStorage:  createStorageServer(t, kvBackend),
+			betaStorage:   createStorageServer(t, kvBackend),
+			alphaPrefix:   "kv1",
+			betaPrefix:    "kv2",
 		})
 	})
 }
@@ -1801,4 +1421,210 @@ func numberToWord(n int) string {
 		return words[n]
 	}
 	return fmt.Sprintf("%d", n)
+}
+
+// searchCompatibilityTestConfig defines configuration for a search compatibility test scenario
+type searchCompatibilityTestConfig struct {
+	namespace     string                  // namespace for test isolation
+	searchBackend resource.StorageBackend // backend used for the search server
+	alphaStorage  resource.ResourceServer // storage server for Alpha resources
+	betaStorage   resource.ResourceServer // storage server for Beta resources
+	alphaPrefix   string                  // prefix for Alpha resource names (e.g., "sql", "kv1")
+	betaPrefix    string                  // prefix for Beta resource names (e.g., "kv", "kv2")
+}
+
+// runSearchCompatibilityScenario runs a complete search compatibility test scenario
+// with create, update, and delete phases
+func runSearchCompatibilityScenario(t *testing.T, cfg searchCompatibilityTestConfig) {
+	t.Helper()
+	ctx := testutil.NewDefaultTestContext(t)
+
+	// Create search server with the specified backend
+	searchServer := NewTestResourceServerWithSearch(t, cfg.searchBackend)
+
+	// Track resource versions for update/delete phases
+	resourceVersions := make(map[string]int64)
+
+	// Helper to generate resource name
+	alphaName := func(i int) string {
+		return fmt.Sprintf("%s-playlist-alpha-%d", cfg.alphaPrefix, i)
+	}
+	betaName := func(i int) string {
+		return fmt.Sprintf("%s-playlist-beta-%d", cfg.betaPrefix, i)
+	}
+
+	// Phase A: Alpha storage creates resources with "Alpha" prefix
+	t.Run("Phase A: Create Alpha resources", func(t *testing.T) {
+		for i := 1; i <= 4; i++ {
+			name := alphaName(i)
+			created := createPlaylistResource(t, cfg.alphaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-alpha-%d", cfg.alphaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		expectedNames := []string{alphaName(1), alphaName(2), alphaName(3), alphaName(4)}
+		verifySearchServerStats(t, searchServer, cfg.namespace, 4)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "", 4, expectedNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 4, expectedNames)
+	})
+
+	// Phase B: Beta storage creates resources with "Beta" prefix
+	t.Run("Phase B: Create Beta resources", func(t *testing.T) {
+		for i := 1; i <= 4; i++ {
+			name := betaName(i)
+			created := createPlaylistResource(t, cfg.betaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-beta-%d", cfg.betaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		allNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			betaName(1), betaName(2), betaName(3), betaName(4),
+		}
+		alphaNames := []string{alphaName(1), alphaName(2), alphaName(3), alphaName(4)}
+		betaNames := []string{betaName(1), betaName(2), betaName(3), betaName(4)}
+
+		verifySearchServerStats(t, searchServer, cfg.namespace, 8)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "", 8, allNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 4, alphaNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 4, betaNames)
+	})
+
+	// Phase C: Alpha storage creates more Alpha resources
+	t.Run("Phase C: Create more Alpha resources", func(t *testing.T) {
+		for i := 5; i <= 7; i++ {
+			name := alphaName(i)
+			created := createPlaylistResource(t, cfg.alphaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-alpha-%d", cfg.alphaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		alphaNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			alphaName(5), alphaName(6), alphaName(7),
+		}
+		verifySearchServerStats(t, searchServer, cfg.namespace, 11)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 7, alphaNames)
+	})
+
+	// Phase D: Beta storage creates more Beta resources
+	t.Run("Phase D: Create more Beta resources", func(t *testing.T) {
+		for i := 5; i <= 7; i++ {
+			name := betaName(i)
+			created := createPlaylistResource(t, cfg.betaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-beta-%d", cfg.betaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		betaNames := []string{
+			betaName(1), betaName(2), betaName(3), betaName(4),
+			betaName(5), betaName(6), betaName(7),
+		}
+		verifySearchServerStats(t, searchServer, cfg.namespace, 14)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 7, betaNames)
+	})
+
+	// Phase E: Update resources and verify search reflects changes
+	t.Run("Phase E: Update resources and verify search", func(t *testing.T) {
+		// Update first Alpha resource with new title containing "Updated"
+		name := alphaName(1)
+		updated := updatePlaylistResource(t, cfg.alphaStorage, ctx, PlaylistResourceOptions{
+			Name:       name,
+			Namespace:  cfg.namespace,
+			UID:        fmt.Sprintf("%s-uid-alpha-1", cfg.alphaPrefix),
+			Generation: 2,
+			Title:      "Updated Alpha Playlist One",
+			Folder:     "",
+		}, resourceVersions[name])
+		resourceVersions[name] = updated.ResourceVersion
+
+		// Update first Beta resource with new title containing "Updated"
+		name = betaName(1)
+		updated = updatePlaylistResource(t, cfg.betaStorage, ctx, PlaylistResourceOptions{
+			Name:       name,
+			Namespace:  cfg.namespace,
+			UID:        fmt.Sprintf("%s-uid-beta-1", cfg.betaPrefix),
+			Generation: 2,
+			Title:      "Updated Beta Playlist One",
+			Folder:     "",
+		}, resourceVersions[name])
+		resourceVersions[name] = updated.ResourceVersion
+
+		// Verify total count remains 14
+		verifySearchServerStats(t, searchServer, cfg.namespace, 14)
+
+		// Verify search for "Updated" returns 2 results
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Updated", 2, []string{
+			alphaName(1), betaName(1),
+		})
+
+		// Verify Alpha and Beta counts remain correct
+		alphaNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			alphaName(5), alphaName(6), alphaName(7),
+		}
+		betaNames := []string{
+			betaName(1), betaName(2), betaName(3), betaName(4),
+			betaName(5), betaName(6), betaName(7),
+		}
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 7, alphaNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 7, betaNames)
+	})
+
+	// Phase F: Delete resources and verify search reflects removal
+	t.Run("Phase F: Delete resources and verify search", func(t *testing.T) {
+		// Delete last Alpha resource
+		name := alphaName(7)
+		deletePlaylistResource(t, cfg.alphaStorage, ctx, cfg.namespace, name, resourceVersions[name])
+
+		// Delete last Beta resource
+		name = betaName(7)
+		deletePlaylistResource(t, cfg.betaStorage, ctx, cfg.namespace, name, resourceVersions[name])
+
+		// Verify total count is now 12 (14 - 2 deleted)
+		verifySearchServerStats(t, searchServer, cfg.namespace, 12)
+
+		// Verify Alpha count is now 6 (7 - 1 deleted)
+		alphaNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			alphaName(5), alphaName(6),
+		}
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 6, alphaNames)
+
+		// Verify Beta count is now 6 (7 - 1 deleted)
+		betaNames := []string{
+			betaName(1), betaName(2), betaName(3), betaName(4),
+			betaName(5), betaName(6),
+		}
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 6, betaNames)
+
+		// Verify "Updated" search still returns 2 results (updated resources weren't deleted)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Updated", 2, []string{
+			alphaName(1), betaName(1),
+		})
+	})
 }
