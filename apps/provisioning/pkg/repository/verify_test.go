@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -68,11 +68,11 @@ func TestGetRepositoriesInNamespace(t *testing.T) {
 
 func TestVerifyAgainstExisting(t *testing.T) {
 	tests := []struct {
-		name              string
-		cfg               *provisioning.Repository
-		existingRepos     []provisioning.Repository
-		wantErr           bool
-		wantErrContains   string
+		name            string
+		cfg             *provisioning.Repository
+		existingRepos   []provisioning.Repository
+		wantErr         bool
+		wantErrContains string
 	}{
 		{
 			name: "allows first repository with instance sync",

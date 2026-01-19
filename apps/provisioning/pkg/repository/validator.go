@@ -162,14 +162,14 @@ func FromFieldError(err *field.Error) *provisioning.TestResults {
 //
 // Note: VerifyAgainstExistingRepositories type is defined in tester.go
 type AdmissionValidator struct {
-	validator                        RepositoryValidator
+	validator                         RepositoryValidator
 	verifyAgainstExistingRepositories VerifyAgainstExistingRepositories
 }
 
 // NewAdmissionValidator creates a new repository admission validator
 func NewAdmissionValidator(validator RepositoryValidator, verifyFn VerifyAgainstExistingRepositories) *AdmissionValidator {
 	return &AdmissionValidator{
-		validator:                        validator,
+		validator:                         validator,
 		verifyAgainstExistingRepositories: verifyFn,
 	}
 }
