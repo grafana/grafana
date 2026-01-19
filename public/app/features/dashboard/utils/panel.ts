@@ -1,12 +1,19 @@
 import { isString as _isString } from 'lodash';
 
-import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel, dateTimeAsMoment } from '@grafana/data';
+import {
+  TimeRange,
+  AppEvents,
+  rangeUtil,
+  dateMath,
+  PanelModel as IPanelModel,
+  dateTimeAsMoment,
+  store,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
-import store from 'app/core/store';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
