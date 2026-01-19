@@ -73,33 +73,82 @@ jobs:
           header: coverage-report-${{ matrix.codeowner }}
           delete: true
 
-  generate-slugs:
-    name: Generate slug for ${{ matrix.codeowner }}
-    needs: setup
+  coverage:
+    name: Coverage ${{ matrix.branch }} - ${{ matrix.codeowner }}
+    needs: [setup, detect-changes]
     if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
         codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
+        branch: [pr, main]
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout PR branch to access script
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - name: Setup Node.js
+      - name: Setup Node.js for manifest generation
         uses: ./.github/actions/setup-node
 
-      - name: Generate slug for ${{ matrix.codeowner }}
+      - name: Install dependencies for manifest generation
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Generate codeowners manifest
+        run: yarn codeowners-manifest
+
+      - name: Check if codeowner affected by changes
+        id: check-affected
+        run: |
+          AFFECTED=$(node scripts/check-codeowner-affected.js "${{ matrix.codeowner }}" ${{ needs.detect-changes.outputs.changed-files }})
+          echo "affected=$AFFECTED" >> $GITHUB_OUTPUT
+          echo "Codeowner ${{ matrix.codeowner }} affected: $AFFECTED"
+
+      - name: Checkout target branch
+        if: steps.check-affected.outputs.affected == 'true'
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ matrix.branch == 'main' && 'main' || github.ref }}
+          persist-credentials: false
+
+      - name: Setup Node.js
+        if: steps.check-affected.outputs.affected == 'true'
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        if: steps.check-affected.outputs.affected == 'true'
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Get codeowner slug
+        if: steps.check-affected.outputs.affected == 'true'
+        id: codeowner-slug
         run: |
           SLUG=$(node -e "
             const { createCodeownerSlug } = require('./scripts/codeowners-manifest/utils.js');
             console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
           ")
+          echo "slug=$SLUG" >> $GITHUB_OUTPUT
 
-          echo "=== Codeowner Slug Generated ==="
-          echo "Codeowner: ${{ matrix.codeowner }}"
-          echo "Slug: $SLUG"
-          echo "================================"
+      - name: Run coverage for ${{ matrix.codeowner }}
+        if: steps.check-affected.outputs.affected == 'true'
+        run: yarn test:coverage:by-codeowner ${{ matrix.codeowner }}
+        env:
+          SHOULD_OPEN_COVERAGE_REPORT: 'false'
+          CI: 'true'
+
+      - name: Upload coverage summary
+        if: steps.check-affected.outputs.affected == 'true'
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-${{ matrix.branch }}-${{ steps.codeowner-slug.outputs.slug }}
+          path: coverage-summary.json
+          retention-days: 1
