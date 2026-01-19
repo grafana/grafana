@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 
 import {
   Connection,
-  ConnectionSpec,
   ConnectionSecure,
+  ConnectionSpec,
   useCreateConnectionMutation,
   useReplaceConnectionMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
@@ -15,7 +15,7 @@ export function useCreateOrUpdateConnection(name?: string) {
   const updateOrCreate = useCallback(
     async (data: ConnectionSpec, privateKey?: string) => {
       const secure: ConnectionSecure | undefined = privateKey?.length
-        ? { privateKey: { create: privateKey } }
+        ? { privateKey: { create: btoa(privateKey) } }
         : undefined;
 
       const connection: Connection = {

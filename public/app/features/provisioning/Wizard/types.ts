@@ -1,6 +1,6 @@
 import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StatusInfo, RepositoryFormData } from '../types';
+import { RepositoryFormData, StatusInfo } from '../types';
 
 export type WizardStep = 'authType' | 'githubApp' | 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 
@@ -24,9 +24,6 @@ export interface WizardFormData {
   githubAppMode?: GitHubAppMode;
   githubApp?: {
     connectionName?: string;
-    appID?: string;
-    installationID?: string;
-    privateKey?: string;
   };
 }
 
