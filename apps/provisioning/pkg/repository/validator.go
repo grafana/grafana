@@ -7,10 +7,13 @@ import (
 	"slices"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/admission"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type RepositoryValidator struct {
@@ -146,4 +149,87 @@ func FromFieldError(err *field.Error) *provisioning.TestResults {
 			Detail: err.Detail,
 		}},
 	}
+}
+
+// AdmissionValidator handles validation for Repository resources during admission
+// Note: VerifyAgainstExistingRepositories type is defined in tester.go
+type AdmissionValidator struct {
+	validator                        RepositoryValidator
+	verifyAgainstExistingRepositories VerifyAgainstExistingRepositories
+}
+
+// NewAdmissionValidator creates a new repository admission validator
+func NewAdmissionValidator(validator RepositoryValidator, verifyFn VerifyAgainstExistingRepositories) *AdmissionValidator {
+	return &AdmissionValidator{
+		validator:                        validator,
+		verifyAgainstExistingRepositories: verifyFn,
+	}
+}
+
+// Validate validates Repository resources during admission
+func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+	if obj == nil {
+		return nil
+	}
+
+	// Do not validate objects we are trying to delete
+	meta, _ := utils.MetaAccessor(obj)
+	if meta.GetDeletionTimestamp() != nil {
+		return nil
+	}
+
+	r, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return fmt.Errorf("expected repository configuration, got %T", obj)
+	}
+
+	// Copy previous values if they exist
+	if a.GetOldObject() != nil {
+		if oldRepo, ok := a.GetOldObject().(*provisioning.Repository); ok {
+			CopySecureValues(r, oldRepo)
+		}
+	}
+
+	// ALL configuration validations should be done in ValidateRepository -
+	// this is how the UI is able to show proper validation errors
+	//
+	// the only time to add configuration checks here is if you need to compare
+	// the incoming change to the current configuration
+	isCreate := a.GetOperation() == admission.Create
+	list := v.validator.ValidateRepository(ctx, r, isCreate)
+
+	if a.GetOperation() == admission.Update {
+		oldRepo := a.GetOldObject().(*provisioning.Repository)
+		if r.Spec.Type != oldRepo.Spec.Type {
+			list = append(list, field.Forbidden(field.NewPath("spec", "type"),
+				"Changing repository type is not supported"))
+		}
+
+		// Do not allow changing the sync target once anything has synced successfully
+		if r.Spec.Sync.Target != oldRepo.Spec.Sync.Target && len(oldRepo.Status.Stats) > 0 {
+			list = append(list, field.Forbidden(field.NewPath("spec", "sync", "target"),
+				"Changing sync target after running sync is not supported"))
+		}
+	}
+
+	// Early exit to avoid more expensive checks if we have already found errors
+	if len(list) > 0 {
+		return invalidRepositoryError(a.GetName(), list)
+	}
+
+	// Verify against existing repositories
+	if v.verifyAgainstExistingRepositories != nil {
+		if targetError := v.verifyAgainstExistingRepositories(ctx, r); targetError != nil {
+			return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
+		}
+	}
+
+	return nil
+}
+
+func invalidRepositoryError(name string, list field.ErrorList) error {
+	return apierrors.NewInvalid(
+		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
+		name, list)
 }
