@@ -85,6 +85,7 @@
 
 /apps/alerting/ @grafana/alerting-backend
 /apps/quotas/ @grafana/grafana-search-and-storage
+/apps/live/ @grafana/grafana-app-platform-squad
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad

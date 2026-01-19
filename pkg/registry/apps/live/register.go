@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/grafana/grafana/apps/advisor/pkg/apis"
-	liveapp "github.com/grafana/grafana/apps/annotation/pkg/app"
+	apis "github.com/grafana/grafana/apps/live/pkg/apis/manifestdata"
+	liveapp "github.com/grafana/grafana/apps/live/pkg/app"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -35,9 +35,10 @@ func RegisterAppInstaller(
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, liveapp.New)
 
 	appConfig := app.Config{
-		KubeConfig:     restclient.Config{},
-		ManifestData:   *apis.LocalManifest().ManifestData,
-		SpecificConfig: &liveapp.AnnotationConfig{
+		KubeConfig:   restclient.Config{},
+		ManifestData: *apis.LocalManifest().ManifestData,
+		SpecificConfig: &liveapp.LiveConfig{
+			Enable: true,
 			//	TagHandler: tagHandler,
 		},
 	}
