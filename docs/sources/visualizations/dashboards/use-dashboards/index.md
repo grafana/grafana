@@ -202,11 +202,11 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 ## Kiosk mode
 
-You can view a dashboard in kiosk mode, where the main menu and top navigation bar are hidden.
-This can be useful if you want to display as much information as possible on the screen.
+In kiosk mode, the main menu and top navigation bar of a dashboard are hidden.
+This can be useful if you want to display as much information as possible on the screen or use the dashboard to present information to a wider audience.
 
 - **Turn on kiosk mode**: Click your profile icon and select **Enable kiosk mode**.
-- **Turn off kiosk mode**:  Press `Esc`.
+- **Turn off kiosk mode**: Press `Esc`.
 
 ## Set dashboard time range
 
