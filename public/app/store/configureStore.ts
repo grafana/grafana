@@ -1,9 +1,10 @@
-import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
+import { createListenerMiddleware, configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
 import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
 import { legacyAPI } from 'app/api/clients/legacy';
+import { rolesAPI } from 'app/api/clients/roles';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
@@ -42,6 +43,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         browseDashboardsAPI.middleware,
         legacyAPI.middleware,
         scopeAPIv0alpha1.middleware,
+        rolesAPI.middleware,
         ...allApiClientMiddleware,
         ...extraMiddleware
       ),
