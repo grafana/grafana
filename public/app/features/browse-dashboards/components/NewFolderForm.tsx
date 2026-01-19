@@ -4,13 +4,14 @@ import { useForm } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Field, Stack, Checkbox, Text, Space, Icon, Tooltip } from '@grafana/ui';
+import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { FolderDTO } from 'app/types/folders';
 
 import { TeamSelector } from '../../../core/components/OwnerReferences/ManageOwnerReferences';
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 
 interface Props {
-  onConfirm: (folderName: string) => void;
+  onConfirm: (folderName: string, teamOwnerRef?: OwnerReference) => void;
   onCancel: () => void;
   parentFolder?: FolderDTO;
 }
@@ -29,13 +30,14 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   } = useForm<FormModel>({ defaultValues: initialFormModel });
 
   const [createTeamFolder, setCreateTeamFolder] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<OwnerReference | undefined>(undefined);
 
   const handleTeamFolderToggle = () => {
     setCreateTeamFolder(!createTeamFolder);
   };
 
-  const handleTeamSelectorChange = () => {
-    console.log('Team selector changed');
+  const handleTeamSelectorChange = (ownerRef: OwnerReference) => {
+    setSelectedTeam(ownerRef);
   };
 
   const translatedFolderNameRequiredPhrase = t(
@@ -48,7 +50,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   return (
     <form
       name="addFolder"
-      onSubmit={handleSubmit((form) => onConfirm(form.folderName))}
+      onSubmit={handleSubmit((form) => onConfirm(form.folderName, createTeamFolder ? selectedTeam : undefined))}
       data-testid={selectors.pages.BrowseDashboards.NewFolderForm.form}
     >
       <Field
