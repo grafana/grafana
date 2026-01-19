@@ -46,7 +46,9 @@ const FlameGraphCallTreeContainer = memo(
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
-    const searchMatchRowRef = useRef<HTMLTableRowElement | null>(null);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+    // Track which search match we've scrolled to, to avoid re-scrolling on every render
+    const lastScrolledMatchRef = useRef<string | undefined>(undefined);
 
     const colorScheme = data.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.PackageBased;
 
@@ -286,14 +288,29 @@ const FlameGraphCallTreeContainer = memo(
       return undefined;
     }, [searchNodes, currentMatchIndex]);
 
-    useEffect(() => {
-      if (searchMatchRowRef.current) {
-        searchMatchRowRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
-      }
-    }, [currentMatchIndex, currentSearchMatchId]);
+    // Callback ref that scrolls when the search match row is rendered
+    const searchMatchRowRef = useCallback(
+      (node: HTMLTableRowElement | null) => {
+        if (node && currentSearchMatchId && currentSearchMatchId !== lastScrolledMatchRef.current) {
+          lastScrolledMatchRef.current = currentSearchMatchId;
+          const container = scrollContainerRef.current;
+          if (container) {
+            // Use requestAnimationFrame to ensure layout is complete
+            requestAnimationFrame(() => {
+              const rowRect = node.getBoundingClientRect();
+              const containerRect = container.getBoundingClientRect();
+              const rowTopRelativeToContainer = rowRect.top - containerRect.top + container.scrollTop;
+              const targetScrollTop = rowTopRelativeToContainer - container.clientHeight / 2 + rowRect.height / 2;
+              container.scrollTo({
+                top: Math.max(0, targetScrollTop),
+                behavior: 'smooth',
+              });
+            });
+          }
+        }
+      },
+      [currentSearchMatchId]
+    );
 
     const calculatedExpanded = useMemo(() => {
       const baseExpanded = getInitialExpandedState(nodes, 1);
@@ -805,7 +822,11 @@ const FlameGraphCallTreeContainer = memo(
                   </thead>
                 </table>
                 {/* Scrollable body */}
-                <div style={{ flex: 1, overflowY: 'scroll', overflowX: 'auto' }} className={styles.scrollContainer}>
+                <div
+                  ref={scrollContainerRef}
+                  style={{ flex: 1, overflowY: 'scroll', overflowX: 'auto' }}
+                  className={styles.scrollContainer}
+                >
                   <table {...getTableProps()} className={styles.table}>
                     <tbody {...getTableBodyProps()} className={styles.tbody}>
                       {rows.map((row, rowIndex) => {
