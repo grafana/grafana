@@ -121,12 +121,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
     useStepStatus();
 
-  const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
-  const isFinishWithSyncCompleted =
-    activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
-  const shouldUseCancelBehavior =
-    activeStep === 'authType' || activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
-
   const navigate = useNavigate();
   const styles = useStyles2(getStyles);
   const { createGitHubAppConnection, isLoading: isCreatingConnection } = useWizardConnection();
@@ -160,6 +154,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     'repository.sync.target',
     'githubAuthType',
   ]);
+
+  const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
+  const isFinishWithSyncCompleted =
+    activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
+  const shouldUseCancelBehavior =
+    activeStep === 'authType' || (activeStep === 'connection' && repoType !== 'github') || isSyncCompleted || isFinishWithSyncCompleted;
 
   const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
   const visibleSteps = useMemo(() => steps.filter((s) => s.id !== 'authType'), [steps]);
@@ -248,6 +248,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       return;
     }
 
+    // For GitHub connection step, if repo was created, show confirmation before going back
+    if (activeStep === 'connection' && repoName) {
+      setShowCancelConfirmation(true);
+      return;
+    }
+
     // For other steps, go back one step
     handleBack();
   };
@@ -295,8 +301,13 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       return t('provisioning.wizard-content.button-cancel', 'Cancel');
     }
 
+    // For GitHub connection step, show Cancel if repo was created
+    if (activeStep === 'connection' && repoName) {
+      return t('provisioning.wizard-content.button-cancel', 'Cancel');
+    }
+
     return t('provisioning.wizard-content.button-previous', 'Previous');
-  }, [isCancelling, shouldUseCancelBehavior]);
+  }, [isCancelling, shouldUseCancelBehavior, activeStep, repoName]);
 
   const handleNext = async () => {
     const isLastStep = currentStepIndex === steps.length - 1;
