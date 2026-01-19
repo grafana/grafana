@@ -17,6 +17,7 @@ jobs:
     outputs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
       prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
+      changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -42,11 +43,8 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v6
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
     - run: yarn install --immutable --check-cache
     - run: yarn run prettier:check
     - run: yarn run lint
@@ -63,11 +61,8 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v6
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
@@ -89,11 +84,8 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v6
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
     - run: yarn install --immutable --check-cache
     - run: yarn run typecheck
   lint-frontend-typecheck-enterprise:
@@ -109,11 +101,8 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v6
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
@@ -133,11 +122,8 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v6
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
     - run: yarn install --immutable --check-cache
     - name: Generate API clients
       run: |
@@ -201,11 +187,8 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v6
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
@@ -224,3 +207,26 @@ jobs:
             echo "${uncommited_error_message}"
             exit 1
         fi
+  lint-frontend-packed-packages:
+    needs: detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    name: Verify packed frontend packages
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout build commit
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Install dependencies
+      run: yarn install --immutable
+    - name: Build and pack packages
+      run: |
+        yarn run packages:build
+        yarn run packages:pack
+    - name: Validate packages
+      run: ./scripts/validate-npm-packages.sh

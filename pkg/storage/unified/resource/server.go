@@ -43,6 +43,11 @@ type ResourceServer interface {
 	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
 	resourcepb.QuotasServer
+	ResourceServerStopper
+}
+
+type ResourceServerStopper interface {
+	Stop(ctx context.Context) error
 }
 
 type ListIterator interface {
@@ -449,7 +454,7 @@ func (s *server) Stop(ctx context.Context) error {
 		err := s.lifecycle.Stop(ctx)
 		if err != nil {
 			stopFailed = true
-			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
+			s.initErr = fmt.Errorf("service stopped with error: %w", err)
 		}
 	}
 

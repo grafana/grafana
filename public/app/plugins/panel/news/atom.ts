@@ -10,7 +10,7 @@ export function parseAtomFeed(txt: string): Feed {
       title: getProperty(node, 'title'),
       link: node.querySelector('link')?.getAttribute('href') ?? '',
       content: getProperty(node, 'content'),
-      pubDate: getProperty(node, 'published'),
+      pubDate: getProperty(node, 'published') || getProperty(node, 'updated'),
       ogImage: node.querySelector("meta[property='og:image']")?.getAttribute('content'),
     })),
   };
