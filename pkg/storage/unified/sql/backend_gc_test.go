@@ -17,13 +17,19 @@ import (
 )
 
 func TestIntegrationGarbageCollectionBatch(t *testing.T) {
+	gcConfig := GarbageCollectionConfig{
+		Enabled:          true,
+		Interval:         time.Minute,
+		BatchSize:        100,
+		DashboardsMaxAge: 24 * time.Hour,
+	}
 	t.Run("can garbage collect a deleted resource", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
-		storageBackend, _ := newTestBackend(t)
+		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -76,7 +82,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
-		storageBackend, _ := newTestBackend(t)
+		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -136,7 +142,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
-		storageBackend, _ := newTestBackend(t)
+		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -196,7 +202,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
-		storageBackend, _ := newTestBackend(t)
+		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -250,13 +256,19 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 }
 
 func TestIntegrationGarbageCollectionLoop(t *testing.T) {
+	gcConfig := GarbageCollectionConfig{
+		Enabled:          true,
+		Interval:         time.Minute,
+		BatchSize:        100,
+		DashboardsMaxAge: 24 * time.Hour,
+	}
 	t.Run("can delete eligble resources", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 
-		storageBackend, _ := newTestBackend(t)
+		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
 
 		_, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -275,13 +287,13 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.Equal(t, int64(2), results["group/resource"])
 	})
 
-	t.Run("will respect custom resource retention settings", func(t *testing.T) {
+	t.Run("will respect dashboard retention settings", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 		t.Cleanup(db.CleanupTestDB)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 
-		storageBackend, _ := newTestBackend(t)
+		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -325,7 +337,7 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 	})
 }
 
-func newTestBackend(t *testing.T) (resource.StorageBackend, sqldb.DB) {
+func newTestBackend(t *testing.T, gcConfig GarbageCollectionConfig) (resource.StorageBackend, sqldb.DB) {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
@@ -335,6 +347,7 @@ func newTestBackend(t *testing.T) (resource.StorageBackend, sqldb.DB) {
 		DBProvider:           eDB,
 		IsHA:                 false,
 		LastImportTimeMaxAge: 24 * time.Hour,
+		GarbageCollection:    gcConfig,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, backend)
