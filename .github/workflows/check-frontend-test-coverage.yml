@@ -152,3 +152,107 @@ jobs:
           name: coverage-${{ matrix.branch }}-${{ steps.codeowner-slug.outputs.slug }}
           path: coverage-summary.json
           retention-days: 1
+
+  compare-and-report:
+    name: Compare & Report - ${{ matrix.codeowner }}
+    needs: [setup, detect-changes, coverage]
+    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies for manifest and comparison
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Generate codeowners manifest
+        run: yarn codeowners-manifest
+
+      - name: Check if codeowner affected by changes
+        id: check-affected
+        run: |
+          AFFECTED=$(node scripts/check-codeowner-affected.js "${{ matrix.codeowner }}" ${{ needs.detect-changes.outputs.changed-files }})
+          echo "affected=$AFFECTED" >> $GITHUB_OUTPUT
+          echo "Codeowner ${{ matrix.codeowner }} affected: $AFFECTED"
+
+      - name: Delete old coverage comment if not affected
+        if: steps.check-affected.outputs.affected == 'false'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: coverage-report-${{ matrix.codeowner }}
+          delete: true
+
+      - name: Get codeowner slug
+        if: steps.check-affected.outputs.affected == 'true'
+        id: codeowner-slug
+        run: |
+          SLUG=$(node -e "
+            const { createCodeownerSlug } = require('./scripts/codeowners-manifest/utils.js');
+            console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
+          ")
+          echo "slug=$SLUG" >> $GITHUB_OUTPUT
+
+      - name: Download PR coverage
+        if: steps.check-affected.outputs.affected == 'true'
+        uses: actions/download-artifact@v6
+        with:
+          name: coverage-pr-${{ steps.codeowner-slug.outputs.slug }}
+          path: ./coverage-pr
+
+      - name: Download main coverage
+        if: steps.check-affected.outputs.affected == 'true'
+        uses: actions/download-artifact@v6
+        with:
+          name: coverage-main-${{ steps.codeowner-slug.outputs.slug }}
+          path: ./coverage-main
+
+      - name: Compare coverage
+        if: steps.check-affected.outputs.affected == 'true'
+        id: compare
+        run: |
+          node scripts/compare-coverage-by-codeowner.js
+          {
+            echo "markdown<<EOF"
+            cat ./coverage-comparison.md
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Get Vault secrets
+        if: steps.check-affected.outputs.affected == 'true' && github.event.pull_request.head.repo.fork == false
+        id: get-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GITHUB_APP_ID=grafana_pr_automation_app:app_id
+            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
+
+      - name: Generate GitHub App token
+        if: steps.check-affected.outputs.affected == 'true' && github.event.pull_request.head.repo.fork == false
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ env.GITHUB_APP_ID }}
+          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Post PR comment
+        if: steps.check-affected.outputs.affected == 'true' && github.event.pull_request.head.repo.fork == false
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: coverage-report-${{ matrix.codeowner }}
+          message: ${{ steps.compare.outputs.markdown }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
