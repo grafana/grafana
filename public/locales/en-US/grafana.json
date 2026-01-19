@@ -10276,6 +10276,12 @@
       "published-by": "Published by",
       "updated-on": "Updated on"
     },
+    "import-resource-format-error": {
+      "cancel": "Cancel",
+      "title": "Unsupported format",
+      "v1-message": "This dashboard is in Kubernetes v1 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard.",
+      "v2-message": "This dashboard is in v2 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard."
+    },
     "snapshot-list-table": {
       "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
       "confirmText-delete": "Delete",
