@@ -215,7 +215,7 @@ abstract class DataSourceApi<
   readonly name: string;
 
   /**
-   *  Internal ID, this will be removed in G13
+   * Internal ID, this will be removed in G13
    *
    * @deprecated
    */
