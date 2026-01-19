@@ -439,6 +439,11 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 		rowPanel["title"] = *tab.Spec.Title
 	}
 
+	if tab.Spec.Repeat != nil && tab.Spec.Repeat.Value != "" {
+		// We only use value here as V1 doesn't support mode
+		rowPanel["repeat"] = tab.Spec.Repeat.Value
+	}
+
 	rowPanel["gridPos"] = map[string]interface{}{
 		"x": 0,
 		"y": currentY,
@@ -817,6 +822,21 @@ func convertAutoGridLayoutToPanelsWithOffset(elements map[string]dashv2alpha1.Da
 					Name: item.Spec.Element.Name,
 				},
 			},
+		}
+
+		// Convert AutoGridRepeatOptions to RepeatOptions if present
+		// AutoGridRepeatOptions only has mode and value; infer direction and maxPerRow from AutoGrid settings:
+		// - direction: always "h" (AutoGrid flows horizontally, left-to-right then wraps)
+		// - maxPerRow: from AutoGrid's maxColumnCount
+		if item.Spec.Repeat != nil {
+			directionH := dashv2alpha1.DashboardRepeatOptionsDirectionH
+			maxPerRow := int64(maxColumnCount)
+			gridItem.Spec.Repeat = &dashv2alpha1.DashboardRepeatOptions{
+				Mode:      item.Spec.Repeat.Mode,
+				Value:     item.Spec.Repeat.Value,
+				Direction: &directionH,
+				MaxPerRow: &maxPerRow,
+			}
 		}
 
 		panel, err := convertPanelFromElement(&element, &gridItem)
@@ -1355,6 +1375,12 @@ func convertQueryVariableToV1(variable *dashv2alpha1.DashboardQueryVariableKind)
 		varMap["regexApplyTo"] = string(*spec.RegexApplyTo)
 	}
 	varMap["allowCustomValue"] = spec.AllowCustomValue
+	if len(spec.StaticOptions) > 0 {
+		varMap["staticOptions"] = convertVariableOptionsToV1(spec.StaticOptions)
+	}
+	if spec.StaticOptionsOrder != nil {
+		varMap["staticOptionsOrder"] = string(*spec.StaticOptionsOrder)
+	}
 
 	// Convert query - handle LEGACY_STRING_VALUE_KEY
 	querySpec := spec.Query.Spec

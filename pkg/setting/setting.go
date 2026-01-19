@@ -630,13 +630,7 @@ type Cfg struct {
 }
 
 type UnifiedStorageConfig struct {
-	DualWriterMode                       rest.DualWriterMode
-	DualWriterPeriodicDataSyncJobEnabled bool
-	DualWriterMigrationDataSyncDisabled  bool
-	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
-	DataSyncerInterval time.Duration
-	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
-	DataSyncerRecordsLimit int
+	DualWriterMode rest.DualWriterMode
 	// EnableMigration indicates whether migration is enabled for the resource.
 	// If not set, will use the default from MigratedUnifiedResources.
 	EnableMigration bool

@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.25.5
+go 1.25.6
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -13,10 +13,10 @@ require (
 	go.opentelemetry.io/otel v1.39.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.39.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.48.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.49.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
-	golang.org/x/text v0.32.0 // indirect; @grafana/grafana-backend-group
-	google.golang.org/grpc v1.77.0 // indirect; @grafana/plugins-platform-backend
+	golang.org/x/text v0.33.0 // indirect; @grafana/grafana-backend-group
+	google.golang.org/grpc v1.78.0 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.11 // indirect; @grafana/plugins-platform-backend
 )
 
@@ -29,7 +29,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opentelemetry.io/otel/metric v1.39.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 )

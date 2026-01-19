@@ -25,6 +25,13 @@ type Annotation struct {
 	Status AnnotationStatus `json:"status" yaml:"status"`
 }
 
+func NewAnnotation() *Annotation {
+	return &Annotation{
+		Spec:   *NewAnnotationSpec(),
+		Status: *NewAnnotationStatus(),
+	}
+}
+
 func (o *Annotation) GetSpec() any {
 	return o.Spec
 }
