@@ -14,9 +14,10 @@ import {
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
+import { isImportedResource, isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink } from '../../utils/misc';
 import { createMuteTiming, defaultTimeInterval, isTimeIntervalDisabled } from '../../utils/mute-timings';
-import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { ImportedTimeIntervalAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
 
@@ -24,8 +25,8 @@ interface Props {
   muteTiming?: MuteTiming;
   showError?: boolean;
   loading?: boolean;
-  /** Is the current mute timing provisioned? If so, will disable editing via UI */
-  provisioned?: boolean;
+  /** Provenance of the mute timing - indicates how it was created (e.g., 'file', 'prometheus_convert', 'none') */
+  provenance?: string;
   /** Are we editing an existing time interval? */
   editMode?: boolean;
 }
@@ -56,7 +57,7 @@ const useDefaultValues = (muteTiming?: MuteTiming): MuteTimingFields => {
   };
 };
 
-const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode }: Props) => {
+const MuteTimingForm = ({ muteTiming, showError, loading, provenance, editMode }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
   const hookArgs = { alertmanager: selectedAlertmanager! };
 
@@ -105,14 +106,19 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
     );
   }
 
+  const isProvisioned = isProvisionedResource(provenance);
+  const isImported = isImportedResource(provenance);
+
   return (
     <>
-      {provisioned && <ProvisioningAlert resource={ProvisionedResource.MuteTiming} />}
+      {isProvisioned && isImported && <ImportedTimeIntervalAlert />}
+      {isProvisioned && !isImported && <ProvisioningAlert resource={ProvisionedResource.MuteTiming} />}
       <FormProvider {...formApi}>
         <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
-          <FieldSet disabled={provisioned || updating}>
+          <FieldSet disabled={isProvisioned || updating}>
             <Field
               required
+              noMargin
               label={t('alerting.mute-timing-form.label-name', 'Name')}
               description={t(
                 'alerting.time-interval-form.description-unique-time-interval',

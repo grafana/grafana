@@ -80,6 +80,7 @@ func RegisterAPIService(
 	roleBindingsStorage RoleBindingStorageBackend,
 	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
 	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
+	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
 	orgService org.Service,
@@ -102,32 +103,33 @@ func RegisterAPIService(
 	)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:                       store,
-		userLegacyStore:             user.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
-		saLegacyStore:               serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
-		legacyTeamStore:             team.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
-		teamBindingLegacyStore:      teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracing),
-		ssoLegacyStore:              sso.NewLegacyStore(ssoService, tracing),
-		coreRolesStorage:            coreRolesStorage,
-		roleApiInstaller:            roleApiInstaller,
-		globalRoleApiInstaller:      globalRoleApiInstaller,
-		resourcePermissionsStorage:  resourcepermission.ProvideStorageBackend(dbProvider),
-		roleBindingsStorage:         roleBindingsStorage,
-		externalGroupMappingStorage: externalGroupMappingStorageBackend,
-		teamGroupsHandler:           teamGroupsHandlerImpl,
-		sso:                         ssoService,
-		resourceParentProvider:      resourceParentProvider,
-		authorizer:                  authorizer,
-		legacyAccessClient:          legacyAccessClient,
-		accessClient:                accessClient,
-		zClient:                     zClient,
-		zTickets:                    make(chan bool, MaxConcurrentZanzanaWrites),
-		display:                     user.NewLegacyDisplayREST(store),
-		reg:                         reg,
-		logger:                      log.New("iam.apis"),
-		features:                    features,
-		dual:                        dual,
-		unified:                     unified,
+		store:                             store,
+		userLegacyStore:                   user.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
+		saLegacyStore:                     serviceaccount.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
+		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, enableAuthnMutation, tracing),
+		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, enableAuthnMutation, tracing),
+		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
+		coreRolesStorage:                  coreRolesStorage,
+		roleApiInstaller:                  roleApiInstaller,
+		globalRoleApiInstaller:            globalRoleApiInstaller,
+		resourcePermissionsStorage:        resourcepermission.ProvideStorageBackend(dbProvider),
+		roleBindingsStorage:               roleBindingsStorage,
+		externalGroupMappingStorage:       externalGroupMappingStorageBackend,
+		teamGroupsHandler:                 teamGroupsHandlerImpl,
+		externalGroupMappingSearchHandler: externalGroupMappingSearchHandler,
+		sso:                               ssoService,
+		resourceParentProvider:            resourceParentProvider,
+		authorizer:                        authorizer,
+		legacyAccessClient:                legacyAccessClient,
+		accessClient:                      accessClient,
+		zClient:                           zClient,
+		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
+		display:                           user.NewLegacyDisplayREST(store),
+		reg:                               reg,
+		logger:                            log.New("iam.apis"),
+		features:                          features,
+		dual:                              dual,
+		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
@@ -645,13 +647,17 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	searchRoutes := make([]*builder.APIRoutes, 0, 2)
+	searchRoutes := make([]*builder.APIRoutes, 0, 3)
 	if b.userSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.userSearchHandler.GetAPIRoutes(defs))
 	}
 
 	if b.teamSearch != nil {
 		searchRoutes = append(searchRoutes, b.teamSearch.GetAPIRoutes(defs))
+	}
+
+	if b.externalGroupMappingSearchHandler != nil {
+		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 
 	routes := []*builder.APIRoutes{b.display.GetAPIRoutes(defs)}

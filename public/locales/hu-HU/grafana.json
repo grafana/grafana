@@ -2677,7 +2677,10 @@
     "rules-group": {
       "deleting": "Törlés",
       "text-federated": "Összevont",
-      "text-provisioned": "Kiépítve"
+      "text-provisioned": "Kiépítve",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5446,11 +5449,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5589,6 @@
           "arrow": "Megosztás",
           "title": "Megosztás",
           "tooltip": "Hivatkozás másolása"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Elvetés",
-            "text": "Nem mentett módosításai vannak ezen az irányítópulton. A megosztás előtt menteni kell őket.",
-            "title": "Menti az irányítópult módosításait?",
-            "yesText": "Mentés"
-          }
         },
         "unlink-library-panel": "Könyvtárpanel leválasztása"
       },
@@ -6498,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Menümegosztás ki- és bekapcsolása"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {

@@ -2666,7 +2666,10 @@
     "rules-group": {
       "deleting": "削除しています",
       "text-federated": "フェデレーション",
-      "text-provisioned": "プロビジョニング済み"
+      "text-provisioned": "プロビジョニング済み",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5426,11 +5429,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5569,6 @@
           "arrow": "共有",
           "title": "共有",
           "tooltip": "リンクをコピー"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "破棄",
-            "text": "このダッシュボードには未保存の変更があります。共有する前に保存する必要があります。",
-            "title": "ダッシュボードの変更を保存しますか？",
-            "yesText": "保存"
-          }
         },
         "unlink-library-panel": "ライブラリパネルのリンクを解除"
       },
@@ -6475,6 +6466,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "共有メニューを切り替え"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
