@@ -39,7 +39,6 @@ func TestIntegrationUserTeams(t *testing.T) {
 				AppModeProduction:    false,
 				DisableAnonymous:     true,
 				APIServerStorageType: "unified",
-				DBMaxConns:           1,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -149,7 +148,6 @@ func TestIntegrationUserTeams_Paging(t *testing.T) {
 				AppModeProduction:    false,
 				DisableAnonymous:     true,
 				APIServerStorageType: "unified",
-				DBMaxConns:           1,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"users.iam.grafana.app": {
 						DualWriterMode: mode,
