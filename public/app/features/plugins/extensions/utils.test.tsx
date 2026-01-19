@@ -1,7 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
-import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
+import {
+  dateTime,
+  usePluginContext,
+  PluginLoadingStrategy,
+  PluginExtensionLink,
+  PluginExtensionTypes,
+} from '@grafana/data';
 import { config, AppPluginConfig } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
@@ -22,6 +28,9 @@ import {
   getMutationObserverProxy,
   writableProxy,
   isMutationObserverProxy,
+  isRootPluginExtension,
+  extensionLinkToPanelMenuItem,
+  createExtensionSubMenu,
 } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
@@ -1513,6 +1522,113 @@ describe('Plugin Extensions / Utils', () => {
         addedComponents: [{ title: 'Component 1', targets: [mockExtensionPointId] }],
         addedLinks: [{ title: 'Link 1', targets: [mockExtensionPointId] }],
       });
+    });
+  });
+
+  describe('isRootPluginExtension', () => {
+    const baseLink: PluginExtensionLink = {
+      id: '1',
+      pluginId: 'my-plugin',
+      type: PluginExtensionTypes.link,
+      title: 'My Link',
+      description: 'My description',
+    };
+
+    test('should return true if category is root', () => {
+      expect(isRootPluginExtension({ ...baseLink, category: 'root' })).toBe(true);
+    });
+
+    test('should return false if category is not root', () => {
+      expect(isRootPluginExtension({ ...baseLink, category: 'other' })).toBe(false);
+      expect(isRootPluginExtension({ ...baseLink })).toBe(false);
+    });
+  });
+
+  describe('extensionLinkToPanelMenuItem', () => {
+    const baseLink: PluginExtensionLink = {
+      id: '1',
+      pluginId: 'my-plugin',
+      type: PluginExtensionTypes.link,
+      title: 'My Extension',
+      description: 'My description',
+      path: '/path',
+      icon: 'plug',
+      onClick: jest.fn(),
+      openInNewTab: true,
+    };
+
+    test('should convert extension link to panel menu item', () => {
+      const menuItem = extensionLinkToPanelMenuItem(baseLink);
+
+      expect(menuItem).toEqual({
+        text: 'My Extension',
+        href: '/path',
+        iconClassName: 'plug',
+        onClick: baseLink.onClick,
+        target: '_blank',
+      });
+    });
+
+    test('should truncate title', () => {
+      const extension = {
+        ...baseLink,
+        title: 'My Very Long Extension Title That Should Be Truncated',
+      };
+
+      const menuItem = extensionLinkToPanelMenuItem(extension);
+
+      expect(menuItem.text).toBe('My Very Long Extension...');
+    });
+  });
+
+  describe('createExtensionSubMenu', () => {
+    const baseLink: PluginExtensionLink = {
+      id: '1',
+      pluginId: 'my-plugin',
+      type: PluginExtensionTypes.link,
+      title: 'My Link',
+      description: 'My description',
+    };
+
+    test('should group extensions by category', () => {
+      const extensions: PluginExtensionLink[] = [
+        { ...baseLink, id: '1', title: 'Ext 1', category: 'Cat 1' },
+        { ...baseLink, id: '2', title: 'Ext 2', category: 'Cat 1' },
+        { ...baseLink, id: '3', title: 'Ext 3', category: 'Cat 2' },
+        { ...baseLink, id: '4', title: 'Ext 4' },
+      ];
+
+      const subMenu = createExtensionSubMenu(extensions);
+
+      expect(subMenu).toHaveLength(4); // 2 groups + divider + 1 uncategorized
+      expect(subMenu[0].text).toBe('Cat 1');
+      expect(subMenu[0].subMenu).toHaveLength(2);
+      expect(subMenu[1].text).toBe('Cat 2');
+      expect(subMenu[1].subMenu).toHaveLength(1);
+      expect(subMenu[2].type).toBe('divider');
+      expect(subMenu[3].text).toBe('Ext 4');
+    });
+
+    test('should handle only uncategorized extensions', () => {
+      const extensions: PluginExtensionLink[] = [
+        { ...baseLink, id: '1', title: 'Ext 1' },
+        { ...baseLink, id: '2', title: 'Ext 2' },
+      ];
+
+      const subMenu = createExtensionSubMenu(extensions);
+
+      expect(subMenu).toHaveLength(2);
+      expect(subMenu[0].text).toBe('Ext 1');
+      expect(subMenu[1].text).toBe('Ext 2');
+    });
+
+    test('should handle only categorized extensions', () => {
+      const extensions: PluginExtensionLink[] = [{ ...baseLink, id: '1', title: 'Ext 1', category: 'Cat 1' }];
+
+      const subMenu = createExtensionSubMenu(extensions);
+
+      expect(subMenu).toHaveLength(1);
+      expect(subMenu[0].text).toBe('Cat 1');
     });
   });
 });
