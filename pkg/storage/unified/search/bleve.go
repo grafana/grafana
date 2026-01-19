@@ -1603,16 +1603,15 @@ var exactTermFields = []string{
 
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
-	useExactTermQuery := false
-	if slices.Contains(exactTermFields, req.Key) {
-		useExactTermQuery = true
-	}
+	useExactTermQuery := slices.Contains(exactTermFields, req.Key)
 	switch selection.Operator(req.Operator) {
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
 
+		// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
+		// This should be fixed by using the info from the schema
 		if (req.Key == "login" || req.Key == "email") && len(req.Values) == 1 {
 			return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
 		}
