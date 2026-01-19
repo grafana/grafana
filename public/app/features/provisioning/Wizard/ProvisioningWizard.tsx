@@ -87,11 +87,26 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType, syncTarget, githubAuthType] = watch([
+  const [
+    repoName = '',
+    repoType,
+    syncTarget,
+    githubAuthType,
+    githubAppMode,
+    githubAppConnectionName,
+    githubAppID,
+    githubInstallationID,
+    githubPrivateKey,
+  ] = watch([
     'repositoryName',
     'repository.type',
     'repository.sync.target',
     'githubAuthType',
+    'githubAppMode',
+    'githubApp.connectionName',
+    'githubApp.appID',
+    'githubApp.installationID',
+    'githubApp.privateKey',
   ]);
 
   const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
@@ -446,6 +461,16 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     if (activeStep === 'authType') {
       return false;
     }
+    // GitHub App step: disable until valid selection/input
+    if (activeStep === 'githubApp') {
+      if (githubAppMode === 'existing') {
+        return !githubAppConnectionName;
+      }
+      if (githubAppMode === 'new') {
+        return !githubAppID || !githubInstallationID || !githubPrivateKey;
+      }
+      return true;
+    }
     // If the step is not on Connect page, we only enable it if the job was successful
     if (activeStep !== 'connection' && hasStepError) {
       return true;
@@ -456,7 +481,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob || isCreatingConnection;
   };
-
+  
   return (
     <FormProvider {...methods}>
       <Stack gap={6} direction="row" alignItems="flex-start">
