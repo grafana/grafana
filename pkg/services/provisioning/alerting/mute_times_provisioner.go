@@ -20,7 +20,8 @@ type defaultMuteTimesProvisioner struct {
 }
 
 func NewMuteTimesProvisioner(logger log.Logger,
-	muteTimingService provisioning.MuteTimingService) MuteTimesProvisioner {
+	muteTimingService provisioning.MuteTimingService,
+) MuteTimesProvisioner {
 	return &defaultMuteTimesProvisioner{
 		logger:            logger,
 		muteTimingService: muteTimingService,
@@ -28,8 +29,9 @@ func NewMuteTimesProvisioner(logger log.Logger,
 }
 
 func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
-	files []*AlertingFile) error {
-	cache := map[int64]map[string]definitions.MuteTimeInterval{}
+	files []*AlertingFile,
+) error {
+	cache := map[int64]map[string]models.MuteTiming{}
 	for _, file := range files {
 		for _, muteTiming := range file.MuteTimes {
 			if _, exists := cache[muteTiming.OrgID]; !exists {
@@ -37,9 +39,9 @@ func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 				if err != nil {
 					return err
 				}
-				cache[muteTiming.OrgID] = make(map[string]definitions.MuteTimeInterval, len(intervals))
+				cache[muteTiming.OrgID] = make(map[string]models.MuteTiming, len(intervals))
 				for _, interval := range intervals {
-					cache[muteTiming.OrgID][interval.Name] = interval
+					cache[muteTiming.OrgID][interval.Name] = *interval
 				}
 			}
 			muteTiming.MuteTime.Provenance = definitions.Provenance(models.ProvenanceFile)

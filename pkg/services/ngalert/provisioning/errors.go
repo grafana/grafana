@@ -143,7 +143,7 @@ func makeErrTemplateOrigin(t definitions.NotificationTemplate, action string) er
 	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": t.Name}})
 }
 
-func makeErrMuteTimeIntervalOrigin(mt definitions.MuteTimeInterval, action string) error {
+func makeErrMuteTimingOrigin(mt *models.MuteTiming, action string) error {
 	return ErrTimeIntervalOrigin.Build(errutil.TemplateData{
 		Public: map[string]interface{}{"Action": action, "Name": mt.Name},
 	})

@@ -70,7 +70,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	return result, nil
 }
 
-func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]config.MuteTimeInterval, error) {
+func (e ImportedConfigRevision) GetMuteTimings() ([]*models.MuteTiming, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -97,13 +97,13 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]config.MuteTimeInterva
 	)
 
 	// Apply renames to imported intervals
-	result := make([]config.MuteTimeInterval, 0, len(importedTime)+len(importedMute))
+	result := make([]*models.MuteTiming, 0, len(importedTime)+len(importedMute))
 
-	push := func(mt config.MuteTimeInterval) {
-		if newName, renamed := renames[mt.Name]; renamed {
-			mt.Name = newName
+	push := func(mti config.MuteTimeInterval) {
+		if newName, renamed := renames[mti.Name]; renamed {
+			mti.Name = newName
 		}
-		result = append(result, mt)
+		result = append(result, ConfigMuteTimeIntervalToMuteTiming(mti, models.ProvenanceConvertedPrometheus, models.ResourceOriginImported))
 	}
 
 	for _, ti := range importedTime {
@@ -125,6 +125,29 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 	m := make(map[string]int)
 	receiverUseCounts([]*definitions.Route{e.importedConfig.Route}, m)
 	_, renames := definition.MergeReceivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
+	for original, renamed := range renames {
+		if cnt, ok := m[original]; ok {
+			delete(m, original)
+			m[renamed] = cnt
+		}
+	}
+	return m
+}
+
+// TimeIntervalUseByName returns a map of time interval names to the number of times they are used in routes.
+func (e ImportedConfigRevision) TimeIntervalUseByName() map[string]int {
+	if e.importedConfig == nil {
+		return nil
+	}
+	m := make(map[string]int)
+	timeIntervalUseCounts([]*definitions.Route{e.importedConfig.Route}, m)
+	_, renames := definition.MergeTimeIntervals(
+		e.rev.Config.AlertmanagerConfig.MuteTimeIntervals,
+		e.rev.Config.AlertmanagerConfig.TimeIntervals,
+		e.importedConfig.GetMuteTimeIntervals(),
+		e.importedConfig.GetTimeIntervals(),
+		e.opts.DedupSuffix,
+	)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
 			delete(m, original)

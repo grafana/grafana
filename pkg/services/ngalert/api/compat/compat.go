@@ -413,7 +413,7 @@ func NilIfEmpty[T any](v *[]T) *[]T {
 	return v
 }
 
-func AlertingFileExportFromMuteTimings(orgID int64, m []definitions.MuteTimeInterval) definitions.AlertingFileExport {
+func AlertingFileExportFromMuteTimings(orgID int64, m []*models.MuteTiming) definitions.AlertingFileExport {
 	f := definitions.AlertingFileExport{
 		APIVersion:  1,
 		MuteTimings: make([]definitions.MuteTimeIntervalExport, 0, len(m)),
@@ -424,7 +424,7 @@ func AlertingFileExportFromMuteTimings(orgID int64, m []definitions.MuteTimeInte
 	return f
 }
 
-func MuteTimeIntervalExportFromMuteTiming(orgID int64, m definitions.MuteTimeInterval) definitions.MuteTimeIntervalExport {
+func MuteTimeIntervalExportFromMuteTiming(orgID int64, m *models.MuteTiming) definitions.MuteTimeIntervalExport {
 	return definitions.MuteTimeIntervalExport{
 		OrgID:            orgID,
 		MuteTimeInterval: m.MuteTimeInterval,

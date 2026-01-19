@@ -203,6 +203,29 @@ func receiverUseCounts(routes []*definitions.Route, m map[string]int) {
 	}
 }
 
+// TimeIntervalUseByName returns a map of time interval names to the number of times they are used in routes.
+func (rev *ConfigRevision) TimeIntervalUseByName() map[string]int {
+	m := make(map[string]int)
+	timeIntervalUseCounts([]*definitions.Route{rev.Config.AlertmanagerConfig.Route}, m)
+	return m
+}
+
+// timeIntervalUseCounts counts how many times time intervals are used in routes (both mute and active).
+func timeIntervalUseCounts(routes []*definitions.Route, m map[string]int) {
+	if len(routes) == 0 {
+		return
+	}
+	for _, route := range routes {
+		for _, name := range route.MuteTimeIntervals {
+			m[name]++
+		}
+		for _, name := range route.ActiveTimeIntervals {
+			m[name]++
+		}
+		timeIntervalUseCounts(route.Routes, m)
+	}
+}
+
 // validateAndSetIntegrationUIDs validates existing integration UIDs and generates them if they are empty.
 func validateAndSetIntegrationUIDs(receiver *models.Receiver) error {
 	for _, integration := range receiver.Integrations {

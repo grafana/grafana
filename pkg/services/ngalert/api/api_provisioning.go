@@ -61,10 +61,10 @@ type NotificationPolicyService interface {
 }
 
 type MuteTimingService interface {
-	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
-	GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
-	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
+	GetMuteTimings(ctx context.Context, orgID int64) ([]*alerting_models.MuteTiming, error)
+	GetMuteTiming(ctx context.Context, name string, orgID int64) (*alerting_models.MuteTiming, error)
+	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*alerting_models.MuteTiming, error)
+	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*alerting_models.MuteTiming, error)
 	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
 }
 
@@ -259,7 +259,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimingExport(c *contextmodel.ReqContext,
 	}
 	for _, timing := range timings {
 		if name == timing.Name {
-			e := AlertingFileExportFromMuteTimings(c.GetOrgID(), []definitions.MuteTimeInterval{timing})
+			e := AlertingFileExportFromMuteTimings(c.GetOrgID(), []*alerting_models.MuteTiming{timing})
 			return exportResponse(c, e)
 		}
 	}

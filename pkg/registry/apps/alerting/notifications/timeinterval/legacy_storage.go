@@ -22,9 +22,9 @@ var (
 )
 
 type TimeIntervalService interface {
-	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
-	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
+	GetMuteTimings(ctx context.Context, orgID int64) ([]*ngmodels.MuteTiming, error)
+	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*ngmodels.MuteTiming, error)
+	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*ngmodels.MuteTiming, error)
 	DeleteMuteTiming(ctx context.Context, nameOrUid string, orgID int64, provenance definitions.Provenance, version string) error
 }
 

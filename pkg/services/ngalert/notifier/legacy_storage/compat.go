@@ -8,6 +8,7 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
+	"github.com/prometheus/alertmanager/config"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -175,4 +176,15 @@ func PostableGrafanaReceiverToIntegration(p *apimodels.PostableGrafanaReceiver) 
 	}
 
 	return integration, nil
+}
+
+func ConfigMuteTimeIntervalToMuteTiming(mti config.MuteTimeInterval, provenance models.Provenance, origin models.ResourceOrigin) *models.MuteTiming {
+	mt := models.MuteTiming{
+		UID:              NameToUid(mti.Name),
+		MuteTimeInterval: mti,
+		Provenance:       provenance,
+		Origin:           origin,
+	}
+	mt.Version = mt.Fingerprint()
+	return &mt
 }
