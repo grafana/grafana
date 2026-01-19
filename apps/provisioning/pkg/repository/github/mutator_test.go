@@ -9,12 +9,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestMutator(t *testing.T) {
 	tests := []struct {
 		name          string
 		obj           runtime.Object
+		expectedObj   runtime.Object
 		token         string
 		expectedError string
 	}{
@@ -28,6 +30,17 @@ func TestMutator(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL: "https://github.com/org/repo.git/",
+					},
+				},
+			},
+			expectedObj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo1",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo",
 					},
 				},
 			},
@@ -45,6 +58,17 @@ func TestMutator(t *testing.T) {
 					},
 				},
 			},
+			expectedObj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo2",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo",
+					},
+				},
+			},
 		},
 		{
 			name: "trims only trailing .git from GitHub URL",
@@ -59,6 +83,17 @@ func TestMutator(t *testing.T) {
 					},
 				},
 			},
+			expectedObj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo3",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo",
+					},
+				},
+			},
 		},
 		{
 			name: "does not trim if no .git or slash",
@@ -70,6 +105,53 @@ func TestMutator(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL: "https://github.com/org/repo",
+					},
+				},
+			},
+			expectedObj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo4",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo",
+					},
+				},
+			},
+		},
+		{
+			name: "should add token",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo4",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo",
+					},
+					Connection: &provisioning.ConnectionInfo{
+						Name: "someConnection",
+					},
+				},
+			},
+			expectedObj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "repo4",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/org/repo",
+					},
+					Connection: &provisioning.ConnectionInfo{
+						Name: "someConnection",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.RawSecureValue("someConnection"),
 					},
 				},
 			},
@@ -112,6 +194,7 @@ func TestMutator(t *testing.T) {
 				assert.Contains(t, err.Error(), tt.expectedError)
 			} else {
 				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedObj, tt.obj)
 			}
 		})
 	}

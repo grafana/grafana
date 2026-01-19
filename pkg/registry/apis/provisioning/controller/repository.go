@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,12 +17,13 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -60,8 +62,9 @@ type RepositoryController struct {
 	finalizer     finalizerProcessor
 	statusPatcher StatusPatcher
 
-	repoFactory   repository.Factory
-	healthChecker *HealthChecker
+	repoFactory       repository.Factory
+	connectionFactory connection.Factory
+	healthChecker     *HealthChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
@@ -78,6 +81,7 @@ func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	repoInformer informer.RepositoryInformer,
 	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
 	resourceLister resources.ResourceLister,
 	clients resources.ClientFactory,
 	jobs interface {
@@ -102,9 +106,10 @@ func NewRepositoryController(
 				Name: "provisioningRepositoryController",
 			},
 		),
-		repoFactory:   repoFactory,
-		healthChecker: healthChecker,
-		statusPatcher: statusPatcher,
+		repoFactory:       repoFactory,
+		connectionFactory: connectionFactory,
+		healthChecker:     healthChecker,
+		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
@@ -513,10 +518,17 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return rc.handleDelete(ctx, obj)
 	}
 
+	shouldCreateToken := false
+	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+		// In case a connection is defined in the Repository, but no token has been
+		// created yet, this controller loop should do it.
+		shouldCreateToken = obj.Status.Token.LastUpdated == 0
+	}
+
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
-	patchOperations := []map[string]interface{}{}
+	var patchOperations []map[string]interface{}
 
 	// Determine the main triggering condition
 	switch {
@@ -534,6 +546,22 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
+	}
+
+	if shouldCreateToken {
+		logger.Info("creating token for repository", "connection", obj.Spec.Connection.Name)
+
+		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj)
+		if err != nil {
+			logger.Error("generating repository for token",
+				"connection", obj.Spec.Connection.Name,
+				"error", err,
+			)
+			return err
+		}
+
+		obj.Secure.Token.Create = token
+		patchOperations = append(patchOperations, tokenOps...)
 	}
 
 	repo, err := rc.repoFactory.Build(ctx, obj)
@@ -612,4 +640,42 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	return hookOps, true, nil
+}
+
+func (rc *RepositoryController) generateRepositoryToken(
+	ctx context.Context,
+	obj *provisioning.Repository,
+) (common.RawSecureValue, []map[string]interface{}, error) {
+	c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+	if err != nil {
+		return "", nil, fmt.Errorf("unable to get connection: %w", err)
+	}
+
+	conn, err := rc.connectionFactory.Build(ctx, c)
+	if err != nil {
+		return "", nil, fmt.Errorf("unable to create connection from configuration: %w", err)
+	}
+
+	token, err := conn.GenerateRepositoryToken(ctx, obj)
+	if err != nil {
+		return "", nil, fmt.Errorf("unable to create token for repository: %w", err)
+	}
+
+	return token.Token, []map[string]any{
+		{
+			"op":   "add",
+			"path": "/status/token",
+			"value": provisioning.TokenStatus{
+				LastUpdated: time.Now().UnixMilli(),
+				Expiration:  token.ExpiresAt.UnixMilli(),
+			},
+		},
+		{
+			"op":   "replace",
+			"path": "/secure/token",
+			"value": map[string]string{
+				"create": string(token.Token),
+			},
+		},
+	}, nil
 }
