@@ -151,6 +151,16 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:            "liveAPIServer",
+			Description:     "Registers a live apiserver",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:         "starsFromAPIServer",
 			Description:  "populate star status from apiserver",
 			Stage:        FeatureStageExperimental,

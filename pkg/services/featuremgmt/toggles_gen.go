@@ -55,6 +55,10 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
+	// FlagLiveAPIServer
+	// Registers a live apiserver
+	FlagLiveAPIServer = "liveAPIServer"
+
 	// FlagKubernetesStars
 	// Routes stars requests from /api to the /apis endpoint
 	FlagKubernetesStars = "kubernetesStars"
