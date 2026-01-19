@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"maps"
+	"net/http"
 	"strings"
 	"sync"
 
@@ -231,11 +232,9 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						parent := copy.Paths.Paths[path[:idx+6]]
 						if parent != nil && parent.Get != nil {
 							for _, op := range GetPathOperations(spec) {
-								if op != nil && op.Extensions != nil {
-									action, ok := op.Extensions.GetString("x-kubernetes-action")
-									if ok && action == "connect" {
-										op.Tags = parent.Get.Tags
-									}
+								action, ok := op.Extensions.GetString("x-kubernetes-action")
+								if ok && action == "connect" {
+									op.Tags = parent.Get.Tags
 								}
 							}
 						}
@@ -281,15 +280,32 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 	}
 }
 
-func GetPathOperations(path *spec3.Path) []*spec3.Operation {
-	return []*spec3.Operation{
-		path.Get,
-		path.Head,
-		path.Delete,
-		path.Patch,
-		path.Post,
-		path.Put,
-		path.Trace,
-		path.Options,
+// GetPathOperations returns the set of non-nil operations defined on a path
+func GetPathOperations(path *spec3.Path) map[string]*spec3.Operation {
+	ops := make(map[string]*spec3.Operation)
+	if path.Get != nil {
+		ops[http.MethodGet] = path.Get
 	}
+	if path.Head != nil {
+		ops[http.MethodHead] = path.Head
+	}
+	if path.Delete != nil {
+		ops[http.MethodDelete] = path.Delete
+	}
+	if path.Post != nil {
+		ops[http.MethodPost] = path.Post
+	}
+	if path.Put != nil {
+		ops[http.MethodPut] = path.Put
+	}
+	if path.Patch != nil {
+		ops[http.MethodPatch] = path.Patch
+	}
+	if path.Trace != nil {
+		ops[http.MethodTrace] = path.Trace
+	}
+	if path.Options != nil {
+		ops[http.MethodOptions] = path.Options
+	}
+	return ops
 }
