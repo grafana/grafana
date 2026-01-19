@@ -27,11 +27,11 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*PlaylistAppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*PlaylistAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
 )
 
-type PlaylistAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg     *setting.Cfg
 	service playlistsvc.Service
@@ -41,8 +41,8 @@ func RegisterAppInstaller(
 	p playlistsvc.Service,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-) (*PlaylistAppInstaller, error) {
-	installer := &PlaylistAppInstaller{
+) (*AppInstaller, error) {
+	installer := &AppInstaller{
 		cfg:     cfg,
 		service: p,
 	}
@@ -66,13 +66,13 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func (p *PlaylistAppInstaller) GetAuthorizer() authorizer.Authorizer {
+func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	//nolint:staticcheck // not yet migrated to Resource Authorizer
 	return roleauthorizer.NewRoleAuthorizer()
 }
 
 // GetLegacyStorage returns the legacy storage for the playlist app.
-func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
+func (p *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
 	gvr := playlistv0alpha1.PlaylistKind().GroupVersionResource()
 	if requested.String() != gvr.String() {
 		return nil

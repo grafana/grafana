@@ -18,23 +18,23 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller = (*ExampleAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller = (*AppInstaller)(nil)
 )
 
-type ExampleAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
 }
 
-func (e ExampleAppInstaller) GetAuthorizer() authorizer.Authorizer {
+func (e AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return exampleapp.GetAuthorizer()
 }
 
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-) (*ExampleAppInstaller, error) {
-	installer := &ExampleAppInstaller{
+) (*AppInstaller, error) {
+	installer := &AppInstaller{
 		cfg: cfg,
 	}
 	// Config specific to the app. This can pull from feature flags or setting.Cfg.
@@ -68,7 +68,7 @@ func RegisterAppInstaller(
 		ManifestData:   *manifestdata.LocalManifest().ManifestData,
 		SpecificConfig: specificConfig,
 	}
-	// NewDefaultInstaller gets us the installer we need to underly the ExampleAppInstaller type.
+	// NewDefaultInstaller gets us the installer we need to underly the AppInstaller type.
 	// It does all the hard work of installing our app to the grafana API server
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, manifestdata.NewGoTypeAssociator())
 	if err != nil {
