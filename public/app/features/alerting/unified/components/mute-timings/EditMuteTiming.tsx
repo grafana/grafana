@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom-v5-compat';
 import { t } from '@grafana/i18n';
 import { useGetMuteTiming } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
+import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
@@ -28,13 +29,15 @@ const EditTimingRoute = () => {
     return <Navigate replace to="/alerting/routes" />;
   }
 
+  const provenance = timeInterval?.metadata?.annotations?.[K8sAnnotations.Provenance];
+
   return (
     <MuteTimingForm
       editMode
       loading={isLoading}
       showError={isError}
       muteTiming={timeInterval}
-      provisioned={timeInterval?.provisioned}
+      provenance={provenance}
     />
   );
 };
