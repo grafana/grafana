@@ -1090,19 +1090,6 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	// I'm setting the NextPageToken on the response results here because we need to get the Sort fields from the last hit,
-	// which isn't available in the ResourceTable results on the search response.
-	// Another alternative would be to return the Sort fields of the last hit as part of the search response.
-	if response.Results != nil && len(res.Hits) > 0 && response.TotalHits > int64(len(res.Hits)) {
-		values := searchAfterValuesFromHit(res.Hits[len(res.Hits)-1])
-		if len(values) > 0 {
-			token, err := resource.NewSearchContinueToken(values, b.resourceVersion)
-			if err == nil {
-				response.Results.NextPageToken = token
-			}
-		}
-	}
-
 	// parse the facet fields
 	for k, v := range res.Facets {
 		f := newResponseFacet(v)
@@ -1775,8 +1762,9 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	}
 	for rowID, match := range hits {
 		row := &resourcepb.ResourceTableRow{
-			Key:   &resourcepb.ResourceKey{},
-			Cells: make([][]byte, len(fields)),
+			Key:        &resourcepb.ResourceKey{},
+			Cells:      make([][]byte, len(fields)),
+			SortFields: match.Sort,
 		}
 		table.Rows[rowID] = row
 
@@ -1828,23 +1816,6 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	}
 
 	return table, nil
-}
-
-func searchAfterValuesFromHit(hit *search.DocumentMatch) []string {
-	if hit == nil {
-		return nil
-	}
-	if len(hit.Sort) > 0 {
-		values := make([]string, 0, len(hit.Sort))
-		for _, v := range hit.Sort {
-			values = append(values, fmt.Sprintf("%v", v))
-		}
-		return values
-	}
-	if hit.ID != "" {
-		return []string{hit.ID}
-	}
-	return nil
 }
 
 func (b *bleveIndex) isSelectableField(key string) bool {

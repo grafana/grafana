@@ -1063,6 +1063,9 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		ix++
 	}
 
+	maxPageBytes := s.maxPageSizeBytes
+	pageBytes := 0
+
 	// TODO: What to do about RV and version_match fields?
 	// If we get here, we're doing list with selectable fields. Let's do search instead, since
 	// we index all selectable fields, and fetch resulting documents one by one.
@@ -1128,6 +1131,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 			}
 			if len(val.Value) > 0 {
+				pageBytes += len(val.Value)
 				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
 					Value:           val.Value,
 					ResourceVersion: val.ResourceVersion,
@@ -1135,20 +1139,17 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				if val.ResourceVersion > rsp.ResourceVersion {
 					rsp.ResourceVersion = val.ResourceVersion
 				}
+				if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+					token, err := NewSearchContinueToken(row.GetSortFields(), listRv)
+					if err != nil {
+						return &resourcepb.ListResponse{
+							Error: NewBadRequestError("invalid continue token"),
+						}, nil
+					}
+					rsp.NextPageToken = token
+					return rsp, nil
+				}
 			}
-		}
-
-		// The token on the search results will have the current RV of the index from the most recent search page.
-		// But since were paginating, we want to override this with the RV from the start of the list operation.
-		if len(rsp.Items) > 0 {
-			token, err := GetContinueToken(searchResp.GetResults().GetNextPageToken())
-			if err != nil {
-				return &resourcepb.ListResponse{
-					Error: NewBadRequestError("invalid continue token"),
-				}, nil
-			}
-			token.ResourceVersion = listRv
-			rsp.NextPageToken = token.String()
 		}
 
 		return rsp, nil
@@ -1157,8 +1158,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
-	maxPageBytes := s.maxPageSizeBytes
-	pageBytes := 0
 	rsp := &resourcepb.ListResponse{}
 
 	key := req.Options.Key
