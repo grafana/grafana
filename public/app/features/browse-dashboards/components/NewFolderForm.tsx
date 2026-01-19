@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,8 +28,10 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
     formState: { errors, isSubmitting },
   } = useForm<FormModel>({ defaultValues: initialFormModel });
 
+  const [createTeamFolder, setCreateTeamFolder] = useState(false);
+
   const handleTeamFolderToggle = () => {
-    console.log('Team folder toggle clicked');
+    setCreateTeamFolder(!createTeamFolder);
   };
 
   const handleTeamSelectorChange = () => {
@@ -66,13 +69,14 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
       <Space v={2} />
       <Stack gap={1}>
         <Checkbox
+          value={createTeamFolder}
           label={t('browse-dashboards.action.new-folder-as-team-folder-checkbox', 'Create as a team folder')}
           onChange={handleTeamFolderToggle}
         />
         <Tooltip
           content={t(
             'browse-dashboards.action.new-folder-as-team-folder-checkbox-tooltip',
-            "Team Folders are folders that inherit your team's default sharing and permission settings, making it easier to collaborate."
+            'Team Folders are folders that inherit default sharing and permission settings, making it easier to collaborate.'
           )}
           placement="top"
         >
