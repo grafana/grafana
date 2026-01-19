@@ -11,7 +11,7 @@ import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } f
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { isK8sEntityProvisioned, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAPINamespace } from '../../../../../api/utils';
@@ -21,7 +21,9 @@ import { useAsync } from '../../hooks/useAsync';
 import { useIrmPlugin } from '../../hooks/usePluginBridge';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import { addReceiverAction, deleteReceiverAction, updateReceiverAction } from '../../reducers/alertmanager/receivers';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { SupportedPlugin } from '../../types/pluginBridges';
+import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { enhanceContactPointsWithMetadata } from './utils';
 
@@ -78,10 +80,13 @@ const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
 type K8sReceiver = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver;
 
 const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
+  const metadataProvenance = item.metadata.annotations?.[K8sAnnotations.Provenance];
+  const provenance = metadataProvenance === KnownProvenance.None ? undefined : metadataProvenance;
+
   return {
     id: item.metadata.name || item.metadata.uid || item.spec.title,
     name: item.spec.title,
-    provisioned: isK8sEntityProvisioned(item),
+    provenance: provenance,
     grafana_managed_receiver_configs: item.spec.integrations,
     metadata: item.metadata,
   };

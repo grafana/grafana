@@ -149,9 +149,16 @@ export function enhanceContactPointsWithMetadata({
 
     const id = getContactPointIdentifier(contactPoint);
 
+    // Extract provenance from contactPoint first; else, search in its receivers
+    const contactPointProvenance =
+      'provenance' in contactPoint && contactPoint.provenance !== undefined
+        ? contactPoint.provenance
+        : receivers.find((receiver) => Boolean(receiver.provenance))?.provenance;
+
     return {
       ...contactPoint,
       id,
+      provenance: contactPointProvenance,
       policies:
         alertmanagerConfiguration && usedContactPointsByName && (usedContactPointsByName[contactPoint.name] ?? []),
       grafana_managed_receiver_configs: receivers.map((receiver, index) => {

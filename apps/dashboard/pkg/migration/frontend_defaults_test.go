@@ -1802,6 +1802,41 @@ func TestEnsurePanelsHaveUniqueIds(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "fix_duplicate_ids_in_rows",
+			input: map[string]interface{}{
+				"rows": []interface{}{
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{"type": "timeseries", "id": float64(1)},
+							map[string]interface{}{"type": "table", "id": float64(5)},
+						},
+					},
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{"type": "stat", "id": float64(1)},
+							map[string]interface{}{"type": "gauge", "id": float64(5)},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"rows": []interface{}{
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{"type": "timeseries", "id": float64(1)},
+							map[string]interface{}{"type": "table", "id": float64(5)},
+						},
+					},
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{"type": "stat", "id": float64(6)},
+							map[string]interface{}{"type": "gauge", "id": float64(7)},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -2066,6 +2101,160 @@ func TestInitMeta(t *testing.T) {
 
 			// Verify expected properties exist
 			assertPropertiesExist(t, dashboard, tt.expected)
+		})
+	}
+}
+
+func TestGetPanels(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          map[string]interface{}
+		expectedIDs    []int
+		expectedTitles []string
+	}{
+		{
+			name: "top-level panels only",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"id": 1, "title": "Panel 1", "type": "stat"},
+					map[string]interface{}{"id": 2, "title": "Panel 2", "type": "graph"},
+				},
+			},
+			expectedIDs:    []int{1, 2},
+			expectedTitles: []string{"Panel 1", "Panel 2"},
+		},
+		{
+			name: "nested panels within collapsed row",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":    1,
+						"title": "Row Panel",
+						"type":  "row",
+						"panels": []interface{}{
+							map[string]interface{}{"id": 2, "title": "Nested Panel 1", "type": "stat"},
+							map[string]interface{}{"id": 3, "title": "Nested Panel 2", "type": "graph"},
+						},
+					},
+				},
+			},
+			expectedIDs:    []int{1, 2, 3},
+			expectedTitles: []string{"Row Panel", "Nested Panel 1", "Nested Panel 2"},
+		},
+		{
+			name: "panels inside rows (old row-based format)",
+			input: map[string]interface{}{
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title": "Row 1",
+						"panels": []interface{}{
+							map[string]interface{}{"id": 6, "title": "Row Panel 1", "type": "stat"},
+							map[string]interface{}{"id": 7, "title": "Row Panel 2", "type": "graph"},
+						},
+					},
+					map[string]interface{}{
+						"title": "Row 2",
+						"panels": []interface{}{
+							map[string]interface{}{"id": 8, "title": "Row Panel 3", "type": "table"},
+						},
+					},
+				},
+			},
+			expectedIDs:    []int{6, 7, 8},
+			expectedTitles: []string{"Row Panel 1", "Row Panel 2", "Row Panel 3"},
+		},
+		{
+			name: "ID collision scenario: top-level and row panels",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"id": 1, "title": "Top Level Panel", "type": "text"},
+				},
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title": "Row with high ID panels",
+						"panels": []interface{}{
+							map[string]interface{}{"id": 6, "title": "Row Panel 1", "type": "stat"},
+							map[string]interface{}{"id": 7, "title": "Row Panel 2", "type": "stat"},
+						},
+					},
+				},
+			},
+			expectedIDs:    []int{1, 6, 7},
+			expectedTitles: []string{"Top Level Panel", "Row Panel 1", "Row Panel 2"},
+		},
+		{
+			name: "all panel sources combined",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{"id": 1, "title": "Top Level Panel", "type": "text"},
+					map[string]interface{}{
+						"id":    2,
+						"title": "Collapsed Row",
+						"type":  "row",
+						"panels": []interface{}{
+							map[string]interface{}{"id": 3, "title": "Nested Panel", "type": "stat"},
+						},
+					},
+				},
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title": "Old Format Row",
+						"panels": []interface{}{
+							map[string]interface{}{"id": 10, "title": "Old Row Panel", "type": "graph"},
+						},
+					},
+				},
+			},
+			expectedIDs:    []int{1, 2, 3, 10},
+			expectedTitles: []string{"Top Level Panel", "Collapsed Row", "Nested Panel", "Old Row Panel"},
+		},
+		{
+			name:           "empty dashboard",
+			input:          map[string]interface{}{},
+			expectedIDs:    []int{},
+			expectedTitles: []string{},
+		},
+		{
+			name: "rows with empty panels array",
+			input: map[string]interface{}{
+				"rows": []interface{}{
+					map[string]interface{}{
+						"title":  "Empty Row",
+						"panels": []interface{}{},
+					},
+				},
+			},
+			expectedIDs:    []int{},
+			expectedTitles: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			panels := getPanels(tt.input)
+
+			if len(panels) != len(tt.expectedIDs) {
+				t.Errorf("Expected %d panels, got %d", len(tt.expectedIDs), len(panels))
+				return
+			}
+
+			for i, panel := range panels {
+				if id, ok := panel["id"].(int); ok {
+					if id != tt.expectedIDs[i] {
+						t.Errorf("Panel %d: expected ID %d, got %d", i, tt.expectedIDs[i], id)
+					}
+				} else if len(tt.expectedIDs) > 0 {
+					t.Errorf("Panel %d: missing or invalid ID", i)
+				}
+
+				if title, ok := panel["title"].(string); ok {
+					if title != tt.expectedTitles[i] {
+						t.Errorf("Panel %d: expected title %q, got %q", i, tt.expectedTitles[i], title)
+					}
+				} else if len(tt.expectedTitles) > 0 {
+					t.Errorf("Panel %d: missing or invalid title", i)
+				}
+			}
 		})
 	}
 }

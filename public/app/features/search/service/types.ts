@@ -21,7 +21,7 @@ export interface FacetField {
 
 export interface SearchQuery {
   query?: string;
-  location?: string;
+  location?: string; // folder!
   sort?: string;
   ds_uid?: string;
   ds_type?: string;
@@ -32,9 +32,9 @@ export interface SearchQuery {
   uid?: string[];
   facet?: FacetField[];
   explain?: boolean;
+  panelTitleSearch?: boolean;
   withAllowedActions?: boolean;
   accessInfo?: boolean;
-  hasPreview?: string; // theme
   limit?: number;
   from?: number;
   starred?: boolean;

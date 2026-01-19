@@ -2,8 +2,20 @@ import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
 import { createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
-import { experimentalThemeDefinitions, NewThemeOptionsSchema } from '@grafana/data/internal';
-import { themeJsonSchema } from '@grafana/data/unstable';
+import { NewThemeOptionsSchema } from '@grafana/data/internal';
+import aubergine from '@grafana/data/themes/definitions/aubergine.json';
+import debug from '@grafana/data/themes/definitions/debug.json';
+import desertbloom from '@grafana/data/themes/definitions/desertbloom.json';
+import gildedgrove from '@grafana/data/themes/definitions/gildedgrove.json';
+import gloom from '@grafana/data/themes/definitions/gloom.json';
+import mars from '@grafana/data/themes/definitions/mars.json';
+import matrix from '@grafana/data/themes/definitions/matrix.json';
+import sapphiredusk from '@grafana/data/themes/definitions/sapphiredusk.json';
+import synthwave from '@grafana/data/themes/definitions/synthwave.json';
+import tron from '@grafana/data/themes/definitions/tron.json';
+import victorian from '@grafana/data/themes/definitions/victorian.json';
+import zen from '@grafana/data/themes/definitions/zen.json';
+import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
@@ -34,8 +46,23 @@ const themeMap: Record<string, NewThemeOptions> = {
   },
 };
 
+const experimentalDefinitions: Record<string, unknown> = {
+  aubergine,
+  debug,
+  desertbloom,
+  gildedgrove,
+  gloom,
+  mars,
+  matrix,
+  sapphiredusk,
+  synthwave,
+  tron,
+  victorian,
+  zen,
+};
+
 // Add additional themes
-for (const [name, json] of Object.entries(experimentalThemeDefinitions)) {
+for (const [name, json] of Object.entries(experimentalDefinitions)) {
   const result = NewThemeOptionsSchema.safeParse(json);
   if (!result.success) {
     console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);

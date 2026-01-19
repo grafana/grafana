@@ -1596,7 +1596,7 @@
       "hideTimepicker": false,
       "fiscalYearStartMonth": 0
     },
-    "title": "Span Zero Demo Dashboard",
+    "title": "Span Zero + ID Collision Prevention Demo",
     "variables": [
       {
         "kind": "DatasourceVariable",

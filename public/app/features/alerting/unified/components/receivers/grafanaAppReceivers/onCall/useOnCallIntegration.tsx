@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
-import { NotifierDTO } from 'app/features/alerting/unified/types/alerting';
+import { NotificationChannelOption, NotifierDTO, NotifierType } from 'app/features/alerting/unified/types/alerting';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
@@ -193,7 +193,7 @@ export function useOnCallIntegration() {
   );
 
   const extendOnCallNotifierFeatures = useCallback(
-    (notifier: NotifierDTO): NotifierDTO => {
+    <T extends NotifierType>(notifier: NotifierDTO<T>): NotifierDTO<T> => {
       // If V2 integration is not enabled the receiver will not be extended
       // We still allow users to use this contact point but they need to provide URL manually
       // As they do for webhook integration
@@ -201,8 +201,6 @@ export function useOnCallIntegration() {
       // if someone turned off or downgraded the OnCall plugin but had some receivers configured with OnCall notifier
       // By falling back to plain URL input we allow users to change the config with OnCall disabled/not supporting V2 integration
       if (notifier.type === ReceiverTypes.OnCall && isAlertingV2IntegrationEnabled) {
-        const options = notifier.options.filter((o) => o.propertyName !== 'url');
-
         const newIntegrationOption: SelectableValue<string> = {
           value: OnCallIntegrationType.NewIntegration,
           label: t('alerting.irm-integration.new-integration', 'New IRM integration'),
@@ -220,7 +218,7 @@ export function useOnCallIntegration() {
           ),
         };
 
-        options.unshift(
+        const enhancedOptions = [
           option(
             OnCallIntegrationSetting.IntegrationType,
             t('alerting.irm-integration.connection-method', 'How to connect to IRM'),
@@ -255,10 +253,23 @@ export function useOnCallIntegration() {
                 value: i.integration_url,
               })),
             }
-          )
-        );
+          ),
+        ];
 
-        return { ...notifier, options };
+        const enhanceOptions = (originalOptions: NotificationChannelOption[]) => {
+          const filteredOptions = originalOptions.filter((o) => o.propertyName !== 'url');
+          return [...enhancedOptions, ...filteredOptions];
+        };
+
+        return {
+          ...notifier,
+          options: enhanceOptions(notifier.options),
+          // Also enhance versions[].options so getOptionsForVersion() returns the enhanced options
+          versions: notifier.versions?.map((version) => ({
+            ...version,
+            options: enhanceOptions(version.options),
+          })),
+        };
       }
 
       return notifier;
