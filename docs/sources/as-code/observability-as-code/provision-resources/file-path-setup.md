@@ -129,34 +129,47 @@ The set up process verifies the path and provides an error message if a problem 
 
 #### Synchronization limitations
 
-Full instance sync is not available in Grafana Cloud.
+{{< admonition type="caution" >}}
 
-In Grafana OSS/Enterprise:
+Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
 
-- If you try to perform a full instance sync with resources that contain alerts or panels, the connection will be blocked.
+{{< /admonition >}}
+
+To have access to full instance sync you must explicitly enable the option.
+
+The following applies:
+
 - You won't be able to create new alerts or library panels after setup is completed.
 - If you opted for full instance sync and want to use alerts and library panels, you'll have to delete the provisioned repository and connect again with folder sync.
 
 #### Set up synchronization
 
-Choose to either sync your entire organization resources with external storage, or to sync certain resources to a new Grafana folder (with up to 10 connections).
+You can sync external resources into a new folder without affecting the rest of your instance.
 
-- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. With this option, all of your dashboards are synced to that one repository. You can only have one provisioned connection with this selection, and you won't have the option of setting up additional repositories to connect to.
+To set up synchronization:
 
-- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 connections.
+1. Select which resources you want to sync.
 
-Next, enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
 
-Click **Synchronize** to continue.
+1. Click **Synchronize** to continue.
+
+1. You can repeat this process for up to 10 connections.
+
+{{< admonition type="note" >}}
+
+Optionally, you can export any unmanaged resources into the provisioned folder. See how in [Synchronize with external storage](#synchronize-with-external-storage).
+
+{{< /admonition >}}
 
 ### Synchronize with external storage
 
-After this one time step, all future updates are automatically saved to the local file path and provisioned back to the instance.
+In this step you proceed to synchronize the resources selected in the previous step. Optionally, you can check the **Migrate existing resources** box to migrate your unmanaged dashboards to the provisioned folder.
 
-During the initial synchronization, your dashboards will be temporarily unavailable. No data or configurations will be lost.
+Select **Begin synchronization** to start the process. After this one time step, all future updates are automatically saved to the local file path and provisioned back to the instance.
+
+Note that during the initial synchronization, your dashboards will be temporarily unavailable. No data or configurations will be lost.
 How long the process takes depends upon the number of resources involved.
-
-Select **Begin synchronization** to start the process.
 
 ### Choose additional settings
 
