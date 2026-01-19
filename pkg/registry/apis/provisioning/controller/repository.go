@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -23,7 +24,6 @@ import (
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -518,13 +518,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return rc.handleDelete(ctx, obj)
 	}
 
-	shouldCreateToken := false
-	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
-		// In case a connection is defined in the Repository, but no token has been
-		// created yet, this controller loop should do it.
-		shouldCreateToken = obj.Status.Token.LastUpdated == 0
-	}
-
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
@@ -548,22 +541,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
-	if shouldCreateToken {
-		logger.Info("creating token for repository", "connection", obj.Spec.Connection.Name)
-
-		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj)
-		if err != nil {
-			logger.Error("generating repository for token",
-				"connection", obj.Spec.Connection.Name,
-				"error", err,
-			)
-			return err
-		}
-
-		obj.Secure.Token.Create = token
-		patchOperations = append(patchOperations, tokenOps...)
-	}
-
 	repo, err := rc.repoFactory.Build(ctx, obj)
 	if err != nil {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
@@ -585,6 +562,24 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	_, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
+	}
+
+	if !healthStatus.Healthy &&
+		healthStatus.Error == provisioning.HealthFailureHealth &&
+		slices.Contains(healthStatus.Message, "not authorized") {
+
+		logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
+
+		tokenOps, err := rc.generateRepositoryToken(ctx, obj)
+		if err != nil {
+			logger.Error("generating repository for token",
+				"connection", obj.Spec.Connection.Name,
+				"error", err,
+			)
+			return err
+		}
+
+		patchOperations = append(patchOperations, tokenOps...)
 	}
 
 	// Add health patch operations first
@@ -645,23 +640,23 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 func (rc *RepositoryController) generateRepositoryToken(
 	ctx context.Context,
 	obj *provisioning.Repository,
-) (common.RawSecureValue, []map[string]interface{}, error) {
+) ([]map[string]interface{}, error) {
 	c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to get connection: %w", err)
+		return nil, fmt.Errorf("unable to get connection: %w", err)
 	}
 
 	conn, err := rc.connectionFactory.Build(ctx, c)
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to create connection from configuration: %w", err)
+		return nil, fmt.Errorf("unable to create connection from configuration: %w", err)
 	}
 
 	token, err := conn.GenerateRepositoryToken(ctx, obj)
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to create token for repository: %w", err)
+		return nil, fmt.Errorf("unable to create token for repository: %w", err)
 	}
 
-	return token.Token, []map[string]any{
+	return []map[string]any{
 		{
 			"op":   "add",
 			"path": "/status/token",
