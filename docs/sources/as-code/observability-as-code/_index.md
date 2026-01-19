@@ -25,11 +25,11 @@ cards:
       height: 24
       href: ./foundation-sdk/
       description: The Grafana Foundation SDK is a set of tools, types, and libraries that let you define Grafana dashboards and resources using familiar programming languages like Go, TypeScript, Python, Java, and PHP. Use it in conjunction with `grafanactl` to push your programmatically generated resources.
-    - title: Git Sync (private preview)
+    - title: Git Sync 
       height: 24
-      href: ./provision-resources/intro-git-sync/
+      href: ./git-sync/intro-git-sync/
       description: Git Sync lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance, enabling version control, branching, and pull requests directly from Grafana.
-    - title: File provisioning (private preview)
+    - title: On-prem file provisioning 
       height: 24
       href: ./provision-resources/
       description: File provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.
