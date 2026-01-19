@@ -10,6 +10,7 @@ import { TeamOwnerReference } from './OwnerReference';
 import { SupportedResource, useAddOwnerReference, useGetOwnerReferences } from './hooks';
 
 export const TeamSelector = ({ onChange }: { onChange: (ownerRef: OwnerReference) => void }) => {
+  const [selectedTeam, setSelectedTeam] = useState<ComboboxOption<string> | null>(null);
   const { data: teams } = useListTeamQuery({});
   const teamsOptions = teams?.items.map((team) => ({
     label: team.spec.title,
@@ -18,7 +19,9 @@ export const TeamSelector = ({ onChange }: { onChange: (ownerRef: OwnerReference
   return (
     <Combobox
       options={teamsOptions}
+      value={selectedTeam}
       onChange={(team: ComboboxOption<string>) => {
+        setSelectedTeam(team);
         onChange({
           apiVersion: `${API_GROUP}/${API_VERSION}`,
           kind: 'Team',
