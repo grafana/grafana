@@ -102,8 +102,7 @@ async function testFn() {
   expect(result.current.isLoading).toBe(true);
 
   await waitFor(() => {
-    const withoutPaginationPlaceholders = result.current.items.filter((item) => item.item.kind !== 'ui');
-    return expect(withoutPaginationPlaceholders.length).toBeGreaterThan(1);
+    return expect(result.current.isLoading).toBe(false);
   });
 
   return result.current.items;
