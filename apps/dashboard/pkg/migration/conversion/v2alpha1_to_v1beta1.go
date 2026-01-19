@@ -202,7 +202,6 @@ func convertLinksToV1(links []dashv2alpha1.DashboardDashboardLink) []map[string]
 //   - TabsLayout: Tabs become expanded row panels; content is flattened
 func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.DashboardElement, layout dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) ([]interface{}, error) {
 	// Find the maximum panel ID from all elements to use for row panel IDs.
-	// Row panels in V1 need unique IDs, but V2 layouts don't have row IDs.
 	nextRowID := getMaxPanelIDFromElements(elements) + 1
 
 	if layout.GridLayoutKind != nil {
