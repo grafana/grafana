@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
 
@@ -136,6 +136,51 @@ const FlameGraphPane = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataContainer, keepFocusOnDataChange]);
 
+  // Track whether we set highlightedItemIndexes ourselves (from this pane's flame graph)
+  const weSetHighlightedRef = useRef(false);
+
+  // Sync highlightedItemIndexes from call tree to flame graph focus
+  useEffect(() => {
+    if (!highlightedItemIndexes || highlightedItemIndexes.length === 0) {
+      return;
+    }
+
+    // Skip if we just set this ourselves from the flame graph
+    if (weSetHighlightedRef.current) {
+      weSetHighlightedRef.current = false;
+      return;
+    }
+
+    // Check if current focus already matches
+    const currentIndexes = focusedItemData?.item.itemIndexes;
+    if (currentIndexes && currentIndexes.length === highlightedItemIndexes.length) {
+      const matches = currentIndexes.every((val, idx) => val === highlightedItemIndexes[idx]);
+      if (matches) {
+        return;
+      }
+    }
+
+    // Find the item in the flame graph data by itemIndexes
+    const levels = dataContainer.getLevels();
+    for (const level of levels) {
+      for (const item of level) {
+        if (
+          item.itemIndexes.length === highlightedItemIndexes.length &&
+          item.itemIndexes.every((val, idx) => val === highlightedItemIndexes[idx])
+        ) {
+          const label = dataContainer.getLabel(item.itemIndexes[0]);
+          const totalViewTicks = levels[0][0].value;
+
+          // posX/posY are for context menu positioning, not needed for focus sync
+          setFocusedItemData({ label, item, posX: 0, posY: 0 });
+          setRangeMin(item.start / totalViewTicks);
+          setRangeMax((item.start + item.value) / totalViewTicks);
+          return;
+        }
+      }
+    }
+  }, [highlightedItemIndexes, dataContainer, focusedItemData]);
+
   const resetFocus = useCallback(() => {
     setFocusedItemData(undefined);
     setRangeMin(0);
@@ -224,6 +269,7 @@ const FlameGraphPane = ({
           setRangeMax={setRangeMax}
           onItemFocused={(data) => {
             setFocusedItemData(data);
+            weSetHighlightedRef.current = true;
             setHighlightedItemIndexes?.(data.item.itemIndexes);
           }}
           focusedItemData={focusedItemData}
@@ -265,6 +311,7 @@ const FlameGraphPane = ({
             search={search}
             onSearch={onCallTreeSearch}
             highlightedItemIndexes={highlightedItemIndexes}
+            setHighlightedItemIndexes={setHighlightedItemIndexes}
           />
         </div>
       );

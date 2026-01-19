@@ -26,6 +26,8 @@ type Props = {
   onSearch?: (symbol: string) => void;
   /** Item indexes of the focused item in the flame graph, to set focus in the call tree */
   highlightedItemIndexes?: number[];
+  /** Callback to sync focus from call tree to flame graph */
+  setHighlightedItemIndexes?: (itemIndexes: number[] | undefined) => void;
 };
 
 const FlameGraphCallTreeContainer = memo(
@@ -40,6 +42,7 @@ const FlameGraphCallTreeContainer = memo(
     compact: compactProp,
     onSearch,
     highlightedItemIndexes,
+    setHighlightedItemIndexes,
   }: Props) => {
     const [isCompact, setIsCompact] = useState(false);
     const widthRef = useRef(0);
@@ -68,27 +71,38 @@ const FlameGraphCallTreeContainer = memo(
     const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(0);
     const [searchError, setSearchError] = useState<string | undefined>(undefined);
 
-    const handleSetFocusMode = useCallback((nodeIdOrLabel: string | undefined, isLabel = false) => {
-      if (nodeIdOrLabel === undefined) {
-        setFocusedNodeId(undefined);
-      } else if (isLabel) {
-        // When switching from callers mode, we need to find the node by label in the normal tree
-        setFocusedNodeId(`label:${nodeIdOrLabel}`);
-      } else {
-        setFocusedNodeId(nodeIdOrLabel);
-      }
+    const handleSetFocusMode = useCallback(
+      (nodeIdOrLabel: string | undefined, isLabel = false, itemIndexes?: number[]) => {
+        if (nodeIdOrLabel === undefined) {
+          setFocusedNodeId(undefined);
+          setHighlightedItemIndexes?.(undefined);
+        } else if (isLabel) {
+          // When switching from callers mode, we need to find the node by label in the normal tree
+          setFocusedNodeId(`label:${nodeIdOrLabel}`);
+          setHighlightedItemIndexes?.(itemIndexes);
+        } else {
+          setFocusedNodeId(nodeIdOrLabel);
+          setHighlightedItemIndexes?.(itemIndexes);
+        }
 
-      if (nodeIdOrLabel !== undefined) {
-        setCallersNodeLabel(undefined);
-      }
-    }, []);
+        if (nodeIdOrLabel !== undefined) {
+          setCallersNodeLabel(undefined);
+        }
+      },
+      [setHighlightedItemIndexes]
+    );
 
-    const handleSetCallersMode = useCallback((label: string | undefined) => {
-      setCallersNodeLabel(label);
-      if (label !== undefined) {
-        setFocusedNodeId(undefined);
-      }
-    }, []);
+    const handleSetCallersMode = useCallback(
+      (label: string | undefined) => {
+        setCallersNodeLabel(label);
+        if (label !== undefined) {
+          setFocusedNodeId(undefined);
+        }
+        // Sync with flame graph's sandwich mode
+        onSandwich(label);
+      },
+      [onSandwich]
+    );
 
     const { nodes, focusedNode, callersNode } = useMemo(() => {
       const allNodes = buildAllCallTreeNodes(data);
@@ -437,6 +451,7 @@ const FlameGraphCallTreeContainer = memo(
               <ActionsCell
                 nodeId={row.original.id}
                 label={row.original.label}
+                itemIndexes={row.original.levelItem.itemIndexes}
                 hasChildren={row.original.hasChildren}
                 depth={row.original.depth - depthOffset}
                 parentId={row.original.parentId}
@@ -537,6 +552,7 @@ const FlameGraphCallTreeContainer = memo(
               <ActionsCell
                 nodeId={row.original.id}
                 label={row.original.label}
+                itemIndexes={row.original.levelItem.itemIndexes}
                 hasChildren={row.original.hasChildren}
                 depth={row.original.depth - depthOffset}
                 parentId={row.original.parentId}
@@ -927,10 +943,11 @@ function getRowBackgroundColor(
 type ActionsCellProps = {
   nodeId: string;
   label: string;
+  itemIndexes: number[];
   hasChildren: boolean;
   depth: number;
   parentId: string | undefined;
-  onFocus: (nodeIdOrLabel: string, isLabel?: boolean) => void;
+  onFocus: (nodeIdOrLabel: string, isLabel: boolean, itemIndexes: number[]) => void;
   onShowCallers: (label: string) => void;
   onSearch?: (symbol: string) => void;
   focusedNodeId: string | undefined;
@@ -942,6 +959,7 @@ type ActionsCellProps = {
 const ActionsCell = memo(function ActionsCell({
   nodeId,
   label,
+  itemIndexes,
   hasChildren,
   depth,
   parentId,
@@ -978,9 +996,9 @@ const ActionsCell = memo(function ActionsCell({
           icon="compress-arrows"
           onClick={() => {
             if (inCallersMode) {
-              onFocus(label, true);
+              onFocus(label, true, itemIndexes);
             } else {
-              onFocus(nodeId, false);
+              onFocus(nodeId, false, itemIndexes);
             }
           }}
         />
