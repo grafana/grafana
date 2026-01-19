@@ -30,6 +30,31 @@ jobs:
       - name: Define opted-in teams
         run: echo "Opted-in teams defined in job outputs"
 
+  detect-changes:
+    name: Detect changed files
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    outputs:
+      changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+          fetch-depth: 2
+
+      - name: Detect changed files
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          separator: ' '
+
+      - name: Display changed files
+        run: |
+          echo "=== Changed Files Detected ==="
+          echo "${{ steps.changed-files.outputs.all_changed_files }}"
+          echo "=============================="
+
   cleanup-on-skip:
     name: Cleanup coverage comments
     needs: setup
