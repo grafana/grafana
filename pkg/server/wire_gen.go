@@ -882,7 +882,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := iam.ProvideNoopGlobalRoleApiInstaller()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, globalRoleApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
+	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, globalRoleApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1550,7 +1551,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := iam.ProvideNoopGlobalRoleApiInstaller()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, globalRoleApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
+	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, globalRoleApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
