@@ -37,6 +37,7 @@ import (
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	jobsvalidation "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -125,8 +126,9 @@ type APIBuilder struct {
 	extras       []Extra
 	extraWorkers []jobs.Worker
 
-	restConfigGetter func(context.Context) (*clientrest.Config, error)
-	registry         prometheus.Registerer
+	restConfigGetter        func(context.Context) (*clientrest.Config, error)
+	registry                prometheus.Registerer
+	namespaceLimitsProvider quotas.NamespaceLimitsProvider
 }
 
 // NewAPIBuilder creates an API builder.
@@ -154,6 +156,7 @@ func NewAPIBuilder(
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 	useExclusivelyAccessCheckerForAuthz bool,
+	namespaceLimitsProvider quotas.NamespaceLimitsProvider,
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -198,6 +201,7 @@ func NewAPIBuilder(
 		registry:                            registry,
 		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering, repoFactory),
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
+		namespaceLimitsProvider:             namespaceLimitsProvider,
 	}
 
 	for _, builder := range extraBuilders {
@@ -273,6 +277,7 @@ func RegisterAPIService(
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
+	limitsProvider := quotas.NewFixedNamespaceLimitsProvider(10)
 	builder := NewAPIBuilder(
 		cfg.DisableControllers,
 		repoFactory,
@@ -294,6 +299,7 @@ func RegisterAPIService(
 		reg,
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
+		limitsProvider,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
@@ -858,7 +864,7 @@ func copyConnectionSecureValues(new, old *provisioning.Connection) {
 }
 
 func (b *APIBuilder) VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error {
-	return VerifyAgainstExistingRepositories(ctx, b.repoStore, cfg)
+	return VerifyAgainstExistingRepositories(ctx, b.repoStore, cfg, b.namespaceLimitsProvider)
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
