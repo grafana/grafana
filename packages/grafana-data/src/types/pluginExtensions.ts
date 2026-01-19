@@ -138,10 +138,7 @@ export type PluginExtensionAddedLinkConfig<Context extends object = object> = Pl
   // (Optional) A icon that can be displayed in the ui for the extension option.
   icon?: IconName;
 
-  /**
-   * (Optional) A category to be used when grouping the options in the ui.
-   * If set to "root", the link will be rendered at the root level of the menu.
-   */
+  // (Optional) A category to be used when grouping the options in the ui.
   category?: string;
 
   // (Optional) If true, opens the link in a new tab (renders with target="_blank")
