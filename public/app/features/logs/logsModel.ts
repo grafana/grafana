@@ -419,7 +419,7 @@ export function logSeriesToLogsModel(
       }
 
       let logLevel = LogLevel.unknown;
-      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels?.level ?? labels?.detected_level);
+      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels?.detected_level ?? labels?.level);
       if (typeof logLevelKey === 'number' || typeof logLevelKey === 'string') {
         logLevel = getLogLevelFromKey(logLevelKey);
       } else {
