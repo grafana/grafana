@@ -564,10 +564,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return fmt.Errorf("update health status: %w", err)
 	}
 
-	if !healthStatus.Healthy &&
-		healthStatus.Error == provisioning.HealthFailureHealth &&
-		slices.Contains(healthStatus.Message, "not authorized") {
-
+	if rc.shouldGenerateTokenFromConnection(obj, healthStatus) {
 		logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
 
 		tokenOps, err := rc.generateRepositoryToken(ctx, obj)
@@ -635,6 +632,21 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	return hookOps, true, nil
+}
+
+func (rc *RepositoryController) shouldGenerateTokenFromConnection(
+	obj *provisioning.Repository,
+	healthStatus provisioning.HealthStatus,
+) bool {
+	const (
+		tokenInvalidErrorMessage = "not authorized"
+	)
+
+	return obj.Spec.Connection == nil &&
+		obj.Spec.Connection.Name != "" &&
+		healthStatus.Healthy &&
+		healthStatus.Error == provisioning.HealthFailureHealth &&
+		slices.Contains(healthStatus.Message, tokenInvalidErrorMessage)
 }
 
 func (rc *RepositoryController) generateRepositoryToken(
