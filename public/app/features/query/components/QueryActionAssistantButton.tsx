@@ -1,7 +1,7 @@
 import { useAssistant, createAssistantContextItem } from '@grafana/assistant';
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { evaluateBooleanFlag } from '@grafana/runtime/internal';
+import { config } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 import { queryIsEmpty } from 'app/core/utils/query';
@@ -24,7 +24,7 @@ export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>
   const { isAvailable, openAssistant } = useAssistant();
 
   // Check if the feature toggle is enabled
-  if (!evaluateBooleanFlag('queryWithAssistant', false)) {
+  if (!config.featureToggles.queryWithAssistant) {
     return null;
   }
 

@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 
 import { AssistantHook, useAssistant } from '@grafana/assistant';
 import { CoreApp, DataSourceInstanceSettings } from '@grafana/data';
-import { evaluateBooleanFlag } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema';
 
 import { QueryActionAssistantButton } from './QueryActionAssistantButton';
@@ -12,20 +11,22 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn(),
 }));
 
-// Mock evaluateBooleanFlag
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  evaluateBooleanFlag: jest.fn(),
-}));
-
 // Mock the runtime services that assistant depends on
+const mockConfig = {
+  featureToggles: {
+    queryWithAssistant: false,
+  },
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn().mockReturnValue({ links: [], isLoading: false }),
+  get config() {
+    return mockConfig;
+  },
 }));
 
 const useAssistantMock = jest.mocked(useAssistant);
-const evaluateBooleanFlagMock = jest.mocked(evaluateBooleanFlag);
 
 const mockDataSourceInstance: DataSourceInstanceSettings = {
   uid: 'test-uid',
@@ -51,7 +52,7 @@ describe('QueryActionAssistantButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Default: feature toggle enabled, assistant available
-    evaluateBooleanFlagMock.mockReturnValue(true);
+    mockConfig.featureToggles.queryWithAssistant = true;
     useAssistantMock.mockReturnValue({
       isAvailable: true,
       openAssistant: jest.fn(),
@@ -59,7 +60,7 @@ describe('QueryActionAssistantButton', () => {
   });
 
   it('should render nothing when feature toggle is disabled', () => {
-    evaluateBooleanFlagMock.mockReturnValue(false);
+    mockConfig.featureToggles.queryWithAssistant = false;
     useAssistantMock.mockReturnValue({
       isAvailable: true,
       openAssistant: jest.fn(),
@@ -68,7 +69,6 @@ describe('QueryActionAssistantButton', () => {
     const { container } = render(<QueryActionAssistantButton {...defaultProps} />);
 
     expect(container.firstChild).toBeNull();
-    expect(evaluateBooleanFlagMock).toHaveBeenCalledWith('queryWithAssistant', false);
   });
 
   it('should render nothing when app is not Explore, Dashboard, or PanelEditor', () => {
@@ -77,7 +77,7 @@ describe('QueryActionAssistantButton', () => {
   });
 
   it('should render nothing when Assistant is not available', () => {
-    evaluateBooleanFlagMock.mockReturnValue(true);
+    mockConfig.featureToggles.queryWithAssistant = true;
     useAssistantMock.mockReturnValue({
       isAvailable: false,
       openAssistant: undefined,
@@ -89,7 +89,7 @@ describe('QueryActionAssistantButton', () => {
   });
 
   it('should render nothing when openAssistant is not provided', () => {
-    evaluateBooleanFlagMock.mockReturnValue(true);
+    mockConfig.featureToggles.queryWithAssistant = true;
     useAssistantMock.mockReturnValue({
       isAvailable: true,
       openAssistant: undefined,
@@ -101,7 +101,7 @@ describe('QueryActionAssistantButton', () => {
   });
 
   it('should render button when feature toggle is enabled and assistant is available', () => {
-    evaluateBooleanFlagMock.mockReturnValue(true);
+    mockConfig.featureToggles.queryWithAssistant = true;
     const mockOpenAssistant = jest.fn();
     useAssistantMock.mockReturnValue({
       isAvailable: true,
@@ -112,6 +112,5 @@ describe('QueryActionAssistantButton', () => {
 
     const button = screen.getByRole('button', { name: /query with assistant/i });
     expect(button).toBeInTheDocument();
-    expect(evaluateBooleanFlagMock).toHaveBeenCalledWith('queryWithAssistant', false);
   });
 });
