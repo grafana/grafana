@@ -342,6 +342,13 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 				if v2.Error != nil {
 					lastError = v2.Error.Error()
 				}
+				var lastResult ngModels.LastResult
+				if v2.LatestResult != nil {
+					lastResult = ngModels.LastResult{
+						Values:    v2.LatestResult.Values,
+						Condition: v2.LatestResult.Condition,
+					}
+				}
 				states = append(states, ngModels.AlertInstance{
 					AlertInstanceKey:   key,
 					Labels:             ngModels.InstanceLabels(v2.Labels),
@@ -357,6 +364,7 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 					ResultFingerprint:  v2.ResultFingerprint.String(),
 					EvaluationDuration: v2.EvaluationDuration,
 					LastError:          lastError,
+					LastResult:         lastResult,
 				})
 			}
 		}

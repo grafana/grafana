@@ -801,7 +801,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	ruleGen := func() definitions.PostableGrafanaRule { return *ruleGroup.Rules[0].GrafanaManagedAlert }
 	rule2 := ruleGen()
 	rule2.Title = "Rule2"
-	rule2.NotificationSettings = &definitions.AlertRuleNotificationSettings{Receiver: "grafana-default-email"}
+	rule2.NotificationSettings = &definitions.AlertRuleNotificationSettings{Receiver: "empty"}
 	rule3 := ruleGen()
 	rule3.Title = "Rule3"
 	ruleGroup.Rules = append(ruleGroup.Rules,
@@ -848,7 +848,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	checkInUse(t, receiverListed, receiverGet, 4, 2)
 
 	// Verify the default.
-	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
+	receiverListed, receiverGet = requestReceivers(t, "empty")
 	checkInUse(t, receiverListed, receiverGet, 1, 1)
 
 	// Removing the new extra route should leave only 1.
@@ -871,7 +871,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
 	checkInUse(t, receiverListed, receiverGet, 1, 1)
 
-	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
+	receiverListed, receiverGet = requestReceivers(t, "empty")
 	checkInUse(t, receiverListed, receiverGet, 1, 0)
 
 	// Remove the remaining routes.
@@ -889,7 +889,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
 	checkInUse(t, receiverListed, receiverGet, 0, 0)
 
-	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
+	receiverListed, receiverGet = requestReceivers(t, "empty")
 	checkInUse(t, receiverListed, receiverGet, 1, 0)
 }
 
@@ -1259,7 +1259,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, items.Items, 1)
 		defaultReceiver = &items.Items[0]
-		assert.Equal(t, "grafana-default-email", defaultReceiver.Spec.Title)
+		assert.Equal(t, "empty", defaultReceiver.Spec.Title)
 		assert.NotEmpty(t, defaultReceiver.UID)
 		assert.NotEmpty(t, defaultReceiver.Name)
 		assert.NotEmpty(t, defaultReceiver.ResourceVersion)
@@ -1269,7 +1269,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		assert.NotEmpty(t, defaultReceiver.UID)
 		assert.NotEmpty(t, defaultReceiver.Name)
 		assert.NotEmpty(t, defaultReceiver.ResourceVersion)
-		assert.Len(t, defaultReceiver.Spec.Integrations, 1)
+		assert.Len(t, defaultReceiver.Spec.Integrations, 0)
 	})
 
 	t.Run("should be able to update default receiver", func(t *testing.T) {
@@ -1281,16 +1281,15 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		expected := newDefault.Copy().(*v0alpha1.Receiver)
-		expected.Spec.Integrations[0].Uid = updatedReceiver.Spec.Integrations[0].Uid // default integration does not have UID before first update
-		lineIntegration := expected.Spec.Integrations[1]
+		lineIntegration := expected.Spec.Integrations[0]
 		lineIntegration.SecureFields = map[string]bool{
 			"token": true,
 		}
 		delete(lineIntegration.Settings, "token")
-		assert.Equal(t, "LINE", updatedReceiver.Spec.Integrations[1].Type) // this type is in the schema but not in backend
+		assert.Equal(t, "LINE", updatedReceiver.Spec.Integrations[0].Type) // this type is in the schema but not in backend
 		lineIntegration.Type = "LINE"
-		lineIntegration.Uid = updatedReceiver.Spec.Integrations[1].Uid
-		expected.Spec.Integrations[1] = lineIntegration
+		lineIntegration.Uid = updatedReceiver.Spec.Integrations[0].Uid
+		expected.Spec.Integrations[0] = lineIntegration
 
 		assert.Equal(t, expected.Spec, updatedReceiver.Spec)
 	})
@@ -1524,7 +1523,7 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 	receiverClient, err := v0alpha1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
-		if receiver.Name == "grafana-default-email" {
+		if receiver.Name == "empty" {
 			continue
 		}
 

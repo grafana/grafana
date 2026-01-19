@@ -1,4 +1,4 @@
-import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
+import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
@@ -6,7 +6,6 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
-import store from 'app/core/store';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';

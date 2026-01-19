@@ -3,7 +3,7 @@
 // DO NOT EDIT
 //
 
-package apis
+package manifestdata
 
 import (
 	"encoding/json"
@@ -16,27 +16,27 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	v0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 )
 
 var (
-	rawSchemaPreferencesv1alpha1     = []byte(`{"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"language":{"description":"Selected language (beta)","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"regionalFormat":{"description":"Selected locale (beta)","type":"string"},"theme":{"description":"light, dark, empty is default","type":"string"},"timezone":{"description":"The timezone selection\nTODO: this should use the timezone defined in common","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
-	versionSchemaPreferencesv1alpha1 app.VersionSchema
-	_                                = json.Unmarshal(rawSchemaPreferencesv1alpha1, &versionSchemaPreferencesv1alpha1)
+	rawSchemaPlaylistv0alpha1     = []byte(`{"Item":{"additionalProperties":false,"properties":{"type":{"description":"type of the item.","enum":["dashboard_by_tag","dashboard_by_uid","dashboard_by_id"],"type":"string"},"value":{"description":"Value depends on type and describes the playlist item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the playlist.\n - dashboard_by_uid: The value is the dashboard UID","type":"string"}},"required":["type","value"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Playlist":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"interval":{"type":"string"},"items":{"items":{"$ref":"#/components/schemas/Item"},"type":"array"},"title":{"type":"string"}},"required":["title","interval","items"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaPlaylistv0alpha1 app.VersionSchema
+	_                             = json.Unmarshal(rawSchemaPlaylistv0alpha1, &versionSchemaPlaylistv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
-	AppName:          "preferences",
-	Group:            "preferences.grafana.app",
-	PreferredVersion: "v1alpha1",
+	AppName:          "playlist",
+	Group:            "playlist.grafana.app",
+	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
 		{
-			Name:   "v1alpha1",
+			Name:   "v0alpha1",
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Preferences",
-					Plural:     "Preferences",
+					Kind:       "Playlist",
+					Plural:     "Playlists",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -46,8 +46,14 @@ var appManifestData = app.ManifestData{
 								app.AdmissionOperationUpdate,
 							},
 						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
 					},
-					Schema: &versionSchemaPreferencesv1alpha1,
+					Schema: &versionSchemaPlaylistv0alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -64,11 +70,11 @@ func LocalManifest() app.Manifest {
 }
 
 func RemoteManifest() app.Manifest {
-	return app.NewAPIServerManifest("preferences")
+	return app.NewAPIServerManifest("playlist")
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Preferences/v1alpha1": v1alpha1.PreferencesKind(),
+	"Playlist/v0alpha1": v0alpha1.PlaylistKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

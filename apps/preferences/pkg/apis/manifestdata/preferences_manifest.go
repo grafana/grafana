@@ -3,31 +3,31 @@
 // DO NOT EDIT
 //
 
-package apis
+package manifestdata
 
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
+	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 )
 
 var (
-	rawSchemaStarsv1alpha1     = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
-	versionSchemaStarsv1alpha1 app.VersionSchema
-	_                          = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
+	rawSchemaPreferencesv1alpha1     = []byte(`{"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"language":{"description":"Selected language (beta)","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"regionalFormat":{"description":"Selected locale (beta)","type":"string"},"theme":{"description":"light, dark, empty is default","type":"string"},"timezone":{"description":"The timezone selection\nTODO: this should use the timezone defined in common","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
+	versionSchemaPreferencesv1alpha1 app.VersionSchema
+	_                                = json.Unmarshal(rawSchemaPreferencesv1alpha1, &versionSchemaPreferencesv1alpha1)
 )
 
 var appManifestData = app.ManifestData{
-	AppName:          "collections",
-	Group:            "collections.grafana.app",
+	AppName:          "preferences",
+	Group:            "preferences.grafana.app",
 	PreferredVersion: "v1alpha1",
 	Versions: []app.ManifestVersion{
 		{
@@ -35,8 +35,8 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Stars",
-					Plural:     "Stars",
+					Kind:       "Preferences",
+					Plural:     "Preferences",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -47,7 +47,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					Schema: &versionSchemaStarsv1alpha1,
+					Schema: &versionSchemaPreferencesv1alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -64,11 +64,11 @@ func LocalManifest() app.Manifest {
 }
 
 func RemoteManifest() app.Manifest {
-	return app.NewAPIServerManifest("collections")
+	return app.NewAPIServerManifest("preferences")
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Stars/v1alpha1": v1alpha1.StarsKind(),
+	"Preferences/v1alpha1": v1alpha1.PreferencesKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
