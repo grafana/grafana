@@ -83,11 +83,15 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
           <Icon name="question-circle" />
         </Tooltip>
       </Stack>
-      <Space v={2} />
-      <Text element="p">
-        <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team:</Trans>
-      </Text>
-      <TeamSelector onChange={handleTeamSelectorChange} />
+      {createTeamFolder && (
+        <>
+          <Space v={2} />
+          <Text element="p">
+            <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team:</Trans>
+          </Text>
+          <TeamSelector onChange={handleTeamSelectorChange} />
+        </>
+      )}
       <Space v={2} />
       <Stack>
         <Button variant="secondary" fill="outline" onClick={onCancel}>
