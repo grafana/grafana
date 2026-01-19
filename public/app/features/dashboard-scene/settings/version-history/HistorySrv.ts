@@ -19,8 +19,13 @@ export interface RevisionsModel {
   data: Dashboard;
 }
 
-// TODO: this should be removed entirely
+/**
+ * @deprecated this will be removed before G13
+ */
 export class HistorySrv {
+  /**
+   * @deprecated this will be removed before G13
+   */
   getHistoryList(dashboardUID: string, options: HistoryListOpts) {
     if (typeof dashboardUID !== 'string') {
       return Promise.resolve([]);
@@ -29,12 +34,28 @@ export class HistorySrv {
     return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions`, options);
   }
 
+  /**
+   * @deprecated this will be removed before G13
+   */
   getDashboardVersion(dashboardUID: string, version: number) {
     if (typeof dashboardUID !== 'string') {
       return Promise.resolve({});
     }
 
     return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions/${version}`);
+  }
+
+  /**
+   * @deprecated this will be removed before G13
+   */
+  restoreDashboard(dashboardUID: string, version: number) {
+    if (typeof dashboardUID !== 'string') {
+      return Promise.resolve({});
+    }
+
+    const url = `api/dashboards/uid/${dashboardUID}/restore`;
+
+    return getBackendSrv().post(url, { version });
   }
 }
 
