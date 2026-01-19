@@ -13,11 +13,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -77,7 +75,6 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 		{"sql backend fields compatibility", runTestSQLBackendFieldsCompatibility},
 		{"cross backend consistency", runTestCrossBackendConsistency},
 		{"concurrent operations stress", runTestConcurrentOperationsStress},
-		{"search operations compatibility", runTestSearchOperationsCompatibility},
 	}
 
 	for _, tc := range cases {
@@ -92,6 +89,18 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
 	}
+
+	// Search operations compatibility test (handled separately due to additional SearchServerFactory parameter)
+	t.Run("search operations compatibility", func(t *testing.T) {
+		if opts.SkipTests["search operations compatibility"] {
+			t.Skip()
+		}
+
+		kvbackend, db := newKvBackend(t.Context())
+		sqlbackend, _ := newSqlBackend(t.Context())
+
+		runTestSearchOperationsCompatibility(t, sqlbackend, kvbackend, opts.NSPrefix, db, opts.SearchServerFactory)
+	})
 }
 
 func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
@@ -1274,40 +1283,6 @@ func deletePlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 	return deleted
 }
 
-// NewTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
-func NewTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
-	t.Helper()
-
-	// Create test config
-	cfg := setting.NewCfg()
-	cfg.EnableSearch = true
-	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
-	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
-
-	// Initialize document builders for playlists
-	docBuilders := &resource.TestDocumentBuilderSupplier{
-		GroupsResources: map[string]string{
-			"playlist.grafana.app": "playlists",
-		},
-	}
-
-	// Create search options
-	features := featuremgmt.WithFeatures()
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
-	require.NoError(t, err)
-
-	// Create ResourceServer with search enabled
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend:      backend,
-		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
-		Search:       searchOpts,
-		Reg:          nil,
-	})
-	require.NoError(t, err)
-
-	return server
-}
-
 // createStorageServer creates a ResourceServer without search enabled (storage-api only)
 func createStorageServer(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
 	t.Helper()
@@ -1378,25 +1353,33 @@ func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServe
 	t.Logf("Search OK: query=%s, hits=%d", queryDesc, expectedHits)
 }
 
+// SearchServerFactory is a function that creates a ResourceServer with search enabled
+type SearchServerFactory func(t *testing.T, backend resource.StorageBackend) resource.ResourceServer
+
 // runTestSearchOperationsCompatibility tests search-api with different backend combinations
 // Simulates production rollout: Phase 1 (search=sql, storage=mixed) -> Phase 2 (search=kv, storage=kv)
-func runTestSearchOperationsCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+// The searchServerFactory parameter allows the caller to provide a function that creates search-enabled servers,
+// avoiding import cycles with the search package.
+func runTestSearchOperationsCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB, searchServerFactory SearchServerFactory) {
 	// Skip on SQLite due to concurrency limitations
 	if db.DriverName() == "sqlite3" {
 		t.Skip("Skipping search operations compatibility test on SQLite")
 	}
+
+	// Search server factory is required for search compatibility tests
+	require.NotNil(t, searchServerFactory, "SearchServerFactory must be provided in TestOptions for search compatibility tests")
 
 	// Test 1: Phase 1 Rollout - Search server uses SQL backend, Storage servers use both
 	// This simulates the transitional state where storage-api migrates to sqlkv
 	// while search-api continues using sqlbackend
 	t.Run("Search with SQL backend, Storage mixed", func(t *testing.T) {
 		runSearchCompatibilityScenario(t, searchCompatibilityTestConfig{
-			namespace:     nsPrefix + "-search-sql",
-			searchBackend: sqlBackend,
-			alphaStorage:  createStorageServer(t, sqlBackend),
-			betaStorage:   createStorageServer(t, kvBackend),
-			alphaPrefix:   "sql",
-			betaPrefix:    "kv",
+			namespace:    nsPrefix + "-search-sql",
+			searchServer: searchServerFactory(t, sqlBackend),
+			alphaStorage: createStorageServer(t, sqlBackend),
+			betaStorage:  createStorageServer(t, kvBackend),
+			alphaPrefix:  "sql",
+			betaPrefix:   "kv",
 		})
 	})
 
@@ -1404,12 +1387,12 @@ func runTestSearchOperationsCompatibility(t *testing.T, sqlBackend, kvBackend re
 	// This simulates the final state after complete migration to sqlkv
 	t.Run("Search with KV backend, Storage KV", func(t *testing.T) {
 		runSearchCompatibilityScenario(t, searchCompatibilityTestConfig{
-			namespace:     nsPrefix + "-search-kv",
-			searchBackend: kvBackend,
-			alphaStorage:  createStorageServer(t, kvBackend),
-			betaStorage:   createStorageServer(t, kvBackend),
-			alphaPrefix:   "kv1",
-			betaPrefix:    "kv2",
+			namespace:    nsPrefix + "-search-kv",
+			searchServer: searchServerFactory(t, kvBackend),
+			alphaStorage: createStorageServer(t, kvBackend),
+			betaStorage:  createStorageServer(t, kvBackend),
+			alphaPrefix:  "kv1",
+			betaPrefix:   "kv2",
 		})
 	})
 }
@@ -1425,12 +1408,12 @@ func numberToWord(n int) string {
 
 // searchCompatibilityTestConfig defines configuration for a search compatibility test scenario
 type searchCompatibilityTestConfig struct {
-	namespace     string                  // namespace for test isolation
-	searchBackend resource.StorageBackend // backend used for the search server
-	alphaStorage  resource.ResourceServer // storage server for Alpha resources
-	betaStorage   resource.ResourceServer // storage server for Beta resources
-	alphaPrefix   string                  // prefix for Alpha resource names (e.g., "sql", "kv1")
-	betaPrefix    string                  // prefix for Beta resource names (e.g., "kv", "kv2")
+	namespace    string                  // namespace for test isolation
+	searchServer resource.ResourceServer // search server (with search enabled)
+	alphaStorage resource.ResourceServer // storage server for Alpha resources
+	betaStorage  resource.ResourceServer // storage server for Beta resources
+	alphaPrefix  string                  // prefix for Alpha resource names (e.g., "sql", "kv1")
+	betaPrefix   string                  // prefix for Beta resource names (e.g., "kv", "kv2")
 }
 
 // runSearchCompatibilityScenario runs a complete search compatibility test scenario
@@ -1439,8 +1422,7 @@ func runSearchCompatibilityScenario(t *testing.T, cfg searchCompatibilityTestCon
 	t.Helper()
 	ctx := testutil.NewDefaultTestContext(t)
 
-	// Create search server with the specified backend
-	searchServer := NewTestResourceServerWithSearch(t, cfg.searchBackend)
+	searchServer := cfg.searchServer
 
 	// Track resource versions for update/delete phases
 	resourceVersions := make(map[string]int64)
