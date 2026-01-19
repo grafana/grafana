@@ -92,7 +92,6 @@ grafana::codegen:run apps/folder/pkg
 grafana::codegen:run apps/preferences/pkg
 grafana::codegen:run apps/collections/pkg
 grafana::codegen:run apps/scope/pkg
-grafana::codegen:run apps/live/pkg
 grafana::codegen:run apps/alerting/alertenrichment/pkg
 
 if [ -d "pkg/extensions/apis" ]; then
