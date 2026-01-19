@@ -155,6 +155,7 @@ var (
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
+			HideFromDocs:    true,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 		},
