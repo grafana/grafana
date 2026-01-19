@@ -32,7 +32,6 @@ func TestTestRepository(t *testing.T) {
 						// Missing required title
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				return m
 			}(),
 			expectedCode: http.StatusUnprocessableEntity,
@@ -51,7 +50,6 @@ func TestTestRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				m.On("Test", mock.Anything).Return(&provisioning.TestResults{
 					Code:    http.StatusOK,
 					Success: true,
@@ -70,7 +68,6 @@ func TestTestRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				m.On("Test", mock.Anything).Return(nil, fmt.Errorf("test error"))
 				return m
 			}(),
@@ -85,7 +82,6 @@ func TestTestRepository(t *testing.T) {
 						Title: "Test Repo",
 					},
 				})
-				m.On("Validate").Return(field.ErrorList{})
 				m.On("Test", mock.Anything).Return(&provisioning.TestResults{
 					Code:    http.StatusBadRequest,
 					Success: false,
@@ -104,7 +100,9 @@ func TestTestRepository(t *testing.T) {
 		},
 	}
 
-	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true))
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory))
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			results, err := tester.TestRepository(context.Background(), tt.repository)
@@ -137,13 +135,14 @@ func TestTester_TestRepository(t *testing.T) {
 			Title: "Test Repo",
 		},
 	})
-	repository.On("Validate").Return(field.ErrorList{})
 	repository.On("Test", mock.Anything).Return(&provisioning.TestResults{
 		Code:    http.StatusOK,
 		Success: true,
 	}, nil)
 
-	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true))
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory))
 	results, err := tester.TestRepository(context.Background(), repository)
 	require.NoError(t, err)
 	require.NotNil(t, results)
