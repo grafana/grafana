@@ -170,8 +170,8 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     expect(screen.getByDisplayValue('lotsa-emails')).toBeInTheDocument();
   });
 
-  it('does not show imported contact points in the dropdown', async () => {
-    // Override the receivers handler to include an imported contact point
+  it('does not show contact points with canUse=false (imported) in the dropdown', async () => {
+    // Override the receivers handler to include a contact point that cannot be used (e.g., imported)
     server.use(
       http.get('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () => {
         return HttpResponse.json({
@@ -184,6 +184,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
                 uid: 'regular-receiver',
                 annotations: {
                   'grafana.com/provenance': '',
+                  'grafana.com/canUse': 'true',
                   'grafana.com/access/canAdmin': 'true',
                   'grafana.com/access/canDelete': 'true',
                   'grafana.com/access/canWrite': 'true',
@@ -199,6 +200,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
                 uid: 'imported-receiver',
                 annotations: {
                   'grafana.com/provenance': 'converted_prometheus',
+                  'grafana.com/canUse': 'false',
                   'grafana.com/access/canAdmin': 'true',
                   'grafana.com/access/canDelete': 'false',
                   'grafana.com/access/canWrite': 'false',
@@ -223,12 +225,12 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     const combobox = await within(contactPointInput).findByRole('combobox');
     await user.click(combobox);
 
-    // Wait for options to load and verify imported contact point is not in the list
+    // Wait for options to load and verify contact point with canUse=false is not in the list
     await waitFor(() => {
       expect(screen.queryByRole('option', { name: /imported-receiver/i })).not.toBeInTheDocument();
     });
 
-    // Verify that non-imported contact points are still shown
+    // Verify that contact points with canUse=true are shown
     expect(await screen.findByRole('option', { name: /regular-receiver/i })).toBeInTheDocument();
   });
 

@@ -35,10 +35,10 @@ export const simpleContactPointsListScenario = [listReceiverHandler(simpleContac
 
 export const withErrorScenario = [listReceiverHandler(() => new HttpResponse(null, { status: 500 }))];
 
-// Contact points with different provenances for testing filter functionality
-export const contactPointsWithProvenance = ListReceiverApiResponseFactory.build({
+// Contact points with different canUse values for testing filter functionality
+export const contactPointsWithCanUse = ListReceiverApiResponseFactory.build({
   items: [
-    // Regular contact point (no provenance / empty provenance)
+    // Regular contact point (canUse: true)
     ContactPointFactory.build({
       spec: {
         title: 'regular-contact-point',
@@ -47,10 +47,11 @@ export const contactPointsWithProvenance = ListReceiverApiResponseFactory.build(
       metadata: {
         annotations: ContactPointMetadataAnnotationsFactory.build({
           'grafana.com/provenance': '',
+          'grafana.com/canUse': 'true',
         }),
       },
     }),
-    // Imported contact point (converted_prometheus provenance)
+    // Imported contact point (canUse: false)
     ContactPointFactory.build({
       spec: {
         title: 'imported-contact-point',
@@ -59,10 +60,11 @@ export const contactPointsWithProvenance = ListReceiverApiResponseFactory.build(
       metadata: {
         annotations: ContactPointMetadataAnnotationsFactory.build({
           'grafana.com/provenance': 'converted_prometheus',
+          'grafana.com/canUse': 'false',
         }),
       },
     }),
-    // API provisioned contact point
+    // API provisioned contact point (canUse: true)
     ContactPointFactory.build({
       spec: {
         title: 'api-provisioned-contact-point',
@@ -71,10 +73,17 @@ export const contactPointsWithProvenance = ListReceiverApiResponseFactory.build(
       metadata: {
         annotations: ContactPointMetadataAnnotationsFactory.build({
           'grafana.com/provenance': 'api',
+          'grafana.com/canUse': 'true',
         }),
       },
     }),
   ],
 });
 
-export const contactPointsWithProvenanceScenario = [listReceiverHandler(contactPointsWithProvenance)];
+/** @deprecated Use contactPointsWithCanUse instead */
+export const contactPointsWithProvenance = contactPointsWithCanUse;
+
+export const contactPointsWithCanUseScenario = [listReceiverHandler(contactPointsWithCanUse)];
+
+/** @deprecated Use contactPointsWithCanUseScenario instead */
+export const contactPointsWithProvenanceScenario = contactPointsWithCanUseScenario;
