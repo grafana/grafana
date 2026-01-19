@@ -210,6 +210,10 @@ func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
 	return false
 }
 
+func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	return claims.BatchCheckResponse{}, fmt.Errorf("not implemented")
+}
+
 var _ claims.AccessClient = &authzLimitedClient{}
 
 type contextFallbackKey struct{}

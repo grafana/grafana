@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -131,4 +132,8 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 	}
 
 	return shadowItemChecker, authlib.NoopZookie{}, err
+}
+
+func (c *ShadowClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, errors.New("not implemented")
 }
