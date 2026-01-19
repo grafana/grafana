@@ -158,6 +158,7 @@ var (
 			HideFromDocs:    true,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
+			Expression:      "false",
 		},
 		{
 			Name:         "starsFromAPIServer",

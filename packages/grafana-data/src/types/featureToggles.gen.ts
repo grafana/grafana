@@ -110,6 +110,7 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   /**
   * Registers a live apiserver
+  * @default false
   */
   liveAPIServer?: boolean;
   /**
