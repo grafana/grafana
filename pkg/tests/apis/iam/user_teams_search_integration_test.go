@@ -57,6 +57,7 @@ func TestIntegrationUserTeams(t *testing.T) {
 				UnifiedStorageEnableSearch: true,
 			})
 
+			defer helper.Shutdown()
 			t.Cleanup(func() { helper.Shutdown() })
 
 			doUserTeamsTests(t, helper)
