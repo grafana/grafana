@@ -3,13 +3,12 @@ package app
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	annotationv0alpha1 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )

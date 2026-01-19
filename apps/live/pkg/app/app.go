@@ -1,15 +1,9 @@
 package app
 
 import (
-	"context"
-
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/k8s"
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	liveV1 "github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1"
@@ -19,29 +13,47 @@ type LiveConfig struct {
 	Enable bool
 }
 
-func getPatchClient(restConfig rest.Config, liveKind resource.Kind) (operator.PatchClient, error) {
-	clientGenerator := k8s.NewClientRegistry(restConfig, k8s.ClientConfig{})
-	return clientGenerator.ClientFor(liveKind)
-}
-
 func New(cfg app.Config) (app.App, error) {
-	// liveConfig, ok := cfg.SpecificConfig.(*LiveConfig)
+	// APIPath needs to be set to `/apis`, as it defaults to empty
+	cfg.KubeConfig.APIPath = "/apis"
+	// // We create a client to work with our Example kind in our reconciler
+	// client, err := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig()).ClientFor(liveV1.ChannelKind())
+	// if err != nil {
+	// 	return nil, fmt.Errorf("unable to create example client: %w", err)
+	// }
+	// exampleConfig, ok := cfg.SpecificConfig.(*LiveConfig)
+	// if ok {
+	// 	fmt.Printf("CONFIG: %+v. // %v\n", exampleConfig, client)
+	// }
 
+	// This is the configuration for our App.
 	simpleConfig := simple.AppConfig{
 		Name:       "live",
 		KubeConfig: cfg.KubeConfig,
-		InformerConfig: simple.AppInformerConfig{
-			InformerOptions: operator.InformerOptions{
-				ErrorHandler: func(ctx context.Context, err error) {
-					logging.FromContext(ctx).Error("Informer processing error", "error", err)
-				},
+		// ManagedKinds is the list of all kinds our app manages (the kinds owned by our app).
+		// Here, a Kind is defined as a distinct Group, Version, and Kind combination,
+		// so for each version of our Example kind, we need to add it to this list.
+		// Each kind can also have admission control attached to it--different versions can have different admission control attached.
+		// Handlers for custom routes defined in the manifest for the kind go here--this is where they actuall get routed,
+		// they are only defined in the manifest.
+		// Reconcilers and/or Watchers are also attached here, though they should only be attached to a single version per kind.
+		ManagedKinds: []simple.AppManagedKind{
+			{
+				Kind: liveV1.ChannelKind(),
 			},
 		},
-
-		// Needs something
-		ManagedKinds: []simple.AppManagedKind{{
-			Kind: liveV1.ChannelKind(),
-		}},
+		// VersionedCustomRoutes are the custom route handlers for routes defined at the version level of the manifest
+		// instead of for a specific kind. This are sometimes referred to as "resource routes"
+		// (as opposed to "subresource routes" which are attached to kinds).
+		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
+			"v1alpha1": {
+				{
+					Namespaced: true,
+					Path:       "something",
+					Method:     "GET",
+				}: GetSomethingHandler,
+			},
+		},
 	}
 
 	a, err := simple.NewApp(simpleConfig)
@@ -49,6 +61,9 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
+	// This makes it easier to catch problems at startup, rather than when something doesn't behave as expected.
+	// ValidateManifest will ensure that the capabilities you define in your simple.AppConfig
+	// match the capabilities described in the AppManifest.
 	err = a.ValidateManifest(cfg.ManifestData)
 	if err != nil {
 		return nil, err
@@ -58,8 +73,9 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	gv := liveV1.ChannelKind().GroupVersionKind().GroupVersion()
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {liveV1.ChannelKind()},
+		liveV1.GroupVersion: {
+			liveV1.ChannelKind(),
+		},
 	}
 }
