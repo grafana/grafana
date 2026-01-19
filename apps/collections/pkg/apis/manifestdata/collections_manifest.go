@@ -3,7 +3,7 @@
 // DO NOT EDIT
 //
 
-package apis
+package manifestdata
 
 import (
 	"encoding/json"
@@ -16,27 +16,27 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	v0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	v1alpha1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 )
 
 var (
-	rawSchemaPlaylistv0alpha1     = []byte(`{"Item":{"additionalProperties":false,"properties":{"type":{"description":"type of the item.","enum":["dashboard_by_tag","dashboard_by_uid","dashboard_by_id"],"type":"string"},"value":{"description":"Value depends on type and describes the playlist item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the playlist.\n - dashboard_by_uid: The value is the dashboard UID","type":"string"}},"required":["type","value"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"Playlist":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"interval":{"type":"string"},"items":{"items":{"$ref":"#/components/schemas/Item"},"type":"array"},"title":{"type":"string"}},"required":["title","interval","items"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
-	versionSchemaPlaylistv0alpha1 app.VersionSchema
-	_                             = json.Unmarshal(rawSchemaPlaylistv0alpha1, &versionSchemaPlaylistv0alpha1)
+	rawSchemaStarsv1alpha1     = []byte(`{"Resource":{"additionalProperties":false,"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources\n+listType=set","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"Stars":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"resource":{"items":{"$ref":"#/components/schemas/Resource"},"type":"array"}},"required":["resource"],"type":"object"}}`)
+	versionSchemaStarsv1alpha1 app.VersionSchema
+	_                          = json.Unmarshal(rawSchemaStarsv1alpha1, &versionSchemaStarsv1alpha1)
 )
 
 var appManifestData = app.ManifestData{
-	AppName:          "playlist",
-	Group:            "playlist.grafana.app",
-	PreferredVersion: "v0alpha1",
+	AppName:          "collections",
+	Group:            "collections.grafana.app",
+	PreferredVersion: "v1alpha1",
 	Versions: []app.ManifestVersion{
 		{
-			Name:   "v0alpha1",
+			Name:   "v1alpha1",
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Playlist",
-					Plural:     "Playlists",
+					Kind:       "Stars",
+					Plural:     "Stars",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -46,14 +46,8 @@ var appManifestData = app.ManifestData{
 								app.AdmissionOperationUpdate,
 							},
 						},
-						Mutation: &app.MutationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
-							},
-						},
 					},
-					Schema: &versionSchemaPlaylistv0alpha1,
+					Schema: &versionSchemaStarsv1alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -70,11 +64,11 @@ func LocalManifest() app.Manifest {
 }
 
 func RemoteManifest() app.Manifest {
-	return app.NewAPIServerManifest("playlist")
+	return app.NewAPIServerManifest("collections")
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Playlist/v0alpha1": v0alpha1.PlaylistKind(),
+	"Stars/v1alpha1": v1alpha1.StarsKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
