@@ -5,22 +5,17 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LibraryPanel } from '@grafana/schema';
 import { Field, useStyles2 } from '@grafana/ui';
 
-import { LibraryPanelCard } from '../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
-import { LibraryPanelInput, LibraryPanelInputState } from '../state/reducers';
+import { LibraryPanelCard } from '../../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
+import { LibraryPanelInput, LibraryPanelInputState } from '../../state/reducers';
 
-interface ImportDashboardLibraryPanelsListProps {
+interface Props {
   inputs: LibraryPanelInput[];
   label: string;
   description: string;
   folderName?: string;
 }
 
-export function ImportDashboardLibraryPanelsList({
-  inputs,
-  label,
-  description,
-  folderName,
-}: ImportDashboardLibraryPanelsListProps): ReactElement | null {
+export function LibraryPanelsList({ inputs, label, description, folderName }: Props): ReactElement | null {
   const styles = useStyles2(getStyles);
 
   if (!Boolean(inputs?.length)) {
@@ -29,18 +24,18 @@ export function ImportDashboardLibraryPanelsList({
 
   return (
     <div className={styles.spacer}>
-      <Field label={label} description={description}>
+      <Field label={label} description={description} noMargin>
         <>
           {inputs.map((input, index) => {
             const libraryPanelIndex = `elements[${index}]`;
-            const libraryPanel =
+            const libraryPanel: LibraryPanel =
               input.state === LibraryPanelInputState.New
                 ? { ...input.model, meta: { ...input.model.meta, folderName: folderName ?? 'Dashboards' } }
                 : { ...input.model };
 
             return (
               <div className={styles.item} key={libraryPanelIndex}>
-                <LibraryPanelCard libraryPanel={libraryPanel as LibraryPanel} onClick={() => undefined} />
+                <LibraryPanelCard libraryPanel={libraryPanel} onClick={() => undefined} />
               </div>
             );
           })}

@@ -2045,11 +2045,6 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard-scene/v2schema/ImportDashboardOverviewV2.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 10
-    }
-  },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2778,27 +2773,6 @@
   },
   "public/app/features/logs/logsFrame.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/manage-dashboards/DashboardImportPage.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/manage-dashboards/components/ImportDashboardForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
-    }
-  },
-  "public/app/features/manage-dashboards/components/ImportDashboardLibraryPanelsList.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
       "count": 1
     }
   },

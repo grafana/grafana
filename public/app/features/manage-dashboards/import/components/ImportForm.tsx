@@ -14,10 +14,10 @@ import {
   DataSourceInput,
   ImportDashboardDTO,
   LibraryPanelInputState,
-} from '../state/reducers';
-import { validateTitle, validateUid } from '../utils/validation';
+} from '../../state/reducers';
+import { validateTitle, validateUid } from '../../utils/validation';
 
-import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanelsList';
+import { LibraryPanelsList } from './LibraryPanelsList';
 
 interface Props extends Pick<UseFormReturn<ImportDashboardDTO>, 'register' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
@@ -28,7 +28,7 @@ interface Props extends Pick<UseFormReturn<ImportDashboardDTO>, 'register' | 'co
   onSubmit: FormsOnSubmit<ImportDashboardDTO>;
 }
 
-export const ImportDashboardForm = ({
+export function ImportForm({
   register,
   errors,
   control,
@@ -39,7 +39,7 @@ export const ImportDashboardForm = ({
   onCancel,
   onSubmit,
   watch,
-}: Props) => {
+}: Props) {
   const [isSubmitted, setSubmitted] = useState(false);
   const watchDataSources = watch('dataSources');
   const watchFolder = watch('folder');
@@ -65,7 +65,8 @@ export const ImportDashboardForm = ({
       <Field
         label={t('manage-dashboards.import-dashboard-form.label-name', 'Name')}
         invalid={!!errors.title}
-        error={errors.title && errors.title.message}
+        error={errors.title?.message}
+        noMargin
       >
         <Input
           {...register('title', {
@@ -76,7 +77,7 @@ export const ImportDashboardForm = ({
           data-testid={selectors.components.ImportDashboardForm.name}
         />
       </Field>
-      <Field label={t('manage-dashboards.import-dashboard-form.label-folder', 'Folder')}>
+      <Field label={t('manage-dashboards.import-dashboard-form.label-folder', 'Folder')} noMargin>
         <Controller
           render={({ field: { ref, value, onChange, ...field } }) => (
             <FolderPicker {...field} onChange={(uid, title) => onChange({ uid, title })} value={value.uid} />
@@ -92,7 +93,8 @@ export const ImportDashboardForm = ({
           'The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.'
         )}
         invalid={!!errors.uid}
-        error={errors.uid && errors.uid.message}
+        error={errors.uid?.message}
+        noMargin
       >
         <>
           {!uidReset ? (
@@ -126,6 +128,7 @@ export const ImportDashboardForm = ({
               key={dataSourceOption}
               invalid={errors.dataSources && !!errors.dataSources[index]}
               error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}
+              noMargin
             >
               <Controller
                 name={dataSourceOption}
@@ -153,12 +156,13 @@ export const ImportDashboardForm = ({
               error={errors.constants && errors.constants[index] && `${input.label} needs a value`}
               invalid={errors.constants && !!errors.constants[index]}
               key={constantIndex}
+              noMargin
             >
               <Input {...register(constantIndex, { required: true })} defaultValue={input.value} />
             </Field>
           );
         })}
-      <ImportDashboardLibraryPanelsList
+      <LibraryPanelsList
         inputs={newLibraryPanels}
         label={t('manage-dashboards.import-dashboard-form.label-new-library-panels', 'New library panels')}
         description={t(
@@ -167,7 +171,7 @@ export const ImportDashboardForm = ({
         )}
         folderName={watchFolder.title}
       />
-      <ImportDashboardLibraryPanelsList
+      <LibraryPanelsList
         inputs={existingLibraryPanels}
         label={t('manage-dashboards.import-dashboard-form.label-existing-library-panels', 'Existing library panels')}
         description={t(
@@ -193,7 +197,7 @@ export const ImportDashboardForm = ({
       </Stack>
     </>
   );
-};
+}
 
 function getButtonVariant(errors: FormFieldErrors<ImportDashboardDTO>) {
   return errors && (errors.title || errors.uid) ? 'destructive' : 'primary';

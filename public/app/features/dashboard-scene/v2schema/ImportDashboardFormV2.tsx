@@ -7,19 +7,15 @@ import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { DatasourceSelection, ImportFormDataV2 } from 'app/features/manage-dashboards/import/types';
 import { DashboardInputs, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
 import { validateTitle } from 'app/features/manage-dashboards/utils/validation';
-interface Props
-  extends Pick<
-    UseFormReturn<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>,
-    'register' | 'control' | 'getValues' | 'watch'
-  > {
+interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'control' | 'getValues' | 'watch'> {
   inputs: DashboardInputs;
-  errors: FieldErrors<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>;
+  errors: FieldErrors<ImportFormDataV2>;
   onCancel: () => void;
-  onSubmit: FormsOnSubmit<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>;
+  onSubmit: FormsOnSubmit<ImportFormDataV2>;
 }
 
 export const ImportDashboardFormV2 = ({
@@ -33,7 +29,7 @@ export const ImportDashboardFormV2 = ({
   watch,
 }: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
-  const [selectedDataSources, setSelectedDataSources] = useState<Record<string, { uid: string; type: string }>>({});
+  const [selectedDataSources, setSelectedDataSources] = useState<Record<string, DatasourceSelection>>({});
   /*
     This useEffect is needed for overwriting a dashboard. It
     submits the form even if there's validation errors on title or uid.
@@ -151,14 +147,10 @@ export const ImportDashboardFormV2 = ({
   );
 };
 
-function getButtonVariant(
-  errors: FormFieldErrors<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>
-) {
+function getButtonVariant(errors: FormFieldErrors<ImportFormDataV2>) {
   return errors && (errors.dashboard?.title || errors.k8s?.name) ? 'destructive' : 'primary';
 }
 
-function getButtonText(
-  errors: FormFieldErrors<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>
-) {
+function getButtonText(errors: FormFieldErrors<ImportFormDataV2>) {
   return errors && (errors.dashboard?.title || errors.k8s?.name) ? 'Import (Overwrite)' : 'Import';
 }
