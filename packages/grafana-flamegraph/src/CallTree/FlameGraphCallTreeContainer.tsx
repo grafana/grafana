@@ -10,7 +10,7 @@ import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { ColorScheme, ColorSchemeDiff } from '../types';
 
-import { buildAllCallTreeNodes, buildCallersTreeFromLevels, CallTreeNode, getInitialExpandedState } from './utils';
+import { buildAllCallTreeNodes, buildCallersTree, CallTreeNode, getInitialExpandedState } from './utils';
 
 type Styles = ReturnType<typeof getStyles>;
 
@@ -143,14 +143,14 @@ const FlameGraphCallTreeContainer = memo(
       if (callersNodeLabel) {
         const [callers, _] = data.getSandwichLevels(callersNodeLabel);
 
-        if (callers.length > 0 && callers[0].length > 0) {
-          const levels = data.getLevels();
-          const rootTotal = levels.length > 0 ? levels[0][0].value : 0;
-
-          const { tree, targetNode } = buildCallersTreeFromLevels(callers, callersNodeLabel, data, rootTotal);
+        if (callers.length > 0) {
+          // Build callers tree - follows same pattern as flame graph sandwich mode
+          // Percentages are relative to target (target = 100%)
+          const tree = buildCallersTree(callers, data);
 
           nodesToUse = tree;
-          callersTargetNode = targetNode;
+          // The first node in the tree is the target function
+          callersTargetNode = tree.length > 0 ? tree[0] : undefined;
         } else {
           nodesToUse = [];
           callersTargetNode = undefined;
@@ -584,7 +584,8 @@ const FlameGraphCallTreeContainer = memo(
               Header: 'Self',
               accessor: 'self',
               Cell: ({ row }: { row: Row<CallTreeNode> }) => {
-                const displaySelf = data.getSelfDisplay([row.original.levelItem.itemIndexes[0]]);
+                // Use the pre-computed self value which sums across all merged itemIndexes
+                const displaySelf = data.valueDisplayProcessor(row.original.self);
                 const formattedValue = displaySelf.suffix ? displaySelf.text + displaySelf.suffix : displaySelf.text;
                 return (
                   <div className={styles.valueCell}>

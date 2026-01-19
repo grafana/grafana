@@ -39,10 +39,10 @@ export function buildCallTreeNode(
   const nodeId = parentId ? `${parentId}.${childIndex}` : `${childIndex}`;
   const depth = parentDepth + 1;
 
-  const itemIndex = rootItem.itemIndexes[0];
-  const label = data.getLabel(itemIndex);
-  const self = data.getSelf(itemIndex);
-  const total = data.getValue(itemIndex);
+  const label = data.getLabel(rootItem.itemIndexes[0]);
+  // Use item.value and item.itemIndexes to handle both single and merged items consistently
+  const self = data.getSelf(rootItem.itemIndexes);
+  const total = rootItem.value;
   const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
   const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
 
@@ -53,8 +53,8 @@ export function buildCallTreeNode(
   let diffPercent: number | undefined;
 
   if (data.isDiffFlamegraph()) {
-    selfRight = data.getSelfRight(itemIndex);
-    totalRight = data.getValueRight(itemIndex);
+    selfRight = data.getSelfRight(rootItem.itemIndexes);
+    totalRight = rootItem.valueRight || 0;
     selfPercentRight = rootTotal > 0 ? (selfRight / rootTotal) * 100 : 0;
     totalPercentRight = rootTotal > 0 ? (totalRight / rootTotal) * 100 : 0;
 
@@ -148,73 +148,58 @@ export function getInitialExpandedState(nodes: CallTreeNode[], levelsToExpand = 
 }
 
 /**
- * Build a callers tree directly from sandwich levels data.
- * This creates an inverted tree where the target function is at the root
- * and its callers are shown as children.
+ * Build a callers tree from sandwich levels data.
+ *
+ * This follows the same pattern as the flame graph's sandwich mode:
+ * - The sandwich transformation (mergeParentSubtrees) creates levels where:
+ *   - The last level contains the target function(s)
+ *   - Earlier levels contain callers, with `parents` pointing toward the target
+ * - We start from the target (last level) and traverse via `parents` to build an inverted tree
+ * - Values come directly from item.value (already transformed by sandwich transformation)
+ * - Percentages are relative to the target's total (target = 100%), matching sandwich view
+ *
+ * For self values, we use data.getSelf(item.itemIndexes) which sums the self time
+ * for all merged indices, matching how the flame graph tooltip displays self.
  */
-export function buildCallersTreeFromLevels(
+export function buildCallersTree(
   levels: LevelItem[][],
-  targetLabel: string,
-  data: FlameGraphDataContainer,
-  rootTotal: number
-): { tree: CallTreeNode[]; targetNode: CallTreeNode | undefined } {
+  data: FlameGraphDataContainer
+): CallTreeNode[] {
   if (levels.length === 0) {
-    return { tree: [], targetNode: undefined };
+    return [];
   }
 
-  let targetLevelIndex = -1;
-  let targetItem: LevelItem | undefined;
-
-  for (let i = 0; i < levels.length; i++) {
-    for (const item of levels[i]) {
-      const label = data.getLabel(item.itemIndexes[0]);
-      if (label === targetLabel) {
-        targetLevelIndex = i;
-        targetItem = item;
-        break;
-      }
-    }
-    if (targetItem) {
-      break;
-    }
+  // The target is at the last level (after sandwich transformation reverses the levels)
+  const targetLevel = levels[levels.length - 1];
+  if (!targetLevel || targetLevel.length === 0) {
+    return [];
   }
 
-  if (!targetItem || targetLevelIndex === -1) {
-    return { tree: [], targetNode: undefined };
-  }
+  // Use target's total as the base for all percentages, matching sandwich view
+  // This means: target's totalPercent = 100%, target's selfPercent = self/total (fraction that is self time)
+  const targetTotal = targetLevel.reduce((sum, item) => sum + item.value, 0);
 
-  const childrenMap = new Map<LevelItem, LevelItem[]>();
-
-  for (const level of levels) {
-    for (const item of level) {
-      if (item.parents) {
-        for (const parent of item.parents) {
-          if (!childrenMap.has(parent)) {
-            childrenMap.set(parent, []);
-          }
-          childrenMap.get(parent)!.push(item);
-        }
-      }
-    }
-  }
-
-  const buildInvertedNode = (
+  // Build tree node recursively, traversing via parents (callers)
+  const buildNode = (
     item: LevelItem,
     nodeId: string,
     depth: number,
     parentId: string | undefined
   ): CallTreeNode => {
-    const itemIdx = item.itemIndexes[0];
-    const label = data.getLabel(itemIdx);
-    // Use item.value from the sandwich transformation, not original data frame values.
-    // The sandwich transformation modifies values to represent only the portion
-    // that flowed through each call path to the target function.
+    const label = data.getLabel(item.itemIndexes[0]);
+
+    // Use item.value directly - this is the transformed value from sandwich transformation
+    // representing the portion of time that flowed through this call path
     const total = item.value;
-    // For self, sum across all merged item indexes since itemIndexes can contain multiple
-    // indices when same-label items are merged.
-    const self = item.itemIndexes.reduce((sum, idx) => sum + data.getSelf(idx), 0);
-    const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
-    const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
+
+    // For self, sum across all merged itemIndexes
+    const self = data.getSelf(item.itemIndexes);
+
+    // Both percentages are relative to target's total
+    // - totalPercent: what fraction of target's total came through this path (target = 100%)
+    // - selfPercent: what fraction of target's total is this node's self time
+    const selfPercent = targetTotal > 0 ? (self / targetTotal) * 100 : 0;
+    const totalPercent = targetTotal > 0 ? (total / targetTotal) * 100 : 0;
 
     let selfRight: number | undefined;
     let totalRight: number | undefined;
@@ -223,11 +208,11 @@ export function buildCallersTreeFromLevels(
     let diffPercent: number | undefined;
 
     if (data.isDiffFlamegraph()) {
-      // Use item.valueRight from the sandwich transformation for consistency with total
       totalRight = item.valueRight || 0;
-      selfRight = item.itemIndexes.reduce((sum, idx) => sum + data.getSelfRight(idx), 0);
-      selfPercentRight = rootTotal > 0 ? (selfRight / rootTotal) * 100 : 0;
-      totalPercentRight = rootTotal > 0 ? (totalRight / rootTotal) * 100 : 0;
+      selfRight = data.getSelfRight(item.itemIndexes);
+      const targetTotalRight = targetLevel.reduce((sum, item) => sum + (item.valueRight || 0), 0);
+      selfPercentRight = targetTotalRight > 0 ? (selfRight / targetTotalRight) * 100 : 0;
+      totalPercentRight = targetTotalRight > 0 ? (totalRight / targetTotalRight) * 100 : 0;
 
       if (self > 0) {
         diffPercent = ((selfRight - self) / self) * 100;
@@ -238,14 +223,14 @@ export function buildCallersTreeFromLevels(
       }
     }
 
+    // In the callers tree, we traverse via parents (going up the call stack)
     const callers = item.parents || [];
     const subRows =
       callers.length > 0
         ? callers.map((caller, idx) => {
-            const callerId = `${nodeId}.${idx}`;
-            const callerNode = buildInvertedNode(caller, callerId, depth + 1, nodeId);
-            callerNode.isLastChild = idx === callers.length - 1;
-            return callerNode;
+            const childNode = buildNode(caller, `${nodeId}.${idx}`, depth + 1, nodeId);
+            childNode.isLastChild = idx === callers.length - 1;
+            return childNode;
           })
         : undefined;
 
@@ -275,7 +260,6 @@ export function buildCallersTreeFromLevels(
     };
   };
 
-  const targetNode = buildInvertedNode(targetItem, '0', 0, undefined);
-
-  return { tree: [targetNode], targetNode };
+  // Build tree starting from target(s) at the last level
+  return targetLevel.map((targetItem, index) => buildNode(targetItem, `${index}`, 0, undefined));
 }
