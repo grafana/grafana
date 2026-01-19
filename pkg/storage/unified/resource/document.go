@@ -299,7 +299,6 @@ const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
 const SEARCH_FIELD_TITLE = "title"
-const SEARCH_FIELD_TITLE_NGRAM = "title_ngram"
 const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"

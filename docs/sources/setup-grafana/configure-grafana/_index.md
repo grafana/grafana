@@ -2030,6 +2030,44 @@ For example: `disabled_labels=grafana_folder`
 
 <hr>
 
+### `[unified_alerting.state_history]`
+
+This section configures where Grafana Alerting writes alert state history. Refer to [Configure alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/) for end-to-end setup and examples.
+
+#### `enabled `
+
+Enables recording alert state history. Default is `false`.
+
+#### `backend `
+
+Select the backend used to store alert state history. Supported values: `loki`, `prometheus`, `multiple`.
+
+#### `loki_remote_url `
+
+The URL of the Loki server used when `backend = loki` (or when `backend = multiple` and Loki is a primary/secondary).
+
+#### `prometheus_target_datasource_uid `
+
+Target Prometheus data source UID used for writing alert state changes when `backend = prometheus` (or when `backend = multiple` and Prometheus is a secondary).
+
+#### `prometheus_metric_name `
+
+Optional. Metric name for the alert state metric. Default is `GRAFANA_ALERTS`.
+
+#### `prometheus_write_timeout `
+
+Optional. Timeout for writing alert state data to the target data source. Default is `10s`.
+
+#### `primary `
+
+Used only when `backend = multiple`. Selects the primary backend (for example `loki`).
+
+#### `secondaries `
+
+Used only when `backend = multiple`. Comma-separated list of secondary backends (for example `prometheus`).
+
+<hr>
+
 ### `[unified_alerting.state_history.annotations]`
 
 This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
@@ -2836,9 +2874,11 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 Keys of features to enable, separated by space.
 
-#### `FEATURE_TOGGLE_NAME = false`
+#### `FEATURE_NAME = <value>`
 
-Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
+Use a key-value pair to set feature flag values explicitly, overriding any default values. A few different types are supported, following the OpenFeature specification. See the defaults.ini file for more details.
+
+For example, to disable an on-by-default feature toggle named `exploreMixedDatasource`, specify `exploreMixedDatasource = false`.
 
 <hr>
 

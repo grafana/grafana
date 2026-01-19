@@ -807,7 +807,8 @@
       "label-integration": "Integration",
       "label-notification-settings": "Notification settings",
       "label-section": "Optional {{name}} settings",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": "This is a legacy integration (version: {{version}}). It cannot be modified."
     },
     "classic-condition-viewer": {
       "of": "OF",
@@ -927,9 +928,9 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policies",
+      "used-by_other": "Used by {{ count }} notification policy",
       "used-by-rules_one": "Used by {{ count }} alert rule",
-      "used-by-rules_other": "Used by {{ count }} alert rules"
+      "used-by-rules_other": "Used by {{ count }} alert rule"
     },
     "contact-points-filter": {
       "aria-label-clear": "clear",
@@ -2101,7 +2102,7 @@
         "inherited": "Inherited",
         "mute-time": "Muted when",
         "n-instances_one": "instance",
-        "n-instances_other": "instances",
+        "n-instances_other": "instance",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
@@ -2117,7 +2118,7 @@
           }
         }
       },
-      "n-more-policies_one": "{{count}} additional policy",
+      "n-more-policies_one": "{{count}} additional policies",
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
@@ -2176,11 +2177,16 @@
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
       "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI",
+      "body-imported": "This {{resource}} contains integrations that were imported from an external Alertmanager and is currently read-only. The integrations will become editable after the migration process is complete.",
+      "body-imported-time-interval": "This time interval was imported from an external Alertmanager and is currently read-only. The time interval will become editable after the migration process is complete.",
       "body-provisioned": "This {{resource}} has been provisioned, that means it was created by config. Please contact your server admin to update this {{resource}}.",
+      "title-imported": "This {{resource}} was imported and cannot be edited through the UI",
+      "title-imported-time-interval": "This time interval was imported and cannot be edited through the UI",
       "title-provisioned": "This {{resource}} cannot be edited through the UI"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "Imported",
         "text-provisioned": "Provisioned"
       }
     },
@@ -2673,12 +2679,14 @@
     "rules-group": {
       "deleting": "Deleting",
       "text-federated": "Federated",
-      "text-provisioned": "Provisioned"
+      "text-provisioned": "Provisioned",
+      "ungrouped": "Ungrouped",
+      "ungrouped-suffix": "{{ruleName}} (Ungrouped)",
+      "unknown-rule": "Unknown Rule"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
-      "apply-aria-label": "Apply search \"{{name}}\"",
-      "apply-tooltip": "Apply this search",
+      "apply-tooltip": "Apply search \"{{name}}\"",
       "button-label": "Saved searches",
       "cancel": "Cancel",
       "default-indicator": "Default search",
@@ -3135,9 +3143,12 @@
       "table": "Table"
     },
     "welcome-header": {
+      "description-alert-activity": "See what is currently alerting and explore historical data to investigate current or past issues.",
       "description-alert-rules": "Define the condition that must be met before an alert rule fires",
       "description-configure-firing-alert-instances-routed-contact": "Configure how firing alert instances are routed to contact points",
       "description-configure-receives-notifications": "Configure who receives notifications and how they are sent",
+      "href-text-alert-activity": "View alert activity",
+      "title-alert-activity": "Alert activity",
       "title-alert-rules": "Alert rules",
       "title-contact-points": "Contact points",
       "title-notification-policies": "Notification policies"
@@ -3661,15 +3672,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "checkbox": {
@@ -3756,19 +3767,17 @@
     },
     "recently-viewed": {
       "clear": "Clear history",
-      "empty": "Nothing viewed yet",
       "error": "Recently viewed dashboards couldn’t be loaded.",
       "retry": "Retry",
       "title": "Recently viewed"
     },
     "restore": {
-      "all-failed_one": "Failed to restore {{count}} dashboard",
-      "all-failed_other": "Failed to restore {{count}} dashboards",
+      "all-failed_one": "Failed to restore {{count}} dashboard.",
+      "all-failed_other": "Failed to restore {{count}} dashboard.",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboards failed",
-      "success": "Dashboards restored successfully",
       "success-count_one": "{{count}} dashboard restored successfully",
-      "success-count_other": "{{count}} dashboards restored successfully"
+      "success-count_other": "{{count}} dashboard restored successfully"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
@@ -4413,6 +4422,7 @@
       },
       "no-properties-changed": "No relevant properties changed",
       "table": {
+        "notes": "Notes",
         "updated": "Date",
         "updatedBy": "Updated By",
         "version": "Version"
@@ -4611,6 +4621,7 @@
     },
     "canvas-actions": {
       "add-panel": "Add panel",
+      "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to 2 levels",
       "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
@@ -4871,7 +4882,8 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom Variable"
+          "modal-title": "Custom Variable",
+          "values": "Values separated by comma"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5333,6 +5345,7 @@
       },
       "header-hidden-tooltip": "Row header only visible in edit mode",
       "name": "Rows",
+      "new-row-title": "New row",
       "row": {
         "collapse": "Collapse row",
         "expand": "Expand row",
@@ -5438,11 +5451,7 @@
         "tooltip": "Edit as code"
       },
       "export": {
-        "title": "Export",
-        "unsaved-modal": {
-          "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
-          "title": "Save changes to dashboard?"
-        }
+        "title": "Export"
       },
       "outline": {
         "title": "Outline",
@@ -5583,14 +5592,6 @@
           "title": "Share",
           "tooltip": "Copy link"
         },
-        "share-export": {
-          "modal": {
-            "noText": "Discard",
-            "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
-            "title": "Save changes to dashboard?",
-            "yesText": "Save"
-          }
-        },
         "unlink-library-panel": "Unlink library panel"
       },
       "open-original": "Open original dashboard",
@@ -5691,6 +5692,7 @@
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
       "invalid-json": "Not valid JSON",
+      "tag-too-long": "Dashboard tag too long, max 50 characters",
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
     },
@@ -5796,7 +5798,8 @@
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
     "community-error": "Failed to load community dashboards. Please try again.",
-    "community-error-title": "Error loading community dashboards",
+    "community-error-description": "Failed to load community dashboard.",
+    "community-error-title": "Error loading community dashboard",
     "community-mapping-form": {
       "auto-mapped_one": "{{count}} datasources were automatically configured:",
       "auto-mapped_other": "{{count}} datasources were automatically configured:",
@@ -5964,8 +5967,14 @@
     },
     "custom-variable-form": {
       "custom-options": "Custom options",
+      "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br />Check <4>our docs</4> for more information.",
+      "name-csv-values": "CSV",
+      "name-json-values": "JSON",
       "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
+    },
+    "dashboard-edit-pane-renderer": {
+      "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
     },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
@@ -6367,12 +6376,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "Advanced options",
         "classic": "Classic",
         "json": "JSON",
         "v1-resource": "V1 Resource",
         "v2-resource": "V2 Resource",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "Share dashboard with another instance",
+      "share-externally-tooltip": "Removes all instance-specific metadata and data source references from the resource before export."
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
@@ -6437,8 +6449,8 @@
       "show-variables-warning-alert-title": "Variable queries failed"
     },
     "save-library-viz-panel-modal": {
-      "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
-      "affected-dashboards_other": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
+      "affected-dashboards_one": "This update will affect <strong>{{count}} dashboards.</strong> The following dashboards using the panel will be affected:",
+      "affected-dashboards_other": "This update will affect <strong>{{count}} dashboards.</strong> The following dashboards using the panel will be affected:",
       "cancel": "Cancel",
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
@@ -6479,6 +6491,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+        "title": "Unsaved changes"
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6548,6 +6566,11 @@
         }
       }
     },
+    "use-modal-editor": {
+      "description": {
+        "change-variable-query": "Change variable query"
+      }
+    },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
     },
@@ -6571,6 +6594,7 @@
           "label": "Controls menu"
         },
         "hidden": {
+          "description": "Only visible in edit mode",
           "label": "Hidden"
         },
         "hidden-label": {
@@ -6630,7 +6654,8 @@
       "tooltip-show-usages": "Show usages"
     },
     "variable-values-preview": {
-      "preview-of-values": "Preview of values",
+      "preview-of-values_one": "Preview of values ({{count}})",
+      "preview-of-values_other": "Preview of values ({{count}})",
       "show-more": "Show more"
     },
     "version-history": {
@@ -6960,6 +6985,7 @@
         "drone-datasource": "Drone datasource",
         "git-lab-integration-and-datasource": "GitLab integration and datasource",
         "honeycomb-integration-and-datasource": "Honeycomb integration and datasource",
+        "ibmdb2-datasource": "IBM Db2 data source",
         "jira-integration-and-datasource": "Jira integration and datasource",
         "logic-monitor-devices-datasource": "LogicMonitor Devices datasource",
         "mongo-db-integration-and-data-source": "MongoDB integration and data source",
@@ -7818,7 +7844,6 @@
       "export-externally-label": "Export the dashboard to use in another instance",
       "export-format": "Format",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Remove deployment details",
       "info-text": "Copy or download a file containing the definition of your dashboard",
       "title": "Export dashboard"
     },
@@ -7965,6 +7990,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Show threshold labels",
     "name-show-threshold-markers": "Show threshold markers",
+    "neutral": "Neutral {{value}}",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "Gauge",
@@ -9235,7 +9261,8 @@
     "tags-input": {
       "add": "Add",
       "placeholder-new-tag": "New tag (enter key to add)",
-      "remove": "Remove tag: {{name}}"
+      "remove": "Remove tag: {{name}}",
+      "tag-too-long": "Tag too long, max 50 characters"
     },
     "time-sync-button": {
       "aria-label-sync": "Sync times",
@@ -9325,8 +9352,8 @@
       "actions-confirmation-label": "Confirmation message",
       "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation",
-      "footer-apply-series-as-filter": "Apply as filter",
-      "footer-apply-series-as-inverse-filter": "Apply as inverse filter",
+      "footer-apply-series-as-filter": "Filter on this value",
+      "footer-apply-series-as-inverse-filter": "Filter out this value",
       "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}",
       "footer-filter-for-value": "Filter for '{{value}}'",
@@ -9531,8 +9558,8 @@
       "refresh": "Refresh"
     },
     "query-inspector": {
-      "count-frames_one": "{{count}} frames, ",
-      "count-frames_other": "{{count}} frames, ",
+      "count-frames_one": "{{count}} frames,",
+      "count-frames_other": "{{count}} frames,",
       "count-rows_one": "{{count}} rows",
       "count-rows_other": "{{count}} rows",
       "query-inspector": "Query inspector",
@@ -9791,8 +9818,8 @@
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
       "loading-connected-dashboards": "Loading connected dashboards...",
-      "num-affected_one": "This update will affect <1>{{count}} dashboards.</1>",
-      "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
+      "num-affected_one": "This update will affect <strong>{{count}} dashboards.</strong>",
+      "num-affected_other": "This update will affect <strong>{{count}} dashboards.</strong>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
     }
@@ -10702,18 +10729,6 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
-    "history-container": {
-      "drawer-tittle": "History"
-    },
-    "history-wrapper": {
-      "collapse": "Collapse",
-      "expand": "Expand",
-      "icon-selected": "Selected Entry",
-      "icon-unselected": "Normal Entry",
-      "show-more": "Show more",
-      "today": "Today",
-      "yesterday": "Yesterday"
-    },
     "home": {
       "title": "Home"
     },
@@ -11797,7 +11812,53 @@
       "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
+    "connection-form": {
+      "alert-connection-deleted": "Connection deleted",
+      "alert-connection-saved": "Connection saved",
+      "alert-connection-updated": "Connection updated",
+      "back-to-connections": "Back to connections",
+      "button-save": "Save",
+      "button-saving": "Saving...",
+      "description-app-id": "The ID of your GitHub App",
+      "description-installation-id": "The installation ID of your GitHub App",
+      "description-private-key": "The private key for your GitHub App in PEM format",
+      "description-provider": "Select the provider type",
+      "error-delete-connection": "Failed to delete connection",
+      "error-required": "This field is required",
+      "error-save-connection": "Failed to save connection",
+      "label-app-id": "GitHub App ID",
+      "label-installation-id": "GitHub Installation ID",
+      "label-private-key": "Private Key (PEM)",
+      "label-provider": "Provider",
+      "not-found": "Connection not found",
+      "not-found-description": "The connection you are looking for does not exist.",
+      "page-subtitle": "Configure a connection to authenticate with external providers",
+      "page-title-create": "Create connection",
+      "page-title-edit": "Edit connection",
+      "placeholder-app-id": "123456",
+      "placeholder-installation-id": "12345678",
+      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----..."
+    },
+    "connections": {
+      "add-connection": "Add connection",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
+      "delete-title": "Delete connection",
+      "error-loading": "Failed to load connections",
+      "no-connections": "No connections configured",
+      "no-connections-message": "Add a connection to authenticate with external providers",
+      "no-results": "No results matching your query",
+      "page-subtitle": "View and manage your app connections",
+      "page-title": "Connections",
+      "search-placeholder": "Search connections",
+      "status-connected": "Connected",
+      "status-disconnected": "Disconnected",
+      "status-unknown": "Unknown",
+      "view": "View"
+    },
     "delete-repository-button": {
+      "button-cancel": "Cancel",
       "button-delete": "Delete",
       "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
       "confirm-delete-with-resources": "Are you sure you want to delete the repository configuration and all its resources?",
@@ -11873,13 +11934,13 @@
       "label-sync-interval": "Sync Interval (seconds)"
     },
     "folder-repository-list": {
-      "all-resources-managed_one": "All {{count}} resource is managed",
+      "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
-      "unmanaged-resources_one": "{{count}} resource isn't managed by git sync.",
-      "unmanaged-resources_other": "{{count}} resources aren't managed by git sync."
+      "unmanaged-resources_one": "{{count}} resources aren't managed by Git sync.",
+      "unmanaged-resources_other": "{{count}} resources aren't managed by Git sync."
     },
     "free-tier-limit": {
       "message": "Free-tier accounts are capped to 1 connection, and 20 resources per folder",
@@ -12061,6 +12122,7 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
+      "connections": "Connections",
       "settings": "Settings",
       "source-code": "Source code"
     },
@@ -12510,13 +12572,25 @@
       "endpoint-marker-glow": "Glow",
       "endpoint-marker-none": "None",
       "endpoint-marker-point": "Point",
+      "neutral": {
+        "description": "Leave empty to use Min as neutral point",
+        "placeholder": "none",
+        "title": "Neutral value"
+      },
       "segment-count": "Segments",
       "segment-spacing": "Segment spacing",
       "shape": "Style",
       "shape-circle": "Circle",
       "shape-gauge": "Arc",
       "sparkline": "Show sparkline",
-      "threshold-labels": "Show threshold labels",
+      "text-mode": "Text mode",
+      "text-mode-auto": "Auto",
+      "text-mode-name": "Name",
+      "text-mode-none": "None",
+      "text-mode-value": "Value",
+      "text-mode-value-and-name": "Value and Name",
+      "threshold-labels": "Show labels",
+      "threshold-labels-description": "Display threshold and neutral values",
       "threshold-markers": "Show thresholds"
     }
   },
@@ -12530,11 +12604,11 @@
       "no-search-result": "No results found for your query"
     },
     "restore-modal": {
-      "folder-picker-text_one": "Please choose a folder where your dashboard will be restored.",
+      "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
       "folder-picker-text_other": "Please choose a folder where your dashboards will be restored.",
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
@@ -12674,14 +12748,6 @@
       "starred": "Starred",
       "view-as-folders": "View by folders",
       "view-as-list": "View as list"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alphabetically (A-Z)",
-          "alphabetically-za": "Alphabetically (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Import",
@@ -13280,8 +13346,8 @@
       "label-never": "Never"
     },
     "status-history-panel": {
-      "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)",
-      "too-many-points_other": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)"
+      "too-many-points_one": "Too many points to visualize properly. <br />Update the query to return fewer points. <br />({{count}} points received)",
+      "too-many-points_other": "Too many points to visualize properly. <br />Update the query to return fewer points. <br />({{count}} points received)"
     }
   },
   "support-bundles": {
@@ -14385,6 +14451,17 @@
       },
       "name": {
         "series-to-rows": "Series to rows"
+      }
+    },
+    "smoothing": {
+      "description": "Reduce noise in time series data through adaptive downsampling.",
+      "effective-resolution": "Effective: {{value}}",
+      "effective-resolution-tooltip": "Resolution is limited to 2× the number of data points ({{points}}).",
+      "is-applicable-description": "The Smoothing transformation requires at least one time series frame to function. You currently have none.",
+      "name": "Smoothing",
+      "resolution": {
+        "label": "Resolution",
+        "tooltip": "Controls smoothing intensity. Lower values create more aggressive smoothing. Both original and smoothed data are displayed."
       }
     },
     "sort-by-transformer-editor": {

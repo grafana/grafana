@@ -2056,9 +2056,7 @@ func TestIntegrationDeleteFolderWithProvisionedDashboards(t *testing.T) {
 						DualWriterMode: modeDw,
 					},
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
+				UnifiedStorageEnableSearch: true,
 			}
 
 			setupProvisioningDir(t, &ops)
@@ -2165,9 +2163,7 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 				DualWriterMode: mode3,
 			},
 		},
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagUnifiedStorageSearch,
-		},
+		UnifiedStorageEnableSearch: true,
 	}
 
 	setupProvisioningDir(t, &ops)

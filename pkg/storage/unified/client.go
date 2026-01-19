@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/dskit/services"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -121,6 +122,7 @@ func newClient(opts options.StorageOptions,
 		kv := resource.NewBadgerKV(db)
 		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 			KvStore: kv,
+			Log:     log.New(),
 		})
 		if err != nil {
 			return nil, err
@@ -271,7 +273,7 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	retryCfg := retryConfig{
 		Max:           3,
 		Backoff:       time.Second,
-		BackoffJitter: 0.5,
+		BackoffJitter: 0.1,
 	}
 	unary = append(unary, unaryRetryInterceptor(retryCfg))
 	unary = append(unary, unaryRetryInstrument(metrics.requestRetries))
@@ -288,12 +290,14 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	// Use round_robin to balances requests more evenly over the available Storage server.
+	// Use round_robin to balance requests more evenly over the available Storage server.
 	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
 
 	// Disable looking up service config from TXT DNS records.
 	// This reduces the number of requests made to the DNS servers.
 	opts = append(opts, grpc.WithDisableServiceConfig())
+
+	opts = append(opts, connectionBackoffOptions())
 
 	if clientKeepaliveTime > 0 {
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{

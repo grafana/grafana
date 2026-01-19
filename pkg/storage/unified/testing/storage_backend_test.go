@@ -7,11 +7,8 @@ import (
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestBadgerKVStorageBackend(t *testing.T) {
@@ -32,57 +29,38 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		NSPrefix: "badgerkvstorage-test",
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
-			TestBlobSupport:       true,
-			TestListModifiedSince: true,
+			TestBlobSupport: true,
 			// Badger does not support bulk import yet.
 			TestGetResourceLastImportTime: true,
 		},
 	})
 }
 
-func TestSQLKVStorageBackend(t *testing.T) {
-	newBackendFunc := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		dbstore := db.InitTestDB(t)
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-		require.NoError(t, err)
-		kv, err := resource.NewSQLKV(eDB)
-		require.NoError(t, err)
-		kvOpts := resource.KVBackendOptions{
-			KvStore: kv,
-		}
-		backend, err := resource.NewKVStorageBackend(kvOpts)
-		require.NoError(t, err)
-		db, err := eDB.Init(ctx)
-		require.NoError(t, err)
-		return backend, db
+func TestIntegrationSQLKVStorageBackend(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	skipTests := map[string]bool{
+		TestBlobSupport:               true,
+		TestGetResourceLastImportTime: true,
 	}
 
-	RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-		backend, _ := newBackendFunc(ctx)
-		return backend
-	}, &TestOptions{
-		NSPrefix: "sqlkvstorage-test",
-		SkipTests: map[string]bool{
-			TestHappyPath:                 true,
-			TestWatchWriteEvents:          true,
-			TestList:                      true,
-			TestBlobSupport:               true,
-			TestGetResourceStats:          true,
-			TestListHistory:               true,
-			TestListHistoryErrorReporting: true,
-			TestListModifiedSince:         true,
-			TestListTrash:                 true,
-			TestCreateNewResource:         true,
-			TestGetResourceLastImportTime: true,
-			TestOptimisticLocking:         true,
-			TestKeyPathGeneration:         true,
-		},
+	t.Run("Without RvManager", func(t *testing.T) {
+		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			backend, _ := NewTestSqlKvBackend(t, ctx, false)
+			return backend
+		}, &TestOptions{
+			NSPrefix:  "sqlkvstoragetest",
+			SkipTests: skipTests,
+		})
 	})
 
-	RunSQLStorageBackendCompatibilityTest(t, newBackendFunc, &TestOptions{
-		NSPrefix: "sqlkvstorage-compatibility-test",
-		SkipTests: map[string]bool{
-			TestKeyPathGeneration: true,
-		},
+	t.Run("With RvManager", func(t *testing.T) {
+		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
+			backend, _ := NewTestSqlKvBackend(t, ctx, true)
+			return backend
+		}, &TestOptions{
+			NSPrefix:  "sqlkvstoragetest-rvmanager",
+			SkipTests: skipTests,
+		})
 	})
 }
