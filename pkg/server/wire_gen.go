@@ -780,11 +780,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider, cfg)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	playlistAppInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
+	appInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	appInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, featureToggles)
+	pluginsAppInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -792,7 +792,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	alertingRulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG)
+	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG)
 	if err != nil {
 		return nil, err
 	}
@@ -800,7 +800,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	alertingNotificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
+	notificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
 	if err != nil {
 		return nil, err
 	}
@@ -821,7 +821,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	alertingHistorianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
 	if err != nil {
 		return nil, err
 	}
@@ -829,7 +829,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, alertingHistorianAppInstaller, quotasAppInstaller)
+	v2 := appregistry.ProvideAppInstallers(featureToggles, appInstaller, pluginsAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
@@ -1449,11 +1449,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider, cfg)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	playlistAppInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
+	appInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	appInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, featureToggles)
+	pluginsAppInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -1461,7 +1461,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	alertingRulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG)
+	rulesAppInstaller, err := rules.RegisterAppInstaller(cfg, alertNG)
 	if err != nil {
 		return nil, err
 	}
@@ -1469,7 +1469,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	alertingNotificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
+	notificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
 	if err != nil {
 		return nil, err
 	}
@@ -1490,7 +1490,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	alertingHistorianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
 	if err != nil {
 		return nil, err
 	}
@@ -1498,7 +1498,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, playlistAppInstaller, appInstaller, shortURLAppInstaller, alertingRulesAppInstaller, correlationsAppInstaller, alertingNotificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, alertingHistorianAppInstaller, quotasAppInstaller)
+	v2 := appregistry.ProvideAppInstallers(featureToggles, appInstaller, pluginsAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()

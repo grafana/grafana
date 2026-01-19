@@ -364,6 +364,13 @@ func TestCache_GetAlertInstances(t *testing.T) {
 				if state.Error != nil {
 					lastError = state.Error.Error()
 				}
+				var lastResult models.LastResult
+				if state.LatestResult != nil {
+					lastResult = models.LastResult{
+						Values:    state.LatestResult.Values,
+						Condition: state.LatestResult.Condition,
+					}
+				}
 				expected = append(expected, models.AlertInstance{
 					AlertInstanceKey:   key,
 					Labels:             models.InstanceLabels(state.Labels),
@@ -379,6 +386,7 @@ func TestCache_GetAlertInstances(t *testing.T) {
 					ResultFingerprint:  state.ResultFingerprint.String(),
 					EvaluationDuration: state.EvaluationDuration,
 					LastError:          lastError,
+					LastResult:         lastResult,
 				})
 			}
 
