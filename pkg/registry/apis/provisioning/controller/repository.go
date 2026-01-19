@@ -642,7 +642,7 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 		tokenInvalidErrorMessage = "not authorized"
 	)
 
-	return obj.Spec.Connection == nil &&
+	return obj.Spec.Connection != nil &&
 		obj.Spec.Connection.Name != "" &&
 		healthStatus.Healthy &&
 		healthStatus.Error == provisioning.HealthFailureHealth &&
