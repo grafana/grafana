@@ -301,6 +301,86 @@ describe('getPanelMenu()', () => {
         ])
       );
     });
+
+    it('should add root category items to the main menu', () => {
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const extensions: PluginExtensionLink[] = [
+        {
+          id: '1',
+          pluginId: '...',
+          type: PluginExtensionTypes.link,
+          title: 'Root Action',
+          description: 'Action at root level',
+          path: '/path',
+          category: 'root',
+        },
+      ];
+      const menuItems = getPanelMenu(dashboard, panel, extensions);
+
+      // Should be in main menu, not under Extensions
+      expect(menuItems).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Root Action',
+            href: '/path',
+          }),
+        ])
+      );
+
+      // Extensions submenu should not exist if only root items
+      expect(menuItems.find((i) => i.text === 'Extensions')).toBeUndefined();
+    });
+
+    it('should still group non-root category items in Extensions submenu', () => {
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const extensions: PluginExtensionLink[] = [
+        {
+          id: '1',
+          pluginId: '...',
+          type: PluginExtensionTypes.link,
+          title: 'Root Action',
+          path: '/path-root',
+          category: 'root',
+          description: 'desc',
+        },
+        {
+          id: '2',
+          pluginId: '...',
+          type: PluginExtensionTypes.link,
+          title: 'Other Action',
+          path: '/path-other',
+          category: 'Other',
+          description: 'desc',
+        },
+      ];
+      const menuItems = getPanelMenu(dashboard, panel, extensions);
+
+      // Root action in main menu
+      expect(menuItems).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Root Action',
+          }),
+        ])
+      );
+
+      // Other action in Extensions submenu
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Other',
+            subMenu: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Other Action',
+              }),
+            ]),
+          }),
+        ])
+      );
+    });
   });
 
   describe('when panel is in view mode', () => {
