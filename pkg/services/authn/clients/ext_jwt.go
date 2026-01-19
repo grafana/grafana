@@ -131,8 +131,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	// TODO: How to support other identity types like render and anonymous here?
-	if !claims.IsIdentityType(t, claims.TypeUser, claims.TypeServiceAccount) {
+	if !claims.IsIdentityType(t, claims.TypeUser, claims.TypeServiceAccount, claims.TypeRenderService, claims.TypeAnonymous) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
