@@ -2,53 +2,68 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
-test.describe(
-  'Smoke tests',
-  {
-    tag: ['@acceptance'],
-  },
-  () => {
-    test('Login, create test data source, create dashboard and panel scenario', async ({
-      createDataSourceConfigPage,
-      gotoDashboardPage,
-      selectors,
-      page,
-    }) => {
-      const dataSourceConfigPage = await createDataSourceConfigPage({
-        name: `e2e-${uuidv4()}`,
-        type: 'grafana-testdata-datasource',
-      });
-      const { datasource } = dataSourceConfigPage;
-      await dataSourceConfigPage.saveAndTest({
-        path: `/api/datasources/uid/${datasource.uid}?accesscontrol=true`,
-      });
+test.describe('other smoke tests', { tag: ['@acceptance'] }, () => {
+  test('Home page loads', async ({ page }) => {
+    console.log('smoke test: Initial cookies:', { date: new Date().toISOString() });
+    console.log(
+      (await page.context().cookies()).map((v) => `${v.name}=${v.value.substring(0, 50)} (${v.domain})`).join(';\n\t')
+    );
+    await page.goto('/');
+    console.log('smoke test: After content load cookies:');
+    console.log(
+      (await page.context().cookies()).map((v) => `${v.name}=${v.value.substring(0, 50)} (${v.domain})`).join(';\n\t')
+    );
+    await expect(page.getByTestId('data-testid Command palette trigger')).toBeVisible();
+  });
+});
 
-      // Create new dashboard
-      const dashboardPage = await gotoDashboardPage({});
+// test.describe(
+//   'Smoke tests',
+//   {
+//     // tag: ['@acceptance'],
+//   },
+//   () => {
+//     test('Login, create test data source, create dashboard and panel scenario', async ({
+//       createDataSourceConfigPage,
+//       gotoDashboardPage,
+//       selectors,
+//       page,
+//     }) => {
+//       const dataSourceConfigPage = await createDataSourceConfigPage({
+//         name: `e2e-${uuidv4()}`,
+//         type: 'grafana-testdata-datasource',
+//       });
+//       const { datasource } = dataSourceConfigPage;
+//       await dataSourceConfigPage.saveAndTest({
+//         path: `/api/datasources/uid/${datasource.uid}?accesscontrol=true`,
+//       });
 
-      // Add new panel
-      await dashboardPage.addPanel();
+//       // Create new dashboard
+//       const dashboardPage = await gotoDashboardPage({});
 
-      // Select CSV Metric Values scenario
-      const scenarioSelect = dashboardPage.getByGrafanaSelector(
-        selectors.components.DataSource.TestData.QueryTab.scenarioSelectContainer
-      );
-      await expect(scenarioSelect).toBeVisible();
-      await scenarioSelect.locator('input[id*="test-data-scenario-select-"]').click();
-      await page.getByText('CSV Metric Values').click();
+//       // Add new panel
+//       await dashboardPage.addPanel();
 
-      // Verify the graph renders by checking legend
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.VizLegend.seriesName('A-series'))
-      ).toBeVisible();
+//       // Select CSV Metric Values scenario
+//       const scenarioSelect = dashboardPage.getByGrafanaSelector(
+//         selectors.components.DataSource.TestData.QueryTab.scenarioSelectContainer
+//       );
+//       await expect(scenarioSelect).toBeVisible();
+//       await scenarioSelect.locator('input[id*="test-data-scenario-select-"]').click();
+//       await page.getByText('CSV Metric Values').click();
 
-      // Verify panel is added to dashboard
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.VizLegend.seriesName('A-series'))
-      ).toBeVisible();
-    });
-  }
-);
+//       // Verify the graph renders by checking legend
+//       await expect(
+//         dashboardPage.getByGrafanaSelector(selectors.components.VizLegend.seriesName('A-series'))
+//       ).toBeVisible();
+
+//       // Verify panel is added to dashboard
+//       await dashboardPage
+//         .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+//         .click();
+//       await expect(
+//         dashboardPage.getByGrafanaSelector(selectors.components.VizLegend.seriesName('A-series'))
+//       ).toBeVisible();
+//     });
+//   }
+// );

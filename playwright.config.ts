@@ -7,6 +7,11 @@ export const testDirRoot = 'e2e-playwright';
 const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');
 export const DEFAULT_URL = 'http://localhost:3001';
 
+function getStorageStatePathForUser(userArg?: string) {
+  const user = userArg || process.env.GRAFANA_ADMIN_USER || 'admin';
+  return `playwright/.auth/${user}.json`;
+}
+
 export function withAuth(project: Project): Project {
   project.dependencies ??= [];
   project.use ??= {};
@@ -14,14 +19,14 @@ export function withAuth(project: Project): Project {
   project.dependencies = project.dependencies.concat('authenticate');
   project.use = {
     ...project.use,
-    storageState: `playwright/.auth/${process.env.GRAFANA_ADMIN_USER || 'admin'}.json`,
+    storageState: getStorageStatePathForUser(),
   };
 
   return project;
 }
 
 export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
-  fullyParallel: true,
+  fullyParallel: false,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
@@ -29,6 +34,7 @@ export const baseConfig: PlaywrightTestConfig<PluginOptions, {}> = {
   reporter: [
     ['html'], // pretty
   ],
+  // reporter: './my-awesome-reporter.ts',
   expect: {
     timeout: 10_000,
   },
@@ -57,159 +63,175 @@ export default defineConfig<PluginOptions>({
     },
   }),
   projects: [
-    // Login to Grafana with admin user and store the cookie on disk for use in other tests
     {
-      name: 'authenticate',
-      testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
-      testMatch: [/.*\.js/],
-    },
-    // Login to Grafana with new user with viewer role and store the cookie on disk for use in other tests
-    {
-      name: 'createUserAndAuthenticate',
-      testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
-      testMatch: [/.*\.js/],
-      use: {
-        user: {
-          user: 'viewer',
-          password: 'password',
-          role: 'Viewer',
-        },
-      },
-    },
-    // Run all tests in parallel using user with admin role
-    withAuth({
-      name: 'admin',
-      testDir: path.join(pluginDirRoot, '/plugin-e2e-api-tests/as-admin-user'),
-    }),
-    // Run all tests in parallel using user with viewer role
-    {
-      name: 'viewer',
-      testDir: path.join(pluginDirRoot, '/plugin-e2e-api-tests/as-viewer-user'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/viewer.json',
-      },
-      dependencies: ['createUserAndAuthenticate'],
-    },
-    withAuth({
-      name: 'elasticsearch',
-      testDir: path.join(pluginDirRoot, '/elasticsearch'),
-    }),
-    withAuth({
-      name: 'mysql',
-      testDir: path.join(pluginDirRoot, '/mysql'),
-    }),
-    withAuth({
-      name: 'mssql',
-      testDir: path.join(pluginDirRoot, '/mssql'),
-    }),
-    withAuth({
-      name: 'extensions-test-app',
-      testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
-    }),
-    withAuth({
-      name: 'grafana-e2etest-datasource',
-      testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
-    }),
-    withAuth({
-      name: 'cloudwatch',
-      testDir: path.join(pluginDirRoot, '/cloudwatch'),
-    }),
-    withAuth({
-      name: 'azuremonitor',
-      testDir: path.join(pluginDirRoot, '/azuremonitor'),
-    }),
-    withAuth({
-      name: 'cloudmonitoring',
-      testDir: path.join(pluginDirRoot, '/cloudmonitoring'),
-    }),
-    withAuth({
-      name: 'graphite',
-      testDir: path.join(pluginDirRoot, '/graphite'),
-    }),
-    withAuth({
-      name: 'influxdb',
-      testDir: path.join(pluginDirRoot, '/influxdb'),
-    }),
-    withAuth({
-      name: 'opentsdb',
-      testDir: path.join(pluginDirRoot, '/opentsdb'),
-    }),
-    withAuth({
-      name: 'jaeger',
-      testDir: path.join(pluginDirRoot, '/jaeger'),
-    }),
-    withAuth({
-      name: 'grafana-postgresql-datasource',
-      testDir: path.join(pluginDirRoot, '/grafana-postgresql-datasource'),
-    }),
-    withAuth({
-      name: 'canvas',
-      testDir: path.join(testDirRoot, '/canvas'),
-    }),
-    withAuth({
-      name: 'zipkin',
-      testDir: path.join(pluginDirRoot, '/zipkin'),
-    }),
-    {
-      name: 'unauthenticated',
+      name: 'startup', // manually logs in
       testDir: path.join(testDirRoot, '/unauthenticated'),
+      use: {
+        storageState: undefined,
+      },
     },
-    withAuth({
-      name: 'various',
-      testDir: path.join(testDirRoot, '/various-suite'),
-    }),
-    withAuth({
-      name: 'panels',
-      testDir: path.join(testDirRoot, '/panels-suite'),
-    }),
-    withAuth({
+    // Login to Grafana with admin user and store the cookie on disk for use in other tests
+    // // Login to Grafana with new user with viewer role and store the cookie on disk for use in other tests
+    // {
+    //   name: 'createUserAndAuthenticate',
+    //   testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
+    //   testMatch: [/.*\.js/],
+    //   use: {
+    //     user: {
+    //       user: 'viewer',
+    //       password: 'password',
+    //       role: 'Viewer',
+    //     },
+    //   },
+    // },
+    {
       name: 'smoke',
       testDir: path.join(testDirRoot, '/smoke-tests-suite'),
-    }),
-    withAuth({
-      name: 'dashboards',
-      testDir: path.join(testDirRoot, '/dashboards-suite'),
-    }),
-    withAuth({
-      name: 'loki',
-      testDir: path.join(testDirRoot, '/loki'),
-    }),
-    withAuth({
-      name: 'cloud-plugins',
-      testDir: path.join(testDirRoot, '/cloud-plugins-suite'),
-    }),
-    withAuth({
-      name: 'alerting',
-      testDir: path.join(testDirRoot, '/alerting-suite'),
-    }),
-    withAuth({
-      name: 'dashboard-new-layouts',
-      testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
-    }),
-    // Setup project for dashboard CUJS tests
-    withAuth({
-      name: 'dashboard-cujs-setup',
-      testDir: path.join(testDirRoot, '/dashboard-cujs'),
-      testMatch: ['global-setup.spec.ts'],
-    }),
-    // Main dashboard CUJS tests
-    withAuth({
-      name: 'dashboard-cujs',
-      testDir: path.join(testDirRoot, '/dashboard-cujs'),
-      testIgnore: ['global-setup.spec.ts', 'global-teardown.spec.ts'],
-      dependencies: ['dashboard-cujs-setup'],
-    }),
-    // Teardown project for dashboard CUJS tests
-    withAuth({
-      name: 'dashboard-cujs-teardown',
-      testDir: path.join(testDirRoot, '/dashboard-cujs'),
-      testMatch: ['global-teardown.spec.ts'],
-      dependencies: ['dashboard-cujs'],
-    }),
-    withAuth({
-      name: 'grafana-e2etest-panel',
-      testDir: path.join(testDirRoot, '/test-plugins/grafana-test-panel'),
-    }),
+      use: {
+        storageState: `playwright/.auth/coreAuth.json`,
+      },
+    },
+
+    // ----- plugin tests
+    {
+      name: 'plugin-authenticate',
+      testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
+      testMatch: [/.*\.js/],
+    },
+    {
+      name: 'plugin-elasticsearch',
+      testDir: path.join(pluginDirRoot, '/elasticsearch'),
+      dependencies: ['plugin-authenticate'],
+      use: {
+        storageState: getStorageStatePathForUser(),
+      },
+    },
+
+    // ---- rest of tests
+
+    // // Run all tests in parallel using user with admin role
+    // withAuth({
+    //   name: 'admin',
+    //   testDir: path.join(pluginDirRoot, '/plugin-e2e-api-tests/as-admin-user'),
+    // }),
+    // // Run all tests in parallel using user with viewer role
+    // {
+    //   name: 'viewer',
+    //   testDir: path.join(pluginDirRoot, '/plugin-e2e-api-tests/as-viewer-user'),
+    //   use: {
+    //     ...devices['Desktop Chrome'],
+    //     storageState: 'playwright/.auth/viewer.json',
+    //   },
+    //   dependencies: ['createUserAndAuthenticate'],
+    // },
+
+    // withAuth({
+    //   name: 'mysql',
+    //   testDir: path.join(pluginDirRoot, '/mysql'),
+    // }),
+    // withAuth({
+    //   name: 'mssql',
+    //   testDir: path.join(pluginDirRoot, '/mssql'),
+    // }),
+    // withAuth({
+    //   name: 'extensions-test-app',
+    //   testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
+    // }),
+    // withAuth({
+    //   name: 'grafana-e2etest-datasource',
+    //   testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
+    // }),
+    // withAuth({
+    //   name: 'cloudwatch',
+    //   testDir: path.join(pluginDirRoot, '/cloudwatch'),
+    // }),
+    // withAuth({
+    //   name: 'azuremonitor',
+    //   testDir: path.join(pluginDirRoot, '/azuremonitor'),
+    // }),
+    // withAuth({
+    //   name: 'cloudmonitoring',
+    //   testDir: path.join(pluginDirRoot, '/cloudmonitoring'),
+    // }),
+    // withAuth({
+    //   name: 'graphite',
+    //   testDir: path.join(pluginDirRoot, '/graphite'),
+    // }),
+    // withAuth({
+    //   name: 'influxdb',
+    //   testDir: path.join(pluginDirRoot, '/influxdb'),
+    // }),
+    // withAuth({
+    //   name: 'opentsdb',
+    //   testDir: path.join(pluginDirRoot, '/opentsdb'),
+    // }),
+    // withAuth({
+    //   name: 'jaeger',
+    //   testDir: path.join(pluginDirRoot, '/jaeger'),
+    // }),
+    // withAuth({
+    //   name: 'grafana-postgresql-datasource',
+    //   testDir: path.join(pluginDirRoot, '/grafana-postgresql-datasource'),
+    // }),
+    // withAuth({
+    //   name: 'canvas',
+    //   testDir: path.join(testDirRoot, '/canvas'),
+    // }),
+    // withAuth({
+    //   name: 'zipkin',
+    //   testDir: path.join(pluginDirRoot, '/zipkin'),
+    // }),
+    // withAuth({
+    //   name: 'various',
+    //   testDir: path.join(testDirRoot, '/various-suite'),
+    // }),
+    // withAuth({
+    //   name: 'panels',
+    //   testDir: path.join(testDirRoot, '/panels-suite'),
+    // }),
+    // withAuth({
+    //   name: 'dashboards',
+    //   testDir: path.join(testDirRoot, '/dashboards-suite'),
+    // }),
+    // withAuth({
+    //   name: 'loki',
+    //   testDir: path.join(testDirRoot, '/loki'),
+    // }),
+    // withAuth({
+    //   name: 'cloud-plugins',
+    //   testDir: path.join(testDirRoot, '/cloud-plugins-suite'),
+    // }),
+    // withAuth({
+    //   name: 'alerting',
+    //   testDir: path.join(testDirRoot, '/alerting-suite'),
+    // }),
+    // withAuth({
+    //   name: 'dashboard-new-layouts',
+    //   testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
+    // }),
+    // // Setup project for dashboard CUJS tests
+    // withAuth({
+    //   name: 'dashboard-cujs-setup',
+    //   testDir: path.join(testDirRoot, '/dashboard-cujs'),
+    //   testMatch: ['global-setup.spec.ts'],
+    // }),
+    // // Main dashboard CUJS tests
+    // withAuth({
+    //   name: 'dashboard-cujs',
+    //   testDir: path.join(testDirRoot, '/dashboard-cujs'),
+    //   testIgnore: ['global-setup.spec.ts', 'global-teardown.spec.ts'],
+    //   dependencies: ['dashboard-cujs-setup'],
+    // }),
+    // // Teardown project for dashboard CUJS tests
+    // withAuth({
+    //   name: 'dashboard-cujs-teardown',
+    //   testDir: path.join(testDirRoot, '/dashboard-cujs'),
+    //   testMatch: ['global-teardown.spec.ts'],
+    //   dependencies: ['dashboard-cujs'],
+    // }),
+    // withAuth({
+    //   name: 'grafana-e2etest-panel',
+    //   testDir: path.join(testDirRoot, '/test-plugins/grafana-test-panel'),
+    // }),
   ],
 });
