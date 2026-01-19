@@ -34,24 +34,24 @@ import (
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
 	features featuremgmt.FeatureToggles,
-	playlistAppInstaller *playlist.PlaylistAppInstaller,
-	pluginsApplInstaller *plugins.AppInstaller,
-	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
-	rulesAppInstaller *rules.AlertingRulesAppInstaller,
+	playlistAppInstaller *playlist.AppInstaller,
+	pluginsAppInstaller *plugins.AppInstaller,
 	liveAppInstaller *live.AppInstaller,
+	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
+	rulesAppInstaller *rules.AppInstaller,
 	correlationsAppInstaller *correlations.AppInstaller,
-	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
+	alertingNotificationAppInstaller *notifications.AppInstaller,
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
-	annotationAppInstaller *annotation.AnnotationAppInstaller,
-	exampleAppInstaller *example.ExampleAppInstaller,
-	advisorAppInstaller *advisor.AdvisorAppInstaller,
-	alertingHistorianAppInstaller *historian.AlertingHistorianAppInstaller,
+	annotationAppInstaller *annotation.AppInstaller,
+	exampleAppInstaller *example.AppInstaller,
+	advisorAppInstaller *advisor.AppInstaller,
+	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	featureClient := openfeature.NewDefaultClient()
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
-		pluginsApplInstaller,
+		pluginsAppInstaller,
 		exampleAppInstaller,
 	}
 	if featureClient.Boolean(context.Background(), featuremgmt.FlagKubernetesUnifiedStorageQuotas, false, openfeature.TransactionContext(context.Background())) {
@@ -88,8 +88,9 @@ func ProvideAppInstallers(
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAlertingHistorian) && alertingHistorianAppInstaller != nil {
 		installers = append(installers, alertingHistorianAppInstaller)
 	}
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if features.IsEnabledGlobally(featuremgmt.FlagLiveAPIServer) {
 		installers = append(installers, liveAppInstaller)
 	}
 	return installers

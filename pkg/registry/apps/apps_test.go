@@ -19,21 +19,21 @@ import (
 )
 
 func TestProvideAppInstallers_Table(t *testing.T) {
-	playlistInstaller := &playlist.PlaylistAppInstaller{}
+	playlistInstaller := &playlist.AppInstaller{}
 	pluginsInstaller := &plugins.AppInstaller{}
-	rulesInstaller := &rules.AlertingRulesAppInstaller{}
+	rulesInstaller := &rules.AppInstaller{}
 	correlationsAppInstaller := &correlations.AppInstaller{}
-	notificationsAppInstaller := &notifications.AlertingNotificationsAppInstaller{}
-	annotationAppInstaller := &annotation.AnnotationAppInstaller{}
-	exampleAppInstaller := &example.ExampleAppInstaller{}
-	advisorAppInstaller := &advisor.AdvisorAppInstaller{}
-	historianAppInstaller := &historian.AlertingHistorianAppInstaller{}
+	notificationsAppInstaller := &notifications.AppInstaller{}
+	annotationAppInstaller := &annotation.AppInstaller{}
+	exampleAppInstaller := &example.AppInstaller{}
+	advisorAppInstaller := &advisor.AppInstaller{}
+	historianAppInstaller := &historian.AppInstaller{}
 	quotasAppInstaller := &quotas.QuotasAppInstaller{}
 
 	tests := []struct {
 		name           string
 		flags          []any
-		rulesInst      *rules.AlertingRulesAppInstaller
+		rulesInst      *rules.AppInstaller
 		expectRulesApp bool
 	}{
 		{name: "no flags", flags: nil, rulesInst: nil, expectRulesApp: false},
@@ -45,7 +45,21 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tt.flags...)
-			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, nil, correlationsAppInstaller, notificationsAppInstaller, nil, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller)
+			got := ProvideAppInstallers(features,
+				playlistInstaller,
+				pluginsInstaller,
+				nil, // live
+				nil, // ShortURL
+				tt.rulesInst,
+				correlationsAppInstaller,
+				notificationsAppInstaller,
+				nil,
+				annotationAppInstaller,
+				exampleAppInstaller,
+				advisorAppInstaller,
+				historianAppInstaller,
+				quotasAppInstaller,
+			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
 			} else {

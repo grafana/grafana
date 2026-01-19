@@ -2633,6 +2633,20 @@
     },
     {
       "metadata": {
+        "name": "liveAPIServer",
+        "resourceVersion": "1768815248544",
+        "creationTimestamp": "2026-01-19T09:34:08Z"
+      },
+      "spec": {
+        "description": "Registers a live apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "localeFormatPreference",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-03-31T13:59:07Z",

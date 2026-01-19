@@ -17,6 +17,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-23,lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 2022-02-09,influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
+2026-01-19,liveAPIServer,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2025-08-29,starsFromAPIServer,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 2025-08-29,kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-11-29,influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
