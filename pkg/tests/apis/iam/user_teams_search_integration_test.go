@@ -34,39 +34,35 @@ func TestIntegrationUserTeams(t *testing.T) {
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 
 	for _, mode := range modes {
-		func() {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    false,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
-					"teams.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
-					"teambindings.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"users.iam.grafana.app": {
+					DualWriterMode: mode,
 				},
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-					featuremgmt.FlagKubernetesAuthnMutation,
+				"teams.iam.grafana.app": {
+					DualWriterMode: mode,
 				},
-				UnifiedStorageEnableSearch: true,
-			})
+				"teambindings.iam.grafana.app": {
+					DualWriterMode: mode,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesAuthnMutation,
+			},
+			UnifiedStorageEnableSearch: true,
+		})
 
-			defer helper.Shutdown()
+		defer helper.Shutdown()
 
-			t.Run(fmt.Sprintf("user teams endpoint with dual writer mode %d", mode), func(t *testing.T) {
-				doUserTeamsTests(t, helper)
-			})
-		}()
+		doUserTeamsTests(t, helper, mode)
 	}
 }
 
-func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	ctx := context.Background()
 	orgNS := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
 
@@ -124,7 +120,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 	}
 
-	t.Run("returns the bound team for the user", func(t *testing.T) {
+	t.Run(fmt.Sprintf("returns the bound team for the user with dual writer mode %d", mode), func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", u1.GetName())
 
 		var res userTeamsResponse
@@ -142,7 +138,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.False(t, item.External)
 	})
 
-	t.Run("does not return the bound team for a different user", func(t *testing.T) {
+	t.Run(fmt.Sprintf("does not return the bound team for a different user with dual writer mode %d", mode), func(t *testing.T) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", u2.GetName())
 
 		var res userTeamsResponse
@@ -156,7 +152,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.False(t, containsTeam(res, teams[0].GetName()), "did not expect response to contain team %q, got %#v", teams[0].GetName(), res.Items)
 	})
 
-	t.Run("paging with page and limit", func(t *testing.T) {
+	t.Run(fmt.Sprintf("paging with page and limit with dual writer mode %d", mode), func(t *testing.T) {
 		// Page 1, Limit 2
 		res1 := getUserTeamsWithPaging(t, helper, u1.GetName(), 1, 2)
 		require.Len(t, res1.Items, 2)
@@ -188,7 +184,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Len(t, seen, 5, "Should have seen all 5 teams across pages")
 	})
 
-	t.Run("paging with offset and limit", func(t *testing.T) {
+	t.Run(fmt.Sprintf("paging with offset and limit with dual writer mode %d", mode), func(t *testing.T) {
 		// Offset 0, Limit 2
 		res1 := getUserTeamsWithOffset(t, helper, u1.GetName(), 0, 2)
 		require.Len(t, res1.Items, 2)
