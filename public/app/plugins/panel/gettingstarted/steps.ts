@@ -41,7 +41,7 @@ export const getSteps = (): SetupStep[] => [
           return new Promise((resolve) => {
             resolve(
               getDatasourceSrv()
-                .getAll()
+                .getList({ metrics: true })
                 .filter((item) => {
                   return item.meta.builtIn !== true;
                 }).length > 0
