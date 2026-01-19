@@ -3,13 +3,11 @@ package appregistry
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
@@ -22,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -34,17 +33,17 @@ import (
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
 	features featuremgmt.FeatureToggles,
-	playlistAppInstaller *playlist.PlaylistAppInstaller,
+	playlistAppInstaller *playlist.AppInstaller,
 	pluginsApplInstaller *plugins.AppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
-	rulesAppInstaller *rules.AlertingRulesAppInstaller,
+	rulesAppInstaller *rules.AppInstaller,
 	correlationsAppInstaller *correlations.AppInstaller,
-	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
+	alertingNotificationAppInstaller *notifications.AppInstaller,
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
-	annotationAppInstaller *annotation.AnnotationAppInstaller,
-	exampleAppInstaller *example.ExampleAppInstaller,
-	advisorAppInstaller *advisor.AdvisorAppInstaller,
-	alertingHistorianAppInstaller *historian.AlertingHistorianAppInstaller,
+	annotationAppInstaller *annotation.AppInstaller,
+	exampleAppInstaller *example.AppInstaller,
+	advisorAppInstaller *advisor.AppInstaller,
+	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	featureClient := openfeature.NewDefaultClient()

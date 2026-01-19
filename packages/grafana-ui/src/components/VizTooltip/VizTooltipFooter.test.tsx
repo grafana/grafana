@@ -106,10 +106,10 @@ describe('VizTooltipFooter', () => {
       </MemoryRouter>
     );
 
-    const onForButton = screen.getByRole('button', { name: /Apply as filter/i });
+    const onForButton = screen.getByTestId(selectors.components.VizTooltipFooter.buttons.apply);
     expect(onForButton).toBeInTheDocument();
 
-    const onOutButton = screen.getByRole('button', { name: /Apply as inverse filter/i });
+    const onOutButton = screen.getByTestId(selectors.components.VizTooltipFooter.buttons.applyInverse);
     expect(onOutButton).toBeInTheDocument();
 
     await userEvent.click(onForButton);
