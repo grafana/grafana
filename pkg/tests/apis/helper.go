@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -27,9 +26,10 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
+	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -880,35 +880,40 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			Method: http.MethodGet,
 			Path:   path,
 			User:   h.Org1.Admin,
-		}, &AnyResource{})
+		}, &spec3.OpenAPI{})
 
 		require.NotNil(t, rsp.Response)
 		if rsp.Response.StatusCode != 200 {
 			require.Failf(t, "Not OK", "Code[%d] %s", rsp.Response.StatusCode, string(rsp.Body))
 		}
 
-		schema := map[string]any{}
-		err := json.Unmarshal(rsp.Body, &schema)
-		require.NoError(t, err)
-		info, found, err := unstructured.NestedMap(schema, "info", "plugin")
-		require.NoError(t, err)
-		if found {
-			delete(info, "version") // the version is unstable in test environments
-			err = unstructured.SetNestedMap(schema, info, "info", "plugin")
-			require.NoError(t, err)
+		var err error
+		body := rsp.Body
+
+		// Clear the plugin version and build stamp from snapshot
+		if v, ok := rsp.Result.Info.Extensions["x-grafana-plugin"]; ok && v != nil {
+			if pluginInfo, ok := v.(map[string]any); ok {
+				delete(pluginInfo, "version")
+				delete(pluginInfo, "build")
+
+				body, err = rsp.Result.MarshalJSON()
+				require.NoError(t, err)
+			}
 		}
 
-		pretty, err := json.MarshalIndent(schema, "", "  ")
+		var prettyJSON bytes.Buffer
+		err = json.Indent(&prettyJSON, body, "", "  ")
 		require.NoError(t, err)
+		pretty := prettyJSON.String()
 
 		write := false
 		fpath := filepath.Join(dir, fmt.Sprintf("%s-%s.json", gv.Group, gv.Version))
 
 		// nolint:gosec
 		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
-		body, err := os.ReadFile(fpath)
+		body, err = os.ReadFile(fpath)
 		if err == nil {
-			if !assert.JSONEq(t, string(body), string(pretty)) {
+			if !assert.JSONEq(t, string(body), pretty) {
 				t.Logf("openapi spec has changed: %s", path)
 				t.Fail()
 				write = true
@@ -919,7 +924,7 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		}
 
 		if write {
-			e2 := os.WriteFile(fpath, pretty, 0o644)
+			e2 := os.WriteFile(fpath, []byte(pretty), 0o644)
 			if e2 != nil {
 				t.Errorf("error writing file: %s", e2.Error())
 			}

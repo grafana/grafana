@@ -2666,7 +2666,10 @@
     "rules-group": {
       "deleting": "删除",
       "text-federated": "联合",
-      "text-provisioned": "已预置"
+      "text-provisioned": "已预置",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3751,7 +3754,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_other": "",
       "failed-count_other": "",
       "success-count_other": ""
@@ -5321,6 +5323,7 @@
       },
       "header-hidden-tooltip": "行标题仅在编辑模式下可见",
       "name": "行",
+      "new-row-title": "",
       "row": {
         "collapse": "折叠行",
         "expand": "展开行",
@@ -5426,11 +5429,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5569,6 @@
           "arrow": "分享",
           "title": "分享",
           "tooltip": "复制链接"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "丢弃",
-            "text": "此数据面板有未保存的更改。您需要先保存它们，然后才能共享。",
-            "title": "将更改保存到数据面板？",
-            "yesText": "保存"
-          }
         },
         "unlink-library-panel": "取消链接库面板"
       },
@@ -6475,6 +6466,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "切换共享菜单"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -7965,6 +7962,7 @@
     "name-neutral": "中性",
     "name-show-threshold-labels": "显示阈值标签",
     "name-show-threshold-markers": "显示阈值标记",
+    "neutral": "",
     "placeholder-neutral": "自动",
     "suggestions": {
       "arc": "",
@@ -12519,6 +12517,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12532,6 +12535,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12687,14 +12691,6 @@
       "starred": "已加星标",
       "view-as-folders": "按文件夹查看",
       "view-as-list": "以列表形式查看"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "按字母顺序 (A-Z)",
-          "alphabetically-za": "按字母顺序 (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "导入",

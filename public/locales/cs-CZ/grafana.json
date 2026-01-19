@@ -2699,7 +2699,10 @@
     "rules-group": {
       "deleting": "Odstraňování",
       "text-federated": "Federované",
-      "text-provisioned": "Zajištěno"
+      "text-provisioned": "Zajištěno",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3799,7 +3802,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_few": "",
       "all-failed_many": "",
@@ -5381,6 +5383,7 @@
       },
       "header-hidden-tooltip": "Záhlaví řádku viditelné pouze v režimu úprav",
       "name": "Řádky",
+      "new-row-title": "",
       "row": {
         "collapse": "Sbalit řádek",
         "expand": "Rozbalit řádek",
@@ -5486,11 +5489,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5630,14 +5629,6 @@
           "arrow": "Sdílet",
           "title": "Sdílet",
           "tooltip": "Kopírovat odkaz"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Zahodit",
-            "text": "Máte neuložené změny této nástěnky. Před sdílením musíte změny uložit.",
-            "title": "Uložit změny nástěnky?",
-            "yesText": "Uložit"
-          }
         },
         "unlink-library-panel": "Odpojit panel knihovny"
       },
@@ -6544,6 +6535,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Přepnout nabídku sdílení"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -8043,6 +8040,7 @@
     "name-neutral": "Neutrální",
     "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
     "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
+    "neutral": "",
     "placeholder-neutral": "auto.",
     "suggestions": {
       "arc": "",
@@ -12678,6 +12676,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12691,6 +12694,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12852,14 +12856,6 @@
       "starred": "Označeno hvězdičkou",
       "view-as-folders": "Zobrazit podle složek",
       "view-as-list": "Zobrazit jako seznam"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Abecedně (A–Z)",
-          "alphabetically-za": "Abecedně (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importovat",

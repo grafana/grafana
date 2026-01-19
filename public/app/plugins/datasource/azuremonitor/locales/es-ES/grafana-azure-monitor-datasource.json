@@ -274,7 +274,7 @@
       "label-time-column": "Columna de tiempo",
       "label-time-range": "Intervalo de tiempo",
       "tooltip-time-column": "<0>Especifica la columna de tiempo utilizada para el filtrado. El valor predeterminado es la columna <1>timeSpan</1> de las primeras tablas, la primera columna <3>datetime</3> encontrada o <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Especifica el intervalo de tiempo utilizado para la consulta. La opción <1>Consulta</1> solo utilizará los intervalos de tiempo especificados en la consulta. El <3>dashboard</3> solo utilizará el intervalo de tiempo de Grafana. En el modo de creador de logs, solo se utilizará el tiempo del dashboard.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Arriba"

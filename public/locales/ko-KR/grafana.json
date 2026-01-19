@@ -2666,7 +2666,10 @@
     "rules-group": {
       "deleting": "삭제 중",
       "text-federated": "연합됨",
-      "text-provisioned": "프로비저닝됨"
+      "text-provisioned": "프로비저닝됨",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3751,7 +3754,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_other": "",
       "failed-count_other": "",
       "success-count_other": ""
@@ -5321,6 +5323,7 @@
       },
       "header-hidden-tooltip": "행 헤더는 편집 모드에서만 표시됩니다",
       "name": "행",
+      "new-row-title": "",
       "row": {
         "collapse": "행 접기",
         "expand": "행 펼치기",
@@ -5426,11 +5429,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5569,6 @@
           "arrow": "공유",
           "title": "공유",
           "tooltip": "링크 복사"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "무시",
-            "text": "이 대시보드에 대한 변경 사항이 저장되지 않았습니다. 변경 사항을 공유하기 전에 저장해야 합니다.",
-            "title": "변경 사항을 대시보드에 저장할까요?",
-            "yesText": "저장"
-          }
         },
         "unlink-library-panel": "라이브러리 패널 연결 해제"
       },
@@ -6475,6 +6466,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "공유 메뉴 토글"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -7965,6 +7962,7 @@
     "name-neutral": "중간임",
     "name-show-threshold-labels": "임계값 레이블 표시",
     "name-show-threshold-markers": "임계값 마커 표시",
+    "neutral": "",
     "placeholder-neutral": "자동",
     "suggestions": {
       "arc": "",
@@ -12519,6 +12517,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12532,6 +12535,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12687,14 +12691,6 @@
       "starred": "별표 표시됨",
       "view-as-folders": "폴더별로 보기",
       "view-as-list": "리스트로 보기"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "알파벳순(A~Z)",
-          "alphabetically-za": "알파벳순(Z~A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "가져오기",

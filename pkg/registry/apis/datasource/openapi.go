@@ -21,7 +21,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 	// Add plugin information
 	info := map[string]any{
-		"plugin": b.pluginJSON.ID,
+		"id": b.pluginJSON.ID,
 	}
 	if b.pluginJSON.Info.Version != "" {
 		info["version"] = b.pluginJSON.Info.Version
@@ -29,11 +29,9 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	if b.pluginJSON.Info.Build.Time > 0 {
 		info["build"] = b.pluginJSON.Info.Build.Time
 	}
-	oas.Info.AddExtension("plugin", info)
+	oas.Info.AddExtension("x-grafana-plugin", info)
 
-	// The root api URL
 	root := "/apis/" + b.datasourceResourceInfo.GroupVersion().String() + "/"
-
 	// Add queries to the request properties
 	if err := queryschema.AddQueriesToOpenAPI(queryschema.OASQueryOptions{
 		Swagger:          oas,

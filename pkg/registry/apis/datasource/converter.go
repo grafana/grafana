@@ -43,7 +43,7 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			Generation: int64(ds.Version),
 		},
 		Spec:   datasourceV0.UnstructuredSpec{},
-		Secure: ToInlineSecureValues("", ds.UID, maps.Keys(ds.SecureJsonData)),
+		Secure: ToInlineSecureValues(ds.UID, maps.Keys(ds.SecureJsonData)),
 	}
 	obj.UID = gapiutil.CalculateClusterWideUID(obj)
 	obj.Spec.SetTitle(ds.Name).
@@ -97,7 +97,7 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 
 // ToInlineSecureValues converts secure json into InlineSecureValues with reference names
 // The names are predictable and can be used while we implement dual writing for secrets
-func ToInlineSecureValues(_ string, dsUID string, keys iter.Seq[string]) common.InlineSecureValues {
+func ToInlineSecureValues(dsUID string, keys iter.Seq[string]) common.InlineSecureValues {
 	values := make(common.InlineSecureValues)
 	for k := range keys {
 		values[k] = common.InlineSecureValue{
