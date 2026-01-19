@@ -19,7 +19,7 @@ aliases:
   - ../../observability-as-code/provision-resources/intro-git-sync 
 ---
 
-# Provision resources and sync dashboards
+# Introduction to Git Sync
 
 {{< admonition type="caution" >}}
 
@@ -46,6 +46,6 @@ The dashboards saved in your GitHub repository or local folder appear in Grafana
 
 You can set a single folder, or multiple folders to a different repository, with up to 10 connections. Alternatively, your entire Grafana instance can be the provisioned folder.
 
-## Explore provisioning
+## Explore Git Sync
 
 {{< section withDescriptions="true" depth="5" >}}

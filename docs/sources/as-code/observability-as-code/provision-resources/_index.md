@@ -1,5 +1,5 @@
 ---
-description: Learn about how to provision resources using Git Sync and local file provisioning administration.
+description: Learn about how to provision resources using local file provisioning administration.
 keywords:
   - observability
   - configuration
@@ -9,7 +9,7 @@ labels:
     - enterprise
     - oss
 title: Provision resources and sync dashboards
-menuTitle: Provision resources
+menuTitle: On-prem file provisioning 
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/
 aliases:
@@ -33,8 +33,6 @@ In the local file workflow:
 - Any changes made in the provisioned files are reflected in the Grafana database. The Grafana UI reads the database and updates the UI to reflect these changes.
 - You can't use the Grafana UI to edit or delete provisioned resources.
 
-Learn more in [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/).
-
-## Explore provisioning
+## Explore file provisioning
 
 {{< section withDescriptions="true" depth="5" >}}
