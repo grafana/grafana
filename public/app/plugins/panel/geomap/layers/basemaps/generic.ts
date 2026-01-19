@@ -67,8 +67,8 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
         })
         .addNumberInput({
           path: 'config.minZoom',
-          name: 'Min Zoom',
-          description: 'Minimum zoom level. Tiles will not be loaded below this level.',
+          name: 'Min zoom',
+          description: 'Minimum zoom level. Tiles are not loaded below this level.',
           settings: {
             placeholder: '0',
             min: 0,
@@ -77,8 +77,8 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
         })
         .addNumberInput({
           path: 'config.maxZoom',
-          name: 'Max Zoom',
-          description: 'Maximum zoom level provided by the server. Past this level, tiles will be upscaled.',
+          name: 'Max zoom',
+          description: 'Maximum zoom level provided by the server. Beyond this level, tiles are upscaled.',
           settings: {
             placeholder: '18',
             min: 0,

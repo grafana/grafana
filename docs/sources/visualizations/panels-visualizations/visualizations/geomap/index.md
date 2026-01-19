@@ -512,8 +512,8 @@ The XYZ Tile layer is a map from a generic tile layer.
 
 - **URL template** - Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
 - **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
-- **Min Zoom** - Minimum zoom level. Tiles aren't loaded below this level.
-- **Max Zoom** - Maximum zoom level provided by the server. Past this level, tiles are upscaled (digital zoom).
+- **Min zoom** - Minimum zoom level. Tiles aren't loaded below this level.
+- **Max zoom** - Maximum zoom level provided by the server. Beyond this level, tiles are upscaled (digital zoom).
 - **Opacity** from 0 (transparent) to 1 (opaque)
 
 ##### More information
