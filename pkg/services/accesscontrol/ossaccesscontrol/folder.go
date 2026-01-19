@@ -38,6 +38,7 @@ var FolderEditActions = append(FolderViewActions, []string{
 	accesscontrol.ActionAlertingRuleDelete,
 	accesscontrol.ActionAlertingSilencesCreate,
 	accesscontrol.ActionAlertingSilencesWrite,
+	accesscontrol.ActionAlertingProvisioningSetStatus,
 	libraryelements.ActionLibraryPanelsCreate,
 	libraryelements.ActionLibraryPanelsWrite,
 	libraryelements.ActionLibraryPanelsDelete,
