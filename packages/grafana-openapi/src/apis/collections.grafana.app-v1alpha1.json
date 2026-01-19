@@ -19,11 +19,6 @@
                   "$ref": "#/components/schemas/APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/APIResourceList"
@@ -145,16 +140,6 @@
                   "$ref": "#/components/schemas/StarsList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/StarsList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/StarsList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/StarsList"
@@ -210,11 +195,6 @@
                 "$ref": "#/components/schemas/Stars"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Stars"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Stars"
@@ -228,11 +208,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Stars"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Stars"
                 }
@@ -252,11 +227,6 @@
                   "$ref": "#/components/schemas/Stars"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Stars"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Stars"
@@ -268,11 +238,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Stars"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Stars"
                 }
@@ -424,11 +389,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -466,11 +426,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Stars"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Stars"
                 }
@@ -530,11 +485,6 @@
                 "$ref": "#/components/schemas/Stars"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Stars"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Stars"
@@ -552,11 +502,6 @@
                   "$ref": "#/components/schemas/Stars"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Stars"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Stars"
@@ -568,11 +513,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Stars"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Stars"
                 }
@@ -652,11 +592,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -668,11 +603,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -768,11 +698,6 @@
                   "$ref": "#/components/schemas/Stars"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Stars"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Stars"
@@ -784,11 +709,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Stars"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Stars"
                 }

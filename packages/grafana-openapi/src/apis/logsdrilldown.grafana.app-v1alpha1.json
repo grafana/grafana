@@ -18,11 +18,6 @@
                   "$ref": "#/components/schemas/APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/APIResourceList"
@@ -144,16 +139,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumnsList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumnsList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumnsList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumnsList"
@@ -209,11 +194,6 @@
                 "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
@@ -227,11 +207,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
@@ -251,11 +226,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
@@ -267,11 +237,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
@@ -423,11 +388,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -465,11 +425,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
@@ -529,11 +484,6 @@
                 "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
@@ -551,11 +501,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
@@ -567,11 +512,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
@@ -651,11 +591,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -667,11 +602,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -767,11 +697,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
@@ -783,11 +708,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
@@ -839,11 +759,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
@@ -903,11 +818,6 @@
                 "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
@@ -925,11 +835,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
@@ -941,11 +846,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
@@ -1041,11 +941,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
@@ -1057,11 +952,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultColumns"
                 }
@@ -1214,16 +1104,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaultsList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultsList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaultsList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaultsList"
@@ -1279,11 +1159,6 @@
                 "$ref": "#/components/schemas/LogsDrilldownDefaults"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LogsDrilldownDefaults"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LogsDrilldownDefaults"
@@ -1297,11 +1172,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
@@ -1321,11 +1191,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
@@ -1337,11 +1202,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
@@ -1493,11 +1353,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -1535,11 +1390,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
@@ -1599,11 +1449,6 @@
                 "$ref": "#/components/schemas/LogsDrilldownDefaults"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LogsDrilldownDefaults"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LogsDrilldownDefaults"
@@ -1621,11 +1466,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
@@ -1637,11 +1477,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
@@ -1721,11 +1556,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -1737,11 +1567,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -1837,11 +1662,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
@@ -1853,11 +1673,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
@@ -1909,11 +1724,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
@@ -1973,11 +1783,6 @@
                 "$ref": "#/components/schemas/LogsDrilldownDefaults"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LogsDrilldownDefaults"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LogsDrilldownDefaults"
@@ -1995,11 +1800,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
@@ -2011,11 +1811,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
@@ -2111,11 +1906,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
@@ -2127,11 +1917,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownDefaults"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownDefaults"
                 }
@@ -2284,16 +2069,6 @@
                   "$ref": "#/components/schemas/LogsDrilldownList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldownList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldownList"
@@ -2349,11 +2124,6 @@
                 "$ref": "#/components/schemas/LogsDrilldown"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LogsDrilldown"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LogsDrilldown"
@@ -2367,11 +2137,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
@@ -2391,11 +2156,6 @@
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
@@ -2407,11 +2167,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
@@ -2563,11 +2318,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -2605,11 +2355,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
@@ -2669,11 +2414,6 @@
                 "$ref": "#/components/schemas/LogsDrilldown"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LogsDrilldown"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LogsDrilldown"
@@ -2691,11 +2431,6 @@
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
@@ -2707,11 +2442,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
@@ -2791,11 +2521,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -2807,11 +2532,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -2907,11 +2627,6 @@
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
@@ -2923,11 +2638,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
@@ -2979,11 +2689,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
@@ -3043,11 +2748,6 @@
                 "$ref": "#/components/schemas/LogsDrilldown"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LogsDrilldown"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LogsDrilldown"
@@ -3065,11 +2765,6 @@
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
@@ -3081,11 +2776,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
@@ -3181,11 +2871,6 @@
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
@@ -3197,11 +2882,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogsDrilldown"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LogsDrilldown"
                 }

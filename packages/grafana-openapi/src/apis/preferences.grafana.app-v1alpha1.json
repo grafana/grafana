@@ -18,11 +18,6 @@
                   "$ref": "#/components/schemas/APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/APIResourceList"
@@ -144,16 +139,6 @@
                   "$ref": "#/components/schemas/PreferencesList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/PreferencesList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/PreferencesList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/PreferencesList"
@@ -209,11 +194,6 @@
                 "$ref": "#/components/schemas/Preferences"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Preferences"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Preferences"
@@ -227,11 +207,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Preferences"
                 }
@@ -251,11 +226,6 @@
                   "$ref": "#/components/schemas/Preferences"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Preferences"
@@ -267,11 +237,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Preferences"
                 }
@@ -334,11 +299,6 @@
                   "$ref": "#/components/schemas/Preferences"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Preferences"
@@ -394,11 +354,6 @@
                 "$ref": "#/components/schemas/Preferences"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Preferences"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Preferences"
@@ -416,11 +371,6 @@
                   "$ref": "#/components/schemas/Preferences"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Preferences"
@@ -432,11 +382,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Preferences"
                 }
@@ -516,11 +461,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -532,11 +472,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -632,11 +567,6 @@
                   "$ref": "#/components/schemas/Preferences"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Preferences"
@@ -648,11 +578,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Preferences"
                 }
@@ -735,20 +660,6 @@
           }
         ]
       },
-      "PreferencesCookiePreferences": {
-        "type": "object",
-        "properties": {
-          "analytics": {
-            "type": "object"
-          },
-          "functional": {
-            "type": "object"
-          },
-          "performance": {
-            "type": "object"
-          }
-        }
-      },
       "PreferencesList": {
         "type": "object",
         "required": ["metadata", "items"],
@@ -814,14 +725,6 @@
       "PreferencesSpec": {
         "type": "object",
         "properties": {
-          "cookiePreferences": {
-            "description": "Cookie preferences",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/PreferencesCookiePreferences"
-              }
-            ]
-          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"

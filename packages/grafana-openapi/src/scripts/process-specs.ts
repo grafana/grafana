@@ -180,6 +180,7 @@ const oss = {
   output: path.join(import.meta.dirname, '../apis'),
 };
 
+// This script is also used to process specs from the Enterprise repo but we're not publishing these as part of this package for now
 const enterprise = {
   source: path.join(basePath, 'pkg/extensions/apiserver/tests/openapi_snapshots'),
   output: path.join(basePath, 'data/openapi'),

@@ -19,11 +19,6 @@
                   "$ref": "#/components/schemas/APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/APIResourceList"
@@ -145,16 +140,6 @@
                   "$ref": "#/components/schemas/ConnectionList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/ConnectionList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/ConnectionList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/ConnectionList"
@@ -210,11 +195,6 @@
                 "$ref": "#/components/schemas/Connection"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Connection"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Connection"
@@ -228,11 +208,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
                 }
@@ -252,11 +227,6 @@
                   "$ref": "#/components/schemas/Connection"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
@@ -268,11 +238,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
                 }
@@ -424,11 +389,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -466,11 +426,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
                 }
@@ -530,11 +485,6 @@
                 "$ref": "#/components/schemas/Connection"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Connection"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Connection"
@@ -552,11 +502,6 @@
                   "$ref": "#/components/schemas/Connection"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
@@ -568,11 +513,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
                 }
@@ -652,11 +592,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -668,11 +603,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -768,11 +698,6 @@
                   "$ref": "#/components/schemas/Connection"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
@@ -784,11 +709,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
                 }
@@ -904,11 +824,6 @@
                   "$ref": "#/components/schemas/Connection"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
@@ -964,11 +879,6 @@
                 "$ref": "#/components/schemas/Connection"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Connection"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Connection"
@@ -986,11 +896,6 @@
                   "$ref": "#/components/schemas/Connection"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
@@ -1002,11 +907,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
                 }
@@ -1102,11 +1002,6 @@
                   "$ref": "#/components/schemas/Connection"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
@@ -1118,11 +1013,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Connection"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Connection"
                 }
@@ -1275,16 +1165,6 @@
                   "$ref": "#/components/schemas/JobList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/JobList"
@@ -1340,11 +1220,6 @@
                 "$ref": "#/components/schemas/Job"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Job"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Job"
@@ -1358,11 +1233,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
                 }
@@ -1382,11 +1252,6 @@
                   "$ref": "#/components/schemas/Job"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
@@ -1398,11 +1263,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
                 }
@@ -1554,11 +1414,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -1596,11 +1451,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
                 }
@@ -1660,11 +1510,6 @@
                 "$ref": "#/components/schemas/Job"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Job"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Job"
@@ -1682,11 +1527,6 @@
                   "$ref": "#/components/schemas/Job"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
@@ -1698,11 +1538,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
                 }
@@ -1782,11 +1617,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -1798,11 +1628,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -1898,11 +1723,6 @@
                   "$ref": "#/components/schemas/Job"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
@@ -1914,11 +1734,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Job"
                 }
@@ -2071,16 +1886,6 @@
                   "$ref": "#/components/schemas/RepositoryList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/RepositoryList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/RepositoryList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/RepositoryList"
@@ -2136,11 +1941,6 @@
                 "$ref": "#/components/schemas/Repository"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Repository"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Repository"
@@ -2154,11 +1954,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
                 }
@@ -2178,11 +1973,6 @@
                   "$ref": "#/components/schemas/Repository"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
@@ -2194,11 +1984,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
                 }
@@ -2350,11 +2135,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -2392,11 +2172,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
                 }
@@ -2456,11 +2231,6 @@
                 "$ref": "#/components/schemas/Repository"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Repository"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Repository"
@@ -2478,11 +2248,6 @@
                   "$ref": "#/components/schemas/Repository"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
@@ -2494,11 +2259,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
                 }
@@ -2578,11 +2338,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -2594,11 +2349,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -2694,11 +2444,6 @@
                   "$ref": "#/components/schemas/Repository"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
@@ -2710,11 +2455,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
                 }
@@ -3618,11 +3358,6 @@
                   "$ref": "#/components/schemas/Repository"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
@@ -3678,11 +3413,6 @@
                 "$ref": "#/components/schemas/Repository"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Repository"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Repository"
@@ -3700,11 +3430,6 @@
                   "$ref": "#/components/schemas/Repository"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
@@ -3716,11 +3441,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
                 }
@@ -3816,11 +3536,6 @@
                   "$ref": "#/components/schemas/Repository"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
@@ -3832,11 +3547,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Repository"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Repository"
                 }
@@ -4224,7 +3934,7 @@
               }
             ]
           },
-          "webhook": {
+          "token": {
             "description": "Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back",
             "default": {},
             "allOf": [

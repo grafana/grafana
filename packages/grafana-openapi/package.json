@@ -50,7 +50,7 @@
     "process-specs": "node src/scripts/process-specs.ts && yarn copy:api && yarn format"
   },
   "engines": {
-    "node": ">= 24 <25"
+    "node": ">= 22 <25"
   },
   "packageManager": "yarn@4.11.0",
   "devDependencies": {

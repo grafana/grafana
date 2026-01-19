@@ -18,11 +18,6 @@
                   "$ref": "#/components/schemas/APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/APIResourceList"
@@ -46,16 +41,6 @@
                 }
               },
               "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetAlertstatehistory"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetAlertstatehistory"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
                   "$ref": "#/components/schemas/GetAlertstatehistory"
                 }
@@ -182,16 +167,6 @@
                   "$ref": "#/components/schemas/DummyList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/DummyList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/DummyList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/DummyList"
@@ -247,11 +222,6 @@
                 "$ref": "#/components/schemas/Dummy"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Dummy"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Dummy"
@@ -265,11 +235,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
                 }
@@ -289,11 +254,6 @@
                   "$ref": "#/components/schemas/Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
@@ -305,11 +265,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
                 }
@@ -461,11 +416,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -503,11 +453,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
                 }
@@ -567,11 +512,6 @@
                 "$ref": "#/components/schemas/Dummy"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Dummy"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Dummy"
@@ -589,11 +529,6 @@
                   "$ref": "#/components/schemas/Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
@@ -605,11 +540,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
                 }
@@ -689,11 +619,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -705,11 +630,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -805,11 +725,6 @@
                   "$ref": "#/components/schemas/Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
@@ -821,11 +736,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
                 }
@@ -877,11 +787,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
                 }
@@ -941,11 +846,6 @@
                 "$ref": "#/components/schemas/Dummy"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Dummy"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Dummy"
@@ -963,11 +863,6 @@
                   "$ref": "#/components/schemas/Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
@@ -979,11 +874,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
                 }
@@ -1079,11 +969,6 @@
                   "$ref": "#/components/schemas/Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
@@ -1095,11 +980,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dummy"
                 }
@@ -1151,11 +1031,6 @@
                 "$ref": "#/components/schemas/CreateNotificationqueryRequestBody"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateNotificationqueryRequestBody"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/CreateNotificationqueryRequestBody"
@@ -1174,16 +1049,6 @@
                 }
               },
               "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateNotificationquery"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateNotificationquery"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
                   "$ref": "#/components/schemas/CreateNotificationquery"
                 }

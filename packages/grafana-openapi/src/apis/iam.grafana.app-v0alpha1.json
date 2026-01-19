@@ -19,11 +19,6 @@
                   "$ref": "#/components/schemas/APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/APIResourceList"
@@ -179,16 +174,6 @@
                   "$ref": "#/components/schemas/ExternalGroupMappingList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMappingList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMappingList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/ExternalGroupMappingList"
@@ -244,11 +229,6 @@
                 "$ref": "#/components/schemas/ExternalGroupMapping"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/ExternalGroupMapping"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/ExternalGroupMapping"
@@ -262,11 +242,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMapping"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ExternalGroupMapping"
                 }
@@ -286,11 +261,6 @@
                   "$ref": "#/components/schemas/ExternalGroupMapping"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMapping"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/ExternalGroupMapping"
@@ -302,11 +272,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMapping"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ExternalGroupMapping"
                 }
@@ -458,11 +423,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -500,11 +460,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMapping"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ExternalGroupMapping"
                 }
@@ -564,11 +519,6 @@
                 "$ref": "#/components/schemas/ExternalGroupMapping"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/ExternalGroupMapping"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/ExternalGroupMapping"
@@ -586,11 +536,6 @@
                   "$ref": "#/components/schemas/ExternalGroupMapping"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMapping"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/ExternalGroupMapping"
@@ -602,11 +547,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMapping"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ExternalGroupMapping"
                 }
@@ -686,11 +626,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -702,11 +637,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -802,11 +732,6 @@
                   "$ref": "#/components/schemas/ExternalGroupMapping"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMapping"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/ExternalGroupMapping"
@@ -818,11 +743,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExternalGroupMapping"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ExternalGroupMapping"
                 }
@@ -863,6 +783,119 @@
           }
         }
       ]
+    },
+    "/searchExternalGroupMappings": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search ExternalGroupMapping resources by the provided external group IDs.",
+        "operationId": "searchExternalGroupMappings",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "number of results to return",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 30
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "page number (starting from 1)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "number of results to skip",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 0
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "sortable field",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "default sorting",
+                "value": "externalGroup"
+              },
+              "-externalGroup": {
+                "summary": "externalGroup descending",
+                "value": "-externalGroup"
+              },
+              "externalGroup": {
+                "summary": "externalGroup ascending",
+                "value": "externalGroup"
+              }
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "externalGroups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {
+            "description": "Forbidden"
+          },
+          "default": {
+            "description": "Default OK response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["metadata", "items"],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "default": {}
+                      }
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "default": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "/searchTeams": {
       "get": {
@@ -1198,16 +1231,6 @@
                   "$ref": "#/components/schemas/ServiceAccountList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccountList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccountList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccountList"
@@ -1263,11 +1286,6 @@
                 "$ref": "#/components/schemas/ServiceAccount"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/ServiceAccount"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/ServiceAccount"
@@ -1281,11 +1299,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccount"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccount"
                 }
@@ -1305,11 +1318,6 @@
                   "$ref": "#/components/schemas/ServiceAccount"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccount"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccount"
@@ -1321,11 +1329,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccount"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccount"
                 }
@@ -1477,11 +1480,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -1519,11 +1517,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccount"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccount"
                 }
@@ -1583,11 +1576,6 @@
                 "$ref": "#/components/schemas/ServiceAccount"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/ServiceAccount"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/ServiceAccount"
@@ -1605,11 +1593,6 @@
                   "$ref": "#/components/schemas/ServiceAccount"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccount"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccount"
@@ -1621,11 +1604,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccount"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccount"
                 }
@@ -1705,11 +1683,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -1721,11 +1694,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -1821,11 +1789,6 @@
                   "$ref": "#/components/schemas/ServiceAccount"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccount"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccount"
@@ -1837,11 +1800,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceAccount"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/ServiceAccount"
                 }
@@ -1935,16 +1893,6 @@
                 }
               },
               "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/SSOSettingList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/SSOSettingList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
                   "$ref": "#/components/schemas/SSOSettingList"
                 }
@@ -2080,11 +2028,6 @@
                   "$ref": "#/components/schemas/SSOSetting"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/SSOSetting"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/SSOSetting"
@@ -2140,11 +2083,6 @@
                 "$ref": "#/components/schemas/SSOSetting"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/SSOSetting"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/SSOSetting"
@@ -2162,11 +2100,6 @@
                   "$ref": "#/components/schemas/SSOSetting"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/SSOSetting"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/SSOSetting"
@@ -2178,11 +2111,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SSOSetting"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/SSOSetting"
                 }
@@ -2262,11 +2190,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -2278,11 +2201,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -2378,11 +2296,6 @@
                   "$ref": "#/components/schemas/SSOSetting"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/SSOSetting"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/SSOSetting"
@@ -2394,11 +2307,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SSOSetting"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/SSOSetting"
                 }
@@ -2551,16 +2459,6 @@
                   "$ref": "#/components/schemas/TeamBindingList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBindingList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBindingList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamBindingList"
@@ -2616,11 +2514,6 @@
                 "$ref": "#/components/schemas/TeamBinding"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/TeamBinding"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/TeamBinding"
@@ -2634,11 +2527,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBinding"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamBinding"
                 }
@@ -2658,11 +2546,6 @@
                   "$ref": "#/components/schemas/TeamBinding"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBinding"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamBinding"
@@ -2674,11 +2557,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBinding"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamBinding"
                 }
@@ -2830,11 +2708,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -2872,11 +2745,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBinding"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamBinding"
                 }
@@ -2936,11 +2804,6 @@
                 "$ref": "#/components/schemas/TeamBinding"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/TeamBinding"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/TeamBinding"
@@ -2958,11 +2821,6 @@
                   "$ref": "#/components/schemas/TeamBinding"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBinding"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamBinding"
@@ -2974,11 +2832,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBinding"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamBinding"
                 }
@@ -3058,11 +2911,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -3074,11 +2922,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -3174,11 +3017,6 @@
                   "$ref": "#/components/schemas/TeamBinding"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBinding"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamBinding"
@@ -3190,11 +3028,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamBinding"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamBinding"
                 }
@@ -3347,16 +3180,6 @@
                   "$ref": "#/components/schemas/TeamList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamList"
@@ -3412,11 +3235,6 @@
                 "$ref": "#/components/schemas/Team"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Team"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Team"
@@ -3430,11 +3248,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Team"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Team"
                 }
@@ -3454,11 +3267,6 @@
                   "$ref": "#/components/schemas/Team"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Team"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Team"
@@ -3470,11 +3278,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Team"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Team"
                 }
@@ -3626,11 +3429,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -3668,11 +3466,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Team"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Team"
                 }
@@ -3732,11 +3525,6 @@
                 "$ref": "#/components/schemas/Team"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Team"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Team"
@@ -3754,11 +3542,6 @@
                   "$ref": "#/components/schemas/Team"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Team"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Team"
@@ -3770,11 +3553,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Team"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Team"
                 }
@@ -3854,11 +3632,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -3870,11 +3643,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -3970,11 +3738,6 @@
                   "$ref": "#/components/schemas/Team"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Team"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Team"
@@ -3986,11 +3749,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Team"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Team"
                 }
@@ -4217,16 +3975,6 @@
                   "$ref": "#/components/schemas/UserList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/UserList"
@@ -4282,11 +4030,6 @@
                 "$ref": "#/components/schemas/User"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/User"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/User"
@@ -4300,11 +4043,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/User"
                 }
@@ -4324,11 +4062,6 @@
                   "$ref": "#/components/schemas/User"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/User"
@@ -4340,11 +4073,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/User"
                 }
@@ -4496,11 +4224,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -4538,11 +4261,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/User"
                 }
@@ -4602,11 +4320,6 @@
                 "$ref": "#/components/schemas/User"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/User"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/User"
@@ -4624,11 +4337,6 @@
                   "$ref": "#/components/schemas/User"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/User"
@@ -4640,11 +4348,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/User"
                 }
@@ -4724,11 +4427,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -4740,11 +4438,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -4840,11 +4533,6 @@
                   "$ref": "#/components/schemas/User"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/User"
@@ -4856,11 +4544,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/User"
                 }

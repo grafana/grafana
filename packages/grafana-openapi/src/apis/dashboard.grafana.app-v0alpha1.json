@@ -19,11 +19,6 @@
                   "$ref": "#/components/schemas/APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/APIResourceList"
@@ -145,16 +140,6 @@
                   "$ref": "#/components/schemas/DashboardList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/DashboardList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/DashboardList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/DashboardList"
@@ -210,11 +195,6 @@
                 "$ref": "#/components/schemas/Dashboard"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Dashboard"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Dashboard"
@@ -228,11 +208,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dashboard"
                 }
@@ -252,11 +227,6 @@
                   "$ref": "#/components/schemas/Dashboard"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Dashboard"
@@ -268,11 +238,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dashboard"
                 }
@@ -424,11 +389,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -466,11 +426,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dashboard"
                 }
@@ -530,11 +485,6 @@
                 "$ref": "#/components/schemas/Dashboard"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/Dashboard"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/Dashboard"
@@ -552,11 +502,6 @@
                   "$ref": "#/components/schemas/Dashboard"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Dashboard"
@@ -568,11 +513,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dashboard"
                 }
@@ -652,11 +592,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -668,11 +603,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -768,11 +698,6 @@
                   "$ref": "#/components/schemas/Dashboard"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Dashboard"
@@ -784,11 +709,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Dashboard"
                 }
@@ -978,16 +898,6 @@
                   "$ref": "#/components/schemas/LibraryPanelList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanelList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanelList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryPanelList"
@@ -1043,11 +953,6 @@
                 "$ref": "#/components/schemas/LibraryPanel"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LibraryPanel"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LibraryPanel"
@@ -1061,11 +966,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanel"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryPanel"
                 }
@@ -1085,11 +985,6 @@
                   "$ref": "#/components/schemas/LibraryPanel"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanel"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryPanel"
@@ -1101,11 +996,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanel"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryPanel"
                 }
@@ -1257,11 +1147,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -1299,11 +1184,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanel"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryPanel"
                 }
@@ -1363,11 +1243,6 @@
                 "$ref": "#/components/schemas/LibraryPanel"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/LibraryPanel"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/LibraryPanel"
@@ -1385,11 +1260,6 @@
                   "$ref": "#/components/schemas/LibraryPanel"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanel"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryPanel"
@@ -1401,11 +1271,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanel"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryPanel"
                 }
@@ -1485,11 +1350,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -1501,11 +1361,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
@@ -1601,11 +1456,6 @@
                   "$ref": "#/components/schemas/LibraryPanel"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanel"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryPanel"
@@ -1617,11 +1467,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LibraryPanel"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryPanel"
                 }
@@ -1734,6 +1579,22 @@
             }
           },
           {
+            "name": "panelType",
+            "in": "query",
+            "description": "find dashboards using panels of a given plugin type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataSourceType",
+            "in": "query",
+            "description": "find dashboards using datasources of a given plugin type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "permission",
             "in": "query",
             "description": "permission needed for the resource (view, edit, admin)",
@@ -1776,6 +1637,14 @@
             "name": "explain",
             "in": "query",
             "description": "add debugging info that may help explain why the result matched",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "panelTitleSearch",
+            "in": "query",
+            "description": "[experimental] optionally include matches from panel titles",
             "schema": {
               "type": "boolean"
             }
@@ -1846,16 +1715,6 @@
                 }
               },
               "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/SnapshotList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/SnapshotList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
                   "$ref": "#/components/schemas/SnapshotList"
                 }
@@ -2064,11 +1923,6 @@
                   "$ref": "#/components/schemas/Snapshot"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Snapshot"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Snapshot"
@@ -2144,11 +1998,6 @@
                   "$ref": "#/components/schemas/Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
@@ -2160,11 +2009,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/Status"
                 }
