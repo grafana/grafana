@@ -201,12 +201,16 @@ func convertLinksToV1(links []dashv2alpha1.DashboardDashboardLink) []map[string]
 //   - AutoGridLayout: Calculates gridPos based on column count and row height
 //   - TabsLayout: Tabs become expanded row panels; content is flattened
 func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.DashboardElement, layout dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) ([]interface{}, error) {
+	// Find the maximum panel ID from all elements to use for row panel IDs.
+	// Row panels in V1 need unique IDs, but V2 layouts don't have row IDs.
+	nextRowID := getMaxPanelIDFromElements(elements) + 1
+
 	if layout.GridLayoutKind != nil {
 		return convertGridLayoutToPanels(elements, layout.GridLayoutKind)
 	}
 
 	if layout.RowsLayoutKind != nil {
-		return convertRowsLayoutToPanels(elements, layout.RowsLayoutKind)
+		return convertRowsLayoutToPanels(elements, layout.RowsLayoutKind, &nextRowID)
 	}
 
 	if layout.AutoGridLayoutKind != nil {
@@ -214,11 +218,32 @@ func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.Dashboa
 	}
 
 	if layout.TabsLayoutKind != nil {
-		return convertTabsLayoutToPanels(elements, layout.TabsLayoutKind)
+		return convertTabsLayoutToPanels(elements, layout.TabsLayoutKind, &nextRowID)
 	}
 
 	// No layout specified, return empty panels
 	return []interface{}{}, nil
+}
+
+// getMaxPanelIDFromElements finds the maximum panel ID across all dashboard elements.
+// This is used to determine the starting ID for row panels during V2 to V1 conversion.
+func getMaxPanelIDFromElements(elements map[string]dashv2alpha1.DashboardElement) int64 {
+	var maxID int64 = 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			id := int64(element.PanelKind.Spec.Id)
+			if id > maxID {
+				maxID = id
+			}
+		}
+		if element.LibraryPanelKind != nil {
+			id := int64(element.LibraryPanelKind.Spec.Id)
+			if id > maxID {
+				maxID = id
+			}
+		}
+	}
+	return maxID
 }
 
 func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, gridLayout *dashv2alpha1.DashboardGridLayoutKind) ([]interface{}, error) {
@@ -243,21 +268,23 @@ func convertGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement
 // convertRowsLayoutToPanels converts a RowsLayout to V1 panels.
 // All nested structures (rows within rows, tabs within rows) are flattened to the root level.
 // Each row becomes a row panel, and nested content is added sequentially after it.
-func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind) ([]interface{}, error) {
-	return convertNestedLayoutToPanels(elements, rowsLayout, nil, 0)
+// nextRowID is a pointer to the next available ID for row panels, incremented as IDs are assigned.
+func convertRowsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind, nextRowID *int64) ([]interface{}, error) {
+	return convertNestedLayoutToPanels(elements, rowsLayout, nil, 0, nextRowID)
 }
 
 // convertNestedLayoutToPanels handles arbitrary nesting of RowsLayout and TabsLayout.
 // It processes each row/tab in order, tracking Y position to ensure panels don't overlap.
 // The function recursively flattens nested structures to produce a flat V1 panel array.
-func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind, yOffset int64) ([]interface{}, error) {
+// nextRowID is a pointer to the next available ID for row panels, incremented as IDs are assigned.
+func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, rowsLayout *dashv2alpha1.DashboardRowsLayoutKind, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind, yOffset int64, nextRowID *int64) ([]interface{}, error) {
 	panels := make([]interface{}, 0)
 	currentY := yOffset
 
 	// Process RowsLayout
 	if rowsLayout != nil {
 		for _, row := range rowsLayout.Spec.Rows {
-			rowPanels, newY, err := processRowItem(elements, &row, currentY)
+			rowPanels, newY, err := processRowItem(elements, &row, currentY, nextRowID)
 			if err != nil {
 				return nil, err
 			}
@@ -269,7 +296,7 @@ func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardEleme
 	// Process TabsLayout (tabs are converted to rows)
 	if tabsLayout != nil {
 		for _, tab := range tabsLayout.Spec.Tabs {
-			tabPanels, newY, err := processTabItem(elements, &tab, currentY)
+			tabPanels, newY, err := processTabItem(elements, &tab, currentY, nextRowID)
 			if err != nil {
 				return nil, err
 			}
@@ -288,7 +315,9 @@ func convertNestedLayoutToPanels(elements map[string]dashv2alpha1.DashboardEleme
 //   - Collapsed row: Panels stored inside row.panels with absolute Y positions
 //   - Expanded row: Panels added to top level after the row panel
 //   - Nested layouts: Parent row is preserved; nested content is flattened after it
-func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dashv2alpha1.DashboardRowsLayoutRowKind, startY int64) ([]interface{}, int64, error) {
+//
+// nextRowID is a pointer to the next available ID for row panels, incremented after each use.
+func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dashv2alpha1.DashboardRowsLayoutRowKind, startY int64, nextRowID *int64) ([]interface{}, int64, error) {
 	panels := make([]interface{}, 0)
 	currentY := startY
 
@@ -300,7 +329,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 		if !isHiddenHeader {
 			rowPanel := map[string]interface{}{
 				"type": "row",
-				"id":   -1,
+				"id":   *nextRowID,
 				"gridPos": map[string]interface{}{
 					"x": 0,
 					"y": currentY,
@@ -308,6 +337,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 					"h": 1,
 				},
 			}
+			*nextRowID++
 			if row.Spec.Title != nil {
 				rowPanel["title"] = *row.Spec.Title
 			}
@@ -318,7 +348,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 		}
 
 		// Then process nested rows
-		nestedPanels, err := convertNestedLayoutToPanels(elements, row.Spec.Layout.RowsLayoutKind, nil, currentY)
+		nestedPanels, err := convertNestedLayoutToPanels(elements, row.Spec.Layout.RowsLayoutKind, nil, currentY, nextRowID)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -333,7 +363,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 		if !isHiddenHeader {
 			rowPanel := map[string]interface{}{
 				"type": "row",
-				"id":   -1,
+				"id":   *nextRowID,
 				"gridPos": map[string]interface{}{
 					"x": 0,
 					"y": currentY,
@@ -341,6 +371,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 					"h": 1,
 				},
 			}
+			*nextRowID++
 			if row.Spec.Title != nil {
 				rowPanel["title"] = *row.Spec.Title
 			}
@@ -351,7 +382,7 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 		}
 
 		// Then process nested tabs
-		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, row.Spec.Layout.TabsLayoutKind, currentY)
+		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, row.Spec.Layout.TabsLayoutKind, currentY, nextRowID)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -366,8 +397,9 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 	if !isHiddenHeader {
 		rowPanel := map[string]interface{}{
 			"type": "row",
-			"id":   -1,
+			"id":   *nextRowID,
 		}
+		*nextRowID++
 
 		if row.Spec.Title != nil {
 			rowPanel["title"] = *row.Spec.Title
@@ -423,17 +455,19 @@ func processRowItem(elements map[string]dashv2alpha1.DashboardElement, row *dash
 // Each tab becomes an expanded row panel (collapsed=false) with an empty panels array.
 // The tab's content is flattened and added to the top level after the row panel.
 // Nested layouts within the tab are recursively processed.
-func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dashv2alpha1.DashboardTabsLayoutTabKind, startY int64) ([]interface{}, int64, error) {
+// nextRowID is a pointer to the next available ID for row panels, incremented after each use.
+func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dashv2alpha1.DashboardTabsLayoutTabKind, startY int64, nextRowID *int64) ([]interface{}, int64, error) {
 	panels := make([]interface{}, 0)
 	currentY := startY
 
 	// Create a row panel for this tab (tabs become expanded rows)
 	rowPanel := map[string]interface{}{
 		"type":      "row",
-		"id":        -1,
+		"id":        *nextRowID,
 		"collapsed": false,
 		"panels":    []interface{}{},
 	}
+	*nextRowID++
 
 	if tab.Spec.Title != nil {
 		rowPanel["title"] = *tab.Spec.Title
@@ -456,7 +490,7 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 	// Handle nested layouts inside the tab
 	if tab.Spec.Layout.RowsLayoutKind != nil {
 		// Nested RowsLayout inside tab
-		nestedPanels, err := convertNestedLayoutToPanels(elements, tab.Spec.Layout.RowsLayoutKind, nil, currentY)
+		nestedPanels, err := convertNestedLayoutToPanels(elements, tab.Spec.Layout.RowsLayoutKind, nil, currentY, nextRowID)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -464,7 +498,7 @@ func processTabItem(elements map[string]dashv2alpha1.DashboardElement, tab *dash
 		currentY = getMaxYFromPanels(nestedPanels, currentY)
 	} else if tab.Spec.Layout.TabsLayoutKind != nil {
 		// Nested TabsLayout inside tab
-		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, tab.Spec.Layout.TabsLayoutKind, currentY)
+		nestedPanels, err := convertNestedLayoutToPanels(elements, nil, tab.Spec.Layout.TabsLayoutKind, currentY, nextRowID)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -973,8 +1007,9 @@ func convertAutoGridLayoutToPanels(elements map[string]dashv2alpha1.DashboardEle
 // V1 has no native tab concept, so tabs are converted to expanded row panels.
 // Each tab becomes a row panel (collapsed=false, panels=[]) with its content
 // flattened to the top level. Tab order is preserved in the output.
-func convertTabsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind) ([]interface{}, error) {
-	return convertNestedLayoutToPanels(elements, nil, tabsLayout, 0)
+// nextRowID is a pointer to the next available ID for row panels, incremented as IDs are assigned.
+func convertTabsLayoutToPanels(elements map[string]dashv2alpha1.DashboardElement, tabsLayout *dashv2alpha1.DashboardTabsLayoutKind, nextRowID *int64) ([]interface{}, error) {
+	return convertNestedLayoutToPanels(elements, nil, tabsLayout, 0, nextRowID)
 }
 
 func convertPanelFromElement(element *dashv2alpha1.DashboardElement, layoutItem *dashv2alpha1.DashboardGridLayoutItemKind) (map[string]interface{}, error) {
