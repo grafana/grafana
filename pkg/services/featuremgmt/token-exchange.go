@@ -28,7 +28,6 @@ type tokenExchangeMiddlewareImpl struct {
 type signerSettings struct {
 	token            string
 	tokenExchangeURL string
-	namespace        string
 }
 
 var _ http.RoundTripper = &tokenExchangeMiddlewareImpl{}
