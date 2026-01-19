@@ -101,7 +101,7 @@ export const usePluginDetailsTabs = (
     }
 
     if (
-      config.featureToggles.panelTitleSearch &&
+      config.featureToggles.unifiedStorageSearchUI &&
       (pluginConfig.meta.type === PluginType.panel || pluginConfig.meta.type === PluginType.datasource)
     ) {
       navModelChildren.push({

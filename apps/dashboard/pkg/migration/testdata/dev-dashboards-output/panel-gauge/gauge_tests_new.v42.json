@@ -2117,7 +2117,7 @@
         }
       ],
       "title": "Numeric, no series",
-      "type": "gauge"
+      "type": "radialbar"
     },
     {
       "datasource": {
@@ -2183,7 +2183,188 @@
         }
       ],
       "title": "Non-numeric",
-      "type": "gauge"
+      "type": "radialbar"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
+      "id": 40,
+      "panels": [],
+      "title": "Data Links",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "links": [
+            {
+              "title": "Grafana",
+              "url": "https://grafana.com"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 60
+      },
+      "id": 38,
+      "maxDataPoints": 20,
+      "options": {
+        "barShape": "rounded",
+        "barWidthFactor": 0.4,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": false
+        },
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "circle",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sparkline": false
+      },
+      "pluginVersion": "13.0.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "max": 100,
+          "min": 1,
+          "noise": 22,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "spread": 22,
+          "startValue": 1
+        }
+      ],
+      "title": "Single link",
+      "type": "radialbar"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "links": [
+            {
+              "title": "Grafana",
+              "url": "https://grafana.com"
+            },
+            {
+              "title": "Grafana - What's new",
+              "url": "https://grafana.com/docs/grafana/latest/whatsnew/"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 60
+      },
+      "id": 39,
+      "maxDataPoints": 20,
+      "options": {
+        "barShape": "rounded",
+        "barWidthFactor": 0.4,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": false
+        },
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "circle",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sparkline": false
+      },
+      "pluginVersion": "13.0.0-pre",
+      "targets": [
+        {
+          "alias": "1",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "max": 100,
+          "min": 1,
+          "noise": 22,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "spread": 22,
+          "startValue": 1
+        }
+      ],
+      "title": "Multiple links",
+      "type": "radialbar"
     }
   ],
   "preload": false,
