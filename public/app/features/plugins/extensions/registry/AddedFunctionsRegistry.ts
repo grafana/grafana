@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash';
 import { ReplaySubject } from 'rxjs';
 
-import { PluginExtensionAddedFunctionConfig } from '@grafana/data';
+import { AppPluginConfig, PluginExtensionAddedFunctionConfig } from '@grafana/data';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
@@ -20,12 +20,13 @@ export type AddedFunctionsRegistryItem<Signature = unknown> = {
 
 export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[], PluginExtensionAddedFunctionConfig> {
   constructor(
+    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedFunctionsRegistryItem[]>>;
       initialState?: RegistryType<AddedFunctionsRegistryItem[]>;
     } = {}
   ) {
-    super(options);
+    super(apps, options);
   }
 
   mapToRegistry(
@@ -49,7 +50,11 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedFunctionMetaInfoMissing(pluginId, config, configLog)) {
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isAddedFunctionMetaInfoMissing(pluginId, config, configLog, this.apps)
+      ) {
         continue;
       }
 

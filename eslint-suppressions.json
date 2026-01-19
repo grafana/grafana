@@ -2962,11 +2962,6 @@
       "count": 30
     }
   },
-  "public/app/features/plugins/extensions/validators.ts": {
-    "no-restricted-syntax": {
-      "count": 4
-    }
-  },
   "public/app/features/plugins/sandbox/distortions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

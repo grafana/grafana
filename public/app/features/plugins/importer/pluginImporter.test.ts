@@ -10,12 +10,6 @@ import {
   PluginType,
 } from '@grafana/data';
 
-import {
-  addedComponentsRegistry,
-  addedFunctionsRegistry,
-  addedLinksRegistry,
-  exposedComponentsRegistry,
-} from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';
 
 import * as importPluginModule from './importPluginModule';

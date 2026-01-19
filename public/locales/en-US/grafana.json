@@ -11506,6 +11506,16 @@
         "deprecated": "Deprecated"
       }
     },
+    "get-plugin-extension-registries": {
+      "description": {
+        "add-to-dashboard-form": "Add to dashboard form",
+        "central-alert-history-scene": "Central alert history scene"
+      },
+      "title": {
+        "add-to-dashboard-form": "Add to dashboard form",
+        "central-alert-history-scene": "Central alert history scene"
+      }
+    },
     "get-started-with-app": {
       "disable": "Disable",
       "enable": "Enable"

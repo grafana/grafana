@@ -1,15 +1,12 @@
 import { PropsWithChildren, createContext, useContext } from 'react';
+import { useAsync } from 'react-use';
 
 import { AddedComponentsRegistry } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from 'app/features/plugins/extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from 'app/features/plugins/extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from 'app/features/plugins/extensions/registry/ExposedComponentsRegistry';
 
-import { PluginExtensionRegistries } from './registry/types';
-
-export interface ExtensionRegistriesContextType {
-  registries: PluginExtensionRegistries;
-}
+import { getPluginExtensionRegistries } from './registry/setup';
 
 // Using a different context for each registry to avoid unnecessary re-renders
 export const AddedLinksRegistryContext = createContext<AddedLinksRegistry | undefined>(undefined);
@@ -49,10 +46,13 @@ export function useExposedComponentsRegistry(): ExposedComponentsRegistry {
   return context;
 }
 
-export const ExtensionRegistriesProvider = ({
-  registries,
-  children,
-}: PropsWithChildren<ExtensionRegistriesContextType>) => {
+export const ExtensionRegistriesProvider = ({ children }: PropsWithChildren) => {
+  const { loading, value: registries } = useAsync(() => getPluginExtensionRegistries());
+
+  if (loading || !registries) {
+    return null;
+  }
+
   return (
     <AddedLinksRegistryContext.Provider value={registries.addedLinksRegistry}>
       <AddedComponentsRegistryContext.Provider value={registries.addedComponentsRegistry}>

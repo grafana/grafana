@@ -1,6 +1,6 @@
 import { ReplaySubject } from 'rxjs';
 
-import { PluginExtensionExposedComponentConfig } from '@grafana/data';
+import { AppPluginConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
@@ -22,12 +22,13 @@ export class ExposedComponentsRegistry extends Registry<
   PluginExtensionExposedComponentConfig
 > {
   constructor(
+    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<ExposedComponentRegistryItem>>;
       initialState?: RegistryType<ExposedComponentRegistryItem>;
     } = {}
   ) {
-    super(options);
+    super(apps, options);
   }
 
   mapToRegistry(
@@ -65,7 +66,7 @@ export class ExposedComponentsRegistry extends Registry<
       if (
         pluginId !== 'grafana' &&
         isGrafanaDevMode() &&
-        isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog)
+        isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog, this.apps)
       ) {
         continue;
       }

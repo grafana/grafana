@@ -18,7 +18,7 @@ import { RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
-import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
 import { RouterWrapper } from './routes/RoutesWrapper';
 
@@ -126,7 +126,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                 >
                   <MaybeTimeRangeProvider>
                     <ScopesContextProvider>
-                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                      <ExtensionRegistriesProvider>
                         <ExtensionSidebarContextProvider>
                           <UNSAFE_PortalProvider getContainer={getPortalContainer}>
                             <GlobalStyles />

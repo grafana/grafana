@@ -1,6 +1,6 @@
 import { ReplaySubject } from 'rxjs';
 
-import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
+import { AppPluginConfig, IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/internal';
 
 import * as errors from '../errors';
@@ -26,12 +26,13 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
 
 export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], PluginExtensionAddedLinkConfig> {
   constructor(
+    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedLinkRegistryItem[]>>;
       initialState?: RegistryType<AddedLinkRegistryItem[]>;
     } = {}
   ) {
-    super(options);
+    super(apps, options);
   }
 
   mapToRegistry(
@@ -66,7 +67,11 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config, configLog)) {
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isAddedLinkMetaInfoMissing(pluginId, config, configLog, this.apps)
+      ) {
         continue;
       }
 
