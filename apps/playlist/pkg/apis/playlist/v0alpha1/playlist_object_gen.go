@@ -25,6 +25,13 @@ type Playlist struct {
 	Status PlaylistStatus `json:"status" yaml:"status"`
 }
 
+func NewPlaylist() *Playlist {
+	return &Playlist{
+		Spec:   *NewPlaylistSpec(),
+		Status: *NewPlaylistStatus(),
+	}
+}
+
 func (o *Playlist) GetSpec() any {
 	return o.Spec
 }

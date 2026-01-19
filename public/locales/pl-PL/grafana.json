@@ -813,7 +813,8 @@
       "label-integration": "Integracja",
       "label-notification-settings": "Ustawienia powiadomień",
       "label-section": "Ustawienia opcjonalne: {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "OF",
@@ -2192,11 +2193,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Ten zasób został skonfigurowany za pośrednictwem {{provenance}} i nie można go edytować z poziomu interfejsu użytkownika",
       "badge-tooltip-standard": "Ten zasób został skonfigurowany i nie można go edytować z poziomu interfejsu użytkownika",
+      "body-imported": "",
       "body-provisioned": "Zasób {{resource}} został aprowizowany, co oznacza, że został utworzony przez konfigurację. Skontaktuj się z administratorem serwera, aby zaktualizować zasób {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Tego zasobu {{resource}} nie można edytować z poziomu interfejsu użytkownika"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Po aprowizacji"
       }
     },
@@ -2695,11 +2699,13 @@
     "rules-group": {
       "deleting": "Usuwam",
       "text-federated": "Federacja",
-      "text-provisioned": "Po aprowizacji"
+      "text-provisioned": "Po aprowizacji",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3796,7 +3802,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_few": "",
       "all-failed_many": "",
@@ -5378,6 +5383,7 @@
       },
       "header-hidden-tooltip": "Nagłówek wiersza widoczny tylko w trybie edycji",
       "name": "Wiersze",
+      "new-row-title": "",
       "row": {
         "collapse": "Zwiń wiersz",
         "expand": "Rozwiń wiersz",
@@ -5483,11 +5489,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5627,14 +5629,6 @@
           "arrow": "Udostępnij",
           "title": "Udostępnij",
           "tooltip": "Kopiuj link"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Odrzuć",
-            "text": "Masz niezapisane zmiany dotyczące tego pulpitu. Musisz je zapisać, zanim będzie można udostępnić pulpit.",
-            "title": "Zapisać zmiany dotyczące pulpitu?",
-            "yesText": "Zapisz"
-          }
         },
         "unlink-library-panel": "Rozłącz panel biblioteki"
       },
@@ -6424,12 +6418,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasyczny",
         "json": "JSON",
         "v1-resource": "Zasób V1",
         "v2-resource": "Zasób V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Czy na pewno chcesz przywrócić pulpit w wersji {{version}}? Wszystkie niezapisane zmiany zostaną utracone.",
@@ -6538,6 +6535,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Przełącz menu udostępniania"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -7028,6 +7031,7 @@
         "drone-datasource": "Źródło danych Drone",
         "git-lab-integration-and-datasource": "Integracja i źródło danych GitLab",
         "honeycomb-integration-and-datasource": "Integracja i źródło danych Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integracja i źródło danych Jira",
         "logic-monitor-devices-datasource": "Źródło danych urządzeń LogicMonitor",
         "mongo-db-integration-and-data-source": "Integracja i źródło danych MongoDB",
@@ -7890,7 +7894,6 @@
       "export-externally-label": "Eksportuj pulpit, aby użyć go w innej instancji",
       "export-format": "Format",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Usuń szczegóły wdrożenia",
       "info-text": "Skopiuj lub pobierz plik zawierający definicję pulpitu",
       "title": "Eksportuj pulpit"
     },
@@ -8037,6 +8040,7 @@
     "name-neutral": "Neutralne",
     "name-show-threshold-labels": "Pokaż etykiety progów",
     "name-show-threshold-markers": "Pokaż znaczniki progów",
+    "neutral": "",
     "placeholder-neutral": "automatycznie",
     "suggestions": {
       "arc": "",
@@ -12672,6 +12676,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12685,6 +12694,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12846,14 +12856,6 @@
       "starred": "Oznaczone gwiazdką",
       "view-as-folders": "Wyświetl według folderów",
       "view-as-list": "Wyświetl jako listę"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetycznie (A–Z)",
-          "alphabetically-za": "Alfabetycznie (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importuj",

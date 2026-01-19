@@ -1,5 +1,6 @@
 import { render, act, screen, waitFor } from 'test/test-utils';
 
+import { store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setBackendSrv, setEchoSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -7,7 +8,6 @@ import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
-import store from 'app/core/store';
 
 import { AddToDashboardForm, Props } from './AddToDashboardForm';
 

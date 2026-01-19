@@ -1,5 +1,6 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
+import { setVisualization } from '../../../utils/panel-helpers';
 import { formatExpectError } from '../errors';
 import { successfulDataQuery } from '../mocks/queries';
 import { scenarios } from '../mocks/resources';
@@ -56,7 +57,7 @@ test.describe(
       test('mocked query data response', async ({ panelEditPage, page }) => {
         await panelEditPage.mockQueryDataResponse(successfulDataQuery, 200);
         await panelEditPage.datasource.set('gdev-testdata');
-        await panelEditPage.setVisualization(TABLE_VIZ_NAME);
+        await setVisualization(panelEditPage, TABLE_VIZ_NAME);
         await panelEditPage.refreshPanel();
         await expect(
           panelEditPage.panel.getErrorIcon(),
@@ -75,7 +76,7 @@ test.describe(
         selectors,
         page,
       }) => {
-        await panelEditPage.setVisualization(TABLE_VIZ_NAME);
+        await setVisualization(panelEditPage, TABLE_VIZ_NAME);
         await expect(
           panelEditPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header),
           formatExpectError('Expected panel visualization to be set to table')
@@ -93,7 +94,7 @@ test.describe(
       });
 
       test('Select time zone in timezone picker', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const axisOptions = await panelEditPage.getCustomOptions('Axis');
         const timeZonePicker = axisOptions.getSelect('Time zone');
 
@@ -102,7 +103,7 @@ test.describe(
       });
 
       test('select unit in unit picker', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const standardOptions = panelEditPage.getStandardOptions();
         const unitPicker = standardOptions.getUnitPicker('Unit');
 
@@ -112,7 +113,7 @@ test.describe(
       });
 
       test('enter value in number input', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const axisOptions = panelEditPage.getCustomOptions('Axis');
         const lineWith = axisOptions.getNumberInput('Soft min');
 
@@ -122,7 +123,7 @@ test.describe(
       });
 
       test('enter value in slider', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const graphOptions = panelEditPage.getCustomOptions('Graph styles');
         const lineWidth = graphOptions.getSliderInput('Line width');
 
@@ -132,7 +133,7 @@ test.describe(
       });
 
       test('select value in single value select', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const standardOptions = panelEditPage.getStandardOptions();
         const colorSchemeSelect = standardOptions.getSelect('Color scheme');
 
@@ -141,7 +142,7 @@ test.describe(
       });
 
       test('clear input', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const panelOptions = panelEditPage.getPanelOptions();
         const title = panelOptions.getTextInput('Title');
 
@@ -151,7 +152,7 @@ test.describe(
       });
 
       test('enter value in input', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const panelOptions = panelEditPage.getPanelOptions();
         const description = panelOptions.getTextInput('Description');
 
@@ -161,7 +162,7 @@ test.describe(
       });
 
       test('unchecking switch', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const axisOptions = panelEditPage.getCustomOptions('Axis');
         const showBorder = axisOptions.getSwitch('Show border');
 
@@ -174,7 +175,7 @@ test.describe(
       });
 
       test('checking switch', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const axisOptions = panelEditPage.getCustomOptions('Axis');
         const showBorder = axisOptions.getSwitch('Show border');
 
@@ -184,7 +185,7 @@ test.describe(
       });
 
       test('re-selecting value in radio button group', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const axisOptions = panelEditPage.getCustomOptions('Axis');
         const placement = axisOptions.getRadioGroup('Placement');
 
@@ -196,7 +197,7 @@ test.describe(
       });
 
       test('selecting value in radio button group', async ({ panelEditPage }) => {
-        await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+        await setVisualization(panelEditPage, TIME_SERIES_VIZ_NAME);
         const axisOptions = panelEditPage.getCustomOptions('Axis');
         const placement = axisOptions.getRadioGroup('Placement');
 
