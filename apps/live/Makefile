@@ -7,7 +7,8 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 		--gogenpath=./pkg/apis \
 		--grouping=group \
 		--defencoding=none \
-		--genoperatorstate=false \
-		--noschemasinmanifest
+		--genoperatorstate=false
 
-	
+.PHONY: test
+test: generate
+	go test ./...

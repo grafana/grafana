@@ -6,6 +6,7 @@
 package manifestdata
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -16,6 +17,12 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1alpha1 "github.com/grafana/grafana/apps/live/pkg/apis/live/v1alpha1"
+)
+
+var (
+	rawSchemaChannelv1alpha1     = []byte(`{"Channel":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"data":{"additionalProperties":{"additionalProperties":{},"type":"object"},"description":"DataFrame schema","type":"object"},"minute_rate":{"description":"The message count in the last min","type":"integer"},"path":{"description":"The Channel path","type":"string"}},"required":["path","minute_rate","data"],"type":"object"}}`)
+	versionSchemaChannelv1alpha1 app.VersionSchema
+	_                            = json.Unmarshal(rawSchemaChannelv1alpha1, &versionSchemaChannelv1alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -32,6 +39,7 @@ var appManifestData = app.ManifestData{
 					Plural:     "Channels",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Schema:     &versionSchemaChannelv1alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
