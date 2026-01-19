@@ -730,7 +730,7 @@ policies:
   # <int> organization ID, default = 1
   - orgId: 1
     # <string> name of the contact point that should be used for this route
-    receiver: grafana-default-email
+    receiver: grafana-default
     # <list> The labels by which incoming alerts are grouped together. For example,
     #        multiple alerts coming in for cluster=A and alertname=LatencyHigh would
     #        be batched into a single group.

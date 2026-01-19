@@ -204,11 +204,6 @@ export interface FeatureToggles {
   */
   queryCacheRequestDeduplication?: boolean;
   /**
-  * Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
-  * @default false
-  */
-  permissionsFilterRemoveSubquery?: boolean;
-  /**
   * Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
   * @default false
   */
@@ -1425,4 +1420,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSyncDispatchTimer?: boolean;
+  /**
+  * Enables the Query with Assistant button in the query editor
+  * @default false
+  */
+  queryWithAssistant?: boolean;
 }

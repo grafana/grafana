@@ -2666,7 +2666,10 @@
     "rules-group": {
       "deleting": "Menghapus",
       "text-federated": "Federasi",
-      "text-provisioned": "Disediakan"
+      "text-provisioned": "Disediakan",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5426,11 +5429,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5569,6 @@
           "arrow": "Bagikan",
           "title": "Bagikan",
           "tooltip": "Salin tautan"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Buang",
-            "text": "Anda memiliki perubahan yang belum disimpan ke dasbor ini. Anda harus menyimpannya sebelum dapat membagikannya.",
-            "title": "Simpan perubahan ke dasbor?",
-            "yesText": "Simpan"
-          }
         },
         "unlink-library-panel": "Putus tautan panel pustaka"
       },
@@ -6475,6 +6466,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alihkan menu bagikan"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
