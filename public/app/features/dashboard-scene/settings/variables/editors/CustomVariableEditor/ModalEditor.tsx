@@ -41,7 +41,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom Variable')}
+      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
