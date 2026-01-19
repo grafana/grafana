@@ -11,7 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// AdmissionValidator handles validation for Connection resources during admission
+// AdmissionValidator handles validation for Connection resources during admission.
+//
+// Validation during admission is limited to structural checks that do not require
+// decrypting secrets or calling external services (e.g., GitHub API). This ensures
+// fast, synchronous validation without side effects.
+//
+// For runtime validation that requires secrets or external service checks, use the
+// Test() method on the Connection interface instead.
 type AdmissionValidator struct {
 	factory Factory
 }
@@ -54,9 +61,6 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 			provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
 			c.GetName(), list)
 	}
-
-	// Note: Runtime validation (e.g., checking GitHub API) is skipped during admission
-	// to avoid decrypting secrets. Runtime validation can be done via Test() method if needed.
 
 	return nil
 }

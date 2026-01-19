@@ -151,7 +151,15 @@ func FromFieldError(err *field.Error) *provisioning.TestResults {
 	}
 }
 
-// AdmissionValidator handles validation for Repository resources during admission
+// AdmissionValidator handles validation for Repository resources during admission.
+//
+// Validation during admission is limited to structural checks that do not require
+// decrypting secrets or calling external services (e.g., Git hosting APIs). This ensures
+// fast, synchronous validation without side effects.
+//
+// For runtime validation that requires secrets or external service checks, use the
+// Test() method on the Repository interface instead.
+//
 // Note: VerifyAgainstExistingRepositories type is defined in tester.go
 type AdmissionValidator struct {
 	validator                        RepositoryValidator
