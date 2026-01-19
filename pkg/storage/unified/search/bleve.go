@@ -1568,9 +1568,13 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 		useExactTermQuery = true
 	}
 	switch selection.Operator(req.Operator) {
-	case selection.Equals:
+	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
+		}
+
+		if (req.Key == "login" || req.Key == "email") && len(req.Values) == 1 {
+			return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
 		}
 
 		if len(req.Values) == 1 && useExactTermQuery {
@@ -1633,7 +1637,6 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 		return boolQuery, nil
 
 	// will fall through to the BadRequestError
-	case selection.DoubleEquals:
 	case selection.NotEquals:
 	case selection.DoesNotExist:
 	case selection.GreaterThan:

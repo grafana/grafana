@@ -2274,7 +2274,6 @@ func TestIntegrationFolderWithOwner(t *testing.T) {
 	require.Len(t, owners, 1, "folderB should have 1 owner reference")
 	require.Equal(t, "engineering", owners[0].Name)
 	require.Equal(t, "Team", owners[0].Kind)
-	t.Logf("folderB owner references: %+v", owners)
 
 	// Find results with a specific owner (with trimming suffix)
 	sr := callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/engineering ")

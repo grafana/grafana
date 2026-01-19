@@ -11,7 +11,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/storage"
 
@@ -121,22 +120,6 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 	if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
 		requirements := opts.Predicate.Field.Requirements()
 		for _, r := range requirements {
-			// NOTE: requires: scheme.AddFieldLabelConversionFunc(
-			if r.Field == "search.ownerReference" {
-				if len(requirements) > 1 {
-					return nil, predicate, apierrors.NewBadRequest("search.ownerReference only supports one requirement")
-				}
-				req.Options.Fields = []*resourcepb.Requirement{{
-					Key:      r.Field,
-					Operator: string(r.Operator),
-					Values:   []string{r.Value},
-				}}
-
-				// with only one requirement, we do not need to transform the predicate to exclude this pseudo field
-				predicate.Field = fields.Everything()
-				break
-			}
-
 			requirement := &resourcepb.Requirement{Key: r.Field, Operator: string(r.Operator)}
 			if r.Value != "" {
 				requirement.Values = append(requirement.Values, r.Value)

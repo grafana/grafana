@@ -16,41 +16,10 @@ func (s *server) tryFieldSelector(ctx context.Context, req *resourcepb.ListReque
 	for _, v := range req.Options.Fields {
 		if v.Key == "metadata.name" && v.Operator == `=` {
 			names = v.Values
+			continue
 		}
 
-		// Search by owner reference
-		if v.Key == "search.ownerReference" {
-			if len(req.Options.Fields) > 1 {
-				return &resourcepb.ListResponse{
-					Error: NewBadRequestError("multiple fields found"),
-				}
-			}
-
-			results, err := s.Search(ctx, &resourcepb.ResourceSearchRequest{
-				Fields: []string{}, // no extra fields
-				Options: &resourcepb.ListOptions{
-					Key: req.Options.Key,
-					Fields: []*resourcepb.Requirement{{
-						Key:      SEARCH_FIELD_OWNER_REFERENCES,
-						Operator: v.Operator,
-						Values:   v.Values,
-					}},
-				},
-			})
-			if err != nil {
-				return &resourcepb.ListResponse{
-					Error: AsErrorResult(err),
-				}
-			}
-			if len(results.Results.Rows) < 1 { // nothing found
-				return &resourcepb.ListResponse{
-					ResourceVersion: 1, // TODO, search result should include when it was indexed
-				}
-			}
-			for _, res := range results.Results.Rows {
-				names = append(names, res.Key.Name)
-			}
-		}
+		// TODO: support other field selectors
 	}
 
 	// The required names
@@ -73,6 +42,9 @@ func (s *server) tryFieldSelector(ctx context.Context, req *resourcepb.ListReque
 					Value:           found.Value,
 					ResourceVersion: found.ResourceVersion,
 				})
+				if found.ResourceVersion > rsp.ResourceVersion {
+					rsp.ResourceVersion = found.ResourceVersion
+				}
 			}
 		}
 		return rsp

@@ -129,23 +129,6 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		Version: runtime.APIVersionInternal,
 	})
 
-	// Allow searching by owner reference
-	gvk := gv.WithKind("Folder")
-	err := scheme.AddFieldLabelConversionFunc(
-		gvk,
-		func(label, value string) (string, string, error) {
-			if label == "metadata.name" || label == "metadata.namespace" {
-				return label, value, nil
-			}
-			if label == "search.ownerReference" { // TODO: this should become more general
-				return label, value, nil
-			}
-			return "", "", fmt.Errorf("field label not supported for %s: %s", gvk, label)
-		})
-	if err != nil {
-		return err
-	}
-
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {
 	//   return err
