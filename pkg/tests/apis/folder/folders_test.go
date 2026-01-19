@@ -2215,9 +2215,6 @@ func TestIntegrationFolderSearchWithOwner(t *testing.T) {
 				DualWriterMode: grafanarest.Mode5,
 			},
 		},
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagUnifiedStorageSearch,
-		},
 	})
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
