@@ -1420,4 +1420,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSyncDispatchTimer?: boolean;
+  /**
+  * Enables the Query with Assistant button in the query editor
+  * @default false
+  */
+  queryWithAssistant?: boolean;
 }
