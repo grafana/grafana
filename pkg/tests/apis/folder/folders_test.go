@@ -2206,7 +2206,7 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 }
 
 // Test finding folders with an owner
-func TestIntegrationFolderWithOwner(t *testing.T) {
+func TestIntegrationFolderSearchWithOwner(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous:     true,
 		AppModeProduction:    true,
@@ -2255,6 +2255,11 @@ func TestIntegrationFolderWithOwner(t *testing.T) {
 		Kind:       "Team",
 		Name:       "engineering",
 		UID:        "123456", // required by k8s
+	}, {
+		APIVersion: "iam.grafana.app/v0alpha1",
+		Kind:       "Team",
+		Name:       "testing",
+		UID:        "123457", // required by k8s
 	}})
 	out, err = client.Resource.Create(context.Background(), folder, metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -2271,7 +2276,7 @@ func TestIntegrationFolderWithOwner(t *testing.T) {
 	folderB, err := client.Resource.Get(context.Background(), "folderB", metav1.GetOptions{})
 	require.NoError(t, err)
 	owners := folderB.GetOwnerReferences()
-	require.Len(t, owners, 1, "folderB should have 1 owner reference")
+	require.Len(t, owners, 2, "folderB should have 2 owner references")
 	require.Equal(t, "engineering", owners[0].Name)
 	require.Equal(t, "Team", owners[0].Kind)
 
@@ -2284,8 +2289,8 @@ func TestIntegrationFolderWithOwner(t *testing.T) {
 	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing")
 	require.Len(t, sr.Hits, 0)
 
-	// Find results using OR (search for owners)
-	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing&ownerReference=iam.grafana.app/Team/engineering")
+	// Find results using OR conditions and search by second owner reference
+	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing&ownerReference=iam.grafana.app/Team/testing")
 	require.Len(t, sr.Hits, 1)
 	require.Equal(t, "folderB", sr.Hits[0].Name)
 }
