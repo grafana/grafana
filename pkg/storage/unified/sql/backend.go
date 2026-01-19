@@ -661,14 +661,12 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 		}
 	}
 
-	// If latest RV is the same as request RV, there's nothing to report, and we can avoid running another query.
-	if latestRv == sinceRv {
+	// If latest RV equal or older than request RV, there's nothing to report, and we can avoid running another query.
+	if latestRv <= sinceRv {
 		return latestRv, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
 	}
 
-	// since results are sorted by name ASC and rv DESC, we can get away with tracking the last seen
-	lastSeen := ""
-
+	seen := make(map[string]struct{})
 	seq := func(yield func(*resource.ModifiedResource, error) bool) {
 		query := sqlResourceListModifiedSinceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -702,12 +700,11 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 			}
 
 			// Deduplicate by name (namespace, group, and resource are always the same in the result set)
-			if mr.Key.Name == lastSeen {
+			if _, ok := seen[mr.Key.Name]; ok {
 				continue
 			}
 
-			lastSeen = mr.Key.Name
-
+			seen[mr.Key.Name] = struct{}{}
 			if !yield(mr, nil) {
 				return
 			}

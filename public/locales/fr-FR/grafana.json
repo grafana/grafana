@@ -807,7 +807,8 @@
       "label-integration": "Intégration",
       "label-notification-settings": "Paramètres de notification",
       "label-section": "Paramètres facultatifs : {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DE",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Cette ressource a été mise en service via {{provenance}} et ne peut pas être modifiée via l'interface utilisateur",
       "badge-tooltip-standard": "Cette ressource a été mise en service et ne peut pas être modifiée via l'interface utilisateur",
+      "body-imported": "",
       "body-provisioned": "Cette {{resource}} a été mise en service, cela signifie qu’elle a été créée par configuration. Veuillez contacter votre administrateur de serveur pour mettre à jour cette {{resource}}.",
+      "title-imported": "",
       "title-provisioned": "Cette {{resource}} ne peut pas être modifiée via l’interface utilisateur"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Mis en service"
       }
     },
@@ -2673,11 +2677,13 @@
     "rules-group": {
       "deleting": "Suppression",
       "text-federated": "Fédéré",
-      "text-provisioned": "Mis en service"
+      "text-provisioned": "Mis en service",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3764,7 +3770,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5338,6 +5343,7 @@
       },
       "header-hidden-tooltip": "En-tête de ligne visible uniquement en mode édition",
       "name": "Lignes",
+      "new-row-title": "",
       "row": {
         "collapse": "Réduire la ligne",
         "expand": "Développer la ligne",
@@ -5443,11 +5449,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5587,14 +5589,6 @@
           "arrow": "Partager",
           "title": "Partager",
           "tooltip": "Copier le lien"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Abandonner",
-            "text": "Vous avez des modifications non enregistrées dans ce tableau de bord. Vous devez les enregistrer avant de pouvoir les partager.",
-            "title": "Enregistrer les modifications dans le tableau de bord ?",
-            "yesText": "Enregistrer"
-          }
         },
         "unlink-library-panel": "Dissocier le panneau Bibliothèque"
       },
@@ -6380,12 +6374,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Classique",
         "json": "JSON",
         "v1-resource": "Ressource V1",
         "v2-resource": "Ressource V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Voulez-vous vraiment restaurer le tableau de bord dans sa version {{version}} ? Toutes les modifications non enregistrées seront perdues.",
@@ -6492,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Basculer le menu de partage"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6980,6 +6983,7 @@
         "drone-datasource": "Source de données Drone",
         "git-lab-integration-and-datasource": "Intégration et source de données GitLab",
         "honeycomb-integration-and-datasource": "Intégration et source de données Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Intégration et source de données Jira",
         "logic-monitor-devices-datasource": "Source de données LogicMonitor Devices",
         "mongo-db-integration-and-data-source": "Intégration et source de données MongoDB",
@@ -7838,7 +7842,6 @@
       "export-externally-label": "Exporter le tableau de bord pour l'utiliser dans une autre instance",
       "export-format": "Format",
       "export-mode": "Modèle",
-      "export-remove-ds-refs": "Supprimer les détails du déploiement",
       "info-text": "Copier ou télécharger un fichier contenant la définition de votre tableau de bord",
       "title": "Exporter le tableau de bord"
     },
@@ -7985,6 +7988,7 @@
     "name-neutral": "Neutre",
     "name-show-threshold-labels": "Afficher les étiquettes de seuil",
     "name-show-threshold-markers": "Afficher les marqueurs de seuil",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -12566,6 +12570,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12579,6 +12588,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12736,14 +12746,6 @@
       "starred": "Favoris",
       "view-as-folders": "Voir par dossier",
       "view-as-list": "Voir en tant que liste"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Par ordre alphabétique (A-Z)",
-          "alphabetically-za": "Par ordre alphabétique (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importer",

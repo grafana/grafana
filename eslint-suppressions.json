@@ -377,11 +377,6 @@
       "count": 1
     }
   },
-  "packages/grafana-prometheus/src/configuration/PromSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 25
-    }
-  },
   "packages/grafana-prometheus/src/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1202,11 +1197,6 @@
   },
   "public/app/core/specs/backend_srv.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/core/store.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -3115,11 +3105,6 @@
   "public/app/features/search/page/components/columns.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/search/service/bluge.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
     }
   },
   "public/app/features/search/state/SearchStateManager.ts": {

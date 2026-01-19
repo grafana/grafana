@@ -55,10 +55,6 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
-	// FlagIndividualCookiePreferences
-	// Support overriding cookie preferences per user
-	FlagIndividualCookiePreferences = "individualCookiePreferences"
-
 	// FlagKubernetesStars
 	// Routes stars requests from /api to the /apis endpoint
 	FlagKubernetesStars = "kubernetesStars"
@@ -122,10 +118,6 @@ const (
 	// FlagQueryCacheRequestDeduplication
 	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
 	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
-
-	// FlagPermissionsFilterRemoveSubquery
-	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
-	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
 
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
@@ -543,10 +535,6 @@ const (
 	// Enable folder&#39;s api server counts
 	FlagK8SFolderCounts = "k8SFolderCounts"
 
-	// FlagK8SFolderMove
-	// Enable folder&#39;s api server move
-	FlagK8SFolderMove = "k8SFolderMove"
-
 	// FlagImprovedExternalSessionHandlingSAML
 	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
 	FlagImprovedExternalSessionHandlingSAML = "improvedExternalSessionHandlingSAML"
@@ -645,6 +633,10 @@ const (
 	// FlagKubernetesAuthzCoreRolesApi
 	// Registers AuthZ Core Roles /apis endpoint
 	FlagKubernetesAuthzCoreRolesApi = "kubernetesAuthzCoreRolesApi"
+
+	// FlagKubernetesAuthzGlobalRolesApi
+	// Registers AuthZ Global Roles /apis endpoint
+	FlagKubernetesAuthzGlobalRolesApi = "kubernetesAuthzGlobalRolesApi"
 
 	// FlagKubernetesAuthzRolesApi
 	// Registers AuthZ Roles /apis endpoint
