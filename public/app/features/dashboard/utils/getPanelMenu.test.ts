@@ -313,7 +313,7 @@ describe('getPanelMenu()', () => {
           title: 'Root Action',
           description: 'Action at root level',
           path: '/path',
-          category: 'root',
+          category: '${root}',
         },
       ];
       const menuItems = getPanelMenu(dashboard, panel, extensions);
@@ -342,7 +342,7 @@ describe('getPanelMenu()', () => {
           type: PluginExtensionTypes.link,
           title: 'Root Action',
           path: '/path-root',
-          category: 'root',
+          category: '${root}',
           description: 'desc',
         },
         {

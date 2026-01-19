@@ -412,7 +412,7 @@ export function truncateTitle(title: string, length: number): string {
   return `${part.trimEnd()}...`;
 }
 
-export const PLUGINS_EXTENSIONS_ROOT_CATEGORY = 'root';
+export const PLUGINS_EXTENSIONS_ROOT_CATEGORY = '${root}';
 
 export function isRootPluginExtension(extension: PluginExtensionLink): boolean {
   return extension.category === PLUGINS_EXTENSIONS_ROOT_CATEGORY;
