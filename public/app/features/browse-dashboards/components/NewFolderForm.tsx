@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Input, Field, Stack, Checkbox, Text, Space } from '@grafana/ui';
+import { Button, Input, Field, Stack, Checkbox, Text, Space, Icon, Tooltip } from '@grafana/ui';
 import { FolderDTO } from 'app/types/folders';
 
 import { TeamSelector } from '../../../core/components/OwnerReferences/ManageOwnerReferences';
@@ -64,10 +64,22 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
         />
       </Field>
       <Space v={2} />
-      <Checkbox
-        label={t('browse-dashboards.action.new-folder-as-team-folder-checkbox', 'Create as a team folder')}
-        onChange={handleTeamFolderToggle}
-      />
+      <Stack gap={1}>
+        <Checkbox
+          label={t('browse-dashboards.action.new-folder-as-team-folder-checkbox', 'Create as a team folder')}
+          onChange={handleTeamFolderToggle}
+        />
+        <Tooltip
+          content={t(
+            'browse-dashboards.action.new-folder-as-team-folder-checkbox-tooltip',
+            "Team Folders are folders that inherit your team's default sharing and permission settings, making it easier to collaborate."
+          )}
+          placement="top"
+        >
+          <Icon name="question-circle" />
+        </Tooltip>
+      </Stack>
+      <Space v={2} />
       <Text element="p">
         <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team:</Trans>
       </Text>
