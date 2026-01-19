@@ -2666,7 +2666,10 @@
     "rules-group": {
       "deleting": "正在刪除",
       "text-federated": "聯合",
-      "text-provisioned": "已佈建"
+      "text-provisioned": "已佈建",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5426,11 +5429,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5569,6 @@
           "arrow": "分享",
           "title": "分享",
           "tooltip": "複製網址"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "捨棄",
-            "text": "此儀表板有未儲存的變更。您需要先行儲存，然後才能共用。",
-            "title": "要將變更儲存至儀表板嗎？",
-            "yesText": "儲存"
-          }
         },
         "unlink-library-panel": "取消連結資料庫面板"
       },
@@ -6475,6 +6466,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "切換分享選單"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {

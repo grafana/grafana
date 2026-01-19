@@ -36,6 +36,9 @@ var WireSetExts = wire.NewSet(
 	externalgroupmapping.ProvideNoopTeamGroupsREST,
 	wire.Bind(new(externalgroupmapping.TeamGroupsHandler), new(*externalgroupmapping.NoopTeamGroupsREST)),
 
+	externalgroupmapping.ProvideNoopSearchREST,
+	wire.Bind(new(externalgroupmapping.SearchHandler), new(*externalgroupmapping.NoopSearchREST)),
+
 	// Auditing Options
 	auditing.ProvideNoopBackend,
 	auditing.ProvideNoopPolicyRuleProvider,

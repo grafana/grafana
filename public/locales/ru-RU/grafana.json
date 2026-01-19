@@ -2699,7 +2699,10 @@
     "rules-group": {
       "deleting": "Удаляется",
       "text-federated": "Федеративная",
-      "text-provisioned": "Подготовлено"
+      "text-provisioned": "Подготовлено",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5486,11 +5489,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5630,14 +5629,6 @@
           "arrow": "Общий доступ",
           "title": "Общий доступ",
           "tooltip": "Копировать ссылку"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Отменить",
-            "text": "У вас есть несохраненные изменения на дашборде. Сохраните их, чтобы поделиться дашбордом.",
-            "title": "Сохранить изменения на дашборде?",
-            "yesText": "Сохранить"
-          }
         },
         "unlink-library-panel": "Отсоединить панель библиотеки"
       },
@@ -6544,6 +6535,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Переключить меню общего доступа"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {

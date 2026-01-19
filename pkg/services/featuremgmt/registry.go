@@ -298,13 +298,6 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
-			Name:        "permissionsFilterRemoveSubquery",
-			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
 			Name:            "configurableSchedulerTick",
 			Description:     "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
 			Stage:           FeatureStageExperimental,
