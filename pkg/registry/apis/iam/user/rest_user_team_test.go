@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -313,7 +313,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 }
 
 func TestUserTeamREST_parseResults(t *testing.T) {
-	handler := NewTeamMemberREST(nil, trace.NewNoopTracerProvider().Tracer("test"), featuremgmt.WithFeatures())
+	handler := NewTeamMemberREST(nil, noop.NewTracerProvider().Tracer("test"), featuremgmt.WithFeatures())
 
 	t.Run("should return empty body when result is nil", func(t *testing.T) {
 		result, err := handler.parseResults(nil, 0)
