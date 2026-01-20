@@ -2138,8 +2138,8 @@
         "suffix": "Kérjük, frissítse az oldalt, és próbálkozzon újra.",
         "title": "Nem sikerült értesítési szabályzatot hozzáadni vagy frissíteni"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} további házirend",
+      "n-more-policies_other": "{{count}} további házirend"
     },
     "policy": {
       "label-new-child-policy": "Új gyermekházirend",
@@ -2178,8 +2178,10 @@
       "badge-tooltip-provenance": "Ez az erőforrás ki van építve ({{provenance}}), és nem szerkeszthető a felhasználói felületen keresztül",
       "badge-tooltip-standard": "Ez az erőforrás ki van építve, és nem szerkeszthető a felhasználói felületen keresztül",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Ez a(z) {{resource}} ki van építve, ami azt jelenti, hogy konfiguráció hozta létre. Ezen {{resource}} frissítéshez forduljon a kiszolgáló rendszergazdájához.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Ez a(z) {{resource}} nem szerkeszthető a felhasználói felületen keresztül"
     },
     "provisioning-badge": {
@@ -2677,7 +2679,10 @@
     "rules-group": {
       "deleting": "Törlés",
       "text-federated": "Összevont",
-      "text-provisioned": "Kiépítve"
+      "text-provisioned": "Kiépítve",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3767,7 +3772,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5341,6 +5345,7 @@
       },
       "header-hidden-tooltip": "Sorfejléc csak szerkesztési módban látható",
       "name": "Sorok",
+      "new-row-title": "",
       "row": {
         "collapse": "Sor összecsukása",
         "expand": "Sor kibontása",
@@ -5446,11 +5451,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5591,6 @@
           "arrow": "Megosztás",
           "title": "Megosztás",
           "tooltip": "Hivatkozás másolása"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Elvetés",
-            "text": "Nem mentett módosításai vannak ezen az irányítópulton. A megosztás előtt menteni kell őket.",
-            "title": "Menti az irányítópult módosításait?",
-            "yesText": "Mentés"
-          }
         },
         "unlink-library-panel": "Könyvtárpanel leválasztása"
       },
@@ -6462,8 +6455,8 @@
       "loading-connected-dashboards": "Csatlakoztatott irányítópultok betöltése…",
       "placeholder-search-affected-dashboards": "Érintett irányítópultok keresése",
       "update-all": "Összes frissítése",
-      "affected-dashboards_one": "Ez a frissítés <1>{{count}} irányítópultot érint.</1> A panelt használó következő irányítópultokat érinti:",
-      "affected-dashboards_other": "Ez a frissítés <1>{{count}} irányítópultot érint.</1> A panelt használó következő irányítópultokat érinti:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Hiba történt az irányítópult mentésekor",
@@ -6498,6 +6491,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Menümegosztás ki- és bekapcsolása"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -7991,6 +7990,7 @@
     "name-neutral": "Semleges",
     "name-show-threshold-labels": "Küszöbértékcímkék megjelenítése",
     "name-show-threshold-markers": "Küszöbértékjelölők megjelenítése",
+    "neutral": "",
     "placeholder-neutral": "automatikus",
     "suggestions": {
       "arc": "",
@@ -9560,8 +9560,8 @@
     "query-inspector": {
       "query-inspector": "Lekérdezés-ellenőrző",
       "text-loading-query-inspector": "Lekérdezésvizsgáló betöltése…",
-      "count-frames_one": "{{count}} keret, ",
-      "count-frames_other": "{{count}} keret, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} sor",
       "count-rows_other": "{{count}} sor"
     }
@@ -9820,8 +9820,8 @@
       "loading-connected-dashboards": "Csatlakoztatott irányítópultok betöltése…",
       "placeholder-search-affected-dashboards": "Érintett irányítópultok keresése",
       "update-all": "Összes frissítése",
-      "num-affected_one": "Ez a frissítés <1>{{count}} irányítópultot érint.</1>",
-      "num-affected_other": "Ez a frissítés <1>{{count}} irányítópultot érint.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12544,13 +12544,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Lekérdezési sor összecsukása",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Adatforrás súgójának megjelenítése",
       "drag-and-drop": "Húzza át az átrendezéshez",
       "duplicate-query": "Lekérdezés duplikálása",
       "expand-row": "Lekérdezési sor kibontása",
       "hide-response": "Válasz elrejtése",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Lekérdezés eltávolítása",
+      "selected-datasource-label": "",
       "show-response": "Válasz megjelenítése"
     },
     "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
@@ -12572,6 +12584,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12585,6 +12602,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12601,10 +12619,10 @@
       "restore-button": "Visszaállítás",
       "restore-loading": "Visszaállítás...",
       "title": "Irányítópultok visszaállítása",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Kérjük, válasszon egy mappát, ahová az irányítópultok vissza lesznek állítva.",
+      "folder-picker-text_other": "Kérjük, válasszon egy mappát, ahová az irányítópultok vissza lesznek állítva.",
+      "text_one": "Ez a művelet visszaállít {{numberOfDashboards}} irányítópultot.",
+      "text_other": "Ez a művelet visszaállít {{numberOfDashboards}} irányítópultot."
     }
   },
   "recentlyDeleted": {
@@ -12742,14 +12760,6 @@
       "starred": "Csillagozott",
       "view-as-folders": "Nézet mappák szerint",
       "view-as-list": "Listanézet"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Betűrendben (A–Z)",
-          "alphabetically-za": "Betűrendben (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importálás",
@@ -13348,8 +13358,8 @@
       "label-never": "Soha"
     },
     "status-history-panel": {
-      "too-many-points_one": "Túl sok a pont a megfelelő megjelenítéshez. <1></1>Frissítse a lekérdezést, hogy kevesebb pontot adjon vissza. <3></3>({{count}} pont érkezett)",
-      "too-many-points_other": "Túl sok a pont a megfelelő megjelenítéshez. <1></1>Frissítse a lekérdezést, hogy kevesebb pontot adjon vissza. <3></3>({{count}} pont érkezett)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

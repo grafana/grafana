@@ -1,6 +1,6 @@
 import * as H from 'history';
 
-import { CoreApp, DataQueryRequest, locationUtil, NavIndex, NavModelItem } from '@grafana/data';
+import { CoreApp, DataQueryRequest, locationUtil, NavIndex, NavModelItem, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
@@ -21,7 +21,6 @@ import { appEvents } from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
-import store from 'app/core/store';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -405,6 +404,38 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public canDiscard() {
     return this._initialState !== undefined;
+  }
+
+  /**
+   * Discard changes and revert to the last saved state, while keeping edit mode enabled.
+   * This is useful for flows where you want to continue an action (for example share/export)
+   * without forcing the user to exit edit mode.
+   */
+  public discardChangesAndKeepEditing() {
+    if (!this.canDiscard()) {
+      console.error('Trying to discard back to a state that does not exist, initialState undefined');
+      return;
+    }
+
+    // Stop tracking while we reset state.
+    this._changeTracker.stopTrackingChanges();
+
+    const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
+
+    // Ensure the restored layout stays editable.
+    restoredState.body.editModeChanged?.(true);
+
+    this.setState({
+      ...restoredState,
+      isEditing: true,
+      editable: true,
+      isDirty: false,
+      editPanel: undefined,
+      editview: undefined,
+      overlay: undefined,
+    });
+
+    this._changeTracker.startTrackingChanges();
   }
 
   public pauseTrackingChanges() {

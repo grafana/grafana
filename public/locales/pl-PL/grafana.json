@@ -2152,10 +2152,10 @@
         "suffix": "Odśwież stronę i spróbuj ponownie.",
         "title": "Nie udało się dodać lub zaktualizować zasad dotyczących powiadomień"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_few": "",
-      "n-more-policies_many": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} dodatkowy zbiór zasad",
+      "n-more-policies_few": "{{count}} dodatkowe zbiory zasad",
+      "n-more-policies_many": "{{count}} dodatkowych zbiorów zasad",
+      "n-more-policies_other": "{{count}} dodatkowego zbioru zasad"
     },
     "policy": {
       "label-new-child-policy": "Nowe zasady pochodne",
@@ -2194,8 +2194,10 @@
       "badge-tooltip-provenance": "Ten zasób został skonfigurowany za pośrednictwem {{provenance}} i nie można go edytować z poziomu interfejsu użytkownika",
       "badge-tooltip-standard": "Ten zasób został skonfigurowany i nie można go edytować z poziomu interfejsu użytkownika",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Zasób {{resource}} został aprowizowany, co oznacza, że został utworzony przez konfigurację. Skontaktuj się z administratorem serwera, aby zaktualizować zasób {{resource}}.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Tego zasobu {{resource}} nie można edytować z poziomu interfejsu użytkownika"
     },
     "provisioning-badge": {
@@ -2699,7 +2701,10 @@
     "rules-group": {
       "deleting": "Usuwam",
       "text-federated": "Federacja",
-      "text-provisioned": "Po aprowizacji"
+      "text-provisioned": "Po aprowizacji",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3799,7 +3804,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_few": "",
       "all-failed_many": "",
@@ -5381,6 +5385,7 @@
       },
       "header-hidden-tooltip": "Nagłówek wiersza widoczny tylko w trybie edycji",
       "name": "Wiersze",
+      "new-row-title": "",
       "row": {
         "collapse": "Zwiń wiersz",
         "expand": "Rozwiń wiersz",
@@ -5486,11 +5491,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5630,14 +5631,6 @@
           "arrow": "Udostępnij",
           "title": "Udostępnij",
           "tooltip": "Kopiuj link"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Odrzuć",
-            "text": "Masz niezapisane zmiany dotyczące tego pulpitu. Musisz je zapisać, zanim będzie można udostępnić pulpit.",
-            "title": "Zapisać zmiany dotyczące pulpitu?",
-            "yesText": "Zapisz"
-          }
         },
         "unlink-library-panel": "Rozłącz panel biblioteki"
       },
@@ -6506,10 +6499,10 @@
       "loading-connected-dashboards": "Wczytywanie połączonych pulpitów…",
       "placeholder-search-affected-dashboards": "Szukaj pulpitów, których to dotyczy",
       "update-all": "Aktualizuj wszystkie",
-      "affected-dashboards_one": "Ta aktualizacja wpłynie na <1>{{count}} pulpitu.</1> Będzie to miało wpływ na następujące pulpity korzystające z panelu:",
-      "affected-dashboards_few": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1> Będzie to miało wpływ na następujące pulpity korzystające z panelu:",
-      "affected-dashboards_many": "Ta aktualizacja wpłynie na <1>{{count}} pulpitów.</1> Będzie to miało wpływ na następujące pulpity korzystające z panelu:",
-      "affected-dashboards_other": "Ta aktualizacja wpłynie na <1>{{count}} pulpitu.</1> Będzie to miało wpływ na następujące pulpity korzystające z panelu:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_few": "",
+      "affected-dashboards_many": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Błąd podczas zapisywania pulpitu",
@@ -6544,6 +6537,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Przełącz menu udostępniania"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -8043,6 +8042,7 @@
     "name-neutral": "Neutralne",
     "name-show-threshold-labels": "Pokaż etykiety progów",
     "name-show-threshold-markers": "Pokaż znaczniki progów",
+    "neutral": "",
     "placeholder-neutral": "automatycznie",
     "suggestions": {
       "arc": "",
@@ -9632,10 +9632,10 @@
     "query-inspector": {
       "query-inspector": "Inspektor zapytań",
       "text-loading-query-inspector": "Wczytywanie inspektora zapytań…",
-      "count-frames_one": "{{count}} ramki, ",
-      "count-frames_few": "{{count}} ramki, ",
-      "count-frames_many": "{{count}} ramki, ",
-      "count-frames_other": "{{count}} ramki, ",
+      "count-frames_one": "",
+      "count-frames_few": "",
+      "count-frames_many": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} wiersza",
       "count-rows_few": "{{count}} wiersze",
       "count-rows_many": "{{count}} wierszy",
@@ -9900,10 +9900,10 @@
       "loading-connected-dashboards": "Wczytywanie połączonych pulpitów…",
       "placeholder-search-affected-dashboards": "Szukaj pulpitów, których to dotyczy",
       "update-all": "Aktualizuj wszystkie",
-      "num-affected_one": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>",
-      "num-affected_few": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>",
-      "num-affected_many": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>",
-      "num-affected_other": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1>"
+      "num-affected_one": "",
+      "num-affected_few": "",
+      "num-affected_many": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12650,13 +12650,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Zwiń wiersz zapytania",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Pokaż pomoc dotyczącą źródła danych",
       "drag-and-drop": "Przeciągnij i upuść, aby zmienić kolejność",
       "duplicate-query": "Duplikuj zapytanie",
       "expand-row": "Rozwiń wiersz zapytania",
       "hide-response": "Ukryj odpowiedź",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Usuń zapytanie",
+      "selected-datasource-label": "",
       "show-response": "Pokaż odpowiedź"
     },
     "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"
@@ -12678,6 +12690,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12691,6 +12708,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12707,14 +12725,14 @@
       "restore-button": "Przywróć",
       "restore-loading": "Przywracanie…",
       "title": "Przywróć pulpity",
-      "folder-picker-text_one": "",
-      "folder-picker-text_few": "",
-      "folder-picker-text_many": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_few": "",
-      "text_many": "",
-      "text_other": ""
+      "folder-picker-text_one": "Wybierz folder, w którym zostanie przywrócony pulpit.",
+      "folder-picker-text_few": "Wybierz folder, w którym zostaną przywrócone pulpity.",
+      "folder-picker-text_many": "Wybierz folder, w którym zostaną przywrócone pulpity.",
+      "folder-picker-text_other": "Wybierz folder, w którym zostaną przywrócone pulpity.",
+      "text_one": "To działanie spowoduje przywrócenie {{numberOfDashboards}} pulpitu.",
+      "text_few": "To działanie spowoduje przywrócenie {{numberOfDashboards}} pulpitów.",
+      "text_many": "To działanie spowoduje przywrócenie {{numberOfDashboards}} pulpitu.",
+      "text_other": "To działanie spowoduje przywrócenie {{numberOfDashboards}} pulpitu."
     }
   },
   "recentlyDeleted": {
@@ -12852,14 +12870,6 @@
       "starred": "Oznaczone gwiazdką",
       "view-as-folders": "Wyświetl według folderów",
       "view-as-list": "Wyświetl jako listę"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetycznie (A–Z)",
-          "alphabetically-za": "Alfabetycznie (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importuj",
@@ -13460,10 +13470,10 @@
       "label-never": "Nigdy"
     },
     "status-history-panel": {
-      "too-many-points_one": "Zbyt wiele punktów, aby można było prawidłowo je zwizualizować. <1></1>Zaktualizuj zapytanie, aby zwróciło mniej punktów. <3></3>(Otrzymano {{count}} punktu)",
-      "too-many-points_few": "Zbyt wiele punktów, aby można było prawidłowo je zwizualizować. <1></1>Zaktualizuj zapytanie, aby zwróciło mniej punktów. <3></3>(Otrzymano {{count}} punkty)",
-      "too-many-points_many": "Zbyt wiele punktów, aby można było prawidłowo je zwizualizować. <1></1>Zaktualizuj zapytanie, aby zwróciło mniej punktów. <3></3>(Otrzymano {{count}} punktów)",
-      "too-many-points_other": "Zbyt wiele punktów, aby można było prawidłowo je zwizualizować. <1></1>Zaktualizuj zapytanie, aby zwróciło mniej punktów. <3></3>(Otrzymano {{count}} punktu)"
+      "too-many-points_one": "",
+      "too-many-points_few": "",
+      "too-many-points_many": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {
