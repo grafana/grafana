@@ -1,18 +1,18 @@
 import { type ReactElement } from 'react';
 
-import { Button } from '@grafana/ui';
+import { LinkButton } from '@grafana/ui';
 
 export interface NotificationButtonProps {
   buttonLabel: string;
-  onClick: () => void;
+  href: string;
   ariaLabel?: string;
 }
 
-export function NotificationButton({ buttonLabel, onClick, ariaLabel }: NotificationButtonProps) {
+export function NotificationButton({ buttonLabel, href, ariaLabel }: NotificationButtonProps) {
   return (
-    <Button size="sm" variant="primary" fill="text" onClick={onClick} aria-label={ariaLabel ?? buttonLabel}>
+    <LinkButton size="sm" variant="primary" fill="text" href={href} aria-label={ariaLabel ?? buttonLabel}>
       {buttonLabel}
-    </Button>
+    </LinkButton>
   );
 }
 

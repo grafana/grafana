@@ -399,7 +399,7 @@ export const browseDashboardsAPI = createApi({
             const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View Recently Deleted');
             const component = buildNotificationButton({
               buttonLabel: buttonText,
-              onClick: () => locationService.push('/dashboard/recently-deleted'),
+              href: '/dashboard/recently-deleted',
             });
             dispatch(notifyApp(createSuccessNotification(title, '', undefined, component)));
           } else if (config.featureToggles.kubernetesDashboards) {

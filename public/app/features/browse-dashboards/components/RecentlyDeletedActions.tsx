@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
@@ -140,7 +140,7 @@ export function RecentlyDeletedActions() {
       if (notificationData.kind === 'action') {
         const component = buildNotificationButton({
           buttonLabel: notificationData.data.buttonLabel,
-          onClick: () => locationService.push(notificationData.data.targetUrl),
+          href: notificationData.data.targetUrl,
         });
         dispatch(notifyApp(createSuccessNotification(notificationData.data.title, '', undefined, component)));
       } else {
