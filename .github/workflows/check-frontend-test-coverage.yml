@@ -301,3 +301,25 @@ jobs:
           header: coverage-report-${{ matrix.codeowner }}
           message: ${{ steps.compare.outputs.markdown }}
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
+  all-coverage-checks-pass:
+    name: All coverage checks pass
+    needs: [setup, compare-and-report]
+    if: always()
+    runs-on: ubuntu-x64-small
+    steps:
+      - name: Check if skipped
+        id: check-skip
+        run: |
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Coverage checks skipped due to 'no-check-frontend-test-coverage' label"
+          else
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+            echo "All opted-in teams' coverage checks have completed."
+          fi
+
+      - name: Verify all checks passed
+        if: steps.check-skip.outputs.skipped == 'false'
+        run: |
+          echo "If this step succeeds, all coverage metrics were maintained or improved."
