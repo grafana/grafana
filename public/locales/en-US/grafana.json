@@ -12938,6 +12938,9 @@
     "menu": {
       "export-image-title": "Export as image",
       "export-json-title": "Export as JSON",
+      "invite-team-button": "Invite team",
+      "invite-team-description": "Share this dashboard with collaborators",
+      "invite-team-title": "Invite your team",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
