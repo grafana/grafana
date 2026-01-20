@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
+import { useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
@@ -24,6 +25,7 @@ interface Props {
   dashboard: PluginDashboard | GnetDashboard;
   details?: Details;
   onClick: () => void;
+  onClose: () => void;
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
@@ -34,6 +36,7 @@ function DashboardCardComponent({
   title,
   imageUrl,
   onClick,
+  onClose,
   dashboard,
   details,
   isLogo,
@@ -42,6 +45,21 @@ function DashboardCardComponent({
   kind,
 }: Props) {
   const styles = useStyles2(getStyles);
+
+  const { isAvailable: assistantAvailable, openAssistant } = useAssistant();
+
+  const onUseAssistantClick = () => {
+    if (assistantAvailable) {
+      openAssistant?.({
+        origin: 'dashboard-library/use-dashboard',
+        mode: 'dashboarding',
+        prompt: `Create a dashboard using the dashboard template ${title}`,
+        // context: [dashboardContext],
+        autoSend: true,
+      });
+      onClose();
+    }
+  };
 
   return (
     <Card className={styles.card} noMargin>
@@ -90,6 +108,11 @@ function DashboardCardComponent({
             <Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>
           )}
         </Button>
+        {assistantAvailable && (
+          <Button variant="secondary" fill="outline" onClick={onUseAssistantClick} icon="ai-sparkle">
+            <Trans i18nKey="dashboard-library.card.use-with-assistant-button">Use with Assistant</Trans>
+          </Button>
+        )}
         {details && (
           <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
             <IconButton
