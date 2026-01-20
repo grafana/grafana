@@ -232,7 +232,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 	}))
 
 	mg.AddMigration("Add index to resource_history for garbage collection deletion", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
-		Cols: []string{"group", "resource", "name"},
+		Cols: []string{"group", "resource", "namespace", "name"},
 		Type: migrator.IndexType,
 		Name: "IDX_resource_history_group_resource_name",
 	}))
