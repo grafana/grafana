@@ -28,7 +28,7 @@ func NewExtraOptions() *ExtraOptions {
 	return &ExtraOptions{
 		DevMode:        false,
 		Verbosity:      0,
-		RequestTimeout: 1 * time.Hour,
+		RequestTimeout: 10 * time.Minute,
 	}
 }
 
