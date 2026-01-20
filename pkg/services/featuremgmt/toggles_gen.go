@@ -143,10 +143,6 @@ const (
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
 
-	// FlagEnableNativeHTTPHistogram
-	// Enables native HTTP Histograms
-	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
-
 	// FlagDisableClassicHTTPHistogram
 	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
 	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"

@@ -244,11 +244,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables native HTTP Histograms
-  * @default false
-  */
-  enableNativeHTTPHistogram?: boolean;
-  /**
   * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
   * @default false
   */

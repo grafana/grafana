@@ -366,15 +366,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "enableNativeHTTPHistogram",
-			Description:     "Enables native HTTP Histograms",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
 			Name:            "disableClassicHTTPHistogram",
 			Description:     "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
 			Stage:           FeatureStageExperimental,
