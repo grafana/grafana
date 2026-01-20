@@ -1,5 +1,6 @@
 import { OwnerReference } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { useGetTeamQuery, useGetTeamMembersQuery } from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import { Trans } from '@grafana/i18n';
 import { Stack, Text, Avatar, Link, Tooltip } from '@grafana/ui';
 
 export const getGravatarUrl = (text: string) => {
@@ -17,7 +18,9 @@ export const TeamOwnerReference = ({ ownerReference }: { ownerReference: OwnerRe
   const membersTooltip = (
     <>
       <Stack gap={1} direction="column">
-        <Text>Team members:</Text>
+        <Text>
+          <Trans i18nKey="folder-owner-reference-label">Team members:</Trans>
+        </Text>
         {teamMembers?.items?.map((member) => (
           <div key={member.identity.name}>
             <Avatar src={member.avatarURL} /> {member.displayName}
