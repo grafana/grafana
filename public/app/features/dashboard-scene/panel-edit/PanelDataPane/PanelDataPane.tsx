@@ -75,7 +75,6 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       return;
     }
     if (typeof values.tab === 'string') {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       this.setState({ tab: values.tab as TabId });
     }
   }
