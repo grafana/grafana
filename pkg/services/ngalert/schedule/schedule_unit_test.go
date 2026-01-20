@@ -1196,12 +1196,19 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 }
 
 type schedulerOpts struct {
-	clock clock.Clock
+	clock                 clock.Clock
+	evaluationCoordinator EvaluationCoordinator
 }
 
 func withSchedulerClock(clock clock.Clock) func(opts *schedulerOpts) {
 	return func(opts *schedulerOpts) {
 		opts.clock = clock
+	}
+}
+
+func withEvaluationCoordinator(ec EvaluationCoordinator) func(opts *schedulerOpts) {
+	return func(opts *schedulerOpts) {
+		opts.evaluationCoordinator = ec
 	}
 }
 
@@ -1298,6 +1305,7 @@ func setupScheduler(
 		FeatureToggles:         featuremgmt.WithFeatures(),
 		RecordingWriter:        fakeRecordingWriter,
 		RuleStopReasonProvider: ruleStopReasonProvider,
+		EvaluationCoordinator:  opts.evaluationCoordinator,
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),
@@ -1429,4 +1437,55 @@ func assertScheduledContains(t *testing.T, scheduled []readyToRunItem, rule *mod
 		}
 	}
 	require.True(t, contains, "Expected a scheduled rule with key %s title %s but didn't get one, scheduled rules were %v", rule.GetKey(), rule.Title, scheduled)
+}
+
+type mockEvaluationCoordinator struct {
+	shouldEvaluate bool
+}
+
+func (m *mockEvaluationCoordinator) ShouldEvaluate() bool {
+	return m.shouldEvaluate
+}
+
+func TestProcessTick_WithEvaluationCoordinator(t *testing.T) {
+	ctx := context.Background()
+	dispatcherGroup, ctx := errgroup.WithContext(ctx)
+
+	ruleStore := newFakeRulesStore()
+	coordinator := &mockEvaluationCoordinator{shouldEvaluate: false}
+	sched := setupScheduler(t, ruleStore, nil, nil, nil, nil, nil, withEvaluationCoordinator(coordinator))
+
+	gen := models.RuleGen
+	alertRule := gen.With(gen.WithOrgID(1), gen.WithInterval(time.Second), gen.WithTitle("rule-1")).GenerateRef()
+	ruleStore.PutRule(ctx, alertRule)
+
+	t.Run("when coordinator returns false, processTick should skip evaluation", func(t *testing.T) {
+		coordinator.shouldEvaluate = false
+
+		tick := time.Now()
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Nil(t, scheduled, "no rules should be scheduled when coordinator returns false")
+		require.Nil(t, stopped, "no rules should be stopped when coordinator returns false")
+		require.Nil(t, updated, "no rules should be updated when coordinator returns false")
+	})
+
+	t.Run("when coordinator returns true, processTick should evaluate rules", func(t *testing.T) {
+		coordinator.shouldEvaluate = true
+
+		tick := time.Now().Add(time.Second)
+		scheduled, _, _ := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1, "one rule should be scheduled when coordinator returns true")
+		require.Equal(t, alertRule, scheduled[0].rule)
+	})
+
+	t.Run("when coordinator is nil, processTick should evaluate rules normally", func(t *testing.T) {
+		schedNoCoordinator := setupScheduler(t, ruleStore, nil, nil, nil, nil, nil)
+
+		tick := time.Now().Add(2 * time.Second)
+		scheduled, _, _ := schedNoCoordinator.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1, "one rule should be scheduled when coordinator is nil")
+	})
 }
