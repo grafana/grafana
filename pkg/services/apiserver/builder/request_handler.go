@@ -213,6 +213,29 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 			}
 		}
 
+		// Extract and set content types from OpenAPI spec responses
+		if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
+			contentTypes := make(map[string]bool)
+			for _, response := range operation.Responses.StatusCodeResponses {
+				if response != nil && response.Content != nil {
+					for contentType := range response.Content {
+						contentTypes[contentType] = true
+					}
+				}
+			}
+			// Set Produces based on response content types
+			for contentType := range contentTypes {
+				routeBuilder = routeBuilder.Produces(contentType)
+			}
+		}
+
+		// Extract and set content types from OpenAPI spec request body
+		if operation.RequestBody != nil && operation.RequestBody.Content != nil {
+			for contentType := range operation.RequestBody.Content {
+				routeBuilder = routeBuilder.Consumes(contentType)
+			}
+		}
+
 		// Note: Request/response schemas are already defined in the OpenAPI spec from builders
 		// and will be added to the OpenAPI document via addBuilderRoutes in openapi.go.
 		// We don't duplicate that information here since restful uses the route metadata
