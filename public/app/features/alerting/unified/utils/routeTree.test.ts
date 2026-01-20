@@ -137,6 +137,7 @@ describe('hashRoute and stabilizeRoute', () => {
     };
 
     const expected: Route = {
+      name: '',
       active_time_intervals: [],
       continue: false,
       group_interval: '',
@@ -164,9 +165,9 @@ describe('hashRoute and stabilizeRoute', () => {
     expect(stabilizeRoute(route)).toEqual(expected);
 
     // the hash of the route should be stable (so we assert is twice)
-    expect(hashRoute(route)).toBe('-1tfmmx');
-    expect(hashRoute(route)).toBe('-1tfmmx');
-    expect(hashRoute(expected)).toBe('-1tfmmx');
+    expect(hashRoute(route)).toBe('-djke0w');
+    expect(hashRoute(route)).toBe('-djke0w');
+    expect(hashRoute(expected)).toBe('-djke0w');
 
     // the hash of the unstabilized route should be the same as the stabilized route
     // because the hash function will stabilize the inputs

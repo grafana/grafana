@@ -1,26 +1,31 @@
 import { HttpResponse, http } from 'msw';
 
-import { getRoutingTree, setRoutingTree } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
+import {
+  deleteRoutingTree,
+  getRoutingTree,
+  getRoutingTreeList,
+  resetDefaultRoutingTree,
+  setRoutingTree,
+} from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
   ListNamespacedRoutingTreeApiResponse,
 } from 'app/features/alerting/unified/openapi/routesApi.gen';
-import { ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';
 import { ApiMachineryError } from 'app/features/alerting/unified/utils/k8s/errors';
+import { ROOT_ROUTE_NAME } from '../../../../utils/k8s/constants';
 
 const wrapRoutingTreeResponse: (
-  route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
-) => ListNamespacedRoutingTreeApiResponse = (route) => ({
+  routes: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree[]
+) => ListNamespacedRoutingTreeApiResponse = (routes) => ({
   kind: 'RoutingTree',
   metadata: {},
-  items: [route],
+  items: routes,
 });
 
 const listNamespacedRoutingTreesHandler = () =>
   http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, () => {
-    const userDefinedTree = getRoutingTree(ROOT_ROUTE_NAME)!;
-    return HttpResponse.json(wrapRoutingTreeResponse(userDefinedTree));
+    return HttpResponse.json(wrapRoutingTreeResponse(getRoutingTreeList()));
   });
 
 const HTTP_RESPONSE_CONFLICT: ApiMachineryError = {
@@ -50,6 +55,53 @@ const updateNamespacedRoutingTreeHandler = () =>
     }
   );
 
-const handlers = [listNamespacedRoutingTreesHandler(), updateNamespacedRoutingTreeHandler()];
+const getNamespacedRoutingTreeHandler = () =>
+  http.get<{ namespace: string; name: string }>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`,
+    ({ params: { name } }) => {
+      const routingTree = getRoutingTree(name);
+      if (!routingTree) {
+        return HttpResponse.json({ message: 'NotFound' }, { status: 404 });
+      }
+      return HttpResponse.json(routingTree);
+    }
+  );
+
+const createNamespacedRoutingTreeHandler = () =>
+  http.post<{ namespace: string; name: string }, ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`,
+    async ({ params: { name }, request }) => {
+      const routingTree = await request.json();
+      setRoutingTree(name, routingTree);
+      return HttpResponse.json(routingTree);
+    }
+  );
+
+const deleteNamespacedRoutingTreeHandler = () =>
+  http.delete<{ namespace: string; name: string }>(
+    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`,
+    ({ params: { name } }) => {
+      const routingTree = getRoutingTree(name);
+      if (!routingTree) {
+        return HttpResponse.json({ message: 'NotFound' }, { status: 404 });
+      }
+      if ( name === ROOT_ROUTE_NAME ) {
+        // Reset instead.
+        resetDefaultRoutingTree();
+      } else {
+        deleteRoutingTree(name);
+      }
+      return HttpResponse.json({});
+    }
+  );
+
+
+const handlers = [
+  listNamespacedRoutingTreesHandler(),
+  updateNamespacedRoutingTreeHandler(),
+  getNamespacedRoutingTreeHandler(),
+  createNamespacedRoutingTreeHandler(),
+  deleteNamespacedRoutingTreeHandler(),
+];
 
 export default handlers;
