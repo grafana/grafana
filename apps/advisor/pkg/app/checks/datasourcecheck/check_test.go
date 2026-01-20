@@ -62,11 +62,13 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -88,11 +90,13 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -115,11 +119,13 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -142,11 +148,13 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -167,11 +175,13 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -193,11 +203,13 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: false}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -218,11 +230,13 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: false}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -248,12 +262,14 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
-			GrafanaVersion:        "11.0.0",
+			DatasourceSvc:  mockDatasourceSvc,
+			PluginRepo:     mockPluginRepo,
+			PluginStore:    mockPluginStore,
+			GrafanaVersion: "11.0.0",
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -282,12 +298,14 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
-			GrafanaVersion:        "11.0.0",
+			DatasourceSvc:  mockDatasourceSvc,
+			PluginRepo:     mockPluginRepo,
+			PluginStore:    mockPluginStore,
+			GrafanaVersion: "11.0.0",
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -314,12 +332,14 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
-			DatasourceSvc:         mockDatasourceSvc,
-			PluginContextProvider: mockPluginContextProvider,
-			PluginClient:          mockPluginClient,
-			PluginRepo:            mockPluginRepo,
-			PluginStore:           mockPluginStore,
-			GrafanaVersion:        "11.0.0",
+			DatasourceSvc:  mockDatasourceSvc,
+			PluginRepo:     mockPluginRepo,
+			PluginStore:    mockPluginStore,
+			GrafanaVersion: "11.0.0",
+			healthChecker: &MockHealthChecker{
+				pluginContextProvider: mockPluginContextProvider,
+				pluginClient:          mockPluginClient,
+			},
 		}
 
 		failures, err := runChecks(check)
@@ -395,4 +415,25 @@ type MockPluginRepo struct {
 
 func (m *MockPluginRepo) GetPluginsInfo(context.Context, repo.GetPluginsInfoOptions, repo.CompatOpts) ([]repo.PluginInfo, error) {
 	return m.plugins, nil
+}
+
+type MockHealthChecker struct {
+	pluginContextProvider *MockPluginContextProvider
+	pluginClient          *MockPluginClient
+}
+
+func (m *MockHealthChecker) CheckHealth(ctx context.Context, ds *datasources.DataSource) (*backend.CheckHealthResult, error) {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	pCtx, err := m.pluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
+	if err != nil {
+		return nil, err
+	}
+	req := &backend.CheckHealthRequest{
+		PluginContext: pCtx,
+		Headers:       map[string]string{},
+	}
+	return m.pluginClient.CheckHealth(ctx, req)
 }

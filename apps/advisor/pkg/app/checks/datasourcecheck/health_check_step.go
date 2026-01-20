@@ -9,14 +9,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type healthCheckStep struct {
-	PluginContextProvider PluginContextProvider
-	PluginClient          plugins.Client
+	HealthChecker checks.HealthChecker
 }
 
 func (s *healthCheckStep) Title() string {
@@ -42,39 +40,25 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 	}
 
 	// Health check execution
-	requester, err := identity.GetRequester(ctx)
+	resp, err := s.HealthChecker.CheckHealth(ctx, ds)
 	if err != nil {
-		return nil, err
-	}
-	pCtx, err := s.PluginContextProvider.GetWithDataSource(ctx, ds.Type, requester, ds)
-	if err != nil {
+		// Unable to check health check
+		log.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
+		if errors.Is(err, plugins.ErrMethodNotImplemented) || errors.Is(err, plugins.ErrPluginUnavailable) {
+			// The plugin does not support backend health checks
+			return nil, nil
+		}
+		// For other errors (including ErrPluginNotRegistered from GetWithDataSource),
+		// we skip the health check step and let the missing plugin step handle it
 		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			// The plugin is not installed, handle this in the missing plugin step
 			return nil, nil
 		}
-		// Unable to check health check
-		log.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
 		return nil, nil
 	}
-	req := &backend.CheckHealthRequest{
-		PluginContext: pCtx,
-		Headers:       map[string]string{},
-	}
-	resp, err := s.PluginClient.CheckHealth(ctx, req)
-	if err != nil || (resp != nil && resp.Status != backend.HealthStatusOk) {
-		if err != nil {
-			log.Debug("Failed to check health", "datasource_uid", ds.UID, "error", err)
-			if errors.Is(err, plugins.ErrMethodNotImplemented) || errors.Is(err, plugins.ErrPluginUnavailable) {
-				// The plugin does not support backend health checks
-				return nil, nil
-			}
-		} else {
-			log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
-		}
-		moreInfo := ""
-		if resp != nil {
-			moreInfo = fmt.Sprintf("Status: %s\nMessage: %s\nJSONDetails: %s", resp.Status, resp.Message, resp.JSONDetails)
-		}
+	if resp != nil && resp.Status != backend.HealthStatusOk {
+		log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
+		moreInfo := fmt.Sprintf("Status: %s\nMessage: %s\nJSONDetails: %s", resp.Status, resp.Message, resp.JSONDetails)
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailureWithMoreInfo(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
