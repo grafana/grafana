@@ -2138,8 +2138,8 @@
         "suffix": "Por favor, atualize a página e tente novamente.",
         "title": "Falha ao adicionar ou atualizar a política de notificação"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} políticas adicionais",
+      "n-more-policies_other": "{{count}} políticas adicionais"
     },
     "policy": {
       "label-new-child-policy": "Nova política secundária",
@@ -2178,8 +2178,10 @@
       "badge-tooltip-provenance": "Este recurso foi provisionado através de {{provenance}} e não pode ser editado através da interface do utilizador",
       "badge-tooltip-standard": "Este recurso foi provisionado e não pode ser editado através da interface do utilizador",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Este {{resource}} foi aprovisionado, o que significa que foi criado por configuração. Entre em contacto com o seu administrador do servidor para atualizar este {{resource}}.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Este {{resource}} não pode ser editado através da interface do utilizador"
     },
     "provisioning-badge": {
@@ -2677,7 +2679,10 @@
     "rules-group": {
       "deleting": "A eliminar",
       "text-federated": "Federado",
-      "text-provisioned": "Aprovisionado"
+      "text-provisioned": "Aprovisionado",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3767,7 +3772,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5341,6 +5345,7 @@
       },
       "header-hidden-tooltip": "Cabeçalho da linha visível apenas no modo de edição",
       "name": "Linhas",
+      "new-row-title": "",
       "row": {
         "collapse": "Recolher linha",
         "expand": "Expandir linha",
@@ -5446,11 +5451,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5591,6 @@
           "arrow": "Partilhar",
           "title": "Partilhar",
           "tooltip": "Copiar link"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Descartar",
-            "text": "Tem alterações não guardadas neste painel de controlo. Tem de as guardar antes de as poder partilhar.",
-            "title": "Guardar alterações no painel de controlo?",
-            "yesText": "Guardar"
-          }
         },
         "unlink-library-panel": "Desassociar painel de biblioteca"
       },
@@ -6462,8 +6455,8 @@
       "loading-connected-dashboards": "A carregar painéis de controlo ligados...",
       "placeholder-search-affected-dashboards": "Pesquisar painéis de controlo afetados",
       "update-all": "Atualizar tudo",
-      "affected-dashboards_one": "Esta atualização afetará <1>{{count}} painéis de controlo.</1> Os seguintes painéis de controlo que utilizam o painel serão afetados:",
-      "affected-dashboards_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1> Os seguintes painéis de controlo que utilizam o painel serão afetados:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Erro ao guardar o painel de controlo",
@@ -6498,6 +6491,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alternar menu de partilha"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -7991,6 +7990,7 @@
     "name-neutral": "Neutro",
     "name-show-threshold-labels": "Mostrar as etiquetas de limite",
     "name-show-threshold-markers": "Mostrar os marcadores de limite",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -9560,8 +9560,8 @@
     "query-inspector": {
       "query-inspector": "Inspetor de consultas",
       "text-loading-query-inspector": "A carregar o inspetor de consultas...",
-      "count-frames_one": "{{count}} frames, ",
-      "count-frames_other": "{{count}} frames, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} linhas",
       "count-rows_other": "{{count}} linhas"
     }
@@ -9820,8 +9820,8 @@
       "loading-connected-dashboards": "A carregar painéis de controlo ligados...",
       "placeholder-search-affected-dashboards": "Pesquisar painéis de controlo afetados",
       "update-all": "Atualizar tudo",
-      "num-affected_one": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>",
-      "num-affected_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12544,13 +12544,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Recolher linha de consulta",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Mostrar ajuda da origem de dados",
       "drag-and-drop": "Arrastar e largar para reordenar",
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir linha de consulta",
       "hide-response": "Ocultar resposta",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Remover consulta",
+      "selected-datasource-label": "",
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas"
@@ -12572,6 +12584,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12585,6 +12602,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12601,10 +12619,10 @@
       "restore-button": "Restaurar",
       "restore-loading": "A restaurar...",
       "title": "Restaurar painéis de controlo",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Escolha uma pasta onde os seus painéis de controlo serão restaurados.",
+      "folder-picker-text_other": "Escolha uma pasta onde os seus painéis de controlo serão restaurados.",
+      "text_one": "Esta ação irá restaurar {{numberOfDashboards}} painéis de controlo.",
+      "text_other": "Esta ação irá restaurar {{numberOfDashboards}} painéis de controlo."
     }
   },
   "recentlyDeleted": {
@@ -12742,14 +12760,6 @@
       "starred": "Favoritos",
       "view-as-folders": "Ver por pastas",
       "view-as-list": "Ver como lista"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Por ordem alfabética (A-Z)",
-          "alphabetically-za": "Por ordem alfabética (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importar",
@@ -13348,8 +13358,8 @@
       "label-never": "Nunca"
     },
     "status-history-panel": {
-      "too-many-points_one": "Demasiados pontos para visualizar corretamente. <1></1>Atualizar a consulta para devolver menos pontos. <3></3>({{count}} pontos recebidos)",
-      "too-many-points_other": "Demasiados pontos para visualizar corretamente. <1></1>Atualizar a consulta para devolver menos pontos. <3></3>({{count}} pontos recebidos)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/codegen
 
-go 1.25.5
+go 1.25.6
 
 require (
 	cuelang.org/go v0.11.1
@@ -9,7 +9,7 @@ require (
 	github.com/grafana/cog v0.0.46
 	github.com/grafana/cuetsy v0.1.11
 	github.com/matryer/is v1.4.1
-	golang.org/x/tools v0.40.0
+	golang.org/x/tools v0.41.0
 )
 
 require (
@@ -48,10 +48,10 @@ require (
 	github.com/woodsbury/decimal128 v1.4.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/yalue/merged_fs v1.3.0 // indirect
-	golang.org/x/mod v0.31.0 // indirect
-	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/mod v0.32.0 // indirect
+	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

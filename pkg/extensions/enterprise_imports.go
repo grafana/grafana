@@ -1,6 +1,11 @@
 //go:build enterprise || pro
 // +build enterprise pro
 
+// NOTE: ensure imports below are actually being used in enterprise
+// there is a wrinkle that this approach avoids, as seen in for e.g. go.opentelemetry.io/proto/otlp, which has no imports at root of the module.
+// When referred to directly, it will keep showing up in go.mod as an indirect even when its direct.
+// this doesn't happen if you refer to a subpath such as go.opentelemetry.io/proto/otlp/collector/logs/v1 (which also will happen to be in your enterprise code).
+
 package extensions
 
 import (
@@ -15,8 +20,6 @@ import (
 	_ "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	_ "github.com/aws/aws-sdk-go-v2/service/sts"
 	_ "github.com/beevik/etree"
-	_ "github.com/blugelabs/bluge"
-	_ "github.com/blugelabs/bluge_segment_api"
 	_ "github.com/crewjam/saml"
 	_ "github.com/docker/go-connections/nat"
 	_ "github.com/go-jose/go-jose/v4"

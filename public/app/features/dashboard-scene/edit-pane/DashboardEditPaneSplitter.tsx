@@ -215,6 +215,14 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       position: 'relative',
       flex: '1 1 0',
       overflow: 'hidden',
+
+      [theme.breakpoints.down('sm')]: {
+        flex: 1,
+
+        '> div:nth-child(2)': {
+          zIndex: theme.zIndex.activePanel,
+        },
+      },
     }),
     bodyWrapperKiosk: css({
       padding: theme.spacing(0, 2, 2, 2),
