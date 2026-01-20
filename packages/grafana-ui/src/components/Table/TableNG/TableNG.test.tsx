@@ -100,7 +100,7 @@ const createNestedDataFrame = (): DataFrame => {
         name: 'Nested hidden',
         type: FieldType.string,
         values: ['secret1', 'secret2'],
-        config: { custom: { hidden: true } },
+        config: { custom: { hideFrom: { viz: true } } },
       },
       {
         name: 'Nested A',
