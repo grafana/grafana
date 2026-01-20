@@ -50,6 +50,7 @@ type QueryResult struct {
 	FoundMetrics       int      // Metrics found
 	MissingMetrics     []string // Missing metrics for this query
 	CompatibilityScore float64  // Query compatibility (0.0 - 1.0)
+	ParseError         *string  // Optional parse error message (nil = parsed successfully)
 }
 
 // validatorRegistry holds registered validator constructors

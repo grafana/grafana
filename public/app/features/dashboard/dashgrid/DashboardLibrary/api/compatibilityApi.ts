@@ -43,6 +43,8 @@ export interface QueryBreakdown {
   missingMetrics: string[];
   /** Compatibility score for this query (0-100) */
   compatibilityScore: number;
+  /** Optional error message for queries that failed to parse */
+  parseError?: string;
 }
 
 /**

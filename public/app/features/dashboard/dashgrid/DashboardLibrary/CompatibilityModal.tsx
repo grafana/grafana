@@ -124,8 +124,30 @@ export const CompatibilityModal = ({ isOpen, onDismiss, dashboardJson, datasourc
                 <Trans i18nKey="compatibility-modal.score-title">Compatibility Score</Trans>
               </Text>
               <Text element="p">
-                <pre>{result.compatibilityScore * 100}%</pre>
+                <pre>{(result.compatibilityScore * 100).toFixed(0)}%</pre>
               </Text>
+
+              {/* Simple note about parse errors if any */}
+              {(() => {
+                const parseErrors = result.datasourceResults[0]?.queryBreakdown?.filter((q) => q.parseError) || [];
+                if (parseErrors.length > 0) {
+                  // Log parse errors to console for debugging
+                  parseErrors.forEach((q) => {
+                    console.log(
+                      `[CompatibilityModal] Parse error in panel "${q.panelTitle}" (Query ${q.queryRefId}):`,
+                      q.parseError
+                    );
+                  });
+                  return (
+                    <Text color="warning">
+                      <Trans i18nKey="compatibility-modal.parse-errors-note">
+                        Note: Some queries failed to parse. Check browser console for details.
+                      </Trans>
+                    </Text>
+                  );
+                }
+                return null;
+              })()}
 
               <Text element="p">
                 <pre className={styles.jsonPreview}>{JSON.stringify(result, null, 2)}</pre>

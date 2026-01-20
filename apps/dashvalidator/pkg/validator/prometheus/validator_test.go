@@ -575,13 +575,30 @@ func TestValidateQueries_AllQueriesFailToParse(t *testing.T) {
 	// Execute
 	result, err := v.ValidateQueries(context.Background(), queries, datasource)
 
-	// Verify - no queries checked, score defaults to 1.0
+	// Verify - no queries checked, score is 0% (not 1.0!)
 	require.NoError(t, err) // Parser errors don't fail validation
 	require.Equal(t, 2, result.TotalQueries)
 	require.Equal(t, 0, result.CheckedQueries) // None successfully parsed
 	require.Equal(t, 0, result.TotalMetrics)
-	require.InDelta(t, 1.0, result.CompatibilityScore, 0.001)
-	require.Empty(t, result.QueryBreakdown) // No successfully parsed queries
+	require.InDelta(t, 0.0, result.CompatibilityScore, 0.001) // Bug fix: was 1.0, now 0.0
+	require.Len(t, result.QueryBreakdown, 2)                  // Failed queries now included
+
+	// Verify first failed query
+	qr1 := result.QueryBreakdown[0]
+	require.Equal(t, "Bad Query 1", qr1.PanelTitle)
+	require.Equal(t, "A", qr1.QueryRefID)
+	require.NotNil(t, qr1.ParseError)
+	require.Contains(t, *qr1.ParseError, "invalid PromQL syntax")
+	require.Equal(t, 0, qr1.TotalMetrics)
+	require.InDelta(t, 0.0, qr1.CompatibilityScore, 0.001)
+
+	// Verify second failed query
+	qr2 := result.QueryBreakdown[1]
+	require.Equal(t, "Bad Query 2", qr2.PanelTitle)
+	require.Equal(t, "B", qr2.QueryRefID)
+	require.NotNil(t, qr2.ParseError)
+	require.Contains(t, *qr2.ParseError, "invalid PromQL syntax")
+	require.InDelta(t, 0.0, qr2.CompatibilityScore, 0.001)
 }
 
 func TestValidateQueries_SomeQueriesParse_SomeFail(t *testing.T) {
@@ -615,15 +632,31 @@ func TestValidateQueries_SomeQueriesParse_SomeFail(t *testing.T) {
 	// Execute
 	result, err := v.ValidateQueries(context.Background(), queries, datasource)
 
-	// Verify - only successful query counted
+	// Verify - only successful query counted for metrics, but both in breakdown
 	require.NoError(t, err)
 	require.Equal(t, 2, result.TotalQueries)
 	require.Equal(t, 1, result.CheckedQueries) // Only 1 parsed successfully
 	require.Equal(t, 1, result.TotalMetrics)
 	require.Equal(t, 1, result.FoundMetrics)
 	require.InDelta(t, 1.0, result.CompatibilityScore, 0.001)
-	require.Len(t, result.QueryBreakdown, 1) // Only successful query in breakdown
-	require.Equal(t, "A", result.QueryBreakdown[0].QueryRefID)
+	require.Len(t, result.QueryBreakdown, 2) // Both queries in breakdown now
+
+	// Verify successful query
+	qr1 := result.QueryBreakdown[0]
+	require.Equal(t, "A", qr1.QueryRefID)
+	require.Equal(t, "Good Query", qr1.PanelTitle)
+	require.Nil(t, qr1.ParseError)
+	require.Equal(t, 1, qr1.TotalMetrics)
+	require.InDelta(t, 1.0, qr1.CompatibilityScore, 0.001)
+
+	// Verify failed query has parse error
+	qr2 := result.QueryBreakdown[1]
+	require.Equal(t, "B", qr2.QueryRefID)
+	require.Equal(t, "Bad Query", qr2.PanelTitle)
+	require.NotNil(t, qr2.ParseError)
+	require.Contains(t, *qr2.ParseError, "invalid PromQL syntax")
+	require.Equal(t, 0, qr2.TotalMetrics)
+	require.InDelta(t, 0.0, qr2.CompatibilityScore, 0.001)
 }
 
 // ============================================================================

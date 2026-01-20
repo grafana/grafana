@@ -124,7 +124,9 @@ function DashboardCardComponent({
                 }
               }}
               aria-label={t('dashboard-library.card.check-compatibility-button', 'Check compatibility')}
-            />
+            >
+              {t('dashboard-library.card.check-compatibility-button', 'Check compatibility')}
+            </Button>
           </Tooltip>
         )}
       </Card.Actions>

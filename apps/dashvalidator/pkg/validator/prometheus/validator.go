@@ -56,25 +56,37 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 	}
 
 	// Step 1: Parse all queries to extract metrics
+	// Track all parse results (success or failure) so we can include errors in breakdown
+	type queryParseResult struct {
+		metrics    []string
+		parseError error
+	}
+	parseResults := make([]queryParseResult, len(queries))
 	allMetrics := make(map[string]bool) // Use map to deduplicate
 	queryMetrics := make(map[int][]string)
 
 	for i, query := range queries {
 		fmt.Printf("[DEBUG PROM] Parsing query %d: %s\n", i, query.QueryText)
 		metrics, err := v.parser.ExtractMetrics(query.QueryText)
-		if err != nil {
-			// If we can't parse the query, we still continue with others
-			// but we don't count this query as "checked"
-			fmt.Printf("[DEBUG PROM] Failed to parse query %d: %v\n", i, err)
-			continue
-		}
-		fmt.Printf("[DEBUG PROM] Extracted %d metrics from query %d: %v\n", len(metrics), i, metrics)
-		result.CheckedQueries++
-		queryMetrics[i] = metrics
 
-		// Add to global metrics set
-		for _, metric := range metrics {
-			allMetrics[metric] = true
+		// Store result regardless of success/failure
+		parseResults[i] = queryParseResult{
+			metrics:    metrics,
+			parseError: err,
+		}
+
+		if err != nil {
+			fmt.Printf("[DEBUG PROM] Failed to parse query %d: %v\n", i, err)
+			// Don't continue - we'll include this in breakdown as a failed query
+		} else {
+			fmt.Printf("[DEBUG PROM] Extracted %d metrics from query %d: %v\n", len(metrics), i, metrics)
+			result.CheckedQueries++
+			queryMetrics[i] = metrics
+
+			// Add to global metrics set
+			for _, metric := range metrics {
+				allMetrics[metric] = true
+			}
 		}
 	}
 
@@ -117,20 +129,33 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 		result.MissingMetrics = append(result.MissingMetrics, metric)
 	}
 
-	// Step 4: Build per-query breakdown
+	// Step 4: Build per-query breakdown (including queries that failed to parse)
 	for i, query := range queries {
-		metrics, ok := queryMetrics[i]
-		if !ok {
-			// Query wasn't parsed successfully, skip
+		parseResult := parseResults[i]
+
+		queryResult := validator.QueryResult{
+			PanelTitle: query.PanelTitle,
+			PanelID:    query.PanelID,
+			QueryRefID: query.RefID,
+		}
+
+		// Check if parsing failed
+		if parseResult.parseError != nil {
+			// Query failed to parse - treat as 0% compatible
+			errMsg := parseResult.parseError.Error()
+			queryResult.ParseError = &errMsg
+			queryResult.TotalMetrics = 0
+			queryResult.FoundMetrics = 0
+			queryResult.MissingMetrics = []string{}
+			queryResult.CompatibilityScore = 0.0
+
+			result.QueryBreakdown = append(result.QueryBreakdown, queryResult)
 			continue
 		}
 
-		queryResult := validator.QueryResult{
-			PanelTitle:   query.PanelTitle,
-			PanelID:      query.PanelID,
-			QueryRefID:   query.RefID,
-			TotalMetrics: len(metrics),
-		}
+		// Query parsed successfully - proceed with normal validation
+		metrics := parseResult.metrics
+		queryResult.TotalMetrics = len(metrics)
 
 		// Check which metrics from this query are missing
 		queryMissing := make([]string, 0)
@@ -156,8 +181,16 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 	// Step 5: Calculate overall compatibility score
 	if result.TotalMetrics > 0 {
 		result.CompatibilityScore = float64(result.FoundMetrics) / float64(result.TotalMetrics)
+	} else if result.TotalQueries == 0 {
+		// No queries at all - nothing to validate, treat as 100% compatible
+		result.CompatibilityScore = 1.0
+	} else if result.CheckedQueries > 0 {
+		// All queries parsed but extracted no metrics (e.g., time() or pure math expressions)
+		// This is valid - treat as 100% compatible
+		result.CompatibilityScore = 1.0
 	} else {
-		result.CompatibilityScore = 1.0 // No metrics = perfect compatibility
+		// All queries failed to parse - treat as 0% compatible
+		result.CompatibilityScore = 0.0
 	}
 
 	fmt.Printf("[DEBUG PROM] Validation complete! Score: %.2f, Found: %d/%d metrics\n",

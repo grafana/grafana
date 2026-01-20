@@ -70,6 +70,7 @@ type queryResult struct {
 	FoundMetrics       int      `json:"foundMetrics"`
 	MissingMetrics     []string `json:"missingMetrics"`
 	CompatibilityScore float64  `json:"compatibilityScore"`
+	ParseError         *string  `json:"parseError,omitempty"`
 }
 
 func New(cfg app.Config) (app.App, error) {
@@ -309,6 +310,7 @@ func convertToCheckResponse(result *validator.DashboardCompatibilityResult) chec
 				FoundMetrics:       qr.FoundMetrics,
 				MissingMetrics:     qr.MissingMetrics,
 				CompatibilityScore: qr.CompatibilityScore,
+				ParseError:         qr.ParseError,
 			})
 		}
 

@@ -154,4 +154,8 @@ dashboardcompatibilityscorev0alpha1: {
 	// Calculated as: (foundMetrics / totalMetrics) * 100
 	// 100 = query will work perfectly, 0 = query will return no data.
 	compatibilityScore: float64
+
+	// Optional error message for queries that failed to parse.
+	// When present, the query is treated as 0% compatible.
+	parseError?: string
 }
