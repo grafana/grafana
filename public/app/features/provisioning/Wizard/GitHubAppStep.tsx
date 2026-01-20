@@ -55,6 +55,11 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
     submit: async () => {
       const isValid = await credentialForm.trigger();
       if (!isValid) {
+        const validationError = t(
+          'provisioning.wizard.github-app-creation-default-error',
+          'Failed to create connection'
+        );
+        onSubmit({ success: false, error: validationError });
         return;
       }
 
@@ -89,7 +94,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
         <Controller
           name="githubAppMode"
           control={control}
-          render={({ field: { ref: fieldRef, onChange, ...field } }) => (
+          render={({ field: { onChange, ...field } }) => (
             <RadioButtonGroup
               options={[
                 {

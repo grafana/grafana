@@ -416,8 +416,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
                 message: errorMessage?.message ?? '',
               },
             });
-          }
-          if (field && errorMessage) {
+          } else if (field && errorMessage) {
             setError(field, errorMessage);
           } else {
             setStepStatusInfo({
