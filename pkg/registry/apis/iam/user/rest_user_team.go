@@ -66,6 +66,12 @@ func (s *UserTeamREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//nolint:staticcheck // not migrated to OpenFeature
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamBindings) {
+			http.Error(w, "functionality not available", http.StatusForbidden)
+			return
+		}
+
 		ctx, span := s.tracer.Start(r.Context(), "user.teams")
 		defer span.End()
 
