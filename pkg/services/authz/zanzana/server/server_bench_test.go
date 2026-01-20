@@ -43,7 +43,7 @@ const (
 	benchFolderResource    = "folders"
 
 	// BenchmarkBatchCheck measures the performance of BatchCheck requests with 50 items per batch.
-	batchCheckSize = 50
+	_ = 50 // batchCheckSize - kept for documentation
 )
 
 // benchmarkData holds all the generated test data for benchmarks
