@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"iter"
 	"math"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -262,6 +263,16 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 	b.log.Info("starting garbage collection loop")
 
 	go func() {
+		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
+		if b.garbageCollection.Interval > 0 {
+			jitter := time.Duration(rand.Int63n(b.garbageCollection.Interval.Nanoseconds()))
+			select {
+			case <-b.done:
+				return
+			case <-time.After(jitter):
+			}
+		}
+
 		ticker := time.NewTicker(b.garbageCollection.Interval)
 		defer ticker.Stop()
 
@@ -281,6 +292,7 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
 	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
 	defer span.End()
+	start := time.Now()
 
 	deletedByKey := map[string]int64{}
 
@@ -321,7 +333,9 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 				b.log.Info("garbage collection deleted history",
 					"group", group,
 					"resource", resourceName,
-					"rows", totalDeleted)
+					"rows", totalDeleted,
+					"seconds", time.Since(start).Seconds(),
+				)
 				deletedByKey[resourceKey] += totalDeleted
 			}
 		}
