@@ -192,7 +192,7 @@ export function DashList(props: PanelProps<Options>) {
               locationInfo={locationInfo}
               layoutMode="list"
               onStarChange={handleStarChange}
-              source="browseDashboardsPage_DashListView"
+              source="dashListView"
             />
           </li>
         );
