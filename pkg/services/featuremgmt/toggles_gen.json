@@ -4551,14 +4551,18 @@
     {
       "metadata": {
         "name": "useMTPlugins",
-        "resourceVersion": "1764913709691",
-        "creationTimestamp": "2025-12-05T07:09:41Z"
+        "resourceVersion": "1768554119948",
+        "creationTimestamp": "2025-12-05T07:09:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-16 09:01:59.948292 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
