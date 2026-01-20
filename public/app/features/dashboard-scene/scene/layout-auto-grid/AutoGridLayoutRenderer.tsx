@@ -17,7 +17,11 @@ import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden } = model.useState();
   const styles = useStyles2(getStyles, model.state);
-  const { layoutOrchestrator, isEditing } = useDashboardState(model);
+  const {
+    layoutOrchestrator,
+    isEditing,
+    meta: { isEmbedded },
+  } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();
@@ -26,7 +30,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     return null;
   }
 
-  const showCanvasActions = !isRepeatCloneOrChildOf(model) && isEditing;
+  const showCanvasActions = !isEmbedded && !isRepeatCloneOrChildOf(model) && isEditing;
 
   if (soloPanelContext) {
     return children.map((item) => <item.Component key={item.state.key} model={item} />);
