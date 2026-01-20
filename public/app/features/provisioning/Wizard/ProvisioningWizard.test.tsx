@@ -281,7 +281,9 @@ describe('ProvisioningWizard', () => {
 
       await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
 
-      expect(await screen.findByRole('heading', { name: /3\. Synchronize with external storage/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('heading', { name: /3\. Synchronize with external storage/i })
+      ).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Begin synchronization/i })).toBeInTheDocument();
     });
 
