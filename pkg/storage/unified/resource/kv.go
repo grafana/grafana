@@ -62,6 +62,22 @@ const MaxBatchOps = 20
 // ErrKeyAlreadyExists is returned when BatchOpCreate is used on an existing key
 var ErrKeyAlreadyExists = errors.New("key already exists")
 
+// BatchError wraps errors from Batch operations with context about which operation failed
+type BatchError struct {
+	Err   error   // The underlying error
+	Index int     // Index of the failed operation in the batch
+	Op    BatchOp // The operation that failed
+}
+
+func (e *BatchError) Error() string {
+	return fmt.Sprintf("batch operation %d (mode: %d, key: %s) failed: %v",
+		e.Index, e.Op.Mode, e.Op.Key, e.Err)
+}
+
+func (e *BatchError) Unwrap() error {
+	return e.Err
+}
+
 type KV interface {
 	// Keys returns all the keys in the store
 	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
@@ -415,7 +431,7 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
 
-	for _, op := range ops {
+	for i, op := range ops {
 		keyWithSection := section + "/" + op.Key
 
 		switch op.Mode {
@@ -423,42 +439,42 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 			// Check that key doesn't exist, then set
 			_, err := txn.Get([]byte(keyWithSection))
 			if err == nil {
-				return ErrKeyAlreadyExists
+				return &BatchError{Err: ErrKeyAlreadyExists, Index: i, Op: op}
 			}
 			if !errors.Is(err, badger.ErrKeyNotFound) {
-				return err
+				return &BatchError{Err: err, Index: i, Op: op}
 			}
 			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
-				return err
+				return &BatchError{Err: err, Index: i, Op: op}
 			}
 
 		case BatchOpUpdate:
 			// Check that key exists, then set
 			_, err := txn.Get([]byte(keyWithSection))
 			if errors.Is(err, badger.ErrKeyNotFound) {
-				return ErrNotFound
+				return &BatchError{Err: ErrNotFound, Index: i, Op: op}
 			}
 			if err != nil {
-				return err
+				return &BatchError{Err: err, Index: i, Op: op}
 			}
 			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
-				return err
+				return &BatchError{Err: err, Index: i, Op: op}
 			}
 
 		case BatchOpPut:
 			// Upsert: create or update
 			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
-				return err
+				return &BatchError{Err: err, Index: i, Op: op}
 			}
 
 		case BatchOpDelete:
 			// Idempotent delete - don't error if not found
 			if err := txn.Delete([]byte(keyWithSection)); err != nil {
-				return err
+				return &BatchError{Err: err, Index: i, Op: op}
 			}
 
 		default:
-			return fmt.Errorf("unknown operation mode: %d", op.Mode)
+			return &BatchError{Err: fmt.Errorf("unknown operation mode: %d", op.Mode), Index: i, Op: op}
 		}
 	}
 

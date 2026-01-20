@@ -887,6 +887,14 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, resource.ErrKeyAlreadyExists)
 
+		// Verify BatchError fields
+		var batchErr *resource.BatchError
+		if assert.ErrorAs(t, err, &batchErr) {
+			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
+			assert.Equal(t, "create-exists-key", batchErr.Op.Key, "failed operation key should match")
+			assert.Equal(t, resource.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
+		}
+
 		// Verify the original value is unchanged
 		reader, err := kv.Get(ctx, section, "create-exists-key")
 		require.NoError(t, err)
@@ -925,6 +933,14 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, resource.ErrNotFound)
+
+		// Verify BatchError fields
+		var batchErr *resource.BatchError
+		if assert.ErrorAs(t, err, &batchErr) {
+			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
+			assert.Equal(t, "update-nonexistent-key", batchErr.Op.Key, "failed operation key should match")
+			assert.Equal(t, resource.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
+		}
 
 		// Verify the key was not created
 		_, err = kv.Get(ctx, section, "update-nonexistent-key")
@@ -992,6 +1008,14 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		err := kv.Batch(ctx, section, ops)
 		assert.ErrorIs(t, err, resource.ErrKeyAlreadyExists)
 
+		// Verify BatchError identifies the correct operation
+		var batchErr *resource.BatchError
+		if assert.ErrorAs(t, err, &batchErr) {
+			assert.Equal(t, 1, batchErr.Index, "failed operation index should be 1 (second operation)")
+			assert.Equal(t, "rollback-exists", batchErr.Op.Key, "failed operation key should match")
+			assert.Equal(t, resource.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
+		}
+
 		// Verify rollback: the first operation should NOT have persisted
 		_, err = kv.Get(ctx, section, "rollback-new1")
 		assert.ErrorIs(t, err, resource.ErrNotFound)
@@ -1057,5 +1081,43 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		err := kv.Batch(ctx, section, ops)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "too many operations")
+	})
+
+	t.Run("batch error context with later operation failure", func(t *testing.T) {
+		// Create some keys first
+		saveKVHelper(t, kv, ctx, section, "error-context-key2", strings.NewReader("existing"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "error-context-key0", Value: []byte("value0")},
+			{Mode: resource.BatchOpPut, Key: "error-context-key1", Value: []byte("value1")},
+			{Mode: resource.BatchOpUpdate, Key: "error-context-nonexistent", Value: []byte("should-fail")}, // This will fail at index 2
+			{Mode: resource.BatchOpPut, Key: "error-context-key3", Value: []byte("value3")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.Error(t, err)
+
+		// Verify BatchError provides correct context
+		var batchErr *resource.BatchError
+		require.ErrorAs(t, err, &batchErr, "error should be a BatchError")
+		assert.Equal(t, 2, batchErr.Index, "failed operation index should be 2")
+		assert.Equal(t, "error-context-nonexistent", batchErr.Op.Key, "failed operation key should match")
+		assert.Equal(t, resource.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
+		assert.ErrorIs(t, batchErr.Err, resource.ErrNotFound, "underlying error should be ErrNotFound")
+
+		// Verify error message contains useful information
+		errMsg := err.Error()
+		assert.Contains(t, errMsg, "batch operation 2", "error message should contain operation index")
+		assert.Contains(t, errMsg, "error-context-nonexistent", "error message should contain key")
+
+		// Verify atomic rollback - no keys should have been created
+		_, err = kv.Get(ctx, section, "error-context-key0")
+		assert.ErrorIs(t, err, resource.ErrNotFound, "first operation should have been rolled back")
+
+		_, err = kv.Get(ctx, section, "error-context-key1")
+		assert.ErrorIs(t, err, resource.ErrNotFound, "second operation should have been rolled back")
+
+		_, err = kv.Get(ctx, section, "error-context-key3")
+		assert.ErrorIs(t, err, resource.ErrNotFound, "fourth operation should not have been executed")
 	})
 }
