@@ -14,9 +14,9 @@ interface Props {
   showFolderNames: boolean;
   locationInfo?: LocationInfo;
   layoutMode: 'list' | 'card';
+  source: string; // for rudderstack analytics to track which page DashListItem click from
   order?: number; // for rudderstack analytics to track position in cards
   onStarChange?: (id: string, isStarred: boolean) => void;
-  source?: string; // for rudderstack analytics to track which page DashListItem click from
 }
 export function DashListItem({
   dashboard,
