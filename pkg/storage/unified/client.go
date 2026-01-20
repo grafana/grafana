@@ -7,7 +7,6 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
-	"github.com/fullstorydev/grpchan"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -33,8 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -49,15 +46,7 @@ type Options struct {
 	Authzc       types.AccessClient
 	Docs         resource.DocumentBuilderSupplier
 	SecureValues secrets.InlineSecureValueSupport
-	// TODO: try to remove this
-	Backend resource.StorageBackend // Shared backend to avoid duplicate metrics registration
-	// SearchServer is used in monolith mode where both storage and search run in the same process.
-	// This is provided by sql.ProvideSearchBackend via Wire.
-	SearchServer resource.SearchServer
-	// SearchClient is used when storage and search run as separate services (gRPC mode).
-	// The storage server uses this to call the search server for operations like
-	// finding dashboards in a folder during delete.
-	//SearchClient resourcepb.ResourceIndexClient
+	Backend      resource.StorageBackend // unused until sql.ProvideStorageBackend is implemented
 }
 
 type clientMetrics struct {
@@ -65,7 +54,8 @@ type clientMetrics struct {
 	requestRetries  *prometheus.CounterVec
 }
 
-// This adds a UnifiedStorage client into the wire dependency tree
+// ProvideUnifiedResourceClient creates a unified ResourceClient to be used in the wire dependency tree.
+// Note: use a more specific client when possible
 func ProvideUnifiedResourceClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
@@ -79,7 +69,7 @@ func ProvideUnifiedResourceClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.Backend, opts.SearchServer)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.Backend)
 	if err == nil {
 		// Decide whether to disable SQL fallback stats per resource in Mode 5.
 		// Otherwise we would still try to query the legacy SQL database in Mode 5.
@@ -104,46 +94,24 @@ func ProvideUnifiedResourceClient(opts *Options,
 	return client, err
 }
 
-// ProvideUnifiedSearchClient adds a search client for wire dependency tree.
-func ProvideUnifiedSearchClient(resourceClient resource.ResourceClient) (resource.SearchClient, error) {
+// ProvideSearchClient adds a search client for wire dependency tree.
+func ProvideSearchClient(resourceClient resource.ResourceClient) (resource.SearchClient, error) {
 	return resourceClient, nil
 }
 
-// ProvideUnifiedStorageClient adds a storage client for wire dependency tree.
-func ProvideUnifiedStorageClient(resourceClient resource.ResourceClient) (resource.StorageClient, error) {
+// ProvideStorageClient adds a storage client for wire dependency tree.
+func ProvideStorageClient(resourceClient resource.ResourceClient) (resource.StorageClient, error) {
 	return resourceClient, nil
 }
 
-// ProvideUnifiedMigratorClient adds a migrator client for wire dependency tree.
-func ProvideUnifiedMigratorClient(resourceClient resource.ResourceClient) (resource.MigratorClient, error) {
+// ProvideMigratorClient adds a migrator client for wire dependency tree.
+func ProvideMigratorClient(resourceClient resource.ResourceClient) (resource.MigratorClient, error) {
 	return resourceClient, nil
 }
 
-// ProvideUnifiedQuotaClient adds a quota client for wire dependency tree.
-func ProvideUnifiedQuotaClient(resourceClient resource.ResourceClient) (resource.QuotaClient, error) {
+// ProvideQuotaClient adds a quota client for wire dependency tree.
+func ProvideQuotaClient(resourceClient resource.ResourceClient) (resource.QuotaClient, error) {
 	return resourceClient, nil
-}
-
-// ProvideSearchClient creates a gRPC client to connect to a remote search server.
-// This is used when storage and search run as separate services.
-// Returns nil if search_server_address is not configured.
-func ProvideSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
-	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-	searchServerAddress := apiserverCfg.Key("search_server_address").MustString("")
-
-	if searchServerAddress == "" {
-		// No separate search server configured
-		return nil, nil
-	}
-
-	metrics := newClientMetrics(prometheus.NewRegistry())
-	conn, err := newGrpcConn(searchServerAddress, metrics, features, 0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to search server at %s: %w", searchServerAddress, err)
-	}
-
-	cc := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
-	return resourcepb.NewResourceIndexClient(cc), nil
 }
 
 func newClient(opts options.StorageOptions,
@@ -158,7 +126,6 @@ func newClient(opts options.StorageOptions,
 	indexMetrics *resource.BleveIndexMetrics,
 	secure secrets.InlineSecureValueSupport,
 	backend resource.StorageBackend,
-	searchServer resource.SearchServer,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -243,20 +210,6 @@ func newClient(opts options.StorageOptions,
 				return nil, err
 			}
 			storageOptions.SearchOptions = &searchOptions
-
-			//searchServer, err = sql.NewSearchServer(sql.SearchServerOptions{
-			//	Backend:       storageOptions.Backend, // share backend when running unified storage
-			//	DB:            db,
-			//	Cfg:           cfg,
-			//	Tracer:        tracer,
-			//	Reg:           reg,
-			//	AccessClient:  authzc,
-			//	SearchOptions: searchOptions,
-			//	IndexMetrics:  indexMetrics,
-			//})
-			//if err != nil {
-			//	return nil, err
-			//}
 		}
 
 		if cfg.QOSEnabled {

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -110,7 +109,7 @@ type APIBuilder struct {
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
 	dashboardAccess  legacy.MigrationDashboardAccessor
-	searchClient     resourcepb.ManagedObjectIndexClient
+	searchClient     resource.SearchClient
 	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
 	access           auth.AccessChecker
@@ -244,7 +243,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	client resource.SearchClient, // implements resource.RepositoryClient
+	client resource.SearchClient,
 	configProvider apiserver.RestConfigProvider,
 	access authlib.AccessClient,
 	dashboardAccess legacy.MigrationDashboardAccessor,
