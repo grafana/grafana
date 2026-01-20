@@ -5,7 +5,7 @@ import { useDebounce, usePrevious } from 'react-use';
 
 import { ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, IconButton, Input, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, IconButton, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS } from './constants';
 import { PaneView, SelectedView, ViewMode } from './types';
@@ -111,21 +111,41 @@ const FlameGraphHeader = ({
             </>
           ) : (
             <>
-              <Select<PaneView>
-                options={paneViewOptions}
-                value={leftPaneView}
-                onChange={(v) => v.value && setLeftPaneView(v.value)}
-                width={16}
-                className={styles.compactSelect}
-              />
+              <Dropdown
+                overlay={
+                  <Menu>
+                    {paneViewOptions.map((option) => (
+                      <Menu.Item
+                        key={option.value}
+                        label={option.label ?? ''}
+                        onClick={() => option.value && setLeftPaneView(option.value)}
+                      />
+                    ))}
+                  </Menu>
+                }
+              >
+                <Button variant="secondary" size="sm" className={styles.paneDropdownButton}>
+                  {paneViewOptions.find((o) => o.value === leftPaneView)?.label}
+                </Button>
+              </Dropdown>
               <IconButton name="exchange-alt" size="sm" tooltip="Swap views" onClick={onSwapPanes} />
-              <Select<PaneView>
-                options={paneViewOptions}
-                value={rightPaneView}
-                onChange={(v) => v.value && setRightPaneView(v.value)}
-                width={16}
-                className={styles.compactSelect}
-              />
+              <Dropdown
+                overlay={
+                  <Menu>
+                    {paneViewOptions.map((option) => (
+                      <Menu.Item
+                        key={option.value}
+                        label={option.label ?? ''}
+                        onClick={() => option.value && setRightPaneView(option.value)}
+                      />
+                    ))}
+                  </Menu>
+                }
+              >
+                <Button variant="secondary" size="sm" className={styles.paneDropdownButton}>
+                  {paneViewOptions.find((o) => o.value === rightPaneView)?.label}
+                </Button>
+              </Dropdown>
             </>
           )}
         </div>
@@ -303,9 +323,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'extraElements',
     marginLeft: theme.spacing(1),
   }),
-  compactSelect: css({
-    label: 'compactSelect',
-    marginRight: theme.spacing(0.5),
+  paneDropdownButton: css({
+    label: 'paneDropdownButton',
+    minWidth: '95px',
+    justifyContent: 'center',
   }),
 });
 
