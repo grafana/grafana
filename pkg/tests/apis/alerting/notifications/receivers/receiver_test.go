@@ -144,8 +144,8 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 	adminClient, err := v0alpha1.NewReceiverClientFromGenerator(admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	writeACMetadata := []string{"canWrite", "canDelete"}
-	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin", "canModifyProtected"}
+	writeACMetadata := []string{"canWrite", "canDelete", "canTest"}
+	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin", "canModifyProtected", "canTest"}
 
 	mustID := func(user apis.User) int64 {
 		id, err := user.Identity.GetInternalID()
@@ -416,6 +416,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 		canDelete          bool
 		canReadSecrets     bool
 		canAdmin           bool
+		canTest            bool
 	}
 	// region users
 	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
@@ -436,6 +437,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 		createWildcardPermission(
 			accesscontrol.ActionAlertingReceiversRead,
 			accesscontrol.ActionAlertingReceiversUpdate,
+		),
+	})
+	updaterAndTester := helper.CreateUser("updaterAndTester", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+			accesscontrol.ActionAlertingReceiversTest,
 		),
 	})
 	deleter := helper.CreateUser("deleter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
@@ -494,6 +502,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete:          true,
 			canAdmin:           true,
 			canReadSecrets:     true,
+			canTest:            true,
 		},
 		{
 			user:      org1.Editor,
@@ -501,6 +510,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canUpdate: true,
 			canCreate: true,
 			canDelete: true,
+			canTest:   true,
 		},
 		{
 			user:    org1.Viewer,
@@ -526,6 +536,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canUpdate: true,
 		},
 		{
+			user:      updaterAndTester,
+			canRead:   true,
+			canUpdate: true,
+			canTest:   true,
+		},
+		{
 			user:      deleter,
 			canRead:   true,
 			canDelete: true,
@@ -540,6 +556,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canCreate: true,
 			canUpdate: true,
 			canDelete: true,
+			canTest:   true,
 		},
 		{
 			user:               adminLikeUser,
@@ -550,6 +567,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete:          true,
 			canAdmin:           true,
 			canReadSecrets:     true,
+			canTest:            true,
 		},
 		{
 			user:               adminLikeUserLongName,
@@ -560,6 +578,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete:          true,
 			canAdmin:           true,
 			canReadSecrets:     true,
+			canTest:            true,
 		},
 	}
 
@@ -619,6 +638,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 				expectedWithMetadata.SetCanUse(true)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
+				}
+				if tc.canTest {
+					expectedWithMetadata.SetAccessControl("canTest")
 				}
 				if tc.canUpdateProtected {
 					expectedWithMetadata.SetAccessControl("canModifyProtected")
@@ -1341,6 +1363,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		receiver.SetAccessControl("canReadSecrets")
 		receiver.SetAccessControl("canAdmin")
 		receiver.SetAccessControl("canModifyProtected")
+		receiver.SetAccessControl("canTest")
 		receiver.SetInUse(0, nil)
 		receiver.SetCanUse(true)
 

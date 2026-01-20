@@ -14,6 +14,7 @@
           "grafana.com/access/canDelete": "true",
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/access/canWrite": "true",
           "grafana.com/canUse": "true",
           "grafana.com/inUse/routes": "1",
@@ -35,6 +36,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -55,6 +57,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -98,6 +101,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -145,6 +149,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -202,6 +207,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -246,6 +252,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -306,6 +313,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "1",
           "grafana.com/inUse/rules": "0",
@@ -376,6 +384,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -428,6 +437,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -511,6 +521,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -564,6 +575,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -609,6 +621,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -657,6 +670,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",
@@ -704,6 +718,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "1",
           "grafana.com/inUse/rules": "0",
@@ -748,6 +763,7 @@
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
+          "grafana.com/access/canTest": "true",
           "grafana.com/canUse": "false",
           "grafana.com/inUse/routes": "0",
           "grafana.com/inUse/rules": "0",

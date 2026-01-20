@@ -514,6 +514,12 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 		basePerms.Set(models.ReceiverPermissionModifyProtected, true)
 	}
 
+	if err := s.test.AuthorizePreConditions(ctx, user); err != nil {
+		basePerms.Set(models.ReceiverPermissionTest, false)
+	} else if err := s.test.AuthorizeAll(ctx, user); err == nil {
+		basePerms.Set(models.ReceiverPermissionTest, true)
+	}
+
 	if basePerms.AllSet() {
 		// Shortcut for the case when all permissions are known based on preconditions.
 		result := make(map[string]models.ReceiverPermissionSet, len(receivers))
@@ -549,6 +555,11 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 		if _, ok := permSet.Has(models.ReceiverPermissionModifyProtected); !ok {
 			err := s.updateProtected.authorize(ctx, user, rcv)
 			permSet.Set(models.ReceiverPermissionModifyProtected, err == nil)
+		}
+
+		if _, ok := permSet.Has(models.ReceiverPermissionTest); !ok {
+			err := s.test.authorize(ctx, user, rcv)
+			permSet.Set(models.ReceiverPermissionTest, err == nil)
 		}
 
 		result[rcv.GetUID()] = permSet
