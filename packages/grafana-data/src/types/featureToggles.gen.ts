@@ -109,6 +109,11 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
+  * Registers a live apiserver
+  * @default false
+  */
+  liveAPIServer?: boolean;
+  /**
   * populate star status from apiserver
   * @default false
   */
@@ -1420,4 +1425,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSyncDispatchTimer?: boolean;
+  /**
+  * Enables the Query with Assistant button in the query editor
+  * @default false
+  */
+  queryWithAssistant?: boolean;
 }

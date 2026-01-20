@@ -3,7 +3,7 @@
 // DO NOT EDIT
 //
 
-package apis
+package manifestdata
 
 import (
 	"encoding/json"
@@ -63,6 +63,7 @@ var appManifestData = app.ManifestData{
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
 				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
 			},
 		},
 
@@ -96,21 +97,6 @@ var appManifestData = app.ManifestData{
 								OperationProps: spec3.OperationProps{
 
 									OperationId: "getFoo",
-
-									Parameters: []*spec3.Parameter{
-
-										{
-											ParameterProps: spec3.ParameterProps{
-												Name: "message",
-												In:   "query",
-												Schema: &spec.Schema{
-													SchemaProps: spec.SchemaProps{
-														Type: []string{"string"},
-													},
-												},
-											},
-										},
-									},
 
 									Responses: &spec3.Responses{
 										ResponsesProps: spec3.ResponsesProps{
@@ -287,6 +273,7 @@ var appManifestData = app.ManifestData{
 						},
 					},
 				},
+				Schemas: map[string]spec.Schema{},
 			},
 		},
 	},
@@ -332,9 +319,7 @@ func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (g
 	return goType, exists
 }
 
-var customRouteToGoParamsType = map[string]runtime.Object{
-	"v1alpha1|Example|foo|GET": &v1alpha1.GetFooRequestParamsObject{},
-}
+var customRouteToGoParamsType = map[string]runtime.Object{}
 
 func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goType runtime.Object, exists bool) {
 	if len(path) > 0 && path[0] == '/' {

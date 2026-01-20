@@ -126,7 +126,6 @@ const datasource = {
 
 const datasourceInstance = {
   name: datasource.name,
-  id: 1,
   uid: datasource.uid,
   type: datasource.type,
   jsonData: {},
