@@ -173,43 +173,25 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 function QueryEditorNextContainer({ model }: SceneComponentProps<PanelDataPaneNext>) {
   const { panelRef, datasource, dsSettings, error } = model.useState();
   const panel = panelRef.resolve();
-
-  // Find the SceneQueryRunner (may be wrapped by SceneDataTransformer)
   const queryRunner = getQueryRunnerFor(panel);
-
-  // Subscribe to queryRunner state for queries and data
   const queryRunnerState = queryRunner?.useState();
 
-  // Core context: panel, datasource (rarely changes)
-  const coreValue = useMemo(
+  // All reactive state in one object
+  const state = useMemo(
     () => ({
       panel,
       datasource,
       dsSettings,
-    }),
-    [panel, datasource, dsSettings]
-  );
-
-  // Queries context: query list (changes on user action)
-  const queriesValue = useMemo(
-    () => ({
       queries: queryRunnerState?.queries ?? [],
-    }),
-    [queryRunnerState?.queries]
-  );
-
-  // Data context: query results (changes frequently)
-  const dataValue = useMemo(
-    () => ({
       data: queryRunnerState?.data,
       isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
       error,
     }),
-    [queryRunnerState?.data, error]
+    [panel, datasource, dsSettings, queryRunnerState?.queries, queryRunnerState?.data, error]
   );
 
-  // Actions context: stable function references
-  const actionsValue = useMemo(
+  // Stable actions - only changes if model changes (it won't)
+  const actions = useMemo(
     () => ({
       updateQueries: model.updateQueries,
       addQuery: model.addQuery,
@@ -224,7 +206,7 @@ function QueryEditorNextContainer({ model }: SceneComponentProps<PanelDataPaneNe
   );
 
   return (
-    <QueryEditorProvider core={coreValue} queries={queriesValue} data={dataValue} actions={actionsValue}>
+    <QueryEditorProvider state={state} actions={actions}>
       <QueryEditorNext />
     </QueryEditorProvider>
   );

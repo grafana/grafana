@@ -4,12 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Badge, Button, Card, Grid, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import {
-  useQueryEditorCore,
-  useQueryEditorData,
-  useQueryEditorActions,
-  useQueryEditorQueries,
-} from './QueryEditorContext';
+import { useQueryEditorState, useQueryEditorActions } from './QueryEditorContext';
 
 export const QueryEditorNext = () => {
   const styles = useStyles2(getStyles);
@@ -38,9 +33,9 @@ export const QueryEditorNext = () => {
   );
 };
 
-// Datasource information - uses useQueryEditorCore
+// Datasource information
 function DatasourceInfo() {
-  const { dsSettings, panel } = useQueryEditorCore();
+  const { dsSettings, panel } = useQueryEditorState();
 
   return (
     <Card noMargin>
@@ -64,9 +59,9 @@ function DatasourceInfo() {
   );
 }
 
-// Queries list - uses useQueryEditorQueries
+// Queries list
 function QueriesInfo() {
-  const { queries } = useQueryEditorQueries();
+  const { queries } = useQueryEditorState();
 
   return (
     <Card noMargin>
@@ -102,9 +97,9 @@ function QueriesInfo() {
   );
 }
 
-// Data results - uses useQueryEditorData
+// Data results
 function DataInfo() {
-  const { data, isLoading, error } = useQueryEditorData();
+  const { data, isLoading, error } = useQueryEditorState();
 
   return (
     <Card noMargin>
@@ -158,7 +153,7 @@ function DataInfo() {
   );
 }
 
-// Actions demo - uses useQueryEditorActions
+// Actions demo - stable refs, no re-renders on state change
 function ActionsDemo() {
   const { addQuery, runQueries } = useQueryEditorActions();
 
