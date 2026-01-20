@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -26,7 +26,6 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
   const isEdit = Boolean(connectionName);
   const privateKey = data?.secure?.privateKey;
-  const [privateKeyConfigured, setPrivateKeyConfigured] = useState(Boolean(privateKey));
   const [submitData, request] = useCreateOrUpdateConnection(connectionName);
   const navigate = useNavigate();
 
@@ -114,10 +113,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
           <GitHubAppCredentialFields
             required={!isEdit}
-            privateKeyConfigured={privateKeyConfigured}
-            onPrivateKeyReset={() => {
-              setPrivateKeyConfigured(false);
-            }}
+            privateKeyConfigured={Boolean(privateKey)}
           />
 
           <Stack gap={2}>

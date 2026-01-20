@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -55,7 +55,6 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
 
   const [createConnection] = useCreateOrUpdateConnection();
   const [connections, isLoading, error] = useConnectionList({});
-  const [privateKeyConfigured, setPrivateKeyConfigured] = useState(false);
 
   const githubAppMode = watch('githubAppMode');
 
@@ -183,13 +182,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
 
       {githubAppMode === 'new' && (
         <FormProvider {...credentialForm}>
-          <GitHubAppCredentialFields
-            required
-            privateKeyConfigured={privateKeyConfigured}
-            onPrivateKeyReset={() => {
-              setPrivateKeyConfigured(false);
-            }}
-          />
+          <GitHubAppCredentialFields required />
         </FormProvider>
       )}
     </Stack>

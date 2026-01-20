@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -9,14 +9,13 @@ import { ConnectionFormData } from '../../types';
 export interface GitHubAppCredentialFieldsProps {
   /** Whether fields are required */
   required?: boolean;
-  /** Whether private key is already configured (edit mode) */
+  /** Initial value for whether private key is configured (edit mode) */
   privateKeyConfigured?: boolean;
-  /** Callback when private key is reset */
-  onPrivateKeyReset?: () => void;
 }
 
 export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
-  ({ required = true, privateKeyConfigured = false, onPrivateKeyReset }) => {
+  ({ required = true, privateKeyConfigured = false }) => {
+    const [isPrivateKeyConfigured, setIsPrivateKeyConfigured] = useState(privateKeyConfigured);
     const {
       register,
       control,
@@ -90,10 +89,10 @@ export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
                   'provisioning.connection-form.placeholder-private-key',
                   '-----BEGIN RSA PRIVATE KEY-----...'
                 )}
-                isConfigured={privateKeyConfigured}
+                isConfigured={isPrivateKeyConfigured}
                 onReset={() => {
                   setValue('privateKey', '');
-                  onPrivateKeyReset?.();
+                  setIsPrivateKeyConfigured(false);
                 }}
                 rows={8}
                 grow
