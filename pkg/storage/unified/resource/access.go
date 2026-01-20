@@ -189,7 +189,8 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			return true
 		}, claims.NoopZookie{}, nil
 	}
-	checker, zookie, err := c.client.Compile(ctx, id, req)
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+	checker, zookie, err := c.client.Compile(ctx, id, req) //nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	if err != nil {
 		c.logger.FromContext(ctx).Error("Compile", "group", req.Group, "resource", req.Resource, "error", err)
 		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()

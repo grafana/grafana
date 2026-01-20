@@ -93,7 +93,8 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 		defer cancel()
 
 		timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("zanzana"))
-		itemChecker, _, err := c.zanzanaClient.Compile(zanzanaCtxTimeout, id, req)
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+		itemChecker, _, err := c.zanzanaClient.Compile(zanzanaCtxTimeout, id, req) //nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 		timer.ObserveDuration()
 		if err != nil {
 			c.logger.Warn("Failed to compile zanzana item checker", "error", err)
@@ -102,6 +103,7 @@ func (c *ShadowClient) Compile(ctx context.Context, id authlib.AuthInfo, req aut
 	}()
 
 	timer := prometheus.NewTimer(c.metrics.compileSeconds.WithLabelValues("rbac"))
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	rbacItemChecker, _, err := c.accessClient.Compile(ctx, id, req)
 	timer.ObserveDuration()
 	if err != nil {
