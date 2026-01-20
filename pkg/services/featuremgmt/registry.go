@@ -144,6 +144,16 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:            "liveAPIServer",
+			Description:     "Registers a live apiserver",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:         "starsFromAPIServer",
 			Description:  "populate star status from apiserver",
 			Stage:        FeatureStageExperimental,
@@ -289,13 +299,6 @@ var (
 			Stage:       FeatureStageExperimental,
 			Expression:  "false", // enabled by default
 			Owner:       grafanaOperatorExperienceSquad,
-		},
-		{
-			Name:        "permissionsFilterRemoveSubquery",
-			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -2197,6 +2200,7 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+			HideFromDocs: true,
 		},
 		{
 			Name:         "multiPropsVariables",
@@ -2239,6 +2243,14 @@ var (
 			RequiresRestart: true,
 			HideFromDocs:    true,
 			Expression:      "false",
+		},
+		{
+			Name:         "queryWithAssistant",
+			Description:  "Enables the Query with Assistant button in the query editor",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
 		},
 	}
 )

@@ -928,9 +928,9 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policies",
+      "used-by_other": "Used by {{ count }} notification policy",
       "used-by-rules_one": "Used by {{ count }} alert rule",
-      "used-by-rules_other": "Used by {{ count }} alert rules"
+      "used-by-rules_other": "Used by {{ count }} alert rule"
     },
     "contact-points-filter": {
       "aria-label-clear": "clear",
@@ -2102,7 +2102,7 @@
         "inherited": "Inherited",
         "mute-time": "Muted when",
         "n-instances_one": "instance",
-        "n-instances_other": "instances",
+        "n-instances_other": "instance",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
@@ -2118,7 +2118,7 @@
           }
         }
       },
-      "n-more-policies_one": "{{count}} additional policy",
+      "n-more-policies_one": "{{count}} additional policies",
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
@@ -2177,9 +2177,11 @@
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
       "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI",
-      "body-imported": "This contact point contains integrations that were imported from an external Alertmanager and is currently read-only. The integrations will become editable after the migration process is complete.",
+      "body-imported": "This {{resource}} contains integrations that were imported from an external Alertmanager and is currently read-only. The integrations will become editable after the migration process is complete.",
+      "body-imported-time-interval": "This time interval was imported from an external Alertmanager and is currently read-only. The time interval will become editable after the migration process is complete.",
       "body-provisioned": "This {{resource}} has been provisioned, that means it was created by config. Please contact your server admin to update this {{resource}}.",
-      "title-imported": "This contact point was imported and cannot be edited through the UI",
+      "title-imported": "This {{resource}} was imported and cannot be edited through the UI",
+      "title-imported-time-interval": "This time interval was imported and cannot be edited through the UI",
       "title-provisioned": "This {{resource}} cannot be edited through the UI"
     },
     "provisioning-badge": {
@@ -2677,7 +2679,10 @@
     "rules-group": {
       "deleting": "Deleting",
       "text-federated": "Federated",
-      "text-provisioned": "Provisioned"
+      "text-provisioned": "Provisioned",
+      "ungrouped": "Ungrouped",
+      "ungrouped-suffix": "{{ruleName}} (Ungrouped)",
+      "unknown-rule": "Unknown Rule"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
@@ -3667,15 +3672,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "checkbox": {
@@ -3767,12 +3772,12 @@
       "title": "Recently viewed"
     },
     "restore": {
-      "all-failed_one": "Failed to restore {{count}} dashboard",
-      "all-failed_other": "Failed to restore {{count}} dashboards",
+      "all-failed_one": "Failed to restore {{count}} dashboard.",
+      "all-failed_other": "Failed to restore {{count}} dashboard.",
       "failed-count_one": "{{count}} dashboard failed",
       "failed-count_other": "{{count}} dashboards failed",
       "success-count_one": "{{count}} dashboard restored successfully",
-      "success-count_other": "{{count}} dashboards restored successfully"
+      "success-count_other": "{{count}} dashboard restored successfully"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
@@ -5446,11 +5451,7 @@
         "tooltip": "Edit as code"
       },
       "export": {
-        "title": "Export",
-        "unsaved-modal": {
-          "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
-          "title": "Save changes to dashboard?"
-        }
+        "title": "Export"
       },
       "outline": {
         "title": "Outline",
@@ -5590,14 +5591,6 @@
           "arrow": "Share",
           "title": "Share",
           "tooltip": "Copy link"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Discard",
-            "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
-            "title": "Save changes to dashboard?",
-            "yesText": "Save"
-          }
         },
         "unlink-library-panel": "Unlink library panel"
       },
@@ -6456,8 +6449,8 @@
       "show-variables-warning-alert-title": "Variable queries failed"
     },
     "save-library-viz-panel-modal": {
-      "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
-      "affected-dashboards_other": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
+      "affected-dashboards_one": "This update will affect <strong>{{count}} dashboards.</strong> The following dashboards using the panel will be affected:",
+      "affected-dashboards_other": "This update will affect <strong>{{count}} dashboards.</strong> The following dashboards using the panel will be affected:",
       "cancel": "Cancel",
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
@@ -6498,6 +6491,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "You have unsaved changes to this dashboard. You need to save them before you can share it.",
+        "title": "Unsaved changes"
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -9559,8 +9558,8 @@
       "refresh": "Refresh"
     },
     "query-inspector": {
-      "count-frames_one": "{{count}} frames, ",
-      "count-frames_other": "{{count}} frames, ",
+      "count-frames_one": "{{count}} frames,",
+      "count-frames_other": "{{count}} frames,",
       "count-rows_one": "{{count}} rows",
       "count-rows_other": "{{count}} rows",
       "query-inspector": "Query inspector",
@@ -9819,8 +9818,8 @@
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
       "loading-connected-dashboards": "Loading connected dashboards...",
-      "num-affected_one": "This update will affect <1>{{count}} dashboards.</1>",
-      "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
+      "num-affected_one": "This update will affect <strong>{{count}} dashboards.</strong>",
+      "num-affected_other": "This update will affect <strong>{{count}} dashboards.</strong>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
     }
@@ -11935,13 +11934,13 @@
       "label-sync-interval": "Sync Interval (seconds)"
     },
     "folder-repository-list": {
-      "all-resources-managed_one": "All {{count}} resource is managed",
+      "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
       "no-results-matching-your-query": "No results matching your query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} resources managed by Git sync.",
       "placeholder-search": "Search",
-      "unmanaged-resources_one": "{{count}} resource isn't managed by git sync.",
-      "unmanaged-resources_other": "{{count}} resources aren't managed by git sync."
+      "unmanaged-resources_one": "{{count}} resources aren't managed by Git sync.",
+      "unmanaged-resources_other": "{{count}} resources aren't managed by Git sync."
     },
     "free-tier-limit": {
       "message": "Free-tier accounts are capped to 1 connection, and 20 resources per folder",
@@ -12545,13 +12544,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "Dashboard",
+      "app-explore": "Explore",
+      "app-label": "App:",
+      "assistant-actionable-create": "Please describe what you want to query and what insights you're looking for.",
+      "assistant-actionable-update": "Please describe what you want to change or improve in this query.",
+      "assistant-prompt-create": "Help me create a new query to answer my questions and provide the insights I need.",
+      "assistant-prompt-update": "Help me update the current query to answer my questions and provide the insights I need.",
       "collapse-row": "Collapse query row",
+      "current-query": "Current query",
+      "current-query-label": "Current query:",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
+      "other-queries": "Other queries",
+      "query-with-assistant": "Query with Assistant",
       "remove-query": "Remove query",
+      "selected-datasource-label": "Selected data source:",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
@@ -12605,11 +12616,11 @@
       "no-search-result": "No results found for your query"
     },
     "restore-modal": {
-      "folder-picker-text_one": "Please choose a folder where your dashboard will be restored.",
+      "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
       "folder-picker-text_other": "Please choose a folder where your dashboards will be restored.",
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
@@ -13347,8 +13358,8 @@
       "label-never": "Never"
     },
     "status-history-panel": {
-      "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)",
-      "too-many-points_other": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)"
+      "too-many-points_one": "Too many points to visualize properly. <br />Update the query to return fewer points. <br />({{count}} points received)",
+      "too-many-points_other": "Too many points to visualize properly. <br />Update the query to return fewer points. <br />({{count}} points received)"
     }
   },
   "support-bundles": {

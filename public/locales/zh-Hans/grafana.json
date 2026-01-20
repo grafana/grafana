@@ -2170,8 +2170,10 @@
       "badge-tooltip-provenance": "此资源已通过 {{provenance}} 配置，无法通过用户界面编辑",
       "badge-tooltip-standard": "此资源已配置，无法通过用户界面编辑",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "此 {{resource}} 已预置，这意味着它是由配置创建的。请联系服务器管理员以更新此 {{resource}}。",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "此 {{resource}} 无法通过用户界面编辑"
     },
     "provisioning-badge": {
@@ -2666,7 +2668,10 @@
     "rules-group": {
       "deleting": "删除",
       "text-federated": "联合",
-      "text-provisioned": "已预置"
+      "text-provisioned": "已预置",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5426,11 +5431,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5571,6 @@
           "arrow": "分享",
           "title": "分享",
           "tooltip": "复制链接"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "丢弃",
-            "text": "此数据面板有未保存的更改。您需要先保存它们，然后才能共享。",
-            "title": "将更改保存到数据面板？",
-            "yesText": "保存"
-          }
         },
         "unlink-library-panel": "取消链接库面板"
       },
@@ -6440,7 +6433,7 @@
       "loading-connected-dashboards": "正在加载已关联的数据面板...",
       "placeholder-search-affected-dashboards": "搜索受影响的数据面板",
       "update-all": "全部更新",
-      "affected-dashboards_other": "此更新将影响 <1>{{count}} 个数据面板。</1> 使用该面板的以下数据面板将受到影响："
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "保存数据面板时出错",
@@ -6475,6 +6468,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "切换共享菜单"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -9525,7 +9524,7 @@
     "query-inspector": {
       "query-inspector": "查询检查器",
       "text-loading-query-inspector": "正在加载查询检查器...",
-      "count-frames_other": "{{count}} 帧",
+      "count-frames_other": "",
       "count-rows_other": "{{count}} 行"
     }
   },
@@ -9781,7 +9780,7 @@
       "loading-connected-dashboards": "正在加载已关联的数据面板...",
       "placeholder-search-affected-dashboards": "搜索受影响的数据面板",
       "update-all": "全部更新",
-      "num-affected_other": "此更新将影响 <1>{{count}} 个数据面板。</1>"
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12492,13 +12491,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "折叠查询行",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "显示数据源帮助",
       "drag-and-drop": "拖放以重新排序",
       "duplicate-query": "复制查询",
       "expand-row": "展开查询行",
       "hide-response": "隐藏回复",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "删除查询",
+      "selected-datasource-label": "",
       "show-response": "显示回复"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
@@ -13291,7 +13302,7 @@
       "label-never": "从不"
     },
     "status-history-panel": {
-      "too-many-points_other": "数据点过多，无法正常可视化。<1></1>请更新查询以返回更少的数据点。<3></3>（已接收 {{count}} 个数据点）"
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {
