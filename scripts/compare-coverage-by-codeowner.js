@@ -149,6 +149,7 @@ ${tableRows}
  * @param {string} mainPath - Path to main branch coverage summary JSON
  * @param {string} prPath - Path to PR branch coverage summary JSON
  * @param {string} outputPath - Path to write comparison markdown
+ * @returns {boolean} True if coverage check passed
  */
 function compareCoverageByCodeowner(
   mainPath = COVERAGE_MAIN_PATH,
@@ -164,6 +165,7 @@ function compareCoverageByCodeowner(
   }
 
   const markdown = generateMarkdown(mainCoverage, prCoverage);
+  const overallPass = getOverallStatus(mainCoverage.summary, prCoverage.summary);
 
   try {
     fs.writeFileSync(outputPath, markdown, 'utf8');
@@ -172,10 +174,17 @@ function compareCoverageByCodeowner(
     console.error(`Error writing output file: ${err.message}`);
     process.exit(1);
   }
+
+  return overallPass;
 }
 
 if (require.main === module) {
-  compareCoverageByCodeowner();
+  const passed = compareCoverageByCodeowner();
+  if (!passed) {
+    console.error('❌ Coverage check failed: One or more metrics decreased');
+    process.exit(1);
+  }
+  console.log('✅ Coverage check passed: All metrics maintained or improved');
 }
 
 module.exports = { compareCoverageByCodeowner, generateMarkdown, getOverallStatus };
