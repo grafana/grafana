@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Card, Icon, TagList, useTheme2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
@@ -71,6 +72,8 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       '&:hover': {
         backgroundColor: theme.colors.action.hover,
       },
+
+      '&:focus-visible': getFocusStyles(theme),
     }),
     heading: css({
       width: '100%',
