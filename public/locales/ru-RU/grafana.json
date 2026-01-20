@@ -2152,10 +2152,10 @@
         "suffix": "Обновите страницу и повторите попытку.",
         "title": "Не удалось добавить или обновить политику уведомления"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_few": "",
-      "n-more-policies_many": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} дополнительная политика",
+      "n-more-policies_few": "{{count}} дополнительные политики",
+      "n-more-policies_many": "{{count}} дополнительных политик",
+      "n-more-policies_other": "{{count}} дополнительной политики"
     },
     "policy": {
       "label-new-child-policy": "Новая дочерняя политика",
@@ -2194,8 +2194,10 @@
       "badge-tooltip-provenance": "Ресурс был подготовлен через {{provenance}} и не может быть изменен через пользовательский интерфейс",
       "badge-tooltip-standard": "Ресурс был подготовлен и не может быть изменен через пользовательский интерфейс",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "{{resource}} подготовлен, то есть был создан с помощью конфигурации. Чтобы обновить {{resource}}, обратитесь к администратору сервера.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Этот {{resource}} невозможно отредактировать через пользовательский интерфейс"
     },
     "provisioning-badge": {
@@ -6497,10 +6499,10 @@
       "loading-connected-dashboards": "Загрузка подключенных дашбордов...",
       "placeholder-search-affected-dashboards": "Поиск затронутых дашбордов",
       "update-all": "Обновить все",
-      "affected-dashboards_one": "Обновление затронет <1>{{count}} дашбордов.</1> Будут затронуты следующие дашборды, использующие панель:",
-      "affected-dashboards_few": "Обновление затронет <1>{{count}} дашборда.</1> Будут затронуты следующие дашборды, использующие панель:",
-      "affected-dashboards_many": "Обновление затронет <1>{{count}} дашбордов.</1> Будут затронуты следующие дашборды, использующие панель:",
-      "affected-dashboards_other": "Обновление затронет <1>{{count}} дашбордов.</1> Будут затронуты следующие дашборды, использующие панель:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_few": "",
+      "affected-dashboards_many": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Ошибка при сохранении дашборда",
@@ -9630,10 +9632,10 @@
     "query-inspector": {
       "query-inspector": "Инспектор запросов",
       "text-loading-query-inspector": "Загрузка инспектора запросов...",
-      "count-frames_one": "{{count}} фреймов, ",
-      "count-frames_few": "{{count}} фрейма, ",
-      "count-frames_many": "{{count}} фреймов, ",
-      "count-frames_other": "{{count}} фреймов, ",
+      "count-frames_one": "",
+      "count-frames_few": "",
+      "count-frames_many": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} строк",
       "count-rows_few": "{{count}} строки",
       "count-rows_many": "{{count}} строк",
@@ -9898,10 +9900,10 @@
       "loading-connected-dashboards": "Загрузка подключенных дашбордов...",
       "placeholder-search-affected-dashboards": "Поиск затронутых дашбордов",
       "update-all": "Обновить все",
-      "num-affected_one": "Обновление затронет <1>{{count}} дашбордов.</1>",
-      "num-affected_few": "Обновление затронет <1>{{count}} дашборда.</1>",
-      "num-affected_many": "Обновление затронет <1>{{count}} дашбордов.</1>",
-      "num-affected_other": "Обновление затронет <1>{{count}} дашбордов.</1>"
+      "num-affected_one": "",
+      "num-affected_few": "",
+      "num-affected_many": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12648,13 +12650,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Свернуть строку запроса",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Показать справку по источнику данных",
       "drag-and-drop": "Перетащить для изменения порядка",
       "duplicate-query": "Дублировать запрос",
       "expand-row": "Развернуть строку запроса",
       "hide-response": "Скрыть ответ",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Удалить запрос",
+      "selected-datasource-label": "",
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
@@ -12711,14 +12725,14 @@
       "restore-button": "Восстановить",
       "restore-loading": "Восстановление...",
       "title": "Восстановление дашбордов",
-      "folder-picker-text_one": "",
-      "folder-picker-text_few": "",
-      "folder-picker-text_many": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_few": "",
-      "text_many": "",
-      "text_other": ""
+      "folder-picker-text_one": "Выберите папку для восстановления вашего дашборда.",
+      "folder-picker-text_few": "Выберите папку для восстановления ваших дашбордов.",
+      "folder-picker-text_many": "Выберите папку для восстановления вашего дашборда.",
+      "folder-picker-text_other": "Выберите папку для восстановления вашего дашборда.",
+      "text_one": "Это действие приведет к восстановлению {{numberOfDashboards}} дашборда.",
+      "text_few": "Это действие приведет к восстановлению {{numberOfDashboards}} дашбордов.",
+      "text_many": "Это действие приведет к восстановлению {{numberOfDashboards}} дашборда.",
+      "text_other": "Это действие приведет к восстановлению {{numberOfDashboards}} дашборда."
     }
   },
   "recentlyDeleted": {
@@ -13456,10 +13470,10 @@
       "label-never": "Никогда"
     },
     "status-history-panel": {
-      "too-many-points_one": "Слишком много точек для правильной визуализации. <1></1>Обновите запрос, чтобы получить меньше точек. <3></3>(получено {{count}} точки)",
-      "too-many-points_few": "Слишком много точек для правильной визуализации. <1></1>Обновите запрос, чтобы получить меньше точек. <3></3>(получены {{count}} точки)",
-      "too-many-points_many": "Слишком много точек для правильной визуализации. <1></1>Обновите запрос, чтобы получить меньше точек. <3></3>(получены {{count}} точек)",
-      "too-many-points_other": "Слишком много точек для правильной визуализации. <1></1>Обновите запрос, чтобы получить меньше точек. <3></3>(получено {{count}} точки)"
+      "too-many-points_one": "",
+      "too-many-points_few": "",
+      "too-many-points_many": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {
