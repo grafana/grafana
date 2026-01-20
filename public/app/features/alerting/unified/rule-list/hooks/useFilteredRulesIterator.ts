@@ -16,12 +16,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { RuleSource, RulesFilter } from '../../search/rulesSearchParser';
-import {
-  getDataSourceByUid,
-  getDatasourceAPIUid,
-  getExternalRulesSources,
-  isSupportedExternalRulesSourceType,
-} from '../../utils/datasource';
+import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { getDatasourceFilter } from './datasourceFilter';
@@ -168,13 +163,16 @@ function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): Async
  * Only allows Prometheus and Loki data source types.
  */
 function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceIdentifier[] {
+  const allExternalSources = getExternalRulesSources();
+
   return filter.dataSourceNames.reduce<DataSourceRulesSourceIdentifier[]>((acc, dataSourceName) => {
     // since "getDatasourceAPIUid" can throw we'll omit any non-existing data sources
     try {
       const uid = getDatasourceAPIUid(dataSourceName);
-      const type = getDataSourceByUid(uid)?.type;
 
-      if (type === undefined || isSupportedExternalRulesSourceType(type) === false) {
+      // Only include data sources that exist in allExternalRulesSources
+      const existsInExternalSources = allExternalSources.some((source) => source.uid === uid);
+      if (!existsInExternalSources) {
         return acc;
       }
 
