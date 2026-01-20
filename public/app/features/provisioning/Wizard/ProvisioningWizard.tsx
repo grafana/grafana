@@ -27,7 +27,7 @@ import { Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useResourceStats } from './hooks/useResourceStats';
-import { RepoType, WizardFormData, WizardStep } from './types';
+import { ConnectionCreationResult, RepoType, WizardFormData, WizardStep } from './types';
 import { getSteps } from './utils/getSteps';
 
 const appEvents = getAppEvents();
@@ -314,7 +314,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   ]);
 
   const handleGitHubAppSubmit = useCallback(
-    (result: { success: true; connectionName: string } | { success: false; error: string }) => {
+    (result: ConnectionCreationResult) => {
       if (result.success) {
         setValue('githubApp.connectionName', result.connectionName);
         setStepStatusInfo({ status: 'success' });

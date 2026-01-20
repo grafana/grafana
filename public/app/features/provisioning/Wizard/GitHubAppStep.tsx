@@ -12,14 +12,14 @@ import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnectio
 import { ConnectionFormData } from '../types';
 
 import { SelectableConnectionCard } from './SelectableConnectionCard';
-import { WizardFormData } from './types';
+import { ConnectionCreationResult, WizardFormData } from './types';
 
 export interface GitHubAppStepRef {
   submit: () => Promise<void>;
 }
 
 interface GitHubAppStepProps {
-  onSubmit: (result: { success: true; connectionName: string } | { success: false; error: string }) => void;
+  onSubmit: (result: ConnectionCreationResult) => void;
 }
 
 export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(function GitHubAppStep(
