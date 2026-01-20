@@ -119,9 +119,6 @@ export function getLabelTypeFromFrame(
   }
 
   const valueTypes = typeField?.values[index];
-  if (!typeField) {
-    return null;
-  }
   switch (valueTypes?.[labelKey]) {
     case 'I':
       return LabelType.Indexed;
