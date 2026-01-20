@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
@@ -49,6 +50,7 @@ type ConnectionController struct {
 	logger     logging.Logger
 
 	statusPatcher ConnectionStatusPatcher
+	tester        connection.SimpleConnectionTester
 
 	queue workqueue.TypedRateLimitingInterface[*connectionQueueItem]
 }
@@ -58,6 +60,7 @@ func NewConnectionController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	connInformer informer.ConnectionInformer,
 	statusPatcher ConnectionStatusPatcher,
+	tester connection.SimpleConnectionTester,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -70,6 +73,7 @@ func NewConnectionController(
 			},
 		),
 		statusPatcher: statusPatcher,
+		tester:        tester,
 		logger:        logging.DefaultLogger.With("logger", connectionLoggerName),
 	}
 
@@ -191,8 +195,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return nil
 	}
 
-	// For now, just update the state to connected, health to healthy, and observed generation
-	// Future: Add credential validation logic here
 	patchOperations := []map[string]interface{}{}
 
 	// Only update observedGeneration when spec changes
@@ -204,28 +206,60 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		})
 	}
 
-	// Always update state and health
-	patchOperations = append(patchOperations,
-		map[string]interface{}{
+	// Test the connection to determine health status
+	testResults, err := cc.tester.TestConnection(ctx, conn)
+	if err != nil {
+		logger.Error("failed to test connection", "error", err)
+		return fmt.Errorf("failed to test connection: %w", err)
+	}
+
+	// Determine health status from test results
+	var healthStatus provisioning.HealthStatus
+	if testResults.Success {
+		healthStatus = provisioning.HealthStatus{
+			Healthy: true,
+			Checked: time.Now().UnixMilli(),
+		}
+		// Update state to connected if healthy
+		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/state",
 			"value": provisioning.ConnectionStateConnected,
-		},
-		map[string]interface{}{
-			"op":   "replace",
-			"path": "/status/health",
-			"value": provisioning.HealthStatus{
-				Healthy: true,
-				Checked: time.Now().UnixMilli(),
-			},
-		},
-	)
+		})
+	} else {
+		// Build error messages from test results
+		var errorMsgs []string
+		for _, testErr := range testResults.Errors {
+			if testErr.Detail != "" {
+				errorMsgs = append(errorMsgs, testErr.Detail)
+			}
+		}
+		healthStatus = provisioning.HealthStatus{
+			Healthy: false,
+			Error:   provisioning.HealthFailureHealth,
+			Checked: time.Now().UnixMilli(),
+			Message: errorMsgs,
+		}
+		// Update state to disconnected if unhealthy
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/state",
+			"value": provisioning.ConnectionStateDisconnected,
+		})
+	}
+
+	// Update health status
+	patchOperations = append(patchOperations, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/health",
+		"value": healthStatus,
+	})
 
 	if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
 		return fmt.Errorf("failed to update connection status: %w", err)
 	}
 
-	logger.Info("connection reconciled successfully")
+	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
 	return nil
 }
 

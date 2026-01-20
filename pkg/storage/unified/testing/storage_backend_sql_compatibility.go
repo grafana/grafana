@@ -36,6 +36,10 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 		KvStore: kv,
 	}
 
+	if db.DriverName() == "sqlite3" {
+		kvOpts.UseChannelNotifier = true
+	}
+
 	if withRvManager {
 		dialect := sqltemplate.DialectForDriver(db.DriverName())
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
@@ -200,7 +204,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 	var keyPathRV int64
 	if isSqlBackend {
 		// Convert microsecond RV to snowflake for key_path construction
-		keyPathRV = rvmanager.SnowflakeFromRv(resourceVersion)
+		keyPathRV = rvmanager.SnowflakeFromRV(resourceVersion)
 	} else {
 		// KV backend already provides snowflake RV
 		keyPathRV = resourceVersion
@@ -434,9 +438,6 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceHistoryRecord
 	for rows.Next() {
@@ -460,33 +461,34 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 	for resourceIdx, res := range resources {
 		// Check create record (action=1, generation=1)
 		createRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, createRecord, res, resourceIdx, 1, 0, 1, resourceVersions[resourceIdx][0])
+		verifyResourceHistoryRecord(t, createRecord, namespace, res, resourceIdx, 1, 0, 1, resourceVersions[resourceIdx][0])
 		recordIndex++
 	}
 
 	for resourceIdx, res := range resources {
 		// Check update record (action=2, generation=2)
 		updateRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, updateRecord, res, resourceIdx, 2, resourceVersions[resourceIdx][0], 2, resourceVersions[resourceIdx][1])
+		verifyResourceHistoryRecord(t, updateRecord, namespace, res, resourceIdx, 2, resourceVersions[resourceIdx][0], 2, resourceVersions[resourceIdx][1])
 		recordIndex++
 	}
 
 	for resourceIdx, res := range resources[:2] {
 		// Check delete record (action=3, generation=0) - only first 2 resources were deleted
 		deleteRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, deleteRecord, res, resourceIdx, 3, resourceVersions[resourceIdx][1], 0, resourceVersions[resourceIdx][2])
+		verifyResourceHistoryRecord(t, deleteRecord, namespace, res, resourceIdx, 3, resourceVersions[resourceIdx][1], 0, resourceVersions[resourceIdx][2])
 		recordIndex++
 	}
 }
 
 // verifyResourceHistoryRecord validates a single resource_history record
-func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, expectedRes struct{ name, folder string }, resourceIdx, expectedAction int, expectedPrevRV int64, expectedGeneration int, expectedRV int64) {
+func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, namespace string, expectedRes struct{ name, folder string }, resourceIdx, expectedAction int, expectedPrevRV int64, expectedGeneration int, expectedRV int64) {
 	// Validate GUID (should be non-empty)
 	require.NotEmpty(t, record.GUID, "GUID should not be empty")
 
 	// Validate group/resource/namespace/name
 	require.Equal(t, "playlist.grafana.app", record.Group)
 	require.Equal(t, "playlists", record.Resource)
+	require.Equal(t, namespace, record.Namespace)
 	require.Equal(t, expectedRes.name, record.Name)
 
 	// Validate value contains expected JSON - server modifies/formats the JSON differently for different operations
@@ -513,8 +515,12 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	// For KV backend operations, expectedPrevRV is now in snowflake format (returned by KV backend)
 	// but resource_history table stores microsecond RV, so we need to use IsRvEqual for comparison
 	if strings.Contains(record.Namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(expectedPrevRV, record.PreviousResourceVersion),
-			"Previous resource version should match (KV backend snowflake format)")
+		if expectedPrevRV == 0 {
+			require.Zero(t, record.PreviousResourceVersion)
+		} else {
+			require.Equal(t, expectedPrevRV, rvmanager.SnowflakeFromRV(record.PreviousResourceVersion),
+				"Previous resource version should match (KV backend snowflake format)")
+		}
 	} else {
 		require.Equal(t, expectedPrevRV, record.PreviousResourceVersion)
 	}
@@ -546,9 +552,6 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceRecord
 	for rows.Next() {
@@ -612,9 +615,6 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	// Check that we have exactly one entry for playlist.grafana.app/playlists
 	rows, err := db.QueryContext(ctx, query, "playlist.grafana.app", "playlists")
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceVersionRecord
 	for rows.Next() {
@@ -649,7 +649,7 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	isKvBackend := strings.Contains(namespace, "-kv")
 	recordResourceVersion := record.ResourceVersion
 	if isKvBackend {
-		recordResourceVersion = rvmanager.SnowflakeFromRv(record.ResourceVersion)
+		recordResourceVersion = rvmanager.SnowflakeFromRV(record.ResourceVersion)
 	}
 
 	require.Less(t, recordResourceVersion, int64(9223372036854775807), "resource_version should be reasonable")
@@ -841,24 +841,20 @@ func runMixedConcurrentOperations(t *testing.T, sqlServer, kvServer resource.Res
 	}
 
 	// SQL backend operations
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-startBarrier // Wait for signal to start
 		if err := runBackendOperationsWithCounts(ctx, sqlServer, namespace+"-sql", "sql", opCounts); err != nil {
 			errors <- fmt.Errorf("SQL backend operations failed: %w", err)
 		}
-	}()
+	})
 
 	// KV backend operations
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-startBarrier // Wait for signal to start
 		if err := runBackendOperationsWithCounts(ctx, kvServer, namespace+"-kv", "kv", opCounts); err != nil {
 			errors <- fmt.Errorf("KV backend operations failed: %w", err)
 		}
-	}()
+	})
 
 	// Start both goroutines simultaneously
 	close(startBarrier)

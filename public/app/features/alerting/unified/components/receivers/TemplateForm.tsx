@@ -32,10 +32,12 @@ import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { EditorColumnHeader } from '../EditorColumnHeader';
-import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import {
   NotificationTemplate,
@@ -122,7 +124,9 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   // AI feedback state
   const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState(false);
 
-  const { isProvisioned } = useNotificationTemplateMetadata(originalTemplate);
+  const { provenance } = useNotificationTemplateMetadata(originalTemplate);
+  const isProvisioned = isProvisionedResource(provenance);
+  const isImported = provenance === KnownProvenance.ConvertedPrometheus;
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
     : undefined;
@@ -204,7 +208,12 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
             </Alert>
           )}
           {/* warning about provisioned template */}
-          {isProvisioned && (
+          {isProvisioned && isImported && (
+            <Box grow={0}>
+              <ImportedResourceAlert resource={ProvisionedResource.Template} />
+            </Box>
+          )}
+          {isProvisioned && !isImported && (
             <Box grow={0}>
               <ProvisioningAlert resource={ProvisionedResource.Template} />
             </Box>
