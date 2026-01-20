@@ -8,6 +8,8 @@ replace github.com/grafana/grafana => ../..
 
 replace github.com/grafana/grafana/apps/provisioning => ../provisioning
 
+replace github.com/grafana/grafana/apps/live => ../live
+
 replace github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 
 replace github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
