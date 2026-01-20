@@ -338,6 +338,10 @@ func (b *backend) garbageCollectionCutoffTimestamp(group, resourceName string, d
 }
 
 func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName string, cutoffTimestamp int64, batchSize int) (int64, error) {
+	ctx, span := tracer.Start(ctx, "sql.backend.garbageCollectBatch")
+	span.SetAttributes(attribute.String("group", group), attribute.String("resource", resourceName), attribute.Int64("cutoffTimestamp", cutoffTimestamp), attribute.Int("batchSize", batchSize))
+	defer span.End()
+
 	var rowsAffected int64
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		// query will return at most batchSize candidates
@@ -355,6 +359,7 @@ func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName s
 		if len(candidates) == 0 {
 			return nil
 		}
+		span.AddEvent("candidates", trace.WithAttributes(attribute.Int("candidates", len(candidates))))
 		res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryGCDeleteByNames, &sqlGarbageCollectDeleteByNamesRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Group:       group,
@@ -369,6 +374,7 @@ func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName s
 			return err
 		}
 		rowsAffected = rows
+		span.AddEvent("rows deleted", trace.WithAttributes(attribute.Int64("rowsDeleted", rowsAffected)))
 		return nil
 	})
 	return rowsAffected, err
