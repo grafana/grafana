@@ -21,27 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
-var (
-	ErrReceiverInUse = errutil.Conflict("alerting.notifications.receivers.used").MustTemplate(
-		"Receiver is used by '{{ .Public.UsedBy }}'",
-		errutil.WithPublic("Receiver is used by {{ .Public.UsedBy }}"),
-	)
-	ErrReceiverVersionConflict = errutil.Conflict("alerting.notifications.receivers.conflict").MustTemplate(
-		"Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",
-		errutil.WithPublic("Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'"),
-	)
-
-	ErrReceiverDependentResourcesProvenance = errutil.Conflict("alerting.notifications.receivers.usedProvisioned").MustTemplate(
-		"Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
-		errutil.WithPublic(`Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
-	)
-
-	ErrReceiverOrigin = errutil.BadRequest("alerting.notifications.receivers.originInvalid").MustTemplate(
-		"Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
-		errutil.WithPublic("Receiver '{{ .Public.Name }} cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
-	)
-)
-
 // ReceiverService is the service for managing alertmanager receivers.
 type ReceiverService struct {
 	authz                  receiverAccessControlService
@@ -157,7 +136,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt 
 
 	rcv, err := revision.GetReceiver(uid, prov)
 	if err != nil {
-		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
+		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			imported := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
 			if len(imported) > 0 {
 				rcv = imported[0]
@@ -291,7 +270,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 
 	existing, err := revision.GetReceiver(uid, prov)
 	if err != nil {
-		if !errors.Is(err, legacy_storage.ErrReceiverNotFound) {
+		if !errors.Is(err, models.ErrReceiverNotFound) {
 			return err
 		}
 		if rs.includeImported {
@@ -380,7 +359,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 
 	if err := createdReceiver.Validate(rs.decryptor(ctx)); err != nil {
 		span.RecordError(err)
-		return nil, legacy_storage.MakeErrReceiverInvalid(err)
+		return nil, models.ErrReceiverInvalid(err)
 	}
 
 	// Generate UID from name.
@@ -443,7 +422,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 
 	existing, err := revision.GetReceiver(r.GetUID(), prov)
 	if err != nil {
-		if errors.Is(err, legacy_storage.ErrReceiverNotFound) && rs.includeImported {
+		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			// try to get the imported receiver and return a specific error if it exists
 			result := rs.getImportedReceivers(ctx, span, []string{r.GetUID()}, revision)
 			if len(result) > 0 {
@@ -505,7 +484,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	}
 
 	if err := updatedReceiver.Validate(rs.decryptor(ctx)); err != nil {
-		return nil, legacy_storage.MakeErrReceiverInvalid(err)
+		return nil, models.ErrReceiverInvalid(err)
 	}
 
 	result, err := revision.UpdateReceiver(&updatedReceiver)
@@ -739,7 +718,7 @@ func makeReceiverInUseErr(usedByRoutes bool, rules []models.AlertRuleKey) error 
 		data["UsedBy"] = strings.Join(usedBy, ", ")
 	}
 
-	return ErrReceiverInUse.Build(errutil.TemplateData{
+	return models.ErrReceiverInUse.Build(errutil.TemplateData{
 		Public: data,
 		Error:  nil,
 	})
@@ -753,7 +732,7 @@ func makeErrReceiverVersionConflict(current *models.Receiver, desiredVersion str
 			"Name":           current.Name,
 		},
 	}
-	return ErrReceiverVersionConflict.Build(data)
+	return models.ErrReceiverVersionConflict.Build(data)
 }
 
 func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []models.AlertRuleKey) error {
@@ -769,13 +748,13 @@ func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []mode
 		data["UsedByRoutes"] = true
 	}
 
-	return ErrReceiverDependentResourcesProvenance.Build(errutil.TemplateData{
+	return models.ErrReceiverDependentResourcesProvenance.Build(errutil.TemplateData{
 		Public: data,
 	})
 }
 
 func makeErrReceiverOrigin(r *models.Receiver, action string) error {
-	return ErrReceiverOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": r.Name}})
+	return models.ErrReceiverOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": r.Name}})
 }
 
 func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {

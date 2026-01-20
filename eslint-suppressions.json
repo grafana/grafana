@@ -1200,11 +1200,6 @@
       "count": 1
     }
   },
-  "public/app/core/store.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 1
-    }
-  },
   "public/app/core/time_series2.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 19
@@ -1387,11 +1382,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/components/mute-timings/MuteTimingForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeInterval.tsx": {
     "no-restricted-syntax": {
       "count": 5
@@ -1512,11 +1502,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/ActiveTimingFields.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/MuteTimingFields.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1764,16 +1749,6 @@
   },
   "public/app/features/commandPalette/actions/scopesUtils.ts": {
     "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2985,16 +2960,6 @@
   "public/app/features/plugins/extensions/usePluginLinks.test.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/plugins/extensions/utils.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 27
-    }
-  },
-  "public/app/features/plugins/extensions/utils.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
     }
   },
   "public/app/features/plugins/extensions/validators.test.tsx": {
@@ -4247,11 +4212,6 @@
   "public/app/plugins/panel/canvas/editor/LineStyleEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/editor/element/APIEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx": {

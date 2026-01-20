@@ -27,7 +27,6 @@ import { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPo
 import { Policy } from './Policy';
 import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 import {
-  isRouteProvisioned,
   useAddNotificationPolicy,
   useDeleteNotificationPolicy,
   useNotificationPolicyRoute,
@@ -101,7 +100,6 @@ export const NotificationPoliciesList = () => {
     return;
   }, [defaultPolicy]);
   const routeProvenance = defaultPolicy?.provenance;
-  const isRootRouteProvisioned = rootRoute ? isRouteProvisioned(rootRoute) : false;
 
   // useAsync could also work but it's hard to wait until it's done in the tests
   // Combining with useEffect gives more predictable results because the condition is in useEffect
@@ -247,7 +245,6 @@ export const NotificationPoliciesList = () => {
             currentRoute={defaults(rootRoute, TIMING_OPTIONS_DEFAULTS)}
             contactPointsState={contactPointsState.receivers}
             readOnly={!hasConfigurationAPI}
-            provisioned={isRootRouteProvisioned}
             provenance={routeProvenance}
             alertManagerSourceName={selectedAlertmanager}
             onAddPolicy={openAddModal}

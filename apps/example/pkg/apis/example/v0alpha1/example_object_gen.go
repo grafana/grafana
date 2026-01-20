@@ -25,6 +25,13 @@ type Example struct {
 	Status ExampleStatus `json:"status" yaml:"status"`
 }
 
+func NewExample() *Example {
+	return &Example{
+		Spec:   *NewExampleSpec(),
+		Status: *NewExampleStatus(),
+	}
+}
+
 func (o *Example) GetSpec() any {
 	return o.Spec
 }
