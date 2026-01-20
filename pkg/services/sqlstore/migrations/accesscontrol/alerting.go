@@ -162,3 +162,49 @@ func (m *receiverProtectedFieldsEditor) Exec(sess *xorm.Session, mg *migrator.Mi
 func AddReceiverProtectedFieldsEditor(mg *migrator.Migrator) {
 	mg.AddMigration("add 'alert.notifications.receivers.protected:write' to receiver admins", &receiverProtectedFieldsEditor{})
 }
+
+type scopedReceiverTestingPermissions struct {
+	migrator.MigrationBase
+}
+
+var _ migrator.CodeMigration = new(alertingMigrator)
+
+func (m *scopedReceiverTestingPermissions) SQL(migrator.Dialect) string {
+	return "code migration"
+}
+
+func (m *scopedReceiverTestingPermissions) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	sql := fmt.Sprintf(`SELECT *
+			FROM permission AS P
+			WHERE action = '%[0]s'
+			    AND EXISTS(SELECT 1 FROM role AS R WHERE R.id = P.role_id AND R.name LIKE 'managed:%')
+			    AND NOT EXISTS(SELECT 1
+			                   FROM permission AS P2
+			                   WHERE P2.role_id = P.role_id
+			                     AND P2.action = '%[1]s' AND P2.scope = P.scope
+			                   )`, accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversTestCreate)
+	var results []accesscontrol.Permission
+	if err := sess.SQL(sql).Find(&results); err != nil {
+		return fmt.Errorf("failed to query permissions: %w", err)
+	}
+
+	permissionsToCreate := make([]accesscontrol.Permission, 0, len(results))
+	rolesAffected := make(map[int64][]string)
+	for _, result := range results {
+		result.ID = 0
+		result.Action = accesscontrol.ActionAlertingReceiversTestCreate
+		result.Created = time.Now()
+		result.Updated = time.Now()
+		permissionsToCreate = append(permissionsToCreate, result)
+		rolesAffected[result.RoleID] = append(rolesAffected[result.RoleID], result.Identifier)
+	}
+	_, err := sess.InsertMulti(&permissionsToCreate)
+	for id, ids := range rolesAffected {
+		mg.Logger.Debug(fmt.Sprintf("Added permission '%s' to managed role", accesscontrol.ActionAlertingReceiversTestCreate), "roleID", id, "identifiers", ids)
+	}
+	return err
+}
+
+func AddScopedReceiverTestingPermissions(mg *migrator.Migrator) {
+	mg.AddMigration("add 'alert.notifications.receivers.test:write' to managed roles", &scopedReceiverTestingPermissions{})
+}
