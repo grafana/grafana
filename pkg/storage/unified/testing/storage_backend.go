@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -53,8 +52,9 @@ type NewBackendWithDBFunc func(ctx context.Context) (resource.StorageBackend, sq
 
 // TestOptions configures which tests to run
 type TestOptions struct {
-	SkipTests map[string]bool // tests to skip
-	NSPrefix  string          // namespace prefix for isolation
+	SkipTests           map[string]bool                                                             // tests to skip
+	NSPrefix            string                                                                      // namespace prefix for isolation
+	SearchServerFactory func(t *testing.T, backend resource.StorageBackend) resource.ResourceServer // factory for creating search-enabled servers (optional, needed for search tests)
 }
 
 // GenerateRandomNSPrefix creates a random namespace prefix for test isolation
@@ -94,14 +94,9 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 	}
 
 	for _, tc := range cases {
-		if shouldSkip := opts.SkipTests[tc.name]; shouldSkip {
-			t.Logf("Skipping test: %s", tc.name)
-			continue
-		}
-
 		t.Run(tc.name, func(t *testing.T) {
-			if db.IsTestDbSQLite() {
-				t.Skip("Skipping tests on sqlite until channel notifier is implemented")
+			if opts.SkipTests[tc.name] {
+				t.Skip()
 			}
 
 			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
@@ -555,7 +550,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			Resource:  "resource",
 		}
 		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
-		require.Greater(t, latestRv, rvCreated)
+		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
 		counter := 0
 		for res, err := range seq {
@@ -617,23 +612,43 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		require.Equal(t, 1, counter) // only one event should be returned
 	})
 
-	t.Run("will order events by resource version ascending and name descending", func(t *testing.T) {
+	t.Run("everything all at once", func(t *testing.T) {
 		key := resource.NamespacedResource{
 			Namespace: ns,
 			Group:     "group",
 			Resource:  "resource",
 		}
 
-		rvCreated1, _ := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
-		rvCreated2, _ := writeEvent(ctx, backend, "aItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
-		rvCreated3, _ := writeEvent(ctx, backend, "bItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		rv1, err := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		require.NoError(t, err)
+		rv2, err := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv1))
+		require.NoError(t, err)
+		rv3, err := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv2))
+		require.NoError(t, err)
+		// add a few events to another namespace in between events for the one we're testing
+		rv4, err := writeEvent(ctx, backend, "otherNsItem", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
+		require.NoError(t, err)
+		rv5, err := writeEvent(ctx, backend, "otherNsItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV("other-ns", rv4))
+		require.NoError(t, err)
+		_, err = writeEvent(ctx, backend, "otherNsItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV("other-ns", rv5))
+		require.NoError(t, err)
+		rv6, err := writeEvent(ctx, backend, "cItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv3))
+		require.NoError(t, err)
+		rv7, err := writeEvent(ctx, backend, "aItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		require.NoError(t, err)
+		rv8, err := writeEvent(ctx, backend, "aItem", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rv7))
+		require.NoError(t, err)
+		rv9, err := writeEvent(ctx, backend, "aItem", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rv8))
+		require.NoError(t, err)
+		rv10, err := writeEvent(ctx, backend, "bItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+		require.NoError(t, err)
 
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated1-1)
-		require.Greater(t, latestRv, rvCreated3)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rv1-1)
+		require.GreaterOrEqual(t, latestRv, rv10)
 
 		counter := 0
-		names := []string{"aItem", "bItem", "cItem"}
-		rvs := []int64{rvCreated2, rvCreated3, rvCreated1}
+		names := []string{"bItem", "aItem", "cItem"}
+		rvs := []int64{rv10, rv9, rv6}
 		for res, err := range seq {
 			require.NoError(t, err)
 			require.Equal(t, key.Namespace, res.Key.Namespace)

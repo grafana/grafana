@@ -200,7 +200,7 @@ export function loadDataSources(): ThunkResult<Promise<void>> {
 
 export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSettings>> {
   return async (dispatch) => {
-    let dataSource = await api.getDataSourceByIdOrUid(uid);
+    let dataSource = await api.getDataSourceByUid(uid);
 
     // Reload route to use UID instead
     // -------------------------------
