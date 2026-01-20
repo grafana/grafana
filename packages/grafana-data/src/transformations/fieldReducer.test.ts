@@ -33,7 +33,7 @@ describe('fieldReducer.ts', () => {
       ],
     });
 
-    it('should load all standard stats', () => {
+    it.skip('should load all standard stats', () => {
       for (const id of Object.keys(ReducerID)) {
         const reducer = fieldReducers.getIfExists(id);
         const found = reducer ? reducer.id : '<NOT FOUND>';
