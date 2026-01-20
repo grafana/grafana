@@ -2,19 +2,19 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
 import {
-  useSearchTeamsQuery as useLegacySearchTeamsQuery,
+  CreateTeamCommand,
+  UpdateTeamCommand,
   useCreateTeamMutation,
   useDeleteTeamByIdMutation,
-  useListTeamsRolesQuery,
-  CreateTeamCommand,
-  useSetTeamRolesMutation,
   useGetTeamByIdQuery,
+  useSearchTeamsQuery as useLegacySearchTeamsQuery,
+  useListTeamsRolesQuery,
+  useSetTeamRolesMutation,
   useUpdateTeamMutation,
-  UpdateTeamCommand,
 } from 'app/api/clients/legacy';
-import { addFilteredDisplayName } from 'app/core/components/RolePicker/utils';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
+import { addFilteredDisplayName } from 'app/core/utils/roles';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 import { useDispatch } from 'app/types/store';
 

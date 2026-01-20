@@ -2,9 +2,8 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { isFetchError } from '@grafana/runtime';
+import { addDisplayNameForFixedRole, addFilteredDisplayName } from 'app/core/utils/roles';
 import { Role } from 'app/types/accessControl';
-
-import { addDisplayNameForFixedRole, addFilteredDisplayName } from './utils';
 
 interface FetchTeamRolesArgs {
   teamId: number;
@@ -37,7 +36,6 @@ export const rolesAPI = createApi({
   baseQuery: createBaseQuery({ baseURL: '/api' }),
   tagTypes: ['TeamRoles', 'UserRoles', 'RoleOptions'],
   endpoints: (builder) => ({
-    // Fetch team roles
     fetchTeamRoles: builder.query<Role[], FetchTeamRolesArgs>({
       query: ({ teamId, orgId }) => ({
         url: `/access-control/teams/${teamId}/roles`,
@@ -58,7 +56,6 @@ export const rolesAPI = createApi({
       },
     }),
 
-    // Update team roles
     updateTeamRoles: builder.mutation<void, UpdateTeamRolesArgs>({
       query: ({ teamId, roles, orgId }) => {
         const roleUids = roles.flatMap((x) => x.uid);
@@ -75,7 +72,6 @@ export const rolesAPI = createApi({
       invalidatesTags: (result, error, { teamId }) => [{ type: 'TeamRoles', id: teamId }],
     }),
 
-    // Fetch user roles
     fetchUserRoles: builder.query<Role[], FetchUserRolesArgs>({
       query: ({ userId, orgId }) => ({
         url: `/access-control/users/${userId}/roles`,
@@ -100,7 +96,6 @@ export const rolesAPI = createApi({
       },
     }),
 
-    // Update user roles
     updateUserRoles: builder.mutation<void, UpdateUserRolesArgs>({
       query: ({ userId, roles, orgId }) => {
         const filteredRoles = roles.filter((role) => !role.mapped);
@@ -118,7 +113,6 @@ export const rolesAPI = createApi({
       invalidatesTags: (result, error, { userId }) => [{ type: 'UserRoles', id: userId }],
     }),
 
-    // Fetch role options
     fetchRoleOptions: builder.query<Role[], FetchRoleOptionsArgs>({
       query: ({ orgId }) => ({
         url: '/access-control/roles',
