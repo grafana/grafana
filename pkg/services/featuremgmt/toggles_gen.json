@@ -1374,6 +1374,7 @@
         "name": "disableClassicHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-06-18T19:37:44Z",
+        "deletionTimestamp": "2026-01-20T11:46:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -1559,6 +1560,7 @@
         "name": "enableNativeHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-10-03T18:23:55Z",
+        "deletionTimestamp": "2026-01-20T11:37:01Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
