@@ -253,6 +253,50 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
+
+	t.Run("will not delete rows when resource is deleted then recreated with same name", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+		t.Cleanup(db.CleanupTestDB)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+		storageBackend, _ := newTestBackend(t, gcConfig)
+		b := storageBackend.(*backend)
+
+		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+			Backend: storageBackend,
+		})
+		require.NoError(t, err)
+
+		rv1, err := test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+
+		_, err = test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED, test.WithNamespaceAndRV("namespace", rv1))
+		require.NoError(t, err)
+
+		_, err = test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED, test.WithNamespace("namespace"))
+		require.NoError(t, err)
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		rowsDeleted, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
+		require.NoError(t, err)
+		require.Equal(t, int64(0), rowsDeleted)
+
+		historyResp, err := server.List(ctx, &resourcepb.ListRequest{
+			Source: resourcepb.ListRequest_HISTORY,
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "namespace",
+					Group:     "group",
+					Resource:  "resource",
+					Name:      "resource1",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, historyResp.Error)
+		require.Len(t, historyResp.Items, 1)
+	})
 }
 
 func TestIntegrationGarbageCollectionLoop(t *testing.T) {
