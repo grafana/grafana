@@ -21,19 +21,6 @@ export function useQueryEditorCore(): QueryEditorCoreContextValue {
   return context;
 }
 
-// Granular hooks
-export function usePanel(): VizPanel {
-  return useQueryEditorCore().panel;
-}
-
-export function useDatasource(): DataSourceApi | undefined {
-  return useQueryEditorCore().datasource;
-}
-
-export function useDatasourceSettings(): DataSourceInstanceSettings | undefined {
-  return useQueryEditorCore().dsSettings;
-}
-
 // Queries context: query list (changes on user action)
 interface QueryEditorQueriesContextValue {
   queries: DataQuery[];
@@ -69,19 +56,6 @@ export function useQueryEditorData(): QueryEditorDataContextValue {
     throw new Error('useQueryEditorData must be used within QueryEditorProvider');
   }
   return context;
-}
-
-// Granular hooks
-export function usePanelData(): PanelData | undefined {
-  return useQueryEditorData().data;
-}
-
-export function useIsLoading(): boolean {
-  return useQueryEditorData().isLoading;
-}
-
-export function useError(): Error | undefined {
-  return useQueryEditorData().error;
 }
 
 // Actions context: mutation functions (stable, never changes)

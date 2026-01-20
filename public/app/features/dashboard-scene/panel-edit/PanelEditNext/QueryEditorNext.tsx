@@ -5,13 +5,10 @@ import { t, Trans } from '@grafana/i18n';
 import { Alert, Badge, Button, Card, Grid, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import {
-  useDatasourceSettings,
-  useError,
-  useIsLoading,
-  usePanelData,
-  usePanel,
-  useQueries,
+  useQueryEditorCore,
+  useQueryEditorData,
   useQueryEditorActions,
+  useQueryEditorQueries,
 } from './QueryEditorContext';
 
 export const QueryEditorNext = () => {
@@ -43,8 +40,7 @@ export const QueryEditorNext = () => {
 
 // Datasource information - uses useQueryEditorCore
 function DatasourceInfo() {
-  const dsSettings = useDatasourceSettings();
-  const panel = usePanel();
+  const { dsSettings, panel } = useQueryEditorCore();
 
   return (
     <Card noMargin>
@@ -70,7 +66,7 @@ function DatasourceInfo() {
 
 // Queries list - uses useQueryEditorQueries
 function QueriesInfo() {
-  const queries = useQueries();
+  const { queries } = useQueryEditorQueries();
 
   return (
     <Card noMargin>
@@ -108,9 +104,7 @@ function QueriesInfo() {
 
 // Data results - uses useQueryEditorData
 function DataInfo() {
-  const data = usePanelData();
-  const isLoading = useIsLoading();
-  const error = useError();
+  const { data, isLoading, error } = useQueryEditorData();
 
   return (
     <Card noMargin>
