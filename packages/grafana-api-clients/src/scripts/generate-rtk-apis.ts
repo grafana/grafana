@@ -101,6 +101,8 @@ const config: ConfigFile = {
     ...createAPIConfig('advisor', 'v0alpha1'),
     ...createAPIConfig('correlations', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v0alpha1'),
+    ...createAPIConfig('dashboard', 'v1beta1'),
+    ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('folder', 'v1beta1'),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v0alpha1'),

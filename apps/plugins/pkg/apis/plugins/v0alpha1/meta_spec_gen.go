@@ -215,7 +215,6 @@ type MetaSpec struct {
 	Module       *MetaV0alpha1SpecModule    `json:"module,omitempty"`
 	BaseURL      *string                    `json:"baseURL,omitempty"`
 	Signature    *MetaV0alpha1SpecSignature `json:"signature,omitempty"`
-	Angular      *MetaV0alpha1SpecAngular   `json:"angular,omitempty"`
 	Translations map[string]string          `json:"translations,omitempty"`
 	// +listType=atomic
 	Children []string `json:"children,omitempty"`
@@ -459,16 +458,6 @@ type MetaV0alpha1SpecSignature struct {
 // NewMetaV0alpha1SpecSignature creates a new MetaV0alpha1SpecSignature object.
 func NewMetaV0alpha1SpecSignature() *MetaV0alpha1SpecSignature {
 	return &MetaV0alpha1SpecSignature{}
-}
-
-// +k8s:openapi-gen=true
-type MetaV0alpha1SpecAngular struct {
-	Detected bool `json:"detected"`
-}
-
-// NewMetaV0alpha1SpecAngular creates a new MetaV0alpha1SpecAngular object.
-func NewMetaV0alpha1SpecAngular() *MetaV0alpha1SpecAngular {
-	return &MetaV0alpha1SpecAngular{}
 }
 
 // +k8s:openapi-gen=true

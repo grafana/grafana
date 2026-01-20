@@ -14,7 +14,7 @@ import {
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { DashboardStateChangedEvent } from '../../edit-pane/shared';
+import { DashboardStateChangedEvent, RepeatsUpdatedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -147,6 +147,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
     this.setState({ repeatedPanels, repeatedConditionalRendering });
     this._prevRepeatValues = values;
+    this.publishEvent(new RepeatsUpdatedEvent(this), true);
   }
 
   public getPanelCount() {

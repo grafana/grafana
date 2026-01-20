@@ -918,7 +918,7 @@
       ]
     },
     "timezone": "utc",
-    "title": "Span Zero Demo Dashboard"
+    "title": "Span Zero + ID Collision Prevention Demo"
   },
   "status": {
     "conversion": {
