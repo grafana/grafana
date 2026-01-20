@@ -41,14 +41,14 @@ export function DashListItem({
     <>
       {layoutMode === 'list' ? (
         <div className={css.dashlistLink}>
-          <Box flex={1}>
-            <Link href={url}>{dashboard.name}</Link>
+          <Link href={url}>
+            <Text element="p">{dashboard.name}</Text>
             {showFolderNames && locationInfo && (
               <Text color="secondary" variant="bodySmall" element="p">
                 {locationInfo?.name}
               </Text>
             )}
-          </Box>
+          </Link>
           <StarToolbarButton
             title={dashboard.name}
             group="dashboard.grafana.app"
