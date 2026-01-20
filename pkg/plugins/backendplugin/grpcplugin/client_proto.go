@@ -3,9 +3,10 @@ package grpcplugin
 import (
 	"context"
 	"errors"
+	"os/exec"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin/runner"
-	"os/exec"
 
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
