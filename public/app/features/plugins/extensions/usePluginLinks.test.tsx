@@ -1,14 +1,15 @@
 import { act, renderHook } from '@testing-library/react';
 import type { JSX } from 'react';
+import { useAsync } from 'react-use';
 
 import {
+  AppPluginConfig,
   PluginContextProvider,
   PluginExtensionPoints,
   PluginLoadingStrategy,
   PluginMeta,
   PluginType,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import * as errors from './errors';
@@ -53,23 +54,63 @@ jest.mock('./logs/log', () => {
   };
 });
 
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: jest.fn(),
+}));
+
 describe('usePluginLinks()', () => {
+  const useAsyncMock = jest.mocked(useAsync);
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
   const pluginId = 'myorg-extensions-app';
   const extensionPointId = `${pluginId}/extension-point/v1`;
+  const defaultApps = [
+    {
+      id: pluginId,
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        addedFunctions: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      },
+    },
+  ];
+  let apps: AppPluginConfig[] = defaultApps;
 
   beforeEach(() => {
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+
     registries = {
-      addedComponentsRegistry: new AddedComponentsRegistry(),
-      exposedComponentsRegistry: new ExposedComponentsRegistry(),
-      addedLinksRegistry: new AddedLinksRegistry(),
-      addedFunctionsRegistry: new AddedFunctionsRegistry(),
+      addedComponentsRegistry: new AddedComponentsRegistry(apps),
+      exposedComponentsRegistry: new ExposedComponentsRegistry(apps),
+      addedLinksRegistry: new AddedLinksRegistry(apps),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(apps),
     };
     resetLogMock(log);
+
+    useAsyncMock.mockReturnValue({
+      value: registries,
+      loading: false,
+    });
 
     pluginMeta = {
       id: pluginId,
@@ -107,37 +148,15 @@ describe('usePluginLinks()', () => {
       },
     };
 
-    config.apps[pluginId] = {
-      id: pluginId,
-      path: '',
-      version: '',
-      preload: false,
-      angular: {
-        detected: false,
-        hideDeprecation: false,
-      },
-      loadingStrategy: PluginLoadingStrategy.fetch,
-      dependencies: {
-        grafanaVersion: '8.0.0',
-        plugins: [],
-        extensions: {
-          exposedComponents: [],
-        },
-      },
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        addedFunctions: [],
-        exposedComponents: [],
-        extensionPoints: [],
-      },
-    };
-
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider meta={pluginMeta}>
-        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
+  });
+
+  afterEach(() => {
+    apps = defaultApps;
   });
 
   it('should return an empty array if there are no link extensions registered for the extension point', () => {
@@ -234,7 +253,7 @@ describe('usePluginLinks()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -268,8 +287,9 @@ describe('usePluginLinks()', () => {
       path: `/a/${pluginId}/2`,
     };
 
-    // The `AddedLinksRegistry` is validating if the link is registered in the plugin metadata (config.apps).
-    config.apps[pluginId].extensions.addedLinks = [linkConfig];
+    registries.addedLinksRegistry = new AddedLinksRegistry([
+      { ...apps[0], extensions: { ...apps[0].extensions!, addedLinks: [linkConfig] } },
+    ]);
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider
@@ -284,7 +304,7 @@ describe('usePluginLinks()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -312,7 +332,7 @@ describe('usePluginLinks()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -331,7 +351,7 @@ describe('usePluginLinks()', () => {
 
     // No plugin context -> used in Grafana core
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
     );
 
     // Adding an extension to the extension point
@@ -363,7 +383,7 @@ describe('usePluginLinks()', () => {
 
     // No plugin context -> used in Grafana core
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
     );
 
     const extensionPointId = 'grafana/not-exposed-extension-point/v1';
@@ -392,7 +412,7 @@ describe('usePluginLinks()', () => {
 
     // No plugin context -> used in Grafana core
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
     );
 
     const { result } = renderHook(() => usePluginLinks({ extensionPointId: 'invalid-extension-point-id' }), {
@@ -417,7 +437,7 @@ describe('usePluginLinks()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -456,7 +476,7 @@ describe('usePluginLinks()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 

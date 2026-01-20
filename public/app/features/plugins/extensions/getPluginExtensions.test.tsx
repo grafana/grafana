@@ -46,8 +46,8 @@ async function createRegistries(
     addedLinkConfigs: PluginExtensionAddedLinkConfig[];
   }>
 ) {
-  const addedLinksRegistry = new AddedLinksRegistry();
-  const addedComponentsRegistry = new AddedComponentsRegistry();
+  const addedLinksRegistry = new AddedLinksRegistry([]);
+  const addedComponentsRegistry = new AddedComponentsRegistry([]);
 
   for (const { pluginId, addedLinkConfigs, addedComponentConfigs } of preloadResults) {
     addedLinksRegistry.register({
@@ -554,8 +554,8 @@ describe('getObservablePluginExtensions()', () => {
   const pluginId = 'grafana-basic-app';
 
   beforeEach(() => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
     pluginExtensionRegistries.addedLinksRegistry.register({
       pluginId,
       configs: [
@@ -633,8 +633,8 @@ describe('getObservablePluginLinks()', () => {
   const pluginId = 'grafana-basic-app';
 
   beforeEach(() => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
     pluginExtensionRegistries.addedLinksRegistry.register({
       pluginId,
       configs: [
@@ -709,8 +709,8 @@ describe('getObservablePluginLinks()', () => {
   });
 
   it('should receive an empty array if there are no links', async () => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
 
     const observable = getObservablePluginLinks({ extensionPointId }).pipe(first());
     const links = await firstValueFrom(observable);
@@ -724,8 +724,8 @@ describe('getObservablePluginComponents()', () => {
   const pluginId = 'grafana-basic-app';
 
   beforeEach(() => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
     pluginExtensionRegistries.addedLinksRegistry.register({
       pluginId,
       configs: [
@@ -801,8 +801,8 @@ describe('getObservablePluginComponents()', () => {
   });
 
   it('should receive an empty array if there are no components', async () => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
+    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
 
     const observable = getObservablePluginComponents({ extensionPointId }).pipe(first());
     const components = await firstValueFrom(observable);
