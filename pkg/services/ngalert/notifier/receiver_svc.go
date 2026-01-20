@@ -574,6 +574,7 @@ func (rs *ReceiverService) AccessControlMetadata(ctx context.Context, user ident
 		perms.Set(models.ReceiverPermissionAdmin, false)
 		perms.Set(models.ReceiverPermissionWrite, false)
 		perms.Set(models.ReceiverPermissionDelete, false)
+		perms.Set(models.ReceiverPermissionTest, false)
 		permissions[m.GetUID()] = perms
 	}
 	return permissions, nil
