@@ -27,32 +27,6 @@ const app: AppPluginConfig = structuredClone({
   buildMode: 'production',
 });
 
-export const basicApp: AppPluginConfig = structuredClone({
-  id: 'grafana-basic-app',
-  path: '',
-  version: '',
-  preload: false,
-  angular: {
-    detected: false,
-    hideDeprecation: false,
-  },
-  loadingStrategy: PluginLoadingStrategy.fetch,
-  dependencies: {
-    grafanaVersion: '8.0.0',
-    plugins: [],
-    extensions: {
-      exposedComponents: [],
-    },
-  },
-  extensions: {
-    addedLinks: [],
-    addedComponents: [],
-    addedFunctions: [],
-    exposedComponents: [],
-    extensionPoints: [],
-  },
-});
-
 export const metas: AppPluginMetas = structuredClone({
   'grafana-exploretraces-app': {
     id: 'grafana-exploretraces-app',
@@ -507,7 +481,7 @@ export const metas: AppPluginMetas = structuredClone({
 
 export const apps = Object.values(metas);
 
-export const genericAppPluginConfig: Omit<AppPluginConfig, 'id'> = {
+export const genericAppPluginConfig: Omit<AppPluginConfig, 'id'> = structuredClone({
   path: '',
   version: '',
   preload: false,
@@ -530,4 +504,9 @@ export const genericAppPluginConfig: Omit<AppPluginConfig, 'id'> = {
     exposedComponents: [],
     extensionPoints: [],
   },
-};
+});
+
+export const basicApp: AppPluginConfig = structuredClone({
+  ...genericAppPluginConfig,
+  id: 'grafana-basic-app',
+});
