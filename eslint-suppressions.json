@@ -2091,11 +2091,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/GenAI/utils.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/HelpWizard/HelpWizard.tsx": {
     "no-restricted-syntax": {
       "count": 3
