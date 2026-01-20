@@ -184,15 +184,31 @@ export class CloudWatchDatasource
     return this.logsQueryRunner.getLogRowContext(row, context, super.query.bind(this), query);
   }
 
-  targetContainsTemplate(target: any) {
+  targetContainsTemplate(target: CloudWatchQuery) {
+    if (this.templateSrv.containsTemplate(target.region)) {
+      return true;
+    }
+
+    if (isCloudWatchMetricsQuery(target)) {
       return (
-      this.templateSrv.containsTemplate(target.region) ||
         this.templateSrv.containsTemplate(target.namespace) ||
         this.templateSrv.containsTemplate(target.metricName) ||
-      this.templateSrv.containsTemplate(target.expression!) ||
-      target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
-      find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
+        this.templateSrv.containsTemplate(target.expression) ||
+        !!find(target.dimensions, (v, k) => {
+          const values = Array.isArray(v) ? v : [v];
+          return this.templateSrv.containsTemplate(k) || values.some((val) => this.templateSrv.containsTemplate(val));
+        })
       );
+    }
+
+    if (isCloudWatchLogsQuery(target)) {
+      return (
+        this.templateSrv.containsTemplate(target.expression) ||
+        !!target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup))
+      );
+    }
+
+    return false;
   }
 
   getQueryDisplayText(query: CloudWatchQuery) {
