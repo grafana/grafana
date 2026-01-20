@@ -37,7 +37,11 @@ function formatPercentage(value) {
  * @returns {string} Status icon and text
  */
 function getStatusIcon(mainValue, prValue) {
-  if (prValue >= mainValue) {
+  // Round to 1 decimal place for comparison to match display precision
+  const prPct = Math.round(prValue * 10) / 10;
+  const mainPct = Math.round(mainValue * 10) / 10;
+
+  if (prPct >= mainPct) {
     return '✅ Pass';
   }
   return '❌ Fail';
@@ -51,7 +55,12 @@ function getStatusIcon(mainValue, prValue) {
  */
 function getOverallStatus(mainSummary, prSummary) {
   const metrics = ['lines', 'statements', 'functions', 'branches'];
-  const allPass = metrics.every((metric) => prSummary[metric].pct >= mainSummary[metric].pct);
+  const allPass = metrics.every((metric) => {
+    // Round to 1 decimal place for comparison to match display precision
+    const prPct = Math.round(prSummary[metric].pct * 10) / 10;
+    const mainPct = Math.round(mainSummary[metric].pct * 10) / 10;
+    return prPct >= mainPct;
+  });
   return allPass;
 }
 
