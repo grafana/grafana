@@ -36,7 +36,7 @@ export const simpleContactPointsListScenario = [listReceiverHandler(simpleContac
 export const withErrorScenario = [listReceiverHandler(() => new HttpResponse(null, { status: 500 }))];
 
 // Contact points with different canUse values for testing filter functionality
-export const contactPointsWithCanUse = ListReceiverApiResponseFactory.build({
+export const contactPointsListWithUnusableItems = ListReceiverApiResponseFactory.build({
   items: [
     // Regular contact point (canUse: true)
     ContactPointFactory.build({
@@ -47,7 +47,6 @@ export const contactPointsWithCanUse = ListReceiverApiResponseFactory.build({
       metadata: {
         annotations: ContactPointMetadataAnnotationsFactory.build({
           'grafana.com/provenance': '',
-          'grafana.com/canUse': 'true',
         }),
       },
     }),
@@ -73,17 +72,10 @@ export const contactPointsWithCanUse = ListReceiverApiResponseFactory.build({
       metadata: {
         annotations: ContactPointMetadataAnnotationsFactory.build({
           'grafana.com/provenance': 'api',
-          'grafana.com/canUse': 'true',
         }),
       },
     }),
   ],
 });
 
-/** @deprecated Use contactPointsWithCanUse instead */
-export const contactPointsWithProvenance = contactPointsWithCanUse;
-
-export const contactPointsWithCanUseScenario = [listReceiverHandler(contactPointsWithCanUse)];
-
-/** @deprecated Use contactPointsWithCanUseScenario instead */
-export const contactPointsWithProvenanceScenario = contactPointsWithCanUseScenario;
+export const contactPointsListWithUnusableItemsScenario = [listReceiverHandler(contactPointsListWithUnusableItems)];
