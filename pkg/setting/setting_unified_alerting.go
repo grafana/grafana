@@ -28,19 +28,11 @@ const (
 	alertmanagerDefaultConfiguration = `{
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email",
+			"receiver": "empty",
 			"group_by": ["grafana_folder", "alertname"]
 		},
 		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"settings": {
-					"addresses": "<example@email.com>"
-				}
-			}]
+			"name": "empty"
 		}]
 	}
 }
@@ -156,6 +148,8 @@ type UnifiedAlertingSettings struct {
 
 	// AlertmanagerMaxTemplateOutputSize specifies the maximum allowed size for rendered template output in bytes.
 	AlertmanagerMaxTemplateOutputSize int64
+
+	BacktestingMaxEvaluations int
 }
 
 type RecordingRuleSettings struct {
@@ -190,6 +184,8 @@ type UnifiedAlertingReservedLabelSettings struct {
 type UnifiedAlertingPrometheusConversionSettings struct {
 	// RuleQueryOffset defines a time offset to apply to rule queries during conversion from Prometheus to Grafana format
 	RuleQueryOffset time.Duration
+	// DefaultDatasourceUID is the default datasource UID to use when converting Prometheus rules if not specified via header
+	DefaultDatasourceUID string
 }
 
 type UnifiedAlertingLokiSettings struct {
@@ -536,7 +532,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	prometheusConversion := iniFile.Section("unified_alerting.prometheus_conversion")
 	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{
-		RuleQueryOffset: prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
+		RuleQueryOffset:      prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
+		DefaultDatasourceUID: prometheusConversion.Key("default_datasource_uid").MustString(""),
 	}
 
 	rr := iniFile.Section("recording_rules")
@@ -589,6 +586,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.AlertmanagerMaxTemplateOutputSize = ua.Key("alertmanager_max_template_output_bytes").MustInt64(10485760)
 	if uaCfg.AlertmanagerMaxTemplateOutputSize < 0 {
 		return fmt.Errorf("setting 'alertmanager_max_template_output_bytes' is invalid, only 0 or a positive integer are allowed")
+	}
+
+	uaCfg.BacktestingMaxEvaluations = ua.Key("backtesting_max_evaluations").MustInt(100)
+	if uaCfg.BacktestingMaxEvaluations < 0 {
+		uaCfg.BacktestingMaxEvaluations = 100
 	}
 
 	cfg.UnifiedAlerting = uaCfg

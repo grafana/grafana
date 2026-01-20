@@ -98,7 +98,7 @@ You can share dashboards in the following ways:
 - [As a report](#schedule-a-report)
 - [As a snapshot](#share-a-snapshot)
 - [As a PDF export](#export-a-dashboard-as-pdf)
-- [As a JSON file export](#export-a-dashboard-as-json)
+- [As a JSON file export](#export-a-dashboard-as-code)
 - [As an image export](#export-a-dashboard-as-an-image)
 
 When you share a dashboard externally as a link or by email, those dashboards are included in a list of your shared dashboards. To view the list and manage these dashboards, navigate to **Dashboards > Shared dashboards**.
@@ -213,7 +213,7 @@ To export a dashboard in its current state as a PDF, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down in the top-right corner and select **Export as PDF**.
+1. Click the **Export** drop-down in the sidebar and select **Export as PDF**.
 1. In the **Export dashboard PDF** drawer that opens, select either **Landscape** or **Portrait** for the PDF orientation.
 1. Select either **Grid** or **Simple** for the PDF layout.
 1. Set the **Zoom** level; zoom in to enlarge text, or zoom out to see more data (like table columns) per panel.
@@ -229,7 +229,7 @@ Export a Grafana JSON file that contains everything you need, including layout, 
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the top-right corner and select **Export as code**.
+1. Click the **Export** drop-down list in the sidebar and select **Export as code**.
 
    The **Export dashboard** drawer opens.
 
@@ -255,7 +255,7 @@ To export a dashboard in its current state as a PNG image file, follow these ste
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Export** drop-down list in the top-right corner and select **Export as image**.
+1. Click the **Export** drop-down list in the sidebar and select **Export as image**.
 
    The **Export as image** drawer opens.
 

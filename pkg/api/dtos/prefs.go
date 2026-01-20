@@ -13,13 +13,12 @@ type UpdatePrefsCmd struct {
 	// Deprecated: Use HomeDashboardUID instead
 	HomeDashboardID  int64   `json:"homeDashboardId"`
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
-	// Enum: utc,browser
+	// Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string
 	Timezone       string                       `json:"timezone"`
 	WeekStart      string                       `json:"weekStart"`
 	QueryHistory   *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	Language       string                       `json:"language"`
 	RegionalFormat string                       `json:"regionalFormat"`
-	Cookies        []pref.CookieType            `json:"cookies,omitempty"`
 	Navbar         *pref.NavbarPreference       `json:"navbar,omitempty"`
 }
 
@@ -31,13 +30,12 @@ type PatchPrefsCmd struct {
 	// Default:0
 	// Deprecated: Use HomeDashboardUID instead
 	HomeDashboardID *int64 `json:"homeDashboardId,omitempty"`
-	// Enum: utc,browser
+	// Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string
 	Timezone         *string                      `json:"timezone,omitempty"`
 	WeekStart        *string                      `json:"weekStart,omitempty"`
 	Language         *string                      `json:"language,omitempty"`
 	RegionalFormat   *string                      `json:"regionalFormat,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
-	Cookies          []pref.CookieType            `json:"cookies,omitempty"`
 	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
 }

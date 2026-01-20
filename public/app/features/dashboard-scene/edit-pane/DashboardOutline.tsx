@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
-import { Box, Icon, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Box, Icon, ScrollContainer, Sidebar, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -24,12 +24,14 @@ export function DashboardOutline({ editPane, isEditing }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
 
   return (
-    <>
+    <Box display="flex" direction="column" flex={1} height="100%">
       <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
-      <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
-        <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
-      </Box>
-    </>
+      <ScrollContainer showScrollIndicators={true}>
+        <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
+          <DashboardOutlineNode sceneObject={dashboard} isEditing={isEditing} editPane={editPane} depth={0} index={0} />
+        </Box>
+      </ScrollContainer>
+    </Box>
   );
 }
 
@@ -55,12 +57,10 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   const outlineRename = useOutlineRename(editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
-  const visibleChildren = useMemo(() => {
-    const children = editableElement.getOutlineChildren?.(isEditing) ?? [];
-    return isEditing
-      ? children
-      : children.filter((child) => !getEditableElementFor(child)?.getEditableElementInfo().isHidden);
-  }, [editableElement, isEditing]);
+  const outlineChildren = editableElement.getOutlineChildren?.(isEditing) ?? [];
+  const visibleChildren = isEditing
+    ? outlineChildren
+    : outlineChildren.filter((child) => !getEditableElementFor(child)?.getEditableElementInfo().isHidden);
 
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -94,7 +94,11 @@ function DashboardOutlineNode({ sceneObject, editPane, isEditing, depth, index }
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       style={{ '--depth': depth } as React.CSSProperties}
     >
-      <div className={cx(styles.row, { [styles.rowSelected]: isSelected })}>
+      <div
+        className={cx(styles.row, isEditing ? styles.rowEditMode : styles.rowViewMode, {
+          [styles.rowSelected]: isSelected,
+        })}
+      >
         <div className={styles.indentation}></div>
         {isContainer && (
           <button
@@ -191,11 +195,17 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: theme.spacing(0.5),
       borderRadius: theme.shape.radius.default,
-
+    }),
+    rowEditMode: css({
       '&:hover': {
         color: theme.colors.text.primary,
         outline: `1px dashed ${theme.colors.border.strong}`,
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+      },
+    }),
+    rowViewMode: css({
+      '&:hover': {
+        textDecoration: 'underline',
       },
     }),
     rowSelected: css({
@@ -246,7 +256,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     nodeButtonClone: css({
       color: theme.colors.text.secondary,
-      cursor: 'not-allowed',
     }),
     outlineInput: css({
       border: `1px solid ${theme.components.input.borderColor}`,

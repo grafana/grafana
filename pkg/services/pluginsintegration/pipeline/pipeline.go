@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
@@ -19,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugin"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
@@ -42,7 +43,7 @@ func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pr registry.Service)
 	})
 }
 
-func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, ap pluginassets.Provider) *bootstrap.Bootstrap {
+func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, ap pluginassets.Provider, cdn *pluginscdn.Service) *bootstrap.Bootstrap {
 	disableAlertingForTempoDecorateFunc := func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		if p.ID == coreplugin.Tempo && !cfg.Features.TempoAlertingEnabled {
 			p.Alerting = false
@@ -52,7 +53,7 @@ func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.Signature
 
 	return bootstrap.New(cfg, bootstrap.Opts{
 		ConstructFunc: bootstrap.DefaultConstructFunc(cfg, sc, ap),
-		DecorateFuncs: append(bootstrap.DefaultDecorateFuncs(cfg), disableAlertingForTempoDecorateFunc),
+		DecorateFuncs: append(bootstrap.DefaultDecorateFuncs(cfg, cdn), disableAlertingForTempoDecorateFunc),
 	})
 }
 

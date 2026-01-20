@@ -9,6 +9,7 @@ import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafa
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -32,7 +33,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
-  const isInKioskMode = kioskMode === KioskMode.Full;
+  const { isPlaying } = playlistSrv.useState();
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
@@ -94,8 +95,10 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   };
 
   function renderBody() {
+    const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
+
     // In kiosk mode the full document body scrolls so we don't need to wrap in our own scrollbar
-    if (isInKioskMode) {
+    if (renderWithoutSidebar) {
       return (
         <div
           className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
@@ -194,6 +197,14 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       position: 'relative',
       flex: '1 1 0',
       overflow: 'hidden',
+
+      [theme.breakpoints.down('sm')]: {
+        flex: 1,
+
+        '> div:nth-child(2)': {
+          zIndex: theme.zIndex.activePanel,
+        },
+      },
     }),
     bodyWrapperKiosk: css({
       padding: theme.spacing(0, 2, 2, 2),

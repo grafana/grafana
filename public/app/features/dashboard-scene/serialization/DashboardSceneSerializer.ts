@@ -46,6 +46,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
       saveTimeRange?: boolean;
       saveVariables?: boolean;
       saveRefresh?: boolean;
+      rawJson?: Dashboard | DashboardV2Spec;
     }
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
@@ -184,9 +185,15 @@ export class V1DashboardSerializer
 
   getDashboardChangesFromScene(
     scene: DashboardScene,
-    options: { saveTimeRange?: boolean; saveVariables?: boolean; saveRefresh?: boolean }
+    options: {
+      saveTimeRange?: boolean;
+      saveVariables?: boolean;
+      saveRefresh?: boolean;
+      rawJson?: Dashboard | DashboardV2Spec;
+    }
   ) {
-    const changedSaveModel = this.getSaveModel(scene);
+    const changedSaveModel =
+      options.rawJson && !isDashboardV2Spec(options.rawJson) ? options.rawJson : this.getSaveModel(scene);
     const changeInfo = getRawDashboardChanges(
       this.initialSaveModel!,
       changedSaveModel,
@@ -396,9 +403,15 @@ export class V2DashboardSerializer
 
   getDashboardChangesFromScene(
     scene: DashboardScene,
-    options: { saveTimeRange?: boolean; saveVariables?: boolean; saveRefresh?: boolean }
+    options: {
+      saveTimeRange?: boolean;
+      saveVariables?: boolean;
+      saveRefresh?: boolean;
+      rawJson?: Dashboard | DashboardV2Spec;
+    }
   ) {
-    const changedSaveModel = this.getSaveModel(scene);
+    const changedSaveModel =
+      options.rawJson && isDashboardV2Spec(options.rawJson) ? options.rawJson : this.getSaveModel(scene);
     const changeInfo = getRawDashboardV2Changes(
       this.initialSaveModel!,
       changedSaveModel,
