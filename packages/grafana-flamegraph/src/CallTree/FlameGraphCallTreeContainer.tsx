@@ -7,8 +7,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
-import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { ColorScheme, ColorSchemeDiff } from '../types';
+import { FlameGraphDataContainer, LevelItem } from '../FlameGraph/dataTransform';
+import { GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
+import { ColorScheme, ColorSchemeDiff, SelectedView } from '../types';
 
 import { buildAllCallTreeNodes, buildCallersTree, CallTreeNode, getInitialExpandedState } from './utils';
 
@@ -28,6 +29,10 @@ type Props = {
   highlightedItemIndexes?: number[];
   /** Callback to sync focus from call tree to flame graph */
   setHighlightedItemIndexes?: (itemIndexes: number[] | undefined) => void;
+  /** Extra buttons to show in the context menu */
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
+  /** Current selected view for extra context menu buttons */
+  selectedView?: SelectedView;
 };
 
 const FlameGraphCallTreeContainer = memo(
@@ -43,6 +48,8 @@ const FlameGraphCallTreeContainer = memo(
     onSearch,
     highlightedItemIndexes,
     setHighlightedItemIndexes,
+    getExtraContextMenuButtons,
+    selectedView,
   }: Props) => {
     const [isCompact, setIsCompact] = useState(false);
     const widthRef = useRef(0);
@@ -452,6 +459,7 @@ const FlameGraphCallTreeContainer = memo(
                 nodeId={row.original.id}
                 label={row.original.label}
                 itemIndexes={row.original.levelItem.itemIndexes}
+                levelItem={row.original.levelItem}
                 hasChildren={row.original.hasChildren}
                 depth={row.original.depth - depthOffset}
                 parentId={row.original.parentId}
@@ -462,6 +470,10 @@ const FlameGraphCallTreeContainer = memo(
                 callersNodeLabel={callersNodeLabel}
                 isSearchMatch={searchNodes?.includes(row.original.id) ?? false}
                 actionsCellClass={styles.actionsCell}
+                getExtraContextMenuButtons={getExtraContextMenuButtons}
+                data={data}
+                selectedView={selectedView}
+                search={search}
               />
             ),
             width: ACTIONS_WIDTH,
@@ -553,6 +565,7 @@ const FlameGraphCallTreeContainer = memo(
                 nodeId={row.original.id}
                 label={row.original.label}
                 itemIndexes={row.original.levelItem.itemIndexes}
+                levelItem={row.original.levelItem}
                 hasChildren={row.original.hasChildren}
                 depth={row.original.depth - depthOffset}
                 parentId={row.original.parentId}
@@ -563,6 +576,10 @@ const FlameGraphCallTreeContainer = memo(
                 callersNodeLabel={callersNodeLabel}
                 isSearchMatch={searchNodes?.includes(row.original.id) ?? false}
                 actionsCellClass={styles.actionsCell}
+                getExtraContextMenuButtons={getExtraContextMenuButtons}
+                data={data}
+                selectedView={selectedView}
+                search={search}
               />
             ),
             width: ACTIONS_WIDTH,
@@ -946,6 +963,7 @@ type ActionsCellProps = {
   nodeId: string;
   label: string;
   itemIndexes: number[];
+  levelItem: LevelItem;
   hasChildren: boolean;
   depth: number;
   parentId: string | undefined;
@@ -956,12 +974,17 @@ type ActionsCellProps = {
   callersNodeLabel: string | undefined;
   isSearchMatch: boolean;
   actionsCellClass: string;
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
+  data: FlameGraphDataContainer;
+  selectedView?: SelectedView;
+  search: string;
 };
 
 const ActionsCell = memo(function ActionsCell({
   nodeId,
   label,
   itemIndexes,
+  levelItem,
   hasChildren,
   depth,
   parentId,
@@ -972,6 +995,10 @@ const ActionsCell = memo(function ActionsCell({
   callersNodeLabel,
   isSearchMatch,
   actionsCellClass,
+  getExtraContextMenuButtons,
+  data,
+  selectedView,
+  search,
 }: ActionsCellProps) {
   const isTheFocusedNode =
     nodeId === focusedNodeId || (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === label);
@@ -984,7 +1011,24 @@ const ActionsCell = memo(function ActionsCell({
   const shouldShowCallersItem = !isTheCallersTarget && !isRootNode;
   const shouldShowSearchItem = onSearch && !isSearchMatch;
 
-  const hasAnyAction = shouldShowFocusItem || shouldShowCallersItem || shouldShowSearchItem;
+  const extraButtons = useMemo(() => {
+    if (!getExtraContextMenuButtons) {
+      return [];
+    }
+    const clickedItemData = {
+      label,
+      item: levelItem,
+      posX: 0,
+      posY: 0,
+    };
+    return getExtraContextMenuButtons(clickedItemData, data.data, {
+      selectedView: selectedView ?? SelectedView.FlameGraph,
+      isDiff: data.isDiffFlamegraph(),
+      search,
+    });
+  }, [getExtraContextMenuButtons, label, levelItem, data, selectedView, search]);
+
+  const hasAnyAction = shouldShowFocusItem || shouldShowCallersItem || shouldShowSearchItem || extraButtons.length > 0;
 
   if (!hasAnyAction) {
     return <div className={actionsCellClass} />;
@@ -1009,6 +1053,9 @@ const ActionsCell = memo(function ActionsCell({
         <Menu.Item label="Show callers" icon="expand-arrows-alt" onClick={() => onShowCallers(label)} />
       )}
       {shouldShowSearchItem && <Menu.Item label="Search" icon="search" onClick={() => onSearch!(label)} />}
+      {extraButtons.map(({ label: btnLabel, icon, onClick }) => (
+        <Menu.Item key={btnLabel} label={btnLabel} icon={icon} onClick={onClick} />
+      ))}
     </Menu>
   );
 

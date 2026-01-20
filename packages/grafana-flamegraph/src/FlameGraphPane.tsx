@@ -312,6 +312,8 @@ const FlameGraphPane = ({
             onSearch={onCallTreeSearch}
             highlightedItemIndexes={highlightedItemIndexes}
             setHighlightedItemIndexes={setHighlightedItemIndexes}
+            getExtraContextMenuButtons={getExtraContextMenuButtons}
+            selectedView={selectedView}
           />
         </div>
       );
