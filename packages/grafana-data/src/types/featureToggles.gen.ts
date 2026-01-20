@@ -244,11 +244,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-  * @default false
-  */
-  disableClassicHTTPHistogram?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   * @default false
   */

@@ -67,8 +67,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 	reqDurationOptions.NativeHistogramMinResetDuration = time.Hour
 	reqSizeOptions.NativeHistogramMinResetDuration = time.Hour
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagDisableClassicHTTPHistogram) {
+	if !cfg.ClassicHTTPHistogramEnabled {
 		// setting Buckets to nil with native options set means the classic
 		// histogram will no longer be exposed - this can be a good way to
 		// reduce cardinality in the exposed metrics

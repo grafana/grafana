@@ -366,15 +366,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "disableClassicHTTPHistogram",
-			Description:     "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
 			Name:            "kubernetesSnapshots",
 			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
