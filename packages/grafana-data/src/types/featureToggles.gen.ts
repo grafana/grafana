@@ -59,11 +59,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Logs the path for requests that are instrumented as unknown
-  * @default false
-  */
-  logRequestsInstrumentedAsUnknown?: boolean;
-  /**
   * Run the GRPC server
   * @default false
   */
@@ -248,16 +243,6 @@ export interface FeatureToggles {
   * @default false
   */
   externalServiceAccounts?: boolean;
-  /**
-  * Enables native HTTP Histograms
-  * @default false
-  */
-  enableNativeHTTPHistogram?: boolean;
-  /**
-  * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-  * @default false
-  */
-  disableClassicHTTPHistogram?: boolean;
   /**
   * Routes snapshot requests from /api to the /apis endpoint
   * @default false

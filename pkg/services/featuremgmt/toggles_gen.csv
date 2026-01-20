@@ -7,7 +7,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-02-03,featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
 2022-03-17,storage,experimental,@grafana/search-and-storage,false,false,false
 2022-05-31,canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-2022-06-10,logRequestsInstrumentedAsUnknown,experimental,@grafana/grafana-backend-group,false,false,false
 2022-09-26,grpcServer,preview,@grafana/search-and-storage,false,false,false
 2022-11-28,cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 2022-10-14,showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
@@ -45,8 +44,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 2023-09-28,externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
-2023-10-03,enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
-2024-06-18,disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 2023-12-05,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-06-05,kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,false

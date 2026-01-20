@@ -1374,6 +1374,7 @@
         "name": "disableClassicHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-06-18T19:37:44Z",
+        "deletionTimestamp": "2026-01-20T11:46:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -1559,6 +1560,7 @@
         "name": "enableNativeHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-10-03T18:23:55Z",
+        "deletionTimestamp": "2026-01-20T11:37:01Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -2688,6 +2690,7 @@
         "name": "logRequestsInstrumentedAsUnknown",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-06-10T08:56:55Z",
+        "deletionTimestamp": "2026-01-16T14:10:42Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -4568,14 +4571,18 @@
     {
       "metadata": {
         "name": "useMTPlugins",
-        "resourceVersion": "1764913709691",
-        "creationTimestamp": "2025-12-05T07:09:41Z"
+        "resourceVersion": "1768554119948",
+        "creationTimestamp": "2025-12-05T07:09:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-16 09:01:59.948292 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

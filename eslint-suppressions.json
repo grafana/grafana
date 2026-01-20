@@ -2962,16 +2962,6 @@
       "count": 2
     }
   },
-  "public/app/features/plugins/extensions/utils.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 27
-    }
-  },
-  "public/app/features/plugins/extensions/utils.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
   "public/app/features/plugins/extensions/validators.test.tsx": {
     "no-restricted-syntax": {
       "count": 30
@@ -4222,11 +4212,6 @@
   "public/app/plugins/panel/canvas/editor/LineStyleEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/editor/element/APIEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx": {

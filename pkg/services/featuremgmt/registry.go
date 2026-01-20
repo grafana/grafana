@@ -77,13 +77,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "logRequestsInstrumentedAsUnknown",
-			Description: "Logs the path for requests that are instrumented as unknown",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
-			Expression:  "false",
-		},
-		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,
@@ -371,24 +364,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 			Expression:  "false",
-		},
-		{
-			Name:            "enableNativeHTTPHistogram",
-			Description:     "Enables native HTTP Histograms",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
-			Name:            "disableClassicHTTPHistogram",
-			Description:     "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
 		},
 		{
 			Name:            "kubernetesSnapshots",
@@ -2207,6 +2182,7 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+			HideFromDocs: true,
 		},
 		{
 			Name:         "multiPropsVariables",

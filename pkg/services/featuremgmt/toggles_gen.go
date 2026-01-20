@@ -31,10 +31,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagLogRequestsInstrumentedAsUnknown
-	// Logs the path for requests that are instrumented as unknown
-	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -146,14 +142,6 @@ const (
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
-
-	// FlagEnableNativeHTTPHistogram
-	// Enables native HTTP Histograms
-	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
-
-	// FlagDisableClassicHTTPHistogram
-	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
