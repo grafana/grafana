@@ -161,10 +161,7 @@ export function getInitialExpandedState(nodes: CallTreeNode[], levelsToExpand = 
  * For self values, we use data.getSelf(item.itemIndexes) which sums the self time
  * for all merged indices, matching how the flame graph tooltip displays self.
  */
-export function buildCallersTree(
-  levels: LevelItem[][],
-  data: FlameGraphDataContainer
-): CallTreeNode[] {
+export function buildCallersTree(levels: LevelItem[][], data: FlameGraphDataContainer): CallTreeNode[] {
   if (levels.length === 0) {
     return [];
   }
@@ -180,12 +177,7 @@ export function buildCallersTree(
   const targetTotal = targetLevel.reduce((sum, item) => sum + item.value, 0);
 
   // Build tree node recursively, traversing via parents (callers)
-  const buildNode = (
-    item: LevelItem,
-    nodeId: string,
-    depth: number,
-    parentId: string | undefined
-  ): CallTreeNode => {
+  const buildNode = (item: LevelItem, nodeId: string, depth: number, parentId: string | undefined): CallTreeNode => {
     const label = data.getLabel(item.itemIndexes[0]);
 
     // Use item.value directly - this is the transformed value from sandwich transformation
