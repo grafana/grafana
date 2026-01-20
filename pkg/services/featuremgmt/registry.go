@@ -2069,6 +2069,14 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: false,
 		},
+		{
+			Name:         "queryEditorNext",
+			Description:  "Enables next generation query editor experience",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
+		},
+
 	}
 )
 

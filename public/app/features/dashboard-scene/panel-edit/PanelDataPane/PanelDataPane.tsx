@@ -17,6 +17,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
+import { PanelDataPaneNext } from '../PanelEditNext/PanelDataPaneNext';
+
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
@@ -34,6 +36,16 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
   public static createFor(panel: VizPanel) {
     const panelRef = panel.getRef();
+
+    const config = getConfig();
+    const queryExperienceNext = config.featureToggles.queryEditorNext;
+
+    // Query experience v2
+    if (queryExperienceNext) {
+      return new PanelDataPaneNext({ panelRef });
+    }
+
+    // Original experience
     const tabs: PanelDataPaneTab[] = [
       new PanelDataQueriesTab({ panelRef }),
       new PanelDataTransformationsTab({ panelRef }),
@@ -63,6 +75,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       return;
     }
     if (typeof values.tab === 'string') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       this.setState({ tab: values.tab as TabId });
     }
   }

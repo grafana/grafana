@@ -40,6 +40,7 @@ import {
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
@@ -47,7 +48,7 @@ export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
   isDirty?: boolean;
   optionsPane?: PanelOptionsPane;
-  dataPane?: PanelDataPane;
+  dataPane?: PanelDataPane | PanelDataPaneNext;
   panelRef: SceneObjectRef<VizPanel>;
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;

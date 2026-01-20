@@ -1251,4 +1251,8 @@ export interface FeatureToggles {
   * Enables profiles exemplars support in profiles drilldown
   */
   profilesExemplars?: boolean;
+  /**
+  * Enables next generation query editor experience
+  */
+  queryEditorNext?: boolean;
 }
