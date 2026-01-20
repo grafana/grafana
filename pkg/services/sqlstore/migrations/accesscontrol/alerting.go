@@ -176,12 +176,12 @@ func (m *scopedReceiverTestingPermissions) SQL(migrator.Dialect) string {
 func (m *scopedReceiverTestingPermissions) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	sql := fmt.Sprintf(`SELECT *
 			FROM permission AS P
-			WHERE action = '%[0]s'
-			    AND EXISTS(SELECT 1 FROM role AS R WHERE R.id = P.role_id AND R.name LIKE 'managed:%')
+			WHERE action = '%[1]s'
+			    AND EXISTS(SELECT 1 FROM role AS R WHERE R.id = P.role_id AND R.name LIKE 'managed:%%')
 			    AND NOT EXISTS(SELECT 1
 			                   FROM permission AS P2
 			                   WHERE P2.role_id = P.role_id
-			                     AND P2.action = '%[1]s' AND P2.scope = P.scope
+			                     AND P2.action = '%[2]s' AND P2.scope = P.scope
 			                   )`, accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversTestCreate)
 	var results []accesscontrol.Permission
 	if err := sess.SQL(sql).Find(&results); err != nil {
@@ -206,5 +206,5 @@ func (m *scopedReceiverTestingPermissions) Exec(sess *xorm.Session, mg *migrator
 }
 
 func AddScopedReceiverTestingPermissions(mg *migrator.Migrator) {
-	mg.AddMigration("add 'alert.notifications.receivers.test:write' to managed roles", &scopedReceiverTestingPermissions{})
+	mg.AddMigration("add 'alert.notifications.receivers.test:create' to managed roles", &scopedReceiverTestingPermissions{})
 }
