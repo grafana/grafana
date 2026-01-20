@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -57,7 +58,7 @@ type FakeRuleStateProvider struct {
 	states map[ngmodels.AlertRuleKey][]*state.State
 }
 
-func (f FakeRuleStateProvider) GetStatesForRuleUID(orgID int64, UID string) []*state.State {
+func (f FakeRuleStateProvider) GetStatesForRuleUID(_ context.Context, orgID int64, UID string) []*state.State {
 	return f.states[ngmodels.AlertRuleKey{
 		OrgID: orgID,
 		UID:   UID,
