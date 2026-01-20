@@ -1,6 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
 import { NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -85,12 +86,14 @@ describe('AlertmanagerPageWrapper', () => {
       expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
     });
 
-    it('should show AlertManagerPicker when external data sources have manageAlerts=undefined (defaults to true)', () => {
+    it('should show AlertManagerPicker when external data sources have manageAlerts=undefined and config default is true', () => {
+      config.defaultDatasourceManageAlertsUiToggle = true;
+
       const dataSourceDefaultManageAlerts = mockDataSource({
         name: 'prometheus-default',
         uid: 'prometheus-default-uid',
         type: 'prometheus',
-        jsonData: {}, // manageAlerts defaults to true when undefined
+        jsonData: {}, // manageAlerts uses config.defaultDatasourceManageAlertsUiToggle when undefined
       });
       setupDataSources(dataSourceDefaultManageAlerts);
 
@@ -102,6 +105,27 @@ describe('AlertmanagerPageWrapper', () => {
       renderTestComponent();
 
       expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
+    });
+
+    it('should hide AlertManagerPicker when external data sources have manageAlerts=undefined and config default is false', () => {
+      config.defaultDatasourceManageAlertsUiToggle = false;
+
+      const dataSourceDefaultManageAlerts = mockDataSource({
+        name: 'prometheus-default',
+        uid: 'prometheus-default-uid',
+        type: 'prometheus',
+        jsonData: {}, // manageAlerts uses config.defaultDatasourceManageAlertsUiToggle when undefined
+      });
+      setupDataSources(dataSourceDefaultManageAlerts);
+
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingRuleExternalRead,
+      ]);
+
+      renderTestComponent();
+
+      expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
     });
 
     it('should show AlertManagerPicker when multiple external data sources exist with at least one managing alerts', () => {
