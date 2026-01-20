@@ -1,8 +1,7 @@
-/* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Alert, Badge, Button, Card, Grid, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import {
@@ -26,7 +25,10 @@ export const QueryEditorNext = () => {
         <Trans i18nKey="query-editor-next.title">🚀 Next Generation Query Editor</Trans>
       </Text>
       <Text color="secondary">
-        This is a scaffold showing all available context data. Each section uses granular hooks for optimal performance.
+        <Trans i18nKey="query-editor-next.description">
+          This is a scaffold showing all available context data. Each section uses granular hooks for optimal
+          performance.
+        </Trans>
       </Text>
 
       <Grid columns={2} gap={2}>
@@ -56,10 +58,10 @@ function DatasourceInfo() {
       </Card.Heading>
       <Card.Description>
         <Stack direction="column" gap={1}>
-          <Row label="Name" value={dsSettings?.name ?? 'Not loaded'} />
-          <Row label="Type" value={dsSettings?.type ?? '—'} />
-          <Row label="UID" value={dsSettings?.uid ?? '—'} mono />
-          <Row label="Panel Key" value={panel.state.key ?? '—'} mono />
+          <Row label={t('query-editor-next.name', 'Name')} value={dsSettings?.name ?? 'Not loaded'} />
+          <Row label={t('query-editor-next.type', 'Type')} value={dsSettings?.type ?? '—'} />
+          <Row label={t('query-editor-next.uid', 'UID')} value={dsSettings?.uid ?? '—'} mono />
+          <Row label={t('query-editor-next.panel-key', 'Panel Key')} value={panel.state.key ?? '—'} mono />
         </Stack>
       </Card.Description>
     </Card>
@@ -75,13 +77,17 @@ function QueriesInfo() {
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           <Icon name="document-info" />
-          <span>Queries</span>
+          <span>
+            <Trans i18nKey="query-editor-next.queries">Queries</Trans>
+          </span>
           <Badge text={String(queries.length)} color="blue" />
         </Stack>
       </Card.Heading>
       <Card.Description>
         {queries.length === 0 ? (
-          <Text color="secondary">No queries defined</Text>
+          <Text color="secondary">
+            <Trans i18nKey="query-editor-next.no-queries-defined">No queries defined</Trans>
+          </Text>
         ) : (
           <Stack direction="column" gap={1}>
             {queries.map((query, index) => (
@@ -90,7 +96,7 @@ function QueriesInfo() {
                 <Text variant="bodySmall" color="secondary">
                   {query.datasource?.type ?? 'inherited'}
                 </Text>
-                {query.hide && <Badge text="hidden" color="orange" icon="eye-slash" />}
+                {query.hide && <Badge text={t('query-editor-next.hidden', 'hidden')} color="orange" icon="eye-slash" />}
               </Stack>
             ))}
           </Stack>
@@ -111,33 +117,43 @@ function DataInfo() {
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           <Icon name="chart-line" />
-          <span>Data</span>
+          <span>
+            <Trans i18nKey="query-editor-next.data">Data</Trans>
+          </span>
           {isLoading && <Spinner size="sm" />}
           {data?.state && <Badge text={data.state} color={data.state === 'Done' ? 'green' : 'blue'} />}
         </Stack>
       </Card.Heading>
       <Card.Description>
         {error ? (
-          <Alert severity="error" title="Error">
+          <Alert severity="error" title={t('query-editor-next.error', 'Error')}>
             {error.message}
           </Alert>
         ) : !data ? (
-          <Text color="secondary">No data yet</Text>
+          <Text color="secondary">
+            <Trans i18nKey="query-editor-next.no-data-yet">No data yet</Trans>
+          </Text>
         ) : (
           <Stack direction="column" gap={1}>
-            <Row label="State" value={data.state} />
-            <Row label="Series" value={String(data.series?.length ?? 0)} />
-            <Row label="Annotations" value={String(data.annotations?.length ?? 0)} />
+            <Row label={t('query-editor-next.state', 'State')} value={data.state} />
+            <Row label={t('query-editor-next.series', 'Series')} value={String(data.series?.length ?? 0)} />
+            <Row
+              label={t('query-editor-next.annotations', 'Annotations')}
+              value={String(data.annotations?.length ?? 0)}
+            />
             {data.series?.[0] && (
               <>
-                <Row label="First Series" value={data.series[0].name ?? data.series[0].refId ?? '—'} />
-                <Row label="Fields" value={String(data.series[0].fields.length)} />
-                <Row label="Rows" value={String(data.series[0].length)} />
+                <Row
+                  label={t('query-editor-next.first-series', 'First Series')}
+                  value={data.series[0].name ?? data.series[0].refId ?? '—'}
+                />
+                <Row label={t('query-editor-next.fields', 'Fields')} value={String(data.series[0].fields.length)} />
+                <Row label={t('query-editor-next.rows', 'Rows')} value={String(data.series[0].length)} />
               </>
             )}
             {data.timeRange && (
               <Row
-                label="Time Range"
+                label={t('query-editor-next.time-range', 'Time Range')}
                 value={`${data.timeRange.from.format('HH:mm')} - ${data.timeRange.to.format('HH:mm')}`}
               />
             )}
@@ -157,18 +173,24 @@ function ActionsDemo() {
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           <Icon name="bolt" />
-          <span>Actions</span>
+          <span>
+            <Trans i18nKey="query-editor-next.actions">Actions</Trans>
+          </span>
         </Stack>
       </Card.Heading>
       <Card.Description>
         <Stack direction="column" gap={2}>
-          <Text color="secondary">These buttons use stable action references (no re-renders on data change)</Text>
+          <Text color="secondary">
+            <Trans i18nKey="query-editor-next.stable-action-references">
+              These buttons use stable action references (no re-renders on data change)
+            </Trans>
+          </Text>
           <Stack gap={1}>
             <Button variant="secondary" size="sm" icon="plus" onClick={() => addQuery()}>
-              Add Query
+              <Trans i18nKey="query-editor-next.add-query">Add Query</Trans>
             </Button>
             <Button variant="primary" size="sm" icon="sync" onClick={() => runQueries()}>
-              Run Queries
+              <Trans i18nKey="query-editor-next.run-queries">Run Queries</Trans>
             </Button>
           </Stack>
         </Stack>

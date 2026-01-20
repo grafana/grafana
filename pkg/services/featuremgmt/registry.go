@@ -2266,7 +2266,6 @@ var (
 			Owner:        grafanaDataProSquad,
 			Expression:   "false",
 		},
-
 	}
 )
 
