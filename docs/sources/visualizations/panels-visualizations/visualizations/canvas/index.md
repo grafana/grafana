@@ -152,6 +152,7 @@ The following options let you configure basic, unauthenticated API calls:
 | Content-Type | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
 | Query parameters | Enter as many **Key**, **Value** pairs as you need. |
 | Header parameters | Enter as many **Key**, **Value** pairs as you need. |
+| Success message | Enter a message that will appear if the API call is successful. If you leave the field empty, the default message "API call was successful" appears. |
 | Payload | Enter the body of the API call. |
 
 <!-- prettier-ignore-end -->
