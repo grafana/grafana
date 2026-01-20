@@ -515,16 +515,16 @@ const FlameGraphCallTreeContainer = memo(
 
         cols.push(
           {
-            Header: 'Baseline %',
-            accessor: 'selfPercent',
+            Header: 'Baseline',
+            accessor: 'totalPercent',
             Cell: ({ value }: { value: number }) => `${value.toFixed(2)}%`,
             sortType: 'basic',
             width: BASELINE_WIDTH,
             minWidth: BASELINE_WIDTH,
           },
           {
-            Header: 'Comparison %',
-            accessor: 'selfPercentRight',
+            Header: 'Comparison',
+            accessor: 'totalPercentRight',
             Cell: ({ value }: { value: number | undefined }) => (value !== undefined ? `${value.toFixed(2)}%` : '-'),
             sortType: 'basic',
             width: COMPARISON_WIDTH,
@@ -918,8 +918,10 @@ function getRowBackgroundColor(
     const rootTotal = levels[0][0].value;
     const rootTotalRight = levels[0][0].valueRight || 0;
 
+    // getBarColorByDiff expects combined total as first parameter
+    // node.total is now the left/baseline value only, so we need to add them back together
     const barColor = getBarColorByDiff(
-      node.total,
+      node.total + (node.totalRight || 0),
       node.totalRight || 0,
       rootTotal,
       rootTotalRight,

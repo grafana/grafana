@@ -27,11 +27,17 @@ export interface CallTreeNode {
  * Build hierarchical call tree node from the LevelItem structure.
  * Each node gets a unique ID based on its path in the tree.
  * Children are stored in the subRows property for react-table useExpanded.
+ *
+ * For diff flame graphs:
+ * - Baseline and comparison percentages are calculated relative to their respective totals
+ * - This matches exactly how the Flame Graph tooltip calculates diff values
+ * - Diff % is the percentage change between comparison% and baseline%
  */
 export function buildCallTreeNode(
   data: FlameGraphDataContainer,
   rootItem: LevelItem,
-  rootTotal: number,
+  rootTotalLeft: number,
+  rootTotalRight: number,
   parentId?: string,
   parentDepth = -1,
   childIndex = 0
@@ -40,12 +46,11 @@ export function buildCallTreeNode(
   const depth = parentDepth + 1;
 
   const label = data.getLabel(rootItem.itemIndexes[0]);
-  // Use item.value and item.itemIndexes to handle both single and merged items consistently
-  const self = data.getSelf(rootItem.itemIndexes);
-  const total = rootItem.value;
-  const selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
-  const totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
 
+  let self: number;
+  let total: number;
+  let selfPercent: number;
+  let totalPercent: number;
   let selfRight: number | undefined;
   let totalRight: number | undefined;
   let selfPercentRight: number | undefined;
@@ -53,24 +58,45 @@ export function buildCallTreeNode(
   let diffPercent: number | undefined;
 
   if (data.isDiffFlamegraph()) {
+    // For diff view, separate left (baseline) and right (comparison) values
+    // This matches exactly what FlameGraphTooltip.getDiffTooltipData does
+    const selfLeft = data.getSelf(rootItem.itemIndexes);
     selfRight = data.getSelfRight(rootItem.itemIndexes);
+    const totalLeft = rootItem.value - (rootItem.valueRight || 0);
     totalRight = rootItem.valueRight || 0;
-    selfPercentRight = rootTotal > 0 ? (selfRight / rootTotal) * 100 : 0;
-    totalPercentRight = rootTotal > 0 ? (totalRight / rootTotal) * 100 : 0;
 
-    if (self > 0) {
-      diffPercent = ((selfRight - self) / self) * 100;
-    } else if (selfRight > 0) {
+    // Store the left values as the primary values
+    self = selfLeft;
+    total = totalLeft;
+
+    // Calculate percentages relative to their respective totals (matching Flame Graph)
+    selfPercent = rootTotalLeft > 0 ? (selfLeft / rootTotalLeft) * 100 : 0;
+    totalPercent = rootTotalLeft > 0 ? (totalLeft / rootTotalLeft) * 100 : 0;
+    selfPercentRight = rootTotalRight > 0 ? (selfRight / rootTotalRight) * 100 : 0;
+    totalPercentRight = rootTotalRight > 0 ? (totalRight / rootTotalRight) * 100 : 0;
+
+    // Diff is the percentage change between comparison% and baseline% of TOTAL values
+    // This matches FlameGraphTooltip: diff = ((percentageRight - percentageLeft) / percentageLeft) * 100
+    if (totalPercent > 0) {
+      diffPercent = ((totalPercentRight - totalPercent) / totalPercent) * 100;
+    } else if (totalPercentRight > 0) {
       diffPercent = Infinity;
     } else {
       diffPercent = 0;
     }
+  } else {
+    // Non-diff mode: use combined values
+    self = data.getSelf(rootItem.itemIndexes);
+    total = rootItem.value;
+    const rootTotal = rootTotalLeft; // For non-diff, rootTotalRight is 0
+    selfPercent = rootTotal > 0 ? (self / rootTotal) * 100 : 0;
+    totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
   }
 
   const subRows =
     rootItem.children.length > 0
       ? rootItem.children.map((child, index) => {
-          const childNode = buildCallTreeNode(data, child, rootTotal, nodeId, depth, index);
+          const childNode = buildCallTreeNode(data, child, rootTotalLeft, rootTotalRight, nodeId, depth, index);
           childNode.isLastChild = index === rootItem.children.length - 1;
           return childNode;
         })
@@ -108,13 +134,32 @@ export function buildCallTreeNode(
  * Build all call tree nodes from the root level items.
  * Returns an array of root nodes, each with their children in subRows.
  * This handles cases where there might be multiple root items.
+ *
+ * For diff flame graphs, separates left (baseline) and right (comparison) totals
+ * to match the Flame Graph's calculation method.
  */
 export function buildAllCallTreeNodes(data: FlameGraphDataContainer): CallTreeNode[] {
   const levels = data.getLevels();
-  const rootTotal = levels.length > 0 ? levels[0][0].value : 0;
+  if (levels.length === 0) {
+    return [];
+  }
 
-  const rootNodes = levels[0].map((rootItem, index) =>
-    buildCallTreeNode(data, rootItem, rootTotal, undefined, -1, index)
+  const rootItem = levels[0][0];
+  let rootTotalLeft: number;
+  let rootTotalRight: number;
+
+  if (data.isDiffFlamegraph()) {
+    // For diff: separate left and right totals (matching FlameGraphTooltip.getDiffTooltipData)
+    rootTotalRight = rootItem.valueRight || 0;
+    rootTotalLeft = rootItem.value - rootTotalRight;
+  } else {
+    // For non-diff: all value is "left", right is 0
+    rootTotalLeft = rootItem.value;
+    rootTotalRight = 0;
+  }
+
+  const rootNodes = levels[0].map((item, index) =>
+    buildCallTreeNode(data, item, rootTotalLeft, rootTotalRight, undefined, -1, index)
   );
 
   return rootNodes;
@@ -158,8 +203,10 @@ export function getInitialExpandedState(nodes: CallTreeNode[], levelsToExpand = 
  * - Values come directly from item.value (already transformed by sandwich transformation)
  * - Percentages are relative to the target's total (target = 100%), matching sandwich view
  *
- * For self values, we use data.getSelf(item.itemIndexes) which sums the self time
- * for all merged indices, matching how the flame graph tooltip displays self.
+ * For diff flame graphs:
+ * - Baseline and comparison percentages are calculated relative to their respective totals
+ * - This matches exactly how the Flame Graph tooltip calculates diff values
+ * - Diff % is the percentage change between comparison% and baseline%
  */
 export function buildCallersTree(levels: LevelItem[][], data: FlameGraphDataContainer): CallTreeNode[] {
   if (levels.length === 0) {
@@ -172,27 +219,28 @@ export function buildCallersTree(levels: LevelItem[][], data: FlameGraphDataCont
     return [];
   }
 
-  // Use target's total as the base for all percentages, matching sandwich view
-  // This means: target's totalPercent = 100%, target's selfPercent = self/total (fraction that is self time)
-  const targetTotal = targetLevel.reduce((sum, item) => sum + item.value, 0);
+  // Calculate separate totals for diff view
+  let targetTotalLeft: number;
+  let targetTotalRight: number;
+
+  if (data.isDiffFlamegraph()) {
+    // For diff: separate left and right totals
+    targetTotalRight = targetLevel.reduce((sum, item) => sum + (item.valueRight || 0), 0);
+    targetTotalLeft = targetLevel.reduce((sum, item) => sum + item.value, 0) - targetTotalRight;
+  } else {
+    // For non-diff: all value is "left"
+    targetTotalLeft = targetLevel.reduce((sum, item) => sum + item.value, 0);
+    targetTotalRight = 0;
+  }
 
   // Build tree node recursively, traversing via parents (callers)
   const buildNode = (item: LevelItem, nodeId: string, depth: number, parentId: string | undefined): CallTreeNode => {
     const label = data.getLabel(item.itemIndexes[0]);
 
-    // Use item.value directly - this is the transformed value from sandwich transformation
-    // representing the portion of time that flowed through this call path
-    const total = item.value;
-
-    // For self, sum across all merged itemIndexes
-    const self = data.getSelf(item.itemIndexes);
-
-    // Both percentages are relative to target's total
-    // - totalPercent: what fraction of target's total came through this path (target = 100%)
-    // - selfPercent: what fraction of target's total is this node's self time
-    const selfPercent = targetTotal > 0 ? (self / targetTotal) * 100 : 0;
-    const totalPercent = targetTotal > 0 ? (total / targetTotal) * 100 : 0;
-
+    let self: number;
+    let total: number;
+    let selfPercent: number;
+    let totalPercent: number;
     let selfRight: number | undefined;
     let totalRight: number | undefined;
     let selfPercentRight: number | undefined;
@@ -200,19 +248,37 @@ export function buildCallersTree(levels: LevelItem[][], data: FlameGraphDataCont
     let diffPercent: number | undefined;
 
     if (data.isDiffFlamegraph()) {
-      totalRight = item.valueRight || 0;
+      // For diff view, separate left (baseline) and right (comparison) values
+      const selfLeft = data.getSelf(item.itemIndexes);
       selfRight = data.getSelfRight(item.itemIndexes);
-      const targetTotalRight = targetLevel.reduce((sum, item) => sum + (item.valueRight || 0), 0);
+      const totalLeft = item.value - (item.valueRight || 0);
+      totalRight = item.valueRight || 0;
+
+      // Store the left values as the primary values
+      self = selfLeft;
+      total = totalLeft;
+
+      // Calculate percentages relative to their respective totals (matching Flame Graph)
+      selfPercent = targetTotalLeft > 0 ? (selfLeft / targetTotalLeft) * 100 : 0;
+      totalPercent = targetTotalLeft > 0 ? (totalLeft / targetTotalLeft) * 100 : 0;
       selfPercentRight = targetTotalRight > 0 ? (selfRight / targetTotalRight) * 100 : 0;
       totalPercentRight = targetTotalRight > 0 ? (totalRight / targetTotalRight) * 100 : 0;
 
-      if (self > 0) {
-        diffPercent = ((selfRight - self) / self) * 100;
-      } else if (selfRight > 0) {
+      // Diff is the percentage change between comparison% and baseline% of TOTAL values
+      // This matches FlameGraphTooltip: diff = ((percentageRight - percentageLeft) / percentageLeft) * 100
+      if (totalPercent > 0) {
+        diffPercent = ((totalPercentRight - totalPercent) / totalPercent) * 100;
+      } else if (totalPercentRight > 0) {
         diffPercent = Infinity;
       } else {
         diffPercent = 0;
       }
+    } else {
+      // Non-diff mode
+      self = data.getSelf(item.itemIndexes);
+      total = item.value;
+      selfPercent = targetTotalLeft > 0 ? (self / targetTotalLeft) * 100 : 0;
+      totalPercent = targetTotalLeft > 0 ? (total / targetTotalLeft) * 100 : 0;
     }
 
     // In the callers tree, we traverse via parents (going up the call stack)
