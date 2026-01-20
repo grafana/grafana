@@ -111,6 +111,28 @@ describe('getRulesSourcesFromFilter - data source filtering logic', () => {
     });
   });
 
+  describe('empty filter behavior', () => {
+    it('should return all external sources when no datasource filter is provided', () => {
+      const allExternalSources: DataSourceRulesSourceIdentifier[] = [
+        { uid: 'prometheus-uid', name: 'Prometheus', ruleSourceType: 'datasource' },
+        { uid: 'loki-uid', name: 'Loki', ruleSourceType: 'datasource' },
+      ];
+
+      getExternalRulesSourcesMock.mockReturnValue(allExternalSources);
+
+      // When filter.dataSourceNames is empty, getRulesSourcesFromFilter should return
+      // all external sources without needing to call getDatasourceAPIUid
+      // This avoids the need for a second call to getExternalRulesSources
+      const result = getExternalRulesSourcesMock();
+
+      expect(result).toEqual(allExternalSources);
+      expect(result.length).toBe(2);
+
+      // getDatasourceAPIUid should not be called when filter is empty
+      expect(getDatasourceAPIUidMock).not.toHaveBeenCalled();
+    });
+  });
+
   describe('error handling', () => {
     it('should handle errors from getDatasourceAPIUid gracefully', () => {
       getDatasourceAPIUidMock.mockImplementation(() => {

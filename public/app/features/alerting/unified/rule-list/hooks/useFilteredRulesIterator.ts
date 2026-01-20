@@ -68,16 +68,12 @@ interface GetIteratorResult {
 }
 
 export function useFilteredRulesIteratorProvider() {
-  const allExternalRulesSources = getExternalRulesSources();
-
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
 
   const getFilteredRulesIterable = (filterState: RulesFilter, options: FetchGroupsLimitOptions): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */
     const abortController = new AbortController();
-
-    const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
     const { backendFilter, frontendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(filterState);
 
@@ -101,9 +97,7 @@ export function useFilteredRulesIteratorProvider() {
     );
 
     // Determine which data sources to use
-    const externalRulesSourcesToFetchFrom = hasDataSourceFilterActive
-      ? getRulesSourcesFromFilter(filterState)
-      : allExternalRulesSources;
+    const externalRulesSourcesToFetchFrom = getRulesSourcesFromFilter(filterState);
 
     if (filterState.ruleSource === RuleSource.Grafana) {
       return { iterable: grafanaRulesGenerator, abortController };
@@ -161,9 +155,15 @@ function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): Async
 /**
  * Finds all data sources that the user might want to filter by.
  * Only allows Prometheus and Loki data source types.
+ * Returns all external rules sources if no filter is provided.
  */
 function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceIdentifier[] {
   const allExternalSources = getExternalRulesSources();
+
+  // If no filter is provided, return all external sources
+  if (filter.dataSourceNames.length === 0) {
+    return allExternalSources;
+  }
 
   return filter.dataSourceNames.reduce<DataSourceRulesSourceIdentifier[]>((acc, dataSourceName) => {
     // since "getDatasourceAPIUid" can throw we'll omit any non-existing data sources
