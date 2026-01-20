@@ -10,15 +10,36 @@ import {
   PluginType,
 } from '@grafana/data';
 
+import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
+import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
+import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
+import { getPluginExtensionRegistries } from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';
 
 import * as importPluginModule from './importPluginModule';
 import { pluginImporter, clearCaches } from './pluginImporter';
 
+jest.mock('../extensions/registry/setup', () => ({
+  getPluginExtensionRegistries: jest.fn().mockResolvedValue({
+    exposedComponentsRegistry: { register: jest.fn() },
+    addedComponentsRegistry: { register: jest.fn() },
+    addedLinksRegistry: { register: jest.fn() },
+    addedFunctionsRegistry: { register: jest.fn() },
+  }),
+}));
+
 describe('pluginImporter', () => {
+  const getPluginExtensionsMock = jest.mocked(getPluginExtensionRegistries);
   beforeEach(() => {
     jest.clearAllMocks();
     clearCaches();
+    getPluginExtensionsMock.mockResolvedValue({
+      exposedComponentsRegistry: { register: jest.fn() } as unknown as ExposedComponentsRegistry,
+      addedComponentsRegistry: { register: jest.fn() } as unknown as AddedComponentsRegistry,
+      addedLinksRegistry: { register: jest.fn() } as unknown as AddedLinksRegistry,
+      addedFunctionsRegistry: { register: jest.fn() } as unknown as AddedFunctionsRegistry,
+    });
   });
 
   describe('importPanel', () => {
@@ -211,12 +232,7 @@ describe('pluginImporter', () => {
           addedFunctionConfigs: [{}],
         },
       };
-      const exposedComponentsRegistrySpy = jest
-        .spyOn(exposedComponentsRegistry, 'register')
-        .mockImplementation(() => {});
-      const addedComponentsRegistrySpy = jest.spyOn(addedComponentsRegistry, 'register').mockImplementation(() => {});
-      const addedLinksRegistrySpy = jest.spyOn(addedLinksRegistry, 'register').mockImplementation(() => {});
-      const addedFunctionsRegistrySpy = jest.spyOn(addedFunctionsRegistry, 'register').mockImplementation(() => {});
+
       const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ ...plugin });
 
       const result = await pluginImporter.importApp({ ...appPlugin });
@@ -231,10 +247,25 @@ describe('pluginImporter', () => {
       });
       expect(init).toHaveBeenCalledWith({ ...appPlugin });
       expect(setComponentsFromLegacyExports).toHaveBeenCalledWith({ ...plugin });
-      expect(exposedComponentsRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [{}] });
-      expect(addedComponentsRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [{}] });
-      expect(addedLinksRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [{}] });
-      expect(addedFunctionsRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [{}] });
+      const { addedComponentsRegistry, addedLinksRegistry, addedFunctionsRegistry, exposedComponentsRegistry } =
+        await getPluginExtensionsMock();
+      expect(addedComponentsRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [{}],
+      });
+      expect(addedLinksRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [{}],
+      });
+      expect(addedFunctionsRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [{}],
+      });
+
+      expect(exposedComponentsRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [{}],
+      });
 
       expect(result).toEqual({
         ...appPlugin,
@@ -262,12 +293,7 @@ describe('pluginImporter', () => {
           addedFunctionConfigs: [{}],
         },
       };
-      const exposedComponentsRegistrySpy = jest
-        .spyOn(exposedComponentsRegistry, 'register')
-        .mockImplementation(() => {});
-      const addedComponentsRegistrySpy = jest.spyOn(addedComponentsRegistry, 'register').mockImplementation(() => {});
-      const addedLinksRegistrySpy = jest.spyOn(addedLinksRegistry, 'register').mockImplementation(() => {});
-      const addedFunctionsRegistrySpy = jest.spyOn(addedFunctionsRegistry, 'register').mockImplementation(() => {});
+
       const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ ...plugin });
       const meta = { ...appPlugin, loadingStrategy: PluginLoadingStrategy.script };
 
@@ -283,10 +309,25 @@ describe('pluginImporter', () => {
       });
       expect(init).toHaveBeenCalledWith({ ...meta });
       expect(setComponentsFromLegacyExports).toHaveBeenCalledWith({ ...plugin });
-      expect(exposedComponentsRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [{}] });
-      expect(addedComponentsRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [{}] });
-      expect(addedLinksRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [{}] });
-      expect(addedFunctionsRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [{}] });
+      const { addedComponentsRegistry, addedLinksRegistry, addedFunctionsRegistry, exposedComponentsRegistry } =
+        await getPluginExtensionsMock();
+      expect(addedComponentsRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [{}],
+      });
+      expect(addedLinksRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [{}],
+      });
+      expect(addedFunctionsRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [{}],
+      });
+
+      expect(exposedComponentsRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [{}],
+      });
 
       expect(result).toEqual({
         ...appPlugin,
@@ -301,12 +342,6 @@ describe('pluginImporter', () => {
     });
 
     it('should import an empty app plugin if missing exported plugin', async () => {
-      const exposedComponentsRegistrySpy = jest
-        .spyOn(exposedComponentsRegistry, 'register')
-        .mockImplementation(() => {});
-      const addedComponentsRegistrySpy = jest.spyOn(addedComponentsRegistry, 'register').mockImplementation(() => {});
-      const addedLinksRegistrySpy = jest.spyOn(addedLinksRegistry, 'register').mockImplementation(() => {});
-      const addedFunctionsRegistrySpy = jest.spyOn(addedFunctionsRegistry, 'register').mockImplementation(() => {});
       const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
 
       const result = await pluginImporter.importApp({ ...appPlugin });
@@ -319,10 +354,26 @@ describe('pluginImporter', () => {
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
-      expect(exposedComponentsRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [] });
-      expect(addedComponentsRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [] });
-      expect(addedLinksRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [] });
-      expect(addedFunctionsRegistrySpy).toHaveBeenCalledWith({ pluginId: 'test-plugin', configs: [] });
+
+      const { addedComponentsRegistry, addedLinksRegistry, addedFunctionsRegistry, exposedComponentsRegistry } =
+        await getPluginExtensionsMock();
+      expect(addedComponentsRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [],
+      });
+      expect(addedLinksRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [],
+      });
+      expect(addedFunctionsRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [],
+      });
+
+      expect(exposedComponentsRegistry.register).toHaveBeenCalledWith({
+        pluginId: 'test-plugin',
+        configs: [],
+      });
 
       expect(result).toEqual({ ...new AppPlugin(), meta: { ...appPlugin } });
     });
