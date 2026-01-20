@@ -1,9 +1,11 @@
-name: build-instrumentation-otel.yaml
+name: "OTEL Exporter"
 
 on:
   workflow_run:
-    workflows: ["test-ci-instrumentation-workflow"]
-    types: [completed]
+    workflows:
+      - test-ci-instrumentation-workflow
+    types:
+      - completed
 
 jobs:
   send-telemetry:
