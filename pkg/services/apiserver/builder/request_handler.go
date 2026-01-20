@@ -213,6 +213,13 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 			}
 		}
 
+		if produces := extractProducesFromResponses(operation.Responses); produces != nil {
+			routeBuilder = routeBuilder.Produces(produces...)
+		}
+		if consumes := extractConsumesFromRequestBody(operation.RequestBody); consumes != nil {
+			routeBuilder = routeBuilder.Consumes(consumes...)
+		}
+
 		// Note: Request/response schemas are already defined in the OpenAPI spec from builders
 		// and will be added to the OpenAPI document via addBuilderRoutes in openapi.go.
 		// We don't duplicate that information here since restful uses the route metadata
@@ -223,6 +230,56 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 	}
 
 	return nil
+}
+
+// extractConsumesFromRequestBody extracts content types from OpenAPI request body definition
+func extractConsumesFromRequestBody(requestBody *spec3.RequestBody) []string {
+	if requestBody == nil || requestBody.Content == nil {
+		return nil
+	}
+
+	result := make([]string, 0, len(requestBody.Content))
+	for contentType := range requestBody.Content {
+		result = append(result, contentType)
+	}
+
+	// Counting for missing content-type header
+	result = append(result, "*/*")
+
+	return result
+}
+
+// extractProducesFromResponses extracts unique content types from OpenAPI response definitions
+func extractProducesFromResponses(responses *spec3.Responses) []string {
+	if responses == nil {
+		return nil
+	}
+
+	contentTypes := make(map[string]struct{})
+	for _, response := range responses.StatusCodeResponses {
+		if response != nil && response.Content != nil {
+			for contentType := range response.Content {
+				contentTypes[contentType] = struct{}{}
+			}
+		}
+	}
+
+	if responses.Default != nil && responses.Default.Content != nil {
+		for contentType := range responses.Default.Content {
+			contentTypes[contentType] = struct{}{}
+		}
+	}
+
+	if len(contentTypes) == 0 {
+		return nil
+	}
+
+	result := make([]string, 0, len(contentTypes))
+	for contentType := range contentTypes {
+		result = append(result, contentType)
+	}
+
+	return result
 }
 
 func prefixRouteIDWithK8sVerbIfNotPresent(operationID string, method string) string {
