@@ -40,7 +40,7 @@ jobs:
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
           repo_secrets: |
-            OTEL_EXPORTER_OTLP_API_KEY=grafana-oltp-exporter:grafana-oltp-api-key
+            OTEL_EXPORTER_OTLP_API_KEY=grafana-oltp-api-key:grafana-oltp-api-key
 
       - uses: paper2/github-actions-opentelemetry@main
         env:
