@@ -225,6 +225,7 @@ export enum PluginExtensionPoints {
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+  BottomDrawer = 'grafana/bottom-drawer/v0-alpha',
   MegaMenuAction = 'grafana/megamenu/action',
   SingleTopBarAction = 'grafana/singletopbar/action',
 }

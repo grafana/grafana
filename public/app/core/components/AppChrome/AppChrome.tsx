@@ -16,6 +16,12 @@ import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboard
 import { AppChromeMenu } from './AppChromeMenu';
 import { AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import {
+  BottomDrawer,
+  MAX_BOTTOM_DRAWER_HEIGHT,
+  MIN_BOTTOM_DRAWER_HEIGHT,
+} from './BottomDrawer/BottomDrawer';
+import { useBottomDrawerContext } from './BottomDrawer/BottomDrawerProvider';
+import {
   ExtensionSidebar,
   MAX_EXTENSION_SIDEBAR_WIDTH,
   MIN_EXTENSION_SIDEBAR_WIDTH,
@@ -36,6 +42,11 @@ export function AppChrome({ children }: Props) {
     extensionSidebarWidth,
     setExtensionSidebarWidth,
   } = useExtensionSidebarContext();
+  const {
+    isOpen: isBottomDrawerOpen,
+    bottomDrawerHeight,
+    setBottomDrawerHeight,
+  } = useBottomDrawerContext();
   const state = chrome.useState();
   const scopes = useScopes();
 
@@ -56,6 +67,7 @@ export function AppChrome({ children }: Props) {
     [styles.content]: true,
     [styles.contentChromeless]: state.chromeless,
     [styles.contentWithSidebar]: isExtensionSidebarOpen && !state.chromeless,
+    [styles.contentWithBottomDrawer]: isBottomDrawerOpen && !state.chromeless,
   });
 
   const handleMegaMenu = () => {
@@ -151,6 +163,22 @@ export function AppChrome({ children }: Props) {
             </Resizable>
           )}
         </div>
+        {!state.chromeless && isBottomDrawerOpen && (
+          <Resizable
+            className={cx(styles.bottomDrawerContainer, {
+              [styles.bottomDrawerMenuDocked]: menuDockedAndOpen,
+              [contentSizeStyles.bottomDrawerWithSidebar]: isExtensionSidebarOpen,
+            })}
+            defaultSize={{ height: bottomDrawerHeight }}
+            enable={{ top: true }}
+            onResize={(_evt, _direction, ref) => setBottomDrawerHeight(ref.getBoundingClientRect().height)}
+            handleClasses={{ top: dragStyles.dragHandleBaseHorizontal }}
+            minHeight={MIN_BOTTOM_DRAWER_HEIGHT}
+            maxHeight={MAX_BOTTOM_DRAWER_HEIGHT}
+          >
+            <BottomDrawer />
+          </Resizable>
+        )}
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
@@ -241,6 +269,8 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      minHeight: 0,
+      overflow: 'auto',
       label: 'page-panes',
     }),
     panesWithSidebar: css({
@@ -284,6 +314,17 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
     }),
+    contentWithBottomDrawer: css({
+      height: '100vh',
+      overflow: 'hidden',
+    }),
+    bottomDrawerContainer: css({
+      flexShrink: 0,
+      width: '100%',
+    }),
+    bottomDrawerMenuDocked: css({
+      paddingLeft: MENU_WIDTH,
+    }),
   };
 };
 
@@ -291,6 +332,9 @@ const getContentSizeStyles = (_: GrafanaTheme2, extensionSidebarWidth = 0) => {
   return {
     contentWidth: css({
       maxWidth: `calc(100% - ${extensionSidebarWidth}px) !important`,
+    }),
+    bottomDrawerWithSidebar: css({
+      paddingRight: extensionSidebarWidth,
     }),
   };
 };

@@ -11,6 +11,7 @@ import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
 import { GrafanaApp } from './app';
+import { BottomDrawerContextProvider } from './core/components/AppChrome/BottomDrawer/BottomDrawerProvider';
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
@@ -119,14 +120,16 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                     <ScopesContextProvider>
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
                         <ExtensionSidebarContextProvider>
-                          <UNSAFE_PortalProvider getContainer={getPortalContainer}>
-                            <GlobalStyles />
-                            <div className="grafana-app">
-                              <RouterWrapper {...routerWrapperProps} />
-                              <LiveConnectionWarning />
-                              <PortalContainer />
-                            </div>
-                          </UNSAFE_PortalProvider>
+                          <BottomDrawerContextProvider>
+                            <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                              <GlobalStyles />
+                              <div className="grafana-app">
+                                <RouterWrapper {...routerWrapperProps} />
+                                <LiveConnectionWarning />
+                                <PortalContainer />
+                              </div>
+                            </UNSAFE_PortalProvider>
+                          </BottomDrawerContextProvider>
                         </ExtensionSidebarContextProvider>
                       </ExtensionRegistriesProvider>
                     </ScopesContextProvider>

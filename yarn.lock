@@ -11933,6 +11933,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@xterm/addon-fit@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "@xterm/addon-fit@npm:0.10.0"
+  peerDependencies:
+    "@xterm/xterm": ^5.0.0
+  checksum: 10/8edfad561c0d0316c5883cbe2ce56109f105a2b2bf53b71d5f8c788e656a3205c1093a659dddcf4025a459e4b7ff8e07b6c6a19815c8711deeded560de5f1893
+  languageName: node
+  linkType: hard
+
+"@xterm/xterm@npm:^5.5.0":
+  version: 5.5.0
+  resolution: "@xterm/xterm@npm:5.5.0"
+  checksum: 10/d4cdc402de81a83a3e0ef93f38072cb8f54abe4d65865f2e29b92cbc2593f86d052f6b993895c9e5dec97f47548f504e90bcea0aad6845917c09b03f2f3a4629
+  languageName: node
+  linkType: hard
+
 "@xtuc/ieee754@npm:^1.2.0":
   version: 1.2.0
   resolution: "@xtuc/ieee754@npm:1.2.0"
@@ -19592,6 +19608,8 @@ __metadata:
     "@visx/shape": "npm:3.12.0"
     "@visx/tooltip": "npm:3.12.0"
     "@welldone-software/why-did-you-render": "npm:8.0.3"
+    "@xterm/addon-fit": "npm:^0.10.0"
+    "@xterm/xterm": "npm:^5.5.0"
     ansicolor: "npm:2.0.3"
     autoprefixer: "npm:10.4.21"
     babel-loader: "npm:10.0.0"

@@ -40,6 +40,18 @@ export interface ToggleExtensionSidebarPayload {
   componentTitle: string;
 }
 
+export interface OpenBottomDrawerPayload {
+  props?: Record<string, unknown>;
+  pluginId: string;
+  componentTitle: string;
+}
+
+export interface ToggleBottomDrawerPayload {
+  props?: Record<string, unknown>;
+  pluginId: string;
+  componentTitle: string;
+}
+
 export interface ShowConfirmModalPayload {
   title?: string;
   text?: string;
@@ -189,6 +201,18 @@ export class CloseExtensionSidebarEvent extends BusEventBase {
 
 export class ToggleExtensionSidebarEvent extends BusEventWithPayload<ToggleExtensionSidebarPayload> {
   static type = 'toggle-extension-sidebar';
+}
+
+export class OpenBottomDrawerEvent extends BusEventWithPayload<OpenBottomDrawerPayload> {
+  static type = 'open-bottom-drawer';
+}
+
+export class CloseBottomDrawerEvent extends BusEventBase {
+  static type = 'close-bottom-drawer';
+}
+
+export class ToggleBottomDrawerEvent extends BusEventWithPayload<ToggleBottomDrawerPayload> {
+  static type = 'toggle-bottom-drawer';
 }
 
 /**
