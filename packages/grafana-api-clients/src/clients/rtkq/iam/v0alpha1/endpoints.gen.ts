@@ -721,10 +721,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['User'],
       }),
-      getUserTeams: build.query<GetUserTeamsApiResponse, GetUserTeamsApiArg>({
-        query: (queryArg) => ({ url: `/users/${queryArg.name}/teams` }),
-        providesTags: ['User'],
-      }),
     }),
     overrideExisting: false,
   });
@@ -1730,11 +1726,6 @@ export type UpdateUserApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetUserTeamsApiResponse = /** status 200 OK */ UserTeamList;
-export type GetUserTeamsApiArg = {
-  /** name of the UserTeamList */
-  name: string;
-};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -2144,26 +2135,6 @@ export type UserList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type TeamRef = {
-  /** Name is the unique identifier for a team. */
-  name?: string;
-};
-export type UserTeam = {
-  /** Possible enum values:
-     - `"admin"`
-     - `"member"` */
-  permission?: 'admin' | 'member';
-  teamRef?: TeamRef;
-  title?: string;
-};
-export type UserTeamList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: UserTeam[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ListMeta;
-};
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
@@ -2232,6 +2203,4 @@ export const {
   useReplaceUserMutation,
   useDeleteUserMutation,
   useUpdateUserMutation,
-  useGetUserTeamsQuery,
-  useLazyGetUserTeamsQuery,
 } = injectedRtkApi;
