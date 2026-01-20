@@ -208,6 +208,17 @@
           "regex": "",
           "skipUrlSync": false,
           "sort": 0,
+          "staticOptions": [
+            {
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before",
           "type": "query"
         },
         {

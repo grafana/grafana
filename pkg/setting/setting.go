@@ -600,6 +600,7 @@ type Cfg struct {
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
+	IndexScoringModel                          string        // Note: Temporary config to switch the index scoring model and will be removed soon.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
@@ -623,19 +624,14 @@ type Cfg struct {
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
 	EnableSQLKVBackend                         bool
+	EnableSQLKVCompatibilityMode               bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
 }
 
 type UnifiedStorageConfig struct {
-	DualWriterMode                       rest.DualWriterMode
-	DualWriterPeriodicDataSyncJobEnabled bool
-	DualWriterMigrationDataSyncDisabled  bool
-	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
-	DataSyncerInterval time.Duration
-	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
-	DataSyncerRecordsLimit int
+	DualWriterMode rest.DualWriterMode
 	// EnableMigration indicates whether migration is enabled for the resource.
 	// If not set, will use the default from MigratedUnifiedResources.
 	EnableMigration bool

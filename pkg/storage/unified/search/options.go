@@ -46,6 +46,7 @@ func NewSearchOptions(
 			BuildVersion:           cfg.BuildVersion,
 			OwnsIndex:              ownsIndexFn,
 			IndexMinUpdateInterval: cfg.IndexMinUpdateInterval,
+			ScoringModel:           cfg.IndexScoringModel,
 		}, indexMetrics)
 
 		if err != nil {

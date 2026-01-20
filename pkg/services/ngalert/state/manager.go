@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"strconv"
 	"strings"
@@ -203,6 +204,21 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				}
 				resultFp = data.Fingerprint(fp)
 			}
+			var stateError error
+			if entry.LastError != "" {
+				stateError = errors.New(entry.LastError)
+			}
+			var values map[string]float64
+			var latestResult *Evaluation
+			if len(entry.LastResult.Values) > 0 || entry.LastResult.Condition != "" {
+				values = entry.LastResult.Values
+				latestResult = &Evaluation{
+					EvaluationTime:  entry.LastEvalTime,
+					EvaluationState: translateInstanceState(entry.CurrentState),
+					Values:          values,
+					Condition:       entry.LastResult.Condition,
+				}
+			}
 			state := &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
@@ -215,10 +231,14 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				EndsAt:               entry.CurrentStateEnd,
 				FiredAt:              entry.FiredAt,
 				LastEvaluationTime:   entry.LastEvalTime,
+				EvaluationDuration:   entry.EvaluationDuration,
 				Annotations:          annotations,
 				ResultFingerprint:    resultFp,
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
+				Error:                stateError,
+				Values:               values,
+				LatestResult:         latestResult,
 			}
 			st.cache.set(state)
 			statesCount++
@@ -631,9 +651,8 @@ func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
 	for _, state := range states {
 		if state.LastEvaluationTime.After(status.EvaluationTimestamp) {
 			status.EvaluationTimestamp = state.LastEvaluationTime
+			status.EvaluationDuration = state.EvaluationDuration
 		}
-
-		status.EvaluationDuration = state.EvaluationDuration
 
 		switch state.State {
 		case eval.Normal:
