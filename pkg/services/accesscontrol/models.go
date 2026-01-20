@@ -463,7 +463,8 @@ const (
 	ActionAlertingReceiversUpdate           = "alert.notifications.receivers:write"
 	ActionAlertingReceiversUpdateProtected  = "alert.notifications.receivers.protected:write"
 	ActionAlertingReceiversDelete           = "alert.notifications.receivers:delete"
-	ActionAlertingReceiversTest             = "alert.notifications.receivers:test"
+	ActionAlertingReceiversTest             = "alert.notifications.receivers:test" // This is a deprecated action, use ActionAlertingReceiversTestCreate instead
+	ActionAlertingReceiversTestCreate       = "alert.notifications.receivers.test:create"
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 

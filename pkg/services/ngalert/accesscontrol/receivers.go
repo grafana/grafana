@@ -8,6 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+const (
+	NewReceiverType = "new"
+)
+
 var (
 	// Asserts pre-conditions for read access to redacted receivers. If this evaluates to false, the user cannot read any redacted receivers.
 	readRedactedReceiversPreConditionsEval = ac.EvalAny(
@@ -158,6 +162,48 @@ var (
 			ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite, models.ScopeReceiversProvider.GetResourceScopeUID(uid)),
 		)
 	}
+
+	testReceiversAllEval = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+		ac.EvalPermission(ac.ActionAlertingReceiversTest),
+		ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingReceiversTestCreate, models.ScopeReceiversAll),
+			readRedactedAllReceiversEval,
+			updateAllReceiversEval,
+		),
+	)
+
+	TestReceiversPreconditionEval = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+		ac.EvalPermission(ac.ActionAlertingReceiversTest),
+		ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingReceiversTestCreate),
+			readRedactedReceiversPreConditionsEval,
+			updateReceiversPreConditionsEval,
+		),
+	)
+
+	testReceiversEvalOne = func(uid string) ac.Evaluator {
+		return ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+			ac.EvalPermission(ac.ActionAlertingReceiversTest),
+			ac.EvalAll(
+				readRedactedReceiverEval(uid),
+				updateReceiverEval(uid),
+				ac.EvalPermission(ac.ActionAlertingReceiversTestCreate, models.ScopeReceiversProvider.GetResourceScopeUID(uid)),
+			),
+		)
+	}
+
+	// It's a new receiver, we do not need to check for read because the user will get admin permissions once it's created
+	TestReceiverNew = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingReceiversTest),
+		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+		ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingReceiversCreate), // Action for receivers. Org scope.
+			ac.EvalPermission(ac.ActionAlertingReceiversTestCreate, models.ScopeReceiversProvider.GetResourceScopeType(NewReceiverType)),
+		),
+	)
 )
 
 type ReceiverAccess[T models.Identified] struct {
@@ -168,6 +214,7 @@ type ReceiverAccess[T models.Identified] struct {
 	updateProtected actionAccess[T]
 	delete          actionAccess[T]
 	permissions     actionAccess[T]
+	test            actionAccess[T]
 }
 
 // NewReceiverAccess creates a new ReceiverAccess service. If includeProvisioningActions is true, the service will include
@@ -257,6 +304,18 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 				return permissionsReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: permissionsAllReceiversEval,
+		},
+		test: actionAccess[T]{
+			genericService: genericService{
+				ac: a,
+			},
+			resource:      "receiver",
+			action:        "test",
+			authorizeSome: TestReceiversPreconditionEval,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return testReceiversEvalOne(receiver.GetUID())
+			},
+			authorizeAll: testReceiversAllEval,
 		},
 	}
 
@@ -367,6 +426,34 @@ type identified struct {
 
 func (i identified) GetUID() string {
 	return i.uid
+}
+
+func (s ReceiverAccess[T]) AuthorizeTestAll(ctx context.Context, user identity.Requester) error {
+	return s.test.AuthorizeAll(ctx, user)
+}
+
+// AuthorizeTest authorizes the user to perform the test action on a receiver resource. Returns an error if unauthorized.
+func (s ReceiverAccess[T]) AuthorizeTest(ctx context.Context, user identity.Requester, identified T) error {
+	return s.test.Authorize(ctx, user, identified)
+}
+
+// AuthorizeTestByUID authorizes the user to perform the test action on a receiver resource by UID. Returns an error if unauthorized.
+func (s ReceiverAccess[T]) AuthorizeTestByUID(ctx context.Context, user identity.Requester, uid string) error {
+	return s.test.Authorize(ctx, user, identified{uid: uid})
+}
+
+// AuthorizeTestNew authorizes the user to perform the test action on a new receiver resource. Returns an error if unauthorized.
+func (s ReceiverAccess[T]) AuthorizeTestNew(ctx context.Context, user identity.Requester) error {
+	// skip shortcuts that check preconditions and wildcards
+	authz := actionAccess[identified]{
+		genericService: s.test.genericService,
+		resource:       "receiver",
+		action:         "test new",
+		authorizeOne: func(receiver models.Identified) ac.Evaluator {
+			return TestReceiverNew
+		},
+	}
+	return authz.authorize(ctx, user, identified{})
 }
 
 // AuthorizeDeleteByUID checks if user has access to delete a receiver by uid. Returns an error if user does not have access.
