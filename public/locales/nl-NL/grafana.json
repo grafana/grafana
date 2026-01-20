@@ -807,7 +807,8 @@
       "label-integration": "Integratie",
       "label-notification-settings": "Instellingen van meldingen",
       "label-section": "Optionele instellingen voor {{name}}",
-      "test": "Testen"
+      "test": "Testen",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "VAN",
@@ -2176,11 +2177,14 @@
     "provisioning": {
       "badge-tooltip-provenance": "Deze bron is geprovisioneerd via {{provenance}} en kan niet worden bewerkt via de gebruikersinterface",
       "badge-tooltip-standard": "Deze bron is geprovisioneerd en kan niet worden bewerkt via de gebruikersinterface",
+      "body-imported": "",
       "body-provisioned": "Deze {{resource}} is ingericht, dat betekent dat het is gemaakt door configuratie. Neem contact op met je serverbeheerder om deze {{resource}} bij te werken.",
+      "title-imported": "",
       "title-provisioned": "Deze {{resource}} kan niet worden bewerkt via de gebruikersinterface"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Provisioned"
       }
     },
@@ -2673,11 +2677,13 @@
     "rules-group": {
       "deleting": "Verwijderen",
       "text-federated": "Federatief",
-      "text-provisioned": "Provisioned"
+      "text-provisioned": "Provisioned",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3764,7 +3770,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5338,6 +5343,7 @@
       },
       "header-hidden-tooltip": "Koptekst van de rij is alleen zichtbaar in bewerkingsmodus",
       "name": "Rijen",
+      "new-row-title": "",
       "row": {
         "collapse": "Rij samenvouwen",
         "expand": "Rij uitvouwen",
@@ -5443,11 +5449,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5587,14 +5589,6 @@
           "arrow": "Delen",
           "title": "Delen",
           "tooltip": "Link kopiëren"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Negeren",
-            "text": "Je hebt niet-opgeslagen wijzigingen in dit dashboard. Je moet ze opslaan voordat je ze kunt delen.",
-            "title": "Wijzigingen in dashboard opslaan?",
-            "yesText": "Opslaan"
-          }
         },
         "unlink-library-panel": "Bibliotheekpaneel ontkoppelen"
       },
@@ -6380,12 +6374,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klassiek",
         "json": "JSON",
         "v1-resource": "V1-bron",
         "v2-resource": "V2-bron",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Weet je zeker dat je het dashboard naar versie {{version}} wilt herstellen? Alle niet opgeslagen wijzigingen zullen verloren gaan.",
@@ -6492,6 +6489,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Menu delen in-/uitschakelen"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6980,6 +6983,7 @@
         "drone-datasource": "Drone-gegevensbron",
         "git-lab-integration-and-datasource": "GitLab-integratie en -gegevensbron",
         "honeycomb-integration-and-datasource": "Honeycomb-integratie en -gegevensbron",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira-integratie en -gegevensbron",
         "logic-monitor-devices-datasource": "LogicMonitor Devices-gegevensbron",
         "mongo-db-integration-and-data-source": "MongoDB-integratie en -gegevensbron",
@@ -7838,7 +7842,6 @@
       "export-externally-label": "Exporteer het dashboard om het in een andere instantie te gebruiken",
       "export-format": "Formaat",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Implementatiegegevens verwijderen",
       "info-text": "Kopieer of download een JSON-bestand met de JSON van je dashboard",
       "title": "Dashboard exporteren"
     },
@@ -7985,6 +7988,7 @@
     "name-neutral": "Neutraal",
     "name-show-threshold-labels": "Drempellabels weergeven",
     "name-show-threshold-markers": "Drempelmarkeringen weergeven",
+    "neutral": "",
     "placeholder-neutral": "automatisch",
     "suggestions": {
       "arc": "",
@@ -11806,7 +11810,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Verwijderen",
       "confirm-delete-keep-resources": "Weet je zeker dat je de repository-configuratie wilt verwijderen, maar de bronnen wilt behouden?",
       "confirm-delete-with-resources": "Weet je zeker dat je de repository-configuratie en alle bronnen wilt verwijderen?",
@@ -12070,6 +12120,7 @@
       "jobs": "Taken"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Instellingen",
       "source-code": "Broncode"
     },
@@ -12519,6 +12570,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12532,6 +12588,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12689,14 +12746,6 @@
       "starred": "Favorieten",
       "view-as-folders": "Weergeven als mappen",
       "view-as-list": "Weergeven als lijst"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetisch (A-Z)",
-          "alphabetically-za": "Alfabetisch (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importeren",

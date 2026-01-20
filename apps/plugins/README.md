@@ -4,8 +4,7 @@ API documentation is available at http://localhost:3000/swagger?api=plugins.graf
 
 ## Codegen
 
-- Go: `make generate`
-- Frontend: Follow instructions in this [README](../..//packages/grafana-api-clients/README.md)
+- Go and TypeScript: `make generate`
 
 ## Plugin sync
 

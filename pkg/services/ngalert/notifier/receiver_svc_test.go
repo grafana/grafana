@@ -61,7 +61,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
 		_, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
-		require.ErrorIs(t, err, legacy_storage.ErrReceiverNotFound)
+		require.ErrorIs(t, err, models.ErrReceiverNotFound)
 	})
 
 	t.Run("when includeImported is true", func(t *testing.T) {
@@ -82,7 +82,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 		t.Run("falls to only Grafana if cannot read imported receivers", func(t *testing.T) {
 			sut := createReceiverServiceSut(t, secretsService, withImportedIncluded, withInvalidExtraConfig)
 			_, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid("receiver1"), false, redactedUser)
-			require.ErrorIs(t, err, legacy_storage.ErrReceiverNotFound)
+			require.ErrorIs(t, err, models.ErrReceiverNotFound)
 			_, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid("slack receiver"), false, redactedUser)
 			require.NoError(t, err)
 		})
@@ -355,13 +355,13 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID:   baseReceiver.UID,
 			existing:    util.Pointer(baseReceiver.Clone()),
 			version:     "wrong version",
-			expectedErr: ErrReceiverVersionConflict,
+			expectedErr: models.ErrReceiverVersionConflict,
 		},
 		{
 			name:        "delete of receiver with non-Grafana origin fails",
 			user:        writer,
 			deleteUID:   legacy_storage.NameToUid("empty receiver"),
-			expectedErr: ErrReceiverOrigin,
+			expectedErr: models.ErrReceiverOrigin,
 			opts: []createReceiverServiceSutOpt{
 				withImportedIncluded,
 			},
@@ -405,7 +405,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			name, err := legacy_storage.UidToName(tc.deleteUID)
 			require.NoError(t, err)
 			_, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(name), false, writer)
-			assert.ErrorIs(t, err, legacy_storage.ErrReceiverNotFound)
+			assert.ErrorIs(t, err, models.ErrReceiverNotFound)
 
 			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
 			require.NoError(t, err)
@@ -473,7 +473,7 @@ func TestReceiverService_Create(t *testing.T) {
 			name:        "existing receiver fails",
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("grafana-default-email")),
-			expectedErr: legacy_storage.ErrReceiverExists,
+			expectedErr: models.ErrReceiverExists,
 		},
 		{
 			name: "create integration with empty UID generates a new UID",
@@ -492,7 +492,7 @@ func TestReceiverService_Create(t *testing.T) {
 			name:        "create receiver with non-Grafana origin fails",
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithOrigin(models.ResourceOriginImported)),
-			expectedErr: ErrReceiverOrigin,
+			expectedErr: models.ErrReceiverOrigin,
 		},
 		{
 			name: "create integration with invalid UID fails",
@@ -500,7 +500,7 @@ func TestReceiverService_Create(t *testing.T) {
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
 				models.CopyIntegrationWith(slackIntegration, models.IntegrationMuts.WithUID("///@#$%^&*(")),
 			)),
-			expectedErr: legacy_storage.ErrReceiverInvalid,
+			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "create integration with existing UID fails",
@@ -508,13 +508,13 @@ func TestReceiverService_Create(t *testing.T) {
 			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
 				models.CopyIntegrationWith(slackIntegration, models.IntegrationMuts.WithUID("UID1")), // UID of grafana-default-email.
 			)),
-			expectedErr: legacy_storage.ErrReceiverInvalid,
+			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name:        "create with invalid integration fails",
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithInvalidIntegration("slack")),
-			expectedErr: legacy_storage.ErrReceiverInvalid,
+			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "create integration with no normal settings should not store nil settings",
@@ -563,7 +563,7 @@ func TestReceiverService_Create(t *testing.T) {
 			name:        "receiver with empty name fails",
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("")),
-			expectedErr: legacy_storage.ErrReceiverInvalid,
+			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name:     "should be able to create receiver with the same name as imported ones",
@@ -804,13 +804,13 @@ func TestReceiverService_Update(t *testing.T) {
 			receiver:    baseReceiver.Clone(),
 			version:     "wrong version",
 			existing:    util.Pointer(baseReceiver.Clone()),
-			expectedErr: ErrReceiverVersionConflict,
+			expectedErr: models.ErrReceiverVersionConflict,
 		},
 		{
 			name:        "update receiver that doesn't exist fails",
 			user:        writer,
 			receiver:    baseReceiver.Clone(),
-			expectedErr: legacy_storage.ErrReceiverNotFound,
+			expectedErr: models.ErrReceiverNotFound,
 		},
 		{
 			name:     "update that adds new integration generates a new UID",
@@ -827,27 +827,27 @@ func TestReceiverService_Update(t *testing.T) {
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, models.CopyIntegrationWith(emailIntegration, im.WithUID(slackIntegration.UID)))),
 			existing:    util.Pointer(baseReceiver.Clone()),
-			expectedErr: legacy_storage.ErrReceiverInvalid,
+			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name:        "update with invalid integration fails",
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithInvalidIntegration("slack")),
 			existing:    util.Pointer(baseReceiver.Clone()),
-			expectedErr: legacy_storage.ErrReceiverInvalid,
+			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name:        "receivers with non-Grafana origin are not accepted",
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithOrigin(models.ResourceOriginImported)),
 			existing:    util.Pointer(baseReceiver.Clone()),
-			expectedErr: ErrReceiverOrigin,
+			expectedErr: models.ErrReceiverOrigin,
 		},
 		{
 			name:        "receivers of non-Grafana origin cannot be updated",
 			user:        writer,
 			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithName("receiver1")),
-			expectedErr: ErrReceiverOrigin,
+			expectedErr: models.ErrReceiverOrigin,
 			opts:        []createReceiverServiceSutOpt{withImportedIncluded},
 		},
 		{
@@ -993,7 +993,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut.ruleNotificationsStore = ruleStore
 
 		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
-		require.ErrorIs(t, err, ErrReceiverDependentResourcesProvenance)
+		require.ErrorIs(t, err, models.ErrReceiverDependentResourcesProvenance)
 
 		require.Len(t, ruleStore.Calls, 1)
 		assert.Equal(t, "RenameReceiverInNotificationSettings", ruleStore.Calls[0].Method)
@@ -1016,7 +1016,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut.ruleNotificationsStore = ruleStore
 
 		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
-		require.ErrorIs(t, err, ErrReceiverDependentResourcesProvenance)
+		require.ErrorIs(t, err, models.ErrReceiverDependentResourcesProvenance)
 
 		require.Len(t, ruleStore.Calls, 1)
 		assert.Equal(t, "RenameReceiverInNotificationSettings", ruleStore.Calls[0].Method)
@@ -1027,14 +1027,14 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		assert.Falsef(t, ruleStore.Calls[0].Args[5].(bool), "dryrun expected to be false")
 	})
 
-	t.Run("returns ErrReceiverInvalid if empty name", func(t *testing.T) {
+	t.Run("returns ErrReceiverInvalidBase if empty name", func(t *testing.T) {
 		ruleStore := &fakeAlertRuleNotificationStore{}
 		sut := createReceiverServiceSut(t, &secretsService)
 		sut.ruleNotificationsStore = ruleStore
 		baseReceiver.Name = ""
 
 		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
-		require.ErrorIs(t, err, legacy_storage.ErrReceiverInvalid)
+		require.ErrorIs(t, err, models.ErrReceiverInvalidBase)
 	})
 
 	t.Run("can rename receiver to name that is already used by another receiver of different origin", func(t *testing.T) {
