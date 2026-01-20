@@ -4546,7 +4546,8 @@
     "add": {
       "new-panel": {
         "description": "Drag or click to add a panel",
-        "title": "Panel"
+        "title": "Panel",
+        "button": "Add new panel button"
       },
       "pane-header": "Add"
     },

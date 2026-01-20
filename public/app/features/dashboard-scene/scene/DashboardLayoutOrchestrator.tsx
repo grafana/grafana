@@ -303,7 +303,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
 
     // if the cursor is in the sidebar, don't add panel
-    const isInSidebar = elementsUnderPoint.some((el) => el.getAttribute('data-testid') === 'sidebar-container');
+    const isInSidebar = elementsUnderPoint.some((el) => el.getAttribute('id') === 'sidebar-container');
 
     if (isInSidebar) {
       return;

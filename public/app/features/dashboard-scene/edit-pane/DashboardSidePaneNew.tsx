@@ -12,15 +12,13 @@ import addPanelImg from 'img/dashboards/add-panel.png';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-export function DashboardSidePaneNew({
-  onAddPanel,
-  dashboard,
-  selectedElement,
-}: {
-  onAddPanel: () => void;
+interface Props {
   dashboard: SceneObject;
   selectedElement: SceneObject | undefined;
-}) {
+  onAddPanel: () => void;
+}
+
+export function DashboardSidePaneNew({ onAddPanel, dashboard, selectedElement }: Props) {
   const styles = useStyles2(getStyles);
   const orchestrator = getDashboardSceneFor(dashboard).state.layoutOrchestrator;
 
@@ -28,6 +26,7 @@ export function DashboardSidePaneNew({
     onAddPanel();
     DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(selectedElement));
   };
+
   return (
     <DragDropContext onDragStart={() => orchestrator?.startDraggingNewPanel()} onDragEnd={() => {}}>
       <Droppable droppableId="side-drop-id" isDropDisabled>
@@ -60,7 +59,11 @@ export function DashboardSidePaneNew({
                         }}
                         aria-label={t('dashboard.add.new-panel.title', 'Panel')}
                       >
-                        <img alt="Add panel click area" src={addPanelImg} draggable={false} />
+                        <img
+                          alt={t('dashboard.add.new-panel.button', 'Add new panel button')}
+                          src={addPanelImg}
+                          draggable={false}
+                        />
                       </div>
                     );
                   }}

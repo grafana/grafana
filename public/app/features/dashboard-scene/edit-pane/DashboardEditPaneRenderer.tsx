@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -50,23 +50,26 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
     return undefined;
   }, [selection]);
 
-  const onSetLayoutElement = (obj: SceneObject<SceneObjectState> | undefined) => {
-    if (obj) {
-      // find the closest row or tab to add the new panel to
-      // if the selected element is not inside a row or tab, add to dashboard root
-      setSelectedLayoutElement(
-        sceneGraph.findObject(
-          obj,
-          (currentSceneObject: SceneObject<SceneObjectState>) =>
-            currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
-        ) || dashboard
-      );
-    } else {
-      setSelectedLayoutElement(dashboard);
-    }
-  };
+  const onSetLayoutElement = useCallback(
+    (obj: SceneObject<SceneObjectState> | undefined) => {
+      if (obj) {
+        // find the closest row or tab to add the new panel to
+        // if the selected element is not inside a row or tab, add to dashboard root
+        setSelectedLayoutElement(
+          sceneGraph.findObject(
+            obj,
+            (currentSceneObject: SceneObject<SceneObjectState>) =>
+              currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
+          ) || dashboard
+        );
+      } else {
+        setSelectedLayoutElement(dashboard);
+      }
+    },
+    [dashboard]
+  );
 
-  const onAddNewPanel = () => {
+  const onAddNewPanel = useCallback(() => {
     if (selectedLayoutElement) {
       const panel = getDefaultVizPanel();
       if (selectedLayoutElement instanceof DashboardScene) {
@@ -75,7 +78,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         selectedLayoutElement.getLayout().addPanel(panel);
       }
     }
-  };
+  }, [dashboard, selectedLayoutElement]);
 
   return (
     <>
