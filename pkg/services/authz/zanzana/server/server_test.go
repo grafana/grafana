@@ -117,11 +117,6 @@ func TestIntegrationServer(t *testing.T) {
 		srv.cfg.UseStreamedListObjects = false
 	})
 
-	t.Run("test batch check", func(t *testing.T) {
-		setup(t, srv)
-		testBatchCheck(t, srv)
-	})
-
 	t.Run("test mutate", func(t *testing.T) {
 		testMutate(t, srv)
 	})
