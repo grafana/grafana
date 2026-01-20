@@ -40,14 +40,15 @@ jobs:
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
           repo_secrets: |
-            OTEL_EXPORTER_OTLP_API_KEY=grafana-oltp-api-key:grafana-oltp-api-key
+            OTEL_EXPORTER_OTLP_API_KEY=grafana-oltp-api-key:grafana-oltp-api-key-base64
+
 
       - uses: paper2/github-actions-opentelemetry@main
         env:
           OTEL_SERVICE_NAME: github-actions-opentelemetry
           OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
           OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp"
-          OTEL_EXPORTER_OTLP_HEADERS: api-key=${{ env.OTEL_EXPORTER_OTLP_API_KEY }}
+          OTEL_EXPORTER_OTLP_HEADERS: "Authorization: Basic ${{ env.OTEL_EXPORTER_OTLP_API_KEY }}"
           OTEL_RESOURCE_ATTRIBUTES: team=grafana-backend,env=cd
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
