@@ -192,6 +192,9 @@ Query expressions are different for each data source. For more information, refe
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
+Stuff for multi-prop
+When using Query variables to produce JSON/object results, the query must expose all fields you plan to use as properties. Query variables that rely on static options or regex extraction have limitations with multi-property JSON. See the design doc for details.
+
 ## Add a custom variable
 
 Use a _custom_ variable for a value that does not change, such as a number or a string.
@@ -210,6 +213,9 @@ For example, if you have server names or region names that never change, then yo
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
+
+Stuff for multi-prop
+Custom variable custom values: When you save options using JSON, the editor disables allowCustomValue (custom input for that variable). The editor enforces this behavior to keep variable behavior predictable. 
 
 ## Add a text box variable
 

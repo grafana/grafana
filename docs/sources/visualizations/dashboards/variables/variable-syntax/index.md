@@ -223,3 +223,8 @@ servers = ["test1", "test2"]
 String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
+
+## Multi-property variables in dashboards??
+
+Use the variable in your queries and panels: ${yourVar} for the base value, ${yourVar.someProperty} for any other property. Verify nested property names using the preview/autocomplete. 
+
