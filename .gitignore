@@ -262,3 +262,6 @@ public/mockServiceWorker.js
 
 # Ignore grafana/hippocampus local cache folder
 .hippo
+
+packages/grafana-e2e-selectors/src/testid-coverage-report.json
+packages/grafana-e2e-selectors/reftarget-coverage-report.json
