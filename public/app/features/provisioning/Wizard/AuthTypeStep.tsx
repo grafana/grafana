@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import { memo, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Card, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, Icon, Stack, Text } from '@grafana/ui';
 
 import { GitHubAuthType, WizardFormData } from './types';
 
@@ -38,8 +36,6 @@ const getAuthTypeOptions = (): AuthTypeOption[] => [
 
 export const AuthTypeStep = memo(function AuthTypeStep() {
   const { control } = useFormContext<WizardFormData>();
-  const styles = useStyles2(getStyles);
-
   const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
 
   return (
@@ -64,7 +60,6 @@ export const AuthTypeStep = memo(function AuthTypeStep() {
                 onClick={() => {
                   onChange(option.id);
                 }}
-                className={styles.card}
               >
                 <Card.Figure>
                   <Icon name={option.icon} size="xxxl" />
@@ -78,13 +73,4 @@ export const AuthTypeStep = memo(function AuthTypeStep() {
       />
     </Stack>
   );
-});
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  card: css({
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: theme.colors.background.secondary,
-    },
-  }),
 });

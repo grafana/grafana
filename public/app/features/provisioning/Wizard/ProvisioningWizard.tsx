@@ -118,6 +118,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
+  const visibleStepIndex = visibleSteps.findIndex((s) => s.id === activeStep);
 
   const canSkipSync = repoName && !isResourceStatsLoading && shouldSkipSync;
 
@@ -488,7 +489,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
               <Text element="h2">
                 {activeStep === 'authType'
                   ? currentStepConfig?.title
-                  : `${currentStepIndex + 1}. ${currentStepConfig?.title}`}
+                  : `${visibleStepIndex + 1}. ${currentStepConfig?.title}`}
               </Text>
             </Box>
 
