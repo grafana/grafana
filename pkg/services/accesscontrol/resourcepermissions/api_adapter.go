@@ -19,7 +19,6 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -75,7 +74,7 @@ func (a *api) getResourcePermissionsFromK8s(ctx context.Context, namespace strin
 		dto = append(dto, directDTO...)
 	}
 
-	inheritedDTO, err := a.getInheritedPermissions(ctx, namespace, resourceID, dynamicClient)
+	inheritedDTO, err := a.GetInheritedPermissions(ctx, namespace, resourceID, dynamicClient)
 	if err != nil {
 		a.logger.Warn("Failed to get inherited permissions from k8s API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 	} else {
@@ -179,51 +178,35 @@ func getMapKeys(m map[string][]string) []string {
 	return keys
 }
 
-func (a *api) getInheritedPermissions(ctx context.Context, namespace string, resourceID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
-	switch a.service.options.Resource {
-	case "folders":
+func (a *api) GetInheritedPermissions(ctx context.Context, namespace string, resourceID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
+
+	if a.service.options.Resource == "folders" {
 		return a.getFolderHierarchyPermissions(ctx, namespace, resourceID, dynamicClient)
-
-	case "dashboards":
-		return a.getDashboardInheritedPermissions(ctx, namespace, resourceID, dynamicClient)
-
-	default:
-		return getResourcePermissionsResponse{}, nil
-	}
-}
-
-func (a *api) getDashboardInheritedPermissions(ctx context.Context, namespace string, dashboardUID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
-	dashboardsGVR := schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "dashboards",
-	}
-
-	dashboardResource := dynamicClient.Resource(dashboardsGVR).Namespace(namespace)
-	unstructuredDash, err := dashboardResource.Get(ctx, dashboardUID, metav1.GetOptions{})
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
+	} else {
+		if a.service.options.GetParentFolder == nil {
 			return getResourcePermissionsResponse{}, nil
 		}
-		return nil, fmt.Errorf("failed to get dashboard from k8s: %w", err)
+
+		parentFolderUID, err := a.service.options.GetParentFolder(ctx, namespace, resourceID, dynamicClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get parent folder: %w", err)
+		}
+
+		if parentFolderUID == "" {
+			// Root-level resource, no inherited permissions
+			return getResourcePermissionsResponse{}, nil
+		}
+
+		return a.getFolderHierarchyPermissions(ctx, namespace, parentFolderUID, dynamicClient)
 	}
-
-	annotations := unstructuredDash.GetAnnotations()
-	parentFolderUID := annotations[utils.AnnoKeyFolder]
-
-	if parentFolderUID == "" {
-		return getResourcePermissionsResponse{}, nil
-	}
-
-	return a.getFolderHierarchyPermissions(ctx, namespace, parentFolderUID, dynamicClient)
 }
 
 // getFolderHierarchyPermissions gets permissions from a folder and all its parents
 func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace string, folderUID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
 	foldersGVR := schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v1beta1",
-		Resource: "folders",
+		Group:    folderv1.APIGroup,
+		Version:  folderv1.APIVersion,
+		Resource: folderv1.RESOURCE,
 	}
 
 	// GET /apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{folderUID}/parents
@@ -259,7 +242,7 @@ func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace strin
 			continue
 		}
 
-		parentPermName := a.buildResourcePermissionName(parentFolder.Name)
+		parentPermName := fmt.Sprintf("%s-folders-%s", folderv1.APIGroup, parentFolder.Name)
 
 		unstructuredObj, err := resourcePermResource.Get(ctx, parentPermName, metav1.GetOptions{})
 		if err != nil {
