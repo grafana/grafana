@@ -154,7 +154,6 @@ func (s *ExtendedJWT) authenticateAsUser(
 		},
 	}
 
-	// Set OrgRoles for non-database identity types
 	if t == claims.TypeAnonymous {
 		identity.OrgRoles = map[int64]org.RoleType{
 			s.cfg.DefaultOrgID(): org.RoleType(s.cfg.Anonymous.OrgRole),
