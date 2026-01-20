@@ -86,7 +86,7 @@ export class AddedComponentsRegistry extends Registry<
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new AddedComponentsRegistry({
+    return new AddedComponentsRegistry(this.apps, {
       registrySubject: this.registrySubject,
     });
   }

@@ -95,7 +95,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new AddedLinksRegistry({
+    return new AddedLinksRegistry(this.apps, {
       registrySubject: this.registrySubject,
     });
   }

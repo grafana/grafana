@@ -83,7 +83,7 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new AddedFunctionsRegistry({
+    return new AddedFunctionsRegistry(this.apps, {
       registrySubject: this.registrySubject,
     });
   }
