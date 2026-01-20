@@ -221,7 +221,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 			continue
 		}
 		isNew := true
-		for _, i := range receiver.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		for _, i := range receiver.GrafanaManagedReceivers {
 			if i.UID != "" {
 				isNew = false
 				break

@@ -148,7 +148,7 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 							Actions:           []string{accesscontrol.ActionAlertingReceiversRead, accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversTestCreate},
 							Resource:          models.ScopeReceiversRoot,
 							ResourceAttribute: "uid",
-							ResourceID:        existingReceiver.ObjectMeta.Name,
+							ResourceID:        existingReceiver.Name,
 						},
 					})
 				}(),
