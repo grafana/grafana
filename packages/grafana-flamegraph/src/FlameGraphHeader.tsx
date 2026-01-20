@@ -5,9 +5,9 @@ import { useDebounce, usePrevious } from 'react-use';
 
 import { ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, IconButton, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, Input, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
 
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
+import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS } from './constants';
 import { PaneView, SelectedView, ViewMode } from './types';
 
 type Props = {
@@ -91,21 +91,43 @@ const FlameGraphHeader = ({
 
       {selectedView === SelectedView.Multi && viewMode === ViewMode.Split && (
         <div className={styles.middleContainer}>
-          <RadioButtonGroup<PaneView>
-            size="sm"
-            options={paneViewOptions}
-            value={leftPaneView}
-            onChange={setLeftPaneView}
-            className={styles.buttonSpacing}
-          />
-          <IconButton name="exchange-alt" size="sm" tooltip="Swap views" onClick={onSwapPanes} />
-          <RadioButtonGroup<PaneView>
-            size="sm"
-            options={paneViewOptions}
-            value={rightPaneView}
-            onChange={setRightPaneView}
-            className={styles.buttonSpacing}
-          />
+          {containerWidth >= MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS ? (
+            <>
+              <RadioButtonGroup<PaneView>
+                size="sm"
+                options={paneViewOptions}
+                value={leftPaneView}
+                onChange={setLeftPaneView}
+                className={styles.buttonSpacing}
+              />
+              <IconButton name="exchange-alt" size="sm" tooltip="Swap views" onClick={onSwapPanes} />
+              <RadioButtonGroup<PaneView>
+                size="sm"
+                options={paneViewOptions}
+                value={rightPaneView}
+                onChange={setRightPaneView}
+                className={styles.buttonSpacing}
+              />
+            </>
+          ) : (
+            <>
+              <Select<PaneView>
+                options={paneViewOptions}
+                value={leftPaneView}
+                onChange={(v) => v.value && setLeftPaneView(v.value)}
+                width={16}
+                className={styles.compactSelect}
+              />
+              <IconButton name="exchange-alt" size="sm" tooltip="Swap views" onClick={onSwapPanes} />
+              <Select<PaneView>
+                options={paneViewOptions}
+                value={rightPaneView}
+                onChange={(v) => v.value && setRightPaneView(v.value)}
+                width={16}
+                className={styles.compactSelect}
+              />
+            </>
+          )}
         </div>
       )}
 
@@ -280,6 +302,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   extraElements: css({
     label: 'extraElements',
     marginLeft: theme.spacing(1),
+  }),
+  compactSelect: css({
+    label: 'compactSelect',
+    marginRight: theme.spacing(0.5),
   }),
 });
 
