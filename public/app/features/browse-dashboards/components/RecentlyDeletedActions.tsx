@@ -4,7 +4,8 @@ import { Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -136,10 +137,19 @@ export function RecentlyDeletedActions() {
 
     const notificationData = getRestoreNotificationData(successful, failed, restoreTarget);
     if (notificationData) {
-      appEvents.publish({
-        type: notificationData.alertType,
-        payload: [notificationData.message],
-      });
+      if (notificationData.kind === 'action') {
+        const component = buildNotificationButton({
+          buttonLabel: notificationData.data.buttonLabel,
+          onClick: () => locationService.push(notificationData.data.targetUrl),
+          ariaLabel: notificationData.data.buttonLabel,
+        });
+        dispatch(notifyApp(createSuccessNotification(notificationData.data.title, '', undefined, component)));
+      } else {
+        appEvents.publish({
+          type: notificationData.data.alertType,
+          payload: [notificationData.data.message],
+        });
+      }
     }
     setIsBulkRestoreLoading(false);
     setIsRestoreModalOpen(false);
