@@ -179,8 +179,7 @@ func getMapKeys(m map[string][]string) []string {
 }
 
 func (a *api) GetInheritedPermissions(ctx context.Context, namespace string, resourceID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
-
-	if a.service.options.Resource == "folders" {
+	if a.service.options.Resource == folderv1.RESOURCE {
 		return a.getFolderHierarchyPermissions(ctx, namespace, resourceID, dynamicClient)
 	} else {
 		if a.service.options.GetParentFolder == nil {
