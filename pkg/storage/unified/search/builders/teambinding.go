@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	TEAM_BINDING_SUBJECT_NAME = "subject.name"
-	TEAM_BINDING_TEAM_REF     = "teamRef.name"
+	TEAM_BINDING_SUBJECT_NAME = "subject_name"
+	TEAM_BINDING_TEAM_REF     = "team_ref"
 	TEAM_BINDING_PERMISSION   = "permission"
 	TEAM_BINDING_EXTERNAL     = "external"
 )

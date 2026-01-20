@@ -10,6 +10,7 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 var (
@@ -104,8 +106,8 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_PREFIX + "subject.name",
-						Operator: "=",
+						Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
+						Operator: string(selection.Equals),
 						Values:   []string{name},
 					},
 				},
@@ -115,9 +117,9 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, options runtime
 			Page:    int64(page),
 			Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 			Fields: []string{
-				resource.SEARCH_FIELD_PREFIX + "teamRef.name",
-				resource.SEARCH_FIELD_PREFIX + "permission",
-				resource.SEARCH_FIELD_PREFIX + "external",
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_PERMISSION,
+				resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_EXTERNAL,
 			},
 		}
 
@@ -153,9 +155,11 @@ func (s *UserTeamREST) ConnectMethods() []string {
 func (h *UserTeamREST) parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetTeamsBody, error) {
 	if result == nil {
 		return iamv0alpha1.GetTeamsBody{}, nil
-	} else if result.Error != nil {
+	}
+	if result.Error != nil {
 		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
-	} else if result.Results == nil {
+	}
+	if result.Results == nil {
 		return iamv0alpha1.GetTeamsBody{}, nil
 	}
 
@@ -169,23 +173,23 @@ func (h *UserTeamREST) parseResults(result *resourcepb.ResourceSearchResponse, o
 		}
 
 		switch v.Name {
-		case "teamRef.name":
+		case builders.TEAM_BINDING_TEAM_REF:
 			teamRefIDX = i
-		case "permission":
+		case builders.TEAM_BINDING_PERMISSION:
 			permissionIDX = i
-		case "external":
+		case builders.TEAM_BINDING_EXTERNAL:
 			externalIDX = i
 		}
 	}
 
 	if teamRefIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column 'teamRef.name' not found in search results")
+		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM_REF)
 	}
 	if permissionIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column 'permission' not found in search results")
+		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
 	}
 	if externalIDX < 0 {
-		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column 'external' not found in search results")
+		return iamv0alpha1.GetTeamsBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
 	}
 
 	body := iamv0alpha1.GetTeamsBody{

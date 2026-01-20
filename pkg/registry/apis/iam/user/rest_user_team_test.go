@@ -227,7 +227,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 				{
 					Results: &resourcepb.ResourceTable{
 						Columns: []*resourcepb.ResourceTableColumnDefinition{
-							{Name: "teamRef.name"},
+							{Name: "team_ref"},
 							{Name: "permission"},
 							{Name: "external"},
 						},
@@ -301,7 +301,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		httpHandler.ServeHTTP(w, req)
 
 		expectedFields := []string{
-			resource.SEARCH_FIELD_PREFIX + "teamRef.name",
+			resource.SEARCH_FIELD_PREFIX + "team_ref",
 			resource.SEARCH_FIELD_PREFIX + "permission",
 			resource.SEARCH_FIELD_PREFIX + "external",
 		}
@@ -347,7 +347,7 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		require.Empty(t, result.Items)
 	})
 
-	t.Run("should return error when teamRef.name column is missing", func(t *testing.T) {
+	t.Run("should return error when team_ref column is missing", func(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -359,7 +359,7 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		}
 		result, err := handler.parseResults(searchResult, 0)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "required column 'teamRef.name' not found")
+		require.Contains(t, err.Error(), "required column 'team_ref' not found")
 		require.Empty(t, result.Items)
 	})
 
@@ -367,7 +367,7 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "teamRef.name"},
+					{Name: "team_ref"},
 					{Name: "external"},
 				},
 				Rows: []*resourcepb.ResourceTableRow{},
@@ -383,7 +383,7 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "teamRef.name"},
+					{Name: "team_ref"},
 					{Name: "permission"},
 				},
 				Rows: []*resourcepb.ResourceTableRow{},
@@ -399,7 +399,7 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "teamRef.name"},
+					{Name: "team_ref"},
 					{Name: "permission"},
 					{Name: "external"},
 				},
@@ -438,7 +438,7 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 		searchResult := &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "teamRef.name"},
+					{Name: "team_ref"},
 					{Name: "permission"},
 					{Name: "external"},
 				},
@@ -464,7 +464,7 @@ func TestUserTeamREST_parseResults(t *testing.T) {
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					nil,
-					{Name: "teamRef.name"},
+					{Name: "team_ref"},
 					{Name: "permission"},
 					{Name: "external"},
 				},
