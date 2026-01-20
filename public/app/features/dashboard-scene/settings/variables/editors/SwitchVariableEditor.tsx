@@ -5,9 +5,10 @@ import { SwitchVariableForm } from '../components/SwitchVariableForm';
 
 interface SwitchVariableEditorProps {
   variable: SwitchVariable;
+  inline?: boolean;
 }
 
-export function SwitchVariableEditor({ variable }: SwitchVariableEditorProps) {
+export function SwitchVariableEditor({ variable, inline = false }: SwitchVariableEditorProps) {
   const { value, enabledValue, disabledValue } = variable.useState();
 
   const onEnabledValueChange = (newEnabledValue: string) => {
@@ -36,6 +37,7 @@ export function SwitchVariableEditor({ variable }: SwitchVariableEditorProps) {
       disabledValue={disabledValue}
       onEnabledValueChange={onEnabledValueChange}
       onDisabledValueChange={onDisabledValueChange}
+      inline={inline}
     />
   );
 }
@@ -49,7 +51,7 @@ export function getSwitchVariableOptions(variable: SceneVariable): OptionsPaneIt
   return [
     new OptionsPaneItemDescriptor({
       id: `variable-${variable.state.name}-value`,
-      render: () => <SwitchVariableEditor variable={variable} />,
+      render: () => <SwitchVariableEditor variable={variable} inline={true} />,
     }),
   ];
 }

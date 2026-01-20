@@ -366,6 +366,17 @@
           "regexApplyTo": "value",
           "skipUrlSync": false,
           "sort": 2,
+          "staticOptions": [
+            {
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before",
           "tagValuesQuery": "",
           "tagsQuery": "",
           "type": "query",
