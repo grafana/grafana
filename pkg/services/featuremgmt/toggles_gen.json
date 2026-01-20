@@ -738,7 +738,8 @@
       "metadata": {
         "name": "apiExtensions",
         "resourceVersion": "1764159104213",
-        "creationTimestamp": "2025-11-26T12:11:44Z"
+        "creationTimestamp": "2025-11-26T12:11:44Z",
+        "deletionTimestamp": "2026-01-20T15:08:00Z"
       },
       "spec": {
         "description": "Enable Kubernetes CustomResourceDefinition (CRD) support with dynamic API registration",

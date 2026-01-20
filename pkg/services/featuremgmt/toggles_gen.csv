@@ -100,7 +100,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,useScopeSingleNodeEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2025-08-29,useMultipleScopeNodesEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2024-11-11,logQLScope,privatePreview,@grafana/oss-big-tent,false,false,false
-2024-02-28,sqlExpressions,preview,@grafana/grafana-datasources-core-services,false,false,false
+2024-02-27,sqlExpressions,preview,@grafana/grafana-datasources-core-services,false,false,false
 2025-07-24,sqlExpressionsColumnAutoComplete,experimental,@grafana/datapro,false,false,true
 2024-02-12,kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-05-15,kubernetesAggregatorCapTokenAuth,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -151,11 +151,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-17,unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 2025-11-05,timeRangePan,experimental,@grafana/dataviz-squad,false,false,true
-2025-11-21,newTimeRangeZoomShortcuts,experimental,@grafana/dataviz-squad,false,false,true
+2025-11-20,newTimeRangeZoomShortcuts,experimental,@grafana/dataviz-squad,false,false,true
 2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 2024-12-20,playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-11-14,passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
-2024-12-19,prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
+2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 2024-11-05,enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 2024-11-07,enableSCIM,preview,@grafana/identity-access-team,false,false,false
 2024-11-12,crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true

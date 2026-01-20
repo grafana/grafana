@@ -1326,7 +1326,6 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend
 /conf/provisioning/sample/ @grafana/grafana-app-platform-squad
-/conf/apiextensions.ini @grafana/grafana-app-platform-squad
 
 # Security
 /relyance.yaml @grafana/security-team

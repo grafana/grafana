@@ -1,8 +1,6 @@
 package generic
 
 import (
-	"context"
-
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,20 +28,9 @@ func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo u
 	gv := resourceInfo.GroupVersion()
 	gv.Version = runtime.APIVersionInternal
 	strategy := NewStrategy(scheme, gv)
-
-	gr := resourceInfo.GroupResource()
-	var keyRootFunc func(ctx context.Context) string
-	var keyFunc func(ctx context.Context, name string) (string, error)
-
 	if resourceInfo.IsClusterScoped() {
 		strategy = strategy.WithClusterScope()
-		keyRootFunc = ClusterScopedKeyRootFunc(gr)
-		keyFunc = ClusterScopedKeyFunc(gr)
-	} else {
-		keyRootFunc = KeyRootFunc(gr)
-		keyFunc = NamespaceKeyFunc(gr)
 	}
-
 
 	// Use custom GetAttrs if provided, otherwise use default
 	var attrFunc storage.AttrFunc
@@ -60,10 +47,10 @@ func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo u
 	store := &registry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
-		KeyRootFunc:               keyRootFunc,
-		KeyFunc:                   keyFunc,
+		KeyRootFunc:               KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             predicateFunc,
-		DefaultQualifiedResource:  gr,
+		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor:            resourceInfo.TableConverter(),
 		CreateStrategy:            strategy,
