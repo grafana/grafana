@@ -111,10 +111,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             />
           </Field>
 
-          <GitHubAppCredentialFields
-            required={!isEdit}
-            privateKeyConfigured={Boolean(privateKey)}
-          />
+          <GitHubAppCredentialFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
 
           <Stack gap={2}>
             <Button type="submit" disabled={request.isLoading}>
