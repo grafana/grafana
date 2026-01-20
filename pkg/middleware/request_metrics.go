@@ -8,7 +8,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -27,8 +26,6 @@ var (
 
 // RequestMetrics is a middleware handler that instruments the request.
 func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promRegister prometheus.Registerer) web.Middleware {
-	log := log.New("middleware.request-metrics")
-
 	httpRequestsInFlight := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: "grafana",
@@ -112,12 +109,6 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				// if grafana does not recognize the handler and returns 404 we should register it as `notfound`
 				if status == http.StatusNotFound {
 					handler = "notfound"
-				} else {
-					// log requests where we could not identify handler so we can register them.
-					//nolint:staticcheck // not yet migrated to OpenFeature
-					if features.IsEnabled(r.Context(), featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
-						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
-					}
 				}
 			}
 

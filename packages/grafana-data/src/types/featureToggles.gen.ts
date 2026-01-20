@@ -59,11 +59,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Logs the path for requests that are instrumented as unknown
-  * @default false
-  */
-  logRequestsInstrumentedAsUnknown?: boolean;
-  /**
   * Run the GRPC server
   * @default false
   */

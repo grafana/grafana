@@ -2688,6 +2688,7 @@
         "name": "logRequestsInstrumentedAsUnknown",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-06-10T08:56:55Z",
+        "deletionTimestamp": "2026-01-16T14:10:42Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
