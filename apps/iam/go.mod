@@ -12,6 +12,8 @@ replace github.com/grafana/grafana/apps/secret => ../secret
 
 replace github.com/grafana/grafana/apps/provisioning => ../provisioning
 
+replace github.com/grafana/grafana/apps/live => ../live
+
 replace github.com/grafana/grafana/apps/advisor => ../advisor
 
 replace github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment

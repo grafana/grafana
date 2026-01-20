@@ -7,7 +7,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-02-03,featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
 2022-03-17,storage,experimental,@grafana/search-and-storage,false,false,false
 2022-05-31,canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-2022-06-10,logRequestsInstrumentedAsUnknown,experimental,@grafana/grafana-backend-group,false,false,false
 2022-09-26,grpcServer,preview,@grafana/search-and-storage,false,false,false
 2022-11-28,cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 2022-10-14,showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
@@ -17,6 +16,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-10-23,lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 2022-02-09,influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
+2026-01-19,liveAPIServer,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2025-08-29,starsFromAPIServer,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 2025-08-29,kubernetesStars,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-11-29,influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
@@ -279,4 +279,5 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-06,secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-01-07,profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
+2026-01-15,queryWithAssistant,experimental,@grafana/oss-big-tent,false,false,true
 2026-01-20,kubernetesTeamBindings,experimental,@grafana/identity-access-team,false,false,false
