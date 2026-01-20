@@ -22,6 +22,7 @@ type Client interface {
 	// Apps and installations
 	GetApp(ctx context.Context) (App, error)
 	GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error)
+	CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error)
 }
 
 // App represents a Github App.
@@ -40,6 +41,14 @@ type AppInstallation struct {
 	ID int64
 	// Whether the installation is enabled or not.
 	Enabled bool
+}
+
+// InstallationToken represents a Github App Installation Access Token.
+type InstallationToken struct {
+	// Token is the access token value.
+	Token string
+	// ExpiresAt is the expiration time of the token.
+	ExpiresAt string
 }
 
 type githubClient struct {
@@ -61,7 +70,6 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 		return App{}, err
 	}
 
-	// TODO(ferruvich): do we need any other info?
 	return App{
 		ID:    app.GetID(),
 		Slug:  app.GetSlug(),
@@ -85,9 +93,34 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 		return AppInstallation{}, err
 	}
 
-	// TODO(ferruvich): do we need any other info?
 	return AppInstallation{
 		ID:      installation.GetID(),
 		Enabled: installation.GetSuspendedAt().IsZero(),
+	}, nil
+}
+
+// CreateInstallationAccessToken creates an installation access token scoped to a specific repository.
+func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error) {
+	id, err := strconv.Atoi(installationID)
+	if err != nil {
+		return InstallationToken{}, fmt.Errorf("invalid installation ID: %s", installationID)
+	}
+
+	opts := &github.InstallationTokenOptions{
+		Repositories: []string{repo},
+	}
+
+	token, _, err := r.gh.Apps.CreateInstallationToken(ctx, int64(id), opts)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return InstallationToken{}, ErrServiceUnavailable
+		}
+		return InstallationToken{}, err
+	}
+
+	return InstallationToken{
+		Token:     token.GetToken(),
+		ExpiresAt: token.GetExpiresAt().String(),
 	}, nil
 }

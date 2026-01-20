@@ -29,8 +29,7 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		NSPrefix: "badgerkvstorage-test",
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
-			TestBlobSupport:       true,
-			TestListModifiedSince: true,
+			TestBlobSupport: true,
 			// Badger does not support bulk import yet.
 			TestGetResourceLastImportTime: true,
 		},
@@ -42,7 +41,6 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 
 	skipTests := map[string]bool{
 		TestBlobSupport:               true,
-		TestListModifiedSince:         true,
 		TestGetResourceLastImportTime: true,
 	}
 

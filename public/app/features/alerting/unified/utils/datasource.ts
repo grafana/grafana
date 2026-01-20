@@ -74,7 +74,7 @@ export function getRulesDataSources() {
 }
 
 export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
-  return isGrafanaRulesSource(rulesSource) ? 'grafana' : (rulesSource.uid ?? rulesSource.id);
+  return isGrafanaRulesSource(rulesSource) ? 'grafana' : rulesSource.uid;
 }
 
 export function getRulesDataSource(rulesSourceName: string) {
@@ -285,17 +285,6 @@ export function getRulesSourceByName(name: string): RulesSource | undefined {
     return GRAFANA_RULES_SOURCE_NAME;
   }
   return getDataSourceByName(name);
-}
-
-export function getDatasourceAPIId(dataSourceName: string) {
-  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return GRAFANA_RULES_SOURCE_NAME;
-  }
-  const ds = getDataSourceByName(dataSourceName);
-  if (!ds) {
-    throw new Error(`Datasource "${dataSourceName}" not found`);
-  }
-  return String(ds.id);
 }
 
 export function getDatasourceAPIUid(dataSourceName: string) {

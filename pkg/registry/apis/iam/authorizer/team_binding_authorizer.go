@@ -97,8 +97,8 @@ func (r *TeamBindingAuthorizer) beforeWrite(ctx context.Context, obj runtime.Obj
 	teamName := concreteObj.Spec.TeamRef.Name
 	checkReq := types.CheckRequest{
 		Namespace: authInfo.GetNamespace(),
-		Group:     iamv0.GROUP,
-		Resource:  iamv0.TeamResourceInfo.GetName(),
+		Group:     iamv0.TeamResourceInfo.GroupResource().Group,
+		Resource:  iamv0.TeamResourceInfo.GroupResource().Resource,
 		Verb:      utils.VerbSetPermissions,
 		Name:      teamName,
 	}

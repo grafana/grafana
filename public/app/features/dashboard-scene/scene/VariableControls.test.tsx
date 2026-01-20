@@ -22,7 +22,7 @@ jest.mock('@grafana/runtime', () => {
 
 describe('VariableControls', () => {
   it('should not render scopes variable', () => {
-    const variables = [new ScopesVariable({})];
+    const variables = [new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' })];
     const dashboard = buildScene(variables);
     dashboard.activate();
 
@@ -68,6 +68,16 @@ describe('VariableControls', () => {
     render(<VariableControls dashboard={dashboard} />);
 
     expect(screen.queryByText('TextVarControls')).not.toBeInTheDocument();
+  });
+
+  it('should render visible variables in edit mode', async () => {
+    const dashboard = buildScene([new TextBoxVariable({ name: 'TextVarVisible', hide: VariableHide.dontHide })]);
+    dashboard.activate();
+
+    dashboard.setState({ isEditing: true });
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
   });
 });
 

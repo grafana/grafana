@@ -3,6 +3,7 @@ import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
+import { TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -73,7 +74,13 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
           size="md"
           onClose={handleClose}
         >
-          <TemplateSelector onSelect={onSelect} onClose={handleClose} option={option} valueInForm={valueInForm} />
+          <TemplateSelector
+            onSelect={onSelect}
+            onClose={handleClose}
+            option={option}
+            valueInForm={valueInForm}
+            filterKind="grafana"
+          />
         </Drawer>
       )}
     </>
@@ -120,9 +127,10 @@ interface TemplateSelectorProps {
   onClose: () => void;
   option: NotificationChannelOption;
   valueInForm: string;
+  filterKind?: TemplateGroupTemplateKind;
 }
 
-function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
+export function TemplateSelector({ onSelect, onClose, option, valueInForm, filterKind }: TemplateSelectorProps) {
   const styles = useStyles2(getStyles);
   const valueInFormIsCustom = Boolean(valueInForm) && !matchesOnlyOneTemplate(valueInForm);
   const [template, setTemplate] = useState<SelectableValue<Template> | undefined>(undefined);
@@ -171,12 +179,20 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     setTemplateOption(option);
   };
 
+  // Filter templates by kind
+  const filteredData = useMemo(() => {
+    if (!filterKind) {
+      return data;
+    }
+    return (data ?? []).filter((template) => template.kind === filterKind);
+  }, [data, filterKind]);
+
   const options = useMemo(() => {
-    if (!defaultTemplates || !data || isLoading || error) {
+    if (!defaultTemplates || !filteredData || isLoading || error) {
       return [];
     }
-    return getTemplateOptions(data, defaultTemplates);
-  }, [data, defaultTemplates, isLoading, error]);
+    return getTemplateOptions(filteredData, defaultTemplates);
+  }, [filteredData, defaultTemplates, isLoading, error]);
 
   const defaultTemplateValue = useMemo(() => {
     if (!options.length || !Boolean(valueInForm) || !matchesOnlyOneTemplate(valueInForm)) {

@@ -149,7 +149,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: check if lister could list too many repositories or resources
-	all, err := GetRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()), b.store)
+	all, err := GetRepositoriesInNamespace(request.WithNamespace(r.Context(), u.GetNamespace()), b.repoStore)
 	if err != nil {
 		errhttp.Write(r.Context(), err, w)
 		return

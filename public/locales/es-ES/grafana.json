@@ -807,7 +807,8 @@
       "label-integration": "Integración",
       "label-notification-settings": "Ajustes de notificaciones",
       "label-section": "Ajustes de {{name}} opcionales",
-      "test": "Prueba"
+      "test": "Prueba",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DE",
@@ -2137,8 +2138,8 @@
         "suffix": "Actualiza la página y vuelve a intentarlo.",
         "title": "Error al añadir o actualizar la política de notificación"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} políticas adicionales",
+      "n-more-policies_other": "{{count}} políticas adicionales"
     },
     "policy": {
       "label-new-child-policy": "Nueva política secundaria",
@@ -2176,11 +2177,16 @@
     "provisioning": {
       "badge-tooltip-provenance": "Este recurso se ha aprovisionado a través de {{provenance}} y no se puede editar mediante la interfaz de usuario",
       "badge-tooltip-standard": "Este recurso se ha aprovisionado y no se puede editar a través de la interfaz de usuario",
+      "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Este {{resource}} se ha aprovisionado, lo que significa que ha sido creado por la configuración. Ponte en contacto con el administrador del servidor para actualizar este {{resource}}.",
+      "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Este {{resource}} no se puede editar a través de la interfaz de usuario"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Provisionado"
       }
     },
@@ -2673,11 +2679,13 @@
     "rules-group": {
       "deleting": "Eliminando",
       "text-federated": "Federado",
-      "text-provisioned": "Provisionado"
+      "text-provisioned": "Provisionado",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3764,7 +3772,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -5338,6 +5345,7 @@
       },
       "header-hidden-tooltip": "El encabezado de la fila solo es visible en el modo de edición",
       "name": "Filas",
+      "new-row-title": "",
       "row": {
         "collapse": "Contraer fila",
         "expand": "Expandir fila",
@@ -5443,11 +5451,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5587,14 +5591,6 @@
           "arrow": "Compartir",
           "title": "Compartir",
           "tooltip": "Copiar enlace"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Descartar",
-            "text": "Hay cambios no guardados en este dashboard. Debes guardarlos antes de poder compartirlo.",
-            "title": "¿Guardar los cambios en el dashboard?",
-            "yesText": "Guardar"
-          }
         },
         "unlink-library-panel": "Desvincular panel de librería"
       },
@@ -6380,12 +6376,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Clásico",
         "json": "JSON",
         "v1-resource": "Recurso V1",
         "v2-resource": "Recurso V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "¿Seguro que quieres restaurar el dashboard a la versión {{version}}? Todos los cambios no guardados se perderán.",
@@ -6456,8 +6455,8 @@
       "loading-connected-dashboards": "Cargando dashboards conectados...",
       "placeholder-search-affected-dashboards": "Buscar dashboards afectados",
       "update-all": "Actualizar todo",
-      "affected-dashboards_one": "Esta actualización afectará a <1>{{count}} dashboards.</1> Los siguientes dashboards que utilizan el panel se verán afectados:",
-      "affected-dashboards_other": "Esta actualización afectará a <1>{{count}} dashboards.</1> Los siguientes dashboards que utilizan el panel se verán afectados:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Error al guardar el panel de control",
@@ -6492,6 +6491,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alternar menú de compartir"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6980,6 +6985,7 @@
         "drone-datasource": "Fuente de datos de Drone",
         "git-lab-integration-and-datasource": "Integración y fuente de datos de GitLab",
         "honeycomb-integration-and-datasource": "Integración y fuente de datos de Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integración y fuente de datos de Jira",
         "logic-monitor-devices-datasource": "Fuente de datos de dispositivos de LogicMonitor",
         "mongo-db-integration-and-data-source": "Integración y fuente de datos de MongoDB",
@@ -7838,7 +7844,6 @@
       "export-externally-label": "Exportar el panel de control para utilizarlo en otra instancia",
       "export-format": "Formato",
       "export-mode": "Modelo",
-      "export-remove-ds-refs": "Eliminar detalles de implementación",
       "info-text": "Copiar o descargar un archivo que contenga la definición de su dashboard",
       "title": "Exportar panel"
     },
@@ -7985,6 +7990,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Mostrar etiquetas de umbral",
     "name-show-threshold-markers": "Mostrar marcadores de umbral",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -9554,8 +9560,8 @@
     "query-inspector": {
       "query-inspector": "Inspector de consultas",
       "text-loading-query-inspector": "Cargando inspector de consultas...",
-      "count-frames_one": "{{count}} marcos, ",
-      "count-frames_other": "{{count}} marcos, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} filas",
       "count-rows_other": "{{count}} filas"
     }
@@ -9814,8 +9820,8 @@
       "loading-connected-dashboards": "Cargando dashboards conectados...",
       "placeholder-search-affected-dashboards": "Buscar dashboards afectados",
       "update-all": "Actualizar todo",
-      "num-affected_one": "Esta actualización afectará a <1>{{count}} dashboards.</1>",
-      "num-affected_other": "Esta actualización afectará a <1>{{count}} dashboards.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12538,13 +12544,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Contraer la fila de la consulta",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Mostrar la ayuda de la fuente de datos",
       "drag-and-drop": "Arrastrar y soltar para reordenar",
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir la fila de la consulta",
       "hide-response": "Ocultar respuesta",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Eliminar consulta",
+      "selected-datasource-label": "",
       "show-response": "Mostrar respuesta"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
@@ -12566,6 +12584,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12579,6 +12602,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12595,10 +12619,10 @@
       "restore-button": "Restaurar",
       "restore-loading": "Restaurando...",
       "title": "Restaurar paneles de control",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Elige la carpeta en la que se restaurarán tus paneles de control.",
+      "folder-picker-text_other": "Elige la carpeta en la que se restaurarán tus paneles de control.",
+      "text_one": "Esta acción restaurará {{numberOfDashboards}} paneles de control.",
+      "text_other": "Esta acción restaurará {{numberOfDashboards}} paneles de control."
     }
   },
   "recentlyDeleted": {
@@ -12736,14 +12760,6 @@
       "starred": "Destacado",
       "view-as-folders": "Ver por carpetas",
       "view-as-list": "Ver como lista"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabéticamente (A-Z)",
-          "alphabetically-za": "Alfabéticamente (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importar",
@@ -13342,8 +13358,8 @@
       "label-never": "Nunca"
     },
     "status-history-panel": {
-      "too-many-points_one": "Demasiados puntos para visualizar correctamente. <1></1>Actualice la consulta para devolver menos puntos. <3></3>({{count}} puntos recibidos)",
-      "too-many-points_other": "Demasiados puntos para visualizar correctamente. <1></1>Actualice la consulta para devolver menos puntos. <3></3>({{count}} puntos recibidos)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {
