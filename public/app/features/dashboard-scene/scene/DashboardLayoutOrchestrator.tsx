@@ -100,13 +100,12 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _activationHandler() {
     return () => {
       document.body.removeEventListener('pointermove', this._onPointerMove);
-      document.body.removeEventListener('pointermove', this._onNewPanelPointerMove, true);
       document.body.removeEventListener('pointermove', this._onRowDragPointerMove);
       document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
-      document.body.removeEventListener('pointerup', this._dropNewPanel, true);
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp, true);
       this._clearTabActivationTimer();
       this._clearDragPreview();
+      this._cleanupDragState();
     };
   }
 
@@ -148,7 +147,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   public startDraggingNewPanel(): void {
-    document.body.addEventListener('pointermove', this._onNewPanelPointerMove);
+    document.body.addEventListener('pointermove', this._onNewPanelPointerMove, true);
     document.body.addEventListener('pointerup', this._dropNewPanel, true);
   }
 
@@ -298,6 +297,12 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // If not detached, stopRowDrag from hello-pangea/dnd will handle cleanup
   };
 
+  private _cleanupDragState() {
+    document.body.removeEventListener('pointermove', this._onNewPanelPointerMove, true);
+    document.body.removeEventListener('pointerup', this._dropNewPanel, true);
+    this._lastDropTarget = null;
+  }
+
   private _dropNewPanel = (evt: PointerEvent): void => {
     const lastDropTarget = this._lastDropTarget;
     const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
@@ -306,6 +311,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const isInSidebar = elementsUnderPoint.some((el) => el.getAttribute('id') === 'sidebar-container');
 
     if (isInSidebar) {
+      this._cleanupDragState();
       return;
     }
 
@@ -318,11 +324,13 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._getDashboard().addPanel(panel);
     }
 
-    document.body.removeEventListener('pointermove', this._onNewPanelPointerMove);
-    document.body.removeEventListener('pointerup', this._dropNewPanel, true);
-    this._lastDropTarget = null;
-    DashboardInteractions.trackAddPanelClick('sidebar', lastDropTarget ? getLayoutType(lastDropTarget) : 'dashboard', 'drop');
+    this._cleanupDragState();
 
+    DashboardInteractions.trackAddPanelClick(
+      'sidebar',
+      lastDropTarget ? getLayoutType(lastDropTarget) : 'dashboard',
+      'drop'
+    );
   };
 
   private _addPanelToLayout = (dropTarget: DashboardDropTarget, panel: VizPanel) => {
