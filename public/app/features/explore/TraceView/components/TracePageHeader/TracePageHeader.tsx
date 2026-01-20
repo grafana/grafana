@@ -396,30 +396,32 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         </>
       )}
 
-      <div className={styles.filtersContainer}>
-        <Label>{t('explore.trace-page-header.filters', 'Filters')}</Label>
-        <div className={styles.adhocFiltersRow}>
-          {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
-        </div>
-        {trace && (
-          <div className={styles.searchAndPillsRow}>
-            <TraceFilterPills trace={trace} search={search} setSearch={setSearch} />
-            <TracePageSearchBar
-              trace={trace}
-              search={search}
-              spanFilterMatches={spanFilterMatches}
-              setShowSpanFilterMatchesOnly={(showMatchesOnly: boolean) =>
-                setSearch({ ...search, matchesOnly: showMatchesOnly })
-              }
-              focusedSpanIndexForSearch={focusedSpanIndexForSearch}
-              setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
-              setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-              datasourceType={datasourceType}
-              showSpanFilters={showSpanFilters}
-            />
+      {!hideHeaderDetails && (
+        <div className={styles.filtersContainer}>
+          <Label>{t('explore.trace-page-header.filters', 'Filters')}</Label>
+          <div className={styles.adhocFiltersRow}>
+            {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
           </div>
-        )}
-      </div>
+          {trace && (
+            <div className={styles.searchAndPillsRow}>
+              <TraceFilterPills trace={trace} search={search} setSearch={setSearch} />
+              <TracePageSearchBar
+                trace={trace}
+                search={search}
+                spanFilterMatches={spanFilterMatches}
+                setShowSpanFilterMatchesOnly={(showMatchesOnly: boolean) =>
+                  setSearch({ ...search, matchesOnly: showMatchesOnly })
+                }
+                focusedSpanIndexForSearch={focusedSpanIndexForSearch}
+                setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
+                setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+                datasourceType={datasourceType}
+                showSpanFilters={showSpanFilters}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 });
