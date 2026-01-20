@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -109,7 +110,7 @@ type APIBuilder struct {
 	jobHistoryLoki   *jobs.LokiJobHistory
 	resourceLister   resources.ResourceLister
 	dashboardAccess  legacy.MigrationDashboardAccessor
-	unified          resource.ResourceClient
+	searchClient     resourcepb.ManagedObjectIndexClient
 	repoFactory      repository.Factory
 	client           client.ProvisioningV0alpha1Interface
 	access           auth.AccessChecker
@@ -134,7 +135,7 @@ func NewAPIBuilder(
 	onlyApiServer bool,
 	repoFactory repository.Factory,
 	features featuremgmt.FeatureToggles,
-	unified resource.ResourceClient,
+	searchClient resource.SearchClient,
 	configProvider apiserver.RestConfigProvider,
 	dashboardAccess legacy.MigrationDashboardAccessor,
 	storageStatus dualwrite.Service,
@@ -160,7 +161,7 @@ func NewAPIBuilder(
 	}
 
 	parsers := resources.NewParserFactory(clients)
-	resourceLister := resources.NewResourceListerForMigrations(unified)
+	resourceLister := resources.NewResourceListerForMigrations(searchClient)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -181,7 +182,7 @@ func NewAPIBuilder(
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		resourceLister:                      resourceLister,
 		dashboardAccess:                     dashboardAccess,
-		unified:                             unified,
+		searchClient:                        searchClient,
 		access:                              accessChecker,
 		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
 		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
@@ -243,7 +244,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	client resource.ResourceClient, // implements resource.RepositoryClient
+	client resource.SearchClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	access authlib.AccessClient,
 	dashboardAccess legacy.MigrationDashboardAccessor,
@@ -851,7 +852,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			repositoryListerWrapper := func(ctx context.Context) ([]provisioning.Repository, error) {
 				return GetRepositoriesInNamespace(ctx, b.store)
 			}
-			usageMetricCollector := usage.MetricCollector(b.tracer, repositoryListerWrapper, b.unified)
+			usageMetricCollector := usage.MetricCollector(b.tracer, repositoryListerWrapper, b.searchClient)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)

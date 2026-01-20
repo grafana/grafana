@@ -25,7 +25,7 @@ type migrationDefinition struct {
 	name         string
 	migrationID  string // The ID stored in the migration log table (e.g., "playlists migration")
 	resources    []string
-	registerFunc func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption)
+	registerFunc func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.SearchClient, opts ...ResourceMigrationOption)
 }
 
 var resourceRegistry = []resourceDefinition{
@@ -66,7 +66,7 @@ func registerMigrations(ctx context.Context,
 	cfg *setting.Cfg,
 	mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
-	client resource.ResourceClient,
+	client resource.SearchClient,
 	sqlStore db.DB,
 ) error {
 	for _, migration := range migrationRegistry {
@@ -90,7 +90,7 @@ func registerMigrations(ctx context.Context,
 
 func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
-	client resource.ResourceClient,
+	client resource.SearchClient,
 	opts ...ResourceMigrationOption,
 ) {
 	foldersDef := getResourceDefinition("folder.grafana.app", "folders")
@@ -127,7 +127,7 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator,
 
 func registerPlaylistMigration(mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
-	client resource.ResourceClient,
+	client resource.SearchClient,
 	opts ...ResourceMigrationOption,
 ) {
 	playlistsDef := getResourceDefinition("playlist.grafana.app", "playlists")

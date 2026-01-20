@@ -605,10 +605,12 @@ func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
 	return totalBatchesIndexed, nil
 }
 
+// TODO: verify if needed
 func (s *searchSupport) Init(ctx context.Context) error {
 	return s.init(ctx)
 }
 
+// TODO: verify if needed
 func (s *searchSupport) Stop(_ context.Context) error {
 	s.stop()
 	return nil

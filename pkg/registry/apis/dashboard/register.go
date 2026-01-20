@@ -105,7 +105,7 @@ type DashboardsAPIBuilder struct {
 	accessControl                accesscontrol.AccessControl
 	accessClient                 authlib.AccessClient
 	legacy                       *DashboardStorage
-	unified                      resource.ResourceClient
+	storageClient                resource.StorageClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	dashboardPermissions         dashboards.PermissionsRegistrationService
 	dashboardPermissionsSvc      accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
@@ -142,7 +142,8 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	sql db.DB,
 	tracing *tracing.TracingService,
-	unified resource.ResourceClient,
+	storageClient resource.StorageClient,
+	searchClient resource.SearchClient,
 	dual dualwrite.Service,
 	sorter sort.Service,
 	quotaService quota.Service,
@@ -164,7 +165,7 @@ func RegisterAPIService(
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
-	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
+	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, searchClient, sorter, features)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
 		SnapshotsEnabled:     cfg.SnapshotEnabled,
@@ -180,9 +181,9 @@ func RegisterAPIService(
 		features:                     features,
 		accessControl:                accessControl,
 		accessClient:                 accessClient,
-		unified:                      unified,
+		storageClient:                storageClient,
 		dashboardProvisioningService: provisioningDashboardService,
-		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
+		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, searchClient, features),
 		dashStore:                    dashStore,
 		QuotaService:                 quotaService,
 		ProvisioningService:          provisioning,
@@ -715,7 +716,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 			unified,
 			largeObjects,
-			b.unified,
+			b.storageClient,
 			b.accessClient,
 			newDTOFunc,
 			nil, // no publicDashboardService in standalone mode
@@ -753,7 +754,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 		storage[dashboards.StoragePath()].(rest.Getter),
 		largeObjects,
-		b.unified,
+		b.storageClient,
 		b.accessClient,
 		newDTOFunc,
 		b.publicDashboardService,

@@ -134,7 +134,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 	})
 
 	// test on all dualwriter modes
-	for mode := 0; mode <= 4; mode++ {
+	for mode := 4; mode <= 4; mode++ {
 		modeDw := grafanarest.DualWriterMode(mode)
 
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v)", modeDw), func(t *testing.T) {

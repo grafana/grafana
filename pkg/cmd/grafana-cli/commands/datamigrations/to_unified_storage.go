@@ -226,7 +226,7 @@ func promptYesNo(prompt string) (bool, error) {
 }
 
 func newUnifiedMigratorClient(cfg *setting.Cfg, sqlStore db.DB, featureToggles featuremgmt.FeatureToggles) (resource.MigratorClient, error) {
-	return unified.ProvideUnifiedStorageClient(&unified.Options{
+	return unified.ProvideUnifiedResourceClient(&unified.Options{
 		Cfg:      cfg,
 		Features: featureToggles,
 		DB:       sqlStore,

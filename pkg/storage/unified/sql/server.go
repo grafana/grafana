@@ -55,6 +55,7 @@ type StorageServerOptions struct {
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
+	SearchOptions    *resource.SearchOptions // Deprecated: use NewSearchServer for search capabilities
 }
 
 // NewSearchServer creates a new SearchServer with the given options.
@@ -110,7 +111,7 @@ func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
 // Important: When running in monolith mode, the backend should be provided by the caller
 // to avoid duplicate metrics registration. Only in standalone microservice mode should
 // this function create its own backend.
-func NewStorageServer(opts StorageServerOptions) (resource.ResourceServer, error) {
+func NewStorageServer(opts *StorageServerOptions) (resource.ResourceServer, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 
 	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
@@ -130,8 +131,10 @@ func NewStorageServer(opts StorageServerOptions) (resource.ResourceServer, error
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg:          opts.Reg,
-		SecureValues: opts.SecureValues,
+		Reg:            opts.Reg,
+		SecureValues:   opts.SecureValues,
+		StorageMetrics: opts.StorageMetrics,
+		Search:         opts.SearchOptions, // Deprecated: use NewSearchServer for search capabilities
 	}
 	if opts.AccessClient != nil {
 		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
@@ -198,6 +201,7 @@ func NewStorageServer(opts StorageServerOptions) (resource.ResourceServer, error
 			}
 
 			serverOptions.Backend = kvBackend
+			opts.Backend = kvBackend // hack to reuse the backend on search server for monolith grafana
 			serverOptions.Diagnostics = kvBackend
 		} else {
 			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
@@ -214,6 +218,7 @@ func NewStorageServer(opts StorageServerOptions) (resource.ResourceServer, error
 				return nil, err
 			}
 			serverOptions.Backend = backend
+			opts.Backend = backend // hack to reuse the backend on search server for monolith grafana
 			serverOptions.Diagnostics = backend
 			serverOptions.Lifecycle = backend
 		}
@@ -230,4 +235,34 @@ func NewStorageServer(opts StorageServerOptions) (resource.ResourceServer, error
 	serverOptions.OverridesService = opts.OverridesService
 
 	return resource.NewResourceServer(serverOptions)
+}
+
+// ProvideSearchBackend creates a SearchServer for Wire dependency injection.
+// This is used in monolith mode where both storage and search run in the same process.
+func ProvideSearchBackend(
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	db infraDB.DB,
+	tracer trace.Tracer,
+	reg prometheus.Registerer,
+	backend resource.StorageBackend,
+	docs resource.DocumentBuilderSupplier,
+	indexMetrics *resource.BleveIndexMetrics,
+) (resource.SearchServer, error) {
+	//searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil)
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to create search options: %w", err)
+	//}
+	//
+	//return NewSearchServer(SearchServerOptions{
+	//	Backend:       backend,
+	//	DB:            db,
+	//	Cfg:           cfg,
+	//	Tracer:        tracer,
+	//	Reg:           reg,
+	//	AccessClient:  nil, // Will be set by the caller if needed
+	//	SearchOptions: searchOptions,
+	//	IndexMetrics:  indexMetrics,
+	//})
+	return nil, nil
 }

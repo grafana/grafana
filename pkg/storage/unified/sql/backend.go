@@ -13,7 +13,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -45,6 +44,8 @@ const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
 
+// TODO: check if we can instantiate dependencies inside ProvideStorageBackend
+// ProvideStorageBackend creates a new backend for storage
 func ProvideStorageBackend(
 	cfg *setting.Cfg,
 	db infraDB.DB,
@@ -52,36 +53,39 @@ func ProvideStorageBackend(
 	reg prometheus.Registerer,
 	storageMetrics *resource.StorageMetrics,
 ) (resource.StorageBackend, error) {
-	// Create the resource DB
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create resource DB: %w", err)
-	}
-
-	// Check if HA is enabled
-	isHA := isHighAvailabilityEnabled(
-		cfg.SectionWithEnvOverrides("database"),
-		cfg.SectionWithEnvOverrides("resource_api"),
-	)
-
-	// Create the backend
-	backend, err := NewBackend(BackendOptions{
-		DBProvider:           eDB,
-		Reg:                  reg,
-		IsHA:                 isHA,
-		storageMetrics:       storageMetrics,
-		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create backend: %w", err)
-	}
-
-	// Initialize the backend
-	if err := backend.Init(context.Background()); err != nil {
-		return nil, fmt.Errorf("failed to initialize backend: %w", err)
-	}
-
-	return backend, nil
+	//// Create the resource DB
+	//eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to create resource DB: %w", err)
+	//}
+	//
+	//// Check if HA is enabled
+	//isHA := isHighAvailabilityEnabled(
+	//	cfg.SectionWithEnvOverrides("database"),
+	//	cfg.SectionWithEnvOverrides("resource_api"),
+	//)
+	//
+	//// Create the backend
+	//backend, err := NewBackend(BackendOptions{
+	//	DBProvider:           eDB,
+	//	Reg:                  reg,
+	//	IsHA:                 isHA,
+	//	storageMetrics:       storageMetrics,
+	//	LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+	//})
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to create backend: %w", err)
+	//}
+	//
+	//// Initialize the backend
+	//if err := backend.Init(context.Background()); err != nil {
+	//	return nil, fmt.Errorf("failed to initialize backend: %w", err)
+	//}
+	//
+	//return backend, nil
+	// TODO: make this the central place to provide SQL backend
+	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
+	return nil, nil
 }
 
 // isHighAvailabilityEnabled determines if high availability mode should

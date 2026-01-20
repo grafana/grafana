@@ -35,6 +35,7 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
 type SearchServer interface {
+	// TODO: verify if needed
 	LifecycleHooks
 
 	resourcepb.ResourceIndexServer
@@ -42,9 +43,20 @@ type SearchServer interface {
 	resourcepb.DiagnosticsServer
 }
 
+type StorageServer interface {
+	resourcepb.ResourceStoreServer
+	resourcepb.BulkStoreServer
+	resourcepb.BlobStoreServer
+	resourcepb.QuotasServer
+	resourcepb.DiagnosticsServer
+}
+
 // ResourceServer implements all gRPC services
+// Deprecated: use specific server instead (StorageServer / SearchServer)
 type ResourceServer interface {
 	resourcepb.ResourceStoreServer
+	resourcepb.ResourceIndexServer
+	resourcepb.ManagedObjectIndexServer
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
@@ -227,6 +239,15 @@ type ResourceServerOptions struct {
 	// The blob configuration
 	Blob BlobConfig
 
+	// Search options
+	Search *SearchOptions
+
+	// Function to determine if this server "owns" the index for a given resource
+	IndexMetrics *BleveIndexMetrics
+
+	// Function to determine if this server "owns" the index for a given resource
+	OwnsIndexFn func(key NamespacedResource) (bool, error)
+
 	// Quota service
 	OverridesService *OverridesService
 
@@ -252,7 +273,7 @@ type ResourceServerOptions struct {
 	// Registerer to register prometheus Metrics for the Resource server
 	Reg prometheus.Registerer
 
-	storageMetrics *StorageMetrics
+	StorageMetrics *StorageMetrics
 
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
@@ -265,6 +286,8 @@ type ResourceServerOptions struct {
 	QOSConfig QueueConfig
 }
 
+// NewResourceServer creates a new ResourceServer instance
+// TODO: split into StorageServer and SearchServer
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
@@ -344,7 +367,8 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		now:              opts.Now,
 		ctx:              ctx,
 		cancel:           cancel,
-		storageMetrics:   opts.storageMetrics,
+		storageMetrics:   opts.StorageMetrics,
+		indexMetrics:     opts.IndexMetrics,
 		maxPageSizeBytes: opts.MaxPageSizeBytes,
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
@@ -354,15 +378,13 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		artificialSuccessfulWriteDelay: opts.IndexMinUpdateInterval,
 	}
 
-	/*
-		if opts.Search.Resources != nil {
-			var err error
-			s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
-			if err != nil {
-				return nil, err
-			}
+	if opts.Search != nil {
+		var err error
+		s.search, err = newSearchSupport(*opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		if err != nil {
+			return nil, err
 		}
-	*/
+	}
 
 	err := s.Init(ctx)
 	if err != nil {
@@ -380,6 +402,7 @@ type server struct {
 	backend          StorageBackend
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
+	search           *searchSupport
 	diagnostics      resourcepb.DiagnosticsServer
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
@@ -426,6 +449,11 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.overridesService.init(ctx)
 		}
 
+		// initialize the search index
+		if s.initErr == nil && s.search != nil {
+			s.initErr = s.search.init(ctx)
+		}
+
 		// Start watching for changes
 		if s.initErr == nil {
 			s.initErr = s.initWatcher()
@@ -448,6 +476,10 @@ func (s *server) Stop(ctx context.Context) error {
 			stopFailed = true
 			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
 		}
+	}
+
+	if s.search != nil {
+		s.search.stop()
 	}
 
 	if s.overridesService != nil {
@@ -1365,6 +1397,47 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 }
 
+func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
+	return s.search.Search(ctx, req)
+}
+
+// GetStats implements ResourceServer.
+func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+
+	if s.search == nil {
+		// If the backend implements "GetStats", we can use it
+		srv, ok := s.backend.(resourcepb.ResourceIndexServer)
+		if ok {
+			return srv.GetStats(ctx, req)
+		}
+		return nil, fmt.Errorf("search index not configured")
+	}
+	return s.search.GetStats(ctx, req)
+}
+
+func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
+	return s.search.ListManagedObjects(ctx, req)
+}
+
+func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
+	return s.search.CountManagedObjects(ctx, req)
+}
+
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
 	return s.diagnostics.IsHealthy(ctx, req)
@@ -1518,6 +1591,14 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	case <-queueCtx.Done():
 		return queueCtx.Err() // Timed out or canceled while waiting for execution.
 	}
+}
+
+func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
+
+	return s.search.RebuildIndexes(ctx, req)
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {

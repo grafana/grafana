@@ -21,16 +21,16 @@ import (
 )
 
 type QuotasAppConfig struct {
-	ResourceClient unifiedStorage.ResourceClient
+	QuotaClient unifiedStorage.QuotaClient
 }
 
 type QuotasHandler struct {
-	ResourceClient unifiedStorage.ResourceClient
+	QuotasClient resourcepb.QuotasClient
 }
 
 func NewQuotasHandler(cfg *QuotasAppConfig) *QuotasHandler {
 	return &QuotasHandler{
-		ResourceClient: cfg.ResourceClient,
+		QuotasClient: cfg.QuotaClient,
 	}
 }
 
@@ -55,7 +55,7 @@ func (h *QuotasHandler) GetQuota(ctx context.Context, writer app.CustomRouteResp
 			Resource:  res,
 		},
 	}
-	quota, err := h.ResourceClient.GetQuotaUsage(ctx, quotaReq)
+	quota, err := h.QuotasClient.GetQuotaUsage(ctx, quotaReq)
 	if err != nil {
 		return err
 	}

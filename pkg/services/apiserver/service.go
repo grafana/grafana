@@ -106,7 +106,7 @@ type service struct {
 	datasources        datasource.ScopedPluginDatasourceProvider
 	contextProvider    datasource.PluginContextWrapper
 	pluginStore        pluginstore.Store
-	unified            resource.ResourceClient
+	storageClient      resource.StorageClient
 	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
 
@@ -133,7 +133,7 @@ func ProvideService(
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	dualWriter dualwrite.Service,
-	unified resource.ResourceClient,
+	storageClient resource.StorageClient,
 	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
@@ -166,7 +166,7 @@ func ProvideService(
 		pluginStore:                       pluginStore,
 		serverLockService:                 serverLockService,
 		dualWriter:                        dualWriter,
-		unified:                           unified,
+		storageClient:                     storageClient,
 		secrets:                           secrets,
 		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
@@ -355,7 +355,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+		getter := apistore.NewRESTOptionsGetterForClient(s.storageClient, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
 		serverConfig.RESTOptionsGetter = getter
 	}

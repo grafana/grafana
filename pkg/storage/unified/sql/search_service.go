@@ -206,6 +206,7 @@ func (s *searchService) OwnsIndex(key resource.NamespacedResource) (bool, error)
 
 func (s *searchService) starting(ctx context.Context) error {
 	if s.hasSubservices {
+		// TODO: check if there are any subservices needed for search
 		s.subservicesWatcher.WatchManager(s.subservices)
 		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservices); err != nil {
 			return fmt.Errorf("failed to start subservices: %w", err)
@@ -218,7 +219,7 @@ func (s *searchService) starting(ctx context.Context) error {
 	}
 
 	// Create search options for the search server
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
+	searchOptions, err := search.NewSearchOptions(s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
 	if err != nil {
 		return err
 	}
@@ -263,6 +264,7 @@ func (s *searchService) starting(ctx context.Context) error {
 	}
 
 	if s.cfg.EnableSharding {
+		// TODO: test with sharding enabled
 		s.log.Info("waiting until search server is JOINING in the ring")
 		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
 		defer cancel()

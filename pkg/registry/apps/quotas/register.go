@@ -32,13 +32,13 @@ func (a *QuotasAppInstaller) GetAuthorizer() authorizer.Authorizer {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	resourceClient resource.ResourceClient,
+	quotaClient resource.QuotaClient,
 ) (*QuotasAppInstaller, error) {
 	installer := &QuotasAppInstaller{
 		cfg: cfg,
 	}
 	specificConfig := &quotasapp.QuotasAppConfig{
-		ResourceClient: resourceClient,
+		QuotaClient: quotaClient,
 	}
 	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, quotasapp.New)
 

@@ -31,14 +31,14 @@ func TestRegisterMigrations(t *testing.T) {
 			{
 				name:      "playlists",
 				resources: []string{fakePlaylistResource},
-				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption) {
+				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.SearchClient, opts ...ResourceMigrationOption) {
 					migrationCalls["playlists"]++
 				},
 			},
 			{
 				name:      "folders and dashboards",
 				resources: []string{fakeFolderResource, fakeDashboardResource},
-				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption) {
+				registerFunc: func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.SearchClient, opts ...ResourceMigrationOption) {
 					migrationCalls["folders and dashboards"]++
 				},
 			},

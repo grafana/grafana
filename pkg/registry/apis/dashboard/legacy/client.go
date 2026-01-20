@@ -15,12 +15,12 @@ var (
 )
 
 // NewDirectStorageClient creates a client that passes requests directly to the server using the *same* context
-func NewDirectStorageClient(server resource.ResourceServer) *DirectStorageClient {
+func NewDirectStorageClient(server resource.StorageServer) *DirectStorageClient {
 	return &DirectStorageClient{server}
 }
 
 type DirectStorageClient struct {
-	server resource.ResourceServer
+	server resource.StorageServer
 }
 
 // Create implements ResourceClient.

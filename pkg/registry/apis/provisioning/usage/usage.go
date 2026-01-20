@@ -12,11 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func MetricCollector(tracer tracing.Tracer, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), unified resource.ResourceClient) usagestats.MetricsFunc {
+func MetricCollector(tracer tracing.Tracer, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), searchClient resourcepb.ManagedObjectIndexClient) usagestats.MetricsFunc {
 	return func(ctx context.Context) (metrics map[string]any, err error) {
 		ctx, span := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
 		defer func() {
@@ -25,8 +24,8 @@ func MetricCollector(tracer tracing.Tracer, repositoryLister func(ctx context.Co
 		}()
 
 		m := map[string]any{}
-		if unified == nil {
-			// FIXME: does this case make any sense? no unified storage -> no game
+		if searchClient == nil {
+			// FIXME: does this case make any sense? no unified search -> no game
 			span.SetStatus(codes.Ok, "unified storage is not available")
 			return m, nil
 		}
@@ -47,7 +46,7 @@ func MetricCollector(tracer tracing.Tracer, repositoryLister func(ctx context.Co
 		//
 		// We could get namespaces from the list of repos below, but that could be zero
 		// while we still have resources managed by terraform, etc
-		count, err := unified.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
+		count, err := searchClient.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
 			Namespace: ns,
 		})
 		if err != nil {

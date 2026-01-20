@@ -45,7 +45,7 @@ func TestSearchFallback(t *testing.T) {
 			}
 			dual := dualwrite.ProvideStaticServiceForTests(cfg)
 
-			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient, featuremgmt.WithFeatures())
+			searchClient := resource.NewSearchWrapperClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient, featuremgmt.WithFeatures())
 			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg)
 
 			rr := httptest.NewRecorder()

@@ -149,7 +149,7 @@ func (s *storageService) starting(ctx context.Context) error {
 	}
 
 	// Create the storage server
-	storageServer, err := NewStorageServer(StorageServerOptions{
+	storageServer, err := NewStorageServer(&StorageServerOptions{
 		Backend:          s.backend,
 		OverridesService: overridesSvc,
 		DB:               s.db,

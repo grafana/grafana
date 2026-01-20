@@ -355,7 +355,7 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	resourceClientCfg.AllowInsecure = unifiedStorageSec.Key("allow_insecure").MustBool(false)
 	resourceClientCfg.Audiences = unifiedStorageSec.Key("audiences").Strings("|")
 
-	client, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
+	client, err := resource.NewRemoteSearchClient(tracer, indexConn, resourceClientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage client: %w", err)
 	}

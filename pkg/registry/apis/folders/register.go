@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -73,7 +74,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	acService accesscontrol.Service,
 	accessClient authlib.AccessClient,
 	registerer prometheus.Registerer,
-	unified resourcepb.ResourceIndexClient,
+	searchClient resource.SearchClient,
 	zanzanaClient zanzana.Client,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
@@ -85,7 +86,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		ac:                   accessControl,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		searcher:             unified,
+		searcher:             searchClient,
 		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 	apiregistration.RegisterAPI(builder)

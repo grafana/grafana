@@ -239,22 +239,10 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if err != nil {
 		return err
 	}
-	var indexConn *grpc.ClientConn
-	if o.SearchServerAddress != "" {
-		indexConn, err = grpc.NewClient(o.SearchServerAddress,
-			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-		)
-		if err != nil {
-			return err
-		}
-	} else {
-		indexConn = conn
-	}
 
 	const resourceStoreAudience = "resourceStore"
 
-	unified, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resource.RemoteResourceClientConfig{
+	storageClient, err := resource.NewRemoteStorageClient(tracer, conn, resource.RemoteResourceClientConfig{
 		Token:            o.GrpcClientAuthenticationToken,
 		TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
 		Namespace:        o.GrpcClientAuthenticationTokenNamespace,
@@ -289,7 +277,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 		o.InlineSecrets = inlineSecureValueService
 	}
 
-	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
+	getter := apistore.NewRESTOptionsGetterForClient(storageClient, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter
 	return nil
 }

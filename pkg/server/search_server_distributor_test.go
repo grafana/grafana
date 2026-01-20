@@ -105,7 +105,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				Namespace: ns,
 			}
 			baselineRes := getBaselineResponse(t, req, baselineServer.GetStats)
-			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.GetStats, instanceResponseCount)
+			distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.GetStats, instanceResponseCount)
 			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
@@ -122,7 +122,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				Namespace: ns,
 			}
 			baselineRes := getBaselineResponse(t, req, baselineServer.CountManagedObjects)
-			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.CountManagedObjects, instanceResponseCount)
+			distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.CountManagedObjects, instanceResponseCount)
 			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
@@ -139,7 +139,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				Namespace: ns,
 			}
 			baselineRes := getBaselineResponse(t, req, baselineServer.ListManagedObjects)
-			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.ListManagedObjects, instanceResponseCount)
+			distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.ListManagedObjects, instanceResponseCount)
 			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
@@ -162,7 +162,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				},
 			}
 			baselineRes := getBaselineResponse(t, req, baselineServer.Search)
-			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.Search, instanceResponseCount)
+			distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.Search, instanceResponseCount)
 			// sometimes the querycost is different between the two. Happens randomly and we don't have control over it
 			// as it comes from bleve. Since we are not testing search functionality we hard-set this to 0 to avoid
 			// flaky tests
@@ -190,7 +190,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				Resource:  "folders",
 			}},
 		}
-		distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.RebuildIndexes, instanceResponseCount)
+		distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.RebuildIndexes, instanceResponseCount)
 		require.Nil(t, distributorRes.Error)
 
 		// assert all instances got the response by looking at the merged details
@@ -275,12 +275,12 @@ func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
 }
 
 type testModuleServer struct {
-	server         *ModuleServer
-	healthClient   grpc_health_v1.HealthClient
-	resourceClient resource.ResourceClient
-	id             string
-	grpcAddress    string
-	httpPort       string
+	server       *ModuleServer
+	healthClient grpc_health_v1.HealthClient
+	searchClient resource.SearchClient
+	id           string
+	grpcAddress  string
+	httpPort     string
 }
 
 func getRandomPort() int {
@@ -308,11 +308,12 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	require.NoError(t, err)
-	client := resource.NewLegacyResourceClient(conn, conn)
+
+	client := resource.NewAuthlessSearchClient(conn)
 
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 
-	server.resourceClient = client
+	server.searchClient = client
 
 	return server
 }
@@ -389,7 +390,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
 	searchServer, err := sql.NewSearchServer(sql.SearchServerOptions{
 		Cfg:           cfg,
@@ -397,7 +398,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 		SearchOptions: searchOpts,
 	})
 	require.NoError(t, err)
-	storageServer, err := sql.NewStorageServer(sql.StorageServerOptions{
+	storageServer, err := sql.NewStorageServer(&sql.StorageServerOptions{
 		Cfg:      cfg,
 		Tracer:   tracer,
 		Features: features,

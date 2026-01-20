@@ -17,7 +17,7 @@ func TestGetQuota(t *testing.T) {
 	t.Run("will return error when resource param is missing", func(t *testing.T) {
 		clientMock := resource.NewMockResourceClient(t)
 		handler := NewQuotasHandler(&QuotasAppConfig{
-			ResourceClient: clientMock,
+			QuotaClient: clientMock,
 		})
 		url, err := url.Parse("http://localhost:3000/apis/quotas.grafana.app/v0alpha1/namespaces/stacks-1/usage?group=dashboard.grafana.app")
 		require.NoError(t, err)
@@ -33,7 +33,7 @@ func TestGetQuota(t *testing.T) {
 	t.Run("will return error when group param is missing", func(t *testing.T) {
 		clientMock := resource.NewMockResourceClient(t)
 		handler := NewQuotasHandler(&QuotasAppConfig{
-			ResourceClient: clientMock,
+			QuotaClient: clientMock,
 		})
 		url, err := url.Parse("http://localhost:3000/apis/quotas.grafana.app/v0alpha1/namespaces/stacks-1/usage?resource=dashboards")
 		require.NoError(t, err)
@@ -54,7 +54,7 @@ func TestGetQuota(t *testing.T) {
 			Limit: 2,
 		}, nil)
 		handler := NewQuotasHandler(&QuotasAppConfig{
-			ResourceClient: clientMock,
+			QuotaClient: clientMock,
 		})
 		url, err := url.Parse("http://localhost:3000/apis/quotas.grafana.app/v0alpha1/namespaces/stacks-1/usage?group=dashboard.grafana.app&resource=dashboards")
 		require.NoError(t, err)

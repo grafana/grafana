@@ -518,6 +518,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
+	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
+	searchServer, err := sql.ProvideSearchBackend(cfg, featureToggles, sqlStore, tracer, registerer, storageBackend, documentBuilderSupplier, bleveIndexMetrics)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
 		Cfg:          cfg,
 		Features:     featureToggles,
@@ -528,9 +533,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		Docs:         documentBuilderSupplier,
 		SecureValues: inlineSecureValueSupport,
 		Backend:      storageBackend,
+		SearchServer: searchServer,
 	}
-	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
-	resourceClient, err := unified.ProvideUnifiedStorageClient(options, storageMetrics, bleveIndexMetrics)
+	resourceClient, err := unified.ProvideUnifiedResourceClient(options, storageMetrics, bleveIndexMetrics)
+	if err != nil {
+		return nil, err
+	}
+	searchClient, err := unified.ProvideUnifiedSearchClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -540,14 +549,18 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl)
-	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, resourceClient)
-	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient)
+	migratorClient, err := unified.ProvideUnifiedMigratorClient(resourceClient)
+	if err != nil {
+		return nil, err
+	}
+	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, migratorClient)
+	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, searchClient)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
 	if err != nil {
 		return nil, err
 	}
 	sortService := sort.ProvideService()
-	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
+	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, searchClient, dualwriteService, sortService, eventualRestConfigProvider)
 	searchService := searchV2.ProvideService(cfg, sqlStore, entityEventsService, acimplService, tracingService, featureToggles, orgService, userService, folderimplService)
 	systemUsers := store.ProvideSystemUsersService()
 	storageService, err := store.ProvideService(sqlStore, featureToggles, cfg, quotaService, systemUsers)
@@ -593,7 +606,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, dashboardsStore, userService, resourceClient, featureToggles, dualwriteService, sortService, registerer)
+	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, dashboardsStore, userService, searchClient, featureToggles, dualwriteService, sortService, registerer)
 	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, dashboardsStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, publicDashboardServiceWrapperImpl, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
 	if err != nil {
 		return nil, err
@@ -742,7 +755,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
 	navtreeService := navtreeimpl.ProvideService(cfg, accessControl, pluginstoreService, service13, starService, featureToggles, dashboardService, acimplService, kvStore, apikeyService, ossLicensingService, authnService)
 	searchHTTPService := searchV2.ProvideSearchHTTPService(searchService)
-	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, resourceClient, featureToggles)
+	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, searchClient, featureToggles)
 	gatherer := metrics.ProvideGatherer()
 	apiAPI := api3.ProvideApi(cfg, featureToggles, starService, eventualRestConfigProvider)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
@@ -784,6 +797,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider, cfg)
+	storageClient, err := unified.ProvideUnifiedStorageClient(resourceClient)
+	if err != nil {
+		return nil, err
+	}
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
 	playlistAppInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
@@ -831,7 +848,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	quotasAppInstaller, err := quotas.RegisterAppInstaller(cfg, featureToggles, resourceClient)
+	quotaClient, err := unified.ProvideUnifiedQuotaClient(resourceClient)
+	if err != nil {
+		return nil, err
+	}
+	quotasAppInstaller, err := quotas.RegisterAppInstaller(cfg, featureToggles, quotaClient)
 	if err != nil {
 		return nil, err
 	}
@@ -839,7 +860,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics, backend, policyRuleProvider)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, storageClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics, backend, policyRuleProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -878,16 +899,16 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
 	dashboardActivityChannel := live.ProvideDashboardActivityChannel(grafanaLive)
-	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, serviceImpl, dashboardActivityChannel, configProvider)
+	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, storageClient, searchClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, serviceImpl, dashboardActivityChannel, configProvider)
 	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, pluginsourcesService)
 	if err != nil {
 		return nil, err
 	}
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, searchClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, dualwriteService, searchClient, orgService, userService, teamService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -899,9 +920,9 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
 	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userService, apiserverService)
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userService, apiserverService)
-	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, storageClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, storageClient, eventualRestConfigProvider, registerer)
 	v4 := extras.ProvideExtraWorkers(pullRequestWorker)
 	v5 := _wireValue
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v5)
@@ -919,7 +940,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, migrationDashboardAccessor, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, searchClient, eventualRestConfigProvider, accessClient, migrationDashboardAccessor, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory)
 	if err != nil {
 		return nil, err
 	}
@@ -1183,6 +1204,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
+	searchServer, err := sql.ProvideSearchBackend(cfg, featureToggles, sqlStore, tracer, registerer, storageBackend, documentBuilderSupplier, bleveIndexMetrics)
+	if err != nil {
+		return nil, err
+	}
 	options := &unified.Options{
 		Cfg:          cfg,
 		Features:     featureToggles,
@@ -1193,9 +1219,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		Docs:         documentBuilderSupplier,
 		SecureValues: inlineSecureValueSupport,
 		Backend:      storageBackend,
+		SearchServer: searchServer,
 	}
-	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
-	resourceClient, err := unified.ProvideUnifiedStorageClient(options, storageMetrics, bleveIndexMetrics)
+	resourceClient, err := unified.ProvideUnifiedResourceClient(options, storageMetrics, bleveIndexMetrics)
+	if err != nil {
+		return nil, err
+	}
+	searchClient, err := unified.ProvideUnifiedSearchClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1205,14 +1235,18 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl)
-	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, resourceClient)
-	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, resourceClient)
+	migratorClient, err := unified.ProvideUnifiedMigratorClient(resourceClient)
+	if err != nil {
+		return nil, err
+	}
+	unifiedMigrator := migrations2.ProvideUnifiedMigrator(migrationDashboardAccessor, migratorClient)
+	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, cfg, sqlStore, kvStore, searchClient)
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService)
 	if err != nil {
 		return nil, err
 	}
 	sortService := sort.ProvideService()
-	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, resourceClient, dualwriteService, sortService, eventualRestConfigProvider)
+	folderimplService := folderimpl.ProvideService(folderStoreImpl, accessControl, inProcBus, dashboardsStore, userService, sqlStore, featureToggles, bundleregistryService, publicDashboardServiceWrapperImpl, cfg, registerer, tracer, searchClient, dualwriteService, sortService, eventualRestConfigProvider)
 	searchService := searchV2.ProvideService(cfg, sqlStore, entityEventsService, acimplService, tracingService, featureToggles, orgService, userService, folderimplService)
 	systemUsers := store.ProvideSystemUsersService()
 	storageService, err := store.ProvideService(sqlStore, featureToggles, cfg, quotaService, systemUsers)
@@ -1258,7 +1292,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, dashboardsStore, userService, resourceClient, featureToggles, dualwriteService, sortService, registerer)
+	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, dashboardsStore, userService, searchClient, featureToggles, dualwriteService, sortService, registerer)
 	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, dashboardsStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, publicDashboardServiceWrapperImpl, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
 	if err != nil {
 		return nil, err
@@ -1409,7 +1443,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
 	navtreeService := navtreeimpl.ProvideService(cfg, accessControl, pluginstoreService, service13, starService, featureToggles, dashboardService, acimplService, kvStore, apikeyService, ossLicensingService, authnService)
 	searchHTTPService := searchV2.ProvideSearchHTTPService(searchService)
-	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, resourceClient, featureToggles)
+	statsService := statsimpl.ProvideService(cfg, sqlStore, dashboardService, folderimplService, orgService, searchClient, featureToggles)
 	gatherer := metrics.ProvideGathererForTest(registerer)
 	apiAPI := api3.ProvideApi(cfg, featureToggles, starService, eventualRestConfigProvider)
 	anonUserLimitValidatorImpl := validator2.ProvideAnonUserLimitValidator()
@@ -1451,6 +1485,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider, cfg)
+	storageClient, err := unified.ProvideUnifiedStorageClient(resourceClient)
+	if err != nil {
+		return nil, err
+	}
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
 	playlistAppInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
@@ -1498,7 +1536,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	quotasAppInstaller, err := quotas.RegisterAppInstaller(cfg, featureToggles, resourceClient)
+	quotaClient, err := unified.ProvideUnifiedQuotaClient(resourceClient)
+	if err != nil {
+		return nil, err
+	}
+	quotasAppInstaller, err := quotas.RegisterAppInstaller(cfg, featureToggles, quotaClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1506,7 +1548,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics, backend, policyRuleProvider)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, storageClient, inlineSecureValueSupport, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics, backend, policyRuleProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1545,16 +1587,16 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	ldapImpl := service12.ProvideService(cfg, featureToggles, ssosettingsimplService)
 	apiService := api4.ProvideService(cfg, routeRegisterImpl, accessControl, userService, authinfoimplService, ossGroups, identitySynchronizer, orgService, ldapImpl, userAuthTokenService, bundleregistryService)
 	dashboardActivityChannel := live.ProvideDashboardActivityChannel(grafanaLive)
-	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, serviceImpl, dashboardActivityChannel, configProvider)
+	dashboardsAPIBuilder := dashboard.RegisterAPIService(featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service15, dashboardServiceImpl, dashboardPermissionsService, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, storageClient, searchClient, dualwriteService, sortService, quotaService, libraryPanelService, eventualRestConfigProvider, userService, libraryElementService, publicDashboardServiceImpl, serviceImpl, dashboardActivityChannel, configProvider)
 	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, accessControl, registerer, pluginsourcesService)
 	if err != nil {
 		return nil, err
 	}
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, resourceClient, zanzanaClient)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, accessClient, registerer, searchClient, zanzanaClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, dualwriteService, resourceClient, orgService, userService, teamService, eventualRestConfigProvider)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, storageBackendImpl, roleApiInstaller, tracingService, storageBackendImpl, storageBackendImpl, noopTeamGroupsREST, dualwriteService, searchClient, orgService, userService, teamService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1566,9 +1608,9 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
 	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userService, apiserverService)
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userService, apiserverService)
-	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, storageClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, storageClient, eventualRestConfigProvider, registerer)
 	v4 := extras.ProvideExtraWorkers(pullRequestWorker)
 	v5 := _wireValue
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v5)
@@ -1586,7 +1628,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, migrationDashboardAccessor, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, searchClient, eventualRestConfigProvider, accessClient, migrationDashboardAccessor, dualwriteService, usageStats, tracingService, v3, v4, repositoryFactory)
 	if err != nil {
 		return nil, err
 	}

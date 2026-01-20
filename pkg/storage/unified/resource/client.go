@@ -31,22 +31,32 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// SearchClient is used to interact with unified search
+// SearchClient is for interacting with unified search
 type SearchClient interface {
 	resourcepb.ResourceIndexClient
 	resourcepb.ManagedObjectIndexClient
 }
 
-// StorageClient is used to interact with unified storage
+// StorageClient is for interacting with unified storage
 type StorageClient interface {
 	resourcepb.ResourceStoreClient
 	resourcepb.BlobStoreClient
 }
 
-// MigratorClient is used to perform migrations to unified storage
+// MigratorClient is for performing migrations to unified storage
 type MigratorClient interface {
 	resourcepb.BulkStoreClient
 	GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error)
+}
+
+// QuotaClient is for quota handlers to interact with unified storage
+type QuotaClient interface {
+	resourcepb.QuotasClient
+}
+
+// DiagnosticsClient is for checking if resource server is healthy
+type DiagnosticsClient interface {
+	resourcepb.DiagnosticsClient
 }
 
 // ResourceClient combines all resource-related clients and should be avoided in favor of more specific interfaces when possible
@@ -56,21 +66,38 @@ type ResourceClient interface {
 	StorageClient
 	SearchClient
 	MigratorClient
-	resourcepb.DiagnosticsClient
-	resourcepb.QuotasClient
+	QuotaClient
+	DiagnosticsClient
 }
 
 // Internal implementation
 type resourceClient struct {
-	resourcepb.ResourceStoreClient
-	resourcepb.ResourceIndexClient
-	resourcepb.ManagedObjectIndexClient
-	resourcepb.BulkStoreClient
-	resourcepb.BlobStoreClient
-	resourcepb.DiagnosticsClient
-	resourcepb.QuotasClient
+	*storageClient
+	*searchClient
+	MigratorClient
+	QuotaClient
 }
 
+// Internal implementation
+type storageClient struct {
+	resourcepb.ResourceStoreClient
+	resourcepb.BlobStoreClient
+	resourcepb.DiagnosticsClient
+}
+
+type searchClient struct {
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.DiagnosticsClient
+}
+
+type migratorClient struct {
+	resourcepb.BulkStoreClient
+	resourcepb.ResourceIndexClient
+	resourcepb.DiagnosticsClient
+}
+
+// NewResourceClient creates a ResourceClient with authentication interceptors
 func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
@@ -90,18 +117,71 @@ func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cf
 
 func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientConnInterface) ResourceClient {
 	return &resourceClient{
-		ResourceStoreClient:      resourcepb.NewResourceStoreClient(storageCc),
-		ResourceIndexClient:      resourcepb.NewResourceIndexClient(indexCc),
-		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(indexCc),
-		BulkStoreClient:          resourcepb.NewBulkStoreClient(storageCc),
-		BlobStoreClient:          resourcepb.NewBlobStoreClient(storageCc),
-		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(storageCc),
-		QuotasClient:             resourcepb.NewQuotasClient(storageCc),
+		storageClient:  newStorageClient(storageCc),
+		searchClient:   newSearchClient(indexCc),
+		MigratorClient: newMigratorClient(indexCc),
+		QuotaClient:    resourcepb.NewQuotasClient(storageCc),
 	}
 }
 
-func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
-	return newResourceClient(cc, cc)
+func newStorageClient(storageConnI grpc.ClientConnInterface) *storageClient {
+	return &storageClient{
+		ResourceStoreClient: resourcepb.NewResourceStoreClient(storageConnI),
+		BlobStoreClient:     resourcepb.NewBlobStoreClient(storageConnI),
+		DiagnosticsClient:   resourcepb.NewDiagnosticsClient(storageConnI),
+	}
+}
+
+func newSearchClient(indexConn grpc.ClientConnInterface) *searchClient {
+	return &searchClient{
+		ResourceIndexClient:      resourcepb.NewResourceIndexClient(indexConn),
+		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(indexConn),
+		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(indexConn),
+	}
+}
+
+func newMigratorClient(indexConn grpc.ClientConnInterface) migratorClient {
+	return migratorClient{
+		ResourceIndexClient: resourcepb.NewResourceIndexClient(indexConn),
+		BulkStoreClient:     resourcepb.NewBulkStoreClient(indexConn),
+		DiagnosticsClient:   resourcepb.NewDiagnosticsClient(indexConn),
+	}
+}
+
+func (rc *resourceClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return rc.searchClient.GetStats(ctx, in, opts...)
+}
+
+func (rc *resourceClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
+	searchRes, errSearch := rc.searchClient.IsHealthy(ctx, in, opts...)
+	storageRes, errStorage := rc.storageClient.IsHealthy(ctx, in, opts...)
+	// join errors
+	if errSearch != nil || errStorage != nil {
+		return nil, fmt.Errorf("search error: %w; storage error: %w", errSearch, errStorage)
+	}
+	// combine results
+	return &resourcepb.HealthCheckResponse{
+		Status: combineHealthStatus(searchRes.Status, storageRes.Status),
+	}, nil
+}
+
+func combineHealthStatus(status resourcepb.HealthCheckResponse_ServingStatus, status2 resourcepb.HealthCheckResponse_ServingStatus) resourcepb.HealthCheckResponse_ServingStatus {
+	switch {
+	case status == resourcepb.HealthCheckResponse_SERVING && status2 == resourcepb.HealthCheckResponse_SERVING:
+		return resourcepb.HealthCheckResponse_SERVING
+	case status == resourcepb.HealthCheckResponse_NOT_SERVING || status2 == resourcepb.HealthCheckResponse_NOT_SERVING:
+		return resourcepb.HealthCheckResponse_NOT_SERVING
+	case status == resourcepb.HealthCheckResponse_SERVICE_UNKNOWN || status2 == resourcepb.HealthCheckResponse_SERVICE_UNKNOWN:
+		return resourcepb.HealthCheckResponse_SERVICE_UNKNOWN
+	default:
+		return resourcepb.HealthCheckResponse_UNKNOWN
+	}
+}
+
+// NewAuthlessSearchClient creates a SearchClient without any authentication interceptors.
+// Only use for tests or locally.
+func NewAuthlessSearchClient(searchConn grpc.ClientConnInterface) SearchClient {
+	return newSearchClient(searchConn)
 }
 
 func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc.ClientConnInterface) ResourceClient {
@@ -110,20 +190,56 @@ func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc
 	return newResourceClient(cc, cci)
 }
 
-func NewLocalResourceClient(server ResourceServer, searchServer SearchServer) ResourceClient {
-	// scenario: local in-proc
-	channel := &inprocgrpc.Channel{}
-	indexChannel := &inprocgrpc.Channel{}
-	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
+// NewLocalResourceClient creates a ResourceClient that communicates with the given ResourceServer in-process.
+// Deprecated: use more specific clients instead: NewLocalStorageClient or NewLocalSearchClient
+func NewLocalResourceClient(server ResourceServer) ResourceClient {
+	channel := createLocalChannel(server, []*grpc.ServiceDesc{
+		&resourcepb.ResourceStore_ServiceDesc,
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.BulkStore_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+		&resourcepb.Quotas_ServiceDesc,
+	})
 
-	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
-	for _, desc := range []*grpc.ServiceDesc{
+	clientInt := authnlib.NewGrpcClientInterceptor(
+		ProvideInProcExchanger(),
+		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
+	)
+
+	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	cci := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return newResourceClient(cc, cci)
+}
+
+func NewLocalStorageClient(server ResourceServer) StorageClient {
+	cc := createLocalChannel(server, []*grpc.ServiceDesc{
 		&resourcepb.ResourceStore_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
-	} {
+	})
+	return newStorageClient(cc)
+}
+
+func NewLocalSearchClient(server SearchServer) SearchClient {
+	cc := createLocalChannel(server, []*grpc.ServiceDesc{
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
+	})
+	return newSearchClient(cc)
+}
+
+// createLocalChannel creates an in-process gRPC channel with authentication interceptors
+func createLocalChannel(server interface{}, serviceDescs []*grpc.ServiceDesc) grpc.ClientConnInterface {
+	channel := &inprocgrpc.Channel{}
+	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
+
+	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
+	for _, desc := range serviceDescs {
 		channel.RegisterService(
 			grpchan.InterceptServer(
 				desc,
@@ -134,31 +250,12 @@ func NewLocalResourceClient(server ResourceServer, searchServer SearchServer) Re
 		)
 	}
 
-	// Register search services on the index channel if searchServer is provided
-	if searchServer != nil {
-		for _, desc := range []*grpc.ServiceDesc{
-			&resourcepb.ResourceIndex_ServiceDesc,
-			&resourcepb.ManagedObjectIndex_ServiceDesc,
-		} {
-			indexChannel.RegisterService(
-				grpchan.InterceptServer(
-					desc,
-					grpcAuth.UnaryServerInterceptor(grpcAuthInt),
-					grpcAuth.StreamServerInterceptor(grpcAuthInt),
-				),
-				searchServer,
-			)
-		}
-	}
-
 	clientInt := authnlib.NewGrpcClientInterceptor(
 		ProvideInProcExchanger(),
 		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
 	)
 
-	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	cci := grpchan.InterceptClientConn(indexChannel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	return newResourceClient(cc, cci)
+	return grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 }
 
 type RemoteResourceClientConfig struct {
@@ -195,6 +292,48 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	cci := grpchan.InterceptClientConn(indexConn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return newResourceClient(cc, cci), nil
+}
+
+func NewRemoteSearchClient(tracer trace.Tracer, searchConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (SearchClient, error) {
+	remoteSearchClient, err := newRemoteClient(tracer, searchConn, cfg)
+	if err != nil {
+		return nil, err
+	}
+	return newSearchClient(remoteSearchClient), nil
+}
+
+func NewRemoteStorageClient(tracer trace.Tracer, storageConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (StorageClient, error) {
+	remoteStorageClient, err := newRemoteClient(tracer, storageConn, cfg)
+	if err != nil {
+		return nil, err
+	}
+	return newStorageClient(remoteStorageClient), nil
+}
+
+func newRemoteClient(tracer trace.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (grpc.ClientConnInterface, error) {
+	exchangeOpts := []authnlib.ExchangeClientOpts{}
+
+	if cfg.AllowInsecure {
+		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
+	}
+
+	tc, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+		Token:            cfg.Token,
+		TokenExchangeURL: cfg.TokenExchangeURL,
+	}, exchangeOpts...)
+
+	if err != nil {
+		return nil, err
+	}
+	clientInt := authnlib.NewGrpcClientInterceptor(
+		tc,
+		authnlib.WithClientInterceptorTracer(tracer),
+		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
+		authnlib.WithClientInterceptorAudience(cfg.Audiences),
+		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
+	)
+
+	return grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor), nil
 }
 
 var authLogger = log.New("resource-client-auth-interceptor")
