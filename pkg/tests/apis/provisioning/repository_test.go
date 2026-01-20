@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1061,4 +1062,81 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 		require.NoError(t, result.Error(), "admin should be able to GET refs")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 	})
+}
+
+func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t, withLogs)
+	ctx := context.Background()
+	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	// Create a connection first
+	connection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      "test-connection",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"type": "github",
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "789012",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": privateKeyBase64,
+			},
+		},
+	}}
+
+	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	require.NoError(t, err, "failed to create connection")
+
+	// Create a repository WITH the connection
+	repoWithConnection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]any{
+			"name":      "repo-with-connection",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"title": "Repo With Connection",
+			"type":  "github",
+			"sync": map[string]any{
+				"enabled": false,
+				"target":  "folder",
+			},
+			"github": map[string]any{
+				"url":    "https://github.com/some/url",
+				"branch": "main",
+			},
+			"connection": map[string]any{
+				"name": "test-connection",
+			},
+		},
+	}}
+
+	createdRepo, err := helper.Repositories.Resource.Create(ctx, repoWithConnection, createOptions)
+	require.NoError(t, err, "failed to create repository with connection")
+
+	cr := unstructuredToRepository(t, createdRepo)
+	// A dummy token must have been created
+	require.False(t, cr.Secure.Token.IsZero())
+
+	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
+		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+		require.NoError(collectT, err, "can list values")
+		r := unstructuredToRepository(t, repo)
+		assert.True(collectT, r.Status.ObservedGeneration > 0, "should be reconciled at least once", r)
+		// Token should be there
+		assert.False(collectT, r.Secure.Token.IsZero())
+		// Name should be different as it has been updated
+		assert.NotEqual(collectT, cr.Secure.Token.Name, r.Secure.Token.Name)
+	}, time.Second*10, time.Second, "Expected repo to be reconciled")
 }

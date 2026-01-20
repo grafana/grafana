@@ -569,7 +569,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 		tokenOps, err := rc.generateRepositoryToken(ctx, obj)
 		if err != nil {
-			logger.Error("generating repository for token",
+			logger.Error("generating token for repository",
 				"connection", obj.Spec.Connection.Name,
 				"error", err,
 			)
