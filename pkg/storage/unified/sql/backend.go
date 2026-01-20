@@ -41,10 +41,6 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
-const defaultGarbageCollectionInterval = 15 * time.Minute
-const defaultGarbageCollectionBatchSize = 100
-const defaultGarbageCollectionMaxAge = 24 * time.Hour
-const dashboardsGarbageCollectionMaxAge = 365 * 24 * time.Hour
 
 type GarbageCollectionConfig struct {
 	Enabled          bool
