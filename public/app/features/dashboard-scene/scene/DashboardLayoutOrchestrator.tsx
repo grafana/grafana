@@ -321,7 +321,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     document.body.removeEventListener('pointermove', this._onNewPanelPointerMove);
     document.body.removeEventListener('pointerup', this._dropNewPanel, true);
     this._lastDropTarget = null;
-    DashboardInteractions.trackAddPanelClick('sidebar', lastDropTarget ? getLayoutType(lastDropTarget) : 'dashboard');
+    DashboardInteractions.trackAddPanelClick('sidebar', lastDropTarget ? getLayoutType(lastDropTarget) : 'dashboard', 'drop');
+
   };
 
   private _addPanelToLayout = (dropTarget: DashboardDropTarget, panel: VizPanel) => {
