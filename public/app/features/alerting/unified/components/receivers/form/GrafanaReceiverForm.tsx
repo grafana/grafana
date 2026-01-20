@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react';
+import {useMemo, useState} from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import {t, Trans} from '@grafana/i18n';
+import {locationService} from '@grafana/runtime';
+import {Alert, LoadingPlaceholder} from '@grafana/ui';
 import {
   useCreateContactPoint,
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import {showManageContactPointPermissions} from 'app/features/alerting/unified/components/contact-points/utils';
+import {GRAFANA_RULES_SOURCE_NAME} from 'app/features/alerting/unified/utils/datasource';
 import {
   canEditEntity,
   canModifyProtectedEntity,
@@ -20,22 +20,22 @@ import {
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { hasLegacyIntegrations } from '../../../utils/notifier-versions';
+import {alertmanagerApi} from '../../../api/alertmanagerApi';
+import {GrafanaChannelValues, ReceiverFormValues} from '../../../types/receiver-form';
+import {hasLegacyIntegrations} from '../../../utils/notifier-versions';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
 } from '../../../utils/receiver-form';
-import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
-import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
-import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
+import {ImportedResourceAlert, ProvisionedResource, ProvisioningAlert} from '../../Provisioning';
+import {ReceiverTypes} from '../grafanaAppReceivers/onCall/onCall';
+import {useOnCallIntegration} from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
-import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
-import { ReceiverForm } from './ReceiverForm';
-import { TestContactPointModal } from './TestContactPointModal';
-import { Notifier } from './notifiers';
+import {GrafanaCommonChannelSettings} from './GrafanaCommonChannelSettings';
+import {ReceiverForm} from './ReceiverForm';
+import {TestContactPointModal} from './TestContactPointModal';
+import {Notifier} from './notifiers';
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   __id: '',
@@ -120,7 +120,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
     const receivers: Receiver[] = [
       {
-        name: 'test',
+        name: contactPoint?.name ?? '', // for new receivers we can use empty string as name
         grafana_managed_receiver_configs: [chan],
       },
     ];
