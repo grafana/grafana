@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -102,8 +103,9 @@ type MultiOrgAlertmanager struct {
 	logger         log.Logger
 
 	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
-	peer         alertingNotify.ClusterPeer
-	settleCancel context.CancelFunc
+	peer                   alertingNotify.ClusterPeer
+	alertsBroadcastChannel alertingCluster.ClusterChannel
+	settleCancel           context.CancelFunc
 
 	configStore AlertingStore
 	orgStore    store.OrgStore
@@ -165,6 +167,8 @@ func NewMultiOrgAlertmanager(
 	if err := moa.setupClustering(cfg); err != nil {
 		return nil, err
 	}
+
+	moa.initAlertBroadcast()
 
 	// Set up the default per tenant Alertmanager factory.
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
@@ -248,6 +252,42 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 		return nil
 	}
 	return nil
+}
+
+// initAlertBroadcast initializes the alert broadcast channel for HA mode.
+// When enabled, alerts evaluated on the primary instance are broadcast to all peers.
+func (moa *MultiOrgAlertmanager) initAlertBroadcast() {
+	if moa.peer == nil {
+		return
+	}
+	if _, ok := moa.peer.(*NilPeer); ok {
+		return
+	}
+	state := newAlertBroadcastState(moa.logger.New("component", "alert-broadcast"), moa)
+	moa.alertsBroadcastChannel = moa.peer.AddState(alertBroadcastKey, state, moa.metrics.Registerer)
+}
+
+// BroadcastAlerts sends alerts to all peers via the cluster channel.
+// This is used in HA single-node evaluation mode to propagate alerts from the
+// primary evaluator to all other instances.
+func (moa *MultiOrgAlertmanager) BroadcastAlerts(orgID int64, alerts apimodels.PostableAlerts) {
+	if moa.alertsBroadcastChannel == nil {
+		return
+	}
+	if len(alerts.PostableAlerts) == 0 {
+		return
+	}
+	payload := AlertBroadcastPayload{
+		OrgID:  orgID,
+		Alerts: alerts,
+	}
+	buf, err := json.Marshal(payload)
+	if err != nil {
+		moa.logger.Warn("Failed to encode broadcast alerts payload", "error", err)
+		return
+	}
+	moa.alertsBroadcastChannel.Broadcast(buf)
+	moa.logger.Debug("Broadcast alerts to peers", "orgID", orgID, "alerts", len(alerts.PostableAlerts))
 }
 
 func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
