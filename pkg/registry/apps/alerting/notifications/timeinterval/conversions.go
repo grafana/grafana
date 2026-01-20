@@ -15,7 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
-func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TimeIntervalList, error) {
+func ConvertToK8sResources(
+	orgID int64,
+	intervals []*ngmodels.MuteTiming,
+	metadatas map[string]ngmodels.MuteTimingMetadata,
+	namespacer request.NamespaceMapper,
+	selector fields.Selector,
+) (*model.TimeIntervalList, error) {
 	data, err := json.Marshal(intervals)
 	if err != nil {
 		return nil, err
@@ -30,7 +36,15 @@ func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 	for idx := range specs {
 		interval := intervals[idx]
 		spec := specs[idx]
-		item := buildTimeInterval(orgID, interval, spec, namespacer)
+
+		var metadata *ngmodels.MuteTimingMetadata
+		if metadatas != nil {
+			if m, ok := metadatas[interval.GetUID()]; ok {
+				metadata = &m
+			}
+		}
+
+		item := buildTimeInterval(orgID, interval, metadata, spec, namespacer)
 		if selector != nil && !selector.Empty() && !selector.Matches(model.TimeIntervalSelectableFields(&item)) {
 			continue
 		}
@@ -39,7 +53,12 @@ func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 	return result, nil
 }
 
-func ConvertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, namespacer request.NamespaceMapper) (*model.TimeInterval, error) {
+func ConvertToK8sResource(
+	orgID int64,
+	interval *ngmodels.MuteTiming,
+	metadata *ngmodels.MuteTimingMetadata,
+	namespacer request.NamespaceMapper,
+) (*model.TimeInterval, error) {
 	data, err := json.Marshal(interval)
 	if err != nil {
 		return nil, err
@@ -49,12 +68,19 @@ func ConvertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 	if err != nil {
 		return nil, err
 	}
-	result := buildTimeInterval(orgID, interval, spec, namespacer)
+	result := buildTimeInterval(orgID, interval, metadata, spec, namespacer)
 	result.UID = gapiutil.CalculateClusterWideUID(&result)
+
 	return &result, nil
 }
 
-func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.TimeIntervalSpec, namespacer request.NamespaceMapper) model.TimeInterval {
+func buildTimeInterval(
+	orgID int64,
+	interval *ngmodels.MuteTiming,
+	metadata *ngmodels.MuteTimingMetadata,
+	spec model.TimeIntervalSpec,
+	namespacer request.NamespaceMapper,
+) model.TimeInterval {
 	i := model.TimeInterval{
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(interval.UID), // TODO This is needed to make PATCH work
@@ -66,6 +92,16 @@ func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec 
 	}
 	i.SetProvenanceStatus(string(interval.Provenance))
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
+
+	if metadata != nil {
+		rules := make([]string, 0, len(metadata.InUseByRules))
+		for _, rule := range metadata.InUseByRules {
+			rules = append(rules, rule.UID)
+		}
+		i.SetInUse(metadata.InUseByRoutes, rules)
+		i.SetCanUse(metadata.CanUse)
+	}
+
 	return i
 }
 

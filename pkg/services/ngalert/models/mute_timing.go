@@ -85,3 +85,11 @@ func (mt *MuteTiming) Fingerprint() string {
 	}
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
+
+// MuteTimingMetadata contains metadata about a MuteTiming's usage in routes
+type MuteTimingMetadata struct {
+	InUseByRules  []AlertRuleKey
+	InUseByRoutes int
+	// CanUse is true if the mute time interval can be used in routes and rules.
+	CanUse bool
+}

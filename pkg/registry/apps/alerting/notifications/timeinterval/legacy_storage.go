@@ -26,6 +26,7 @@ type TimeIntervalService interface {
 	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*ngmodels.MuteTiming, error)
 	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (*ngmodels.MuteTiming, error)
 	DeleteMuteTiming(ctx context.Context, nameOrUid string, orgID int64, provenance definitions.Provenance, version string) error
+	InUseMetadata(ctx context.Context, orgID int64, intervals ...*ngmodels.MuteTiming) (map[string]ngmodels.MuteTimingMetadata, error)
 }
 
 type legacyStorage struct {
@@ -67,7 +68,12 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	return ConvertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
+	inUses, err := s.service.InUseMetadata(ctx, orgId, res...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get in-use metadata: %w", err)
+	}
+
+	return ConvertToK8sResources(orgId, res, inUses, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -81,9 +87,15 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
+	inUses, err := s.service.InUseMetadata(ctx, info.OrgID, timings...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get in-use metadata: %w", err)
+	}
+
 	for _, mt := range timings {
 		if mt.UID == uid {
-			return ConvertToK8sResource(info.OrgID, mt, s.namespacer)
+			metadata := inUses[mt.GetUID()]
+			return ConvertToK8sResource(info.OrgID, mt, &metadata, s.namespacer)
 		}
 	}
 	return nil, errors.NewNotFound(ResourceInfo.GroupResource(), uid)
@@ -118,7 +130,13 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return ConvertToK8sResource(info.OrgID, out, s.namespacer)
+	inUses, err := s.service.InUseMetadata(ctx, info.OrgID, out)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get in-use metadata: %w", err)
+	}
+
+	m := inUses[out.GetUID()]
+	return ConvertToK8sResource(info.OrgID, out, &m, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -165,7 +183,14 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	r, err := ConvertToK8sResource(info.OrgID, updated, s.namespacer)
+	inUses, err := s.service.InUseMetadata(ctx, info.OrgID, updated)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to get in-use metadata: %w", err)
+	}
+
+	m := inUses[updated.GetUID()]
+
+	r, err := ConvertToK8sResource(info.OrgID, updated, &m, s.namespacer)
 	return r, false, err
 }
 

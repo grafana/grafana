@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apiserver/pkg/registry/generic"
 )
@@ -24,6 +26,21 @@ func (o *TimeInterval) SetProvenanceStatus(status string) {
 		status = ProvenanceStatusNone
 	}
 	o.Annotations[ProvenanceStatusAnnotationKey] = status
+}
+
+func (o *TimeInterval) SetCanUse(canUse bool) {
+	if o.Annotations == nil {
+		o.Annotations = make(map[string]string, 1)
+	}
+	o.Annotations[CanUseAnnotationKey] = fmt.Sprintf("%v", canUse)
+}
+
+func (o *TimeInterval) SetInUse(routesCnt int, rules []string) {
+	if o.Annotations == nil {
+		o.Annotations = make(map[string]string, 2)
+	}
+	o.Annotations[InUseAnnotation("routes")] = fmt.Sprintf("%d", routesCnt)
+	o.Annotations[InUseAnnotation("rules")] = fmt.Sprintf("%d", len(rules))
 }
 
 func TimeIntervalSelectableFields(obj *TimeInterval) fields.Set {

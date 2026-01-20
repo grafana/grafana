@@ -462,3 +462,76 @@ func replaceMuteTiming(route *definitions.Route, oldName, newName string) int {
 	}
 	return updated
 }
+
+func (svc *MuteTimingService) InUseMetadata(ctx context.Context, orgID int64, intervals ...*models.MuteTiming) (map[string]models.MuteTimingMetadata, error) {
+	revision, err := svc.configStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	var hasGrafanaOrigin, hasImportedOrigin bool
+	for i := range intervals {
+		switch intervals[i].Origin {
+		case models.ResourceOriginGrafana:
+			hasGrafanaOrigin = true
+		case models.ResourceOriginImported:
+			hasImportedOrigin = true
+		}
+		if hasGrafanaOrigin && hasImportedOrigin {
+			break
+		}
+	}
+
+	var timeIntervalUsesInRoutes map[string]int
+	var importedUsesInRoutes map[string]int
+	timeIntervalUsesInRules := map[string][]models.AlertRuleKey{}
+	if hasGrafanaOrigin {
+		timeIntervalUsesInRoutes = revision.TimeIntervalUseByName()
+		q := models.ListNotificationSettingsQuery{OrgID: orgID}
+		if len(intervals) == 1 {
+			q.TimeIntervalName = intervals[0].Name
+		}
+		keys, err := svc.ruleNotificationsStore.ListNotificationSettings(ctx, q)
+		if err != nil {
+			return nil, err
+		}
+
+		for key, settings := range keys {
+			for _, s := range settings {
+				for _, name := range s.MuteTimeIntervals {
+					timeIntervalUsesInRules[name] = append(timeIntervalUsesInRules[name], key)
+				}
+				for _, name := range s.ActiveTimeIntervals {
+					timeIntervalUsesInRules[name] = append(timeIntervalUsesInRules[name], key)
+				}
+			}
+		}
+	}
+	if hasImportedOrigin {
+		s, err := revision.Imported()
+		if err == nil {
+			importedUsesInRoutes = s.TimeIntervalUseByName()
+		} else {
+			svc.log.FromContext(ctx).Warn("Unable to include imported time intervals. Skipping", "err", err)
+		}
+	}
+
+	results := make(map[string]models.MuteTimingMetadata, len(intervals))
+	for _, mt := range intervals {
+		if mt.Origin == models.ResourceOriginImported {
+			results[mt.GetUID()] = models.MuteTimingMetadata{
+				InUseByRoutes: importedUsesInRoutes[mt.Name],
+				InUseByRules:  nil,
+				CanUse:        false,
+			}
+			continue
+		}
+		results[mt.GetUID()] = models.MuteTimingMetadata{
+			InUseByRoutes: timeIntervalUsesInRoutes[mt.Name],
+			InUseByRules:  timeIntervalUsesInRules[mt.Name],
+			CanUse:        mt.Origin == models.ResourceOriginGrafana, // Only time intervals from the Grafana configuration can be used.
+		}
+	}
+
+	return results, nil
+}
