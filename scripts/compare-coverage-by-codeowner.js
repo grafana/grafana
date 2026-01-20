@@ -24,10 +24,10 @@ function readCoverageFile(filePath) {
 /**
  * Formats a number as a percentage string
  * @param {number} value - Percentage value
- * @returns {string} Formatted percentage (e.g., "85.3%")
+ * @returns {string} Formatted percentage (e.g., "85.34%")
  */
 function formatPercentage(value) {
-  return `${value.toFixed(1)}%`;
+  return `${value.toFixed(2)}%`;
 }
 
 /**
@@ -37,9 +37,9 @@ function formatPercentage(value) {
  * @returns {string} Status icon and text
  */
 function getStatusIcon(mainValue, prValue) {
-  // Round to 1 decimal place for comparison to match display precision
-  const prPct = Math.round(prValue * 10) / 10;
-  const mainPct = Math.round(mainValue * 10) / 10;
+  // Round to 2 decimal places for comparison to match display precision
+  const prPct = Math.round(prValue * 100) / 100;
+  const mainPct = Math.round(mainValue * 100) / 100;
 
   if (prPct >= mainPct) {
     return '✅ Pass';
@@ -56,9 +56,9 @@ function getStatusIcon(mainValue, prValue) {
 function getOverallStatus(mainSummary, prSummary) {
   const metrics = ['lines', 'statements', 'functions', 'branches'];
   const allPass = metrics.every((metric) => {
-    // Round to 1 decimal place for comparison to match display precision
-    const prPct = Math.round(prSummary[metric].pct * 10) / 10;
-    const mainPct = Math.round(mainSummary[metric].pct * 10) / 10;
+    // Round to 2 decimal places for comparison to match display precision
+    const prPct = Math.round(prSummary[metric].pct * 100) / 100;
+    const mainPct = Math.round(mainSummary[metric].pct * 100) / 100;
     return prPct >= mainPct;
   });
   return allPass;
@@ -73,9 +73,9 @@ function getOverallStatus(mainSummary, prSummary) {
 function formatDelta(prValue, mainValue) {
   const delta = prValue - mainValue;
   if (delta > 0) {
-    return `+${delta.toFixed(1)}%`;
+    return `+${delta.toFixed(2)}%`;
   } else if (delta < 0) {
-    return `${delta.toFixed(1)}%`;
+    return `${delta.toFixed(2)}%`;
   }
   return '—';
 }
