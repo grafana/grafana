@@ -220,15 +220,8 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 		if len(receiver.GrafanaManagedReceivers) == 0 {
 			continue
 		}
-		isNew := true
-		for _, i := range receiver.GrafanaManagedReceivers {
-			if i.UID != "" {
-				isNew = false
-				break
-			}
-		}
 		var err error
-		if isNew {
+		if receiver.Name == "" {
 			err = srv.receiverAuthz.AuthorizeTestNew(c.Req.Context(), c.SignedInUser)
 		} else {
 			err = srv.receiverAuthz.AuthorizeTest(c.Req.Context(), c.SignedInUser, ReceiverStatus{Name: receiver.Name})
