@@ -55,6 +55,7 @@ func TestIntegrationUserTeams(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 				featuremgmt.FlagKubernetesAuthnMutation,
+				featuremgmt.FlagKubernetesTeamBindings,
 			},
 			UnifiedStorageEnableSearch: true,
 		})
