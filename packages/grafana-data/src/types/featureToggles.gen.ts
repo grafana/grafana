@@ -1420,4 +1420,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSyncDispatchTimer?: boolean;
+  /**
+  * Enables search for team bindings in the app platform API
+  * @default false
+  */
+  kubernetesTeamBindings?: boolean;
 }

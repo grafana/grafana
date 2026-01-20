@@ -13,7 +13,7 @@
   "fields": {
     "external": true,
     "permission": "Viewer",
-    "subject.name": "user.one",
-    "teamRef.name": "team.one"
+    "subject_name": "user.one",
+    "team_ref": "team.one"
   }
 }
