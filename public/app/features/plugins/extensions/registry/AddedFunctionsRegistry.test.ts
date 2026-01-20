@@ -4,6 +4,7 @@ import { AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
+import { basicApp } from '../test-fixtures/config.apps';
 import { isGrafanaDevMode } from '../utils';
 
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
@@ -28,33 +29,8 @@ jest.mock('../logs/log', () => {
 });
 
 describe('addedFunctionsRegistry', () => {
-  const pluginId = 'grafana-basic-app';
-  const appPluginConfig = {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
-    extensions: {
-      addedFunctions: [],
-      addedLinks: [],
-      addedComponents: [],
-      exposedComponents: [],
-      extensionPoints: [],
-    },
-  };
-  const apps = [appPluginConfig];
+  const pluginId = basicApp.id;
+  const apps = [basicApp];
   const createRegistry = async (override: AppPluginConfig[] = apps) => new AddedFunctionsRegistry(override);
 
   beforeEach(() => {
@@ -703,8 +679,8 @@ describe('addedFunctionsRegistry', () => {
     };
     const { description, targets, title } = fnConfig;
     const app = {
-      ...appPluginConfig,
-      extensions: { ...appPluginConfig.extensions, addedFunctions: [{ description, targets, title }] },
+      ...basicApp,
+      extensions: { ...basicApp.extensions, addedFunctions: [{ description, targets, title }] },
     };
     const registry = await createRegistry([app]);
 

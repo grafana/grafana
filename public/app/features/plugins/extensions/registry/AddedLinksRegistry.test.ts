@@ -4,6 +4,7 @@ import { AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
+import { basicApp } from '../test-fixtures/config.apps';
 import { isGrafanaDevMode } from '../utils';
 
 import { AddedLinksRegistry } from './AddedLinksRegistry';
@@ -28,40 +29,13 @@ jest.mock('../logs/log', () => {
 });
 
 describe('AddedLinksRegistry', () => {
-  const pluginId = 'grafana-basic-app';
-  const appPluginConfig = {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
-    extensions: {
-      addedLinks: [],
-      addedComponents: [],
-      addedFunctions: [],
-      exposedComponents: [],
-      extensionPoints: [],
-    },
-  };
-  const apps = [appPluginConfig];
+  const pluginId = basicApp.id;
+  const apps = [basicApp];
   const createRegistry = async (override: AppPluginConfig[] = apps) => new AddedLinksRegistry(override);
 
   beforeEach(async () => {
     resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-    // Reset appPluginConfig extensions before each test
-    appPluginConfig.extensions.exposedComponents = [];
   });
 
   it('should return empty registry when no extensions registered', async () => {
@@ -692,8 +666,8 @@ describe('AddedLinksRegistry', () => {
     };
     const { description, targets, title } = linkConfig;
     const app = {
-      ...appPluginConfig,
-      extensions: { ...appPluginConfig.extensions, addedLinks: [{ description, targets, title }] },
+      ...basicApp,
+      extensions: { ...basicApp.extensions, addedLinks: [{ description, targets, title }] },
     };
     const registry = await createRegistry([app]);
 

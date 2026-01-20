@@ -1,10 +1,11 @@
 import React from 'react';
 import { firstValueFrom, take } from 'rxjs';
 
-import { AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
+import { AppPluginConfig } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
+import { basicApp } from '../test-fixtures/config.apps';
 import { isGrafanaDevMode } from '../utils';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
@@ -29,33 +30,8 @@ jest.mock('../logs/log', () => {
 });
 
 describe('AddedComponentsRegistry', () => {
-  const pluginId = 'grafana-basic-app';
-  const appPluginConfig = {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
-    extensions: {
-      addedLinks: [],
-      addedComponents: [],
-      addedFunctions: [],
-      exposedComponents: [],
-      extensionPoints: [],
-    },
-  };
-  const apps = [appPluginConfig];
+  const pluginId = basicApp.id;
+  const apps = [basicApp];
   const createRegistry = async (override: AppPluginConfig[] = apps) => new AddedComponentsRegistry(override);
 
   beforeEach(() => {
@@ -511,8 +487,8 @@ describe('AddedComponentsRegistry', () => {
     };
     const { description, targets, title } = componentConfig;
     const app = {
-      ...appPluginConfig,
-      extensions: { ...appPluginConfig.extensions, addedComponents: [{ description, targets, title }] },
+      ...basicApp,
+      extensions: { ...basicApp.extensions, addedComponents: [{ description, targets, title }] },
     };
     const registry = await createRegistry([app]);
 
