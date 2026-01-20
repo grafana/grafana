@@ -79,7 +79,8 @@ jobs:
           STEP_NAME: Build Grafana
           STEP_NUMBER: 8
         run: |
-          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930" make build-go
+          # GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930" make build-go
+          echo "skip"
 
       - name: Cleanup
         run: |

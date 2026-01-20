@@ -1,0 +1,28 @@
+name: build-instrumentation-otel.yaml
+
+on:
+  workflow_run:
+    workflows: ["test-ci-instrumentation-workflow"]
+    types: [completed]
+
+jobs:
+  send-telemetry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Vault secrets
+        if: steps.check-e2e-changes.outputs.changes > 0
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            OTEL_EXPORTER_OTLP_API_KEY=grafana-oltp-exporter:grafana-oltp-api-key
+
+      - uses: paper2/github-actions-opentelemetry@main
+        env:
+          OTEL_SERVICE_NAME: github-actions-opentelemetry
+          OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+          OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp"
+          OTEL_EXPORTER_OTLP_HEADERS: api-key=${{ env.OTEL_EXPORTER_OTLP_API_KEY }}
+          OTEL_RESOURCE_ATTRIBUTES: team=grafana-backend,env=cd
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

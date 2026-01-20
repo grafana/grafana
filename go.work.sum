@@ -1193,6 +1193,7 @@ go.opentelemetry.io/contrib/propagators/b3 v1.35.0 h1:DpwKW04LkdFRFCIgM3sqwTJA/Q
 go.opentelemetry.io/contrib/propagators/b3 v1.35.0/go.mod h1:9+SNxwqvCWo1qQwUpACBY5YKNVxFJn5mlbXg/4+uKBg=
 go.opentelemetry.io/contrib/zpages v0.60.0 h1:wOM9ie1Hz4H88L9KE6GrGbKJhfm+8F1NfW/Y3q9Xt+8=
 go.opentelemetry.io/contrib/zpages v0.60.0/go.mod h1:xqfToSRGh2MYUsfyErNz8jnNDPlnpZqWM/y6Z2Cx7xw=
+go.opentelemetry.io/otel v1.38.0/go.mod h1:zcmtmQ1+YmQM9wrNsTGV/q/uyusom3P8RxwExxkZhjM=
 go.opentelemetry.io/otel/bridge/opencensus v1.35.0 h1:4nJfffRbozhqnuukfRkiahA94mnpryCLJLiduMIDJKI=
 go.opentelemetry.io/otel/bridge/opencensus v1.35.0/go.mod h1:359S30saRYNsB4A46EDx91SpXsQFNgkma7ftg2/L5/M=
 go.opentelemetry.io/otel/bridge/opentracing v1.35.0 h1:qT4jl1fYl0hHuRopNcwS94QosLFhGYcS0HacPUeXmT4=
