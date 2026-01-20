@@ -20,6 +20,9 @@ export interface PanelDataSummary {
   /* returns true if any of the frames in this panel data summary have the type */
   hasPreferredVisualisationType: (type: PreferredVisualisationType) => boolean;
 
+  /** true if time fields exist on the dataframe and the dataframe only contains a single time value */
+  isInstant?: boolean;
+
   /** pass along a reference to the DataFrame array in case it's needed by the plugin */
   rawFrames?: DataFrame[];
 
@@ -49,6 +52,8 @@ class PanelDataSummaryImpl implements PanelDataSummary {
   /** max number of fields in any single dataframe in the panel data */
   public fieldCountMax = 0;
 
+  public isInstant: boolean | undefined = undefined;
+
   private countByType: Partial<Record<FieldType, number>> = {};
   private preferredVisualisationTypes: Set<PreferredVisualisationType> = new Set<PreferredVisualisationType>();
   private dataFrameTypes: Set<DataFrameType> = new Set<DataFrameType>();
@@ -66,6 +71,7 @@ class PanelDataSummaryImpl implements PanelDataSummary {
   }
 
   private _processFrames() {
+    let firstTimeEncountered: number | null = null;
     for (const frame of this.rawFrames ?? []) {
       this.rowCountTotal += frame.length;
 
@@ -79,6 +85,11 @@ class PanelDataSummaryImpl implements PanelDataSummary {
       for (const field of frame.fields) {
         this.fieldCount++;
         this.countByType[field.type] = (this.countByType[field.type] || 0) + 1;
+        if (field.type === FieldType.time) {
+          firstTimeEncountered ??= field.values.find((v) => v != null);
+          this.isInstant =
+            this.isInstant !== false && field.values.every((v) => v == null || v === firstTimeEncountered);
+        }
       }
 
       if (frame.length > this.rowCountMax) {
