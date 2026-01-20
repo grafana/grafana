@@ -485,26 +485,64 @@ describe('CloudWatchMetricsQueryRunner', () => {
     });
   });
 
-  describe('template variable interpolation', () => {
-    it('replaceMetricQueryVars interpolates account id if its part of the query', async () => {
+  describe('interpolateMetricsQueryVariables', () => {
+    it('interpolates values correctly', () => {
+      const testQuery = {
+        id: 'a',
+        refId: 'a',
+        region: 'us-east-2',
+        namespace: '',
+        expression: 'ABS($datasource)',
+        sqlExpression: 'select SUM(CPUUtilization) from $datasource',
+        dimensions: { InstanceId: '$dimension' },
+        statistic: '',
+      };
+      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable] });
+      const result = runner.interpolateMetricsQueryVariables(testQuery, {
+        datasource: { text: 'foo', value: 'foo' },
+        dimension: { text: 'foo', value: 'foo' },
+      });
+      expect(result).toMatchObject({
+        alias: '',
+        metricName: '',
+        namespace: '',
+        period: '',
+        sqlExpression: 'select SUM(CPUUtilization) from foo',
+        expression: 'ABS(foo)',
+        dimensions: { InstanceId: ['foo'] },
+        statistic: '',
+        id: 'a',
+        accountId: undefined,
+        region: 'us-east-2',
+        refId: 'a',
+      });
+    });
+
+    it('interpolates accountId when present', () => {
       const { runner } = setupMockedMetricsQueryRunner({
         variables: [accountIdVariable],
       });
 
-      const result = runner.replaceMetricQueryVars({ ...validMetricSearchBuilderQuery, accountId: '$accountId' }, {});
+      const result = runner.interpolateMetricsQueryVariables(
+        { ...validMetricSearchBuilderQuery, accountId: '$accountId' },
+        {}
+      );
       expect(result.accountId).toBe(accountIdVariable.current.value);
     });
 
-    it('replaceMetricQueryVars should not change account id if its not part of the query', async () => {
+    it('leaves accountId undefined when not specified', () => {
       const { runner } = setupMockedMetricsQueryRunner({
         variables: [accountIdVariable],
       });
 
-      const result = runner.replaceMetricQueryVars({ ...validMetricSearchBuilderQuery, accountId: undefined }, {});
+      const result = runner.interpolateMetricsQueryVariables(
+        { ...validMetricSearchBuilderQuery, accountId: undefined },
+        {}
+      );
       expect(result.accountId).toBeUndefined();
     });
 
-    it('interpolates variables correctly', async () => {
+    it('interpolates SQL expression variables via handleMetricQueries', async () => {
       const { runner, queryMock, request } = setupMockedMetricsQueryRunner({
         variables: [namespaceVariable, metricVariable, limitVariable],
       });
@@ -874,33 +912,6 @@ describe('CloudWatchMetricsQueryRunner', () => {
         'CloudWatch templating error',
         'Multi template variables are not supported for region'
       );
-    });
-  });
-  describe('interpolateMetricsQueryVariables', () => {
-    it('interpolates values correctly', () => {
-      const testQuery = {
-        id: 'a',
-        refId: 'a',
-        region: 'us-east-2',
-        namespace: '',
-        expression: 'ABS($datasource)',
-        sqlExpression: 'select SUM(CPUUtilization) from $datasource',
-        dimensions: { InstanceId: '$dimension' },
-      };
-      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable] });
-      const result = runner.interpolateMetricsQueryVariables(testQuery, {
-        datasource: { text: 'foo', value: 'foo' },
-        dimension: { text: 'foo', value: 'foo' },
-      });
-      expect(result).toStrictEqual({
-        alias: '',
-        metricName: '',
-        namespace: '',
-        period: '',
-        sqlExpression: 'select SUM(CPUUtilization) from foo',
-        expression: 'ABS(foo)',
-        dimensions: { InstanceId: ['foo'] },
-      });
     });
   });
 
