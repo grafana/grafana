@@ -64,7 +64,7 @@ describe('notifications', () => {
         kind: 'event',
         data: {
           alertType: AppEvents.alertWarning.name,
-          message: '2 dashboard restored successfully. 1 dashboard failed.. Permission denied',
+          message: '2 dashboard restored successfully. 1 dashboard failed. Permission denied',
         },
       });
     });
@@ -82,7 +82,7 @@ describe('notifications', () => {
         kind: 'event',
         data: {
           alertType: AppEvents.alertWarning.name,
-          message: '1 dashboard restored successfully. 2 dashboard failed.. First error',
+          message: '1 dashboard restored successfully. 2 dashboard failed. First error',
         },
       });
     });
@@ -104,7 +104,7 @@ describe('notifications', () => {
         kind: 'event',
         data: {
           alertType: AppEvents.alertError.name,
-          message: 'Failed to restore 1 dashboard.. Database connection error',
+          message: 'Failed to restore 1 dashboard. Database connection error',
         },
       });
     });
@@ -141,7 +141,7 @@ describe('notifications', () => {
         kind: 'event',
         data: {
           alertType: AppEvents.alertError.name,
-          message: 'Failed to restore 3 dashboard.. Network timeout',
+          message: 'Failed to restore 3 dashboard. Network timeout',
         },
       });
     });

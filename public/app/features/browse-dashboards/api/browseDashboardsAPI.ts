@@ -388,10 +388,8 @@ export const browseDashboardsAPI = createApi({
           for (const uid of deletedDashboardUIDs) {
             pageStateManager.removeSceneCache(uid);
           }
-        }
 
-        // Show success notification after all deletions
-        if (deletedCount > 0) {
+          // Show success notification after all deletions
           if (config.featureToggles.restoreDashboards) {
             // Show notification with button to Recently Deleted
             const title =
@@ -402,7 +400,6 @@ export const browseDashboardsAPI = createApi({
             const component = buildNotificationButton({
               buttonLabel: buttonText,
               onClick: () => locationService.push('/dashboard/recently-deleted'),
-              ariaLabel: buttonText,
             });
             dispatch(notifyApp(createSuccessNotification(title, '', undefined, component)));
           } else if (config.featureToggles.kubernetesDashboards) {

@@ -64,7 +64,13 @@ export function getRestoreNotificationData(
 
   // Helper to append first error message if present
   const firstError = failed[0]?.error;
-  const appendError = (msg: string) => (firstError ? `${msg}. ${firstError}` : msg);
+  const appendError = (msg: string) => {
+    if (!firstError) {
+      return msg;
+    }
+    const separator = msg.endsWith('.') ? ' ' : '. ';
+    return `${msg}${separator}${firstError}`;
+  };
 
   // Partial success case
   if (successCount > 0) {

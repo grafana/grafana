@@ -141,7 +141,6 @@ export function RecentlyDeletedActions() {
         const component = buildNotificationButton({
           buttonLabel: notificationData.data.buttonLabel,
           onClick: () => locationService.push(notificationData.data.targetUrl),
-          ariaLabel: notificationData.data.buttonLabel,
         });
         dispatch(notifyApp(createSuccessNotification(notificationData.data.title, '', undefined, component)));
       } else {
