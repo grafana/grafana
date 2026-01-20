@@ -2,9 +2,10 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Alert, Field, RadioButtonGroup, Spinner, Stack, Text } from '@grafana/ui';
 import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 
 import { GitHubAppCredentialFields } from '../components/Shared/GitHubAppCredentialFields';
 import { useConnectionList } from '../hooks/useConnectionList';
@@ -61,7 +62,9 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
   // Filter to only GitHub connections
   const githubConnections = connections?.filter((c) => c.spec?.type === 'github') ?? [];
 
-  // Expose submit method to parent
+  // Expose submit method to parent via ref. The parent wizard (ProvisioningWizard) needs to trigger
+  // submission when the user clicks "Next", so we use useImperativeHandle to allow the parent to
+  // call submit() programmatically via githubAppStepRef.current?.submit()
   useImperativeHandle(ref, () => ({
     submit: async () => {
       const isValid = await credentialForm.trigger();
@@ -82,21 +85,14 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
 
       try {
         const result = await createConnection(spec, privateKey);
-        if (result.error) {
-          const message = isFetchError(result.error)
-            ? result.error.data?.message || defaultErrorMessage
-            : defaultErrorMessage;
-          onSubmit({ success: false, error: message });
-        } else if (result.data) {
-          onSubmit({ success: true, connectionName: result.data.metadata?.name || '' });
+        if (result.data?.metadata?.name) {
+          onSubmit({ success: true, connectionName: result.data.metadata.name });
         } else {
-          onSubmit({ success: false, error: defaultErrorMessage });
+          const errorMessage = result.error ? extractErrorMessage(result.error) : defaultErrorMessage;
+          onSubmit({ success: false, error: errorMessage });
         }
       } catch (error) {
-        const message = isFetchError(error)
-          ? error.data?.message || defaultErrorMessage
-          : defaultErrorMessage;
-        onSubmit({ success: false, error: message });
+        onSubmit({ success: false, error: extractErrorMessage(error) });
       }
     },
   }));
