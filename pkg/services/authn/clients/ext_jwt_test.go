@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -356,9 +357,10 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				IDTokenClaims:     &validIDTokenClaimsWithRenderService,
 				Namespace:         "default",
 				AuthenticatedBy:   login.ExtendedJWTModule,
+				OrgRoles:          map[int64]org.RoleType{1: org.RoleAdmin},
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
+					FetchSyncedUser: false,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
 						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
@@ -371,6 +373,11 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			accessToken: &validAccessTokenClaims,
 			idToken:     &validIDTokenClaimsWithAnonymous,
 			orgID:       1,
+			cfg: &setting.Cfg{
+				Anonymous: setting.AnonymousSettings{
+					OrgRole: string(org.RoleEditor),
+				},
+			},
 			want: &authn.Identity{
 				ID:                "0",
 				Type:              claims.TypeAnonymous,
@@ -378,10 +385,11 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaims,
 				IDTokenClaims:     &validIDTokenClaimsWithAnonymous,
 				Namespace:         "default",
+				OrgRoles:          map[int64]org.RoleType{1: org.RoleEditor},
 				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
-					FetchSyncedUser: true,
+					FetchSyncedUser: false,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
 						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
