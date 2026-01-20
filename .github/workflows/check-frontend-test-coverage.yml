@@ -159,7 +159,7 @@ jobs:
         if: steps.check-affected.outputs.affected == 'true'
         uses: actions/checkout@v5
         with:
-          ref: ${{ matrix.branch == 'main' && 'main' || github.ref }}
+          ref: ${{ matrix.branch == 'main' && github.event.pull_request.base.ref || github.event.pull_request.head.sha }}
           persist-credentials: false
 
       - name: Setup Node.js
@@ -183,12 +183,18 @@ jobs:
           ")
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
 
+      - name: Get current commit SHA
+        if: steps.check-affected.outputs.affected == 'true'
+        id: get-sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Run coverage for ${{ matrix.codeowner }}
         if: steps.check-affected.outputs.affected == 'true'
         run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}"
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'
+          GITHUB_SHA: ${{ steps.get-sha.outputs.sha }}
 
       - name: Upload coverage summary
         if: steps.check-affected.outputs.affected == 'true'
