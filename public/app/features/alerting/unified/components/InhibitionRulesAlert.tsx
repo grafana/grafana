@@ -5,11 +5,9 @@ import { Alert, TextLink } from '@grafana/ui';
 
 import { useHasInhibitionRules } from '../hooks/useHasInhibitionRules';
 
-// Documentation URL for inhibition rules
 const INHIBITION_RULES_DOCS_URL =
   'https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-silence/#inhibition-rules';
 
-// we'll omit the props we don't want consumers to overwrite and forward the others to the alert component
 type ExtraAlertProps = Omit<ComponentPropsWithoutRef<typeof Alert>, 'title' | 'severity'>;
 
 interface InhibitionRulesAlertProps extends ExtraAlertProps {

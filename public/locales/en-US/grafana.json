@@ -1643,6 +1643,11 @@
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are firing.",
+      "learn-more": "Learn more about inhibition rules",
+      "title": "Inhibition rules are in effect"
+    },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
       "monitor-status-system-tooltip": "Alerting insights provides pre-built dashboards to monitor your alerting data.",
