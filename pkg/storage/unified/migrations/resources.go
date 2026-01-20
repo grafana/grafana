@@ -25,6 +25,7 @@ type migrationDefinition struct {
 	name         string
 	migrationID  string // The ID stored in the migration log table (e.g., "playlists migration")
 	resources    []string
+	groupResources []schema.GroupResource
 	registerFunc func(mg *sqlstoremigrator.Migrator, migrator UnifiedMigrator, client resource.ResourceClient, opts ...ResourceMigrationOption)
 }
 
@@ -52,12 +53,19 @@ var migrationRegistry = []migrationDefinition{
 		name:         "playlists",
 		migrationID:  "playlists migration",
 		resources:    []string{setting.PlaylistResource},
+		groupResources: []schema.GroupResource{
+			{Group: playlists.APIGroup, Resource: "playlists"},
+		},
 		registerFunc: registerPlaylistMigration,
 	},
 	{
 		name:         "folders and dashboards",
 		migrationID:  "folders and dashboards migration",
 		resources:    []string{setting.FolderResource, setting.DashboardResource},
+		groupResources: []schema.GroupResource{
+			{Group: folders.GROUP, Resource: folders.RESOURCE},
+			{Group: v1beta1.GROUP, Resource: v1beta1.DASHBOARD_RESOURCE},
+		},
 		registerFunc: registerDashboardAndFolderMigration,
 	},
 }

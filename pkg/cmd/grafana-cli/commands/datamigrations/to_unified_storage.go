@@ -14,8 +14,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -49,10 +47,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 
 	opts := legacy.MigrateOptions{
 		Namespace: namespace,
-		Resources: []schema.GroupResource{
-			{Group: folders.GROUP, Resource: folders.RESOURCE},
-			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
-		},
 		Progress: func(count int, msg string) {
 			const minInterval = time.Second
 			shouldPrint := count < 1 || time.Since(last) > minInterval
@@ -61,6 +55,10 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 				last = time.Now()
 			}
 		},
+	}
+	opts.Resources, err = unifiedStorageResourcesForMigration("folders and dashboards")
+	if err != nil {
+		return err
 	}
 
 	featureManager, err := featuremgmt.ProvideManagerService(cfg)
@@ -90,6 +88,27 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	}
 
 	return runInteractiveMigration(ctx, cfg, opts, dashboardAccess, grpcClient, start)
+}
+
+func unifiedStorageResourcesForMigration(name string) ([]schema.GroupResource, error) {
+	catalog := migrations.UnifiedStorageMigrationCatalog()
+	for _, migration := range catalog {
+		if migration.Name != name {
+			continue
+		}
+		if len(migration.Resources) == 0 {
+			return nil, fmt.Errorf("migration %q has no resources", name)
+		}
+		resources := make([]schema.GroupResource, 0, len(migration.Resources))
+		for _, res := range migration.Resources {
+			resources = append(resources, schema.GroupResource{
+				Group:    res.Group,
+				Resource: res.Resource,
+			})
+		}
+		return resources, nil
+	}
+	return nil, fmt.Errorf("migration %q not found in unified storage catalog", name)
 }
 
 func runNonInteractiveMigration(ctx context.Context, opts legacy.MigrateOptions, dashboardAccess legacy.MigrationDashboardAccessor, grpcClient resource.ResourceClient, start time.Time) error {
