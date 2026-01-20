@@ -26,7 +26,11 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
   { onSubmit },
   ref
 ) {
-  const { control, watch } = useFormContext<WizardFormData>();
+  const {
+    control,
+    watch,
+    formState: { errors },
+  } = useFormContext<WizardFormData>();
 
   // GH app form
   const credentialForm = useForm<ConnectionFormData>({
@@ -104,6 +108,10 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
         />
       </Field>
 
+      {errors?.githubApp?.connectionName?.message && (
+        <Alert severity="error" title={errors.githubApp.connectionName.message} />
+      )}
+
       {githubAppMode === 'existing' && (
         <Stack direction="column" gap={2}>
           {isLoading ? (
@@ -134,7 +142,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
               rules={{
                 required:
                   githubAppMode === 'existing' &&
-                  t('provisioning.wizard.github-app-error-required', 'This field is required'),
+                  t('provisioning.wizard.github-app-error-required', 'Connection is required'),
               }}
               render={({ field: { onChange, value } }) => (
                 <Stack direction="column" gap={1}>

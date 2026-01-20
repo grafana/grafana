@@ -12322,7 +12322,7 @@
       "github-app-creation-default-error": "Failed to create connection",
       "github-app-creation-failed": "Failed to create GitHub App connection",
       "github-app-error-loading": "Failed to load connections",
-      "github-app-error-required": "This field is required",
+      "github-app-error-required": "Connection is required",
       "github-app-mode-existing": "Choose an existing app",
       "github-app-mode-label": "GitHub App configuration",
       "github-app-mode-new": "Connect to a new app",

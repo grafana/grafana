@@ -85,13 +85,11 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType, syncTarget, githubAuthType, githubAppMode, githubAppConnectionName] = watch([
+  const [repoName = '', repoType, syncTarget, githubAuthType] = watch([
     'repositoryName',
     'repository.type',
     'repository.sync.target',
     'githubAuthType',
-    'githubAppMode',
-    'githubApp.connectionName',
   ]);
 
   // Ref for GitHubAppStep to trigger submission
@@ -313,6 +311,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     setStepStatusInfo,
   ]);
 
+  // Callback after a GH app has been created
   const handleGitHubAppSubmit = useCallback(
     (result: ConnectionCreationResult) => {
       if (result.success) {
@@ -449,14 +448,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     if (activeStep === 'authType') {
       return false;
     }
-    // GitHub App step: disable until valid selection (for 'new' mode, validation happens on submit)
-    if (activeStep === 'githubApp') {
-      if (githubAppMode === 'existing') {
-        return !githubAppConnectionName;
-      }
-      // For 'new' mode, always enable - validation happens on submit
-      return false;
-    }
     // If the step is not on Connect page, we only enable it if the job was successful
     if (activeStep !== 'connection' && hasStepError) {
       return true;
@@ -467,7 +458,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   };
-  
+
   return (
     <FormProvider {...methods}>
       <Stack gap={6} direction="row" alignItems="flex-start">
@@ -499,9 +490,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
             <div className={styles.content}>
               {activeStep === 'authType' && <AuthTypeStep />}
-              {activeStep === 'githubApp' && (
-                <GitHubAppStep ref={githubAppStepRef} onSubmit={handleGitHubAppSubmit} />
-              )}
+              {activeStep === 'githubApp' && <GitHubAppStep ref={githubAppStepRef} onSubmit={handleGitHubAppSubmit} />}
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && <BootstrapStep settingsData={settingsData} repoName={repoName} />}
               {activeStep === 'synchronize' && (
