@@ -624,6 +624,7 @@ type Cfg struct {
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
 	EnableSQLKVBackend                         bool
+	EnableSQLKVCompatibilityMode               bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
