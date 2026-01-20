@@ -1,8 +1,7 @@
 import React from 'react';
 import { firstValueFrom, take } from 'rxjs';
 
-import { PluginLoadingStrategy } from '@grafana/data';
-import { getAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
@@ -61,19 +60,14 @@ describe('ExposedComponentsRegistry', () => {
       extensionPoints: [],
     },
   };
-
-  const createRegistry = async () => new ExposedComponentsRegistry(await getAppPluginMetas());
+  const apps = [appPluginConfig];
+  const createRegistry = async (override: AppPluginConfig[] = apps) => new ExposedComponentsRegistry(override);
 
   beforeEach(() => {
     resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     // Reset appPluginConfig extensions before each test
     appPluginConfig.extensions.exposedComponents = [];
-    setAppPluginMetas({ [pluginId]: appPluginConfig });
-  });
-
-  afterEach(() => {
-    setAppPluginMetas({});
   });
 
   it('should return empty registry when no exposed components have been registered', async () => {
@@ -427,10 +421,6 @@ describe('ExposedComponentsRegistry', () => {
       component: () => React.createElement('div', null, 'Hello World1'),
     };
 
-    // Make sure that the meta-info is empty
-    appPluginConfig.extensions.exposedComponents = [];
-    setAppPluginMetas({ [pluginId]: appPluginConfig });
-
     const registry = await createRegistry();
     registry.register({
       pluginId,
@@ -477,10 +467,6 @@ describe('ExposedComponentsRegistry', () => {
       component: () => React.createElement('div', null, 'Hello World1'),
     };
 
-    // Make sure that the meta-info is empty
-    appPluginConfig.extensions.exposedComponents = [];
-    setAppPluginMetas({ [pluginId]: appPluginConfig });
-
     const registry = await createRegistry();
     registry.register({
       pluginId,
@@ -503,14 +489,13 @@ describe('ExposedComponentsRegistry', () => {
       description: 'Component description',
       component: () => React.createElement('div', null, 'Hello World1'),
     };
+    const { description, id, title } = componentConfig;
+    const app = {
+      ...appPluginConfig,
+      extensions: { ...appPluginConfig.extensions, exposedComponents: [{ description, id, title }] },
+    };
 
-    // Set the meta-info (without the component function, as plugin.json wouldn't have it)
-    appPluginConfig.extensions.exposedComponents = [
-      { id: componentConfig.id, title: componentConfig.title, description: componentConfig.description },
-    ];
-    setAppPluginMetas({ [pluginId]: appPluginConfig });
-
-    const registry = await createRegistry();
+    const registry = await createRegistry([app]);
     registry.register({
       pluginId,
       configs: [componentConfig],

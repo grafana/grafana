@@ -1,8 +1,7 @@
 import React from 'react';
 import { firstValueFrom, take } from 'rxjs';
 
-import { PluginLoadingStrategy } from '@grafana/data';
-import { getAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
@@ -56,16 +55,12 @@ describe('AddedComponentsRegistry', () => {
       extensionPoints: [],
     },
   };
-  const createRegistry = async () => new AddedComponentsRegistry(await getAppPluginMetas());
+  const apps = [appPluginConfig];
+  const createRegistry = async (override: AppPluginConfig[] = apps) => new AddedComponentsRegistry(override);
 
   beforeEach(() => {
     resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-    setAppPluginMetas({ [pluginId]: appPluginConfig });
-  });
-
-  afterEach(() => {
-    setAppPluginMetas({});
   });
 
   it('should return empty registry when no extensions registered', async () => {
@@ -447,14 +442,6 @@ describe('AddedComponentsRegistry', () => {
       component: () => React.createElement('div', null, 'Hello World1'),
     };
 
-    // Make sure that the meta-info is empty
-    setAppPluginMetas({
-      [pluginId]: {
-        ...appPluginConfig,
-        extensions: { ...appPluginConfig.extensions, addedComponents: [] },
-      },
-    });
-
     registry.register({
       pluginId,
       configs: [componentConfig],
@@ -501,14 +488,6 @@ describe('AddedComponentsRegistry', () => {
       component: () => React.createElement('div', null, 'Hello World1'),
     };
 
-    // Make sure that the meta-info is empty
-    setAppPluginMetas({
-      [pluginId]: {
-        ...appPluginConfig,
-        extensions: { ...appPluginConfig.extensions, addedComponents: [] },
-      },
-    });
-
     registry.register({
       pluginId,
       configs: [componentConfig],
@@ -524,21 +503,18 @@ describe('AddedComponentsRegistry', () => {
     // Enabling dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
-    const registry = await createRegistry();
     const componentConfig = {
       title: 'Component title',
       description: 'Component description',
       targets: ['grafana/alerting/home'],
       component: () => React.createElement('div', null, 'Hello World1'),
     };
-
-    // Make sure that the meta-info is empty
-    setAppPluginMetas({
-      [pluginId]: {
-        ...appPluginConfig,
-        extensions: { ...appPluginConfig.extensions, addedComponents: [componentConfig] },
-      },
-    });
+    const { description, targets, title } = componentConfig;
+    const app = {
+      ...appPluginConfig,
+      extensions: { ...appPluginConfig.extensions, addedComponents: [{ description, targets, title }] },
+    };
+    const registry = await createRegistry([app]);
 
     registry.register({
       pluginId,

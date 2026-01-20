@@ -1,7 +1,6 @@
 import { firstValueFrom, take } from 'rxjs';
 
-import { PluginLoadingStrategy } from '@grafana/data';
-import { getAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
@@ -55,16 +54,12 @@ describe('addedFunctionsRegistry', () => {
       extensionPoints: [],
     },
   };
-  const createRegistry = async () => new AddedFunctionsRegistry(await getAppPluginMetas());
+  const apps = [appPluginConfig];
+  const createRegistry = async (override: AppPluginConfig[] = apps) => new AddedFunctionsRegistry(override);
 
   beforeEach(() => {
     resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
-    setAppPluginMetas({ [pluginId]: appPluginConfig });
-  });
-
-  afterEach(() => {
-    setAppPluginMetas({});
   });
 
   it('should return empty registry when no extensions registered', async () => {
@@ -639,14 +634,6 @@ describe('addedFunctionsRegistry', () => {
       fn: jest.fn().mockReturnValue({}),
     };
 
-    // Make sure that the meta-info is empty
-    setAppPluginMetas({
-      [pluginId]: {
-        ...appPluginConfig,
-        extensions: { ...appPluginConfig.extensions, addedFunctions: [] },
-      },
-    });
-
     registry.register({
       pluginId,
       configs: [fnConfig],
@@ -693,14 +680,6 @@ describe('addedFunctionsRegistry', () => {
       fn: jest.fn().mockReturnValue({}),
     };
 
-    // Make sure that the meta-info is empty
-    setAppPluginMetas({
-      [pluginId]: {
-        ...appPluginConfig,
-        extensions: { ...appPluginConfig.extensions, addedFunctions: [] },
-      },
-    });
-
     registry.register({
       pluginId,
       configs: [fnConfig],
@@ -716,21 +695,18 @@ describe('addedFunctionsRegistry', () => {
     // Enabling dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
-    const registry = await createRegistry();
     const fnConfig = {
       title: 'Function 1',
       description: 'Function 1 description',
       targets: ['grafana/dashboard/panel/menu'],
       fn: jest.fn().mockReturnValue({}),
     };
-
-    // Make sure that the meta-info is empty
-    setAppPluginMetas({
-      [pluginId]: {
-        ...appPluginConfig,
-        extensions: { ...appPluginConfig.extensions, addedFunctions: [fnConfig] },
-      },
-    });
+    const { description, targets, title } = fnConfig;
+    const app = {
+      ...appPluginConfig,
+      extensions: { ...appPluginConfig.extensions, addedFunctions: [{ description, targets, title }] },
+    };
+    const registry = await createRegistry([app]);
 
     registry.register({
       pluginId,

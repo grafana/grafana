@@ -1,7 +1,6 @@
 import { firstValueFrom, take } from 'rxjs';
 
-import { PluginLoadingStrategy } from '@grafana/data';
-import { getAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';
@@ -55,19 +54,14 @@ describe('AddedLinksRegistry', () => {
       extensionPoints: [],
     },
   };
-
-  const createRegistry = async () => new AddedLinksRegistry(await getAppPluginMetas());
+  const apps = [appPluginConfig];
+  const createRegistry = async (override: AppPluginConfig[] = apps) => new AddedLinksRegistry(override);
 
   beforeEach(async () => {
     resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     // Reset appPluginConfig extensions before each test
     appPluginConfig.extensions.exposedComponents = [];
-    setAppPluginMetas({ [pluginId]: appPluginConfig });
-  });
-
-  afterEach(() => {
-    setAppPluginMetas({});
   });
 
   it('should return empty registry when no extensions registered', async () => {
@@ -626,14 +620,6 @@ describe('AddedLinksRegistry', () => {
       configure: jest.fn().mockReturnValue({}),
     };
 
-    // Make sure that the meta-info is empty
-    setAppPluginMetas({
-      [pluginId]: {
-        ...appPluginConfig,
-        extensions: { ...appPluginConfig.extensions, addedLinks: [] },
-      },
-    });
-
     registry.register({
       pluginId,
       configs: [linkConfig],
@@ -682,14 +668,6 @@ describe('AddedLinksRegistry', () => {
       configure: jest.fn().mockReturnValue({}),
     };
 
-    // Make sure that the meta-info is empty
-    setAppPluginMetas({
-      [pluginId]: {
-        ...appPluginConfig,
-        extensions: { ...appPluginConfig.extensions, addedLinks: [] },
-      },
-    });
-
     registry.register({
       pluginId,
       configs: [linkConfig],
@@ -705,7 +683,6 @@ describe('AddedLinksRegistry', () => {
     // Enabling dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
-    const registry = await createRegistry();
     const linkConfig = {
       title: 'Link 1',
       description: 'Link 1 description',
@@ -713,14 +690,12 @@ describe('AddedLinksRegistry', () => {
       targets: ['grafana/dashboard/panel/menu'],
       configure: jest.fn().mockReturnValue({}),
     };
-
-    // Make sure that the meta-info is empty
-    setAppPluginMetas({
-      [pluginId]: {
-        ...appPluginConfig,
-        extensions: { ...appPluginConfig.extensions, addedLinks: [linkConfig] },
-      },
-    });
+    const { description, targets, title } = linkConfig;
+    const app = {
+      ...appPluginConfig,
+      extensions: { ...appPluginConfig.extensions, addedLinks: [{ description, targets, title }] },
+    };
+    const registry = await createRegistry([app]);
 
     registry.register({
       pluginId,
