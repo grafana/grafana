@@ -1529,3 +1529,17 @@ func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, 
 
 	return resp.StatusCode, string(b)
 }
+
+func (a apiClient) TestReceiver(t *testing.T, params apimodels.TestReceiversConfigBodyParams) ([]byte, int, error) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(params)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/receivers/test", a.url), &buf)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	return sendRequestRaw(t, req)
+}
