@@ -1,12 +1,12 @@
-import { useEffect } from 'react';
-import { useAsyncFn } from 'react-use';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useMemo } from 'react';
 
 import { OrgRole } from '@grafana/data';
+import { useFetchUserRolesQuery, useUpdateUserRolesMutation } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 
 import { RolePicker } from './RolePicker';
-import { fetchUserRoles, updateUserRoles } from './api';
 
 export interface Props {
   basicRole: OrgRole;
@@ -54,39 +54,36 @@ export const UserRolePicker = ({
   width,
   isLoading,
 }: Props) => {
-  const [{ loading, value: appliedRoles = roles || [] }, getUserRoles] = useAsyncFn(
-    async (force = false) => {
-      try {
-        if (!force && roles) {
-          return roles;
-        }
-        if (!force && apply && Boolean(pendingRoles?.length)) {
-          return pendingRoles;
-        }
-        if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0) {
-          return await fetchUserRoles(userId, orgId);
-        }
-      } catch (e) {
-        console.error('Error fetching user roles');
-      }
-      return [];
-    },
-    [orgId, userId, pendingRoles, roles]
+  const hasPermission = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0 && orgId;
+
+  const shouldFetch = !roles && !(apply && Boolean(pendingRoles?.length)) && hasPermission;
+
+  const { data: fetchedRoles, isLoading: isFetching } = useFetchUserRolesQuery(
+    shouldFetch ? { userId, orgId } : skipToken
   );
 
-  useEffect(() => {
-    // only load roles when there is an Org selected
-    if (orgId) {
-      getUserRoles();
-    }
-  }, [getUserRoles, orgId]);
+  const [updateUserRoles, { isLoading: isUpdating }] = useUpdateUserRolesMutation();
 
-  const onRolesChange = async (roles: Role[]) => {
+  const appliedRoles =
+    useMemo(() => {
+      if (roles) {
+        return roles;
+      }
+      if (apply && Boolean(pendingRoles?.length)) {
+        return pendingRoles;
+      }
+      return fetchedRoles || [];
+    }, [roles, pendingRoles, fetchedRoles, apply]) || [];
+
+  const onRolesChange = async (newRoles: Role[]) => {
     if (!apply) {
-      await updateUserRoles(roles, userId, orgId);
-      await getUserRoles(true); // Force fetch from backend after update
+      try {
+        await updateUserRoles({ userId, roles: newRoles, orgId }).unwrap();
+      } catch (error) {
+        console.error('Error updating user roles', error);
+      }
     } else if (onApplyRoles) {
-      onApplyRoles(roles, userId, orgId);
+      onApplyRoles(newRoles, userId, orgId);
     }
   };
 
@@ -102,7 +99,7 @@ export const UserRolePicker = ({
       onRolesChange={onRolesChange}
       onBasicRoleChange={onBasicRoleChange}
       roleOptions={roleOptions}
-      isLoading={loading || isLoading}
+      isLoading={isFetching || isUpdating || isLoading}
       disabled={disabled}
       basicRoleDisabled={basicRoleDisabled}
       basicRoleDisabledMessage={basicRoleDisabledMessage}
