@@ -357,6 +357,7 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
         let deletedCount = 0;
+        const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of dashboardUIDs) {
@@ -377,10 +378,16 @@ export const browseDashboardsAPI = createApi({
           const shouldShowSuccessAlert = !config.featureToggles.restoreDashboards;
           await getDashboardAPI().deleteDashboard(dashboardUID, shouldShowSuccessAlert);
 
-          pageStateManager.clearDashboardCache();
-          pageStateManager.removeSceneCache(dashboardUID);
-          deletedDashboardsCache.clear();
           deletedCount++;
+          deletedDashboardUIDs.push(dashboardUID);
+        }
+
+        if (deletedCount > 0) {
+          pageStateManager.clearDashboardCache();
+          deletedDashboardsCache.clear();
+          for (const uid of deletedDashboardUIDs) {
+            pageStateManager.removeSceneCache(uid);
+          }
         }
 
         // Show success notification after all deletions
