@@ -85,6 +85,7 @@ export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
               <SecretTextArea
                 {...field}
                 id="privateKey"
+                invalid={!!errors.privateKey}
                 placeholder={t(
                   'provisioning.connection-form.placeholder-private-key',
                   '-----BEGIN RSA PRIVATE KEY-----...'
