@@ -1432,6 +1432,7 @@ export interface FeatureToggles {
   queryWithAssistant?: boolean;
   /**
   * Enables next generation query editor experience
+  * @default false
   */
   queryEditorNext?: boolean;
 }

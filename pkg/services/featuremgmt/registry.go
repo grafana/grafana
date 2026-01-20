@@ -2264,6 +2264,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDataProSquad,
+			Expression:   "false",
 		},
 
 	}
