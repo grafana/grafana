@@ -1,0 +1,49 @@
+name: Check Fronted Test Coverage
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - 'package.json'
+      - '.github/CODEOWNERS'
+
+permissions: {}
+
+jobs:
+  generate-slugs:
+    name: Generate slug for ${{ matrix.codeowner }}
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # NOTE: Only checks test coverage for opted-in codeowners.
+        #       Please add the GitHub user/team or email used in
+        #       CODEOWNERS to the list below to opt-in.
+        codeowner: &codeowners
+          - '@grafana/datapro'
+          - '@grafana/dataviz-squad'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Generate slug for ${{ matrix.codeowner }}
+        run: |
+          SLUG=$(node -e "
+            const { createCodeownerSlug } = require('./scripts/codeowners-manifest/utils.js');
+            console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
+          ")
+
+          echo "=== Codeowner Slug Generated ==="
+          echo "Codeowner: ${{ matrix.codeowner }}"
+          echo "Slug: $SLUG"
+          echo "================================"
