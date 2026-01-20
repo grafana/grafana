@@ -213,27 +213,11 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 			}
 		}
 
-		// Extract and set content types from OpenAPI spec responses
-		if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
-			contentTypes := make(map[string]bool)
-			for _, response := range operation.Responses.StatusCodeResponses {
-				if response != nil && response.Content != nil {
-					for contentType := range response.Content {
-						contentTypes[contentType] = true
-					}
-				}
-			}
-			// Set Produces based on response content types
-			for contentType := range contentTypes {
-				routeBuilder = routeBuilder.Produces(contentType)
-			}
+		if produces := extractProducesFromResponses(operation.Responses); produces != nil {
+			routeBuilder = routeBuilder.Produces(produces...)
 		}
-
-		// Extract and set content types from OpenAPI spec request body
-		if operation.RequestBody != nil && operation.RequestBody.Content != nil {
-			for contentType := range operation.RequestBody.Content {
-				routeBuilder = routeBuilder.Consumes(contentType)
-			}
+		if consumes := extractConsumesFromRequestBody(operation.RequestBody); consumes != nil {
+			routeBuilder = routeBuilder.Consumes(consumes...)
 		}
 
 		// Note: Request/response schemas are already defined in the OpenAPI spec from builders
@@ -246,6 +230,45 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 	}
 
 	return nil
+}
+
+// extractConsumesFromRequestBody extracts content types from OpenAPI request body definition
+func extractConsumesFromRequestBody(requestBody *spec3.RequestBody) []string {
+	if requestBody == nil || requestBody.Content == nil {
+		return nil
+	}
+
+	result := make([]string, 0, len(requestBody.Content))
+	for contentType := range requestBody.Content {
+		result = append(result, contentType)
+	}
+	return result
+}
+
+// extractProducesFromResponses extracts unique content types from OpenAPI response definitions
+func extractProducesFromResponses(responses *spec3.Responses) []string {
+	if responses == nil {
+		return nil
+	}
+
+	contentTypes := make(map[string]struct{})
+	for _, response := range responses.StatusCodeResponses {
+		if response != nil && response.Content != nil {
+			for contentType := range response.Content {
+				contentTypes[contentType] = struct{}{}
+			}
+		}
+	}
+
+	if len(contentTypes) == 0 {
+		return nil
+	}
+
+	result := make([]string, 0, len(contentTypes))
+	for contentType := range contentTypes {
+		result = append(result, contentType)
+	}
+	return result
 }
 
 func prefixRouteIDWithK8sVerbIfNotPresent(operationID string, method string) string {
