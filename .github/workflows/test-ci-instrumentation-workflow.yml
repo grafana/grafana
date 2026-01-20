@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64-small
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -105,4 +105,25 @@ jobs:
           #          cat trace-toolexec.log
           echo "============================="
 
+  send-telemetry:
+    runs-on: ubuntu-x64-small
+    if: always()
+    needs:
+      - build
+    steps:
+      - name: Get Vault secrets
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            OTEL_EXPORTER_OTLP_API_KEY=grafana-oltp-exporter:grafana-oltp-api-key
 
+      - uses: paper2/github-actions-opentelemetry@main
+        env:
+          OTEL_SERVICE_NAME: github-actions-opentelemetry
+          OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+          OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp"
+          OTEL_EXPORTER_OTLP_HEADERS: api-key=${{ env.OTEL_EXPORTER_OTLP_API_KEY }}
+          OTEL_RESOURCE_ATTRIBUTES: team=grafana-backend,env=cd
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
