@@ -11,30 +11,28 @@ import { GitHubAuthType, WizardFormData } from './types';
 
 interface AuthTypeOption {
   id: GitHubAuthType;
-  labelKey: string;
-  labelDefault: string;
-  descriptionKey: string;
-  descriptionDefault: string;
+  label: string;
+  description: string;
   icon: 'key-skeleton-alt' | 'github';
 }
 
-const authTypeOptions: AuthTypeOption[] = [
+const getAuthTypeOptions = (): AuthTypeOption[] => [
   {
     id: 'pat',
-    labelKey: 'provisioning.wizard.auth-type-pat-label',
-    labelDefault: 'Connect with Personal Access Token',
-    descriptionKey: 'provisioning.wizard.auth-type-pat-description',
-    descriptionDefault:
-      'Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.',
+    label: t('provisioning.wizard.auth-type-pat-label', 'Connect with Personal Access Token'),
+    description: t(
+      'provisioning.wizard.auth-type-pat-description',
+      'Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.'
+    ),
     icon: 'key-skeleton-alt',
   },
   {
     id: 'github-app',
-    labelKey: 'provisioning.wizard.auth-type-github-app-label',
-    labelDefault: 'Connect with GitHub App',
-    descriptionKey: 'provisioning.wizard.auth-type-github-app-description',
-    descriptionDefault:
-      'Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.',
+    label: t('provisioning.wizard.auth-type-github-app-label', 'Connect with GitHub App'),
+    description: t(
+      'provisioning.wizard.auth-type-github-app-description',
+      'Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.'
+    ),
     icon: 'github',
   },
 ];
@@ -57,7 +55,7 @@ export const AuthTypeStep = memo(function AuthTypeStep() {
         control={control}
         render={({ field: { onChange, value } }) => (
           <Stack direction="column" gap={2}>
-            {authTypeOptions.map((option) => (
+            {getAuthTypeOptions().map((option) => (
               <Card
                 key={option.id}
                 noMargin
@@ -73,8 +71,8 @@ export const AuthTypeStep = memo(function AuthTypeStep() {
                 <Card.Figure>
                   <Icon name={option.icon} size="xxxl" />
                 </Card.Figure>
-                <Card.Heading>{t(option.labelKey, option.labelDefault)}</Card.Heading>
-                <Card.Description>{t(option.descriptionKey, option.descriptionDefault)}</Card.Description>
+                <Card.Heading>{option.label}</Card.Heading>
+                <Card.Description>{option.description}</Card.Description>
               </Card>
             ))}
           </Stack>
