@@ -406,6 +406,17 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       } catch (error) {
         if (isFetchError(error)) {
           const [field, errorMessage] = getFormErrors(error.data.errors);
+          // Special handling for token errors on connecting step with the app flow
+          // since we do not show the token field on that step
+          if (field === 'repository.token' && activeStep === 'connection' && githubAuthType !== 'pat') {
+            setStepStatusInfo({
+              status: 'error',
+              error: {
+                title: repositoryConnectionFailed,
+                message: errorMessage?.message ?? '',
+              },
+            });
+          }
           if (field && errorMessage) {
             setError(field, errorMessage);
           } else {
