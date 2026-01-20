@@ -27,6 +27,25 @@ var (
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
 
+// ResourceOwnershipConflictError represents an error that occurred when a resource
+// is owned by a different repository or manager and cannot be modified.
+type ResourceOwnershipConflictError struct {
+	Err error
+}
+
+// Error implements the error interface
+func (e *ResourceOwnershipConflictError) Error() string {
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return "resource ownership conflict"
+}
+
+// Unwrap implements error unwrapping to support errors.Is and errors.As
+func (e *ResourceOwnershipConflictError) Unwrap() error {
+	return e.Err
+}
+
 // NewResourceOwnershipConflictError creates a BadRequest error for when a resource
 // is owned by a different repository or manager and cannot be modified
 func NewResourceOwnershipConflictError(resourceName string, currentManager utils.ManagerProperties, requestingManager utils.ManagerProperties) error {
@@ -37,7 +56,9 @@ func NewResourceOwnershipConflictError(resourceName string, currentManager utils
 		requestingManager.Kind,
 		requestingManager.Identity)
 
-	return apierrors.NewBadRequest(message)
+	return &ResourceOwnershipConflictError{
+		Err: apierrors.NewBadRequest(message),
+	}
 }
 
 type WriteOptions struct {
