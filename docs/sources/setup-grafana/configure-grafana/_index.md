@@ -642,6 +642,12 @@ You must also provide the `rudderstack_write_key` to enable this feature.
 Optional.
 If tracking with RudderStack is enabled, you can provide a custom URL to load the RudderStack SDK.
 
+#### `rudderstack_v3_sdk_url`
+
+Optional.
+This is mirroring the old configuration option, which will be deprecated.
+If `rudderstack_sdk_url` and `rudderstack_v3_sdk_url` are both set, the feature toggle `rudderstackUpgrade` will control which one is loaded.
+
 #### `rudderstack_config_url`
 
 Optional.
@@ -661,11 +667,15 @@ If you want to track Grafana usage via Azure Application Insights, then specify 
 
 Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
-<hr />
+#### `application_insights_auto_route_tracking`
+
+Optionally, use this to configure `enableAutoRouteTracking` in Azure Application Insights. Defaults to `true`. For more details, refer to the [Azure documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/app/application-insights-faq#is-there-a-way-to-see-fewer-events-per-transaction-when-i-use-the-application-insights-javascript-sdk)
 
 #### `feedback_links_enabled`
 
 Set to `false` to remove all feedback links from the UI. Default is `true`.
+
+<hr />
 
 ### `[security]`
 
@@ -982,15 +992,6 @@ This option is deprecated - assign your viewers as editors, if you are using RBA
 {{< /admonition >}}
 
 Viewers can access and use [Explore](../../explore/) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
-
-#### `editors_can_admin`
-
-{{< admonition type="note" >}}
-This option is deprecated - assign your editors as admins, if you are using RBAC assign the team creator role to your users.
-{{< /admonition >}}
-
-Editors can administrate dashboards, folders and teams they create.
-Default is `false`.
 
 #### `user_invite_max_lifetime_duration`
 
@@ -1781,6 +1782,13 @@ Specify the frequency of polling for Alertmanager configuration changes. The def
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), for example, 30s or 1m.
 
+#### `alertmanager_max_template_output_bytes`
+
+Maximum size in bytes that the expanded result of any single template expression (e.g. {{ .CommonAnnotations.description }}, {{ .ExternalURL }}, etc.) may reach during notification rendering.
+The limit is checked after template execution for each templated field, but before the value is inserted into the final notification payload sent to the receiver.
+If exceeded, the notification will contain output truncated up to the limit and a warning will be logged.
+The default value is 10,485,760 bytes (10Mb).
+
 #### `ha_redis_address`
 
 Redis server address or addresses. It can be a single Redis address if using Redis standalone,
@@ -1977,6 +1985,12 @@ If a rule frequency is lower than this value, then this value is enforced.
 
 <hr>
 
+#### `rule_version_record_limit`
+
+Defines the limits for how many alert rule versions are stored in the database per alert rule.
+
+The default `0` value means there's no limit.
+
 ### `[unified_alerting.screenshots]`
 
 For more information about screenshots, refer to [Images in notifications](../../alerting/configure-notifications/template-notifications/images-in-notifications/).
@@ -2016,6 +2030,44 @@ For example: `disabled_labels=grafana_folder`
 
 <hr>
 
+### `[unified_alerting.state_history]`
+
+This section configures where Grafana Alerting writes alert state history. Refer to [Configure alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/) for end-to-end setup and examples.
+
+#### `enabled `
+
+Enables recording alert state history. Default is `false`.
+
+#### `backend `
+
+Select the backend used to store alert state history. Supported values: `loki`, `prometheus`, `multiple`.
+
+#### `loki_remote_url `
+
+The URL of the Loki server used when `backend = loki` (or when `backend = multiple` and Loki is a primary/secondary).
+
+#### `prometheus_target_datasource_uid `
+
+Target Prometheus data source UID used for writing alert state changes when `backend = prometheus` (or when `backend = multiple` and Prometheus is a secondary).
+
+#### `prometheus_metric_name `
+
+Optional. Metric name for the alert state metric. Default is `GRAFANA_ALERTS`.
+
+#### `prometheus_write_timeout `
+
+Optional. Timeout for writing alert state data to the target data source. Default is `10s`.
+
+#### `primary `
+
+Used only when `backend = multiple`. Selects the primary backend (for example `loki`).
+
+#### `secondaries `
+
+Used only when `backend = multiple`. Comma-separated list of secondary backends (for example `prometheus`).
+
+<hr>
+
 ### `[unified_alerting.state_history.annotations]`
 
 This section controls retention of annotations automatically created while evaluating alert rules when alerting state history backend is configured to be annotations (see setting [unified_alerting.state_history].backend)
@@ -2037,6 +2089,10 @@ This section applies only to rules imported as Grafana-managed rules. For more i
 #### `rule_query_offset`
 
 Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
+
+#### `default_datasource_uid`
+
+Set the default data source UID to use for query execution when importing Prometheus rules. Grafana uses this default when the `X-Grafana-Alerting-Datasource-UID` header isn't provided during import. If this option isn't set, the header becomes required. The default value is empty.
 
 <hr>
 
@@ -2141,17 +2197,13 @@ Configures settings around the short link feature.
 
 #### `expire_time`
 
-Short links that are never accessed are considered expired or stale and are deleted as cleanup.
+Short links that are never accessed are considered expired or stale and can be deleted as cleanup.
 Set the expiration time in days.
-The default is `7` days.
+The default is `-1` days (never expire).
 The maximum is `365` days.
-A setting above the maximum uses the value `365` instead.
-Setting `0` means the short links are cleaned up approximately every 10 minutes.
-A negative value such as `-1` disables expiry.
 
-{{< admonition type="caution" >}}
-Short links without an expiration increase the size of the database and can't be deleted. Grafana recommends setting a duration based on your specific use case
-{{< /admonition >}}
+A setting above the maximum uses the value `365` instead.
+A negative value such as `-1` disables expiry.
 
 <hr>
 
@@ -2624,6 +2676,15 @@ These will be installed before starting Grafana. Useful when used with provision
 
 This option disables all preinstalled plugins. The default is `false`. To disable a specific plugin from being preinstalled, use the `disable_plugins` option.
 
+#### `preinstall_auto_update`
+
+Enable automatic updates for preinstalled plugins on start-up.
+When enabled, preinstalled plugins without a pinned version are automatically updated to the latest version when Grafana starts.
+
+The default is `true`.
+
+To prevent automatic updates for specific plugins, pin them to a specific version using the format `plugin_id@version` in the `preinstall` setting.
+
 <hr>
 
 ### `[live]`
@@ -2813,9 +2874,11 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 Keys of features to enable, separated by space.
 
-#### `FEATURE_TOGGLE_NAME = false`
+#### `FEATURE_NAME = <value>`
 
-Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
+Use a key-value pair to set feature flag values explicitly, overriding any default values. A few different types are supported, following the OpenFeature specification. See the defaults.ini file for more details.
+
+For example, to disable an on-by-default feature toggle named `exploreMixedDatasource`, specify `exploreMixedDatasource = false`.
 
 <hr>
 

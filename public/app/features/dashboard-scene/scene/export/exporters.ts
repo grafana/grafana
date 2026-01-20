@@ -12,9 +12,9 @@ import {
   LibraryPanelRef,
   LibraryPanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { notifyApp } from 'app/core/actions';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
@@ -128,6 +128,12 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     if (match) {
       varName = match[1] || match[2] || match[4];
       datasourceVariable = variableLookup[varName];
+
+      // if datasource variable is already templated, skip it
+      if (datasourceVariableRefNameMap[varName]) {
+        return;
+      }
+
       if (datasourceVariable && datasourceVariable.current) {
         datasource = datasourceVariable.current.value;
       }
@@ -172,7 +178,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
           };
         }
 
-        // if it panel or query is relying on a datasource variable
+        // if panel or query is relying on a datasource variable
         // skip templating datasource uid but save the reference so we can set datasource variable's current prop
         if (datasourceVariable && varName) {
           datasourceVariableRefNameMap[varName] = '${' + refName + '}';

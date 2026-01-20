@@ -3,13 +3,12 @@ import classNames from 'classnames';
 import { Resizable } from 're-resizable';
 import { PropsWithChildren, useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
@@ -45,8 +44,7 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
-  const headerHeight = headerLevels * getChromeHeaderLevelHeight();
-  const styles = useStyles2(getStyles, headerHeight);
+  const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight());
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
 
@@ -186,13 +184,13 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
   }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
-const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
+const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number) => {
   return {
     content: css({
       label: 'page-content',
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: headerHeight,
+      paddingTop: headerLevels * headerHeight,
       flexGrow: 1,
       height: 'auto',
     }),
@@ -282,7 +280,7 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => {
       position: 'fixed !important' as 'fixed',
       top: headerHeight,
       bottom: 0,
-      zIndex: 2,
+      zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
     }),
   };

@@ -2,6 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -14,17 +16,26 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   CancelActivationHandler,
+  sceneUtils,
 } from '@grafana/scenes';
-import { Box, useStyles2 } from '@grafana/ui';
+import { Box, Button, useStyles2 } from '@grafana/ui';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardControlsButton } from './DashboardControlsMenu';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene } from './DashboardScene';
+import { DrilldownControls } from './DrilldownControls';
 import { VariableControls } from './VariableControls';
+import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
+import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
+import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
+import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
+import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
+import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
@@ -32,7 +43,7 @@ export interface DashboardControlsState extends SceneObjectState {
   hideTimeControls?: boolean;
   hideVariableControls?: boolean;
   hideLinksControls?: boolean;
-  // Hides the dashbaord-controls dropdown menu
+  // Hides the dashboard-controls dropdown menu
   hideDashboardControls?: boolean;
 }
 
@@ -111,19 +122,8 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     }
   }
 
-  // Dashboard controls is a separate dropdown menu at the top-right of the controls
-  public hasDashboardControls(): boolean {
-    const dashboard = getDashboardSceneFor(this);
-    const { links } = dashboard.state;
-    const hasControlMenuVariables = sceneGraph
-      .getVariables(dashboard)
-      ?.state.variables.some((v) => v.state.hide === VariableHide.inControlsMenu);
-    const hasControlMenuLinks = links.some((link) => link.placement === 'inControlsMenu');
-
-    return hasControlMenuVariables || hasControlMenuLinks;
-  }
-
   public hasControls(): boolean {
+    const dashboard = getDashboardSceneFor(this);
     const hasVariables = sceneGraph
       .getVariables(this)
       ?.state.variables.some((v) => v.state.hide !== VariableHide.hideVariable);
@@ -132,7 +132,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const hideLinks = this.state.hideLinksControls || !hasLinks;
     const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
     const hideTimePicker = this.state.hideTimeControls;
-    const hideDashboardControls = this.state.hideDashboardControls || !this.hasDashboardControls();
+    const hideDashboardControls = this.state.hideDashboardControls || !hasDashboardControls(dashboard);
 
     return !(hideVariables && hideLinks && hideTimePicker && hideDashboardControls);
   }
@@ -151,13 +151,65 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = window.location.search.includes('scene-debugger');
+  const hasDashboardControls = useHasDashboardControls(dashboard);
+
+  // Get adhoc and groupby variables for drilldown controls
+  const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
+  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
+  const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
+  const useUnifiedDrilldownUI = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
-
     return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
 
+  // When dashboardAdHocAndGroupByWrapper is enabled, use the new layout with topRow
+  if (useUnifiedDrilldownUI) {
+    return (
+      <div
+        data-testid={selectors.pages.Dashboard.Controls}
+        className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
+      >
+        <div className={styles.topRow}>
+          {config.featureToggles.scopeFilters && !editPanel && (
+            <ContextualNavigationPaneToggle className={styles.contextualNavToggleNewLayout} hideWhenOpen={true} />
+          )}
+          {!hideVariableControls && (
+            <div className={styles.drilldownControlsContainer}>
+              <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} />
+            </div>
+          )}
+          <div className={cx(styles.rightControlsNewLayout, editPanel && styles.rightControlsWrap)}>
+            {!hideTimeControls && (
+              <div className={styles.fixedControlsNewLayout}>
+                <timePicker.Component model={timePicker} />
+                <refreshPicker.Component model={refreshPicker} />
+              </div>
+            )}
+            {config.featureToggles.dashboardNewLayouts && (
+              <div className={styles.fixedControlsNewLayout}>
+                <DashboardControlActions dashboard={dashboard} />
+              </div>
+            )}
+          </div>
+        </div>
+        {!hideVariableControls && (
+          <>
+            <VariableControls dashboard={dashboard} />
+            <DashboardDataLayerControls dashboard={dashboard} />
+          </>
+        )}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+        {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+        {editPanel && <PanelEditControls panelEditor={editPanel} />}
+        {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
+      </div>
+    );
+  }
+
+  // Original layout when feature toggle is off
   return (
     <div
       data-testid={selectors.pages.Dashboard.Controls}
@@ -165,27 +217,66 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     >
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
-          <div className={styles.timeControls}>
+          <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {!hideDashboardControls && model.hasDashboardControls() && (
-          <div className={styles.dashboardControlsButton}>
-            <DashboardControlsButton dashboard={dashboard} />
+        {config.featureToggles.dashboardNewLayouts && (
+          <div className={styles.fixedControls}>
+            <DashboardControlActions dashboard={dashboard} />
           </div>
         )}
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
+      {config.featureToggles.scopeFilters && !editPanel && (
+        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
+      )}
       {!hideVariableControls && (
         <>
           <VariableControls dashboard={dashboard} />
           <DashboardDataLayerControls dashboard={dashboard} />
         </>
       )}
+      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+      {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
+  );
+}
+
+function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
+  const { isEditing, editPanel, uid, meta, editable } = dashboard.useState();
+  const { isPlaying } = playlistSrv.useState();
+
+  if (editPanel) {
+    return null;
+  }
+
+  const canEditDashboard = dashboard.canEditDashboard();
+  const hasUid = Boolean(uid);
+  const isSnapshot = Boolean(meta.isSnapshot);
+  const isEditable = Boolean(editable);
+  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+
+  return (
+    <>
+      {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
+      {isEditing && <SaveDashboard dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && isEditable && <EditDashboardSwitch dashboard={dashboard} />}
+      {!isPlaying && canEditDashboard && !isEditable && !isEditing && (
+        <MakeDashboardEditableButton dashboard={dashboard} />
+      )}
+      {isPlaying && (
+        <Button
+          variant="secondary"
+          onClick={() => playlistSrv.stop()}
+          data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
+        >
+          <Trans i18nKey="dashboard.toolbar.new.playlist-stop">Stop playlist</Trans>
+        </Button>
+      )}
+    </>
   );
 }
 
@@ -206,6 +297,7 @@ function renderHiddenVariables(dashboard: DashboardScene) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    // Original controls style
     controls: css({
       gap: theme.spacing(1),
       padding: theme.spacing(2, 2, 1, 2),
@@ -214,9 +306,14 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
+      display: 'inline-block',
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
+      },
+      '&:hover .dashboard-canvas-add-button': {
+        opacity: 1,
+        filter: 'unset',
       },
     }),
     controlsPanelEdit: css({
@@ -224,26 +321,64 @@ function getStyles(theme: GrafanaTheme2) {
       // In panel edit we do not need any right padding as the splitter is providing it
       paddingRight: 0,
     }),
+    // New layout styles (used when feature toggle is on)
+    topRow: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: theme.spacing(1),
+      width: '100%',
+      marginBottom: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: {
+        flexWrap: 'wrap',
+      },
+    }),
+    drilldownControlsContainer: css({
+      flex: 1,
+      minWidth: 0,
+      display: 'flex',
+      [theme.breakpoints.down('sm')]: {
+        order: 1, // Move below the time controls
+        flex: '1 1 100%', // Take full width to force new line
+      },
+    }),
     embedded: css({
       background: 'unset',
       position: 'unset',
     }),
+    // Original rightControls style
     rightControls: css({
       display: 'flex',
       gap: theme.spacing(1),
       float: 'right',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       flexWrap: 'wrap',
       maxWidth: '100%',
       minWidth: 0,
     }),
-    timeControls: css({
+    // Modified rightControls for new layout
+    rightControlsNewLayout: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      alignItems: 'flex-start',
+      flexWrap: 'wrap',
+      flexShrink: 0,
+    }),
+    // Original fixedControls style
+    fixedControls: css({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
       order: 2,
       marginLeft: 'auto',
+      flexShrink: 0,
+      alignSelf: 'flex-start',
+    }),
+    // Fixed controls for new layout (no margin/order)
+    fixedControlsNewLayout: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: theme.spacing(1),
       flexShrink: 0,
       alignSelf: 'flex-start',
     }),
@@ -254,6 +389,14 @@ function getStyles(theme: GrafanaTheme2) {
     rightControlsWrap: css({
       flexWrap: 'wrap',
       marginLeft: 'auto',
+    }),
+    contextualNavToggle: css({
+      display: 'inline-flex',
+      margin: theme.spacing(0, 1, 1, 0),
+    }),
+    contextualNavToggleNewLayout: css({
+      display: 'inline-flex',
+      flexShrink: 0,
     }),
   };
 }

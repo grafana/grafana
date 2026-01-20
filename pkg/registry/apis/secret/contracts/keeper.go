@@ -9,7 +9,15 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+const (
+	// This constant can be used as a key in resource tags
+	GrafanaSecretsManagerName = "grafana-secrets-manager"
+)
+
 var (
+	// The name used to refer to the system keeper
+	SystemKeeperName = "system"
+
 	ErrKeeperNotFound      = errors.New("keeper not found")
 	ErrKeeperAlreadyExists = errors.New("keeper already exists")
 )
@@ -21,7 +29,9 @@ type KeeperMetadataStorage interface {
 	Update(ctx context.Context, keeper *secretv1beta1.Keeper, actorUID string) (*secretv1beta1.Keeper, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
 	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.Keeper, error)
-	GetKeeperConfig(ctx context.Context, namespace string, name *string, opts ReadOpts) (secretv1beta1.KeeperConfig, error)
+	GetKeeperConfig(ctx context.Context, namespace string, name string, opts ReadOpts) (secretv1beta1.KeeperConfig, error)
+	SetAsActive(ctx context.Context, namespace xkube.Namespace, name string) error
+	GetActiveKeeperConfig(ctx context.Context, namespace string) (string, secretv1beta1.KeeperConfig, error)
 }
 
 // ErrKeeperInvalidSecureValues is returned when a Keeper references SecureValues that do not exist.
@@ -97,8 +107,8 @@ func (s ExternalID) String() string {
 // Keeper is the interface for secret keepers.
 type Keeper interface {
 	Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (ExternalID, error)
-	Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) error
 	Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error)
+	RetrieveReference(ctx context.Context, cfg secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error)
 	Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error
 }
 

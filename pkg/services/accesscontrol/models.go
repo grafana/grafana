@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -73,11 +74,17 @@ func (r Role) MarshalJSON() ([]byte, error) {
 
 // swagger:ignore
 type RoleDTO struct {
-	Version     int64        `json:"version"`
-	UID         string       `xorm:"uid" json:"uid"`
-	Name        string       `json:"name"`
-	DisplayName string       `json:"displayName,omitempty"`
-	Description string       `json:"description"`
+	// required:true
+	Version int64 `json:"version"`
+	// required:true
+	UID string `xorm:"uid" json:"uid"`
+	// required:true
+	Name string `json:"name"`
+	// required:true
+	DisplayName string `json:"displayName,omitempty"`
+	// required:true
+	Description string `json:"description"`
+	// required:true
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
 	Delegatable *bool        `json:"delegatable,omitempty"`
@@ -87,7 +94,9 @@ type RoleDTO struct {
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
 	OrgID int64 `json:"-" xorm:"org_id"`
 
+	// required:true
 	Updated time.Time `json:"updated"`
+	// required:true
 	Created time.Time `json:"created"`
 }
 
@@ -193,7 +202,7 @@ type BuiltinRole struct {
 	Created time.Time
 }
 
-// Permission is the model for access control permissions.
+// Permission is the model for access control permissions
 type Permission struct {
 	ID     int64  `json:"-" xorm:"pk autoincr 'id'"`
 	RoleID int64  `json:"-" xorm:"role_id"`
@@ -439,6 +448,7 @@ const (
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
 	ActionAlertingNotificationsTemplatesWrite  = "alert.notifications.templates:write"
 	ActionAlertingNotificationsTemplatesDelete = "alert.notifications.templates:delete"
+	ActionAlertingNotificationsTemplatesTest   = "alert.notifications.templates.test:write"
 
 	// Alerting notifications time interval actions
 	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"
@@ -584,4 +594,19 @@ var OrgsCreateAccessEvaluator = EvalAll(
 type QueryWithOrg struct {
 	OrgId  *int64 `json:"orgId"`
 	Global bool   `json:"global"`
+}
+
+type SeedPermission struct {
+	BuiltInRole string `xorm:"builtin_role"`
+	Action      string `xorm:"action"`
+	Scope       string `xorm:"scope"`
+	Origin      string `xorm:"origin"`
+}
+
+type RoleStore interface {
+	LoadRoles(ctx context.Context) (map[string]*RoleDTO, error)
+	SetRole(ctx context.Context, existingRole *RoleDTO, wantedRole RoleDTO) error
+	SetPermissions(ctx context.Context, existingRole *RoleDTO, wantedRole RoleDTO) error
+	CreateRole(ctx context.Context, role RoleDTO) error
+	DeleteRoles(ctx context.Context, roleUIDs []string) error
 }

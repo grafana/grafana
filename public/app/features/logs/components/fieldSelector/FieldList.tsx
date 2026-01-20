@@ -46,7 +46,7 @@ export const FieldList = ({ activeFields, clear, fields, reorder, suggestedField
 function getStyles(theme: GrafanaTheme2) {
   return {
     sidebarWrap: css({
-      overflowY: 'scroll',
+      overflowY: 'auto',
       flex: 1,
       scrollbarWidth: 'thin',
     }),

@@ -675,10 +675,12 @@ export function applySort(
 /**
  * @internal
  */
-export const frameToRecords = (frame: DataFrame): TableRow[] => {
+export const frameToRecords = (frame: DataFrame, nestedFramesFieldName?: string): TableRow[] => {
   const fnBody = `
     const rows = Array(frame.length);
     const values = frame.fields.map(f => f.values);
+    const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+
     let rowCount = 0;
     for (let i = 0; i < frame.length; i++) {
       rows[rowCount] = {
@@ -686,11 +688,14 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
         __index: i,
         ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
       };
-      rowCount += 1;
-      if (rows[rowCount-1]['__nestedFrames']){
-        const childFrame = rows[rowCount-1]['__nestedFrames'];
-        rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
-        rowCount += 1;
+      rowCount++;
+
+      if (hasNestedFrames) {
+        const childFrame = rows[rowCount-1][${JSON.stringify(nestedFramesFieldName)}];
+        if (childFrame){
+          rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
+          rowCount++;
+        }
       }
     }
     return rows;
@@ -698,8 +703,9 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
-  const convert = new Function('frame', fnBody) as FrameToRowsConverter;
-  return convert(frame);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const convert = new Function('frame', 'nestedFramesFieldName', fnBody) as FrameToRowsConverter;
+  return convert(frame, nestedFramesFieldName);
 };
 
 /* ----------------------------- Data grid comparator ---------------------------- */
@@ -1102,12 +1108,18 @@ export function parseStyleJson(rawValue: unknown): CSSProperties | void {
   }
 }
 
-// Safari 26 introduced rendering bugs which require us to disable several features of the table.
+// Safari 26.0 introduced rendering bugs which require us to disable several features of the table.
+// The bugs were later fixed in Safari 26.2.
 export const IS_SAFARI_26 = (() => {
   if (navigator == null) {
     return false;
   }
   const userAgent = navigator.userAgent;
-  const safariVersionMatch = userAgent.match(/Version\/(\d+)\./);
-  return safariVersionMatch && parseInt(safariVersionMatch[1], 10) === 26;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
+  if (!safariVersionMatch) {
+    return false;
+  }
+  const majorVersion = +safariVersionMatch[1];
+  const minorVersion = +safariVersionMatch[2];
+  return majorVersion === 26 && minorVersion <= 1;
 })();

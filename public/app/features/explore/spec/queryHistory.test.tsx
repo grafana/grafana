@@ -1,9 +1,8 @@
 import { Props } from 'react-virtualized-auto-sizer';
 
-import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv, serializeStateToUrlParam, store } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import store from 'app/core/store';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import * as localStorage from '../../../core/history/RichHistoryLocalStorage';
@@ -50,7 +49,7 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: () => true,
     isSignedIn: true,

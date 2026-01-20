@@ -14,14 +14,20 @@
         "type": "dashboard"
       },
       {
-        "datasource": "prometheus",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "enable": true,
         "iconColor": "red",
         "name": "deployment",
         "query": "ALERTS{alertname=\"DeploymentStarted\"}"
       },
       {
-        "datasource": "loki",
+        "datasource": {
+          "type": "loki",
+          "uid": "loki-uid"
+        },
         "enable": false,
         "iconColor": "yellow",
         "name": "alerts",
@@ -79,6 +85,7 @@
       {
         "name": "environment",
         "options": [],
+        "query": "label_values(up, instance)",
         "type": "query"
       },
       {
@@ -86,6 +93,7 @@
         "datasource": "prometheus",
         "name": "service",
         "options": [],
+        "query": "label_values(up, instance)",
         "type": "query"
       },
       {

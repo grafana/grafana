@@ -11,6 +11,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { TabItem } from './TabItem';
 
@@ -29,7 +30,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const href = textUtil.sanitize(locationUtil.getUrlForPartial(location, { [urlKey]: mySlug }));
   const styles = useStyles2(getStyles);
   const pointerDistance = usePointerDistance();
-  const [isConditionallyHidden] = useIsConditionallyHidden(model);
+  const [isConditionallyHidden] = useIsConditionallyHidden(model.state.conditionalRendering);
   const isClone = isRepeatCloneOrChildOf(model);
   const soloPanelContext = useSoloPanelContext();
 
@@ -56,7 +57,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
         <div
-          ref={(ref) => dragProvided.innerRef(ref)}
+          ref={(ref) => {
+            dragProvided.innerRef(ref);
+          }}
           className={cx(dragSnapshot.isDragging && styles.dragging)}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
@@ -89,7 +92,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               onSelect?.(evt);
             }}
             label={titleInterpolated}
-            data-dashboard-drop-target-key={model.state.key}
+            data-tab-activation-key={key}
             {...titleCollisionProps}
           />
         </div>
@@ -116,12 +119,14 @@ interface TabItemLayoutRendererProps {
 export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererProps) {
   const { layout, key } = tab.useState();
   const styles = useStyles2(getStyles);
-  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(tab);
+  const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
+    tab.state.conditionalRendering
+  );
 
   return (
     <TabContent
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
-      data-dashboard-drop-target-key={key}
+      {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}

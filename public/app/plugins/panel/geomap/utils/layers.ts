@@ -26,7 +26,13 @@ export const applyLayerFilter = (
     let panelData = panelDataProps;
     if (options.filterData) {
       const matcherFunc = getFrameMatchers(options.filterData);
-      if (panelData.series.some(matcherFunc)) {
+
+      const queryExists = panelData.request?.targets.some((target) => {
+        return target.refId === options.filterData?.options;
+      });
+
+      // Only apply filter if the target query exists
+      if (queryExists) {
         panelData = {
           ...panelData,
           series: panelData.series.filter(matcherFunc),

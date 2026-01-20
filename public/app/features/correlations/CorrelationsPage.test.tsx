@@ -17,13 +17,13 @@ import {
   setAppEvents,
   setDataSourceSrv,
 } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockDataSource } from '../alerting/unified/mocks';
 
-import CorrelationsPage from './CorrelationsPage';
+import { CorrelationsPageLegacy } from './CorrelationsPageWrapper';
 import {
   createCreateCorrelationResponse,
   createFetchCorrelationsError,
@@ -112,7 +112,7 @@ const renderWithContext = async (
 
   const renderResult = render(
     <TestProvider store={configureStore({})} grafanaContext={grafanaContext}>
-      <CorrelationsPage />
+      <CorrelationsPageLegacy />
     </TestProvider>,
     {
       queries: {

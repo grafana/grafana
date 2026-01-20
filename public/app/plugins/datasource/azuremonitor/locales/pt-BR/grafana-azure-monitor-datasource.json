@@ -17,7 +17,7 @@
       "label-subscription": "Assinatura",
       "placeholder-resource-name": "nome",
       "tooltip-region": "A região de código do recurso. Opcional para um recurso, mas obrigatório ao selecionar vários.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Edite o <2>URI do recurso</2> manualmente. Compatível com o uso de múltiplas variáveis de modelo (por exemplo: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Função de agregação",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Logs básicos",
-      "description-basic-logs": "",
+      "description-basic-logs": "A ativação deste recurso incorre em custos por consulta do Azure Monitor em painéis que consultam tabelas configuradas para <2>logs básicos</2>.",
       "label-enable-basic-logs": "Ativar logs básicos"
     },
     "config-editor": {
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Botão de iniciar consulta de logs do Azure",
       "body-switching-to-builder": "Mudar para o construtor descartará sua consulta KQL atual e limpará o editor KQL. Tem certeza de que deseja continuar?",
-      "body-switching-to-kql": "Mudar para o KQL descartará suas configurações atuais do construtor. Tem certeza de que deseja continuar?",
       "button-kick-start-your-query": "Iniciar sua consulta",
       "button-run-query": "Executar consulta",
       "confirmText-switch-to": "Alternar para {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Coluna de tempo",
       "label-time-range": "Intervalo de tempo",
       "tooltip-time-column": "<0>Especifica a coluna de tempo usada para filtragem. Define como padrão a primeira coluna <1>timeSpan</1> da tabela, a primeira coluna <3>datetime</3> encontrada ou <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Especifica o intervalo de tempo usado para realizar a consulta. A opção <1>Consulta</1> usará apenas os intervalos de tempo especificados na consulta. O <3>painel</3> usará apenas o intervalo de tempo do Grafana. No modo de criador de logs, apenas o tempo do painel será usado.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Topo"

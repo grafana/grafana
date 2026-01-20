@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -26,6 +27,10 @@ func (nc *NoopClient) Compile(ctx context.Context, id authlib.AuthInfo, req auth
 	return nil, authlib.NoopZookie{}, nil
 }
 
+func (nc *NoopClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+}
+
 func (nc NoopClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
@@ -34,10 +39,10 @@ func (nc NoopClient) Write(ctx context.Context, req *authzextv1.WriteRequest) er
 	return nil
 }
 
-func (nc NoopClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return nil, nil
-}
-
 func (nc NoopClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
 	return nil
+}
+
+func (nc NoopClient) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
+	return nil, nil
 }

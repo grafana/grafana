@@ -187,12 +187,12 @@ jobs:
           output: artifacts-${{ matrix.name }}.txt
           verify: ${{ matrix.verify }}
           build-id: ${{ github.run_id }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-list-${{ matrix.name }}
           path: ${{ steps.build.outputs.file }}
           retention-days: 1
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: artifacts-${{ matrix.name }}
           path: ${{ steps.build.outputs.dist-dir }}

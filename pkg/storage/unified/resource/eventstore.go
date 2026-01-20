@@ -32,6 +32,7 @@ type EventKey struct {
 	ResourceVersion int64
 	Action          DataAction
 	Folder          string
+	GUID            string
 }
 
 func (k EventKey) String() string {
@@ -51,8 +52,10 @@ func (k EventKey) Validate() error {
 
 	// Validate each field against the naming rules
 	// Validate naming conventions for all required fields
-	if err := validation.IsValidNamespace(k.Namespace); err != nil {
-		return NewValidationError("namespace", k.Namespace, err[0])
+	if k.Namespace != clusterScopeNamespace {
+		if err := validation.IsValidNamespace(k.Namespace); err != nil {
+			return NewValidationError("namespace", k.Namespace, err[0])
+		}
 	}
 	if err := validation.IsValidGroup(k.Group); err != nil {
 		return NewValidationError("group", k.Group, err[0])
@@ -181,9 +184,9 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 }
 
 // ListSince returns a sequence of events since the given resource version.
-func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64) iter.Seq2[string, error] {
+func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder SortOrder) iter.Seq2[string, error] {
 	opts := ListOptions{
-		Sort:     SortOrderAsc,
+		Sort:     sortOrder,
 		StartKey: fmt.Sprintf("%d", sinceRV),
 	}
 	return func(yield func(string, error) bool) {
@@ -199,9 +202,9 @@ func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64) iter.Seq2
 	}
 }
 
-func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Event, error] {
+func (n *eventStore) ListSince(ctx context.Context, sinceRV int64, sortOrder SortOrder) iter.Seq2[Event, error] {
 	return func(yield func(Event, error) bool) {
-		for evtKey, err := range n.ListKeysSince(ctx, sinceRV) {
+		for evtKey, err := range n.ListKeysSince(ctx, sinceRV, sortOrder) {
 			if err != nil {
 				yield(Event{}, err)
 				return

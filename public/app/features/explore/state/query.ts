@@ -22,6 +22,7 @@ import {
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -36,7 +37,7 @@ import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
+import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
   ExploreItemState,
@@ -48,7 +49,6 @@ import {
 } from 'app/types/explore';
 import { createAsyncThunk, StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
-import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';

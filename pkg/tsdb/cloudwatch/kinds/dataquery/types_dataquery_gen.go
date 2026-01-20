@@ -304,7 +304,7 @@ const (
 type CloudWatchLogsQuery struct {
 	// Whether a query is a Metrics, Logs, or Annotations query
 	QueryMode CloudWatchQueryMode `json:"queryMode"`
-	// Whether a query is a Logs Insights or Logs Anomalies query
+	// Whether a query is a Logs Insights or Log Anomalies query
 	LogsMode *LogsMode `json:"logsMode,omitempty"`
 	Id       string    `json:"id"`
 	// AWS region to query for the logs
@@ -356,14 +356,14 @@ func NewLogGroup() *LogGroup {
 	return &LogGroup{}
 }
 
-// Shape of a Cloudwatch Logs Anomalies query
+// Shape of a Cloudwatch Log Anomalies query
 type CloudWatchLogsAnomaliesQuery struct {
 	Id string `json:"id"`
 	// AWS region to query for the logs
 	Region string `json:"region"`
 	// Whether a query is a Metrics, Logs or Annotations query
 	QueryMode *CloudWatchQueryMode `json:"queryMode,omitempty"`
-	// Whether a query is a Logs Insights or Logs Anomalies query
+	// Whether a query is a Logs Insights or Log Anomalies query
 	LogsMode *LogsMode `json:"logsMode,omitempty"`
 	// Filter to return only anomalies that are 'SUPPRESSED', 'UNSUPPRESSED', or 'ALL' (default)
 	SuppressionState *string `json:"suppressionState,omitempty"`

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -57,6 +58,7 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewFolderResourceTuple("user:5", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "1"),
 		common.NewFolderTuple("user:6", common.RelationGet, "1"),
 		common.NewGroupResourceTuple("user:7", common.RelationGet, folderGroup, folderResource, ""),
+		// folder-4 -> folder-5 -> folder-6
 		common.NewFolderParentTuple("5", "4"),
 		common.NewFolderParentTuple("6", "5"),
 		common.NewFolderResourceTuple("user:8", common.RelationSetEdit, dashboardGroup, dashboardResource, "", "5"),
@@ -69,6 +71,9 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewTypedResourceTuple("user:14", common.RelationGet, common.TypeTeam, teamGroup, teamResource, statusSubresource, "1"),
 		common.NewTypedResourceTuple("user:15", common.RelationGet, common.TypeUser, userGroup, userResource, statusSubresource, "1"),
 		common.NewTypedResourceTuple("user:16", common.RelationGet, common.TypeServiceAccount, serviceAccountGroup, serviceAccountResource, statusSubresource, "1"),
+		common.NewFolderTuple("user:17", common.RelationSetView, "4"),
+		common.NewFolderTuple("user:18", common.RelationCreate, "general"),
+		common.NewFolderResourceTuple("user:18", common.RelationCreate, dashboardGroup, dashboardResource, "", "general"),
 	}
 
 	return setupOpenFGADatabase(t, srv, tuples)
@@ -112,11 +117,6 @@ func TestIntegrationServer(t *testing.T) {
 		srv.cfg.UseStreamedListObjects = false
 	})
 
-	t.Run("test batch check", func(t *testing.T) {
-		setup(t, srv)
-		testBatchCheck(t, srv)
-	})
-
 	t.Run("test mutate", func(t *testing.T) {
 		testMutate(t, srv)
 	})
@@ -127,6 +127,26 @@ func TestIntegrationServer(t *testing.T) {
 
 	t.Run("test mutate resource permissions", func(t *testing.T) {
 		testMutateResourcePermissions(t, srv)
+	})
+
+	t.Run("test mutate org roles", func(t *testing.T) {
+		testMutateOrgRoles(t, srv)
+	})
+
+	t.Run("test query folders", func(t *testing.T) {
+		testQueryFolders(t, srv)
+	})
+
+	t.Run("test mutate role bindings", func(t *testing.T) {
+		testMutateRoleBindings(t, srv)
+	})
+
+	t.Run("test mutate team bindings", func(t *testing.T) {
+		testMutateTeamBindings(t, srv)
+	})
+
+	t.Run("test mutate roles", func(t *testing.T) {
+		testMutateRoles(t, srv)
 	})
 }
 
@@ -194,11 +214,21 @@ func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKe
 }
 
 func newContextWithNamespace() context.Context {
+	return newContextWithNamespaceAndPermissions()
+}
+
+func newContextWithNamespaceAndPermissions(perms ...string) context.Context {
 	ctx := context.Background()
 	ctx = claims.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 		Rest: authnlib.AccessTokenClaims{
-			Namespace: "*",
+			Namespace:            "*",
+			Permissions:          perms,
+			DelegatedPermissions: perms,
 		},
 	}))
 	return ctx
+}
+
+func newContextWithZanzanaUpdatePermission() context.Context {
+	return newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUpdate)
 }

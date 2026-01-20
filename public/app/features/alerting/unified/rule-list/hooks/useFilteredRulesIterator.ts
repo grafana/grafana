@@ -16,16 +16,16 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { RuleSource, RulesFilter } from '../../search/rulesSearchParser';
-import {
-  getDataSourceByUid,
-  getDatasourceAPIUid,
-  getExternalRulesSources,
-  isSupportedExternalRulesSourceType,
-} from '../../utils/datasource';
+import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
-import { groupFilter, ruleFilter } from './filters';
-import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
+import { getDatasourceFilter } from './datasourceFilter';
+import { getGrafanaFilter } from './grafanaFilter';
+import {
+  FetchGroupsLimitOptions,
+  useGrafanaGroupsGenerator,
+  usePrometheusGroupsGenerator,
+} from './prometheusGroupsGenerator';
 
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
 
@@ -68,56 +68,54 @@ interface GetIteratorResult {
 }
 
 export function useFilteredRulesIteratorProvider() {
-  const allExternalRulesSources = getExternalRulesSources();
-
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
 
-  const getFilteredRulesIterable = (filterState: RulesFilter, groupLimit: number): GetIteratorResult => {
+  const getFilteredRulesIterable = (filterState: RulesFilter, options: FetchGroupsLimitOptions): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */
     const abortController = new AbortController();
 
-    const normalizedFilterState = normalizeFilterState(filterState);
-    const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
+    const { backendFilter, frontendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(filterState);
+
+    // Short-circuit: if all provided data source names are invalid, return empty results (no rules can match).
+    if (hasInvalidDataSourceNames) {
+      return { iterable: empty(), abortController };
+    }
 
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
-      grafanaGroupsGenerator(groupLimit, {
-        contactPoint: filterState.contactPoint ?? undefined,
-        health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
-        state: filterState.ruleState ? [filterState.ruleState] : [],
-      })
+      grafanaGroupsGenerator(options.grafanaManagedLimit, backendFilter)
     ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
         groups
-          .filter((group) => groupFilter(group, normalizedFilterState))
+          .filter((group) => frontendFilter.groupMatches(group))
           .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-          .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+          .filter(({ rule }) => frontendFilter.ruleMatches(rule))
           .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
       catchError(() => empty())
     );
 
     // Determine which data sources to use
-    const externalRulesSourcesToFetchFrom = hasDataSourceFilterActive
-      ? getRulesSourcesFromFilter(filterState)
-      : allExternalRulesSources;
+    const externalRulesSourcesToFetchFrom = getRulesSourcesFromFilter(filterState);
 
     if (filterState.ruleSource === RuleSource.Grafana) {
       return { iterable: grafanaRulesGenerator, abortController };
     }
 
+    const { groupMatches, ruleMatches } = getDatasourceFilter(filterState);
+
     const dataSourceGenerators: Array<AsyncIterableX<RuleWithOrigin>> = externalRulesSourcesToFetchFrom.map(
       (dataSourceIdentifier) => {
         const promGroupsGenerator: AsyncIterableX<RuleWithOrigin> = from(
-          prometheusGroupsGenerator(dataSourceIdentifier, groupLimit)
+          prometheusGroupsGenerator(dataSourceIdentifier, options.datasourceManagedLimit.groupLimit)
         ).pipe(
           withAbort(abortController.signal),
           concatMap((groups) =>
             groups
-              .filter((group) => groupFilter(group, normalizedFilterState))
+              .filter((group) => groupMatches(group))
               .flatMap((group) => group.rules.map((rule, index) => ({ group, rule, index })))
-              .filter(({ rule }) => ruleFilter(rule, normalizedFilterState))
+              .filter(({ rule }) => ruleMatches(rule))
               .map(({ group, rule, index }) => mapRuleToRuleWithOrigin(dataSourceIdentifier, group, rule, index))
           ),
           catchError(() => empty())
@@ -157,15 +155,24 @@ function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): Async
 /**
  * Finds all data sources that the user might want to filter by.
  * Only allows Prometheus and Loki data source types.
+ * Returns all external rules sources if no filter is provided.
  */
 function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceIdentifier[] {
+  const allExternalSources = getExternalRulesSources();
+
+  // If no filter is provided, return all external sources
+  if (filter.dataSourceNames.length === 0) {
+    return allExternalSources;
+  }
+
   return filter.dataSourceNames.reduce<DataSourceRulesSourceIdentifier[]>((acc, dataSourceName) => {
     // since "getDatasourceAPIUid" can throw we'll omit any non-existing data sources
     try {
       const uid = getDatasourceAPIUid(dataSourceName);
-      const type = getDataSourceByUid(uid)?.type;
 
-      if (type === undefined || isSupportedExternalRulesSourceType(type) === false) {
+      // Only include data sources that exist in allExternalRulesSources
+      const existsInExternalSources = allExternalSources.some((source) => source.uid === uid);
+      if (!existsInExternalSources) {
         return acc;
       }
 
@@ -212,18 +219,5 @@ function mapGrafanaRuleToRuleWithOrigin(
     },
     namespaceName: group.file,
     origin: 'grafana',
-  };
-}
-
-/**
- * Lowercase free form words, rule name, group name and namespace
- */
-function normalizeFilterState(filterState: RulesFilter): RulesFilter {
-  return {
-    ...filterState,
-    freeFormWords: filterState.freeFormWords.map((word) => word.toLowerCase()),
-    ruleName: filterState.ruleName?.toLowerCase(),
-    groupName: filterState.groupName?.toLowerCase(),
-    namespace: filterState.namespace?.toLowerCase(),
   };
 }

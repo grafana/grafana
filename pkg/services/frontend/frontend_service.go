@@ -22,6 +22,7 @@ import (
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -163,6 +164,11 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	// GET because all POST requests are passed to the backend, even though POST is more correct. The frontend
 	// uses cache busting to ensure requests aren't cached.
 	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
+
+	s.routeGet(m, "/public-dashboards/:accessToken",
+		publicdashboardsapi.SetPublicDashboardAccessToken,
+		s.index.HandleRequest,
+	)
 
 	// All other requests return index.html
 	s.routeGet(m, "/*", s.index.HandleRequest)

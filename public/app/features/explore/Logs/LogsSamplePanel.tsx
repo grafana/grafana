@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useRef } from 'react';
+import { useRef, type JSX } from 'react';
 
 import {
   CoreApp,
@@ -10,6 +10,7 @@ import {
   LoadingState,
   LogsDedupStrategy,
   SplitOpen,
+  store,
   SupplementaryQueryType,
   TimeRange,
 } from '@grafana/data';
@@ -17,7 +18,6 @@ import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import store from 'app/core/store';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 
 import { LogRows } from '../../logs/components/LogRows';

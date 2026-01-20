@@ -30,9 +30,8 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.AppURL,
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		config.Features{
-			SkipHostEnvVarsEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
-			SriChecksEnabled:       features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
-			TempoAlertingEnabled:   features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
+			SriChecksEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
+			TempoAlertingEnabled: features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
 		},
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
@@ -49,7 +48,7 @@ type PluginInstanceCfg struct {
 
 	Tracing config.Tracing
 
-	PluginSettings setting.PluginSettings
+	PluginSettings config.PluginSettings
 
 	AWSAllowedAuthProviders   []string
 	AWSAssumeRoleEnabled      bool
@@ -128,8 +127,8 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 	}, nil
 }
 
-func extractPluginSettings(settingProvider setting.Provider) setting.PluginSettings {
-	ps := setting.PluginSettings{}
+func extractPluginSettings(settingProvider setting.Provider) config.PluginSettings {
+	ps := config.PluginSettings{}
 	for sectionName, sectionCopy := range settingProvider.Current() {
 		if !strings.HasPrefix(sectionName, "plugin.") {
 			continue

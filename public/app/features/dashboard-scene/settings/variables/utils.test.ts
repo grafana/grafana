@@ -93,7 +93,7 @@ describe('isEditableVariableType', () => {
   });
 
   it('should return false for non-editable variable types', () => {
-    const nonEditableTypes: VariableType[] = ['system'];
+    const nonEditableTypes: VariableType[] = ['system', 'snapshot'];
     nonEditableTypes.forEach((type) => {
       expect(isEditableVariableType(type)).toBe(false);
     });

@@ -4,7 +4,7 @@ import { ComponentProps } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
@@ -32,6 +32,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
   onRestoreError,
 }: ModalProps) => {
   const [restoreMethod, { error }] = useRestoreDeletedRule();
+  const { data: folder } = useGetFolderQueryFacade(ruleToRestore?.grafana_alert.namespace_uid);
 
   const title = t('alerting.deleted-rules.restore-modal.title', 'Restore deleted alert rule');
   const errorTitle = t('alerting.deleted-rules.restore-modal.error', 'Could not restore deleted alert rule');
@@ -60,7 +61,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
     if (!ruleToRestore) {
       return;
     }
-    await redirectToRestoreForm(ruleToRestore);
+    await redirectToRestoreForm(ruleToRestore, folder?.title ?? '');
   }
 
   return (
@@ -141,11 +142,8 @@ export function useRestoreDeletedRule() {
   });
 }
 
-const redirectToRestoreForm = async (ruleToRecover: RulerGrafanaRuleDTO) => {
+const redirectToRestoreForm = async (ruleToRecover: RulerGrafanaRuleDTO, namespaceName: string) => {
   let formValues: Partial<RuleFormValues> | undefined;
-  const namespaceName = await backendSrv
-    .getFolderByUid(ruleToRecover.grafana_alert.namespace_uid)
-    .then((folder) => folder.title);
 
   try {
     formValues = grafanaRuleDtoToFormValues(ruleToRecover, namespaceName);

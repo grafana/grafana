@@ -13,6 +13,7 @@ import { AlertStateTag } from '../AlertStateTag';
 
 import { ErrorMessageRow } from './ErrorMessageRow';
 import { LogRecord, omitLabels } from './common';
+import { formatNumericValue } from './numberFormatter';
 
 type LogRecordViewerProps = {
   records: LogRecord[];
@@ -182,7 +183,7 @@ const AlertInstanceValues = memo(({ record }: { record: Record<string, number> }
   return (
     <>
       {values.map(([key, value]) => (
-        <AlertLabel key={key} labelKey={key} value={String(value)} />
+        <AlertLabel key={key} labelKey={key} value={formatNumericValue(value)} />
       ))}
     </>
   );

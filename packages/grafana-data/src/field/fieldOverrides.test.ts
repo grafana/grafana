@@ -9,6 +9,7 @@ import { FieldColorModeId } from '../types/fieldColor';
 import { FieldConfigPropertyItem, FieldConfigSource } from '../types/fieldOverrides';
 import { InterpolateFunction } from '../types/panel';
 import { ThresholdsMode } from '../types/thresholds';
+import { MappingType } from '../types/valueMapping';
 import { Registry } from '../utils/Registry';
 import { locationUtil } from '../utils/location';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
@@ -253,7 +254,7 @@ describe('applyFieldOverrides', () => {
       ],
     });
 
-    it('will apply field overrides to the fields within the frame', () => {
+    it('will apply default field overrides to the fields within the frame', () => {
       const f0 = createDataFrame({
         name: 'A',
         fields: [
@@ -283,6 +284,41 @@ describe('applyFieldOverrides', () => {
       });
 
       expect(withOverrides[0].fields[1].values[0].fields[1].state.range.max).toBe(30);
+    });
+
+    it('will apply targeted field overrides to the fields within the frame', () => {
+      const f0 = createDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['foo'],
+          },
+          {
+            name: 'frame',
+            type: FieldType.frame,
+            values: [f0Internal],
+          },
+        ],
+      });
+      const withOverrides = applyFieldOverrides({
+        data: [f0],
+        fieldConfig: {
+          defaults: {},
+          overrides: [
+            {
+              matcher: { id: FieldMatcherID.byName, options: 'frame' },
+              properties: [{ id: 'max', value: 30 }],
+            },
+          ],
+        },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: customFieldRegistry,
+      });
+
+      expect(withOverrides[0].fields[1].values[0].fields[1].config.max).toBe(30);
     });
 
     it('will not crash when some of the nested frames are undefined', () => {
@@ -963,6 +999,45 @@ describe('setDynamicConfigValue', () => {
 
     expect(config.custom.property3).toEqual({});
     expect(config.displayName).toBeUndefined();
+  });
+
+  it('works correctly with multiple value mappings in the same override', () => {
+    const config: FieldConfig = {
+      mappings: [{ type: MappingType.ValueToText, options: { existing: { text: 'existing' } } }],
+    };
+
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'mappings',
+        value: [{ type: MappingType.ValueToText, options: { first: { text: 'first' } } }],
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [],
+        field: { type: FieldType.number } as Field,
+        dataFrameIndex: 0,
+      }
+    );
+
+    setDynamicConfigValue(
+      config,
+      {
+        id: 'mappings',
+        value: [{ type: MappingType.ValueToText, options: { second: { text: 'second' } } }],
+      },
+      {
+        fieldConfigRegistry: customFieldRegistry,
+        data: [],
+        field: { type: FieldType.number } as Field,
+        dataFrameIndex: 0,
+      }
+    );
+
+    expect(config.mappings).toHaveLength(3);
+    expect(config.mappings![0]).toEqual({ type: MappingType.ValueToText, options: { existing: { text: 'existing' } } });
+    expect(config.mappings![1]).toEqual({ type: MappingType.ValueToText, options: { first: { text: 'first' } } });
+    expect(config.mappings![2]).toEqual({ type: MappingType.ValueToText, options: { second: { text: 'second' } } });
   });
 });
 

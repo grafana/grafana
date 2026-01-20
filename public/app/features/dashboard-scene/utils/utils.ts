@@ -1,4 +1,4 @@
-import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { DataSourceRef, getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -24,6 +24,8 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
+import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -95,6 +97,7 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
 
   return null;
 }
+
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {
     return null;
@@ -149,7 +152,11 @@ export function getMultiVariableValues(variable: MultiValueVariable | CustomVari
 }
 
 // used to transform old interval model to new interval model from scenes
-export function getIntervalsFromQueryString(query: string): string[] {
+export function getIntervalsFromQueryString(query: string | undefined): string[] {
+  if (!query) {
+    return initialIntervalVariableModelState.query?.split(',') ?? [];
+  }
+
   // separate intervals by quotes either single or double
   const matchIntervals = query.match(/(["'])(.*?)\1|\w+/g);
 
@@ -184,7 +191,19 @@ export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): stri
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableModel, intervals: string[]): string {
-  const selectedInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
+  // Handle missing current object or value
+  const currentValue = variable.current?.value;
+  const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
+
+  // If no intervals are available, return empty string (will use default from IntervalVariable)
+  if (intervals.length === 0) {
+    return '';
+  }
+
+  // If no selected interval, return the first valid interval
+  if (!selectedInterval) {
+    return intervals[0];
+  }
 
   // If the interval is the old auto format, return the new auto interval from scenes.
   if (selectedInterval.startsWith('$__auto_interval_') || selectedInterval === '$__auto') {
@@ -218,6 +237,26 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
   return undefined;
 }
 
+/**
+ * Gets the datasource from a query runner.
+ * When no panel-level datasource is set, it means all queries use the same datasource,
+ * so we extract the datasource from the first query.
+ */
+export function getDatasourceFromQueryRunner(queryRunner: SceneQueryRunner): DataSourceRef | null | undefined {
+  // Panel-level datasource is set for mixed datasource panels
+  if (queryRunner.state.datasource) {
+    return queryRunner.state.datasource;
+  }
+
+  // No panel-level datasource means all queries share the same datasource
+  const firstQuery = queryRunner.state.queries?.[0];
+  if (firstQuery?.datasource) {
+    return firstQuery.datasource;
+  }
+
+  return undefined;
+}
+
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
 
@@ -240,9 +279,21 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
+export function getDefaultPluginId(): string {
+  return config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
+    ? UNCONFIGURED_PANEL_PLUGIN_ID
+    : 'timeseries';
+}
+
 export function getDefaultVizPanel(): VizPanel {
-  const defaultPluginId = config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
-  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
+  const defaultPluginId = getDefaultPluginId();
+
+  const newPanelTitle =
+    config.featureToggles.newVizSuggestions && defaultPluginId === UNCONFIGURED_PANEL_PLUGIN_ID
+      ? ''
+      : t('dashboard.new-panel-title', 'New panel');
+
+  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
 
   return new VizPanel({
     title: newPanelTitle,
@@ -251,18 +302,26 @@ export function getDefaultVizPanel(): VizPanel {
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
     $behaviors: [],
+    subHeader: new VizPanelSubHeader({
+      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+    }),
     extendPanelContext: setDashboardPanelContext,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    $data: new SceneDataTransformer({
-      $data: new SceneQueryRunner({
-        queries: [{ refId: 'A' }],
-        datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
-        $behaviors: [new DashboardDatasourceBehaviour({})],
-      }),
-      transformations: [],
+    headerActions: new VizPanelHeaderActions({
+      hideGroupByAction: !config.featureToggles.panelGroupBy,
     }),
+    $data: datasourceSettings
+      ? new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            queries: [{ refId: 'A' }],
+            datasource: getDataSourceRef(datasourceSettings),
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+          transformations: [],
+        })
+      : undefined,
   });
 }
 

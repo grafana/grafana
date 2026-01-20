@@ -8,7 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
@@ -60,6 +60,7 @@ import {
   formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
+import { BacktestDropdownButton } from '../../backtesting/BacktestDropdownButton';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -290,6 +291,8 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                   <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
                 </Button>
               )}
+
+              {config.featureToggles.alertingBacktesting && <BacktestDropdownButton ruleDefinition={watch()} />}
             </Stack>
           </Stack>
         </div>

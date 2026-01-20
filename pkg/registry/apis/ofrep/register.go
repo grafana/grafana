@@ -64,10 +64,6 @@ func NewAPIBuilder(providerType string, url *url.URL, insecure bool, caFile stri
 }
 
 func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) (*APIBuilder, error) {
-	if !cfg.OpenFeature.APIEnabled {
-		return nil, nil
-	}
-
 	var staticEvaluator featuremgmt.StaticFlagEvaluator //  No static evaluator needed for non-static provider
 	var err error
 	if cfg.OpenFeature.ProviderType == setting.StaticProviderType {
@@ -280,7 +276,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if b.providerType == setting.GOFFProviderType {
+	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
 		return
 	}
@@ -308,7 +304,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	isAuthedReq := b.isAuthenticatedRequest(r)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
-	if b.providerType == setting.GOFFProviderType {
+	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
 		return
 	}

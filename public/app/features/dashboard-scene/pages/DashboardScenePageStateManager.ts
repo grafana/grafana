@@ -5,6 +5,7 @@ import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import {
@@ -39,7 +40,11 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import {
+  createV2RowsLayout,
+  SceneCreationOptions,
+  transformSaveModelToScene,
+} from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -105,6 +110,34 @@ interface DashboardScenePageStateManagerLike<T> {
   useState: () => DashboardScenePageState;
 }
 
+/**
+ * Creates scene creation options with appropriate layout creator
+ * based on feature flags and dashboard type.
+ */
+export function getSceneCreationOptions(
+  loadOptions?: LoadDashboardOptions,
+  meta?: { isSnapshot?: boolean }
+): SceneCreationOptions | undefined {
+  const isReport = loadOptions?.route === DashboardRoutes.Report;
+  const isTemplate = loadOptions?.route === DashboardRoutes.Template;
+  const isSnapshot = meta?.isSnapshot ?? false;
+
+  // Don't use v2 layout for reports or snapshots
+  if (isReport || isSnapshot || isTemplate) {
+    return undefined;
+  }
+
+  // Use v2 layout creator when v2 API is enabled
+  if (shouldForceV2API()) {
+    return {
+      createLayout: createV2RowsLayout,
+      targetVersion: 'v2',
+    };
+  }
+
+  return undefined;
+}
+
 abstract class DashboardScenePageStateManagerBase<T>
   extends StateManagerBase<DashboardScenePageState>
   implements DashboardScenePageStateManagerLike<T>
@@ -154,7 +187,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadHomeDashboard(): Promise<DashboardScene | null> {
     const rsp = await this.fetchHomeDashboard();
     if (rsp) {
-      return transformSaveModelToScene(rsp);
+      return transformSaveModelToScene(rsp, undefined, getSceneCreationOptions());
     }
 
     return null;
@@ -235,6 +268,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   private processDashboardFromProvisioning(
     repo: string,
     path: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
@@ -439,10 +473,16 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     }
 
     if (rsp?.dashboard) {
-      const scene = transformSaveModelToScene(rsp);
+      const sceneCreationOptions = getSceneCreationOptions(options, rsp.meta);
+      const scene = transformSaveModelToScene(rsp, options, sceneCreationOptions);
 
       // Special handling for Template route - set up edit mode and dirty state
-      if (config.featureToggles.dashboardLibrary && options.route === DashboardRoutes.Template) {
+      if (
+        (config.featureToggles.dashboardLibrary ||
+          config.featureToggles.suggestedDashboards ||
+          config.featureToggles.dashboardTemplates) &&
+        options.route === DashboardRoutes.Template
+      ) {
         scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
         scene.onEnterEditMode();
         scene.setState({ isDirty: true });
@@ -467,20 +507,54 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
       }
 
-      const scene = transformSaveModelToScene(rsp);
+      // Snapshots should use default v1 layout
+      const scene = transformSaveModelToScene(rsp, undefined, getSceneCreationOptions(undefined, { isSnapshot: true }));
       return scene;
     }
 
     throw new Error('Snapshot not found');
   }
 
-  private async loadTemplateDashboard(): Promise<DashboardDTO> {
+  private buildDashboardDTOFromInterpolated(interpolatedDashboard: DashboardDataDTO): DashboardDTO {
+    return {
+      dashboard: {
+        ...interpolatedDashboard,
+        uid: '',
+        version: 0,
+        id: null,
+      },
+      meta: {
+        canSave: contextSrv.hasEditPermissionInFolders,
+        canEdit: contextSrv.hasEditPermissionInFolders,
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        isNew: true,
+        folderUid: '',
+      },
+    };
+  }
+
+  private async loadDashboardLibrary(): Promise<DashboardDTO> {
     // Extract template parameters from URL
     const searchParams = new URLSearchParams(window.location.search);
     const datasource = searchParams.get('datasource');
+    const gnetId = searchParams.get('gnetId');
     const pluginId = searchParams.get('pluginId');
+
     const path = searchParams.get('path');
 
+    // Check if this is a template dashboard
+    if (gnetId && datasource && pluginId) {
+      return this.loadTemplateDashboard(gnetId, datasource, pluginId);
+    }
+
+    // Check if this is a community dashboard (has gnetId) or plugin dashboard
+    if (gnetId) {
+      return this.loadCommunityTemplateDashboard(gnetId);
+    }
+
+    // Original plugin dashboard flow
     if (!datasource || !pluginId || !path) {
       throw new Error('Missing required parameters for template dashboard');
     }
@@ -505,24 +579,69 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     };
 
     const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+  }
 
-    return {
-      dashboard: {
-        ...interpolatedDashboard,
-        uid: '',
-        version: 0,
-        id: null,
-      },
-      meta: {
-        canSave: true,
-        canEdit: true,
-        canStar: false,
-        canShare: false,
-        canDelete: false,
-        isNew: true,
-        folderUid: '',
-      },
+  private async loadTemplateDashboard(
+    gnetId: string,
+    datasource: string | null,
+    pluginId: string | null
+  ): Promise<DashboardDTO> {
+    // Fetch the community dashboard from grafana.com
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The dashboard JSON is in the 'json' property
+    const dashboardJson = gnetDashboard.json;
+
+    const data = {
+      dashboard: dashboardJson,
+      overwrite: true,
+      inputs: [
+        {
+          name: '*',
+          type: 'datasource',
+          pluginId: pluginId,
+          value: datasource,
+        },
+      ],
     };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
+  }
+
+  private async loadCommunityTemplateDashboard(gnetId: string): Promise<DashboardDTO> {
+    // Extract mappings from URL params
+    const location = locationService.getLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const mappingsJson = searchParams.get('mappings');
+
+    if (!mappingsJson) {
+      throw new Error('Missing mappings parameter for community dashboard');
+    }
+
+    let mappings;
+    try {
+      mappings = JSON.parse(mappingsJson);
+    } catch (err) {
+      throw new Error('Invalid mappings parameter: ' + err);
+    }
+
+    // Fetch the community dashboard from grafana.com
+    const gnetDashboard = await getBackendSrv().get(`/api/gnet/dashboards/${gnetId}`);
+
+    // The dashboard JSON is in the 'json' property
+    const dashboardJson = gnetDashboard.json;
+
+    // Call interpolate endpoint with the dashboard JSON and mappings
+    const data = {
+      dashboard: dashboardJson,
+      overwrite: true,
+      inputs: mappings,
+    };
+
+    const interpolatedDashboard = await getBackendSrv().post('/api/dashboards/interpolate', data);
+    return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
   public async fetchDashboard({
@@ -559,7 +678,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
         case DashboardRoutes.Template:
-          rsp = await this.loadTemplateDashboard();
+          rsp = await this.loadDashboardLibrary();
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
@@ -670,7 +789,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         return;
       }
 
-      const scene = transformSaveModelToScene(rsp);
+      const sceneCreationOptions = getSceneCreationOptions(undefined, rsp.meta);
+      const scene = transformSaveModelToScene(rsp, undefined, sceneCreationOptions);
 
       // we need to call and restore dashboard state on every reload that pulls a new dashboard version
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
@@ -873,6 +993,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
+export function shouldForceV2API(): boolean {
+  return Boolean(config.featureToggles.dashboardNewLayouts);
+}
+
 export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<
   DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
 > {
@@ -885,7 +1009,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     this.v1Manager = new DashboardScenePageStateManager(initialState);
     this.v2Manager = new DashboardScenePageStateManagerV2(initialState);
 
-    this.activeManager = this.v1Manager;
+    this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
   }
 
   private async withVersionHandling<T>(
@@ -990,9 +1114,15 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
     if (options.route === DashboardRoutes.New) {
-      const newDashboardVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
+      const newDashboardVersion = shouldForceV2API() ? 'v2' : 'v1';
       this.setActiveManager(newDashboardVersion);
     }
+
+    // Template dashboards are currently in v1 schema format.
+    if (options.route === DashboardRoutes.Template) {
+      this.setActiveManager('v1');
+    }
+
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
   }
 
@@ -1004,7 +1134,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     }
   }
   public resetActiveManager() {
-    this.setActiveManager('v1');
+    this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
   }
 }
 

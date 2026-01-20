@@ -26,7 +26,7 @@ interface ShortLinkMenuItemData {
   absTime: boolean;
 }
 
-export function ShortLinkButtonMenu() {
+export function ShortLinkButtonMenu({ hideText }: { hideText: boolean }) {
   const defaultMode: ShortLinkMenuItemData = {
     key: 'copy-link',
     label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
@@ -134,7 +134,6 @@ export function ShortLinkButtonMenu() {
       <Button
         tooltip={lastSelected.label}
         icon={lastSelected.icon}
-        size="sm"
         variant="secondary"
         onClick={() => {
           const url = lastSelected.getUrl();
@@ -142,12 +141,11 @@ export function ShortLinkButtonMenu() {
         }}
         aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
       >
-        <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>
+        {!hideText && <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>}
       </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
         <Button
           variant={'secondary'}
-          size="sm"
           icon={isOpen ? 'angle-up' : 'angle-down'}
           aria-label={t('explore.toolbar.copy-shortened-link-menu', 'Open copy link options')}
         />

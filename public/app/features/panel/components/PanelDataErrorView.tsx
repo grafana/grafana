@@ -2,19 +2,21 @@ import { css } from '@emotion/css';
 
 import {
   CoreApp,
+  FieldType,
+  getPanelDataSummary,
   GrafanaTheme2,
+  PanelData,
   PanelDataSummary,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestion,
+  PanelPluginVisualizationSuggestion,
+  store,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
+import { PanelDataErrorViewProps, locationService, config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { Icon, usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
-import store from 'app/core/store';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -23,12 +25,16 @@ import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashbo
 import { useDispatch } from 'app/types/store';
 
 import { changePanelPlugin } from '../state/actions';
+import { hasData } from '../suggestions/utils';
+
+function hasNoQueryConfigured(data: PanelData): boolean {
+  return !data.request?.targets || data.request.targets.length === 0;
+}
 
 export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const styles = useStyles2(getStyles);
   const context = usePanelContext();
-  const builder = new VisualizationSuggestionsBuilder(props.data);
-  const { dataSummary } = builder;
+  const dataSummary = getPanelDataSummary(props.data.series);
   const message = getMessageFor(props, dataSummary);
   const dispatch = useDispatch();
 
@@ -70,7 +76,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     );
   };
 
-  const loadSuggestion = (s: VisualizationSuggestion) => {
+  const loadSuggestion = (s: PanelPluginVisualizationSuggestion) => {
     if (!panel) {
       return;
     }
@@ -93,8 +99,14 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     }
   };
 
+  const noData = !hasData(props.data);
+  const noQueryConfigured = hasNoQueryConfigured(props.data);
+  const showEmptyState =
+    config.featureToggles.newVizSuggestions && context.app === CoreApp.PanelEditor && noQueryConfigured && noData;
+
   return (
     <div className={styles.wrapper}>
+      {showEmptyState && <Icon name="chart-line" size="xxxl" className={styles.emptyStateIcon} />}
       <div className={styles.message} data-testid={selectors.components.Panels.Panel.PanelDataErrorMessage}>
         {message}
       </div>
@@ -131,19 +143,29 @@ function getMessageFor(
     return message;
   }
 
-  if (!data.series || data.series.length === 0 || data.series.every((frame) => frame.length === 0)) {
+  const noData = !hasData(data);
+  const noQueryConfigured = hasNoQueryConfigured(data);
+
+  if (config.featureToggles.newVizSuggestions && noQueryConfigured && noData) {
+    return t(
+      'dashboard.new-panel.empty-state-message',
+      'Run a query to visualize it here or go to all visualizations to add other panel types'
+    );
+  }
+
+  if (noData) {
     return fieldConfig?.defaults.noValue ?? t('panel.panel-data-error-view.no-value.default', 'No data');
   }
 
-  if (needsStringField && !dataSummary.hasStringField) {
+  if (needsStringField && !dataSummary.hasFieldType(FieldType.string)) {
     return t('panel.panel-data-error-view.missing-value.string', 'Data is missing a string field');
   }
 
-  if (needsNumberField && !dataSummary.hasNumberField) {
+  if (needsNumberField && !dataSummary.hasFieldType(FieldType.number)) {
     return t('panel.panel-data-error-view.missing-value.number', 'Data is missing a number field');
   }
 
-  if (needsTimeField && !dataSummary.hasTimeField) {
+  if (needsTimeField && !dataSummary.hasFieldType(FieldType.time)) {
     return t('panel.panel-data-error-view.missing-value.time', 'Data is missing a time field');
   }
 
@@ -175,6 +197,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       rowGap: theme.spacing(1),
       width: '100%',
       maxWidth: '600px',
+    }),
+    emptyStateIcon: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(2),
     }),
   };
 };

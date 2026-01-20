@@ -1,9 +1,7 @@
 import { cx } from '@emotion/css';
-import { useDialog } from '@react-aria/dialog';
-import { FocusScope } from '@react-aria/focus';
-import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { PropsWithChildren, useRef } from 'react';
-import * as React from 'react';
+import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
+import { OverlayContainer } from '@react-aria/overlays';
+import { PropsWithChildren, ReactNode, useId, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -11,6 +9,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
+import { getPortalContainer } from '../Portal/Portal';
 
 import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
@@ -66,23 +65,26 @@ export function Modal(props: PropsWithChildren<Props>) {
     trapFocus = true,
   } = props;
   const styles = useStyles2(getModalStyles);
+  const titleId = useId();
 
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Handle interacting outside the dialog and pressing
-  // the Escape key to close the modal.
-  const { overlayProps, underlayProps } = useOverlay(
-    { isKeyboardDismissDisabled: !closeOnEscape, isOpen, onClose: onDismiss },
-    ref
-  );
-
-  // Get props for the dialog and its title
-  const { dialogProps, titleProps } = useDialog(
-    {
-      'aria-label': ariaLabel,
+  const { context, refs } = useFloating({
+    open: isOpen,
+    onOpenChange: (open) => {
+      if (!open) {
+        onDismiss?.();
+      }
     },
-    ref
-  );
+  });
+
+  const dismiss = useDismiss(context, {
+    enabled: closeOnEscape,
+  });
+
+  const role = useRole(context, {
+    role: 'dialog',
+  });
+
+  const { getFloatingProps } = useInteractions([dismiss, role]);
 
   if (!isOpen) {
     return null;
@@ -96,12 +98,17 @@ export function Modal(props: PropsWithChildren<Props>) {
         role="presentation"
         className={styles.modalBackdrop}
         onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
-        {...underlayProps}
       />
-      <FocusScope contain={trapFocus} autoFocus restoreFocus>
-        <div className={cx(styles.modal, className)} ref={ref} {...overlayProps} {...dialogProps}>
+      <FloatingFocusManager context={context} modal={trapFocus} getInsideElements={() => [getPortalContainer()]}>
+        <div
+          className={cx(styles.modal, className)}
+          ref={refs.setFloating}
+          aria-label={ariaLabel}
+          aria-labelledby={typeof title === 'string' ? titleId : undefined}
+          {...getFloatingProps()}
+        >
           <div className={headerClass}>
-            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} id={titleProps.id} />}
+            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} id={titleId} />}
             {
               // FIXME: custom title components won't get an accessible title.
               // Do we really want to support them or shall we just limit this ModalTabsHeader?
@@ -118,12 +125,12 @@ export function Modal(props: PropsWithChildren<Props>) {
           </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
         </div>
-      </FocusScope>
+      </FloatingFocusManager>
     </OverlayContainer>
   );
 }
 
-function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; children: React.ReactNode }) {
+function ModalButtonRow({ leftItems, children }: { leftItems?: ReactNode; children: ReactNode }) {
   const styles = useStyles2(getModalStyles);
 
   if (leftItems) {

@@ -32,9 +32,10 @@ import (
 )
 
 var (
-	RuleMuts = AlertRuleMutators{}
-	NSMuts   = NotificationSettingsMutators{}
-	RuleGen  = &AlertRuleGenerator{
+	RuleMuts     = AlertRuleMutators{}
+	NSMuts       = NotificationSettingsMutators{}
+	InstanceMuts = AlertInstanceMutators{}
+	RuleGen      = &AlertRuleGenerator{
 		mutators: []AlertRuleMutator{
 			RuleMuts.WithUniqueUID(), RuleMuts.WithUniqueTitle(),
 		},
@@ -407,6 +408,22 @@ func (a *AlertRuleMutators) WithDashboardAndPanel(dashboardUID *string, panelID 
 	return func(rule *AlertRule) {
 		rule.DashboardUID = dashboardUID
 		rule.PanelID = panelID
+	}
+}
+
+// WithDataSourceUID takes a list of UIDs. It adds the nth UID to the nth query in the alert (same index).
+// If there are not enough queries, it adds an empty one with the given data source UID.
+func (a *AlertRuleMutators) WithDataSourceUID(dsUIDs ...string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		for i, uid := range dsUIDs {
+			if i >= len(rule.Data) {
+				rule.Data = append(rule.Data, AlertQuery{
+					DatasourceUID: uid,
+				})
+				continue
+			}
+			rule.Data[i].DatasourceUID = uid
+		}
 	}
 }
 
@@ -912,6 +929,68 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 	return instance
 }
 
+type AlertInstanceMutators struct{}
+
+func (a AlertInstanceMutators) WithOrgID(orgID int64) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.RuleOrgID = orgID
+	}
+}
+
+func (a AlertInstanceMutators) WithRuleUID(ruleUID string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.RuleUID = ruleUID
+	}
+}
+
+func (a AlertInstanceMutators) WithLabelsHash(hash string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LabelsHash = hash
+	}
+}
+
+func (a AlertInstanceMutators) WithReason(reason string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.CurrentReason = reason
+	}
+}
+
+func (a AlertInstanceMutators) WithState(state InstanceStateType) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.CurrentState = state
+	}
+}
+
+func (a AlertInstanceMutators) WithLabels(labels InstanceLabels) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.Labels = labels
+	}
+}
+
+func (a AlertInstanceMutators) WithAnnotations(annotations InstanceAnnotations) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.Annotations = annotations
+	}
+}
+
+func (a AlertInstanceMutators) WithResultFingerprint(fp string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.ResultFingerprint = fp
+	}
+}
+
+func (a AlertInstanceMutators) WithLastError(lastError string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LastError = lastError
+	}
+}
+
+func (a AlertInstanceMutators) WithLastResult(lastResult LastResult) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LastResult = lastResult
+	}
+}
+
 type Mutator[T any] func(*T)
 
 // CopyNotificationSettings creates a deep copy of NotificationSettings.
@@ -1253,6 +1332,18 @@ func (n ReceiverMutators) Decrypted(fn DecryptFn) Mutator[Receiver] {
 func (n ReceiverMutators) WithOrigin(origin ResourceOrigin) Mutator[Receiver] {
 	return func(r *Receiver) {
 		r.Origin = origin
+	}
+}
+
+func (n ReceiverMutators) WithEmptyIntegrations() Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.Integrations = []*Integration{}
+	}
+}
+
+func (n ReceiverMutators) WithUID(uid string) Mutator[Receiver] {
+	return func(r *Receiver) {
+		r.UID = uid
 	}
 }
 

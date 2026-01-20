@@ -16,6 +16,7 @@ import { EmbeddedSceneWithContext } from '@grafana/scenes-react';
 import { DATASOURCE_UID } from '../constants';
 
 import { WorkbenchSceneObject } from './Workbench';
+import { prometheusExpressionBuilder } from './expressionBuilder';
 import { defaultTimeRange } from './utils';
 
 const cursorSync = new behaviors.CursorSync({ key: 'triage-cursor-sync', sync: DashboardCursorSync.Crosshair });
@@ -56,6 +57,9 @@ export const triageScene = new EmbeddedSceneWithContext({
         filters: [],
         baseFilters: [],
         layout: 'combobox',
+        expressionBuilder: prometheusExpressionBuilder,
+        // Filter out __name__ from options as this is the metric name not a filterable label
+        tagKeyRegexFilter: /^(?!__name__$).*/,
       }),
     ],
   }),

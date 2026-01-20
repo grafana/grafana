@@ -24,22 +24,22 @@ const (
 )
 
 type check struct {
-	DatasourceSvc             datasources.DataSourceService
+	DatasourceSvc             checks.DataSourceGetter
 	PluginStore               pluginstore.Store
-	PluginContextProvider     pluginContextProvider
+	PluginContextProvider     PluginContextProvider
 	PluginClient              plugins.Client
-	PluginRepo                repo.Service
+	PluginRepo                checks.PluginInfoGetter
 	GrafanaVersion            string
 	pluginCanBeInstalledCache map[string]bool
 	pluginExistsCacheMu       sync.RWMutex
 }
 
 func New(
-	datasourceSvc datasources.DataSourceService,
+	datasourceSvc checks.DataSourceGetter,
 	pluginStore pluginstore.Store,
-	pluginContextProvider pluginContextProvider,
+	pluginContextProvider PluginContextProvider,
 	pluginClient plugins.Client,
-	pluginRepo repo.Service,
+	pluginRepo checks.PluginInfoGetter,
 	grafanaVersion string,
 ) checks.Check {
 	return &check{
@@ -168,6 +168,6 @@ func (c *check) canBeInstalled(ctx context.Context, pluginType string) (bool, er
 	return isAvailableInRepo, nil
 }
 
-type pluginContextProvider interface {
+type PluginContextProvider interface {
 	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }

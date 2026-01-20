@@ -17,7 +17,7 @@
       "label-subscription": "Abonnement",
       "placeholder-resource-name": "nom",
       "tooltip-region": "La région de code de la ressource. Facultatif pour une ressource, mais obligatoire lors de la sélection de plusieurs ressources.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Modifiez manuellement l’<2>URI de la ressource</2>. Prend en charge l’utilisation de plusieurs variables de modèle (par exemple : /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Fonction d’agrégation",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Journaux de base",
-      "description-basic-logs": "",
+      "description-basic-logs": "L’activation de cette fonctionnalité entraîne des coûts Azure Monitor par requête sur les panneaux du tableau de bord qui interrogent les tables configurées pour les <2>journaux de base</2>.",
       "label-enable-basic-logs": "Activer les journaux de base"
     },
     "config-editor": {
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Bouton Lancer votre requête des journaux Azure",
       "body-switching-to-builder": "Passer en mode Builder supprimera votre requête KQL actuelle et réinitialisera l’éditeur KQL. Voulez-vous continuer ?",
-      "body-switching-to-kql": "Passer en mode KQL supprimera vos paramètres Builder actuels. Voulez-vous continuer ?",
       "button-kick-start-your-query": "Lancer votre requête",
       "button-run-query": "Exécuter la requête",
       "confirmText-switch-to": "Passer en mode {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Colonne de temps",
       "label-time-range": "Plage de temps",
       "tooltip-time-column": "<0>Spécifie la colonne de temps utilisée pour le filtrage. Par défaut, la première colonne <1>timeSpan</1> des tableaux, la première colonne <3>datetime</3> trouvée ou <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Spécifie la plage de temps utilisée pour la requête. L’option <1>Requête</1> n’utilisera que les plages de temps spécifiées dans la requête. Le <3>tableau de bord</3> n’utilisera que la plage de temps Grafana. En mode Créateur de journaux, seule l’heure du tableau de bord sera utilisée.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Haut"

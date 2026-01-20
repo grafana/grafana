@@ -156,11 +156,17 @@ In the **Saved queries** drawer, you can:
 - Edit a query title, description, tags, or the availability of the query to other users in your organization. By default, saved queries are locked for editing.
 - When you access the **Saved queries** drawer from Explore, you can use the **Edit in Explore** option to edit the body of a query.
 
-To access your saved queries, click **+ Add from saved queries** or **Replace with saved query** in the query editor:
+To access your saved queries, click **+ Add from saved queries** or open the **Saved queries** drop-down menu and click **Replace query** in the query editor:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-use-saved-queries-v12.3.png" max-width="750px" alt="Access saved queries" >}}
 
-Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace with saved query** updates your existing query.
+Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
+
+{{< admonition type="note" >}}
+Users with Admin and Editor roles can create and save queries for reuse.
+While Admin users can edit or delete any saved queries, users with the Editor role can only edit or delete the queries they've saved.
+Viewers can only reuse queries.
+{{< /admonition >}}
 
 {{< admonition type="note" >}}
 Users with Admin and Editor roles can create and save queries for reuse.
@@ -172,7 +178,7 @@ Viewers can only reuse queries.
 
 To save a query you've created:
 
-1. From the query editor, click the **Save query** icon:
+1. From the query editor, open the **Saved queries** drop-down menu and click the **Save query** option:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-v12.2.png" max-width="750px" alt="Save a query" >}}
 
@@ -227,7 +233,7 @@ To add a query, follow these steps:
 
 1. To create a query, do one of the following:
    - Write or construct a query in the query language of your data source.
-   - Click **Replace with saved query** to reuse a saved query.
+   - Open the **Saved queries** drop-down menu and click **Replace query** to reuse a saved query.
 
    {{< admonition type="note" >}}
    [Saved queries](#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
@@ -235,7 +241,7 @@ To add a query, follow these steps:
    This feature is only available on Grafana Enterprise and Grafana Cloud.
    {{< /admonition >}}
 
-1. (Optional) To [save the query](#save-a-query) for reuse, click the **Save query** button (or icon).
+1. (Optional) To [save the query](#save-a-query) for reuse, click the **Save query** option in the **Saved queries** drop-down menu.
 1. (Optional) Click **+ Add query** or **Add from saved queries** to add more queries as needed.
 
 1. Click **Run queries**.

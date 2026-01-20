@@ -1,6 +1,6 @@
 import { Trans, t } from '@grafana/i18n';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import UserInviteForm from './UserInviteForm';
 

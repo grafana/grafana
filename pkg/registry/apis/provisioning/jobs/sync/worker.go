@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -28,9 +27,6 @@ type SyncWorker struct {
 
 	// ResourceClients for the repository
 	repositoryResources resources.RepositoryResourcesFactory
-
-	// Check if the system is using unified storage
-	storageStatus dualwrite.Service
 
 	// Patch status for the repository
 	patchStatus RepositoryPatchFn
@@ -48,7 +44,6 @@ type SyncWorker struct {
 func NewSyncWorker(
 	clients resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
-	storageStatus dualwrite.Service,
 	patchStatus RepositoryPatchFn,
 	syncer Syncer,
 	metrics jobs.JobMetrics,
@@ -59,7 +54,6 @@ func NewSyncWorker(
 		clients:             clients,
 		repositoryResources: repositoryResources,
 		patchStatus:         patchStatus,
-		storageStatus:       storageStatus,
 		syncer:              syncer,
 		metrics:             metrics,
 		tracer:              tracer,
@@ -96,13 +90,6 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		)
 	}()
 
-	// Check if we are onboarding from legacy storage
-	// HACK -- this should be handled outside of this worker
-	if r.storageStatus != nil && dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, r.storageStatus) {
-		err := fmt.Errorf("sync not supported until storage has migrated")
-		return tracing.Error(span, err)
-	}
-
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
 		err := fmt.Errorf("sync job submitted for repository that does not support read-write")
@@ -110,25 +97,35 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)
-	// Preserve last ref as we use replace operation
+	// Preserve last ref
 	lastRef := repo.Config().Status.Sync.LastRef
 	syncStatus.LastRef = lastRef
 
-	if syncStatus.State == "" {
-		syncStatus.State = provisioning.JobStateWorking
-	}
+	// Ensure the sync state is set to 'working' if not already set or still pending.
+	// FIXME: This should not be needed as the progress recorder should have set it to 'working' by now.
+	syncStatus.State = provisioning.JobStateWorking
 
-	// Update sync status at start using JSON patch
+	// Update sync status at start using granular JSON patch operations
+	// Only patch fields that are actually being set to avoid overwriting with zero values
 	patchOperations := []map[string]interface{}{
 		{
 			"op":    "replace",
-			"path":  "/status/sync",
-			"value": syncStatus,
+			"path":  "/status/sync/state",
+			"value": syncStatus.State,
+		},
+		{
+			"op":    "replace",
+			"path":  "/status/sync/job",
+			"value": syncStatus.JobID,
+		},
+		{
+			"op":    "replace",
+			"path":  "/status/sync/started",
+			"value": syncStatus.Started,
 		},
 	}
 
 	progress.SetMessage(ctx, "update sync status at start")
-
 	statusCtx, statusSpan := r.tracer.Start(ctx, "provisioning.sync.update_start_status")
 	if err := r.patchStatus(statusCtx, cfg, patchOperations...); err != nil {
 		statusSpan.End()
@@ -174,14 +171,13 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 	syncSpan.End()
 
-	// Create sync status and set hash if successful
-	if syncStatus.State == provisioning.JobStateSuccess {
+	if syncStatus.State != provisioning.JobStateError {
 		syncStatus.LastRef = currentRef
 	} else {
+		// Preserve the original lastRef on error
 		syncStatus.LastRef = lastRef
 	}
 
-	// Update final status using JSON patch
 	progress.SetMessage(ctx, "update status and stats")
 	patchOperations = []map[string]interface{}{
 		{

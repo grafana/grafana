@@ -4,7 +4,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';
 import { CatalogPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';

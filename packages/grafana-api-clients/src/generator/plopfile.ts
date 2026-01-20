@@ -107,15 +107,20 @@ export default function plopGenerator(plop: NodePlopAPI) {
     return actions;
   };
 
-  // Read files from data/openapi directory and use as an array of API clients that the user can select
+  const getOpenAPISpecs = (isEnterprise: boolean): string[] => {
+    const openapiDir = isEnterprise
+      ? path.join(basePath, 'pkg/extensions/apiserver/tests/openapi_snapshots')
+      : path.join(basePath, 'pkg/tests/apis/openapi_snapshots');
 
-  const openapiDir = path.join(basePath, 'data/openapi');
-  let possibleOpenAPISpecs: string[] = [];
-  try {
-    possibleOpenAPISpecs = fs.readdirSync(openapiDir).filter((file: string) => file.endsWith('.json'));
-  } catch (e) {
-    possibleOpenAPISpecs = [];
-  }
+    try {
+      const files = fs.readdirSync(openapiDir).filter((file: string) => file.endsWith('.json'));
+      return files;
+    } catch (e) {
+      throw new Error(
+        "No OpenAPI specs found! Are you trying to generate an API client for enterprise but haven't linked your local environment?"
+      );
+    }
+  };
 
   const generator: PlopGeneratorConfig = {
     description: 'Generate RTK Query API client for a Grafana API group',
@@ -129,7 +134,9 @@ export default function plopGenerator(plop: NodePlopAPI) {
       {
         type: 'list',
         loop: false,
-        choices: possibleOpenAPISpecs,
+        choices: (answers: { isEnterprise?: boolean }) => {
+          return getOpenAPISpecs(answers.isEnterprise ?? false);
+        },
         pageSize: 50,
         name: 'apiInfo',
         message: 'OpenAPI spec:',

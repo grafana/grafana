@@ -7,7 +7,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/apis/correlations.grafana.app/v0alpha1/` }),
+        query: () => ({ url: `/` }),
         providesTags: ['API Discovery'],
       }),
       listCorrelation: build.query<ListCorrelationApiResponse, ListCorrelationApiArg>({
@@ -408,9 +408,7 @@ export type ObjectMeta = {
   uid?: string;
 };
 export type CorrelationTargetSpec = {
-  [key: string]: {
-    [key: string]: any;
-  };
+  [key: string]: any;
 };
 export type CorrelationTransformationSpec = {
   expression: string;

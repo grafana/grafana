@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/nfstatus"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -32,6 +33,9 @@ const (
 
 	// How long we keep silences in the kvstore after they've expired.
 	silenceRetention = 5 * 24 * time.Hour
+
+	// How long we keep flushes in the kvstore after they've expired.
+	flushRetention = 5 * 24 * time.Hour
 )
 
 type AlertingStore interface {
@@ -43,8 +47,10 @@ type AlertingStore interface {
 type stateStore interface {
 	SaveSilences(ctx context.Context, st alertingNotify.State) (int64, error)
 	SaveNotificationLog(ctx context.Context, st alertingNotify.State) (int64, error)
+	SaveFlushLog(ctx context.Context, st alertingNotify.State) (int64, error)
 	GetSilences(ctx context.Context) (string, error)
 	GetNotificationLog(ctx context.Context) (string, error)
+	GetFlushLog(ctx context.Context) (string, error)
 }
 
 type alertmanager struct {
@@ -58,6 +64,7 @@ type alertmanager struct {
 	decryptFn            alertingNotify.GetDecryptedValueFn
 	crypto               Crypto
 	features             featuremgmt.FeatureToggles
+	dynamicLimits        alertingNotify.DynamicLimits
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -99,6 +106,10 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	if err != nil {
 		return nil, err
 	}
+	flushLog, err := stateStore.GetFlushLog(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	silencesOptions := maintenanceOptions{
 		initialState:         silences,
@@ -121,12 +132,29 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 	l := log.New("ngalert.notifier")
 
+	dispatchTimer := GetDispatchTimer(featureToggles)
+
+	var flushLogOptions *maintenanceOptions
+	if dispatchTimer == alertingNotify.DispatchTimerSync {
+		flushLogOptions = &maintenanceOptions{
+			initialState:         flushLog,
+			retention:            flushRetention,
+			maintenanceFrequency: maintenanceInterval,
+			maintenanceFunc: func(state alertingNotify.State) (int64, error) {
+				// Detached context here is to make sure that when the service is shut down the persist operation is executed.
+				return stateStore.SaveFlushLog(context.Background(), state)
+			},
+		}
+	}
+
 	opts := alertingNotify.GrafanaAlertmanagerOpts{
 		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
 		Silences:           silencesOptions,
 		Nflog:              nflogOptions,
+		FlushLog:           flushLogOptions,
+		DispatchTimer:      dispatchTimer,
 		Limits: alertingNotify.Limits{
 			MaxSilences:         cfg.UnifiedAlerting.AlertmanagerMaxSilencesCount,
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
@@ -148,6 +176,16 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		return nil, err
 	}
 
+	limits := alertingNotify.DynamicLimits{
+		Dispatcher: nilLimits{},
+		Templates: alertingTemplates.Limits{
+			MaxTemplateOutputSize: cfg.UnifiedAlerting.AlertmanagerMaxTemplateOutputSize,
+		},
+	}
+	if err := limits.Templates.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid template limits: %w", err)
+	}
+
 	am := &alertmanager{
 		Base:                 gam,
 		ConfigMetrics:        m.AlertmanagerConfigMetrics,
@@ -158,6 +196,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		decryptFn:            decryptFn,
 		crypto:               crypto,
 		features:             featureToggles,
+		dynamicLimits:        limits,
 	}
 
 	return am, nil
@@ -233,7 +272,7 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			_, err = am.applyConfig(ctx, cfg, LogInvalidReceivers) // fail if the autogen config is invalid
+			_, err = am.applyConfig(ctx, cfg, ErrorOnInvalidReceivers) // fail if the autogen config is invalid
 			return err
 		})
 		if err != nil {
@@ -259,7 +298,7 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 		// Since we will now update last_applied when autogen changes even if the user-created config remains the same.
 		// To fix this however, the local alertmanager needs to be able to tell the difference between user-created and
 		// autogen config, which may introduce cross-cutting complexity.
-		configChanged, err := am.applyConfig(ctx, cfg, ErrorOnInvalidReceivers)
+		configChanged, err := am.applyConfig(ctx, cfg, LogInvalidReceivers)
 		if err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
@@ -382,7 +421,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		TimeIntervals:     amConfig.TimeIntervals,
 		Templates:         templates,
 		Receivers:         receivers,
-		DispatcherLimits:  &nilLimits{},
+		Limits:            am.dynamicLimits,
 		Raw:               rawConfig,
 		Hash:              configHash,
 	})

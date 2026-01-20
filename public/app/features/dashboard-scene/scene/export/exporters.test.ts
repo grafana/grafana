@@ -22,13 +22,14 @@ import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
 import { makeExportableV1, makeExportableV2, LibraryElementExport } from './exporters';
 
-jest.mock('app/core/store', () => {
-  return {
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  store: {
     getBool: jest.fn(),
     getObject: jest.fn((_a, b) => b),
     get: jest.fn(),
-  };
-});
+  },
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -291,6 +292,65 @@ describe('dashboard exporter v1', () => {
     const exported: any = await makeExportableV1(dashboardModel);
     expect(exported.panels[0].datasource).toEqual({ uid: '${DS_OTHER}', type: 'other' });
     expect(exported.panels[0].targets[0].datasource).toEqual({ uid: '${DS_OTHER}', type: 'other' });
+  });
+
+  it('should not attempt to templateize datasource variable ref if they have already been templateized', async () => {
+    const dashboard: Dashboard = {
+      title: 'My dashboard',
+      revision: 1,
+      editable: false,
+      graphTooltip: DashboardCursorSync.Off,
+      schemaVersion: 1,
+      timepicker: { hidden: true },
+      timezone: '',
+      panels: [
+        {
+          id: 1,
+          type: 'timeseries',
+          title: 'My panel title',
+          gridPos: { x: 0, y: 0, w: 1, h: 1 },
+          datasource: {
+            type: 'prometheus',
+            uid: '${ds_var}',
+          },
+        },
+      ],
+      templating: {
+        list: [
+          {
+            current: {
+              selected: false,
+              text: 'my-prometheus-datasource',
+              value: 'my-prometheus-datasource-uid',
+            },
+            hide: 0,
+            includeAll: false,
+            multi: false,
+            name: 'ds_var',
+            options: [],
+            query: 'prometheus',
+            refresh: 1,
+            regex: '',
+            skipUrlSync: false,
+            type: 'datasource',
+          },
+          // query variable here uses the datasource variable that has already been templateized
+          {
+            name: 'query_var',
+            datasource: { uid: '${ds_var}', type: 'prometheus' },
+            type: 'query',
+          },
+        ],
+      },
+    };
+    const dashboardModel = new DashboardModel(dashboard, undefined, {
+      getVariablesFromState: () => dashboard.templating!.list! as TypedVariableModel[],
+    });
+    const exported = (await makeExportableV1(dashboardModel)) as DashboardJson;
+
+    // @ts-ignore
+    const queryVarDatasource = exported.templating?.list[1].datasource;
+    expect(queryVarDatasource).toEqual({ uid: '${ds_var}', type: 'prometheus' });
   });
 
   describe('given dashboard with repeated panels', () => {

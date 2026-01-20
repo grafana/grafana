@@ -17,7 +17,7 @@
       "label-subscription": "Abonelik",
       "placeholder-resource-name": "ad",
       "tooltip-region": "Kaynağın kod bölgesi. Bir kaynak için isteğe bağlıdır ancak birden fazla kaynak seçildiğinde zorunludur.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "<2>Kaynak URI'sini</2> manuel olarak düzenleyin. Birden fazla şablon değişkeni kullanımını destekler (örnek: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Toplama işlevi",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Temel Günlükler",
-      "description-basic-logs": "",
+      "description-basic-logs": "Bu özelliğin etkinleştirilmesi, <2>Temel Günlükler</2> için yapılandırılmış tabloları sorgulayan pano panellerinde Azure Monitor sorgu başına maliyetlerinin oluşmasına neden olur.",
       "label-enable-basic-logs": "Temel Günlükleri Etkinleştir"
     },
     "config-editor": {
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure günlükleri sorgu hızlı başlatma düğmesi",
       "body-switching-to-builder": "Oluşturucuya geçmek, mevcut KQL sorgunuzu siler ve KQL düzenleyicisini temizler. Emin misiniz?",
-      "body-switching-to-kql": "KQL'ye geçmek, mevcut oluşturucu ayarlarınızı siler. Emin misiniz?",
       "button-kick-start-your-query": "Sorgunuzu hızlı başlatın",
       "button-run-query": "Sorgu çalıştır",
       "confirmText-switch-to": "Şuna geç: {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Zaman Sütunu",
       "label-time-range": "Zaman aralığı",
       "tooltip-time-column": "<0>Filtreleme için kullanılacak zaman sütununu belirtir. Varsayılan olarak ilk tablonun <1>timeSpan</1> sütunu, bulunan ilk <3>datetime</3> sütunu veya <5>TimeGenerated</5> sütunu kullanılır.</0>",
-      "tooltip-time-range": "<0>Sorgu için kullanılacak zaman aralığını belirtir. <1>Sorgu</1> seçeneği yalnızca sorguda belirtilen zaman aralıklarını kullanacaktır. <3>Pano</3> yalnızca Grafana zaman aralığını kullanacaktır. Günlük Oluşturucu modunda yalnızca Pano zamanı kullanılacaktır.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "En Üst"

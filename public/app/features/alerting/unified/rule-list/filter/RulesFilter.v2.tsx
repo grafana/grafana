@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
@@ -20,7 +20,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import type { AdvancedFilters } from 'app/features/alerting/unified/rule-list/filter/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -39,10 +39,14 @@ import {
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { shouldUseSavedSearches } from '../../featureToggles';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
 import { RulesFilterProps } from './RulesFilter';
+import { SavedSearches } from './SavedSearches';
+import { SavedSearch } from './savedSearchesSchema';
+import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
 import {
   emptyAdvancedFilters,
   formAdvancedFiltersToRuleFilter,
@@ -55,6 +59,25 @@ const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlActi
 
 const radioGroupCompactClass = css({ width: 'max-content' });
 
+// Helper to create a wrapped options function that captures typed input when threshold is exceeded
+function createThresholdAwareOptions<T extends { infoOption?: boolean }>(
+  optionsFunc: (inputValue: string) => Promise<T[]>,
+  setValue: (value: string) => void,
+  fieldName: string
+) {
+  return async (inputValue: string): Promise<T[]> => {
+    const options = await optionsFunc(inputValue);
+    const exceeded = options.length === 1 && options[0].infoOption === true;
+
+    // If threshold exceeded and user is typing, capture the typed value
+    if (exceeded && inputValue) {
+      setValue(inputValue);
+    }
+
+    return options;
+  };
+}
+
 type SearchQueryForm = {
   query: string;
 };
@@ -63,9 +86,22 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   const styles = useStyles2(getStyles);
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const { searchQuery, updateFilters, setSearchQuery } = useRulesFilter();
+  const { filterState, searchQuery, updateFilters, setSearchQuery } = useRulesFilter();
   const popupRef = useRef<HTMLDivElement>(null);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
+
+  // Feature toggle for saved searches
+  const savedSearchesEnabled = shouldUseSavedSearches();
+
+  // Saved searches hook with UserStorage persistence
+  const {
+    savedSearches,
+    isLoading: savedSearchesLoading,
+    saveSearch,
+    renameSearch,
+    deleteSearch,
+    setDefaultSearch,
+  } = useSavedSearches();
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { control, setValue, handleSubmit } = useForm<SearchQueryForm>({
@@ -78,6 +114,20 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
     setValue('query', searchQuery);
   }, [searchQuery, setValue]);
 
+  // Apply saved search - triggers filtering (which updates search input and URL)
+  const handleApplySearch = useCallback(
+    (search: SavedSearch) => {
+      const parsedFilter = getSearchFilterFromQuery(search.query);
+      updateFilters(parsedFilter);
+
+      // Track analytics
+      trackSavedSearchApplied(search);
+    },
+    [updateFilters]
+  );
+
+  // Auto-apply of default search is handled in RuleListPage (before FilterView mounts)
+
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     const parsedFilter = getSearchFilterFromQuery(values.query);
     trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: parsedFilter, filterVariant: 'v2' });
@@ -85,11 +135,9 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
   };
 
   const handleAdvancedFilters: SubmitHandler<AdvancedFilters> = (values) => {
-    const newFilter = formAdvancedFiltersToRuleFilter(values);
-    updateFilters(newFilter);
-
+    updateFilters(formAdvancedFiltersToRuleFilter(values, filterState.freeFormWords));
     trackFilterButtonApplyClick(values, pluginsFilterEnabled);
-    setIsPopupOpen(false); // Should close popup after applying filters?
+    setIsPopupOpen(false);
   };
 
   const handleClearFilters = () => {
@@ -162,6 +210,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
                     'Search by name or enter filter query...'
                   )}
                   name="searchQuery"
+                  escapeRegex={false}
                   onChange={(next) => {
                     trackRulesSearchInputCleared(field.value, next);
                     field.onChange(next);
@@ -222,7 +271,21 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               {filterButtonLabel}
             </Button>
           </PopupCard>
-          <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+          {savedSearchesEnabled && (
+            <SavedSearches
+              savedSearches={savedSearches}
+              currentSearchQuery={searchQuery}
+              onSave={saveSearch}
+              onRename={renameSearch}
+              onDelete={deleteSearch}
+              onApply={handleApplySearch}
+              onSetDefault={setDefaultSearch}
+              isLoading={savedSearchesLoading}
+            />
+          )}
+          <Box marginLeft={2}>
+            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+          </Box>
         </Stack>
       </Stack>
     </form>
@@ -247,8 +310,7 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
   const defaultValues = searchQueryToDefaultValues(filterState);
 
   // Fetch namespace and group data from all sources (optimized for filter UI)
-  const { namespaceOptions, allGroupNames, isLoadingNamespaces, namespacePlaceholder, groupPlaceholder } =
-    useNamespaceAndGroupOptions();
+  const { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder } = useNamespaceAndGroupOptions();
 
   const { labelOptions } = useLabelOptions();
 
@@ -293,13 +355,11 @@ const FilterOptions = ({ onSubmit, onClear, pluginsFilterEnabled }: FilterOption
             <NamespaceField
               namespaceOptions={namespaceOptions}
               namespacePlaceholder={namespacePlaceholder}
-              isLoadingNamespaces={isLoadingNamespaces}
               portalContainer={portalContainer}
             />
             <GroupField
-              allGroupNames={allGroupNames}
+              groupOptions={groupOptions}
               groupPlaceholder={groupPlaceholder}
-              isLoadingNamespaces={isLoadingNamespaces}
               portalContainer={portalContainer}
             />
             <DataSourceNamesField dataSourceOptions={dataSourceOptions} portalContainer={portalContainer} />
@@ -372,15 +432,22 @@ function LabelsField({
 function NamespaceField({
   namespaceOptions,
   namespacePlaceholder,
-  isLoadingNamespaces,
   portalContainer,
 }: {
-  namespaceOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string; description?: string }>>;
+  namespaceOptions: (
+    inputValue: string
+  ) => Promise<Array<{ label?: string; value: string; description?: string; infoOption?: boolean }>>;
   namespacePlaceholder: string;
-  isLoadingNamespaces: boolean;
   portalContainer?: HTMLElement;
 }) {
-  const { control } = useFormContext<AdvancedFilters>();
+  const { control, setValue } = useFormContext<AdvancedFilters>();
+
+  const wrappedOptions = useCallback(
+    (inputValue: string) =>
+      createThresholdAwareOptions(namespaceOptions, (value) => setValue('namespace', value), 'namespace')(inputValue),
+    [namespaceOptions, setValue]
+  );
+
   return (
     <>
       <Label>
@@ -389,36 +456,36 @@ function NamespaceField({
       <Controller
         name="namespace"
         control={control}
-        render={({ field }) => {
-          return (
-            <Combobox<string>
-              placeholder={namespacePlaceholder}
-              options={namespaceOptions}
-              onChange={(option) => field.onChange(option?.value || null)}
-              value={field.value}
-              loading={isLoadingNamespaces}
-              isClearable
-              portalContainer={portalContainer}
-            />
-          );
-        }}
+        render={({ field }) => (
+          <Combobox<string>
+            placeholder={namespacePlaceholder}
+            options={wrappedOptions}
+            onChange={(option) => {
+              if (!option?.infoOption) {
+                field.onChange(option?.value || null);
+              }
+            }}
+            value={field.value}
+            isClearable
+            portalContainer={portalContainer}
+          />
+        )}
       />
     </>
   );
 }
 
 function GroupField({
-  allGroupNames,
+  groupOptions,
   groupPlaceholder,
-  isLoadingNamespaces,
   portalContainer,
 }: {
-  allGroupNames: string[];
+  groupOptions: (inputValue: string) => Promise<Array<{ label?: string; value: string; infoOption?: boolean }>>;
   groupPlaceholder: string;
-  isLoadingNamespaces: boolean;
   portalContainer?: HTMLElement;
 }) {
   const { control } = useFormContext<AdvancedFilters>();
+
   return (
     <>
       <Label>
@@ -427,19 +494,20 @@ function GroupField({
       <Controller
         name="groupName"
         control={control}
-        render={({ field }) => {
-          return (
-            <Combobox<string>
-              placeholder={groupPlaceholder}
-              options={allGroupNames.map((name) => ({ label: name, value: name }))}
-              onChange={(option) => field.onChange(option?.value || null)}
-              value={field.value}
-              loading={isLoadingNamespaces}
-              isClearable
-              portalContainer={portalContainer}
-            />
-          );
-        }}
+        render={({ field }) => (
+          <Combobox<string>
+            placeholder={groupPlaceholder}
+            options={groupOptions}
+            onChange={(option) => {
+              if (!option?.infoOption) {
+                field.onChange(option?.value || null);
+              }
+            }}
+            value={field.value}
+            isClearable
+            portalContainer={portalContainer}
+          />
+        )}
       />
     </>
   );
@@ -573,7 +641,6 @@ function RuleStateField() {
               { label: t('alerting.rules.state.normal', 'Normal'), value: PromAlertingRuleState.Inactive },
               { label: t('alerting.rules.state.pending', 'Pending'), value: PromAlertingRuleState.Pending },
               { label: t('alerting.rules.state.recovering', 'Recovering'), value: PromAlertingRuleState.Recovering },
-              { label: t('alerting.rules.state.unknown', 'Unknown'), value: PromAlertingRuleState.Unknown },
             ]}
             value={field.value}
             onChange={field.onChange}
@@ -733,7 +800,10 @@ function SearchQueryHelp() {
           title={t('alerting.search-query-help.title-labels', 'Labels')}
           expr='label:team=A label:"cluster=new york"'
         />
-        <HelpRow title={t('alerting.search-query-help.title-state', 'State')} expr="state:firing|normal|pending" />
+        <HelpRow
+          title={t('alerting.search-query-help.title-state', 'State')}
+          expr="state:firing|normal|pending|recovering"
+        />
         <HelpRow title={t('alerting.search-query-help.title-type', 'Type')} expr="type:alerting|recording" />
         <HelpRow title={t('alerting.search-query-help.title-health', 'Health')} expr="health:ok|nodata|error" />
         <HelpRow

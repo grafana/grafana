@@ -23,7 +23,13 @@ func NewSimpleRepositoryTester(validator RepositoryValidator) SimpleRepositoryTe
 
 // TestRepository validates the repository and then runs a health check
 func (t *SimpleRepositoryTester) TestRepository(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
-	errors := t.validator.ValidateRepository(repo)
+	// Determine if this is a CREATE or UPDATE operation
+	// If the repository has been observed by the controller (ObservedGeneration > 0),
+	// it's an existing repository and we should treat it as UPDATE
+	cfg := repo.Config()
+	isCreate := cfg.Status.ObservedGeneration == 0
+
+	errors := t.validator.ValidateRepository(ctx, cfg, isCreate)
 	if len(errors) > 0 {
 		rsp := &provisioning.TestResults{
 			Code:    http.StatusUnprocessableEntity, // Invalid

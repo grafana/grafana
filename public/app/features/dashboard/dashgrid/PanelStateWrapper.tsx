@@ -33,8 +33,7 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
+import { appEvents } from 'app/core/app_events';
 import { profiler } from 'app/core/profiler';
 import { annotationServer } from 'app/features/annotations/api';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -122,7 +121,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       data: this.getInitialPanelDataState(),
     };
 
-    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+    if (this.getPanelContextApp() === CoreApp.PanelEditor) {
       const panelInfo = {
         panelId: String(props.panel.id),
         panelType: props.panel.type,
@@ -396,7 +395,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   onPanelError = (error: Error) => {
-    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+    if (this.getPanelContextApp() === CoreApp.PanelEditor) {
       this.logPanelChangesOnError();
     }
 
@@ -545,7 +544,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
               onChangeTimeRange={this.onChangeTimeRange}
               eventBus={dashboard.events}
             />
-            {config.featureToggles.panelMonitoring && this.state.errorMessage === undefined && (
+            {this.state.errorMessage === undefined && (
               <PanelLoadTimeMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
             )}
           </PluginContextProvider>

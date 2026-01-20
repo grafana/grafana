@@ -1,4 +1,11 @@
-import { FieldType, GrafanaConfig, locationUtil, toDataFrame, VariableOrigin } from '@grafana/data';
+import {
+  DataLinkBuiltInVars,
+  FieldType,
+  GrafanaConfig,
+  locationUtil,
+  toDataFrame,
+  VariableOrigin,
+} from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
 import { DashboardLink } from '@grafana/schema';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -10,9 +17,9 @@ import { createQueryVariableAdapter } from 'app/features/variables/query/adapter
 
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { updateConfig } from '../../../../core/config';
-import { getDataFrameVars, LinkSrv } from '../link_srv';
+import { getDataFrameVars, getPanelLinksVariableSuggestions, LinkSrv } from '../link_srv';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   appEvents: {
     subscribe: () => {},
   },
@@ -261,237 +268,295 @@ describe('linkSrv', () => {
       expect(linkSrv.getLinkUrl(anchorInfo)).toBe(anchorInfo.url);
     });
   });
-});
 
-describe('getDataFrameVars', () => {
-  describe('when called with a DataFrame that contains fields without nested path', () => {
-    it('then it should return correct suggestions', () => {
-      const frame = toDataFrame({
-        name: 'indoor',
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'temperature', type: FieldType.number, values: [10, 11, 12] },
-        ],
+  describe('getDataFrameVars', () => {
+    describe('when called with a DataFrame that contains fields without nested path', () => {
+      it('then it should return correct suggestions', () => {
+        const frame = toDataFrame({
+          name: 'indoor',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'temperature', type: FieldType.number, values: [10, 11, 12] },
+          ],
+        });
+
+        const suggestions = getDataFrameVars([frame]);
+
+        expect(suggestions).toEqual([
+          {
+            value: '__data.fields.time',
+            label: 'time',
+            documentation: `Formatted value for time on the same row`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: '__data.fields.temperature',
+            label: 'temperature',
+            documentation: `Formatted value for temperature on the same row`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields[0]`,
+            label: `Select by index`,
+            documentation: `Enter the field order`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields.temperature.numeric`,
+            label: `Show numeric value`,
+            documentation: `the numeric field value`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields.temperature.text`,
+            label: `Show text value`,
+            documentation: `the text value`,
+            origin: VariableOrigin.Fields,
+          },
+        ]);
       });
+    });
 
-      const suggestions = getDataFrameVars([frame]);
+    describe('when called with a DataFrame that contains fields with nested path', () => {
+      it('then it should return correct suggestions', () => {
+        const frame = toDataFrame({
+          name: 'temperatures',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'temperature.indoor', type: FieldType.number, values: [10, 11, 12] },
+          ],
+        });
 
-      expect(suggestions).toEqual([
-        {
-          value: '__data.fields.time',
-          label: 'time',
-          documentation: `Formatted value for time on the same row`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: '__data.fields.temperature',
-          label: 'temperature',
-          documentation: `Formatted value for temperature on the same row`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields[0]`,
-          label: `Select by index`,
-          documentation: `Enter the field order`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields.temperature.numeric`,
-          label: `Show numeric value`,
-          documentation: `the numeric field value`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields.temperature.text`,
-          label: `Show text value`,
-          documentation: `the text value`,
-          origin: VariableOrigin.Fields,
-        },
-      ]);
+        const suggestions = getDataFrameVars([frame]);
+
+        expect(suggestions).toEqual([
+          {
+            value: '__data.fields.time',
+            label: 'time',
+            documentation: `Formatted value for time on the same row`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: '__data.fields["temperature.indoor"]',
+            label: 'temperature.indoor',
+            documentation: `Formatted value for temperature.indoor on the same row`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields[0]`,
+            label: `Select by index`,
+            documentation: `Enter the field order`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields["temperature.indoor"].numeric`,
+            label: `Show numeric value`,
+            documentation: `the numeric field value`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields["temperature.indoor"].text`,
+            label: `Show text value`,
+            documentation: `the text value`,
+            origin: VariableOrigin.Fields,
+          },
+        ]);
+      });
+    });
+
+    describe('when called with a DataFrame that contains fields with displayName', () => {
+      it('then it should return correct suggestions', () => {
+        const frame = toDataFrame({
+          name: 'temperatures',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'temperature.indoor', type: FieldType.number, values: [10, 11, 12] },
+          ],
+        });
+
+        frame.fields[1].config = { ...frame.fields[1].config, displayName: 'Indoor Temperature' };
+
+        const suggestions = getDataFrameVars([frame]);
+
+        expect(suggestions).toEqual([
+          {
+            value: '__data.fields.time',
+            label: 'time',
+            documentation: `Formatted value for time on the same row`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: '__data.fields["Indoor Temperature"]',
+            label: 'Indoor Temperature',
+            documentation: `Formatted value for Indoor Temperature on the same row`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields[0]`,
+            label: `Select by index`,
+            documentation: `Enter the field order`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields["Indoor Temperature"].numeric`,
+            label: `Show numeric value`,
+            documentation: `the numeric field value`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields["Indoor Temperature"].text`,
+            label: `Show text value`,
+            documentation: `the text value`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields["Indoor Temperature"]`,
+            label: `Select by title`,
+            documentation: `Use the title to pick the field`,
+            origin: VariableOrigin.Fields,
+          },
+        ]);
+      });
+    });
+
+    describe('when called with a DataFrame that contains fields with duplicate names', () => {
+      it('then it should ignore duplicates', () => {
+        const frame = toDataFrame({
+          name: 'temperatures',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'temperature.indoor', type: FieldType.number, values: [10, 11, 12] },
+            { name: 'temperature.outdoor', type: FieldType.number, values: [20, 21, 22] },
+          ],
+        });
+
+        frame.fields[1].config = { ...frame.fields[1].config, displayName: 'Indoor Temperature' };
+        // Someone makes a mistake when renaming a field
+        frame.fields[2].config = { ...frame.fields[2].config, displayName: 'Indoor Temperature' };
+
+        const suggestions = getDataFrameVars([frame]);
+
+        expect(suggestions).toEqual([
+          {
+            value: '__data.fields.time',
+            label: 'time',
+            documentation: `Formatted value for time on the same row`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: '__data.fields["Indoor Temperature"]',
+            label: 'Indoor Temperature',
+            documentation: `Formatted value for Indoor Temperature on the same row`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields[0]`,
+            label: `Select by index`,
+            documentation: `Enter the field order`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields["Indoor Temperature"].numeric`,
+            label: `Show numeric value`,
+            documentation: `the numeric field value`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields["Indoor Temperature"].text`,
+            label: `Show text value`,
+            documentation: `the text value`,
+            origin: VariableOrigin.Fields,
+          },
+          {
+            value: `__data.fields["Indoor Temperature"]`,
+            label: `Select by title`,
+            documentation: `Use the title to pick the field`,
+            origin: VariableOrigin.Fields,
+          },
+        ]);
+      });
+    });
+
+    describe('when called with multiple DataFrames', () => {
+      it('it should not return any suggestions', () => {
+        const frame1 = toDataFrame({
+          name: 'server1',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 11, 12] },
+          ],
+        });
+
+        const frame2 = toDataFrame({
+          name: 'server2',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 11, 12] },
+          ],
+        });
+
+        const suggestions = getDataFrameVars([frame1, frame2]);
+
+        expect(suggestions).toEqual([]);
+      });
     });
   });
 
-  describe('when called with a DataFrame that contains fields with nested path', () => {
-    it('then it should return correct suggestions', () => {
-      const frame = toDataFrame({
-        name: 'temperatures',
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'temperature.indoor', type: FieldType.number, values: [10, 11, 12] },
-        ],
-      });
+  describe('getPanelLinksVariableSuggestions', () => {
+    it('then it should return template variables, json properties and built-ins', () => {
+      const templateSrvWithJsonValues = initTemplateSrv('key', [
+        {
+          type: 'custom',
+          name: 'customServers',
+          valuesFormat: 'json',
+          query: '[{"name":"web","ip":"192.168.0.100"},{"name":"ads","ip":"192.168.0.142"}]',
+        },
+      ]);
+      setTemplateSrv(templateSrvWithJsonValues);
 
-      const suggestions = getDataFrameVars([frame]);
+      const suggestions = getPanelLinksVariableSuggestions();
 
       expect(suggestions).toEqual([
         {
-          value: '__data.fields.time',
-          label: 'time',
-          documentation: `Formatted value for time on the same row`,
-          origin: VariableOrigin.Fields,
+          value: 'customServers',
+          label: 'customServers',
+          origin: VariableOrigin.Template,
         },
         {
-          value: '__data.fields["temperature.indoor"]',
-          label: 'temperature.indoor',
-          documentation: `Formatted value for temperature.indoor on the same row`,
-          origin: VariableOrigin.Fields,
+          value: 'customServers.name',
+          label: 'customServers.name',
+          origin: VariableOrigin.Template,
         },
         {
-          value: `__data.fields[0]`,
-          label: `Select by index`,
-          documentation: `Enter the field order`,
-          origin: VariableOrigin.Fields,
+          value: 'customServers.ip',
+          label: 'customServers.ip',
+          origin: VariableOrigin.Template,
         },
         {
-          value: `__data.fields["temperature.indoor"].numeric`,
-          label: `Show numeric value`,
-          documentation: `the numeric field value`,
-          origin: VariableOrigin.Fields,
+          value: `${DataLinkBuiltInVars.includeVars}`,
+          label: 'All variables',
+          documentation: 'Adds current variables',
+          origin: VariableOrigin.Template,
         },
         {
-          value: `__data.fields["temperature.indoor"].text`,
-          label: `Show text value`,
-          documentation: `the text value`,
-          origin: VariableOrigin.Fields,
+          value: `${DataLinkBuiltInVars.keepTime}`,
+          label: 'Time range',
+          documentation: 'Adds current time range',
+          origin: VariableOrigin.BuiltIn,
+        },
+        {
+          value: `${DataLinkBuiltInVars.timeRangeFrom}`,
+          label: 'Time range: from',
+          documentation: "Adds current time range's from value",
+          origin: VariableOrigin.BuiltIn,
+        },
+        {
+          value: `${DataLinkBuiltInVars.timeRangeTo}`,
+          label: 'Time range: to',
+          documentation: "Adds current time range's to value",
+          origin: VariableOrigin.BuiltIn,
         },
       ]);
-    });
-  });
-
-  describe('when called with a DataFrame that contains fields with displayName', () => {
-    it('then it should return correct suggestions', () => {
-      const frame = toDataFrame({
-        name: 'temperatures',
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'temperature.indoor', type: FieldType.number, values: [10, 11, 12] },
-        ],
-      });
-
-      frame.fields[1].config = { ...frame.fields[1].config, displayName: 'Indoor Temperature' };
-
-      const suggestions = getDataFrameVars([frame]);
-
-      expect(suggestions).toEqual([
-        {
-          value: '__data.fields.time',
-          label: 'time',
-          documentation: `Formatted value for time on the same row`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: '__data.fields["Indoor Temperature"]',
-          label: 'Indoor Temperature',
-          documentation: `Formatted value for Indoor Temperature on the same row`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields[0]`,
-          label: `Select by index`,
-          documentation: `Enter the field order`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields["Indoor Temperature"].numeric`,
-          label: `Show numeric value`,
-          documentation: `the numeric field value`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields["Indoor Temperature"].text`,
-          label: `Show text value`,
-          documentation: `the text value`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields["Indoor Temperature"]`,
-          label: `Select by title`,
-          documentation: `Use the title to pick the field`,
-          origin: VariableOrigin.Fields,
-        },
-      ]);
-    });
-  });
-
-  describe('when called with a DataFrame that contains fields with duplicate names', () => {
-    it('then it should ignore duplicates', () => {
-      const frame = toDataFrame({
-        name: 'temperatures',
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'temperature.indoor', type: FieldType.number, values: [10, 11, 12] },
-          { name: 'temperature.outdoor', type: FieldType.number, values: [20, 21, 22] },
-        ],
-      });
-
-      frame.fields[1].config = { ...frame.fields[1].config, displayName: 'Indoor Temperature' };
-      // Someone makes a mistake when renaming a field
-      frame.fields[2].config = { ...frame.fields[2].config, displayName: 'Indoor Temperature' };
-
-      const suggestions = getDataFrameVars([frame]);
-
-      expect(suggestions).toEqual([
-        {
-          value: '__data.fields.time',
-          label: 'time',
-          documentation: `Formatted value for time on the same row`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: '__data.fields["Indoor Temperature"]',
-          label: 'Indoor Temperature',
-          documentation: `Formatted value for Indoor Temperature on the same row`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields[0]`,
-          label: `Select by index`,
-          documentation: `Enter the field order`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields["Indoor Temperature"].numeric`,
-          label: `Show numeric value`,
-          documentation: `the numeric field value`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields["Indoor Temperature"].text`,
-          label: `Show text value`,
-          documentation: `the text value`,
-          origin: VariableOrigin.Fields,
-        },
-        {
-          value: `__data.fields["Indoor Temperature"]`,
-          label: `Select by title`,
-          documentation: `Use the title to pick the field`,
-          origin: VariableOrigin.Fields,
-        },
-      ]);
-    });
-  });
-
-  describe('when called with multiple DataFrames', () => {
-    it('it should not return any suggestions', () => {
-      const frame1 = toDataFrame({
-        name: 'server1',
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'value', type: FieldType.number, values: [10, 11, 12] },
-        ],
-      });
-
-      const frame2 = toDataFrame({
-        name: 'server2',
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          { name: 'value', type: FieldType.number, values: [10, 11, 12] },
-        ],
-      });
-
-      const suggestions = getDataFrameVars([frame1, frame2]);
-
-      expect(suggestions).toEqual([]);
     });
   });
 });

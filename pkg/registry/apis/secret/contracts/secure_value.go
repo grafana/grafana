@@ -11,7 +11,7 @@ import (
 )
 
 // The maximum size of a secure value in bytes when written as raw input.
-const SecureValueRawInputMaxSizeBytes = 24576 // 24 KiB
+const SecureValueRawInputMaxSizeBytes = 24 << 10 // 24 KiB
 
 type DecryptSecureValue struct {
 	Keeper     *string
@@ -21,8 +21,10 @@ type DecryptSecureValue struct {
 }
 
 var (
-	ErrSecureValueNotFound      = errors.New("secure value not found")
-	ErrSecureValueAlreadyExists = errors.New("secure value already exists")
+	ErrSecureValueNotFound            = errors.New("secure value not found")
+	ErrSecureValueAlreadyExists       = errors.New("secure value already exists")
+	ErrReferenceWithSystemKeeper      = errors.New("tried to create secure value using reference with system keeper, references can only be used with 3rd party keepers")
+	ErrSecureValueMissingSecretAndRef = errors.New("secure value spec doesn't have neither a secret or reference")
 )
 
 type ReadOpts struct {
@@ -31,7 +33,7 @@ type ReadOpts struct {
 
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.
 type SecureValueMetadataStorage interface {
-	Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
+	Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
 	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1beta1.SecureValue, error)
 	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.SecureValue, error)
 	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error

@@ -20,6 +20,7 @@ import (
 	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	secretService "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -61,14 +62,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 var provisioningExtras = wire.NewSet(
 	extras.ProvideProvisioningOSSRepositoryExtras,
+	extras.ProvideProvisioningOSSConnectionExtras,
 )
 
 var configProviderExtras = wire.NewSet(
@@ -97,6 +101,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(validations.DataSourceRequestURLValidator), new(*validations.OSSDataSourceRequestURLValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
+	legacysql.NewDatabaseProvider,
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
 	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
 	migrations.ProvideOSSMigrations,
@@ -135,8 +140,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
-	search2.ProvideDashboardStats,
-	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
+	builders.ProvideDashboardStats,
+	wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)),
 	search2.ProvideDocumentBuilders,
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
@@ -150,6 +155,7 @@ var wireExtsBasicSet = wire.NewSet(
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
 	configProviderExtras,
+	advisor.ProvideAppInstaller,
 )
 
 var wireExtsSet = wire.NewSet(

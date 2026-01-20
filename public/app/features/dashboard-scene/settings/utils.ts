@@ -3,8 +3,8 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { locationUtil, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
-import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 

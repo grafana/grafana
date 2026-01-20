@@ -28,7 +28,6 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
-import { InlineSecureValueWarning } from '../components/InlineSecureValueWarning';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
@@ -38,6 +37,7 @@ import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
+import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -57,6 +57,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const repositoryName = data?.metadata?.name;
   const settings = useGetFrontendSettingsQuery();
   const [submitData, request] = useCreateOrUpdateRepository(repositoryName);
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -77,12 +78,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const isEdit = Boolean(repositoryName);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
-  const targetOptions = useMemo(
-    () => getTargetOptions(settings.data?.allowedTargets || ['instance', 'folder']),
-    [settings.data]
-  );
+  const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
   const {
@@ -107,17 +104,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const localFields = type === 'local' ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
 
-  // TODO: this should be removed after 12.2 is released
-  useEffect(() => {
-    if (isGitBased && !data?.secure?.token) {
-      setTokenConfigured(false);
-      setError('token', {
-        type: 'manual',
-        message: `Enter your ${gitFields?.tokenConfig.label ?? 'access token'}`,
-      });
-    }
-  }, [data, gitFields, setTokenConfigured, setError, isGitBased]);
-
   useEffect(() => {
     if (request.isSuccess) {
       const formData = getValues();
@@ -129,11 +115,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
       });
 
       reset(formData);
-      setTimeout(() => {
-        navigate('/admin/provisioning');
-      }, 300);
+      setTimeout(() => navigate(PROVISIONING_URL), 300);
     }
-  }, [request.isSuccess, reset, getValues, navigate, repositoryName]);
+  }, [request.isSuccess, reset, getValues, repositoryName, navigate]);
 
   const onSubmit = async (form: RepositoryFormData) => {
     setIsLoading(true);
@@ -180,7 +164,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
         {gitFields && (
           <>
-            <InlineSecureValueWarning repo={data} />
             <Field
               noMargin
               label={gitFields.tokenConfig.label}
@@ -303,6 +286,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               onChange: (e) => {
                 if (e.target.checked) {
                   setValue('prWorkflow', false);
+                  setValue('enablePushToConfiguredBranch', false);
                 }
               },
             })}
@@ -323,6 +307,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
               description={gitFields.prWorkflowConfig.description}
             />
           </Field>
+        )}
+        {isGitBased && (
+          <EnablePushToConfiguredBranchOption<RepositoryFormData>
+            register={register}
+            registerName="enablePushToConfiguredBranch"
+            readOnly={readOnly}
+          />
         )}
         {type === 'github' && <ConfigFormGithubCollapse register={register} />}
 

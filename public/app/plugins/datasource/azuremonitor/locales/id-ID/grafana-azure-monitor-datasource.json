@@ -17,7 +17,7 @@
       "label-subscription": "Berlangganan",
       "placeholder-resource-name": "nama",
       "tooltip-region": "Wilayah kode sumber daya. Opsional untuk satu sumber daya tetapi wajib saat memilih beberapa sumber daya.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Edit <2>uri sumber daya</2> secara manual. Mendukung penggunaan beberapa variabel templat (misalnya: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Fungsi agregat",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Log Dasar",
-      "description-basic-logs": "",
+      "description-basic-logs": "Jika Anda mengaktifkan fitur ini, Azure Monitor akan dikenakan biaya per kueri untuk panel dasbor yang melakukan kueri pada tabel yang dikonfigurasi untuk <2>Log Dasar</2>.",
       "label-enable-basic-logs": "Aktifkan Log Dasar"
     },
     "config-editor": {
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Tombol kueri untuk memulai menggunakan log Azure",
       "body-switching-to-builder": "Beralih ke Builder akan membuang kueri KQL Anda saat ini dan menghapus editor KQL. Anda yakin?",
-      "body-switching-to-kql": "Beralih ke KQL akan membuang pengaturan pembangun Anda saat ini. Anda yakin?",
       "button-kick-start-your-query": "Mulai kueri Anda",
       "button-run-query": "Jalankan kueri",
       "confirmText-switch-to": "Beralih ke {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Kolom Waktu",
       "label-time-range": "Rentang waktu",
       "tooltip-time-column": "<0>Menentukan kolom waktu yang digunakan untuk penyaringan. Default ke kolom <1>timeSpan</1> tabel pertama, kolom <3>datetime</3> pertama yang ditemukan, atau <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Menentukan rentang waktu yang digunakan untuk kueri. Opsi <1>Kueri</1> hanya akan menggunakan rentang waktu yang ditentukan dalam kueri. <3>Dasbor</3> hanya akan menggunakan rentang waktu Grafana. Dalam mode Pembuat Log, hanya waktu Dasbor yang akan digunakan.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Top"

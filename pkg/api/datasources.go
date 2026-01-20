@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
@@ -200,6 +202,11 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Response {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("GetDataSourceByUID"), time.Since(start).Seconds())
+	}()
+
 	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.GetOrgID())
 
 	if err != nil {
@@ -231,6 +238,11 @@ func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Re
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response.Response {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("DeleteDataSourceByUID"), time.Since(start).Seconds())
+	}()
+
 	uid := web.Params(c.Req)[":uid"]
 
 	if uid == "" {
@@ -266,10 +278,12 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 
 // swagger:route DELETE /datasources/name/{name} datasources deleteDataSourceByName
 //
-// Delete an existing data source by name.
+// Delete an existing data source by name. This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: deleteDataSourceByNameResponse
@@ -361,6 +375,11 @@ func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Response {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("AddDataSource"), time.Since(start).Seconds())
+	}()
+
 	cmd := datasources.AddDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -478,6 +497,10 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response.Response {
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("UpdateDataSourceByUID"), time.Since(start).Seconds())
+	}()
 	cmd := datasources.UpdateDataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -576,10 +599,12 @@ func (hs *HTTPServer) getRawDataSourceByUID(ctx context.Context, uid string, org
 
 // swagger:route GET /datasources/name/{name} datasources getDataSourceByName
 //
-// Get a single data source by Name.
+// Get a single data source by Name.  This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDataSourceResponse
@@ -603,10 +628,12 @@ func (hs *HTTPServer) GetDataSourceByName(c *contextmodel.ReqContext) response.R
 
 // swagger:route GET /datasources/id/{name} datasources getDataSourceIdByName
 //
-// Get data source Id by Name.
+// Get data source Id by Name. This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDataSourceIDResponse

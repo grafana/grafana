@@ -74,6 +74,33 @@ var RoleInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
+var GlobalRoleInfo = globalRoleInfo.WithClusterScope()
+var globalRoleInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"globalroles", "globalrole", "GlobalRole",
+	func() runtime.Object { return &GlobalRole{} },
+	func() runtime.Object { return &GlobalRoleList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Group", Type: "string", Format: "group", Description: "Role group"},
+			{Name: "Title", Type: "string", Format: "string", Description: "Role name"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			globalRole, ok := obj.(*GlobalRole)
+			if ok {
+				return []interface{}{
+					globalRole.Name,
+					globalRole.Spec.Group,
+					globalRole.Spec.Title,
+					globalRole.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			}
+			return nil, fmt.Errorf("expected global role")
+		},
+	},
+)
+
 var ResourcePermissionInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"resourcepermissions", "resourcepermission", "ResourcePermission",
 	func() runtime.Object { return &ResourcePermission{} },
@@ -206,6 +233,30 @@ var TeamBindingResourceInfo = utils.NewResourceInfo(
 	},
 )
 
+var ExternalGroupMappingResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"externalgroupmappings", "externalgroupmapping", "ExternalGroupMapping",
+	func() runtime.Object { return &ExternalGroupMapping{} },
+	func() runtime.Object { return &ExternalGroupMappingList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			mapping, ok := obj.(*ExternalGroupMapping)
+			if ok {
+				if mapping != nil {
+					return []interface{}{
+						mapping.Name,
+						mapping.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				}
+			}
+			return nil, fmt.Errorf("expected external group mapping")
+		},
+	},
+)
+
 var RoleBindingInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"rolebindings", "rolebinding", "RoleBinding",
 	func() runtime.Object { return &RoleBinding{} },
@@ -284,6 +335,14 @@ func AddResourcePermissionKnownTypes(scheme *runtime.Scheme, version schema.Grou
 	return nil
 }
 
+func AddGlobalRoleKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&GlobalRole{},
+		&GlobalRoleList{},
+	)
+	return nil
+}
+
 func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		// Identity
@@ -293,8 +352,12 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&ServiceAccountList{},
 		&Team{},
 		&TeamList{},
+		&GetSearchTeams{},
 		&TeamBinding{},
 		&TeamBindingList{},
+		&ExternalGroupMapping{},
+		&ExternalGroupMappingList{},
+		&GetGroups{},
 		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
 		// &UserTeamList{},
 		// &ServiceAccountTokenList{},
@@ -306,6 +369,22 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
+
+	// Enable field selectors for TeamBinding
+	err := scheme.AddFieldLabelConversionFunc(
+		TeamBindingResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.teamRef.name", "spec.subject.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for TeamBinding: %s", label)
+			}
+		},
+	)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

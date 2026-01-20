@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
-import { useObservable } from 'react-use';
 
 import { usePluginContext, PluginExtensionFunction, PluginExtensionTypes } from '@grafana/data';
 import { UsePluginFunctionsOptions, UsePluginFunctionsResult } from '@grafana/runtime';
 
-import { useAddedFunctionsRegistry } from './ExtensionRegistriesContext';
+import { useAddedFunctionsRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { generateExtensionId, getExtensionPointPluginDependencies } from './utils';
 import { validateExtensionPoint } from './validateExtensionPoint';
@@ -14,11 +13,9 @@ export function usePluginFunctions<Signature>({
   limitPerPlugin,
   extensionPointId,
 }: UsePluginFunctionsOptions): UsePluginFunctionsResult<Signature> {
-  const registry = useAddedFunctionsRegistry();
-  const registryState = useObservable(registry.asObservable());
+  const registryItems = useAddedFunctionsRegistrySlice<Signature>(extensionPointId);
   const pluginContext = usePluginContext();
-  const deps = getExtensionPointPluginDependencies(extensionPointId);
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(deps);
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(extensionPointId, getExtensionPointPluginDependencies);
 
   return useMemo(() => {
     const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });
@@ -33,7 +30,7 @@ export function usePluginFunctions<Signature>({
     const results: Array<PluginExtensionFunction<Signature>> = [];
     const extensionsByPlugin: Record<string, number> = {};
 
-    for (const registryItem of registryState?.[extensionPointId] ?? []) {
+    for (const registryItem of registryItems ?? []) {
       const { pluginId } = registryItem;
 
       // Only limit if the `limitPerPlugin` is set
@@ -51,7 +48,7 @@ export function usePluginFunctions<Signature>({
         title: registryItem.title,
         description: registryItem.description ?? '',
         pluginId: pluginId,
-        fn: registryItem.fn as Signature,
+        fn: registryItem.fn,
       });
       extensionsByPlugin[pluginId] += 1;
     }
@@ -60,5 +57,5 @@ export function usePluginFunctions<Signature>({
       isLoading: false,
       functions: results,
     };
-  }, [extensionPointId, limitPerPlugin, pluginContext, registryState, isLoadingAppPlugins]);
+  }, [extensionPointId, limitPerPlugin, pluginContext, registryItems, isLoadingAppPlugins]);
 }

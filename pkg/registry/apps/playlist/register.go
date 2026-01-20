@@ -6,17 +6,20 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/grafana/grafana/apps/playlist/pkg/apis"
+
+	"github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
@@ -24,11 +27,11 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*PlaylistAppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*PlaylistAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
 )
 
-type PlaylistAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg     *setting.Cfg
 	service playlistsvc.Service
@@ -38,8 +41,8 @@ func RegisterAppInstaller(
 	p playlistsvc.Service,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-) (*PlaylistAppInstaller, error) {
-	installer := &PlaylistAppInstaller{
+) (*AppInstaller, error) {
+	installer := &AppInstaller{
 		cfg:     cfg,
 		service: p,
 	}
@@ -47,14 +50,14 @@ func RegisterAppInstaller(
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
 	})
-	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, playlistapp.New)
+	provider := simple.NewAppProvider(manifestdata.LocalManifest(), specificConfig, playlistapp.New)
 
 	appConfig := app.Config{
 		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
-		ManifestData:   *apis.LocalManifest().ManifestData,
+		ManifestData:   *manifestdata.LocalManifest().ManifestData,
 		SpecificConfig: specificConfig,
 	}
-	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &manifestdata.GoTypeAssociator{})
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +66,13 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
+func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
+	//nolint:staticcheck // not yet migrated to Resource Authorizer
+	return roleauthorizer.NewRoleAuthorizer()
+}
+
 // GetLegacyStorage returns the legacy storage for the playlist app.
-func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
+func (p *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
 	gvr := playlistv0alpha1.PlaylistKind().GroupVersionResource()
 	if requested.String() != gvr.String() {
 		return nil

@@ -1,0 +1,102 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "library-panel-repeat-options-test",
+    "labels": {
+      "test": "library-panel-repeat"
+    }
+  },
+  "spec": {
+    "annotations": {
+      "list": []
+    },
+    "description": "Testing library panel repeat options migration from v1beta1 to v2alpha1",
+    "links": [],
+    "panels": [
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "libraryPanel": {
+          "name": "Library Panel with Horizontal Repeat",
+          "uid": "lib-panel-repeat-h"
+        },
+        "title": "Library Panel with Horizontal Repeat",
+        "type": "library-panel-ref"
+      },
+      {
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 8
+        },
+        "id": 2,
+        "libraryPanel": {
+          "name": "Library Panel with Vertical Repeat",
+          "uid": "lib-panel-repeat-v"
+        },
+        "title": "Library Panel with Vertical Repeat",
+        "type": "library-panel-ref"
+      },
+      {
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 6,
+          "y": 8
+        },
+        "id": 3,
+        "libraryPanel": {
+          "name": "Library Panel with Horizontal Repeat",
+          "uid": "lib-panel-repeat-h"
+        },
+        "maxPerRow": 5,
+        "repeat": "instance-var",
+        "repeatDirection": "v",
+        "title": "Library Panel Instance Override",
+        "type": "library-panel-ref"
+      },
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 6,
+          "x": 0,
+          "y": 12
+        },
+        "id": 4,
+        "libraryPanel": {
+          "name": "Library Panel without Repeat",
+          "uid": "lib-panel-no-repeat"
+        },
+        "title": "Library Panel without Repeat",
+        "type": "library-panel-ref"
+      }
+    ],
+    "schemaVersion": 38,
+    "tags": [
+      "test",
+      "library-panels",
+      "repeat"
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "title": "Library Panel Repeat Options Test Dashboard"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
+}

@@ -5,27 +5,35 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/registry/apps/advisor"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
+	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestProvideAppInstallers_Table(t *testing.T) {
-	playlistInstaller := &playlist.PlaylistAppInstaller{}
-	pluginsInstaller := &plugins.PluginsAppInstaller{}
-	rulesInstaller := &rules.AlertingRulesAppInstaller{}
+	playlistInstaller := &playlist.AppInstaller{}
+	pluginsInstaller := &plugins.AppInstaller{}
+	rulesInstaller := &rules.AppInstaller{}
 	correlationsAppInstaller := &correlations.AppInstaller{}
-	notificationsAppInstaller := &notifications.AlertingNotificationsAppInstaller{}
-	exampleAppInstaller := &example.ExampleAppInstaller{}
+	notificationsAppInstaller := &notifications.AppInstaller{}
+	annotationAppInstaller := &annotation.AppInstaller{}
+	exampleAppInstaller := &example.AppInstaller{}
+	advisorAppInstaller := &advisor.AppInstaller{}
+	historianAppInstaller := &historian.AppInstaller{}
+	quotasAppInstaller := &quotas.QuotasAppInstaller{}
 
 	tests := []struct {
 		name           string
 		flags          []any
-		rulesInst      *rules.AlertingRulesAppInstaller
+		rulesInst      *rules.AppInstaller
 		expectRulesApp bool
 	}{
 		{name: "no flags", flags: nil, rulesInst: nil, expectRulesApp: false},
@@ -37,7 +45,21 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tt.flags...)
-			got := ProvideAppInstallers(features, playlistInstaller, pluginsInstaller, nil, tt.rulesInst, correlationsAppInstaller, notificationsAppInstaller, nil, exampleAppInstaller)
+			got := ProvideAppInstallers(features,
+				playlistInstaller,
+				pluginsInstaller,
+				nil, // live
+				nil, // ShortURL
+				tt.rulesInst,
+				correlationsAppInstaller,
+				notificationsAppInstaller,
+				nil,
+				annotationAppInstaller,
+				exampleAppInstaller,
+				advisorAppInstaller,
+				historianAppInstaller,
+				quotasAppInstaller,
+			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
 			} else {

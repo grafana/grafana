@@ -20,14 +20,12 @@ const mockEventBus = {
 
 class MockDatasourceApi<T extends DataQuery> implements DataSourceApi<T> {
   name: string;
-  id: number;
   type: string;
   uid: string;
   meta: DataSourcePluginMeta<{}>;
 
-  constructor(name: string, id: number, type: string, uid: string, others?: Partial<DataSourceApi>) {
+  constructor(name: string, type: string, uid: string, others?: Partial<DataSourceApi>) {
     this.name = name;
-    this.id = id;
     this.type = type;
     this.uid = uid;
     this.meta = {
@@ -53,13 +51,12 @@ class MockDatasourceApi<T extends DataQuery> implements DataSourceApi<T> {
 }
 
 const dsStore: Record<string, DataSourceApi> = {
-  alertmanager: new MockDatasourceApi('Alertmanager', 3, 'alertmanager', 'alertmanager'),
-  loki: new MockDatasourceApi('Loki', 2, 'loki', 'loki'),
-  prometheus: new MockDatasourceApi<MockQuery>('Prometheus', 1, 'prometheus', 'prometheus', {
+  alertmanager: new MockDatasourceApi('Alertmanager', 'alertmanager', 'alertmanager'),
+  loki: new MockDatasourceApi('Loki', 'loki', 'loki'),
+  prometheus: new MockDatasourceApi<MockQuery>('Prometheus', 'prometheus', 'prometheus', {
     getQueryDisplayText: (query: MockQuery) => query.queryText || 'Unknown query',
   }),
   mixed: new MixedDatasource({
-    id: 4,
     name: 'Mixed',
     type: 'mixed',
     uid: 'mixed',
@@ -89,11 +86,6 @@ const copyStringToClipboard = jest.fn();
 jest.mock('app/core/utils/explore', () => ({
   ...jest.requireActual('app/core/utils/explore'),
   copyStringToClipboard: (str: string) => copyStringToClipboard(str),
-}));
-
-jest.mock('app/core/app_events', () => ({
-  publish: jest.fn(),
-  subscribe: jest.fn(),
 }));
 
 interface MockQuery extends DataQuery {

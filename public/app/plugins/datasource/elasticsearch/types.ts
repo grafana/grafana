@@ -63,9 +63,16 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   index?: string;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
+  defaultQueryMode?: QueryType;
+  apiKeyAuth?: boolean;
+}
+
+export interface ElasticsearchSecureJsonData {
+  apiKey?: string;
 }
 
 export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document';
+export type EditorType = 'code' | 'builder';
 
 interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;

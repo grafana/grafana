@@ -23,7 +23,7 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
       continue;
     }
     // Remove the specified part from the path key
-    const newPathKey = path.replace(/^\/apis\/[^\/]+\/[^\/]+\/namespaces\/\{namespace}/, '');
+    const newPathKey = path.replace(/^\/apis\/[^\/]+\/[^\/]+/, '').replace(/^\/namespaces\/\{namespace}/, '');
 
     // Process each method in the path (e.g., get, post)
     const newPathItem: Record<string, unknown> = {};

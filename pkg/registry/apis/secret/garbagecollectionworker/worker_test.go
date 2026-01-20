@@ -1,8 +1,6 @@
 package garbagecollectionworker_test
 
 import (
-	"fmt"
-	"slices"
 	"testing"
 	"time"
 
@@ -11,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
-	"github.com/mitchellh/copystructure"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -52,7 +49,7 @@ func TestBasic(t *testing.T) {
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
 
-		keeperCfg, err := sut.KeeperMetadataStorage.GetKeeperConfig(t.Context(), sv.Namespace, sv.Spec.Keeper, contracts.ReadOpts{ForUpdate: false})
+		keeperCfg, err := sut.KeeperMetadataStorage.GetKeeperConfig(t.Context(), sv.Namespace, sv.Status.Keeper, contracts.ReadOpts{ForUpdate: false})
 		require.NoError(t, err)
 
 		keeper, err := sut.KeeperService.KeeperForConfig(keeperCfg)
@@ -99,27 +96,33 @@ func TestBasic(t *testing.T) {
 		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
 		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
 	})
-}
 
-var (
-	decryptersGen     = rapid.SampledFrom([]string{"svc1", "svc2", "svc3", "svc4", "svc5"})
-	nameGen           = rapid.SampledFrom([]string{"n1", "n2", "n3", "n4", "n5"})
-	namespaceGen      = rapid.SampledFrom([]string{"ns1", "ns2", "ns3", "ns4", "ns5"})
-	anySecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
-		return &secretv1beta1.SecureValue{
+	t.Run("cleaning up secure values that use references", func(t *testing.T) {
+		sut := testutils.Setup(t)
+
+		keeper, err := sut.CreateAWSKeeper(t.Context())
+		require.NoError(t, err)
+
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
+
+		sv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      nameGen.Draw(t, "name"),
-				Namespace: namespaceGen.Draw(t, "ns"),
+				Namespace: keeper.Namespace,
+				Name:      "sv1",
 			},
 			Spec: secretv1beta1.SecureValueSpec{
-				Description: rapid.SampledFrom([]string{"d1", "d2", "d3", "d4", "d5"}).Draw(t, "description"),
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue(rapid.SampledFrom([]string{"v1", "v2", "v3", "v4", "v5"}).Draw(t, "value"))),
-				Decrypters:  rapid.SliceOfDistinct(decryptersGen, func(v string) string { return v }).Draw(t, "decrypters"),
+				Description: "desc1",
+				Ref:         ptr.To("ref1"),
+				Decrypters:  []string{"decrypter1"},
 			},
-			Status: secretv1beta1.SecureValueStatus{},
-		}
+		}))
+		require.NoError(t, err)
+
+		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+		require.NoError(t, err)
+		require.NoError(t, sut.GarbageCollectionWorker.Cleanup(t.Context(), sv))
 	})
-)
+}
 
 func TestProperty(t *testing.T) {
 	t.Parallel()
@@ -128,26 +131,59 @@ func TestProperty(t *testing.T) {
 
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
-		model := newModel()
+		model := testutils.NewModelGsm(nil)
 
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
-				sv := anySecureValueGen.Draw(t, "sv")
-				svCopy := deepCopy(sv)
+				var sv *secretv1beta1.SecureValue
+				if rapid.Bool().Draw(t, "withRef") {
+					sv = testutils.AnySecureValueWithRefGen.Draw(t, "sv")
+				} else {
+					sv = testutils.AnySecureValueGen.Draw(t, "sv")
+				}
+
+				svCopy := sv.DeepCopy()
 
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv))
-				svCopy.UID = createdSv.UID
-				modelErr := model.create(sut.Clock.Now(), svCopy)
+				if err == nil {
+					svCopy.UID = createdSv.UID
+				}
+				_, modelErr := model.Create(sut.Clock.Now(), svCopy)
 				require.ErrorIs(t, err, modelErr)
 			},
+			"createKeeper": func(t *rapid.T) {
+				input := testutils.AnyKeeperGen.Draw(t, "keeper")
+				modelKeeper, modelErr := model.CreateKeeper(input)
+				keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), input, "actor-uid")
+				if err != nil || modelErr != nil {
+					require.ErrorIs(t, err, modelErr)
+					return
+				}
+				require.Equal(t, modelKeeper.Name, keeper.Name)
+			},
+			"setKeeperAsActive": func(t *rapid.T) {
+				namespace := testutils.NamespaceGen.Draw(t, "namespace")
+				var keeper string
+				if rapid.Bool().Draw(t, "systemKeeper") {
+					keeper = contracts.SystemKeeperName
+				} else {
+					keeper = testutils.KeeperNameGen.Draw(t, "keeper")
+				}
+				modelErr := model.SetKeeperAsActive(namespace, keeper)
+				err := sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), keeper)
+				if err != nil || modelErr != nil {
+					require.ErrorIs(t, err, modelErr)
+					return
+				}
+			},
 			"delete": func(t *rapid.T) {
-				if len(model.items) == 0 {
+				if len(model.SecureValues) == 0 {
 					return
 				}
 
-				i := rapid.IntRange(0, len(model.items)-1).Draw(t, "index")
-				sv := model.items[i]
-				modelErr := model.delete(sv.Namespace, sv.Name)
+				i := rapid.IntRange(0, len(model.SecureValues)-1).Draw(t, "index")
+				sv := model.SecureValues[i]
+				_, modelErr := model.Delete(sv.Namespace, sv.Name)
 				_, err := sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
 				require.ErrorIs(t, err, modelErr)
 			},
@@ -155,7 +191,7 @@ func TestProperty(t *testing.T) {
 				// Taken from secureValueMetadataStorage.acquireLeases
 				minAge := 300 * time.Second
 				maxBatchSize := sut.GarbageCollectionWorker.Cfg.SecretsManagement.GCWorkerMaxBatchSize
-				modelDeleted, modelErr := model.cleanupInactiveSecureValues(sut.Clock.Now(), minAge, maxBatchSize)
+				modelDeleted, modelErr := model.CleanupInactiveSecureValues(sut.Clock.Now(), minAge, maxBatchSize)
 				deleted, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
 				require.ErrorIs(t, err, modelErr)
 
@@ -175,74 +211,4 @@ func TestProperty(t *testing.T) {
 			},
 		})
 	})
-}
-
-type model struct {
-	items []*modelSecureValue
-}
-
-type modelSecureValue struct {
-	*secretv1beta1.SecureValue
-	active  bool
-	created time.Time
-}
-
-func newModel() *model {
-	return &model{
-		items: make([]*modelSecureValue, 0),
-	}
-}
-
-func (m *model) create(now time.Time, sv *secretv1beta1.SecureValue) error {
-	for _, item := range m.items {
-		if item.active && item.Namespace == sv.Namespace && item.Name == sv.Name {
-			item.active = false
-			break
-		}
-	}
-	m.items = append(m.items, &modelSecureValue{SecureValue: sv, active: true, created: now})
-	return nil
-}
-
-func (m *model) delete(ns string, name string) error {
-	for _, sv := range m.items {
-		if sv.active && sv.Namespace == ns && sv.Name == name {
-			sv.active = false
-			return nil
-		}
-	}
-
-	return contracts.ErrSecureValueNotFound
-}
-
-func (m *model) cleanupInactiveSecureValues(now time.Time, minAge time.Duration, maxBatchSize uint16) ([]*modelSecureValue, error) {
-	// Using a slice to allow duplicates
-	toDelete := make([]*modelSecureValue, 0)
-
-	for _, sv := range m.items {
-		if len(toDelete) >= int(maxBatchSize) {
-			break
-		}
-
-		if !sv.active && now.Sub(sv.created) > minAge {
-			toDelete = append(toDelete, sv)
-		}
-	}
-
-	// PERF: The slices are always small
-	m.items = slices.DeleteFunc(m.items, func(v1 *modelSecureValue) bool {
-		return slices.ContainsFunc(toDelete, func(v2 *modelSecureValue) bool {
-			return v2.UID == v1.UID
-		})
-	})
-
-	return toDelete, nil
-}
-
-func deepCopy[T any](sv T) T {
-	copied, err := copystructure.Copy(sv)
-	if err != nil {
-		panic(fmt.Sprintf("failed to copy secure value: %v", err))
-	}
-	return copied.(T)
 }

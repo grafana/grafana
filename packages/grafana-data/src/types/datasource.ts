@@ -215,9 +215,11 @@ abstract class DataSourceApi<
   readonly name: string;
 
   /**
-   *  Set in constructor
+   * Internal ID, this will be removed in G13
+   *
+   * @deprecated
    */
-  readonly id: number;
+  readonly id?: number;
 
   /**
    *  Set in constructor
@@ -314,6 +316,13 @@ abstract class DataSourceApi<
   ): Promise<DrilldownsApplicability[]>;
 
   /**
+   * Get recommended drilldowns for a dashboard
+   */
+  getRecommendedDrilldowns?(
+    options?: DataSourceGetRecommendedDrilldownsOptions<TQuery>
+  ): Promise<DrilldownRecommendation>;
+
+  /**
    * Get tag keys for adhoc filters
    */
   getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
@@ -398,13 +407,9 @@ abstract class DataSourceApi<
 }
 
 /**
- * Options argument to DataSourceAPI.getTagKeys
+ * Base options shared across datasource filtering operations.
  */
-export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuery> {
-  /**
-   * The other existing filters or base filters. New in v10.3
-   */
-  filters: AdHocVariableFilter[];
+export interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
   /**
    * Context time range. New in v10.3
    */
@@ -414,20 +419,26 @@ export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuer
 }
 
 /**
+ * Options argument to DataSourceAPI.getTagKeys
+ */
+export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
+  /**
+   * The other existing filters or base filters. New in v10.3
+   */
+  filters: AdHocVariableFilter[];
+}
+
+/**
  * Options argument to DataSourceAPI.getTagValues
  */
-export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQuery> {
+export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
   key: string;
   /**
    * The other existing filters or base filters. New in v10.3
    */
   filters: AdHocVariableFilter[];
-  /**
-   * Context time range. New in v10.3
-   */
-  timeRange?: TimeRange;
-  queries?: TQuery[];
-  scopes?: Scope[] | undefined;
 }
 
 export interface MetadataInspectorProps<
@@ -643,14 +654,25 @@ export interface MetricFindValue {
   value?: string | number;
   group?: string;
   expandable?: boolean;
+  properties?: Record<string, string>;
 }
 
-export interface DataSourceGetDrilldownsApplicabilityOptions<TQuery extends DataQuery = DataQuery> {
-  filters: AdHocVariableFilter[];
+export interface DataSourceGetDrilldownsApplicabilityOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
+  filters?: AdHocVariableFilter[];
   groupByKeys?: string[];
-  timeRange?: TimeRange;
-  queries?: TQuery[];
-  scopes?: Scope[] | undefined;
+}
+
+export interface DataSourceGetRecommendedDrilldownsOptions<TQuery extends DataQuery = DataQuery>
+  extends DataSourceFilteringRequestOptions<TQuery> {
+  dashboardUid?: string;
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
+}
+
+export interface DrilldownRecommendation {
+  filters?: AdHocVariableFilter[];
+  groupByKeys?: string[];
 }
 
 export interface DrilldownsApplicability {
@@ -712,7 +734,10 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  * in bootData (on page load), or from: /api/frontend/settings
  */
 export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
-  id: number;
+  /**
+   * @deprecated will be removed in G13
+   */
+  id?: number;
   uid: string;
   type: string;
   name: string;

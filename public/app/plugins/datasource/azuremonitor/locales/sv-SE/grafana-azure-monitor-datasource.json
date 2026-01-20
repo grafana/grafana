@@ -17,7 +17,7 @@
       "label-subscription": "Prenumeration",
       "placeholder-resource-name": "namn",
       "tooltip-region": "Resursens kodregion. Valfritt för en enskild resurs men obligatoriskt vid val av flera.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Redigera <2>resursens URI</2> manuellt. Stöder användning av flera mallvariabler (t.ex.: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Aggregeringsfunktion",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Grundläggande loggar",
-      "description-basic-logs": "",
+      "description-basic-logs": "Om den här funktionen aktiveras medför det Azure Monitor-kostnader per fråga för instrumentpanelspaneler som frågar tabeller konfigurerade för <2>basloggar</2>.",
       "label-enable-basic-logs": "Aktivera basloggar"
     },
     "config-editor": {
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Knapp för att kickstarta Azure-loggfrågor",
       "body-switching-to-builder": "Om du byter till Builder kommer din nuvarande KQL-förfrågan att kasseras och KQL-redigeraren att rensas. Är du säker på att du vill göra det?",
-      "body-switching-to-kql": "Om du byter till KQL kommer dina nuvarande byggarinställningar att kasseras. Är du säker?",
       "button-kick-start-your-query": "Kickstarta din fråga",
       "button-run-query": "Kör fråga",
       "confirmText-switch-to": "Byt till {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Tidskolumn",
       "label-time-range": "Tidsintervall",
       "tooltip-time-column": "<0>Anger tidskolumnen som används för filtrering. Standardinställningen är den första tabellens <1>timeSpan</1>-kolumn, den första <3>datetime</3>-kolumnen som hittas eller <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Anger tidsintervallet som används för att fråga. Alternativet <1>Fråga</1> använder endast de tidsintervall som anges i frågan. <3>Instrumentpanelen</3> kommer endast att använda Grafanas tidsintervall. I Logs Builder-läget kommer endast instrumentpanelens tid att användas.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Topp"

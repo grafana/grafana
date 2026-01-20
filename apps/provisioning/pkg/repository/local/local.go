@@ -113,37 +113,6 @@ func (r *localRepository) Config() *provisioning.Repository {
 	return r.config
 }
 
-// Validate implements provisioning.Repository.
-func (r *localRepository) Validate() field.ErrorList {
-	cfg := r.config.Spec.Local
-	if cfg == nil {
-		return field.ErrorList{&field.Error{
-			Type:  field.ErrorTypeRequired,
-			Field: "spec.local",
-		}}
-	}
-
-	// The path value must be set for local provisioning
-	if cfg.Path == "" {
-		return field.ErrorList{field.Required(field.NewPath("spec", "local", "path"),
-			"must enter a path to local file")}
-	}
-
-	if err := safepath.IsSafe(cfg.Path); err != nil {
-		return field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"),
-			cfg.Path, err.Error())}
-	}
-
-	// Check if it is valid
-	_, err := r.resolver.LocalPath(cfg.Path)
-	if err != nil {
-		return field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"),
-			cfg.Path, err.Error())}
-	}
-
-	return nil
-}
-
 // Test implements provisioning.Repository.
 // NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {

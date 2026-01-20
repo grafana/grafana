@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.32, for Linux (aarch64)
+-- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
 --
--- Host: localhost    Database: grafana
+-- Host: localhost    Database: hg_dump
 -- ------------------------------------------------------
--- Server version	8.0.32
+-- Server version	8.4.5
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -41,6 +41,9 @@ INSERT INTO `secret_migration_log` (`migration_id`, `sql`, `success`, `error`, `
   ('add lease_created index to secret_secure_value','CREATE INDEX `IDX_secret_secure_value_lease_created` ON `secret_secure_value` (`lease_created`);',1,'','2022-01-01 00:00:00'),
   ('add data_key_id column to secret_encrypted_value','alter table `secret_encrypted_value` ADD COLUMN `data_key_id` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT \'\' ',1,'','2022-01-01 00:00:00'),
   ('add data_key_id index to secret_encrypted_value','CREATE INDEX `IDX_secret_encrypted_value_data_key_id` ON `secret_encrypted_value` (`data_key_id`);',1,'','2022-01-01 00:00:00'),
+  ('add active column to secret_keeper','alter table `secret_keeper` ADD COLUMN `active` TINYINT(1) NOT NULL DEFAULT 0 ',1,'','2022-01-01 00:00:00'),
+  ('add active column index to secret_keeper','CREATE INDEX `IDX_secret_keeper_namespace_name_active` ON `secret_keeper` (`namespace`,`name`,`active`);',1,'','2022-01-01 00:00:00'),
+  ('set secret_secure_value.keeper to \'system\' where keeper is null in secret_secure_value','UPDATE secret_secure_value SET keeper = \'system\' WHERE keeper IS NULL',1,'','2022-01-01 00:00:00'),
   ('drop my_row_id and add primary key with columns namespace,name,version to table secret_encrypted_value if my_row_id exists (auto-generated mysql column)','\n	  ALTER TABLE secret_encrypted_value\n	  DROP PRIMARY KEY,\n	  DROP COLUMN my_row_id,\n	  DROP INDEX UQE_secret_encrypted_value_namespace_name_version,\n	  ADD PRIMARY KEY (`namespace`,`name`,`version`);\n	',1,'','2022-01-01 00:00:00'),
   ('drop unique index UQE_secret_encrypted_value_namespace_name_version from secret_encrypted_value table if it exists (mysql)','ALTER TABLE secret_encrypted_value DROP INDEX UQE_secret_encrypted_value_namespace_name_version',1,'','2022-01-01 00:00:00'),
   ('add primary key with columns namespace,name,version to table secret_encrypted_value if it doesn\'t exist (mysql)','ALTER TABLE secret_encrypted_value ADD PRIMARY KEY (`namespace`,`name`,`version`)',1,'','2022-01-01 00:00:00'),

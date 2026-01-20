@@ -72,9 +72,10 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			StartsAt:           evaluationTime.Add(-1 * time.Minute),
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
+			EvaluationDuration: 1 * time.Second,
 			LastSentAt:         util.Pointer(evaluationTime),
 			ResolvedAt:         util.Pointer(evaluationTime),
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        rule.Annotations, // alert instance has no stored annotations, falls back to the rule annotations
 			ResultFingerprint:  data.Fingerprint(math.MaxUint64),
 		}, {
 			AlertRuleUID:       rule.UID,
@@ -85,9 +86,10 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			StartsAt:           evaluationTime.Add(-1 * time.Minute),
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
+			EvaluationDuration: 2 * time.Second,
 			LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        map[string]string{"testAnnotation": "value-2"},
 			ResultFingerprint:  data.Fingerprint(math.MaxUint64 - 1),
 		},
 		{
@@ -99,9 +101,10 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			StartsAt:           evaluationTime.Add(-1 * time.Minute),
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
+			EvaluationDuration: 3 * time.Second,
 			LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        map[string]string{"testAnnotation": "value-3"},
 			ResultFingerprint:  data.Fingerprint(0),
 		},
 		{
@@ -113,10 +116,12 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			StartsAt:           evaluationTime.Add(-1 * time.Minute),
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
+			EvaluationDuration: 4 * time.Second,
 			LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        map[string]string{"testAnnotation": "value-4"},
 			ResultFingerprint:  data.Fingerprint(1),
+			Error:              errors.New("test error message"),
 		},
 		{
 			AlertRuleUID:       rule.UID,
@@ -127,9 +132,10 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			StartsAt:           evaluationTime.Add(-1 * time.Minute),
 			EndsAt:             evaluationTime.Add(1 * time.Minute),
 			LastEvaluationTime: evaluationTime,
+			EvaluationDuration: 5 * time.Second,
 			LastSentAt:         nil,
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        map[string]string{"testAnnotation": "value-5"},
 			ResultFingerprint:  data.Fingerprint(2),
 		},
 	}
@@ -144,14 +150,15 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStateNormal,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		LastSentAt:        &evaluationTime,
-		ResolvedAt:        &evaluationTime,
-		Labels:            labels,
-		ResultFingerprint: data.Fingerprint(math.MaxUint64).String(),
+		CurrentState:       models.InstanceStateNormal,
+		LastEvalTime:       evaluationTime,
+		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:    evaluationTime.Add(1 * time.Minute),
+		LastSentAt:         &evaluationTime,
+		ResolvedAt:         &evaluationTime,
+		Labels:             labels,
+		ResultFingerprint:  data.Fingerprint(math.MaxUint64).String(),
+		EvaluationDuration: 1 * time.Second,
 	})
 
 	labels = models.InstanceLabels{"test2": "testValue2"}
@@ -162,14 +169,16 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStateFiring,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		LastSentAt:        util.Pointer(evaluationTime.Add(-1 * time.Minute)),
-		ResolvedAt:        nil,
-		Labels:            labels,
-		ResultFingerprint: data.Fingerprint(math.MaxUint64 - 1).String(),
+		CurrentState:       models.InstanceStateFiring,
+		LastEvalTime:       evaluationTime,
+		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:    evaluationTime.Add(1 * time.Minute),
+		LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+		ResolvedAt:         nil,
+		Labels:             labels,
+		Annotations:        models.InstanceAnnotations{"testAnnotation": "value-2"},
+		ResultFingerprint:  data.Fingerprint(math.MaxUint64 - 1).String(),
+		EvaluationDuration: 2 * time.Second,
 	})
 
 	labels = models.InstanceLabels{"test3": "testValue3"}
@@ -180,14 +189,16 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStateNoData,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		LastSentAt:        util.Pointer(evaluationTime.Add(-1 * time.Minute)),
-		ResolvedAt:        nil,
-		Labels:            labels,
-		ResultFingerprint: data.Fingerprint(0).String(),
+		CurrentState:       models.InstanceStateNoData,
+		LastEvalTime:       evaluationTime,
+		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:    evaluationTime.Add(1 * time.Minute),
+		LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+		ResolvedAt:         nil,
+		Labels:             labels,
+		Annotations:        models.InstanceAnnotations{"testAnnotation": "value-3"},
+		ResultFingerprint:  data.Fingerprint(0).String(),
+		EvaluationDuration: 3 * time.Second,
 	})
 
 	labels = models.InstanceLabels{"test4": "testValue4"}
@@ -198,14 +209,17 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStateError,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		LastSentAt:        util.Pointer(evaluationTime.Add(-1 * time.Minute)),
-		ResolvedAt:        nil,
-		Labels:            labels,
-		ResultFingerprint: data.Fingerprint(1).String(),
+		CurrentState:       models.InstanceStateError,
+		LastEvalTime:       evaluationTime,
+		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:    evaluationTime.Add(1 * time.Minute),
+		LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+		ResolvedAt:         nil,
+		Labels:             labels,
+		Annotations:        models.InstanceAnnotations{"testAnnotation": "value-4"},
+		ResultFingerprint:  data.Fingerprint(1).String(),
+		EvaluationDuration: 4 * time.Second,
+		LastError:          "test error message",
 	})
 
 	labels = models.InstanceLabels{"test5": "testValue5"}
@@ -216,14 +230,16 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStatePending,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		LastSentAt:        nil,
-		ResolvedAt:        nil,
-		Labels:            labels,
-		ResultFingerprint: data.Fingerprint(2).String(),
+		CurrentState:       models.InstanceStatePending,
+		LastEvalTime:       evaluationTime,
+		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:    evaluationTime.Add(1 * time.Minute),
+		LastSentAt:         nil,
+		ResolvedAt:         nil,
+		Labels:             labels,
+		Annotations:        models.InstanceAnnotations{"testAnnotation": "value-5"},
+		ResultFingerprint:  data.Fingerprint(2).String(),
+		EvaluationDuration: 5 * time.Second,
 	})
 
 	labels = models.InstanceLabels{"test6": "testValue6"}
@@ -234,14 +250,16 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStateRecovering,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		LastSentAt:        nil,
-		ResolvedAt:        nil,
-		Labels:            labels,
-		ResultFingerprint: data.Fingerprint(2).String(),
+		CurrentState:       models.InstanceStateRecovering,
+		LastEvalTime:       evaluationTime,
+		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:    evaluationTime.Add(1 * time.Minute),
+		LastSentAt:         nil,
+		ResolvedAt:         nil,
+		Labels:             labels,
+		Annotations:        models.InstanceAnnotations{"testAnnotation": "value-6"},
+		ResultFingerprint:  data.Fingerprint(2).String(),
+		EvaluationDuration: 6 * time.Second,
 	})
 
 	for _, instance := range instances {
@@ -266,7 +284,16 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 			setCacheID(entry)
 			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheID)
 
-			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "LatestResult")); diff != "" {
+			errorComparer := cmp.Comparer(func(a, b error) bool {
+				if a == nil && b == nil {
+					return true
+				}
+				if a == nil || b == nil {
+					return false
+				}
+				return a.Error() == b.Error()
+			})
+			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "LatestResult"), errorComparer); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 				t.FailNow()
 			}
@@ -1497,6 +1524,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 			},
 			CurrentState:      models.InstanceStateNormal,
 			Labels:            labels1,
+			Annotations:       rule.Annotations,
 			LastEvalTime:      lastEval,
 			CurrentStateSince: lastEval,
 			CurrentStateEnd:   lastEval.Add(3 * interval),
@@ -1512,6 +1540,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 			},
 			CurrentState:      models.InstanceStateFiring,
 			Labels:            labels2,
+			Annotations:       rule.Annotations,
 			LastEvalTime:      lastEval,
 			CurrentStateSince: lastEval,
 			CurrentStateEnd:   lastEval.Add(3 * interval),
@@ -1562,7 +1591,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 					LastSentAt:         &lastEval,
 					ResolvedAt:         &lastEval,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        rule.Annotations,
 					ResultFingerprint:  data.Labels{"test1": "testValue1"}.Fingerprint(),
 				},
 			},
@@ -1810,7 +1839,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test1": "testValue1"},
 					State:              eval.Normal,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        map[string]string{"testAnnotation": "value-2"},
 				},
 				{
 					AlertRuleUID:       rule.UID,
@@ -1818,7 +1847,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test2": "testValue2"},
 					State:              eval.Alerting,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        map[string]string{"testAnnotation": "value-2"},
 				},
 			},
 			startingStateCacheCount: 2,
@@ -1959,7 +1988,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test1": "testValue1"},
 					State:              eval.Normal,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        map[string]string{"testAnnotation": "value-2"},
 				},
 				{
 					AlertRuleUID:       rule.UID,
@@ -1967,7 +1996,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test2": "testValue2"},
 					State:              eval.Alerting,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        map[string]string{"testAnnotation": "value-2"},
 				},
 			},
 			startingStateCacheCount:  2,

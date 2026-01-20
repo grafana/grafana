@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
@@ -150,6 +151,11 @@ type Cfg struct {
 	PluginsPath                     string
 	EnterpriseLicensePath           string
 
+	// Classic Provisioning settings
+	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
+	ClassicProvisioningDashboardsServerLockMinWaitMs          int64
+	ClassicProvisioningDashboardsServerLockMaxWaitMs          int64
+
 	// SMTP email settings
 	Smtp SmtpSettings
 
@@ -203,7 +209,7 @@ type Cfg struct {
 	// Plugins
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
-	PluginSettings                   PluginSettings
+	PluginSettings                   config.PluginSettings
 	PluginsAllowUnsigned             []string
 	PluginCatalogURL                 string
 	PluginCatalogHiddenPlugins       []string
@@ -215,6 +221,7 @@ type Cfg struct {
 	ForwardHostEnvVars               []string
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
+	PreinstallAutoUpdate             bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -238,14 +245,16 @@ type Cfg struct {
 	// use this setting.
 	MetricsIncludeTeamLabel          bool
 	MetricsTotalStatsIntervalSeconds int
+	ClassicHTTPHistogramEnabled      bool
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
-	DashboardVersionsToKeep     int
-	MinRefreshInterval          string
-	DefaultHomeDashboardPath    string
-	DashboardPerformanceMetrics []string
-	PanelSeriesLimit            int
+	DashboardVersionsToKeep          int
+	MinRefreshInterval               string
+	DefaultHomeDashboardPath         string
+	DashboardPerformanceMetrics      []string
+	PanelSeriesLimit                 int
+	DashboardSchemaMigrationCacheTTL time.Duration
 
 	// Auth
 	LoginCookieName               string
@@ -389,14 +398,15 @@ type Cfg struct {
 	LocalFileSystemAvailable bool
 
 	// Analytics
-	CheckForGrafanaUpdates              bool
-	CheckForPluginUpdates               bool
-	ReportingDistributor                string
-	ReportingEnabled                    bool
-	ApplicationInsightsConnectionString string
-	ApplicationInsightsEndpointUrl      string
-	FeedbackLinksEnabled                bool
-	ReportingStaticContext              map[string]string
+	CheckForGrafanaUpdates               bool
+	CheckForPluginUpdates                bool
+	ReportingDistributor                 string
+	ReportingEnabled                     bool
+	ApplicationInsightsConnectionString  string
+	ApplicationInsightsEndpointUrl       string
+	ApplicationInsightsAutoRouteTracking bool
+	FeedbackLinksEnabled                 bool
+	ReportingStaticContext               map[string]string
 
 	// Frontend analytics
 	GoogleAnalyticsID                   string
@@ -406,6 +416,7 @@ type Cfg struct {
 	RudderstackDataPlaneURL             string
 	RudderstackWriteKey                 string
 	RudderstackSDKURL                   string
+	RudderstackV3SDKURL                 string
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
@@ -478,6 +489,9 @@ type Cfg struct {
 	// LiveMessageSizeLimit is the maximum size in bytes of Websocket messages
 	// from clients. Defaults to 64KB.
 	LiveMessageSizeLimit int
+	// LiveClientQueueMaxSize is the maximum size in bytes of the client queue
+	// for Live connections. Defaults to 4MB.
+	LiveClientQueueMaxSize int
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -573,8 +587,12 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                             map[string]UnifiedStorageConfig
-	MaxPageSizeBytes                           int
+	UnifiedStorage map[string]UnifiedStorageConfig
+	// DisableDataMigrations will disable resources data migration to unified storage at startup
+	DisableDataMigrations bool
+	MaxPageSizeBytes      int
+	// IndexPath the directory where index files are stored.
+	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexRebuildWorkers                        int
@@ -583,6 +601,7 @@ type Cfg struct {
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
+	IndexScoringModel                          string        // Note: Temporary config to switch the index scoring model and will be removed soon.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
@@ -602,19 +621,23 @@ type Cfg struct {
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
+	EnableSearch                               bool
+	OverridesFilePath                          string
+	OverridesReloadInterval                    time.Duration
+	EnableSQLKVBackend                         bool
+	EnableSQLKVCompatibilityMode               bool
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
 }
 
 type UnifiedStorageConfig struct {
-	DualWriterMode                       rest.DualWriterMode
-	DualWriterPeriodicDataSyncJobEnabled bool
-	DualWriterMigrationDataSyncDisabled  bool
-	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
-	DataSyncerInterval time.Duration
-	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
-	DataSyncerRecordsLimit int
+	DualWriterMode rest.DualWriterMode
+	// EnableMigration indicates whether migration is enabled for the resource.
+	// If not set, will use the default from MigratedUnifiedResources.
+	EnableMigration bool
+	// AutoMigrationThreshold is the threshold below which a resource is automatically migrated.
+	AutoMigrationThreshold int
 }
 
 type InstallPlugin struct {
@@ -1213,6 +1236,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	cfg.readClassicProvisioningSettings(iniFile)
+
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
@@ -1220,6 +1245,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
+	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -1246,6 +1272,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 	cfg.MetricsIncludeTeamLabel = iniFile.Section("metrics").Key("include_team_label").MustBool(false)
 	cfg.MetricsTotalStatsIntervalSeconds = iniFile.Section("metrics").Key("total_stats_collector_interval_seconds").MustInt(1800)
+	cfg.ClassicHTTPHistogramEnabled = iniFile.Section("metrics").Key("classic_http_histogram_enabled").MustBool(true)
 
 	analytics := iniFile.Section("analytics")
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
@@ -1258,6 +1285,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
+	cfg.RudderstackV3SDKURL = analytics.Key("rudderstack_v3_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
@@ -1272,6 +1300,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
+	cfg.ApplicationInsightsAutoRouteTracking = analytics.Key("application_insights_connection_string").MustBool(true)
 	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
 	// parse reporting static context string of key=value, key=value pairs into an object
@@ -1312,7 +1341,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
 	shortLinks := iniFile.Section("short_links")
-	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(7)
+	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(-1)
 
 	if cfg.ShortLinkExpiration > 365 {
 		cfg.Logger.Warn("short_links expire_time must be less than 366 days. Setting to 365 days")
@@ -2062,6 +2091,11 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	if cfg.LiveMessageSizeLimit < -1 {
 		return fmt.Errorf("unexpected value %d for [live] message_size_limit", cfg.LiveMaxConnections)
 	}
+	cfg.LiveClientQueueMaxSize = section.Key("client_queue_max_size").MustInt(4194304)
+	if cfg.LiveClientQueueMaxSize <= 0 {
+		return fmt.Errorf("unexpected value %d for [live] client_queue_max_size", cfg.LiveMaxConnections)
+	}
+
 	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
 	switch cfg.LiveHAEngine {
 	case "", "redis":
@@ -2091,6 +2125,12 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
+}
+
+func (cfg *Cfg) readClassicProvisioningSettings(iniFile *ini.File) {
+	cfg.ClassicProvisioningDashboardsServerLockMinWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_min_wait_ms").MustInt64(100)
+	cfg.ClassicProvisioningDashboardsServerLockMaxWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_wait_ms").MustInt64(1000)
+	cfg.ClassicProvisioningDashboardsServerLockMaxIntervalSeconds = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_interval_seconds").MustInt64(15)
 }
 
 func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
@@ -2130,7 +2170,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
-		cfg.ProvisioningAllowedTargets = []string{"instance", "folder"}
+		cfg.ProvisioningAllowedTargets = []string{"folder"}
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)

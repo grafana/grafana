@@ -21,7 +21,6 @@ import {
   sortDataFrame,
   toDataFrame,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
@@ -292,7 +291,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
     expect(logsModel.meta![1]).toMatchObject({
@@ -305,7 +304,7 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
-  it('given one series should return expected logs model with detected_level', () => {
+  it('given one series should return expected logs model with detected_level as a field', () => {
     const series: DataFrame[] = [
       createDataFrame({
         fields: [
@@ -374,7 +373,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
     expect(logsModel.meta![1]).toMatchObject({
@@ -386,9 +385,123 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
-  it('with infinite scrolling enabled it should return expected logs model', () => {
-    config.featureToggles.logsInfiniteScrolling = true;
+  it('given one legacy series should return expected logs model with detected_level as a label', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'Line',
+            type: FieldType.string,
+            values: ['foo=bar', 'foo=bar'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            // Precedence of detected_level over level, if present
+            values: [
+              {
+                detected_level: 'info',
+                level: 1,
+                job: 'grafana',
+              },
+              {
+                detected_level: 'error',
+                level: 2,
+                job: 'grafana',
+              },
+            ],
+          },
+        ],
+        meta: {
+          limit: 1000,
+        },
+        refId: 'A',
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.rows).toHaveLength(2);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'foo=bar',
+        labels: { detected_level: 'info', level: '1', job: 'grafana' },
+        logLevel: 'info',
+        uniqueLabels: {},
+        uid: 'A_0',
+      },
+      {
+        entry: 'foo=bar',
+        labels: { detected_level: 'error', level: '2', job: 'grafana' },
+        logLevel: 'error',
+        uniqueLabels: {},
+        uid: 'A_1',
+      },
+    ]);
+  });
 
+  it('given one dataplane series should return expected logs model with detected_level as a label', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            values: [123456789, 123456789],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            values: ['foo=bar', 'foo=bar'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            // Precedence of detected_level over level, if present
+            values: [
+              {
+                detected_level: 'info',
+                level: '1',
+                job: 'grafana',
+              },
+              {
+                detected_level: 'error',
+                level: '2',
+                job: 'grafana',
+              },
+            ],
+          },
+        ],
+        meta: {
+          limit: 1000,
+        },
+        refId: 'A',
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.rows).toHaveLength(2);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'foo=bar',
+        labels: { job: 'grafana' },
+        logLevel: 'info',
+        uniqueLabels: {},
+        uid: 'A_0',
+      },
+      {
+        entry: 'foo=bar',
+        labels: { job: 'grafana' },
+        logLevel: 'error',
+        uniqueLabels: {},
+        uid: 'A_1',
+      },
+    ]);
+  });
+
+  it('it should return expected logs model', () => {
     const series: DataFrame[] = [
       createDataFrame({
         fields: [
@@ -421,8 +534,6 @@ describe('dataFrameToLogsModel', () => {
       value: `1 line displayed`,
       kind: LogsMetaKind.String,
     });
-
-    config.featureToggles.logsInfiniteScrolling = false;
   });
 
   it('given one series with limit as custom meta property should return correct limit', () => {
@@ -430,7 +541,7 @@ describe('dataFrameToLogsModel', () => {
     const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
   });
@@ -639,7 +750,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
     expect(logsModel.meta![1]).toMatchObject({
@@ -758,7 +869,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.meta).toHaveLength(3);
     expect(logsModel.meta![0]).toMatchObject({
       label: '',
-      value: `2 lines returned`,
+      value: `2 lines displayed`,
       kind: LogsMetaKind.String,
     });
     expect(logsModel.meta![1]).toMatchObject({

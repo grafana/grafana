@@ -17,7 +17,7 @@
       "label-subscription": "Subskrypcja",
       "placeholder-resource-name": "nazwa",
       "tooltip-region": "Kod regionu zasobu. Opcjonalny w przypadku jednego zasobu, ale wymagany przy wielu zasobach.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Edytuj ręcznie <2>identyfikator URI zasobu</2>. Obsługuje korzystanie z wielu zmiennych szablonu (np. /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Funkcja agregująca",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Podstawowe dzienniki",
-      "description-basic-logs": "",
+      "description-basic-logs": "Włączenie tej funkcji wiąże się z opłatami Azure Monitor za każde zapytanie w przypadku paneli pulpitu, które wysyłają zapytania do tabel skonfigurowanych dla <2>podstawowych dzienników</2>.",
       "label-enable-basic-logs": "Włącz podstawowe dzienniki"
     },
     "config-editor": {
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Przycisk Uruchom zapytanie dotyczący dzienników Azure",
       "body-switching-to-builder": "Przełączenie na tryb konstruktora spowoduje odrzucenie bieżącego zapytania KQL i usunięcie danych z edytora KQL. Czy na pewno?",
-      "body-switching-to-kql": "Przełączenie na KQL spowoduje odrzucenie bieżących ustawień konstruktora. Czy na pewno?",
       "button-kick-start-your-query": "Uruchom zapytanie",
       "button-run-query": "Uruchom zapytanie",
       "confirmText-switch-to": "Przełącz na {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Kolumna czasu",
       "label-time-range": "Zakres czasu",
       "tooltip-time-column": "<0>Określa kolumnę czasu używaną do filtrowania. Domyślnie jest to pierwsza kolumna <1>timeSpan</1> w tabeli, pierwsza znaleziona kolumna <3>datetime</3> lub kolumna <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Określa zakres czasu używany w zapytaniu. Opcja <1>Zapytanie</1> będzie używać tylko zakresów czasu określonych w zapytaniu. Na <3>pulpicie</3> będzie używany tylko zakres czasu Grafany. W trybie konstruktora dzienników będzie używany tylko czas pulpitu nawigacyjnego.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Góra"

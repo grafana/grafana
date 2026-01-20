@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"strconv"
 	"strings"
@@ -184,8 +185,11 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				continue
 			}
 
-			// nil safety.
-			annotations := ruleForEntry.Annotations
+			// Use persisted annotations if available, otherwise fall back to rule annotations
+			annotations := entry.Annotations
+			if len(annotations) == 0 {
+				annotations = ruleForEntry.Annotations
+			}
 			if annotations == nil {
 				annotations = make(map[string]string)
 			}
@@ -200,6 +204,21 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				}
 				resultFp = data.Fingerprint(fp)
 			}
+			var stateError error
+			if entry.LastError != "" {
+				stateError = errors.New(entry.LastError)
+			}
+			var values map[string]float64
+			var latestResult *Evaluation
+			if len(entry.LastResult.Values) > 0 || entry.LastResult.Condition != "" {
+				values = entry.LastResult.Values
+				latestResult = &Evaluation{
+					EvaluationTime:  entry.LastEvalTime,
+					EvaluationState: translateInstanceState(entry.CurrentState),
+					Values:          values,
+					Condition:       entry.LastResult.Condition,
+				}
+			}
 			state := &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
@@ -212,10 +231,14 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				EndsAt:               entry.CurrentStateEnd,
 				FiredAt:              entry.FiredAt,
 				LastEvaluationTime:   entry.LastEvalTime,
+				EvaluationDuration:   entry.EvaluationDuration,
 				Annotations:          annotations,
 				ResultFingerprint:    resultFp,
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
+				Error:                stateError,
+				Values:               values,
+				LatestResult:         latestResult,
 			}
 			st.cache.set(state)
 			statesCount++
@@ -534,7 +557,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 	missingTransitions := []StateTransition{}
 	var staleStatesCount int64 = 0
 
-	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+	toDelete := func(s *State) bool {
 		// We need only states that are not present in the current evaluation, so
 		// skip the state if it was just evaluated.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
@@ -586,6 +609,20 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 		missingTransitions = append(missingTransitions, record)
 
 		return isStale
+	}
+
+	states := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+
+	toDeleteStates := map[data.Fingerprint]struct{}{}
+	for _, s := range states {
+		if toDelete(s) {
+			toDeleteStates[s.CacheID] = struct{}{}
+		}
+	}
+
+	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+		_, ok := toDeleteStates[s.CacheID]
+		return ok
 	})
 
 	return missingTransitions, staleStatesCount
@@ -614,9 +651,8 @@ func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
 	for _, state := range states {
 		if state.LastEvaluationTime.After(status.EvaluationTimestamp) {
 			status.EvaluationTimestamp = state.LastEvaluationTime
+			status.EvaluationDuration = state.EvaluationDuration
 		}
-
-		status.EvaluationDuration = state.EvaluationDuration
 
 		switch state.State {
 		case eval.Normal:

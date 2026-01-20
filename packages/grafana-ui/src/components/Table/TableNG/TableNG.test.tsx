@@ -97,6 +97,12 @@ const createNestedDataFrame = (): DataFrame => {
     name: 'NestedData',
     fields: [
       {
+        name: 'Nested hidden',
+        type: FieldType.string,
+        values: ['secret1', 'secret2'],
+        config: { custom: { hideFrom: { viz: true } } },
+      },
+      {
         name: 'Nested A',
         type: FieldType.string,
         values: ['N1', 'N2'],
@@ -413,6 +419,10 @@ describe('TableNG', () => {
           expect(screen.getByText(text)).toBeInTheDocument();
         });
 
+        // Hidden nested fields should stay hidden
+        expect(screen.queryByText('Nested hidden')).not.toBeInTheDocument();
+        expect(screen.queryByText('secret1')).not.toBeInTheDocument();
+
         // Check if the expanded row has the aria-expanded attribute
         const expandedRow = container.querySelector('[aria-expanded="true"]');
         expect(expandedRow).toBeInTheDocument();
@@ -450,6 +460,19 @@ describe('TableNG', () => {
       // Cell values should still be visible
       expect(screen.getByText('A1')).toBeInTheDocument();
       expect(screen.getByText('1')).toBeInTheDocument();
+    });
+
+    it('shows full column name in title attribute for truncated headers', () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const firstHeaderSpan = headers[0].querySelector('span');
+      const secondHeaderSpan = headers[1].querySelector('span');
+
+      expect(firstHeaderSpan).toHaveAttribute('title', 'Column A');
+      expect(secondHeaderSpan).toHaveAttribute('title', 'Column B');
     });
   });
 

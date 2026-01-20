@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math"
 	"os"
 	"path/filepath"
@@ -15,24 +14,25 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	bolterrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/goleak"
 
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 // This verifies that we close all indexes properly and shutdown all background goroutines from our tests.
@@ -51,7 +51,8 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), nil)
+		ScoringModel:  index.BM25Scoring,
+	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
@@ -77,8 +78,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 
 	t.Run("build dashboards", func(t *testing.T) {
 		key := dashboardskey
-		info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-			return &DashboardDocumentBuilder{
+		info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+			return &builders.DashboardDocumentBuilder{
 				Namespace:        namespace,
 				Blob:             blob,
 				Stats:            make(map[string]map[string]int64), // empty stats
@@ -108,9 +109,9 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 							Title:  "aaa (dash)",
 							Folder: "xxx",
 							Fields: map[string]any{
-								DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
-								DASHBOARD_ERRORS_TODAY:      25,
-								DASHBOARD_VIEWS_LAST_1_DAYS: 50,
+								builders.DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
+								builders.DASHBOARD_ERRORS_TODAY:      25,
+								builders.DASHBOARD_VIEWS_LAST_1_DAYS: 50,
 							},
 							Labels: map[string]string{
 								utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
@@ -141,9 +142,9 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 							Title:  "bbb (dash)",
 							Folder: "xxx",
 							Fields: map[string]any{
-								DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
-								DASHBOARD_ERRORS_TODAY:      40,
-								DASHBOARD_VIEWS_LAST_1_DAYS: 100,
+								builders.DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
+								builders.DASHBOARD_ERRORS_TODAY:      40,
+								builders.DASHBOARD_VIEWS_LAST_1_DAYS: 100,
 							},
 							Tags: []string{"aa"},
 							Labels: map[string]string{
@@ -213,7 +214,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					Limit: 100,
 				},
 			},
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Results)
@@ -242,10 +243,10 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			]
 		}`, string(disp))
 
-		count, _ := index.DocCount(ctx, "")
+		count, _ := index.DocCount(ctx, "", nil)
 		assert.Equal(t, int64(3), count)
 
-		count, _ = index.DocCount(ctx, "zzz")
+		count, _ = index.DocCount(ctx, "zzz", nil)
 		assert.Equal(t, int64(1), count)
 
 		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
@@ -258,7 +259,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				}},
 			},
 			Limit: 100000,
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rsp.TotalHits)
 		require.Equal(t, []string{"aaa", "bbb"}, []string{
@@ -272,15 +273,15 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				Key: key,
 			},
 			Limit:  100000,
-			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+			Fields: []string{builders.DASHBOARD_ERRORS_TODAY, builders.DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
-				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
+				{Field: "fields." + builders.DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
 			},
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(rsp.Results.Columns))
-		require.Equal(t, DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
-		require.Equal(t, DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
+		require.Equal(t, builders.DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
+		require.Equal(t, builders.DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
 		// sorted descending so should start with highest dashboard_views_last_1_days (100)
 		val, err := resource.DecodeCell(rsp.Results.Columns[1], 0, rsp.Results.Rows[0].Cells[1])
 		require.NoError(t, err)
@@ -292,11 +293,11 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				Key: key,
 			},
 			Limit:  100000,
-			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+			Fields: []string{builders.DASHBOARD_ERRORS_TODAY, builders.DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
-				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
+				{Field: "fields." + builders.DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
 			},
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, 0, len(rsp.Results.Rows))
 
@@ -304,7 +305,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		found, err := index.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
 			Kind: "repo",
 			Id:   "repo-1",
-		})
+		}, nil)
 		require.NoError(t, err)
 		jj, err := json.MarshalIndent(found, "", "  ")
 		require.NoError(t, err)
@@ -341,7 +342,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			]
 		}`, string(jj))
 
-		counts, err := index.CountManagedObjects(ctx)
+		counts, err := index.CountManagedObjects(ctx, nil)
 		require.NoError(t, err)
 		jj, err = json.MarshalIndent(counts, "", "  ")
 		require.NoError(t, err)
@@ -433,7 +434,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				Key: key,
 			},
 			Limit: 100000,
-		}, nil)
+		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Results)
@@ -468,7 +469,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
+		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Results)
@@ -532,7 +533,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
+		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
 		require.Equal(t, 3, len(rsp.Results.Rows))
@@ -561,7 +562,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
+		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
 		require.Equal(t, 2, len(rsp.Results.Rows))
@@ -589,7 +590,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
+		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
 		require.Equal(t, 0, len(rsp.Results.Rows))
@@ -646,16 +647,16 @@ func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 	}, authlib.NoopZookie{}, nil
 }
 
+func (nc *StubAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+}
+
 func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
 
 func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
-}
-
-func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return nil, nil
 }
 
 func TestSafeInt64ToInt(t *testing.T) {
@@ -772,8 +773,9 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 	opts := BleveOptions{
 		FileThreshold: defaultFileThreshold,
 		IndexCacheTTL: defaultIndexCacheTTL,
-		Logger:        slog.New(logtest.NewNopHandler(t)),
+		Logger:        log.NewNopLogger(),
 		BuildVersion:  buildVersion,
+		ScoringModel:  index.BM25Scoring,
 	}
 	for _, opt := range options {
 		opt(&opts)
@@ -782,7 +784,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		opts.Root = t.TempDir()
 	}
 
-	backend, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), metrics)
+	backend, err := NewBleveBackend(opts, metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	t.Cleanup(backend.Stop)
@@ -888,7 +890,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 				idx := backend.GetIndex(ns)
 				require.Nil(t, idx)
 
-				_, err = builtIndex.DocCount(context.Background(), "")
+				_, err = builtIndex.DocCount(context.Background(), "", nil)
 				require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 
 				// Verify that there are no open indexes.
@@ -897,7 +899,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 				idx := backend.GetIndex(ns)
 				require.NotNil(t, idx)
 
-				cnt, err := builtIndex.DocCount(context.Background(), "")
+				cnt, err := builtIndex.DocCount(context.Background(), "", nil)
 				require.NoError(t, err)
 				require.Equal(t, int64(1), cnt)
 
@@ -971,7 +973,7 @@ func TestBuildIndex(t *testing.T) {
 			idx, err := newBackend.BuildIndex(context.Background(), ns, secondIndexDocsCount, nil, "test", indexTestDocs(ns, secondIndexDocsCount, 100), nil, rebuild)
 			require.NoError(t, err)
 
-			cnt, err := idx.DocCount(context.Background(), "")
+			cnt, err := idx.DocCount(context.Background(), "", nil)
 			require.NoError(t, err)
 			if rebuild {
 				require.Equal(t, int64(secondIndexDocsCount), cnt, "Index has been not rebuilt")
@@ -1033,10 +1035,10 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			// Verify that first and second index are different, and first one is now closed.
 			require.NotEqual(t, firstIndex, secondIndex)
 
-			_, err = firstIndex.DocCount(context.Background(), "")
+			_, err = firstIndex.DocCount(context.Background(), "", nil)
 			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 
-			cnt, err := secondIndex.DocCount(context.Background(), "")
+			cnt, err := secondIndex.DocCount(context.Background(), "", nil)
 			require.NoError(t, err)
 			require.Equal(t, int64(secondSize), cnt)
 
@@ -1341,7 +1343,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 					Fields: []string{"title"},
 					Query:  "Document",
 					Limit:  10,
-				}, nil)
+				}, nil, nil)
 				if err != nil {
 					if errors.Is(err, bleve.ErrorIndexClosed) || errors.Is(err, context.Canceled) {
 						continue
@@ -1558,7 +1560,7 @@ func TestInvalidBuildVersion(t *testing.T) {
 		Root:         t.TempDir(),
 		BuildVersion: "invalid",
 	}
-	_, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), nil)
+	_, err := NewBleveBackend(opts, nil)
 	require.ErrorContains(t, err, "cannot parse build version")
 }
 
@@ -1574,13 +1576,52 @@ func searchTitle(t *testing.T, idx resource.ResourceIndex, query string, limit i
 		Fields: []string{"title"},
 		Query:  query,
 		Limit:  int64(limit),
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 	return resp
 }
 
 func docCount(t *testing.T, idx resource.ResourceIndex) int {
-	cnt, err := idx.DocCount(context.Background(), "")
+	cnt, err := idx.DocCount(context.Background(), "", nil)
 	require.NoError(t, err)
 	return int(cnt)
+}
+
+func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	// First, create a file-based index with one backend and keep it open
+	backend1, reg1 := setupBleveBackend(t, withRootDir(tmpDir))
+	index1, err := backend1.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+	require.NotNil(t, index1)
+
+	// Verify first index is file-based
+	bleveIdx1, ok := index1.(*bleveIndex)
+	require.True(t, ok)
+	require.Equal(t, indexStorageFile, bleveIdx1.indexStorage)
+	checkOpenIndexes(t, reg1, 0, 1)
+
+	// Now create a second backend using the same directory
+	// This simulates another instance trying to open the same index
+	backend2, _ := setupBleveBackend(t, withRootDir(tmpDir))
+
+	// BuildIndex should detect the file is locked and return an error after timeout
+	now := time.Now()
+	timeout, err := time.ParseDuration(boltTimeout)
+	require.NoError(t, err)
+	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.Error(t, err)
+	require.ErrorIs(t, err, bolterrors.ErrTimeout)
+	require.Nil(t, index2)
+	require.GreaterOrEqual(t, time.Since(now).Milliseconds(), timeout.Milliseconds()-500, "BuildIndex should have waited for approximately boltTimeout duration")
+
+	// Clean up: close first backend to release the file lock
+	backend1.Stop()
 }

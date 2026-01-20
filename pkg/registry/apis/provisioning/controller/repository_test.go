@@ -3,14 +3,19 @@ package controller
 import (
 	"context"
 	"testing"
+	"time"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
@@ -31,6 +36,10 @@ func (m mockProvisioningV0alpha1Interface) HistoricJobs(namespace string) client
 }
 
 func (m mockProvisioningV0alpha1Interface) Jobs(namespace string) client.JobInterface {
+	panic("not needed for testing")
+}
+
+func (m mockProvisioningV0alpha1Interface) Connections(namespace string) client.ConnectionInterface {
 	panic("not needed for testing")
 }
 
@@ -337,4 +346,360 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 		assert.NoError(t, err)
 		assert.False(t, got)
 	})
+}
+
+// mockJobsQueueStore implements both jobs.Queue and jobs.Store for testing
+type mockJobsQueueStore struct {
+	*jobs.MockQueue
+	*jobs.MockStore
+}
+
+func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing.T) {
+	testCases := []struct {
+		name                     string
+		repo                     *provisioning.Repository
+		healthStatus             provisioning.HealthStatus
+		hasHealthStatusChanged   bool
+		expectedUnhealthyMessage bool
+		description              string
+	}{
+		{
+			name: "unhealthy repository should set unhealthy message in sync status",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-repo",
+					Namespace:  "default",
+					Generation: 1,
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: true,
+						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
+					},
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStateSuccess,
+						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Message:  []string{},
+					},
+				},
+			},
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"connection failed"},
+			},
+			hasHealthStatusChanged:   true,
+			expectedUnhealthyMessage: true,
+			description:              "should set unhealthy message when repository becomes unhealthy",
+		},
+		{
+			name: "unhealthy repository should not duplicate unhealthy message",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-repo",
+					Namespace:  "default",
+					Generation: 1,
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: false,
+						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStateError,
+						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Message:  []string{"Repository is unhealthy"},
+					},
+				},
+			},
+			healthStatus: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"connection failed"},
+			},
+			hasHealthStatusChanged:   false,
+			expectedUnhealthyMessage: false,
+			description:              "should not set unhealthy message when it already exists",
+		},
+		{
+			name: "healthy repository should clear unhealthy message",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-repo",
+					Namespace:  "default",
+					Generation: 1,
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: false,
+						Checked: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStateError,
+						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+						Message:  []string{"Repository is unhealthy"},
+					},
+				},
+			},
+			healthStatus: provisioning.HealthStatus{
+				Healthy: true,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{},
+			},
+			hasHealthStatusChanged:   true,
+			expectedUnhealthyMessage: false,
+			description:              "should clear unhealthy message when repository becomes healthy",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create controller
+			rc := &RepositoryController{}
+
+			// Determine sync status ops (this is a pure function, no mocks needed)
+			syncOps := rc.determineSyncStatusOps(tc.repo, nil, tc.healthStatus)
+
+			// Verify expectations
+			hasUnhealthyOp := false
+			hasClearUnhealthyOp := false
+			for _, op := range syncOps {
+				if path, ok := op["path"].(string); ok {
+					if path == "/status/sync/message" {
+						if messages, ok := op["value"].([]string); ok {
+							if len(messages) > 0 && messages[0] == "Repository is unhealthy" {
+								hasUnhealthyOp = true
+							} else if len(messages) == 0 {
+								hasClearUnhealthyOp = true
+							}
+						}
+					}
+				}
+			}
+
+			if tc.expectedUnhealthyMessage {
+				assert.True(t, hasUnhealthyOp, tc.description+": expected unhealthy message operation")
+			} else if len(tc.repo.Status.Sync.Message) > 0 && tc.healthStatus.Healthy {
+				assert.True(t, hasClearUnhealthyOp, tc.description+": expected clear unhealthy message operation")
+			}
+		})
+	}
+}
+
+func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
+	testCases := []struct {
+		name           string
+		repo           *provisioning.Repository
+		jobGetError    error
+		expectedResync bool
+		description    string
+	}{
+		{
+			name: "stale sync status with Pending state - job not found",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStatePending,
+						JobID:    "test-job-123",
+						Started:  time.Now().Add(-10 * time.Minute).UnixMilli(),
+						Finished: time.Now().Add(-10 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			jobGetError:    apierrors.NewNotFound(schema.GroupResource{Resource: "jobs"}, "test-job-123"),
+			expectedResync: true,
+			description:    "should return true to trigger resync when job is not found",
+		},
+		{
+			name: "stale sync status with Working state - job not found",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStateWorking,
+						JobID:    "test-job-456",
+						Started:  time.Now().Add(-5 * time.Minute).UnixMilli(),
+						Finished: time.Now().Add(-5 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			jobGetError:    apierrors.NewNotFound(schema.GroupResource{Resource: "jobs"}, "test-job-456"),
+			expectedResync: true,
+			description:    "should return true to trigger resync when working job is not found",
+		},
+		{
+			name: "non-stale sync status - job exists",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStatePending,
+						JobID:    "test-job-789",
+						Started:  time.Now().Add(-2 * time.Minute).UnixMilli(),
+						Finished: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			jobGetError:    nil,   // Job exists
+			expectedResync: false, // Should continue with normal logic
+			description:    "should continue with normal logic when job exists",
+		},
+		{
+			name: "non-stale sync status - no JobID",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStatePending,
+						JobID:    "",
+						Started:  time.Now().Add(-2 * time.Minute).UnixMilli(),
+						Finished: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			jobGetError:    nil,
+			expectedResync: false,
+			description:    "should not check when JobID is empty",
+		},
+		{
+			name: "non-stale sync status - already finished",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStateSuccess,
+						JobID:    "test-job-999",
+						Finished: time.Now().Add(-1 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			jobGetError:    nil,
+			expectedResync: false,
+			description:    "should not check when sync status is already finished",
+		},
+		{
+			name: "stale sync status - job lookup error (non-NotFound)",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{
+						Enabled:         true,
+						IntervalSeconds: 300,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Sync: provisioning.SyncStatus{
+						State:    provisioning.JobStatePending,
+						JobID:    "test-job-error",
+						Started:  time.Now().Add(-2 * time.Minute).UnixMilli(),
+						Finished: time.Now().Add(-2 * time.Minute).UnixMilli(),
+					},
+				},
+			},
+			jobGetError:    assert.AnError, // Non-NotFound error
+			expectedResync: false,          // Should continue with normal logic
+			description:    "should handle non-NotFound errors gracefully and continue with normal logic",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create mocks
+			mockQueue := jobs.NewMockQueue(t)
+			mockStore := jobs.NewMockStore(t)
+			mockJobs := &mockJobsQueueStore{
+				MockQueue: mockQueue,
+				MockStore: mockStore,
+			}
+
+			// Set up job Get mock
+			if tc.repo.Status.Sync.JobID != "" && (tc.repo.Status.Sync.State == provisioning.JobStatePending || tc.repo.Status.Sync.State == provisioning.JobStateWorking) {
+				mockStore.On("Get", mock.Anything, tc.repo.Namespace, tc.repo.Status.Sync.JobID).Return(nil, tc.jobGetError).Once()
+			}
+
+			// Create controller
+			rc := &RepositoryController{
+				jobs: mockJobs,
+			}
+
+			// Test shouldResync
+			ctx := context.Background()
+			result := rc.shouldResync(ctx, tc.repo)
+
+			// Verify
+			assert.Equal(t, tc.expectedResync, result, tc.description)
+		})
+	}
 }

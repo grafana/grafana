@@ -1,5 +1,5 @@
 import { clamp } from 'lodash';
-import { PureComponent, CSSProperties } from 'react';
+import { PureComponent, CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 
 import { VizOrientation } from '@grafana/data';
@@ -167,7 +167,8 @@ export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D
 
     const repeaterStyle: React.CSSProperties = {
       display: 'flex',
-      overflow: `${minVizWidth ? 'auto' : 'hidden'} ${minVizHeight ? 'auto' : 'hidden'}`,
+      overflowX: `${minVizWidth ? 'auto' : 'hidden'}`,
+      overflowY: `${minVizHeight ? 'auto' : 'hidden'}`,
     };
 
     let vizHeight = height;

@@ -4,10 +4,6 @@ const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
   await import(/* webpackChunkName "dashboardDSPlugin" */ 'app/plugins/datasource/dashboard/module');
-const elasticsearchPlugin = async () =>
-  await import(/* webpackChunkName: "elasticsearchPlugin" */ 'app/plugins/datasource/elasticsearch/module');
-const opentsdbPlugin = async () =>
-  await import(/* webpackChunkName: "opentsdbPlugin" */ 'app/plugins/datasource/opentsdb/module');
 const grafanaPlugin = async () =>
   await import(/* webpackChunkName: "grafanaPlugin" */ 'app/plugins/datasource/grafana/module');
 const influxdbPlugin = async () =>
@@ -77,8 +73,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   // datasources
   'core:plugin/cloudwatch': cloudwatchPlugin,
   'core:plugin/dashboard': dashboardDSPlugin,
-  'core:plugin/elasticsearch': elasticsearchPlugin,
-  'core:plugin/opentsdb': opentsdbPlugin,
   'core:plugin/grafana': grafanaPlugin,
   'core:plugin/influxdb': influxdbPlugin,
   'core:plugin/mixed': mixedPlugin,
@@ -117,5 +111,9 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/histogram': histogramPanel,
   'core:plugin/radialbar': radialBar,
 };
+
+export function isBuiltinPluginPath(path: string): path is keyof typeof builtInPlugins {
+  return Boolean(builtInPlugins[path]);
+}
 
 export default builtInPlugins;

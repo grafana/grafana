@@ -19,20 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	AuthzExtentionService_BatchCheck_FullMethodName = "/authz.extention.v1.AuthzExtentionService/BatchCheck"
-	AuthzExtentionService_Read_FullMethodName       = "/authz.extention.v1.AuthzExtentionService/Read"
-	AuthzExtentionService_Write_FullMethodName      = "/authz.extention.v1.AuthzExtentionService/Write"
-	AuthzExtentionService_Mutate_FullMethodName     = "/authz.extention.v1.AuthzExtentionService/Mutate"
+	AuthzExtentionService_Read_FullMethodName   = "/authz.extention.v1.AuthzExtentionService/Read"
+	AuthzExtentionService_Write_FullMethodName  = "/authz.extention.v1.AuthzExtentionService/Write"
+	AuthzExtentionService_Mutate_FullMethodName = "/authz.extention.v1.AuthzExtentionService/Mutate"
+	AuthzExtentionService_Query_FullMethodName  = "/authz.extention.v1.AuthzExtentionService/Query"
 )
 
 // AuthzExtentionServiceClient is the client API for AuthzExtentionService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthzExtentionServiceClient interface {
-	BatchCheck(ctx context.Context, in *BatchCheckRequest, opts ...grpc.CallOption) (*BatchCheckResponse, error)
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
 	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
 	Mutate(ctx context.Context, in *MutateRequest, opts ...grpc.CallOption) (*MutateResponse, error)
+	Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
 }
 
 type authzExtentionServiceClient struct {
@@ -41,16 +41,6 @@ type authzExtentionServiceClient struct {
 
 func NewAuthzExtentionServiceClient(cc grpc.ClientConnInterface) AuthzExtentionServiceClient {
 	return &authzExtentionServiceClient{cc}
-}
-
-func (c *authzExtentionServiceClient) BatchCheck(ctx context.Context, in *BatchCheckRequest, opts ...grpc.CallOption) (*BatchCheckResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BatchCheckResponse)
-	err := c.cc.Invoke(ctx, AuthzExtentionService_BatchCheck_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *authzExtentionServiceClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error) {
@@ -83,23 +73,30 @@ func (c *authzExtentionServiceClient) Mutate(ctx context.Context, in *MutateRequ
 	return out, nil
 }
 
+func (c *authzExtentionServiceClient) Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryResponse)
+	err := c.cc.Invoke(ctx, AuthzExtentionService_Query_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthzExtentionServiceServer is the server API for AuthzExtentionService service.
 // All implementations should embed UnimplementedAuthzExtentionServiceServer
 // for forward compatibility
 type AuthzExtentionServiceServer interface {
-	BatchCheck(context.Context, *BatchCheckRequest) (*BatchCheckResponse, error)
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	Write(context.Context, *WriteRequest) (*WriteResponse, error)
 	Mutate(context.Context, *MutateRequest) (*MutateResponse, error)
+	Query(context.Context, *QueryRequest) (*QueryResponse, error)
 }
 
 // UnimplementedAuthzExtentionServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedAuthzExtentionServiceServer struct {
 }
 
-func (UnimplementedAuthzExtentionServiceServer) BatchCheck(context.Context, *BatchCheckRequest) (*BatchCheckResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BatchCheck not implemented")
-}
 func (UnimplementedAuthzExtentionServiceServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
 }
@@ -108,6 +105,9 @@ func (UnimplementedAuthzExtentionServiceServer) Write(context.Context, *WriteReq
 }
 func (UnimplementedAuthzExtentionServiceServer) Mutate(context.Context, *MutateRequest) (*MutateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Mutate not implemented")
+}
+func (UnimplementedAuthzExtentionServiceServer) Query(context.Context, *QueryRequest) (*QueryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
 }
 
 // UnsafeAuthzExtentionServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -119,24 +119,6 @@ type UnsafeAuthzExtentionServiceServer interface {
 
 func RegisterAuthzExtentionServiceServer(s grpc.ServiceRegistrar, srv AuthzExtentionServiceServer) {
 	s.RegisterService(&AuthzExtentionService_ServiceDesc, srv)
-}
-
-func _AuthzExtentionService_BatchCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BatchCheckRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthzExtentionServiceServer).BatchCheck(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthzExtentionService_BatchCheck_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthzExtentionServiceServer).BatchCheck(ctx, req.(*BatchCheckRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _AuthzExtentionService_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -193,6 +175,24 @@ func _AuthzExtentionService_Mutate_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthzExtentionService_Query_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzExtentionServiceServer).Query(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthzExtentionService_Query_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzExtentionServiceServer).Query(ctx, req.(*QueryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthzExtentionService_ServiceDesc is the grpc.ServiceDesc for AuthzExtentionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,10 +200,6 @@ var AuthzExtentionService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "authz.extention.v1.AuthzExtentionService",
 	HandlerType: (*AuthzExtentionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "BatchCheck",
-			Handler:    _AuthzExtentionService_BatchCheck_Handler,
-		},
 		{
 			MethodName: "Read",
 			Handler:    _AuthzExtentionService_Read_Handler,
@@ -215,6 +211,10 @@ var AuthzExtentionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Mutate",
 			Handler:    _AuthzExtentionService_Mutate_Handler,
+		},
+		{
+			MethodName: "Query",
+			Handler:    _AuthzExtentionService_Query_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

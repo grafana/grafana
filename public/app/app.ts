@@ -1,7 +1,6 @@
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
-import '@formatjs/intl-durationformat/polyfill';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
@@ -58,7 +57,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
-import appEvents from './core/app_events';
+import { appEvents } from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
 import { useHelpNode } from './core/components/AppChrome/TopBar/useHelpNode';
@@ -258,8 +257,10 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const appPluginsToAwait = getAppPluginsToAwait();
-        const appPluginsToPreload = getAppPluginsToPreload();
+        const [appPluginsToAwait, appPluginsToPreload] = await Promise.all([
+          getAppPluginsToAwait(),
+          getAppPluginsToPreload(),
+        ]);
 
         preloadPlugins(appPluginsToPreload);
         await preloadPlugins(appPluginsToAwait);

@@ -1,8 +1,8 @@
 package apiregistry
 
 import (
+	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
@@ -20,13 +20,13 @@ type Service struct{}
 // and give each builder the chance to register itself with the main server
 func ProvideRegistryServiceSink(
 	_ *dashboardinternal.DashboardsAPIBuilder,
-	_ *dashboardsnapshot.SnapshotsAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,
 	_ *folders.FolderAPIBuilder,
 	_ *iam.IdentityAccessManagementAPIBuilder,
 	_ *query.QueryAPIBuilder,
 	_ *userstorage.UserStorageAPIBuilder,
 	_ *preferences.APIBuilder,
+	_ *collections.APIBuilder,
 	_ *provisioning.APIBuilder,
 	_ *ofrep.APIBuilder,
 	_ *secret.DependencyRegisterer,

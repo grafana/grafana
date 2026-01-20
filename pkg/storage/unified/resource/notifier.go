@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
-	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/grafana/pkg/infra/log"
 	gocache "github.com/patrickmn/go-cache"
 
 	"time"
@@ -13,43 +15,101 @@ import (
 
 const (
 	defaultLookbackPeriod = 30 * time.Second
-	defaultPollInterval   = 100 * time.Millisecond
-	defaultEventCacheSize = 10000
+	defaultMinBackoff     = 100 * time.Millisecond
+	defaultMaxBackoff     = 5 * time.Second
 	defaultBufferSize     = 10000
 )
 
-type notifier struct {
+type notifier interface {
+	// Watch returns a channel that will receive events as they happen.
+	Watch(context.Context, watchOptions) <-chan Event
+	// Publish lets callers to inform watchers about events. Some notifiers
+	// (e.g., channel notifier) require callers to provide the events to be published.
+	// Others (e.g., polling notifier) queries events separately, making
+	// publishing a no-op.
+	Publish(Event)
+}
+
+type pollingNotifier struct {
 	eventStore *eventStore
-	log        logging.Logger
+	log        log.Logger
 }
 
 type notifierOptions struct {
-	log logging.Logger
+	log                log.Logger
+	useChannelNotifier bool
 }
 
 type watchOptions struct {
 	LookbackPeriod time.Duration // How far back to look for events
-	PollInterval   time.Duration // How often to poll for new events
 	BufferSize     int           // How many events to buffer
+	MinBackoff     time.Duration // Minimum interval between polling requests
+	MaxBackoff     time.Duration // Maximum interval between polling requests
 }
 
 func defaultWatchOptions() watchOptions {
 	return watchOptions{
 		LookbackPeriod: defaultLookbackPeriod,
-		PollInterval:   defaultPollInterval,
 		BufferSize:     defaultBufferSize,
+		MinBackoff:     defaultMinBackoff,
+		MaxBackoff:     defaultMaxBackoff,
 	}
 }
 
-func newNotifier(eventStore *eventStore, opts notifierOptions) *notifier {
-	if opts.log == nil {
-		opts.log = &logging.NoOpLogger{}
+func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
+	if opts.useChannelNotifier {
+		return newChannelNotifier(opts.log.New("notifier", "channelNotifier"))
 	}
-	return &notifier{eventStore: eventStore, log: opts.log}
+
+	return &pollingNotifier{eventStore: eventStore, log: opts.log.New("notifier", "pollingNotifier")}
+}
+
+type channelNotifier struct {
+	log         log.Logger
+	subscribers map[chan Event]struct{}
+	mu          sync.Mutex
+}
+
+func newChannelNotifier(log log.Logger) *channelNotifier {
+	return &channelNotifier{
+		log:         log,
+		subscribers: make(map[chan Event]struct{}),
+	}
+}
+
+func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
+	cn.log.Info("creating new notifier", "buffer_size", opts.BufferSize)
+	events := make(chan Event, opts.BufferSize)
+
+	cn.mu.Lock()
+	cn.subscribers[events] = struct{}{}
+	cn.mu.Unlock()
+
+	context.AfterFunc(ctx, func() {
+		cn.mu.Lock()
+		delete(cn.subscribers, events)
+		close(events)
+		cn.mu.Unlock()
+	})
+
+	return events
+}
+
+func (cn *channelNotifier) Publish(event Event) {
+	cn.mu.Lock()
+	defer cn.mu.Unlock()
+
+	for ch := range cn.subscribers {
+		select {
+		case ch <- event:
+		default:
+			cn.log.Warn("dropped event notification, channel full")
+		}
+	}
 }
 
 // Return the last resource version from the event store
-func (n *notifier) lastEventResourceVersion(ctx context.Context) (int64, error) {
+func (n *pollingNotifier) lastEventResourceVersion(ctx context.Context) (int64, error) {
 	e, err := n.eventStore.LastEventKey(ctx)
 	if err != nil {
 		return 0, err
@@ -57,43 +117,64 @@ func (n *notifier) lastEventResourceVersion(ctx context.Context) (int64, error) 
 	return e.ResourceVersion, nil
 }
 
-func (n *notifier) cacheKey(evt Event) string {
+func (n *pollingNotifier) cacheKey(evt Event) string {
 	return fmt.Sprintf("%s~%s~%s~%s~%d", evt.Namespace, evt.Group, evt.Resource, evt.Name, evt.ResourceVersion)
 }
 
-func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
-	if opts.PollInterval <= 0 {
-		opts.PollInterval = defaultPollInterval
+func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
+	if opts.MinBackoff <= 0 {
+		opts.MinBackoff = defaultMinBackoff
 	}
+	if opts.MaxBackoff <= 0 || opts.MaxBackoff <= opts.MinBackoff {
+		opts.MaxBackoff = defaultMaxBackoff
+	}
+
+	n.log.Info("creating new notifier",
+		"lookback", opts.LookbackPeriod,
+		"buffer_size", opts.BufferSize,
+		"min_backoff", opts.MinBackoff,
+		"max_backoff", opts.MaxBackoff,
+	)
+
 	cacheTTL := opts.LookbackPeriod
 	cacheCleanupInterval := 2 * opts.LookbackPeriod
 
 	cache := gocache.New(cacheTTL, cacheCleanupInterval)
 	events := make(chan Event, opts.BufferSize)
 
-	initialRV, err := n.lastEventResourceVersion(ctx)
+	lastRV, err := n.lastEventResourceVersion(ctx)
 	if errors.Is(err, ErrNotFound) {
-		initialRV = snowflakeFromTime(time.Now()) // No events yet, start from the beginning
+		lastRV = 0 // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
 	}
-	lastRV := initialRV + 1 // We want to start watching from the next event
+	lastRV = lastRV + 1 // We want to start watching from the next event
 
 	go func() {
 		defer close(events)
+		// Initialize backoff with minimum backoff interval
+		currentInterval := opts.MinBackoff
+		backoffConfig := backoff.Config{
+			MinBackoff: opts.MinBackoff,
+			MaxBackoff: opts.MaxBackoff,
+			MaxRetries: 0, // infinite retries
+		}
+		bo := backoff.New(ctx, backoffConfig)
+
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(opts.PollInterval):
-				for evt, err := range n.eventStore.ListSince(ctx, subtractDurationFromSnowflake(lastRV, opts.LookbackPeriod)) {
+			case <-time.After(currentInterval):
+				foundEvents := false
+				for evt, err := range n.eventStore.ListSince(ctx, subtractDurationFromSnowflake(lastRV, opts.LookbackPeriod), SortOrderAsc) {
 					if err != nil {
 						n.log.Error("Failed to list events since", "error", err)
 						continue
 					}
 
 					// Skip old events lower than the requested resource version
-					if evt.ResourceVersion <= initialRV {
+					if evt.ResourceVersion < lastRV {
 						continue
 					}
 
@@ -102,6 +183,7 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 						continue
 					}
 
+					foundEvents = true
 					if evt.ResourceVersion > lastRV {
 						lastRV = evt.ResourceVersion + 1
 					}
@@ -113,8 +195,20 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 						return
 					}
 				}
+
+				// Apply backoff logic: reset to min when events are found, increase when no events
+				if foundEvents {
+					bo.Reset()
+					currentInterval = opts.MinBackoff
+				} else {
+					currentInterval = bo.NextDelay()
+				}
 			}
 		}
 	}()
 	return events
+}
+
+func (n *pollingNotifier) Publish(_ Event) {
+	// no-op
 }

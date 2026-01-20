@@ -36,8 +36,8 @@ func TestIntegrationUsers(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesAuthnMutation,
-					featuremgmt.FlagUnifiedStorageSearch,
 				},
+				UnifiedStorageEnableSearch: true,
 			})
 
 			t.Cleanup(func() {

@@ -436,7 +436,9 @@ func TestInitStatePersister(t *testing.T) {
 	ua := setting.UnifiedAlertingSettings{
 		StatePeriodicSaveInterval: 1 * time.Minute,
 	}
-	cfg := state.ManagerCfg{}
+	cfg := state.ManagerCfg{
+		StatePeriodicSaveInterval: 1 * time.Minute,
+	}
 
 	tests := []struct {
 		name                       string

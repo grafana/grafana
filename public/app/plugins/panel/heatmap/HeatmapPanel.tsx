@@ -5,7 +5,6 @@ import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
-  ScaleDistribution,
   TooltipPlugin2,
   TooltipDisplayMode,
   UPlotChart,
@@ -14,19 +13,22 @@ import {
   useTheme2,
   VizLayout,
   EventBusPlugin,
+  XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { FacetedData, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { getXAxisConfig } from '../../../core/components/TimeSeries/utils';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { HeatmapData, prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
 import { Options } from './types';
-import { prepConfig } from './utils';
+import { calculateYSizeDivisor, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
 
@@ -52,6 +54,7 @@ export const HeatmapPanel = (props: HeatmapPanelProps) => {
         timeRange,
       });
     } catch (ex) {
+      console.error(ex);
       return { warning: `${ex}` };
     }
   }, [data.series, data.annotations, options, palette, theme, replaceVariables, timeRange]);
@@ -132,8 +135,20 @@ const HeatmapPanelViz = ({
   const dataRef = useRef(info);
   dataRef.current = info;
 
+  const annotationsLength = options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined;
+
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
+
+    const activeScaleConfig = options.rowsFrame?.yBucketScale ?? scaleConfig;
+
+    // For log/symlog scales: use 1 for pre-bucketed data with explicit scale, otherwise use split value
+    const hasExplicitScale = options.rowsFrame?.yBucketScale !== undefined;
+    const ySizeDivisor = calculateYSizeDivisor(
+      activeScaleConfig?.type,
+      hasExplicitScale,
+      options.calculation?.yBuckets?.value
+    );
 
     return prepConfig({
       dataRef,
@@ -145,12 +160,14 @@ const HeatmapPanelViz = ({
       hideGE: options.filterValues?.ge,
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
-      ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
+      ySizeDivisor,
       selectionMode: options.selectionMode,
+      xAxisConfig: getXAxisConfig(annotationsLength),
+      rowsFrame: options.rowsFrame,
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, timeZone, data.structureRev, cursorSync]);
+  }, [options, timeZone, data.structureRev, cursorSync, annotationsLength]);
 
   const renderLegend = () => {
     if (!options.legend.show) {
@@ -194,6 +211,7 @@ const HeatmapPanelViz = ({
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={builder} eventBus={eventBus} frame={info.series ?? info.heatmap} />
             )}
+            <XAxisInteractionAreaPlugin config={builder} queryZoom={onChangeTimeRange} />
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={builder}
@@ -242,6 +260,7 @@ const HeatmapPanelViz = ({
             )}
             <AnnotationsPlugin2
               replaceVariables={replaceVariables}
+              multiLane={options.annotations?.multiLane}
               annotations={data.annotations ?? []}
               config={builder}
               timeZone={timeZone}

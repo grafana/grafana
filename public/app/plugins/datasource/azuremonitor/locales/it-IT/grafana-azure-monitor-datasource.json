@@ -17,7 +17,7 @@
       "label-subscription": "Abbonamento",
       "placeholder-resource-name": "nome",
       "tooltip-region": "La parte di codice della risorsa. Facoltativo per una risorsa ma obbligatorio quando se ne selezionano più di una.",
-      "tooltip-resource-uri": ""
+      "tooltip-resource-uri": "Modifica manualmente l'<2>URI della risorsa</2>. Supporta l'uso di più variabili di modello (ad esempio: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
       "aria-label-aggregate-function": "Funzione aggregata",
@@ -68,7 +68,7 @@
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Registri di base",
-      "description-basic-logs": "",
+      "description-basic-logs": "L'abilitazione di questa funzione comporta i costi per query di Azure Monitor sui pannelli della dashboard che eseguono query su tabelle configurate per <2>Registri di base</2>.",
       "label-enable-basic-logs": "Abilita registri di base"
     },
     "config-editor": {
@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "I registri di Azure avviano il pulsante della query",
       "body-switching-to-builder": "Il passaggio a Builder eliminerà la query KQL corrente e cancellerà l'editor KQL. Vuoi davvero continuare?",
-      "body-switching-to-kql": "Il passaggio a KQL annullerà le impostazioni correnti del generatore. Vuoi davvero continuare?",
       "button-kick-start-your-query": "Avvia la query",
       "button-run-query": "Esegui query",
       "confirmText-switch-to": "Passa a {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Colonna \"Tempo\"",
       "label-time-range": "Intervallo di tempo",
       "tooltip-time-column": "<0>Specifica la colonna di tempo utilizzata per il filtro. Per impostazione predefinita, la prima colonna delle tabelle <1>timeSpan</1>, la prima colonna <3>datetime</3> trovata o <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Specifica l'intervallo di tempo utilizzato per la query. L'opzione <1>Query</1> utilizzerà solo gli intervalli di tempo specificati nella query. <3>Dashboard</3> utilizzerà solo l'intervallo di tempo di Grafana. In modalità Generatore di registri, verrà utilizzato solo l'orario della dashboard.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "In alto"

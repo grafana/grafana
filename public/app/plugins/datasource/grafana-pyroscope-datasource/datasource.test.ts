@@ -43,6 +43,7 @@ describe('Pyroscope data source', () => {
           queryType: 'both',
           profileTypeId: '',
           groupBy: [''],
+          includeExemplars: false,
         },
       ]);
       expect(queries).toMatchObject([
@@ -118,6 +119,7 @@ describe('normalizeQuery', () => {
       queryType: 'metrics',
       profileTypeId: 'cpu',
       refId: '',
+      includeExemplars: false,
     });
     expect(normalized).toMatchObject({
       labelSelector: '{app="myapp"}',
@@ -145,6 +147,7 @@ const defaultQuery = (query: Partial<Query>): Query => {
     labelSelector: '',
     profileTypeId: '',
     queryType: defaultPyroscopeQueryType,
+    includeExemplars: false,
     ...query,
   };
 };

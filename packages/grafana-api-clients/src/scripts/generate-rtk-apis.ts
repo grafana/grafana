@@ -53,6 +53,12 @@ const config: ConfigFile = {
       tag: true,
       apiFile: '../clients/rtkq/legacy/baseAPI.ts',
       filterEndpoints: (_name, operation) => !operation.operation.deprecated,
+      endpointOverrides: [
+        {
+          pattern: 'listTeamsRoles',
+          type: 'query',
+        },
+      ],
     },
     '../clients/rtkq/migrate-to-cloud/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
@@ -95,12 +101,20 @@ const config: ConfigFile = {
     ...createAPIConfig('advisor', 'v0alpha1'),
     ...createAPIConfig('correlations', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v0alpha1'),
+    ...createAPIConfig('dashboard', 'v1beta1'),
+    ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('folder', 'v1beta1'),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v0alpha1'),
+    ...createAPIConfig('collections', 'v1alpha1'),
     ...createAPIConfig('preferences', 'v1alpha1'),
     ...createAPIConfig('provisioning', 'v0alpha1'),
-    ...createAPIConfig('shorturl', 'v1alpha1'),
+    ...createAPIConfig('shorturl', 'v1beta1'),
+    ...createAPIConfig('notifications.alerting', 'v0alpha1'),
+    ...createAPIConfig('rules.alerting', 'v0alpha1'),
+    ...createAPIConfig('historian.alerting', 'v0alpha1'),
+    ...createAPIConfig('logsdrilldown', 'v1beta1'),
+    ...createAPIConfig('logsdrilldown', 'v1alpha1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
