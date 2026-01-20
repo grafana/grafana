@@ -242,6 +242,10 @@ func extractConsumesFromRequestBody(requestBody *spec3.RequestBody) []string {
 	for contentType := range requestBody.Content {
 		result = append(result, contentType)
 	}
+
+	// Counting for missing content-type header
+	result = append(result, "*/*")
+
 	return result
 }
 
@@ -260,6 +264,12 @@ func extractProducesFromResponses(responses *spec3.Responses) []string {
 		}
 	}
 
+	if responses.Default != nil && responses.Default.Content != nil {
+		for contentType := range responses.Default.Content {
+			contentTypes[contentType] = struct{}{}
+		}
+	}
+
 	if len(contentTypes) == 0 {
 		return nil
 	}
@@ -268,6 +278,7 @@ func extractProducesFromResponses(responses *spec3.Responses) []string {
 	for contentType := range contentTypes {
 		result = append(result, contentType)
 	}
+
 	return result
 }
 
