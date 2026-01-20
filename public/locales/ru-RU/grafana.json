@@ -8024,32 +8024,45 @@
     "discard-button": "Отменить несохраненные изменения",
     "title": "Покинуть страницу?"
   },
+
   "gauge": {
-    "category-gauge": "Индикатор",
-    "category-radial-bar": "",
-    "description-min-height": "Минимальная высота строки (горизонтальная ориентация)",
-    "description-min-width": "Минимальная ширина столбца (вертикальная ориентация)",
-    "description-neutral": "Оставить пустым, чтобы использовать мин. как нейтральную точку",
-    "description-show-threshold-labels": "Отобразить пороговые значения вокруг столбца индикатора",
-    "description-show-threshold-markers": "Отобразить пороговые значения в виде внешнего столбца",
-    "gauge-size-options": {
-      "label-auto": "Авто",
-      "label-manual": "Ручной"
-    },
-    "name-gauge-size": "Размеры индикатора",
-    "name-min-height": "Мин. высота",
-    "name-min-width": "Мин. ширина",
-    "name-neutral": "Нейтральный",
-    "name-show-threshold-labels": "Показывать метки пороговых значений",
-    "name-show-threshold-markers": "Показывать маркеры пороговых значений",
-    "neutral": "",
-    "placeholder-neutral": "авто",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    }
   },
   "gen-ai": {
     "apply-suggestion": "Применить",
@@ -12672,45 +12685,6 @@
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

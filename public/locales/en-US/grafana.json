@@ -7976,12 +7976,46 @@
   },
   "gauge": {
     "category-gauge": "Gauge",
-    "category-radial-bar": "Gauge",
+    "category-gauge": "Gauge",
+    "config": {
+      "bar-shape": "Bar Style",
+      "bar-shape-flat": "Flat",
+      "bar-shape-rounded": "Rounded",
+      "bar-width": "Bar width",
+      "effects": {
+        "bar-glow": "Bar glow",
+        "center-glow": "Center glow",
+        "gradient": "Gradient",
+        "label": "Effects"
+      },
+      "endpoint-marker": "Endpoint marker",
+      "endpoint-marker-description": "Glow is only supported in dark mode",
+      "endpoint-marker-glow": "Glow",
+      "endpoint-marker-none": "None",
+      "endpoint-marker-point": "Point",
+      "neutral": {
+        "description": "Leave empty to use Min as neutral point",
+        "placeholder": "none",
+        "title": "Neutral value"
+      },
+      "segment-count": "Segments",
+      "segment-spacing": "Segment spacing",
+      "shape": "Style",
+      "shape-circle": "Circle",
+      "shape-gauge": "Arc",
+      "sparkline": "Show sparkline",
+      "text-mode": "Text mode",
+      "text-mode-auto": "Auto",
+      "text-mode-name": "Name",
+      "text-mode-none": "None",
+      "text-mode-value": "Value",
+      "text-mode-value-and-name": "Value and Name",
+      "threshold-labels": "Show labels",
+      "threshold-labels-description": "Display threshold and neutral values",
+      "threshold-markers": "Show thresholds"
+    },
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
-    "description-neutral": "Leave empty to use Min as neutral point",
-    "description-show-threshold-labels": "Render the threshold values around the gauge bar",
-    "description-show-threshold-markers": "Renders the thresholds as an outer bar",
     "gauge-size-options": {
       "label-auto": "Auto",
       "label-manual": "Manual"
@@ -7989,15 +8023,10 @@
     "name-gauge-size": "Gauge size",
     "name-min-height": "Min height",
     "name-min-width": "Min width",
-    "name-neutral": "Neutral",
-    "name-show-threshold-labels": "Show threshold labels",
-    "name-show-threshold-markers": "Show threshold markers",
     "neutral": "Neutral {{value}}",
-    "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "Gauge",
-      "circular": "Circular gauge",
-      "no-thresholds": "Gauge - no thresholds"
+      "circular": "Circular gauge"
     },
     "threshold": "Threshold {{value}}"
   },
@@ -12568,45 +12597,6 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "Bar Style",
-      "bar-shape-flat": "Flat",
-      "bar-shape-rounded": "Rounded",
-      "bar-width": "Bar width",
-      "effects": {
-        "bar-glow": "Bar glow",
-        "center-glow": "Center glow",
-        "gradient": "Gradient",
-        "label": "Effects"
-      },
-      "endpoint-marker": "Endpoint marker",
-      "endpoint-marker-description": "Glow is only supported in dark mode",
-      "endpoint-marker-glow": "Glow",
-      "endpoint-marker-none": "None",
-      "endpoint-marker-point": "Point",
-      "neutral": {
-        "description": "Leave empty to use Min as neutral point",
-        "placeholder": "none",
-        "title": "Neutral value"
-      },
-      "segment-count": "Segments",
-      "segment-spacing": "Segment spacing",
-      "shape": "Style",
-      "shape-circle": "Circle",
-      "shape-gauge": "Arc",
-      "sparkline": "Show sparkline",
-      "text-mode": "Text mode",
-      "text-mode-auto": "Auto",
-      "text-mode-name": "Name",
-      "text-mode-none": "None",
-      "text-mode-value": "Value",
-      "text-mode-value-and-name": "Value and Name",
-      "threshold-labels": "Show labels",
-      "threshold-labels-description": "Display threshold and neutral values",
-      "threshold-markers": "Show thresholds"
-    }
   },
   "recently-deleted": {
     "buttons": {

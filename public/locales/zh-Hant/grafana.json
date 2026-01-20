@@ -7947,31 +7947,43 @@
     "title": "要離開頁面嗎？"
   },
   "gauge": {
-    "category-gauge": "儀表",
-    "category-radial-bar": "",
-    "description-min-height": "最小列高（橫向）",
-    "description-min-width": "最小欄寬（縱向）",
-    "description-neutral": "留空以使用最小值作為中性點",
-    "description-show-threshold-labels": "在儀表列周圍渲染閾值",
-    "description-show-threshold-markers": "將閾值渲染為外部列",
-    "gauge-size-options": {
-      "label-auto": "自動",
-      "label-manual": "手動"
-    },
-    "name-gauge-size": "儀表大小",
-    "name-min-height": "最小高度",
-    "name-min-width": "最小寬度",
-    "name-neutral": "中性",
-    "name-show-threshold-labels": "顯示閾值標籤",
-    "name-show-threshold-markers": "顯示閾值標記",
-    "neutral": "",
-    "placeholder-neutral": "自動",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    }
   },
   "gen-ai": {
     "apply-suggestion": "套用",
@@ -12513,45 +12525,6 @@
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

@@ -7973,31 +7973,43 @@
     "title": "Lämna sidan?"
   },
   "gauge": {
-    "category-gauge": "Mätare",
-    "category-radial-bar": "",
-    "description-min-height": "Minsta radhöjd (horisontell orientering)",
-    "description-min-width": "Minsta kolumnbredd (vertikal orientering)",
-    "description-neutral": "Lämna tomt för att använda Min som neutral punkt",
-    "description-show-threshold-labels": "Rendera tröskelvärdena runt mätarstapeln",
-    "description-show-threshold-markers": "Rendera trösklarna som en yttre stapel",
-    "gauge-size-options": {
-      "label-auto": "Auto",
-      "label-manual": "Manuell"
-    },
-    "name-gauge-size": "Mätarstorlek",
-    "name-min-height": "Min. höjd",
-    "name-min-width": "Minsta bredd",
-    "name-neutral": "Neutral",
-    "name-show-threshold-labels": "Visa tröskelvärdesetiketter",
-    "name-show-threshold-markers": "Visa tröskelmarkörer",
-    "neutral": "",
-    "placeholder-neutral": "auto",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    }
   },
   "gen-ai": {
     "apply-suggestion": "Tillämpa",
@@ -12566,45 +12578,6 @@
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

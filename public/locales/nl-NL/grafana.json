@@ -7973,31 +7973,43 @@
     "title": "Pagina verlaten?"
   },
   "gauge": {
-    "category-gauge": "Meter",
-    "category-radial-bar": "",
-    "description-min-height": "Minimale rijhoogte (horizontale oriëntatie)",
-    "description-min-width": "Minimale kolombreedte (verticale oriëntatie)",
-    "description-neutral": "Laat leeg om Min als neutraal punt te gebruiken",
-    "description-show-threshold-labels": "Geef de drempelwaarden rond de meetbalk weer",
-    "description-show-threshold-markers": "Geeft de drempels weer als een buitenste balk",
-    "gauge-size-options": {
-      "label-auto": "Automatisch",
-      "label-manual": "Handmatig"
-    },
-    "name-gauge-size": "Metergrootte",
-    "name-min-height": "Minimale hoogte",
-    "name-min-width": "Minimale breedte",
-    "name-neutral": "Neutraal",
-    "name-show-threshold-labels": "Drempellabels weergeven",
-    "name-show-threshold-markers": "Drempelmarkeringen weergeven",
-    "neutral": "",
-    "placeholder-neutral": "automatisch",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    }
   },
   "gen-ai": {
     "apply-suggestion": "Toepassen",
@@ -12566,45 +12578,6 @@
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

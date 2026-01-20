@@ -25,13 +25,29 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
+				GaugePanelEffects: {
+					barGlow?: bool | *false
+					centerGlow?: bool | *false
+					gradient?: bool | *true
+				 } @cuetsy(kind="interface")
+
 				Options: {
 					common.SingleStatBaseOptions
-					showThresholdLabels:  bool | *false
 					showThresholdMarkers: bool | *true
-					sizing:               common.BarGaugeSizing & (*"auto" | _)
-					minVizWidth:          uint32 | *75
-					minVizHeight:         uint32 | *75
+					showThresholdLabels: bool | *false
+					segmentCount: number | *1
+					segmentSpacing: number | *0.3
+					sparkline?: bool | *true
+					shape: "circle" | *"gauge"
+					barWidthFactor: number | *0.5
+					barShape: "flat" | "rounded" | *"flat"
+					endpointMarker?: "point" | "glow" | "none" | *"point"
+					textMode?: "auto" | "value_and_name" | "value" | "name" | "none" | *"auto"
+					neutral?: number
+					effects: GaugePanelEffects | *{}
+					sizing: common.BarGaugeSizing & (*"auto" | _)
+					minVizWidth: uint32 | *75
+					minVizHeight: uint32 | *75
 				} @cuetsy(kind="interface")
 			}
 		}]

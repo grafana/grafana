@@ -7972,32 +7972,45 @@
     "discard-button": "Nem mentett módosítások elvetése",
     "title": "Kilép az oldalról?"
   },
+
   "gauge": {
-    "category-gauge": "Mérőeszköz",
-    "category-radial-bar": "",
-    "description-min-height": "Minimális sormagasság (vízszintes tájolás)",
-    "description-min-width": "Minimális oszlopszélesség (függőleges tájolás)",
-    "description-neutral": "Hagyja üresen, hogy a Min. értéket használja semleges pontként",
-    "description-show-threshold-labels": "A küszöbértékek megjelenítése a mérősáv körül",
-    "description-show-threshold-markers": "A küszöbértékeket külső sávként jeleníti meg",
-    "gauge-size-options": {
-      "label-auto": "Automatikus",
-      "label-manual": "Kézi"
-    },
-    "name-gauge-size": "Mérőeszköz mérete",
-    "name-min-height": "Min. magasság",
-    "name-min-width": "Min. szélesség",
-    "name-neutral": "Semleges",
-    "name-show-threshold-labels": "Küszöbértékcímkék megjelenítése",
-    "name-show-threshold-markers": "Küszöbértékjelölők megjelenítése",
-    "neutral": "",
-    "placeholder-neutral": "automatikus",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    }
   },
   "gen-ai": {
     "apply-suggestion": "Alkalmaz",
@@ -12566,45 +12579,6 @@
       "show-response": "Válasz megjelenítése"
     },
     "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

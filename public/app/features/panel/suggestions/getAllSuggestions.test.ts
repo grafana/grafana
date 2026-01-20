@@ -71,7 +71,7 @@ jest.mock('../state/util', () => {
   };
 });
 
-const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart', 'radialbar'];
+const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart'];
 
 class ScenarioContext {
   data: DataFrame[] = [];

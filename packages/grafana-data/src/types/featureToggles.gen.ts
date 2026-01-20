@@ -1281,11 +1281,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable new gauge visualization
-  * @default false
-  */
-  newGauge?: boolean;
-  /**
   * Enable new visualization suggestions
   * @default false
   */

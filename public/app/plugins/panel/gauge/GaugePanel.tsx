@@ -1,116 +1,111 @@
-import { PureComponent, type JSX } from 'react';
+import type { JSX } from 'react';
 
-import { FieldDisplay, getDisplayProcessor, getFieldDisplayValues, PanelProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
-import { DataLinksContextMenu, Gauge, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
-import { DataLinksContextMenuApi } from '@grafana/ui/internal';
+import {
+  DisplayValueAlignmentFactors,
+  FieldDisplay,
+  getDisplayValueAlignmentFactors,
+  getFieldDisplayValues,
+  PanelProps,
+} from '@grafana/data';
+import { config, PanelDataErrorView } from '@grafana/runtime';
+import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
 
-import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
+import { Options } from './panelcfg.gen';
 
-import { defaultOptions, Options } from './panelcfg.gen';
-
-export class GaugePanel extends PureComponent<PanelProps<Options>> {
-  renderComponent = (
-    valueProps: VizRepeaterRenderValueProps<FieldDisplay>,
+export function GaugePanel({
+  id,
+  height,
+  width,
+  data,
+  renderCounter,
+  options,
+  replaceVariables,
+  fieldConfig,
+  timeZone,
+}: PanelProps<Options>) {
+  function renderComponent(
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
-  ): JSX.Element => {
-    const { options, fieldConfig } = this.props;
-    const { width, height, count, value } = valueProps;
-    const { field, display } = value;
-    const { openMenu, targetClassName } = menuProps;
+  ) {
+    const { width, height, value } = valueProps;
 
     return (
-      <Gauge
-        value={clearNameForSingleSeries(count, fieldConfig.defaults, display)}
-        width={width}
+      <RadialGauge
+        alignmentFactors={valueProps.alignmentFactors}
+        barWidthFactor={options.barWidthFactor}
+        endpointMarker={options.endpointMarker !== 'none' ? options.endpointMarker : undefined}
+        glowBar={options.effects?.barGlow}
+        glowCenter={options.effects?.centerGlow}
+        gradient={options.effects?.gradient}
         height={height}
-        field={field}
-        text={options.text}
-        showThresholdLabels={options.showThresholdLabels}
-        showThresholdMarkers={options.showThresholdMarkers}
-        theme={config.theme2}
-        onClick={openMenu}
-        className={targetClassName}
-        orientation={options.orientation}
+        nameManualFontSize={options.text?.titleSize}
+        neutral={options.neutral}
+        onClick={menuProps.openMenu}
+        roundedBars={options.barShape === 'rounded'}
+        segmentCount={options.segmentCount}
+        segmentSpacing={options.segmentSpacing}
+        shape={options.shape}
+        showScaleLabels={options.showThresholdLabels}
+        textMode={options.textMode}
+        thresholdsBar={options.showThresholdMarkers}
+        valueManualFontSize={options.text?.valueSize}
+        values={[value]}
+        vizCount={valueProps.count}
+        width={width}
       />
     );
-  };
+  }
 
-  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay>): JSX.Element => {
+  function renderValue(
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>
+  ): JSX.Element {
     const { value } = valueProps;
     const { getLinks, hasLinks } = value;
 
     if (hasLinks && getLinks) {
       return (
         <DataLinksContextMenu links={getLinks} style={{ flexGrow: 1 }}>
-          {(api) => {
-            return this.renderComponent(valueProps, api);
-          }}
+          {(api) => renderComponent(valueProps, api)}
         </DataLinksContextMenu>
       );
     }
 
-    return this.renderComponent(valueProps, {});
-  };
+    return renderComponent(valueProps, {});
+  }
 
-  getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
-
-    for (let frame of data.series) {
-      for (let field of frame.fields) {
-        // Set the Min/Max value automatically for percent and percentunit
-        if (field.config.unit === 'percent' || field.config.unit === 'percentunit') {
-          const min = field.config.min ?? 0;
-          const max = field.config.max ?? (field.config.unit === 'percent' ? 100 : 1);
-          field.state = field.state ?? {};
-          field.state.range = { min, max, delta: max - min };
-          field.display = getDisplayProcessor({ field, theme: config.theme2 });
-        }
-      }
-    }
+  function getValues(): FieldDisplay[] {
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme2,
       data: data.series,
+      sparkline: options.sparkline,
       timeZone,
     });
-  };
+  }
 
-  calculateGaugeSize = () => {
-    const { options } = this.props;
+  if (getValues()[0]?.display?.text === 'No data') {
+    return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} needsNumberField />;
+  }
 
-    const orientation = options.orientation;
-    const isManualSizing = options.sizing === BarGaugeSizing.Manual;
-    const isVerticalOrientation = orientation === VizOrientation.Vertical;
-    const isHorizontalOrientation = orientation === VizOrientation.Horizontal;
-
-    const minVizWidth = isManualSizing && isVerticalOrientation ? options.minVizWidth : defaultOptions.minVizWidth;
-    const minVizHeight = isManualSizing && isHorizontalOrientation ? options.minVizHeight : defaultOptions.minVizHeight;
-
-    return { minVizWidth, minVizHeight };
-  };
-
-  render() {
-    const { height, width, data, renderCounter, options } = this.props;
-
-    const { minVizHeight, minVizWidth } = this.calculateGaugeSize();
-
-    return (
+  return (
+    <Stack direction="row" justifyContent="center" alignItems="center" height={'100%'}>
       <VizRepeater
-        getValues={this.getValues}
-        renderValue={this.renderValue}
+        getValues={getValues}
+        renderValue={renderValue}
         width={width}
         height={height}
         source={data}
         autoGrid={true}
+        itemSpacing={16}
         renderCounter={renderCounter}
         orientation={options.orientation}
-        minVizHeight={minVizHeight}
-        minVizWidth={minVizWidth}
+        minVizHeight={options.sizing === 'auto' ? 0 : options.minVizHeight}
+        minVizWidth={options.sizing === 'auto' ? 0 : options.minVizWidth}
+        getAlignmentFactors={getDisplayValueAlignmentFactors}
       />
-    );
-  }
+    </Stack>
+  );
 }

@@ -7947,31 +7947,43 @@
     "title": "このページを離れますか？"
   },
   "gauge": {
-    "category-gauge": "ゲージ",
-    "category-radial-bar": "",
-    "description-min-height": "最小行の高さ（水平方向）",
-    "description-min-width": "最小列幅（垂直方向）",
-    "description-neutral": "中立点として最小値を使用するには、空のままにします",
-    "description-show-threshold-labels": "ゲージバーの周りのしきい値をレンダリングします",
-    "description-show-threshold-markers": "しきい値を外側のバーとしてレンダリングします",
-    "gauge-size-options": {
-      "label-auto": "自動",
-      "label-manual": "手動"
-    },
-    "name-gauge-size": "ゲージサイズ",
-    "name-min-height": "最小の高さ",
-    "name-min-width": "最小幅",
-    "name-neutral": "中立",
-    "name-show-threshold-labels": "しきい値ラベルを表示",
-    "name-show-threshold-markers": "しきい値マーカーを表示",
-    "neutral": "",
-    "placeholder-neutral": "自動",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    }
   },
   "gen-ai": {
     "apply-suggestion": "適用",
@@ -12513,45 +12525,6 @@
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

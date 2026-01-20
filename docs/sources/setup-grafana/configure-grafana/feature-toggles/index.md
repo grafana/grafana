@@ -96,7 +96,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `newGauge`                        | Enable new gauge visualization                                                                         |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |

@@ -7947,31 +7947,43 @@
     "title": "페이지에서 나가시겠어요?"
   },
   "gauge": {
-    "category-gauge": "게이지",
-    "category-radial-bar": "",
-    "description-min-height": "행 최소 높이(가로 방향)",
-    "description-min-width": "열 최소 너비(세로 방향)",
-    "description-neutral": "'최소'를 중립점으로 사용하려면 비워둡니다",
-    "description-show-threshold-labels": "게이지 막대 주변에 임계값 렌더링",
-    "description-show-threshold-markers": "임계값을 바깥쪽 막대로 렌더링",
-    "gauge-size-options": {
-      "label-auto": "자동",
-      "label-manual": "수동"
-    },
-    "name-gauge-size": "게이지 크기",
-    "name-min-height": "최소 높이",
-    "name-min-width": "최소 너비",
-    "name-neutral": "중간임",
-    "name-show-threshold-labels": "임계값 레이블 표시",
-    "name-show-threshold-markers": "임계값 마커 표시",
-    "neutral": "",
-    "placeholder-neutral": "자동",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    }
   },
   "gen-ai": {
     "apply-suggestion": "적용",
@@ -12513,45 +12525,6 @@
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

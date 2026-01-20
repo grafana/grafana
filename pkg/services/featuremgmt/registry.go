@@ -2015,14 +2015,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "newGauge",
-			Description:  "Enable new gauge visualization",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
-		},
-		{
 			Name:         "newVizSuggestions",
 			Description:  "Enable new visualization suggestions",
 			Stage:        FeatureStagePublicPreview,

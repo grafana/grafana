@@ -16,7 +16,7 @@ import {
 import { VizTextDisplayOptions, VizOrientation, Threshold } from '@grafana/schema';
 
 import { calculateFontSize } from '../../utils/measureText';
-import { clearButtonStyles } from '../Button/Button';
+import { clearButtonStyles } from '../../components/Button/Button';
 
 import { calculateGaugeAutoProps, DEFAULT_THRESHOLDS, getFormattedThresholds } from './utils';
 

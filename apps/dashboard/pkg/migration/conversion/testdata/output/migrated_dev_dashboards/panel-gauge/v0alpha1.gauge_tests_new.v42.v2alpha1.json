@@ -69,7 +69,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -160,7 +160,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -255,7 +255,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -351,7 +351,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -447,7 +447,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -542,7 +542,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -637,7 +637,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -728,7 +728,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -819,7 +819,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -910,7 +910,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1001,7 +1001,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1092,7 +1092,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1179,7 +1179,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1270,7 +1270,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1361,7 +1361,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1452,7 +1452,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1547,7 +1547,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1634,7 +1634,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1725,7 +1725,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1820,7 +1820,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -1915,7 +1915,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -2014,7 +2014,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -2105,7 +2105,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {
@@ -2196,7 +2196,7 @@
             }
           },
           "vizConfig": {
-            "kind": "radialbar",
+            "kind": "gauge",
             "spec": {
               "pluginVersion": "13.0.0-pre",
               "options": {

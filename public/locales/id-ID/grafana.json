@@ -7946,32 +7946,45 @@
     "discard-button": "Buang perubahan yang belum disimpan",
     "title": "Keluar dari halaman?"
   },
+
   "gauge": {
-    "category-gauge": "Alat ukur",
-    "category-radial-bar": "",
-    "description-min-height": "Tinggi baris minimum (orientasi horizontal)",
-    "description-min-width": "Lebar kolom minimum (orientasi vertikal)",
-    "description-neutral": "Biarkan kosong untuk menggunakan Min sebagai titik netral",
-    "description-show-threshold-labels": "Tampilkan nilai ambang batas di sekitar bilah pengukur",
-    "description-show-threshold-markers": "Menampilkan ambang batas sebagai bilah luar",
-    "gauge-size-options": {
-      "label-auto": "Otomatis",
-      "label-manual": "Manual"
-    },
-    "name-gauge-size": "Ukuran alat ukur",
-    "name-min-height": "Tinggi min",
-    "name-min-width": "Lebar minimum",
-    "name-neutral": "Netral",
-    "name-show-threshold-labels": "Tampilkan label ambang batas",
-    "name-show-threshold-markers": "Tampilkan penanda ambang batas",
-    "neutral": "",
-    "placeholder-neutral": "otomatis",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    }
   },
   "gen-ai": {
     "apply-suggestion": "Terapkan",
@@ -12513,45 +12526,6 @@
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

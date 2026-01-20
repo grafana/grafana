@@ -3486,63 +3486,6 @@ export const v0alpha1Response: PluginMetasResponse = cloneDeep({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'radialbar',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'radialbar',
-          type: 'panel',
-          name: 'New Gauge',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'public/plugins/radialbar/img/icon_gauge.svg',
-              large: 'public/plugins/radialbar/img/icon_gauge.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Standard gauge visualization',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/gauge/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          state: 'alpha',
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/radialbar',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'public/plugins/radialbar',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'stackdriver',
         namespace: 'default',
       },

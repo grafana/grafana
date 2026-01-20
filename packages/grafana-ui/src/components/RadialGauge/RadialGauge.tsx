@@ -5,8 +5,8 @@ import { DisplayValueAlignmentFactors, FALLBACK_COLOR, FieldDisplay, GrafanaThem
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
+import { getFormattedThresholds } from '../../graveyard/Gauge/utils';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFormattedThresholds } from '../Gauge/utils';
 
 import { RadialBar } from './RadialBar';
 import { RadialBarSegmented } from './RadialBarSegmented';

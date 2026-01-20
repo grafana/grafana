@@ -7973,31 +7973,43 @@
     "title": "Deseja sair da página?"
   },
   "gauge": {
-    "category-gauge": "Medidor",
-    "category-radial-bar": "",
-    "description-min-height": "Altura mínima da linha (orientação horizontal)",
-    "description-min-width": "Largura mínima da coluna (orientação vertical)",
-    "description-neutral": "Deixar em branco para usar o mínimo como ponto neutro",
-    "description-show-threshold-labels": "Gerar os valores de limite em torno da barra de medição",
-    "description-show-threshold-markers": "Gera os limites como uma barra externa",
-    "gauge-size-options": {
-      "label-auto": "Automático",
-      "label-manual": "Manual"
-    },
-    "name-gauge-size": "Tamanho do medidor",
-    "name-min-height": "Altura mínima",
-    "name-min-width": "Largura mínima",
-    "name-neutral": "Neutro",
-    "name-show-threshold-labels": "Mostrar rótulos de limite",
-    "name-show-threshold-markers": "Mostrar marcadores de limite",
-    "neutral": "",
-    "placeholder-neutral": "automático",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    }
   },
   "gen-ai": {
     "apply-suggestion": "Aplicar",
@@ -12566,45 +12578,6 @@
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

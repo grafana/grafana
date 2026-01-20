@@ -8024,33 +8024,6 @@
     "discard-button": "Zahodit neuložené změny",
     "title": "Opustit stránku?"
   },
-  "gauge": {
-    "category-gauge": "Měřidlo",
-    "category-radial-bar": "",
-    "description-min-height": "Minimální výška řádku (vodorovná orientace)",
-    "description-min-width": "Minimální šířka sloupce (svislá orientace)",
-    "description-neutral": "Ponechte prázdné pro použití Min. jako neutrálního bodu",
-    "description-show-threshold-labels": "Vykreslit prahové hodnoty kolem měřicí lišty",
-    "description-show-threshold-markers": "Vykreslí prahové hodnoty jako vnější lištu",
-    "gauge-size-options": {
-      "label-auto": "Auto",
-      "label-manual": "Manuálně"
-    },
-    "name-gauge-size": "Velikost měřidla",
-    "name-min-height": "Min. výška",
-    "name-min-width": "Min. šířka",
-    "name-neutral": "Neutrální",
-    "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
-    "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
-    "neutral": "",
-    "placeholder-neutral": "auto.",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
-  },
   "gen-ai": {
     "apply-suggestion": "Použít",
     "incomplete-request-error": "Je mi líto, ale vaši žádost se mi nepodařilo dokončit. Zkuste to znovu.",
@@ -12672,45 +12645,6 @@
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {

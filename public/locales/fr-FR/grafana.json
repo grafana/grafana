@@ -7972,33 +7972,6 @@
     "discard-button": "Abandonner les modifications non enregistrées",
     "title": "Quitter la page ?"
   },
-  "gauge": {
-    "category-gauge": "Jauge",
-    "category-radial-bar": "",
-    "description-min-height": "Hauteur minimale des lignes (orientation horizontale)",
-    "description-min-width": "Largeur minimale des colonnes (orientation verticale)",
-    "description-neutral": "Laisser vide pour utiliser le minimum comme point neutre",
-    "description-show-threshold-labels": "Afficher les valeurs de seuil autour de la barre de la jauge",
-    "description-show-threshold-markers": "Affiche les seuils sous forme de barre externe",
-    "gauge-size-options": {
-      "label-auto": "Auto",
-      "label-manual": "Manuel"
-    },
-    "name-gauge-size": "Taille de la jauge",
-    "name-min-height": "Hauteur minimale",
-    "name-min-width": "Largeur minimale",
-    "name-neutral": "Neutre",
-    "name-show-threshold-labels": "Afficher les étiquettes de seuil",
-    "name-show-threshold-markers": "Afficher les marqueurs de seuil",
-    "neutral": "",
-    "placeholder-neutral": "auto",
-    "suggestions": {
-      "arc": "",
-      "circular": "",
-      "no-thresholds": ""
-    },
-    "threshold": ""
-  },
   "gen-ai": {
     "apply-suggestion": "Appliquer",
     "incomplete-request-error": "Désolé, je n'ai pas pu répondre à votre demande. Veuillez réessayer.",
@@ -12567,7 +12540,7 @@
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
   },
-  "radialbar": {
+  "gauge": {
     "config": {
       "bar-shape": "",
       "bar-shape-flat": "",
