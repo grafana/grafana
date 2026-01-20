@@ -1,3 +1,4 @@
+import { textUtil } from '@grafana/data';
 import { Card, Stack, Text, TextLink } from '@grafana/ui';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -32,7 +33,7 @@ export function SelectableConnectionCard({ connection, isSelected, onClick }: Pr
 
       {url && (
         <Card.Meta>
-          <TextLink external href={url}>
+          <TextLink external href={textUtil.sanitizeUrl(url)}>
             {url}
           </TextLink>
         </Card.Meta>

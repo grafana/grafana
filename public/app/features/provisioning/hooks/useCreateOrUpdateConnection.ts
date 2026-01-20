@@ -14,6 +14,7 @@ export function useCreateOrUpdateConnection(name?: string) {
 
   const updateOrCreate = useCallback(
     async (data: ConnectionSpec, privateKey?: string) => {
+      // API expects base64-encoded private key
       const secure: ConnectionSecure | undefined = privateKey?.length
         ? { privateKey: { create: btoa(privateKey) } }
         : undefined;

@@ -355,10 +355,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
           }
           return;
         }
-
-        // For existing mode, just proceed
-        handleNext();
-        return;
       }
 
       // Validate form data before proceeding

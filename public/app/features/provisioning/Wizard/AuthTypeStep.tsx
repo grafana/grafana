@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -41,6 +41,8 @@ export const AuthTypeStep = memo(function AuthTypeStep() {
   const { control } = useFormContext<WizardFormData>();
   const styles = useStyles2(getStyles);
 
+  const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
+
   return (
     <Stack direction="column" gap={2}>
       <Text variant="bodySmall" color="secondary">
@@ -55,7 +57,7 @@ export const AuthTypeStep = memo(function AuthTypeStep() {
         control={control}
         render={({ field: { onChange, value } }) => (
           <Stack direction="column" gap={2}>
-            {getAuthTypeOptions().map((option) => (
+            {authTypeOptions.map((option) => (
               <Card
                 key={option.id}
                 noMargin

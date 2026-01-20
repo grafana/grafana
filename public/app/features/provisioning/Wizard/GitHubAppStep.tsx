@@ -29,7 +29,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
   const modeOptions = [
     {
       value: 'existing',
-      label: t('provisioning.wizard.github-app-mode-existing', 'Choose one of the existing app'),
+      label: t('provisioning.wizard.github-app-mode-existing', 'Choose an existing app'),
     },
     {
       value: 'new',
@@ -76,22 +76,27 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
         github: { appID, installationID },
       };
 
+      const defaultErrorMessage = t(
+        'provisioning.wizard.github-app-creation-default-error',
+        'Failed to create connection'
+      );
+
       try {
         const result = await createConnection(spec, privateKey);
         if (result.error) {
           const message = isFetchError(result.error)
-            ? result.error.data?.message || 'Failed to create connection'
-            : 'Failed to create connection';
+            ? result.error.data?.message || defaultErrorMessage
+            : defaultErrorMessage;
           onSubmit({ success: false, error: message });
         } else if (result.data) {
           onSubmit({ success: true, connectionName: result.data.metadata?.name || '' });
         } else {
-          onSubmit({ success: false, error: 'Failed to create connection' });
+          onSubmit({ success: false, error: defaultErrorMessage });
         }
       } catch (error) {
         const message = isFetchError(error)
-          ? error.data?.message || 'Failed to create connection'
-          : 'Failed to create connection';
+          ? error.data?.message || defaultErrorMessage
+          : defaultErrorMessage;
         onSubmit({ success: false, error: message });
       }
     },
@@ -146,10 +151,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
               name="githubApp.connectionName"
               control={control}
               rules={{
-                required:
-                  githubAppMode === 'existing'
-                    ? t('provisioning.wizard.github-app-error-required', 'This field is required')
-                    : false,
+                required: githubAppMode === 'existing' && t('provisioning.wizard.github-app-error-required', 'This field is required'),
               }}
               render={({ field: { onChange, value } }) => (
                 <Stack direction="column" gap={1}>
