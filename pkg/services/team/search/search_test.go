@@ -1,10 +1,12 @@
 package search
 
 import (
+	"encoding/binary"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -29,6 +31,18 @@ func TestParseResults(t *testing.T) {
 						Name: "externalUID",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
+					{
+						Name: "memberCount",
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+					{
+						Name: "permission",
+						Type: resourcepb.ResourceTableColumnDefinition_INT32,
+					},
+					{
+						Name: "accessControl",
+						Type: resourcepb.ResourceTableColumnDefinition_OBJECT,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -41,6 +55,17 @@ func TestParseResults(t *testing.T) {
 							[]byte("team1@example.com"),
 							[]byte("true"),
 							[]byte("team1-uid"),
+							func() []byte {
+								b := make([]byte, 8)
+								binary.BigEndian.PutUint64(b, 10)
+								return b
+							}(),
+							func() []byte {
+								b := make([]byte, 4)
+								binary.BigEndian.PutUint32(b, 4)
+								return b
+							}(),
+							[]byte("{\"test\":true}"),
 						},
 					},
 				},
@@ -55,6 +80,9 @@ func TestParseResults(t *testing.T) {
 		require.Equal(t, "team1@example.com", results.Hits[0].Email)
 		require.True(t, results.Hits[0].Provisioned)
 		require.Equal(t, "team1-uid", results.Hits[0].ExternalUID)
+		require.Equal(t, int64(10), results.Hits[0].MemberCount)
+		require.Equal(t, team.PermissionTypeAdmin, results.Hits[0].Permission)
+		require.Equal(t, map[string]bool{"test": true}, results.Hits[0].AccessControl)
 	})
 
 	t.Run("should handle nil result", func(t *testing.T) {

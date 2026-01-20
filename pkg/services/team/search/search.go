@@ -1,9 +1,12 @@
 package search
 
 import (
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -22,6 +25,9 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	emailIDX := -1
 	provisionedIDX := -1
 	externalUIDIDX := -1
+	memberCountIDX := -1
+	permissionIDX := -1
+	accessControlIDX := -1
 
 	for i, v := range result.Results.Columns {
 		if v == nil {
@@ -37,6 +43,12 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 			provisionedIDX = i
 		case builders.TEAM_SEARCH_EXTERNAL_UID:
 			externalUIDIDX = i
+		case builders.TEAM_SEARCH_MEMBER_COUNT:
+			memberCountIDX = i
+		case builders.TEAM_SEARCH_PERMISSION:
+			permissionIDX = i
+		case builders.TEAM_SEARCH_ACCESS_CONTROL:
+			accessControlIDX = i
 		}
 	}
 
@@ -73,6 +85,25 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 
 		if externalUIDIDX >= 0 && row.Cells[externalUIDIDX] != nil {
 			hit.ExternalUID = string(row.Cells[externalUIDIDX])
+		}
+
+		if memberCountIDX >= 0 && row.Cells[memberCountIDX] != nil {
+			memberCount := binary.BigEndian.Uint64(row.Cells[memberCountIDX])
+			hit.MemberCount = int64(memberCount)
+		}
+
+		if permissionIDX >= 0 && row.Cells[permissionIDX] != nil {
+			permission := binary.BigEndian.Uint32(row.Cells[permissionIDX])
+			hit.Permission = team.PermissionType(permission)
+		}
+
+		if accessControlIDX >= 0 && row.Cells[accessControlIDX] != nil {
+			var accessControl map[string]bool
+			err := json.Unmarshal(row.Cells[accessControlIDX], &accessControl)
+			if err != nil {
+				return v0alpha1.TeamSearchResults{}, fmt.Errorf("error parsing team search response: error unmarshalling access control: %w", err)
+			}
+			hit.AccessControl = accessControl
 		}
 
 		sr.Hits[i] = *hit
