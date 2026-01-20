@@ -264,6 +264,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         repositoryType: repoType,
         target: syncTarget,
         workflowsEnabled: getWorkflows(formData.repository),
+        ...(repoType === 'github' && { githubAuthType }),
       });
       navigate(PROVISIONING_URL);
     } else {
@@ -301,6 +302,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     getValues,
     repoType,
     syncTarget,
+    githubAuthType,
     navigate,
     activeStep,
     canSkipSync,

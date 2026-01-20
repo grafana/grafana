@@ -4,7 +4,6 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { Card, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { GitHubAuthType, WizardFormData } from './types';
@@ -64,9 +63,6 @@ export const AuthTypeStep = memo(function AuthTypeStep() {
                 isSelected={value === option.id}
                 onClick={() => {
                   onChange(option.id);
-                  reportInteraction('grafana_provisioning_wizard_auth_type_selected', {
-                    authType: option.id,
-                  });
                 }}
                 className={styles.card}
               >
