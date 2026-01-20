@@ -90,19 +90,19 @@ jobs:
       - name: Cat GOMOD traces
         run: |
           echo "====GO MODPROXY TRACES====="
-          cat trace-modcache.log
+          #          cat trace-modcache.log
           echo "==========================="
 
       - name: Cat GOCACHEPROG traces
         run: |
           echo "====GO GOCACHEPROG TRACES====="
-          cat trace-gocache.log
+          #          cat trace-gocache.log
           echo "=============================="
 
       - name: Cat GOTOOLEXEC traces
         run: |
           echo "====GO GOTOOLEXEC TRACES====="
-          cat trace-toolexec.log
+          #          cat trace-toolexec.log
           echo "============================="
 
 
