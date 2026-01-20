@@ -2,8 +2,7 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { Alert, Field, RadioButtonGroup, Spinner, Stack, Text } from '@grafana/ui';
+import { Alert, Field, RadioButtonGroup, Spinner, Stack } from '@grafana/ui';
 import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -27,24 +26,9 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
   { onSubmit },
   ref
 ) {
-  const modeOptions = [
-    {
-      value: 'existing',
-      label: t('provisioning.wizard.github-app-mode-existing', 'Choose an existing app'),
-    },
-    {
-      value: 'new',
-      label: t('provisioning.wizard.github-app-mode-new', 'Connect to a new app'),
-    },
-  ];
+  const { control, watch } = useFormContext<WizardFormData>();
 
-  const {
-    control,
-    watch,
-    formState: { errors },
-  } = useFormContext<WizardFormData>();
-
-  // Local form for credential fields when creating a new connection
+  // GH app form
   const credentialForm = useForm<ConnectionFormData>({
     defaultValues: {
       type: 'github',
@@ -55,11 +39,9 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
   });
 
   const [createConnection] = useCreateOrUpdateConnection();
-  const [connections, isLoading, error] = useConnectionList({});
+  const [connections, isLoading, connectionListError] = useConnectionList({});
 
   const githubAppMode = watch('githubAppMode');
-
-  // Filter to only GitHub connections
   const githubConnections = connections?.filter((c) => c.spec?.type === 'github') ?? [];
 
   // Expose submit method to parent via ref. The parent wizard (ProvisioningWizard) needs to trigger
@@ -105,13 +87,17 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
           control={control}
           render={({ field: { ref: fieldRef, onChange, ...field } }) => (
             <RadioButtonGroup
-              options={modeOptions}
-              onChange={(value) => {
-                onChange(value);
-                reportInteraction('grafana_provisioning_wizard_github_app_mode_selected', {
-                  mode: value,
-                });
-              }}
+              options={[
+                {
+                  value: 'existing',
+                  label: t('provisioning.wizard.github-app-mode-existing', 'Choose an existing app'),
+                },
+                {
+                  value: 'new',
+                  label: t('provisioning.wizard.github-app-mode-new', 'Connect to a new app'),
+                },
+              ]}
+              onChange={onChange}
               {...field}
             />
           )}
@@ -122,22 +108,22 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
         <Stack direction="column" gap={2}>
           {isLoading ? (
             <Spinner />
-          ) : error ? (
+          ) : connectionListError ? (
             <Alert
               severity="error"
               title={t('provisioning.wizard.github-app-error-loading', 'Failed to load connections')}
             >
-              {error instanceof Error ? error.message : String(error)}
+              {extractErrorMessage(connectionListError)}
             </Alert>
           ) : null}
-          {!isLoading && !error && githubConnections.length === 0 && (
+          {!isLoading && !connectionListError && githubConnections.length === 0 && (
             <Alert
               severity="info"
               title={t('provisioning.wizard.github-app-no-connections', 'No GitHub connections found')}
             >
               <Trans i18nKey="provisioning.wizard.github-app-no-connections-message">
-                You don&apos;t have any existing GitHub app connections. Please select &quot;Connect to a new
-                app&quot; to create one.
+                You don&apos;t have any existing GitHub app connections. Please select &quot;Connect to a new app&quot;
+                to create one.
               </Trans>
             </Alert>
           )}
@@ -146,7 +132,9 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
               name="githubApp.connectionName"
               control={control}
               rules={{
-                required: githubAppMode === 'existing' && t('provisioning.wizard.github-app-error-required', 'This field is required'),
+                required:
+                  githubAppMode === 'existing' &&
+                  t('provisioning.wizard.github-app-error-required', 'This field is required'),
               }}
               render={({ field: { onChange, value } }) => (
                 <Stack direction="column" gap={1}>
@@ -157,21 +145,13 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
                         key={connectionName}
                         connection={connection}
                         isSelected={value === connectionName}
-                        onClick={() => {
-                          onChange(connectionName);
-                          reportInteraction('grafana_provisioning_wizard_github_app_selected', {
-                            connectionName,
-                          });
-                        }}
+                        onClick={() => onChange(connectionName)}
                       />
                     );
                   })}
                 </Stack>
               )}
             />
-          )}
-          {errors?.githubApp?.connectionName?.message && (
-            <Text color="error">{errors.githubApp.connectionName.message}</Text>
           )}
         </Stack>
       )}
