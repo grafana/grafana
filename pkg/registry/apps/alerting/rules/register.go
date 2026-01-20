@@ -29,12 +29,12 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AlertingRulesAppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider    = (*AlertingRulesAppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AlertingRulesAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider    = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
 )
 
-type AlertingRulesAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
 	ng  *ngalert.AlertNG
@@ -43,13 +43,13 @@ type AlertingRulesAppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
-) (*AlertingRulesAppInstaller, error) {
+) (*AppInstaller, error) {
 	if ng.IsDisabled() {
 		log.New("app-registry").Info("Skipping Kubernetes Alerting Rules apiserver (rules.alerting.grafana.app): Unified Alerting is disabled")
 		return nil, nil
 	}
 
-	installer := &AlertingRulesAppInstaller{
+	installer := &AppInstaller{
 		cfg: cfg,
 		ng:  ng,
 	}
@@ -124,7 +124,7 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func (a *AlertingRulesAppInstaller) GetAuthorizer() authorizer.Authorizer {
+func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -139,7 +139,7 @@ func (a *AlertingRulesAppInstaller) GetAuthorizer() authorizer.Authorizer {
 	)
 }
 
-func (a *AlertingRulesAppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
+func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
 	switch gvr {
 	case recordingrule.ResourceInfo.GroupVersionResource():

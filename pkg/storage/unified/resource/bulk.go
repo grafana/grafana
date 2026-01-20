@@ -206,6 +206,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			}
 
 			// This will be called for each request -- with the folder ID
+			//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 			runner.checker[NSGR(k)], _, err = s.access.Compile(ctx, user, authlib.ListRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,

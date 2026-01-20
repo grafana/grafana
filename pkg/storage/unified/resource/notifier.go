@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/infra/log"
 	gocache "github.com/patrickmn/go-cache"
 
 	"time"
@@ -32,11 +32,11 @@ type notifier interface {
 
 type pollingNotifier struct {
 	eventStore *eventStore
-	log        logging.Logger
+	log        log.Logger
 }
 
 type notifierOptions struct {
-	log                logging.Logger
+	log                log.Logger
 	useChannelNotifier bool
 }
 
@@ -57,24 +57,20 @@ func defaultWatchOptions() watchOptions {
 }
 
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
-	if opts.log == nil {
-		opts.log = &logging.NoOpLogger{}
-	}
-
 	if opts.useChannelNotifier {
-		return newChannelNotifier(opts.log)
+		return newChannelNotifier(opts.log.New("notifier", "channelNotifier"))
 	}
 
-	return &pollingNotifier{eventStore: eventStore, log: opts.log}
+	return &pollingNotifier{eventStore: eventStore, log: opts.log.New("notifier", "pollingNotifier")}
 }
 
 type channelNotifier struct {
-	log         logging.Logger
+	log         log.Logger
 	subscribers map[chan Event]struct{}
 	mu          sync.Mutex
 }
 
-func newChannelNotifier(log logging.Logger) *channelNotifier {
+func newChannelNotifier(log log.Logger) *channelNotifier {
 	return &channelNotifier{
 		log:         log,
 		subscribers: make(map[chan Event]struct{}),
@@ -82,6 +78,7 @@ func newChannelNotifier(log logging.Logger) *channelNotifier {
 }
 
 func (cn *channelNotifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
+	cn.log.Info("creating new notifier", "buffer_size", opts.BufferSize)
 	events := make(chan Event, opts.BufferSize)
 
 	cn.mu.Lock()
@@ -131,6 +128,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts watchOptions) <-chan E
 	if opts.MaxBackoff <= 0 || opts.MaxBackoff <= opts.MinBackoff {
 		opts.MaxBackoff = defaultMaxBackoff
 	}
+
+	n.log.Info("creating new notifier",
+		"lookback", opts.LookbackPeriod,
+		"buffer_size", opts.BufferSize,
+		"min_backoff", opts.MinBackoff,
+		"max_backoff", opts.MaxBackoff,
+	)
 
 	cacheTTL := opts.LookbackPeriod
 	cacheCleanupInterval := 2 * opts.LookbackPeriod

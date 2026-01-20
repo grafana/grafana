@@ -31,6 +31,7 @@ import {
   urlUtil,
   LogLevel,
   shallowCompare,
+  store,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -47,7 +48,6 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';

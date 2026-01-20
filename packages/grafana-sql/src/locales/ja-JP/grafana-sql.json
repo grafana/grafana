@@ -69,6 +69,12 @@
         "placeholder-select-format": "フォーマットを選択",
         "run-query": "クエリの実行"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "CTRL/CMD+Returnでクエリを実行",
         "tooltip-collapse": "エディターを折りたたむ",

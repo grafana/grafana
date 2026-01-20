@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"slices"
@@ -16,9 +17,13 @@ type RepositoryValidator struct {
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
 	minSyncInterval     time.Duration
+	repoFactory         Factory
 }
 
-func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.SyncTargetType, allowImageRendering bool) RepositoryValidator {
+// FIXME: The separation of concerns here is not ideal. RepositoryValidator should not depend on Factory,
+// but we need to call Factory.Validate() for structural validation (URL, branch, path, etc.) before
+// doing configuration validation. This coupling was introduced to avoid more extensive refactoring.
+func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.SyncTargetType, allowImageRendering bool, repoFactory Factory) RepositoryValidator {
 	// do not allow minsync interval to be less than 10
 	if minSyncInterval <= 10*time.Second {
 		minSyncInterval = 10 * time.Second
@@ -28,16 +33,21 @@ func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.S
 		allowedTargets:      allowedTargets,
 		allowImageRendering: allowImageRendering,
 		minSyncInterval:     minSyncInterval,
+		repoFactory:         repoFactory,
 	}
 }
 
-// ValidateRepository solely does configuration checks on the repository object. It does not run a health check or compare against existing repositories.
+// ValidateRepository does structural validation (via Factory.Validate) and configuration checks on the repository object.
+// It does not run a health check or compare against existing repositories.
 // isCreate indicates whether this is a CREATE operation (true) or UPDATE operation (false).
 // When isCreate is false, allowedTargets validation is skipped to allow existing repositories to continue working.
-func (v *RepositoryValidator) ValidateRepository(repo Repository, isCreate bool) field.ErrorList {
-	list := repo.Validate()
-	cfg := repo.Config()
+func (v *RepositoryValidator) ValidateRepository(ctx context.Context, cfg *provisioning.Repository, isCreate bool) field.ErrorList {
+	var list field.ErrorList
 
+	// FIXME: Structural validation (URL, branch, path, etc.) is done here via Factory.Validate().
+	// This creates a coupling between RepositoryValidator and Factory that is not ideal from a separation
+	// of concerns perspective, but avoids more extensive refactoring.
+	list = append(list, v.repoFactory.Validate(ctx, cfg)...)
 	if cfg.Spec.Title == "" {
 		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
 	}

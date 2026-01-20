@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/codes"
 
@@ -223,11 +221,11 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 }
 
 func (s *PluginsService) checkFlagPluginsAutoUpdate(ctx context.Context) bool {
-	ns := request.GetNamespaceMapper(s.cfg)(1)
-	ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, ns)
 	flag, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, featuremgmt.FlagPluginsAutoUpdate, false, openfeature.TransactionContext(ctx))
 	if err != nil {
 		s.log.Error("flag evaluation error", "flag", featuremgmt.FlagPluginsAutoUpdate, "error", err)
+	} else {
+		s.log.Info("flag evaluation succeeded", "flag", flag, "details", flag)
 	}
 
 	return flag.Value

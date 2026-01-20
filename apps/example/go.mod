@@ -5,7 +5,7 @@ go 1.25.6
 require (
 	github.com/grafana/grafana-app-sdk v0.48.7
 	github.com/grafana/grafana-app-sdk/logging v0.48.7
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20251017153501-8512b219c5fe
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	k8s.io/apimachinery v0.34.3
 	k8s.io/apiserver v0.34.3
 	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
@@ -44,10 +44,10 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20250930082137-a40e2c2b094f // indirect
-	github.com/grafana/authlib/types v0.0.0-20251119142549-be091cf2f4d4 // indirect
-	github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
+	github.com/grafana/authlib v0.0.0-20260119104241-f33edcf42077 // indirect
+	github.com/grafana/authlib/types v0.0.0-20260119104241-f33edcf42077 // indirect
+	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -84,16 +84,17 @@ require (
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/term v0.39.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/tools v0.41.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20251213004720-97cd9d5aeac2 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251222181119-0a764e51fe1b // indirect
 	google.golang.org/grpc v1.78.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

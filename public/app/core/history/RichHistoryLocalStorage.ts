@@ -1,10 +1,8 @@
 import { find, isEqual, omit } from 'lodash';
 
-import { DataQuery, SelectableValue } from '@grafana/data';
+import { DataQuery, SelectableValue, store } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 import { RichHistoryQuery } from 'app/types/explore';
-
-import store from '../store';
 
 import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning } from './RichHistoryStorage';
 import { fromDTO, toDTO } from './localStorageConverter';

@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaPlaylist = resource.NewSimpleSchema("playlist.grafana.app", "v0alpha1", &Playlist{}, &PlaylistList{}, resource.WithKind("Playlist"),
+	schemaPlaylist = resource.NewSimpleSchema("playlist.grafana.app", "v0alpha1", NewPlaylist(), &PlaylistList{}, resource.WithKind("Playlist"),
 		resource.WithPlural("playlists"), resource.WithScope(resource.NamespacedScope))
 	kindPlaylist = resource.Kind{
 		Schema: schemaPlaylist,

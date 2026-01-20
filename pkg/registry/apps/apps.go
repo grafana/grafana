@@ -3,13 +3,11 @@ package appregistry
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
@@ -19,9 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
+	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -34,23 +34,24 @@ import (
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
 	features featuremgmt.FeatureToggles,
-	playlistAppInstaller *playlist.PlaylistAppInstaller,
-	pluginsApplInstaller *plugins.AppInstaller,
+	playlistAppInstaller *playlist.AppInstaller,
+	pluginsAppInstaller *plugins.AppInstaller,
+	liveAppInstaller *live.AppInstaller,
 	shorturlAppInstaller *shorturl.ShortURLAppInstaller,
-	rulesAppInstaller *rules.AlertingRulesAppInstaller,
+	rulesAppInstaller *rules.AppInstaller,
 	correlationsAppInstaller *correlations.AppInstaller,
-	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
+	alertingNotificationAppInstaller *notifications.AppInstaller,
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
-	annotationAppInstaller *annotation.AnnotationAppInstaller,
-	exampleAppInstaller *example.ExampleAppInstaller,
-	advisorAppInstaller *advisor.AdvisorAppInstaller,
-	alertingHistorianAppInstaller *historian.AlertingHistorianAppInstaller,
+	annotationAppInstaller *annotation.AppInstaller,
+	exampleAppInstaller *example.AppInstaller,
+	advisorAppInstaller *advisor.AppInstaller,
+	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	featureClient := openfeature.NewDefaultClient()
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
-		pluginsApplInstaller,
+		pluginsAppInstaller,
 		exampleAppInstaller,
 	}
 	if featureClient.Boolean(context.Background(), featuremgmt.FlagKubernetesUnifiedStorageQuotas, false, openfeature.TransactionContext(context.Background())) {
@@ -88,6 +89,10 @@ func ProvideAppInstallers(
 		installers = append(installers, alertingHistorianAppInstaller)
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagLiveAPIServer) {
+		installers = append(installers, liveAppInstaller)
+	}
 	return installers
 }
 

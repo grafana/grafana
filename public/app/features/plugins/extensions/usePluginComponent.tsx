@@ -15,7 +15,7 @@ import { isExposedComponentDependencyMissing } from './validators';
 export function usePluginComponent<Props extends object = {}>(id: string): UsePluginComponentResult<Props> {
   const registryItem = useExposedComponentRegistrySlice<Props>(id);
   const pluginContext = usePluginContext();
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExposedComponentPluginDependencies(id));
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(id, getExposedComponentPluginDependencies);
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.

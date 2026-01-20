@@ -42,6 +42,9 @@ type RoleApiInstaller ApiInstaller[*iamv0.Role]
 // GlobalRoleApiInstaller provides GlobalRole-specific API registration and validation.
 type GlobalRoleApiInstaller ApiInstaller[*iamv0.GlobalRole]
 
+// TeamLBACApiInstaller provides TeamLBACRule-specific API registration and validation.
+type TeamLBACApiInstaller ApiInstaller[*iamv0.TeamLBACRule]
+
 // NoopApiInstaller is a no-op implementation for when roles are not available (OSS).
 type NoopApiInstaller[T runtime.Object] struct {
 	ResourceInfo utils.ResourceInfo
@@ -85,5 +88,12 @@ func ProvideNoopRoleApiInstaller() RoleApiInstaller {
 func ProvideNoopGlobalRoleApiInstaller() GlobalRoleApiInstaller {
 	return &NoopApiInstaller[*iamv0.GlobalRole]{
 		ResourceInfo: iamv0.GlobalRoleInfo,
+	}
+}
+
+// ProvideNoopTeamLBACApiInstaller provides a no-op TeamLBACRule installer specifically for TeamLBACRule types.
+func ProvideNoopTeamLBACApiInstaller() TeamLBACApiInstaller {
+	return &NoopApiInstaller[*iamv0.TeamLBACRule]{
+		ResourceInfo: iamv0.TeamLBACRuleInfo,
 	}
 }

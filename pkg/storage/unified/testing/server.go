@@ -530,6 +530,10 @@ func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req
 	}, types.NoopZookie{}, nil
 }
 
+func (m *mockAccessClient) BatchCheck(ctx context.Context, user types.AuthInfo, req types.BatchCheckRequest) (types.BatchCheckResponse, error) {
+	return types.BatchCheckResponse{}, fmt.Errorf("not implemented")
+}
+
 type CheckRequestEX struct {
 	types.CheckRequest
 	Folder string

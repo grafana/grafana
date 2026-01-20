@@ -24,7 +24,7 @@ const (
 )
 
 type check struct {
-	DatasourceSvc             datasources.DataSourceService
+	DatasourceSvc             checks.DataSourceGetter
 	PluginStore               pluginstore.Store
 	PluginContextProvider     PluginContextProvider
 	PluginClient              plugins.Client
@@ -35,7 +35,7 @@ type check struct {
 }
 
 func New(
-	datasourceSvc datasources.DataSourceService,
+	datasourceSvc checks.DataSourceGetter,
 	pluginStore pluginstore.Store,
 	pluginContextProvider PluginContextProvider,
 	pluginClient plugins.Client,

@@ -74,7 +74,6 @@ const fakeDsMock: DataSourceApi = {
     getType: () => VariableSupportType.Standard,
     toDataQuery: (q) => ({ ...q, refId: 'FakeDataSource-refId' }),
   },
-  id: 1,
   uid: 'fake-uid',
 };
 

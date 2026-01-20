@@ -156,7 +156,10 @@ metaV0Alpha1: {
 	reqRole?:     string
 	reqAction?:   string
 	// +listType=atomic
-	headers?: [...string]
+	headers?: [...{
+		name:    string
+		content: string
+	}]
 	body?: [string]: _
 	tokenAuth?: {
 		url?: string

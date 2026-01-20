@@ -212,7 +212,6 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 				if tt.wantMode5Enabled {
 					require.Equal(t, 5, int(config.DualWriterMode), "%s: %s", tt.description, resourceName)
 					require.True(t, config.EnableMigration, "%s: EnableMigration should be true for %s", tt.description, resourceName)
-					require.True(t, config.DualWriterMigrationDataSyncDisabled, "%s: DualWriterMigrationDataSyncDisabled should be true for %s", tt.description, resourceName)
 				} else {
 					require.Equal(t, 0, int(config.DualWriterMode), "%s: mode should be 0 for %s", tt.description, resourceName)
 				}

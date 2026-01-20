@@ -38,6 +38,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
 
 		svc := PluginsService{
+			log: log.New("test"),
 			availableUpdates: map[string]availableUpdate{
 				"test-ds": {
 					localVersion:     "0.9.0",

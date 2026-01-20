@@ -304,7 +304,18 @@
           "options": null,
           "multi": true,
           "includeAll": true,
-          "allowCustomValue": false
+          "allowCustomValue": false,
+          "staticOptions": [
+            {
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before"
         }
       },
       {

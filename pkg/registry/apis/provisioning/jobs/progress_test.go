@@ -99,36 +99,36 @@ func TestJobProgressRecorderWarningStatus(t *testing.T) {
 	// Record a result with a warning
 	warningErr := errors.New("deprecated API used")
 	result := JobResourceResult{
-		Name:    "test-resource",
-		Group:   "test.grafana.app",
-		Kind:    "Dashboard",
-		Path:    "dashboards/test.json",
-		Action:  repository.FileActionUpdated,
-		Warning: warningErr,
+		name:    "test-resource",
+		group:   "test.grafana.app",
+		kind:    "Dashboard",
+		path:    "dashboards/test.json",
+		action:  repository.FileActionUpdated,
+		warning: warningErr,
 	}
 	recorder.Record(ctx, result)
 
 	// Record another result with a different warning
 	warningErr2 := errors.New("missing optional field")
 	result2 := JobResourceResult{
-		Name:    "test-resource-2",
-		Group:   "test.grafana.app",
-		Kind:    "Dashboard",
-		Path:    "dashboards/test2.json",
-		Action:  repository.FileActionCreated,
-		Warning: warningErr2,
+		name:    "test-resource-2",
+		group:   "test.grafana.app",
+		kind:    "Dashboard",
+		path:    "dashboards/test2.json",
+		action:  repository.FileActionCreated,
+		warning: warningErr2,
 	}
 	recorder.Record(ctx, result2)
 
 	// Record a result with a warning from a different resource type
 	warningErr3 := errors.New("validation warning")
 	result3 := JobResourceResult{
-		Name:    "test-resource-3",
-		Group:   "test.grafana.app",
-		Kind:    "DataSource",
-		Path:    "datasources/test.yaml",
-		Action:  repository.FileActionCreated,
-		Warning: warningErr3,
+		name:    "test-resource-3",
+		group:   "test.grafana.app",
+		kind:    "DataSource",
+		path:    "datasources/test.yaml",
+		action:  repository.FileActionCreated,
+		warning: warningErr3,
 	}
 	recorder.Record(ctx, result3)
 
@@ -185,24 +185,24 @@ func TestJobProgressRecorderWarningWithErrors(t *testing.T) {
 	// Record a result with an error (errors take precedence)
 	errorErr := errors.New("failed to process")
 	result := JobResourceResult{
-		Name:   "test-resource",
-		Group:  "test.grafana.app",
-		Kind:   "Dashboard",
-		Path:   "dashboards/test.json",
-		Action: repository.FileActionUpdated,
-		Error:  errorErr,
+		name:   "test-resource",
+		group:  "test.grafana.app",
+		kind:   "Dashboard",
+		path:   "dashboards/test.json",
+		action: repository.FileActionUpdated,
+		err:    errorErr,
 	}
 	recorder.Record(ctx, result)
 
 	// Record a result with only a warning
 	warningErr := errors.New("deprecated API used")
 	result2 := JobResourceResult{
-		Name:    "test-resource-2",
-		Group:   "test.grafana.app",
-		Kind:    "Dashboard",
-		Path:    "dashboards/test2.json",
-		Action:  repository.FileActionCreated,
-		Warning: warningErr,
+		name:    "test-resource-2",
+		group:   "test.grafana.app",
+		kind:    "Dashboard",
+		path:    "dashboards/test2.json",
+		action:  repository.FileActionCreated,
+		warning: warningErr,
 	}
 	recorder.Record(ctx, result2)
 
@@ -234,12 +234,12 @@ func TestJobProgressRecorderWarningOnlyNoErrors(t *testing.T) {
 	// Record only warnings, no errors
 	warningErr := errors.New("deprecated API used")
 	result := JobResourceResult{
-		Name:    "test-resource",
-		Group:   "test.grafana.app",
-		Kind:    "Dashboard",
-		Path:    "dashboards/test.json",
-		Action:  repository.FileActionUpdated,
-		Warning: warningErr,
+		name:    "test-resource",
+		group:   "test.grafana.app",
+		kind:    "Dashboard",
+		path:    "dashboards/test.json",
+		action:  repository.FileActionUpdated,
+		warning: warningErr,
 	}
 	recorder.Record(ctx, result)
 
@@ -268,36 +268,34 @@ func TestJobProgressRecorderFolderFailureTracking(t *testing.T) {
 		Path: "folder1/",
 		Err:  assert.AnError,
 	}
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder1/file.json",
-		Action: repository.FileActionCreated,
-		Error:  pathErr,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder1/file.json").
+		WithError(pathErr).
+		WithAction(repository.FileActionCreated).
+		Build())
 
 	// Record another PathCreationError for a different folder
 	pathErr2 := &resources.PathCreationError{
 		Path: "folder2/subfolder/",
 		Err:  assert.AnError,
 	}
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder2/subfolder/file.json",
-		Action: repository.FileActionCreated,
-		Error:  pathErr2,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder2/subfolder/file.json").
+		WithError(pathErr2).
+		WithAction(repository.FileActionCreated).
+		Build())
 
 	// Record a deletion failure
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder3/file1.json",
-		Action: repository.FileActionDeleted,
-		Error:  assert.AnError,
-	})
+	recorder.Record(ctx,
+		NewPathOnlyResult("folder3/file1.json").
+			WithError(assert.AnError).
+			WithAction(repository.FileActionDeleted).
+			Build())
 
 	// Record another deletion failure
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder4/subfolder/file2.json",
-		Action: repository.FileActionDeleted,
-		Error:  assert.AnError,
-	})
+	recorder.Record(ctx,
+		NewPathOnlyResult("folder4/subfolder/file2.json").
+			WithError(assert.AnError).
+			WithAction(repository.FileActionDeleted).
+			Build())
 
 	// Verify failed creations are tracked
 	recorder.mu.RLock()
@@ -326,21 +324,19 @@ func TestJobProgressRecorderHasDirPathFailedCreation(t *testing.T) {
 		Path: "folder1/",
 		Err:  assert.AnError,
 	}
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder1/file.json",
-		Action: repository.FileActionCreated,
-		Error:  pathErr1,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder1/file.json").
+		WithError(pathErr1).
+		WithAction(repository.FileActionCreated).
+		Build())
 
 	pathErr2 := &resources.PathCreationError{
 		Path: "folder2/subfolder/",
 		Err:  assert.AnError,
 	}
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder2/subfolder/file.json",
-		Action: repository.FileActionCreated,
-		Error:  pathErr2,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder2/subfolder/file.json").
+		WithError(pathErr2).
+		WithAction(repository.FileActionCreated).
+		Build())
 
 	// Test nested paths
 	assert.True(t, recorder.HasDirPathFailedCreation("folder1/file.json"))
@@ -365,23 +361,20 @@ func TestJobProgressRecorderHasDirPathFailedDeletion(t *testing.T) {
 	recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
 
 	// Add failed deletions via Record
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder1/file1.json",
-		Action: repository.FileActionDeleted,
-		Error:  assert.AnError,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder1/file1.json").
+		WithError(assert.AnError).
+		WithAction(repository.FileActionDeleted).
+		Build())
 
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder2/subfolder/file2.json",
-		Action: repository.FileActionDeleted,
-		Error:  assert.AnError,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder2/subfolder/file2.json").
+		WithError(assert.AnError).
+		WithAction(repository.FileActionDeleted).
+		Build())
 
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder3/nested/deep/file3.json",
-		Action: repository.FileActionDeleted,
-		Error:  assert.AnError,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder3/nested/deep/file3.json").
+		WithError(assert.AnError).
+		WithAction(repository.FileActionDeleted).
+		Build())
 
 	// Test folder paths with failed deletions
 	assert.True(t, recorder.HasDirPathFailedDeletion("folder1/"))
@@ -414,17 +407,15 @@ func TestJobProgressRecorderResetResults(t *testing.T) {
 		Path: "folder1/",
 		Err:  assert.AnError,
 	}
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder1/file.json",
-		Action: repository.FileActionCreated,
-		Error:  pathErr,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder1/file.json").
+		WithError(pathErr).
+		WithAction(repository.FileActionCreated).
+		Build())
 
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder2/file.json",
-		Action: repository.FileActionDeleted,
-		Error:  assert.AnError,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder2/file.json").
+		WithError(assert.AnError).
+		WithAction(repository.FileActionDeleted).
+		Build())
 
 	// Verify data is stored
 	recorder.mu.RLock()
@@ -452,18 +443,16 @@ func TestJobProgressRecorderIgnoredActionsDontCountAsErrors(t *testing.T) {
 	recorder := newJobProgressRecorder(mockProgressFn).(*jobProgressRecorder)
 
 	// Record an ignored action with error
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder1/file1.json",
-		Action: repository.FileActionIgnored,
-		Error:  assert.AnError,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder1/file1.json").
+		WithError(assert.AnError).
+		WithAction(repository.FileActionIgnored).
+		Build())
 
 	// Record a real error for comparison
-	recorder.Record(ctx, JobResourceResult{
-		Path:   "folder2/file2.json",
-		Action: repository.FileActionCreated,
-		Error:  assert.AnError,
-	})
+	recorder.Record(ctx, NewPathOnlyResult("folder2/file2.json").
+		WithError(assert.AnError).
+		WithAction(repository.FileActionCreated).
+		Build())
 
 	// Verify error count doesn't include ignored actions
 	recorder.mu.RLock()

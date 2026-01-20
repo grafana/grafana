@@ -15,8 +15,7 @@ export function usePluginFunctions<Signature>({
 }: UsePluginFunctionsOptions): UsePluginFunctionsResult<Signature> {
   const registryItems = useAddedFunctionsRegistrySlice<Signature>(extensionPointId);
   const pluginContext = usePluginContext();
-  const deps = getExtensionPointPluginDependencies(extensionPointId);
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(deps);
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(extensionPointId, getExtensionPointPluginDependencies);
 
   return useMemo(() => {
     const { result } = validateExtensionPoint({ extensionPointId, pluginContext, isLoadingAppPlugins });

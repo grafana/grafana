@@ -34,7 +34,6 @@ function createDS(name: string, id: number, builtIn: boolean): DataSourceInstanc
     name: name,
     uid: name + 'uid',
     meta: createPluginMeta(name, builtIn),
-    id,
     access: 'direct',
     jsonData: {},
     type: '',

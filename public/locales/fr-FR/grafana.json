@@ -2138,8 +2138,8 @@
         "suffix": "Actualisez la page, puis réessayez.",
         "title": "Échec lors de l’ajout ou de la mise à jour de la politique de notification"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} politiques supplémentaires",
+      "n-more-policies_other": "{{count}} politiques supplémentaires"
     },
     "policy": {
       "label-new-child-policy": "Nouvelle politique enfant",
@@ -2178,8 +2178,10 @@
       "badge-tooltip-provenance": "Cette ressource a été mise en service via {{provenance}} et ne peut pas être modifiée via l'interface utilisateur",
       "badge-tooltip-standard": "Cette ressource a été mise en service et ne peut pas être modifiée via l'interface utilisateur",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Cette {{resource}} a été mise en service, cela signifie qu’elle a été créée par configuration. Veuillez contacter votre administrateur de serveur pour mettre à jour cette {{resource}}.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Cette {{resource}} ne peut pas être modifiée via l’interface utilisateur"
     },
     "provisioning-badge": {
@@ -2677,7 +2679,10 @@
     "rules-group": {
       "deleting": "Suppression",
       "text-federated": "Fédéré",
-      "text-provisioned": "Mis en service"
+      "text-provisioned": "Mis en service",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5446,11 +5451,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5591,6 @@
           "arrow": "Partager",
           "title": "Partager",
           "tooltip": "Copier le lien"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Abandonner",
-            "text": "Vous avez des modifications non enregistrées dans ce tableau de bord. Vous devez les enregistrer avant de pouvoir les partager.",
-            "title": "Enregistrer les modifications dans le tableau de bord ?",
-            "yesText": "Enregistrer"
-          }
         },
         "unlink-library-panel": "Dissocier le panneau Bibliothèque"
       },
@@ -6462,8 +6455,8 @@
       "loading-connected-dashboards": "Chargement des tableaux de bord connectés...",
       "placeholder-search-affected-dashboards": "Rechercher les tableaux de bord concernés",
       "update-all": "Tout mettre à jour",
-      "affected-dashboards_one": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1> Les tableaux de bord suivants utilisant le panneau seront affectés :",
-      "affected-dashboards_other": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1> Les tableaux de bord suivants utilisant le panneau seront affectés :"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Erreur d'enregistrement du tableau de bord",
@@ -6498,6 +6491,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Basculer le menu de partage"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -9561,8 +9560,8 @@
     "query-inspector": {
       "query-inspector": "Inspecteur de requête",
       "text-loading-query-inspector": "Chargement de l’inspecteur de requête...",
-      "count-frames_one": "{{count}} cadres, ",
-      "count-frames_other": "{{count}} cadres, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} lignes",
       "count-rows_other": "{{count}} lignes"
     }
@@ -9821,8 +9820,8 @@
       "loading-connected-dashboards": "Chargement des tableaux de bord connectés...",
       "placeholder-search-affected-dashboards": "Rechercher les tableaux de bord concernés",
       "update-all": "Tout mettre à jour",
-      "num-affected_one": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1>",
-      "num-affected_other": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12545,13 +12544,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Réduire la ligne de requête",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Afficher l'aide de la source de données",
       "drag-and-drop": "Glisser et déposer pour réorganiser",
       "duplicate-query": "Dupliquer la requête",
       "expand-row": "Développer la ligne de requête",
       "hide-response": "Masquer la réponse",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Supprimer la requête",
+      "selected-datasource-label": "",
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -12608,10 +12619,10 @@
       "restore-button": "Restaurer",
       "restore-loading": "Restauration...",
       "title": "Restaurer les tableaux de bord",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
+      "folder-picker-text_other": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
+      "text_one": "Cette action restaurera {{numberOfDashboards}} tableaux de bord.",
+      "text_other": "Cette action restaurera {{numberOfDashboards}} tableaux de bord."
     }
   },
   "recentlyDeleted": {
@@ -13347,8 +13358,8 @@
       "label-never": "Jamais"
     },
     "status-history-panel": {
-      "too-many-points_one": "Trop de points pour visualiser correctement. <1></1>Mettez à jour la requête pour renvoyer moins de points. <3></3>({{count}} points reçus)",
-      "too-many-points_other": "Trop de points pour visualiser correctement. <1></1>Mettez à jour la requête pour renvoyer moins de points. <3></3>({{count}} points reçus)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

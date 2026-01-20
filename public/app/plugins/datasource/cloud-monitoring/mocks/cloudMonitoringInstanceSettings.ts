@@ -7,7 +7,6 @@ export const createMockInstanceSetttings = (
   overrides?: Partial<DataSourceInstanceSettings<CloudMonitoringOptions>>
 ): DataSourceInstanceSettings<CloudMonitoringOptions> => ({
   url: '/ds/1',
-  id: 1,
   uid: 'abc',
   type: 'stackdriver',
   access: 'proxy',

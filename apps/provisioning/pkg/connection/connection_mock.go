@@ -82,94 +82,60 @@ func (_c *MockConnection_GenerateRepositoryToken_Call) RunAndReturn(run func(con
 	return _c
 }
 
-// Mutate provides a mock function with given fields: _a0
-func (_m *MockConnection) Mutate(_a0 context.Context) error {
-	ret := _m.Called(_a0)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Mutate")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = rf(_a0)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockConnection_Mutate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Mutate'
-type MockConnection_Mutate_Call struct {
-	*mock.Call
-}
-
-// Mutate is a helper method to define mock.On call
-//   - _a0 context.Context
-func (_e *MockConnection_Expecter) Mutate(_a0 interface{}) *MockConnection_Mutate_Call {
-	return &MockConnection_Mutate_Call{Call: _e.mock.On("Mutate", _a0)}
-}
-
-func (_c *MockConnection_Mutate_Call) Run(run func(_a0 context.Context)) *MockConnection_Mutate_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *MockConnection_Mutate_Call) Return(_a0 error) *MockConnection_Mutate_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockConnection_Mutate_Call) RunAndReturn(run func(context.Context) error) *MockConnection_Mutate_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Validate provides a mock function with given fields: ctx
-func (_m *MockConnection) Validate(ctx context.Context) error {
+// Test provides a mock function with given fields: ctx
+func (_m *MockConnection) Test(ctx context.Context) (*v0alpha1.TestResults, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Validate")
+		panic("no return value specified for Test")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+	var r0 *v0alpha1.TestResults
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*v0alpha1.TestResults, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *v0alpha1.TestResults); ok {
 		r0 = rf(ctx)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v0alpha1.TestResults)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// MockConnection_Validate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Validate'
-type MockConnection_Validate_Call struct {
+// MockConnection_Test_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Test'
+type MockConnection_Test_Call struct {
 	*mock.Call
 }
 
-// Validate is a helper method to define mock.On call
+// Test is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockConnection_Expecter) Validate(ctx interface{}) *MockConnection_Validate_Call {
-	return &MockConnection_Validate_Call{Call: _e.mock.On("Validate", ctx)}
+func (_e *MockConnection_Expecter) Test(ctx interface{}) *MockConnection_Test_Call {
+	return &MockConnection_Test_Call{Call: _e.mock.On("Test", ctx)}
 }
 
-func (_c *MockConnection_Validate_Call) Run(run func(ctx context.Context)) *MockConnection_Validate_Call {
+func (_c *MockConnection_Test_Call) Run(run func(ctx context.Context)) *MockConnection_Test_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *MockConnection_Validate_Call) Return(_a0 error) *MockConnection_Validate_Call {
-	_c.Call.Return(_a0)
+func (_c *MockConnection_Test_Call) Return(_a0 *v0alpha1.TestResults, _a1 error) *MockConnection_Test_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockConnection_Validate_Call) RunAndReturn(run func(context.Context) error) *MockConnection_Validate_Call {
+func (_c *MockConnection_Test_Call) RunAndReturn(run func(context.Context) (*v0alpha1.TestResults, error)) *MockConnection_Test_Call {
 	_c.Call.Return(run)
 	return _c
 }

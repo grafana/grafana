@@ -1,3 +1,4 @@
+import { store } from '@grafana/data';
 import {
   AutoGridLayoutItemKind,
   Spec as DashboardV2Spec,
@@ -6,7 +7,6 @@ import {
   TabsLayoutTabKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
-import store from 'app/core/store';
 
 import { deserializeAutoGridItem } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { deserializeGridItem } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';

@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { PanelProps, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
+import { PanelProps, store, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { LocationServiceProvider, config, locationService, setPluginImportUtils } from '@grafana/runtime';
@@ -13,7 +13,6 @@ import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 

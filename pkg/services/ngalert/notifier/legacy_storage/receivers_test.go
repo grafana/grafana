@@ -110,7 +110,7 @@ func TestCreateReceiver(t *testing.T) {
 				UID:  NameToUid("receiver1"),
 				Name: "New receiver name",
 			},
-			expectedError: ErrReceiverExists,
+			expectedError: models.ErrReceiverExists,
 		},
 		{
 			name: "should error if receiver already exists by name",
@@ -118,7 +118,7 @@ func TestCreateReceiver(t *testing.T) {
 				UID:  "some-uid",
 				Name: "receiver1",
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should fail if integration UID is not valid",
@@ -133,7 +133,7 @@ func TestCreateReceiver(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should fail if integration UID already exists",
@@ -148,7 +148,7 @@ func TestCreateReceiver(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should add the receiver to configuration and set integrations UID",
@@ -215,7 +215,7 @@ func TestUpdateReceiver(t *testing.T) {
 				UID:  NameToUid("receiver2"),
 				Name: "receiver1",
 			},
-			expectedError: ErrReceiverNotFound,
+			expectedError: models.ErrReceiverNotFound,
 		},
 		{
 			name: "should fail if integration UID is not valid",
@@ -230,7 +230,7 @@ func TestUpdateReceiver(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should fail if integration UID already exists",
@@ -245,7 +245,7 @@ func TestUpdateReceiver(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ErrReceiverInvalid,
+			expectedError: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "should update the existing receiver",
@@ -305,7 +305,7 @@ func TestGetReceiver(t *testing.T) {
 	t.Run("should return ErrReceiverNotFound if receiver does not exists", func(t *testing.T) {
 		rev := getConfigRevisionForTest()
 		_, err := rev.GetReceiver("not-found", nil)
-		require.ErrorIs(t, err, ErrReceiverNotFound)
+		require.ErrorIs(t, err, models.ErrReceiverNotFound)
 	})
 
 	t.Run("should return receiver if exists", func(t *testing.T) {

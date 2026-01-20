@@ -1318,6 +1318,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			verb = utils.VerbPatch
 		}
 
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 		checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
@@ -1333,6 +1334,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 		// handle federation
 		for _, federated := range req.Federated {
+			//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 			checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 				Namespace: federated.Namespace,
 				Group:     federated.Group,

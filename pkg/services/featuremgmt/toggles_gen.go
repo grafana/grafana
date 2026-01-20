@@ -31,10 +31,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagLogRequestsInstrumentedAsUnknown
-	// Logs the path for requests that are instrumented as unknown
-	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -54,6 +50,10 @@ const (
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
+
+	// FlagLiveAPIServer
+	// Registers a live apiserver
+	FlagLiveAPIServer = "liveAPIServer"
 
 	// FlagKubernetesStars
 	// Routes stars requests from /api to the /apis endpoint
@@ -119,10 +119,6 @@ const (
 	// Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
 	FlagQueryCacheRequestDeduplication = "queryCacheRequestDeduplication"
 
-	// FlagPermissionsFilterRemoveSubquery
-	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
-	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
-
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
@@ -146,14 +142,6 @@ const (
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
-
-	// FlagEnableNativeHTTPHistogram
-	// Enables native HTTP Histograms
-	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
-
-	// FlagDisableClassicHTTPHistogram
-	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
@@ -645,6 +633,10 @@ const (
 	// FlagKubernetesAuthzRolesApi
 	// Registers AuthZ Roles /apis endpoint
 	FlagKubernetesAuthzRolesApi = "kubernetesAuthzRolesApi"
+
+	// FlagKubernetesAuthzTeamLBACRuleApi
+	// Registers AuthZ TeamLBACRule /apis endpoint
+	FlagKubernetesAuthzTeamLBACRuleApi = "kubernetesAuthzTeamLBACRuleApi"
 
 	// FlagKubernetesAuthzRoleBindingsApi
 	// Registers AuthZ Role Bindings /apis endpoint

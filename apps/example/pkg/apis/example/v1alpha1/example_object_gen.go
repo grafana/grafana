@@ -27,6 +27,14 @@ type Example struct {
 	Custom ExampleCustom `json:"custom" yaml:"custom"`
 }
 
+func NewExample() *Example {
+	return &Example{
+		Spec:   *NewExampleSpec(),
+		Status: *NewExampleStatus(),
+		Custom: *NewExampleCustom(),
+	}
+}
+
 func (o *Example) GetSpec() any {
 	return o.Spec
 }

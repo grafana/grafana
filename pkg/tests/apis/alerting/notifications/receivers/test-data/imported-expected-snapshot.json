@@ -5,10 +5,10 @@
   "items": [
     {
       "metadata": {
-        "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
+        "name": "ZW1wdHk",
         "namespace": "default",
-        "uid": "zyXFk301pvwNz4HRPrTMKPMFO2934cPB7H1ZXmyM1TUX",
-        "resourceVersion": "a82b34036bdabbc4",
+        "uid": "a1YdAlNiDl6P4Ub0Hgt2Unlh1vMLa3wVczyEoqIyevQX",
+        "resourceVersion": "d7c9689fe44f7d0b",
         "annotations": {
           "grafana.com/access/canAdmin": "true",
           "grafana.com/access/canDelete": "true",
@@ -22,26 +22,16 @@
         }
       },
       "spec": {
-        "title": "grafana-default-email",
-        "integrations": [
-          {
-            "uid": "",
-            "type": "email",
-            "version": "v1",
-            "disableResolveMessage": false,
-            "settings": {
-              "addresses": "\u003cexample@email.com\u003e"
-            }
-          }
-        ]
+        "title": "empty",
+        "integrations": []
       }
     },
     {
       "metadata": {
-        "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWlsdGVzdC1jcmVhdGUtZ2V0LWNvbmZpZw",
+        "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
         "namespace": "default",
-        "uid": "JzW6DIlcxj4sRN8A2ULcwTXAmm0Vs0Z68aEBqXSvxK0X",
-        "resourceVersion": "b2823b50ffa1eff6",
+        "uid": "zyXFk301pvwNz4HRPrTMKPMFO2934cPB7H1ZXmyM1TUX",
+        "resourceVersion": "40409c09d2b2f217",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -52,7 +42,7 @@
         }
       },
       "spec": {
-        "title": "grafana-default-emailtest-create-get-config",
+        "title": "grafana-default-email",
         "integrations": []
       }
     },

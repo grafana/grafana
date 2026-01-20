@@ -73,7 +73,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	for _, target := range controllerCfg.allowedTargets {
 		allowedTargets = append(allowedTargets, v0alpha1.SyncTargetType(target))
 	}
-	validator := repository.NewValidator(controllerCfg.minSyncInterval, allowedTargets, controllerCfg.allowImageRendering)
+	validator := repository.NewValidator(controllerCfg.minSyncInterval, allowedTargets, controllerCfg.allowImageRendering, controllerCfg.repoFactory)
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer, repository.NewSimpleRepositoryTester(validator))
 

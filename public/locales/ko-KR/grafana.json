@@ -2170,8 +2170,10 @@
       "badge-tooltip-provenance": "이 리소스는 {{provenance}}을(를) 통해 프로비저닝되었으며 UI를 통해 편집할 수 없습니다.",
       "badge-tooltip-standard": "이 리소스는 프로비저닝되었으며 UI를 통해 편집할 수 없습니다.",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "이 {{resource}}이(가) 프로비저닝되었으며, 이는 구성에 의해 생성되었음을 의미합니다. 이 {{resource}}을(를) 업데이트하려면 서버 관리자에게 문의하세요.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "이 {{resource}}은(는) UI에서 편집할 수 없습니다"
     },
     "provisioning-badge": {
@@ -2666,7 +2668,10 @@
     "rules-group": {
       "deleting": "삭제 중",
       "text-federated": "연합됨",
-      "text-provisioned": "프로비저닝됨"
+      "text-provisioned": "프로비저닝됨",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5426,11 +5431,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5571,6 @@
           "arrow": "공유",
           "title": "공유",
           "tooltip": "링크 복사"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "무시",
-            "text": "이 대시보드에 대한 변경 사항이 저장되지 않았습니다. 변경 사항을 공유하기 전에 저장해야 합니다.",
-            "title": "변경 사항을 대시보드에 저장할까요?",
-            "yesText": "저장"
-          }
         },
         "unlink-library-panel": "라이브러리 패널 연결 해제"
       },
@@ -6440,7 +6433,7 @@
       "loading-connected-dashboards": "연결된 대시보드 로딩 중...",
       "placeholder-search-affected-dashboards": "영향을 받는 대시보드 검색",
       "update-all": "모두 업데이트",
-      "affected-dashboards_other": "이 업데이트는 <1>{{count}}개의 대시보드에 영향을 미칩니다.</1> 패널을 사용하는 다음 대시보드가 영향을 받습니다."
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "대시보드 저장 중 오류 발생",
@@ -6475,6 +6468,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "공유 메뉴 토글"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -9525,7 +9524,7 @@
     "query-inspector": {
       "query-inspector": "쿼리 검사기",
       "text-loading-query-inspector": "쿼리 검사기 로딩 중...",
-      "count-frames_other": "프레임 {{count}}개, ",
+      "count-frames_other": "",
       "count-rows_other": "행 {{count}}개"
     }
   },
@@ -9781,7 +9780,7 @@
       "loading-connected-dashboards": "연결된 대시보드 로딩 중...",
       "placeholder-search-affected-dashboards": "영향을 받는 대시보드 검색",
       "update-all": "모두 업데이트",
-      "num-affected_other": "이 업데이트는 <1>{{count}}개의 대시보드에 영향을 미칩니다.</1>"
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12492,13 +12491,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "쿼리 행 접기",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "데이터 소스 도움말 표시",
       "drag-and-drop": "드래그 앤 드롭으로 순서 변경",
       "duplicate-query": "쿼리 복제",
       "expand-row": "쿼리 행 펼치기",
       "hide-response": "응답 숨기기",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "쿼리 제거",
+      "selected-datasource-label": "",
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
@@ -13291,7 +13302,7 @@
       "label-never": "기록 없음"
     },
     "status-history-panel": {
-      "too-many-points_other": "포인트가 너무 많아 제대로 시각화할 수 없습니다. <1></1>포인트를 더 적게 반환하도록 쿼리를 업데이트합니다. <3></3>({{count}}포인트 수신됨)"
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

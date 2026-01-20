@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
-import { getDataSourceByIdOrUid } from './api';
+import { getDataSourceByUid } from './api';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
@@ -20,7 +20,7 @@ const mockResponse = (response: Partial<FetchResponse>) => {
 };
 
 describe('Datasources / API', () => {
-  describe('getDataSourceByIdOrUid()', () => {
+  describe('getDataSourceByUid()', () => {
     it('should resolve to the datasource object in case it is fetched using a UID', async () => {
       const response = {
         ok: true,
@@ -31,7 +31,7 @@ describe('Datasources / API', () => {
       };
       mockResponse(response);
 
-      expect(await getDataSourceByIdOrUid(response.data.uid)).toBe(response.data);
+      expect(await getDataSourceByUid(response.data.uid)).toBe(response.data);
     });
   });
 });

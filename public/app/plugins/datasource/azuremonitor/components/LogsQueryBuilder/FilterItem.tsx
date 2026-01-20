@@ -53,17 +53,13 @@ export const FilterItem: React.FC<FilterItemProps> = ({
       <Combobox
         aria-label={t('components.filter-item.aria-label-column-value', 'Column value')}
         value={
-          filter.operator.value
-            ? {
-                label: String(filter.operator.value),
-                value: String(filter.operator.value),
-              }
-            : null
+          filter.operator.value ? { label: String(filter.operator.value), value: String(filter.operator.value) } : null
         }
         options={(inputValue: string) => getFilterValues(filter, inputValue)}
         onChange={(e) => e.value && onChange(groupIndex, 'value', String(e.value), filterIndex)}
         width={inputFieldSize}
         disabled={!filter.property?.name}
+        key={filter.property.name}
       />
       <Button
         aria-label={t('components.filter-item.aria-label-remove-filter', 'Remove filter')}

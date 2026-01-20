@@ -52,8 +52,9 @@ type NewBackendWithDBFunc func(ctx context.Context) (resource.StorageBackend, sq
 
 // TestOptions configures which tests to run
 type TestOptions struct {
-	SkipTests map[string]bool // tests to skip
-	NSPrefix  string          // namespace prefix for isolation
+	SkipTests           map[string]bool                                                             // tests to skip
+	NSPrefix            string                                                                      // namespace prefix for isolation
+	SearchServerFactory func(t *testing.T, backend resource.StorageBackend) resource.ResourceServer // factory for creating search-enabled servers (optional, needed for search tests)
 }
 
 // GenerateRandomNSPrefix creates a random namespace prefix for test isolation

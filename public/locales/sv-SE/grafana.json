@@ -2138,8 +2138,8 @@
         "suffix": "Uppdatera sidan och försök igen.",
         "title": "Det gick inte att lägga till eller uppdatera aviseringspolicy"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} ytterligare policyer",
+      "n-more-policies_other": "{{count}} ytterligare policyer"
     },
     "policy": {
       "label-new-child-policy": "Ny underordnad policy",
@@ -2178,8 +2178,10 @@
       "badge-tooltip-provenance": "Den här resursen har etablerats via {{provenance}} och kan inte redigeras via användargränssnittet",
       "badge-tooltip-standard": "Denna resurs har etablerats och kan inte redigeras via användargränssnittet",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Denna {{resource}} har provisionerats, vilket betyder att den skapades genom konfigurering. Kontakta serveradministratören om du vill uppdatera denna {{resource}}.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Denna {{resource}} kan inte redigeras via användargränssnittet"
     },
     "provisioning-badge": {
@@ -2677,7 +2679,10 @@
     "rules-group": {
       "deleting": "Raderar",
       "text-federated": "Federerade",
-      "text-provisioned": "Provisionerad"
+      "text-provisioned": "Provisionerad",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -5446,11 +5451,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5591,6 @@
           "arrow": "Dela",
           "title": "Dela",
           "tooltip": "Kopiera länk"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Kassera",
-            "text": "Det finns ändringar i denna instrumentpanel som inte sparats. Du måste spara dem innan du kan dela dem.",
-            "title": "Spara ändringarna i instrumentpanelen?",
-            "yesText": "Spara"
-          }
         },
         "unlink-library-panel": "Ta bort länk till bibliotekspanel"
       },
@@ -6462,8 +6455,8 @@
       "loading-connected-dashboards": "Laddar anslutna instrumentpaneler …",
       "placeholder-search-affected-dashboards": "Sök berörda instrumentpaneler",
       "update-all": "Uppdatera allt",
-      "affected-dashboards_one": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1> Följande instrumentpaneler som använder panelen kommer att påverkas:",
-      "affected-dashboards_other": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1> Följande instrumentpaneler som använder panelen kommer att påverkas:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Fel när instrumentpanel skulle sparas",
@@ -6498,6 +6491,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Växla delningsmenyn"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -9561,8 +9560,8 @@
     "query-inspector": {
       "query-inspector": "Frågeinspektör",
       "text-loading-query-inspector": "Läser in frågeinspektör …",
-      "count-frames_one": "{{count}} ramar, ",
-      "count-frames_other": "{{count}} ramar, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} rader",
       "count-rows_other": "{{count}} rader"
     }
@@ -9821,8 +9820,8 @@
       "loading-connected-dashboards": "Laddar anslutna instrumentpaneler …",
       "placeholder-search-affected-dashboards": "Sök berörda instrumentpaneler",
       "update-all": "Uppdatera allt",
-      "num-affected_one": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1>",
-      "num-affected_other": "Denna uppdatering kommer att påverka <1>{{count}} instrumentpaneler.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12545,13 +12544,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Dölj frågeraden",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Visa hjälp med datakälla",
       "drag-and-drop": "Ändra ordning genom dra och släpp",
       "duplicate-query": "Duplicera fråga",
       "expand-row": "Expandera frågeraden",
       "hide-response": "Dölj svar",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Ta bort fråga",
+      "selected-datasource-label": "",
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
@@ -12608,10 +12619,10 @@
       "restore-button": "Återställ",
       "restore-loading": "Återställer ...",
       "title": "Återställ instrumentpaneler",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
+      "folder-picker-text_other": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
+      "text_one": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel.",
+      "text_other": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel."
     }
   },
   "recentlyDeleted": {
@@ -13347,8 +13358,8 @@
       "label-never": "Aldrig"
     },
     "status-history-panel": {
-      "too-many-points_one": "För många punkter för att visualisera ordentligt. <1></1>Uppdatera frågan för att returnera färre punkter. <3></3>({{count}} punkter mottagna)",
-      "too-many-points_other": "För många punkter för att visualisera ordentligt. <1></1>Uppdatera frågan för att returnera färre punkter. <3></3>({{count}} punkter mottagna)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

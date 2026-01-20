@@ -32,11 +32,11 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AnnotationAppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AnnotationAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
 )
 
-type AnnotationAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg    *setting.Cfg
 	legacy *legacyStorage
@@ -47,8 +47,8 @@ func RegisterAppInstaller(
 	features featuremgmt.FeatureToggles,
 	service annotations.Repository,
 	cleaner annotations.Cleaner,
-) (*AnnotationAppInstaller, error) {
-	installer := &AnnotationAppInstaller{
+) (*AppInstaller, error) {
+	installer := &AppInstaller{
 		cfg: cfg,
 	}
 
@@ -82,7 +82,7 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func (a *AnnotationAppInstaller) GetAuthorizer() authorizer.Authorizer {
+func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(
 		ctx context.Context, attr authorizer.Attributes,
 	) (authorized authorizer.Decision, reason string, err error) {
@@ -95,7 +95,7 @@ func (a *AnnotationAppInstaller) GetAuthorizer() authorizer.Authorizer {
 	})
 }
 
-func (a *AnnotationAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) apiserverrest.Storage {
+func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) apiserverrest.Storage {
 	kind := annotationV0.AnnotationKind()
 	gvr := schema.GroupVersionResource{
 		Group:    kind.Group(),

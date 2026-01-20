@@ -260,20 +260,23 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-jest.mock('app/core/store', () => ({
-  exists: jest.fn(),
-  get: jest.fn(),
-  getObject: jest.fn((_a, b) => b),
-  setObject: jest.fn(),
-  delete: jest.fn(),
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  store: {
+    exists: jest.fn(),
+    get: jest.fn(),
+    getObject: jest.fn((_a, b) => b),
+    setObject: jest.fn(),
+    delete: jest.fn(),
+  },
 }));
 
-const store = jest.requireMock('app/core/store');
+const data = jest.requireMock('@grafana/data');
 let deactivators = [] as Array<() => void>;
 
 describe('PanelDataQueriesTab', () => {
   beforeEach(() => {
-    store.setObject.mockClear();
+    data.store.setObject.mockClear();
   });
 
   afterEach(() => {
@@ -366,7 +369,6 @@ describe('PanelDataQueriesTab', () => {
       // arrange
       const modelMock = await createModelMock();
       const dsSettingsMock: DataSourceInstanceSettings<DataSourceJsonData> = {
-        id: 1,
         uid: 'gdev-testdata',
         name: 'testDs1',
         type: 'grafana-testdata-datasource',
@@ -419,7 +421,7 @@ describe('PanelDataQueriesTab', () => {
       it('should store loaded data source in local storage', async () => {
         await setupScene('panel-1');
 
-        expect(store.setObject).toHaveBeenCalledWith('grafana.dashboards.panelEdit.lastUsedDatasource', {
+        expect(data.store.setObject).toHaveBeenCalledWith('grafana.dashboards.panelEdit.lastUsedDatasource', {
           dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
           datasourceUid: 'gdev-testdata',
         });
@@ -449,8 +451,8 @@ describe('PanelDataQueriesTab', () => {
           []
         );
 
-        expect(store.setObject).toHaveBeenCalledTimes(2);
-        expect(store.setObject).toHaveBeenLastCalledWith('grafana.dashboards.panelEdit.lastUsedDatasource', {
+        expect(data.store.setObject).toHaveBeenCalledTimes(2);
+        expect(data.store.setObject).toHaveBeenLastCalledWith('grafana.dashboards.panelEdit.lastUsedDatasource', {
           dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
           datasourceUid: 'gdev-prometheus',
         });
@@ -752,8 +754,8 @@ describe('PanelDataQueriesTab', () => {
         });
 
         it('should load last used data source if no data source specified for a panel', async () => {
-          store.exists.mockReturnValue(true);
-          store.getObject.mockImplementation((key: string, def: unknown) => {
+          data.store.exists.mockReturnValue(true);
+          data.store.getObject.mockImplementation((key: string, def: unknown) => {
             if (key === PANEL_EDIT_LAST_USED_DATASOURCE) {
               return {
                 dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
@@ -870,8 +872,8 @@ describe('PanelDataQueriesTab', () => {
       });
 
       it('should fall back to last used datasource when V2 query has no explicit datasource', async () => {
-        store.exists.mockReturnValue(true);
-        store.getObject.mockImplementation((key: string, def: unknown) => {
+        data.store.exists.mockReturnValue(true);
+        data.store.getObject.mockImplementation((key: string, def: unknown) => {
           if (key === PANEL_EDIT_LAST_USED_DATASOURCE) {
             return {
               dashboardUid: 'v2-dashboard-uid',

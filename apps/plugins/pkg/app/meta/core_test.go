@@ -20,7 +20,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns cached plugin when available", func(t *testing.T) {
-		provider := NewCoreProvider()
+		provider := NewCoreProvider(pluginsPathFunc(""))
 
 		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
@@ -44,7 +44,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("returns ErrMetaNotFound for non-existent plugin", func(t *testing.T) {
-		provider := NewCoreProvider()
+		provider := NewCoreProvider(pluginsPathFunc(""))
 
 		provider.mu.Lock()
 		provider.initialized = true
@@ -58,7 +58,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("ignores version parameter", func(t *testing.T) {
-		provider := NewCoreProvider()
+		provider := NewCoreProvider(pluginsPathFunc(""))
 
 		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
@@ -83,7 +83,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 
 	t.Run("uses custom TTL when provided", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		provider := NewCoreProviderWithTTL(customTTL)
+		provider := NewCoreProviderWithTTL(pluginsPathFunc(""), customTTL)
 
 		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
@@ -116,7 +116,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, os.Chdir(tempDir))
 
-		provider := NewCoreProvider()
+		provider := NewCoreProvider(pluginsPathFunc(""))
 		result, err := provider.GetMeta(ctx, "any-plugin", "1.0.0")
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrMetaNotFound))
@@ -144,7 +144,8 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 		require.NoError(t, os.Chdir(grafanaRoot))
 
-		provider := NewCoreProvider()
+		pluginsPath := filepath.Join(grafanaRoot, "public", "app", "plugins")
+		provider := NewCoreProvider(pluginsPathFunc(pluginsPath))
 		err = provider.loadPlugins(ctx)
 		require.NoError(t, err)
 		assert.Len(t, provider.loadedPlugins, 53)
@@ -161,11 +162,10 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 		require.NoError(t, os.Chdir(tempDir))
 
-		provider := NewCoreProvider()
+		provider := NewCoreProvider(func() (string, error) { return "", errors.New("not found") })
 		err = provider.loadPlugins(ctx)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "could not find Grafana static root path")
 	})
 
 	t.Run("returns no error when no plugins found", func(t *testing.T) {
@@ -181,7 +181,8 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 		require.NoError(t, os.Chdir(tempDir))
 
-		provider := NewCoreProvider()
+		pluginsPath := filepath.Join(tempDir, "public", "app", "plugins")
+		provider := NewCoreProvider(pluginsPathFunc(pluginsPath))
 		err = provider.loadPlugins(ctx)
 		assert.NoError(t, err)
 	})
@@ -218,7 +219,8 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 		require.NoError(t, os.Chdir(tempDir))
 
-		provider := NewCoreProvider()
+		pluginsPath := filepath.Join(tempDir, "public", "app", "plugins")
+		provider := NewCoreProvider(pluginsPathFunc(pluginsPath))
 		err = provider.loadPlugins(ctx)
 
 		if err != nil {
@@ -240,23 +242,33 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 func TestNewCoreProvider(t *testing.T) {
 	t.Run("creates provider with default TTL", func(t *testing.T) {
-		provider := NewCoreProvider()
+		provider := NewCoreProvider(pluginsPathFunc("/test/path"))
 		assert.Equal(t, defaultCoreTTL, provider.ttl)
 		assert.NotNil(t, provider.loadedPlugins)
 		assert.False(t, provider.initialized)
+		assert.NotNil(t, provider.pluginsPathFunc)
 	})
 }
 
 func TestNewCoreProviderWithTTL(t *testing.T) {
 	t.Run("creates provider with custom TTL", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		provider := NewCoreProviderWithTTL(customTTL)
+		provider := NewCoreProviderWithTTL(pluginsPathFunc("/test/path"), customTTL)
 		assert.Equal(t, customTTL, provider.ttl)
 	})
 
 	t.Run("accepts zero TTL", func(t *testing.T) {
-		provider := NewCoreProviderWithTTL(0)
+		provider := NewCoreProviderWithTTL(pluginsPathFunc("/test/path"), 0)
 		assert.Equal(t, time.Duration(0), provider.ttl)
+	})
+
+	t.Run("stores plugins path function", func(t *testing.T) {
+		expectedPath := "/usr/share/grafana/public/app/plugins"
+		provider := NewCoreProviderWithTTL(pluginsPathFunc(expectedPath), defaultCoreTTL)
+		assert.NotNil(t, provider.pluginsPathFunc)
+		path, err := provider.pluginsPathFunc()
+		require.NoError(t, err)
+		assert.Equal(t, expectedPath, path)
 	})
 }
 
@@ -305,4 +317,10 @@ func TestJsonDataToMeta(t *testing.T) {
 		assert.Nil(t, meta.Info.Author)
 		assert.Empty(t, meta.Info.Keywords)
 	})
+}
+
+func pluginsPathFunc(path string) func() (string, error) {
+	return func() (string, error) {
+		return path, nil
+	}
 }

@@ -14,6 +14,7 @@ import {
   PanelData,
   RawTimeRange,
   ScopedVars,
+  store,
   TimeFragment,
   TimeRange,
   toUtc,
@@ -28,7 +29,6 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { ExploreItemState, ExplorePanelData, RichHistoryQuery } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
-import store from '../../../core/store';
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"maps"
+	"net/http"
 	"strings"
 	"sync"
 
@@ -125,6 +126,24 @@ func addBuilderRoutes(
 	return openAPISpec, nil
 }
 
+// Checks if the path is a "for all namespaces" endpoint
+// If the path is a cluster-scoped resource, return false
+func isAllRoute(prefix, path string, paths map[string]*spec3.Path) bool {
+	if strings.HasPrefix(path, prefix+"namespaces/") {
+		return false
+	}
+
+	// Extract the resource path after the group/version prefix
+	resourcePath := strings.TrimPrefix(path, prefix)
+	// Build the potential namespaced path to check
+	namespacedPath := prefix + "namespaces/{namespace}/" + resourcePath
+	// Check if the namespaced path exists
+	_, hasNamespacedPath := paths[namespacedPath]
+	// If the namespaced path exists, this is a "for all namespaces" endpoint - remove it
+	// Otherwise, it's a cluster-scoped resource - keep it
+	return hasNamespacedPath
+}
+
 // Modify the OpenAPI spec to include the additional routes.
 // nolint:gocyclo
 func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []schema.GroupVersion, apiResourceConfig *serverstorage.ResourceConfig) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -162,7 +181,8 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 					}
 
 					// Remove the "for all namespaces" global routes from OpenAPI (v3)
-					if !strings.HasPrefix(k, prefix+"namespaces/") {
+					// Except for cluster-scoped resources
+					if isAllRoute(prefix, k, copy.Paths.Paths) {
 						delete(copy.Paths.Paths, k)
 						continue
 					}
@@ -175,7 +195,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						}
 					}
 
-					// Replace any */* media types with json+yaml (protobuf?)
+					// Replace any */* media types with json+yaml
 					ops := []*spec3.Operation{v.Delete, v.Put, v.Post}
 					for _, op := range ops {
 						if op == nil || op.RequestBody == nil || len(op.RequestBody.Content) != 1 {
@@ -184,9 +204,8 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						content, ok := op.RequestBody.Content["*/*"]
 						if ok {
 							op.RequestBody.Content = map[string]*spec3.MediaType{
-								"application/json":                    content,
-								"application/yaml":                    content,
-								"application/vnd.kubernetes.protobuf": content,
+								"application/json": content,
+								"application/yaml": content,
 							}
 						}
 					}
@@ -232,32 +251,80 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						parent := copy.Paths.Paths[path[:idx+6]]
 						if parent != nil && parent.Get != nil {
 							for _, op := range GetPathOperations(spec) {
-								if op != nil && op.Extensions != nil {
-									action, ok := op.Extensions.GetString("x-kubernetes-action")
-									if ok && action == "connect" {
-										op.Tags = parent.Get.Tags
-									}
+								action, ok := op.Extensions.GetString("x-kubernetes-action")
+								if ok && action == "connect" {
+									op.Tags = parent.Get.Tags
 								}
 							}
 						}
 					}
 				}
-				return addBuilderRoutes(gv, &copy, builders, apiResourceConfig)
+				result, err := addBuilderRoutes(gv, &copy, builders, apiResourceConfig)
+				if err != nil {
+					return nil, err
+				}
+				// Remove protobuf from all paths (including routes added by addBuilderRoutes)
+				for _, path := range result.Paths.Paths {
+					allOps := GetPathOperations(path)
+					for _, op := range allOps {
+						if op == nil {
+							continue
+						}
+						// Remove protobuf from request body content types
+						if op.RequestBody != nil && op.RequestBody.Content != nil {
+							delete(op.RequestBody.Content, "application/vnd.kubernetes.protobuf")
+						}
+						// Remove protobuf from response content types
+						if op.Responses != nil {
+							if op.Responses.StatusCodeResponses != nil {
+								for _, response := range op.Responses.StatusCodeResponses {
+									if response.Content != nil {
+										delete(response.Content, "application/vnd.kubernetes.protobuf")
+										delete(response.Content, "application/vnd.kubernetes.protobuf;stream=watch")
+									}
+								}
+							}
+							// Handle default response
+							if op.Responses.Default != nil && op.Responses.Default.Content != nil {
+								delete(op.Responses.Default.Content, "application/vnd.kubernetes.protobuf")
+								delete(op.Responses.Default.Content, "application/vnd.kubernetes.protobuf;stream=watch")
+							}
+						}
+					}
+				}
+				return result, nil
 			}
 		}
 		return s, nil
 	}
 }
 
-func GetPathOperations(path *spec3.Path) []*spec3.Operation {
-	return []*spec3.Operation{
-		path.Get,
-		path.Head,
-		path.Delete,
-		path.Patch,
-		path.Post,
-		path.Put,
-		path.Trace,
-		path.Options,
+// GetPathOperations returns the set of non-nil operations defined on a path
+func GetPathOperations(path *spec3.Path) map[string]*spec3.Operation {
+	ops := make(map[string]*spec3.Operation)
+	if path.Get != nil {
+		ops[http.MethodGet] = path.Get
 	}
+	if path.Head != nil {
+		ops[http.MethodHead] = path.Head
+	}
+	if path.Delete != nil {
+		ops[http.MethodDelete] = path.Delete
+	}
+	if path.Post != nil {
+		ops[http.MethodPost] = path.Post
+	}
+	if path.Put != nil {
+		ops[http.MethodPut] = path.Put
+	}
+	if path.Patch != nil {
+		ops[http.MethodPatch] = path.Patch
+	}
+	if path.Trace != nil {
+		ops[http.MethodTrace] = path.Trace
+	}
+	if path.Options != nil {
+		ops[http.MethodOptions] = path.Options
+	}
+	return ops
 }

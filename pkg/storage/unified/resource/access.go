@@ -189,6 +189,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			return true
 		}, claims.NoopZookie{}, nil
 	}
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	checker, zookie, err := c.client.Compile(ctx, id, req)
 	if err != nil {
 		c.logger.FromContext(ctx).Error("Compile", "group", req.Group, "resource", req.Resource, "error", err)
@@ -208,6 +209,10 @@ func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
 		}
 	}
 	return false
+}
+
+func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	return claims.BatchCheckResponse{}, fmt.Errorf("not implemented")
 }
 
 var _ claims.AccessClient = &authzLimitedClient{}

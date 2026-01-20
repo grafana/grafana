@@ -69,6 +69,12 @@
         "placeholder-select-format": "Выбрать формат",
         "run-query": "Выполнить запрос"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Нажмите CTRL/CMD+Return, чтобы выполнить запрос",
         "tooltip-collapse": "Свернуть редактор",

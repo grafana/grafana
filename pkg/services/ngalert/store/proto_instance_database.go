@@ -185,6 +185,13 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 }
 
 func alertInstanceModelToProto(modelInstance models.AlertInstance) *pb.AlertInstance {
+	var lastResult *pb.LastResult
+	if len(modelInstance.LastResult.Values) > 0 || modelInstance.LastResult.Condition != "" {
+		lastResult = &pb.LastResult{
+			Values:    modelInstance.LastResult.Values,
+			Condition: modelInstance.LastResult.Condition,
+		}
+	}
 	return &pb.AlertInstance{
 		Labels:               modelInstance.Labels,
 		LabelsHash:           modelInstance.LabelsHash,
@@ -199,6 +206,8 @@ func alertInstanceModelToProto(modelInstance models.AlertInstance) *pb.AlertInst
 		ResolvedAt:           nullableTimeToTimestamp(modelInstance.ResolvedAt),
 		ResultFingerprint:    modelInstance.ResultFingerprint,
 		EvaluationDurationNs: int64(modelInstance.EvaluationDuration),
+		LastError:            truncate(modelInstance.LastError, maxLastErrorLength),
+		LastResult:           lastResult,
 	}
 }
 
@@ -250,6 +259,14 @@ func alertInstanceProtoToModel(ruleUID string, ruleOrgID int64, protoInstance *p
 		return nil
 	}
 
+	var lastResult models.LastResult
+	if protoInstance.LastResult != nil {
+		lastResult = models.LastResult{
+			Values:    protoInstance.LastResult.Values,
+			Condition: protoInstance.LastResult.Condition,
+		}
+	}
+
 	return &models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{
 			RuleOrgID:  ruleOrgID,
@@ -268,6 +285,8 @@ func alertInstanceProtoToModel(ruleUID string, ruleOrgID int64, protoInstance *p
 		ResolvedAt:         nullableTimestampToTime(protoInstance.ResolvedAt),
 		ResultFingerprint:  protoInstance.ResultFingerprint,
 		EvaluationDuration: time.Duration(protoInstance.EvaluationDurationNs),
+		LastError:          protoInstance.LastError,
+		LastResult:         lastResult,
 	}
 }
 

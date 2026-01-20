@@ -378,6 +378,15 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       definition: variable.spec.definition,
       ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
+      ...(variable.spec.staticOptions?.length
+        ? {
+            staticOptions: variable.spec.staticOptions.map((option) => ({
+              label: String(option.text),
+              value: String(option.value),
+            })),
+          }
+        : {}),
+      ...(variable.spec.staticOptionsOrder !== undefined && { staticOptionsOrder: variable.spec.staticOptionsOrder }),
     });
   } else if (variable.kind === defaultDatasourceVariableKind().kind) {
     return new DataSourceVariable({

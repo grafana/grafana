@@ -69,6 +69,12 @@
         "placeholder-select-format": "Format auswählen",
         "run-query": "Abfrage ausführen"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Drücken Sie STRG/CMD+Eingabe, um die Abfrage auszuführen",
         "tooltip-collapse": "Editor einklappen",

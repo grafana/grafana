@@ -996,7 +996,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 			}
 
 			// We don't have test alerts for the default notifier, continue iterating.
-			if rcv.Name == "grafana-default-email" {
+			if rcv.Name == "empty" {
 				return
 			}
 

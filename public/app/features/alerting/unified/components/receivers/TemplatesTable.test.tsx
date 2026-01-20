@@ -18,30 +18,35 @@ const mockTemplates: Array<Partial<NotificationTemplate>> = [
     title: 'mimir-template',
     content: '{{ define "mimir-template" }}Template from Mimir{{ end }}',
     provenance: KnownProvenance.ConvertedPrometheus,
+    kind: 'mimir',
   },
   {
     uid: 'file-template',
     title: 'file-template',
     content: '{{ define "file-template" }}File provisioned template{{ end }}',
     provenance: KnownProvenance.File,
+    kind: 'grafana',
   },
   {
     uid: 'api-template',
     title: 'api-template',
     content: '{{ define "api-template" }}API provisioned template{{ end }}',
     provenance: KnownProvenance.API,
+    kind: 'grafana',
   },
   {
     uid: 'no-provenance-template',
     title: 'no-provenance-template',
     content: '{{ define "no-provenance-template" }}No provenance template{{ end }}',
     provenance: KnownProvenance.None,
+    kind: 'grafana',
   },
   {
     uid: 'undefined-provenance-template',
     title: 'undefined-provenance-template',
     content: '{{ define "undefined-provenance-template" }}Undefined provenance template{{ end }}',
     provenance: undefined,
+    kind: 'grafana',
   },
 ];
 

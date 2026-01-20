@@ -28,7 +28,7 @@ import {
   formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
 } from '../../../utils/receiver-form';
-import { ImportedContactPointAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
 import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
@@ -144,18 +144,15 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
   // Map notifiers to Notifier[] format for ReceiverForm
   // The grafanaNotifiers include version-specific options via the versions array from the backend
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
   const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
     if (n.type === ReceiverTypes.OnCall) {
       return {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-        dto: extendOnCallNotifierFeatures(n as any) as any,
+        dto: extendOnCallNotifierFeatures(n),
         meta: onCallNotifierMeta,
       };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-    return { dto: n as any };
+    return { dto: n };
   });
 
   return (
@@ -175,7 +172,9 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         </Alert>
       )}
 
-      {isProvisioned && hasLegacyIntegrations(contactPoint, grafanaNotifiers) && <ImportedContactPointAlert />}
+      {isProvisioned && hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
+        <ImportedResourceAlert resource={ProvisionedResource.ContactPoint} />
+      )}
       {isProvisioned && !hasLegacyIntegrations(contactPoint, grafanaNotifiers) && (
         <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />
       )}

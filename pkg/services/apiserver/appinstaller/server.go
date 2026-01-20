@@ -18,7 +18,6 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
@@ -31,11 +30,7 @@ type serverWrapper struct {
 	installer         appsdkapiserver.AppInstaller
 	restOptionsGetter generic.RESTOptionsGetter
 	storageOpts       *grafanaapiserveroptions.StorageOptions
-	kvStore           grafanarest.NamespacedKVStore
-	lock              serverLock
-	namespaceMapper   request.NamespaceMapper
 	dualWriteService  dualwrite.Service
-	dualWriterMetrics *grafanarest.DualWriterMetrics
 	builderMetrics    *builder.BuilderMetrics
 	apiResourceConfig *serverstorage.ResourceConfig
 }
@@ -64,16 +59,11 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				if unifiedStorage, ok := storage.(grafanarest.Storage); ok {
 					log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
 					storage, err = NewDualWriter(
-						s.ctx,
 						gr,
 						s.storageOpts,
 						legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
 						unifiedStorage,
-						s.kvStore,
-						s.lock,
-						s.namespaceMapper,
 						s.dualWriteService,
-						s.dualWriterMetrics,
 						s.builderMetrics,
 					)
 					if err != nil {

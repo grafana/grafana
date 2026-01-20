@@ -3,12 +3,13 @@ package notifications
 import (
 	"context"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
@@ -28,12 +29,12 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AlertingNotificationsAppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AlertingNotificationsAppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider    = (*AlertingNotificationsAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider    = (*AppInstaller)(nil)
 )
 
-type AlertingNotificationsAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
 	ng  *ngalert.AlertNG
@@ -42,13 +43,13 @@ type AlertingNotificationsAppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
-) (*AlertingNotificationsAppInstaller, error) {
+) (*AppInstaller, error) {
 	if ng.IsDisabled() {
 		log.New("app-registry").Info("Skipping Kubernetes Alerting Notifications API server (notifications.alerting.grafana.app): Unified Alerting is disabled")
 		return nil, nil
 	}
 
-	installer := &AlertingNotificationsAppInstaller{
+	installer := &AppInstaller{
 		cfg: cfg,
 		ng:  ng,
 	}
@@ -72,7 +73,7 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func (a AlertingNotificationsAppInstaller) GetAuthorizer() authorizer.Authorizer {
+func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -90,7 +91,7 @@ func (a AlertingNotificationsAppInstaller) GetAuthorizer() authorizer.Authorizer
 		})
 }
 
-func (a AlertingNotificationsAppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
+func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := request.GetNamespaceMapper(a.cfg)
 	api := a.ng.Api
 	if gvr == receiver.ResourceInfo.GroupVersionResource() {

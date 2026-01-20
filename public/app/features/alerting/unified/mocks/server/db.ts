@@ -123,7 +123,6 @@ const dataSourceFactory = DataSourceFactory.define(({ sequence, params, afterBui
 
   const uid = params.uid ?? `mock-ds-${sequence}`;
   return {
-    id: params.id ?? sequence,
     uid,
     type: DataSourceType.Prometheus,
     name: `Prometheus-${uid}`,

@@ -14,7 +14,8 @@ interface Props {
   showFolderNames: boolean;
   locationInfo?: LocationInfo;
   layoutMode: 'list' | 'card';
-  order?: number; // for rudderstack analytics to track position in card list
+  source: string; // for rudderstack analytics to track which page DashListItem click from
+  order?: number; // for rudderstack analytics to track position in cards
   onStarChange?: (id: string, isStarred: boolean) => void;
 }
 export function DashListItem({
@@ -25,12 +26,16 @@ export function DashListItem({
   layoutMode,
   order,
   onStarChange,
+  source,
 }: Props) {
   const css = useStyles2(getStyles);
   const shortTitle = truncate(dashboard.name, { length: 40, omission: '…' });
 
   const onCardLinkClick = () => {
-    reportInteraction('grafana_recently_viewed_dashboards_click_card', {
+    reportInteraction('grafana_browse_dashboards_page_click_list_item', {
+      itemKind: dashboard.kind,
+      source,
+      uid: dashboard.uid,
       cardOrder: order,
     });
   };

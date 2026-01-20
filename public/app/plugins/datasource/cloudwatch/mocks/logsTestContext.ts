@@ -55,7 +55,6 @@ export function setupForLogs() {
     async get() {
       const ds: DataSourceApi = {
         name: 'Xray',
-        id: 0,
         type: '',
         uid: '',
         query: function (

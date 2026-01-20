@@ -89,6 +89,22 @@ describe('RadialGauge utils', () => {
       expect(min).toBe(0);
       expect(max).toBe(100);
     });
+
+    it('should prevent min and max from being equal', () => {
+      const fieldDisplay: FieldDisplay = {
+        display: { numeric: 50, text: '50', color: 'blue' },
+        field: { min: 10, max: 10 },
+        view: undefined,
+        colIndex: 0,
+        rowIndex: 0,
+        name: 'test',
+        getLinks: () => [],
+        hasLinks: false,
+      };
+
+      const [min, max] = getFieldConfigMinMax(fieldDisplay);
+      expect(min).not.toBe(max);
+    });
   });
 
   describe('calculateDimensions', () => {

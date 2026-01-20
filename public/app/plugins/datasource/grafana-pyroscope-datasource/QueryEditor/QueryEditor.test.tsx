@@ -72,7 +72,6 @@ function setupDs() {
     uid: 'test',
     type: PluginType.datasource,
     access: 'proxy',
-    id: 1,
     jsonData: {},
     meta: {
       name: '',

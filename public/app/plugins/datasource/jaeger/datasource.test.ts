@@ -147,7 +147,6 @@ function setupQueryMock(type: 'trace' | 'search') {
 }
 
 const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
-  id: 0,
   uid: '0',
   type: 'tracing',
   name: 'jaeger',

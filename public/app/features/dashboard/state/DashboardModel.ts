@@ -525,6 +525,14 @@ export class DashboardModel implements TimeModel {
       }
     }
 
+    // Also check panels in legacy rows (pre-v16 dashboard format)
+    // This ensures unique IDs are assigned before the row upgrade migration runs
+    for (const panel of this.rawPanelIterator()) {
+      if (panel.id > max) {
+        max = panel.id;
+      }
+    }
+
     return max + 1;
   }
 
@@ -535,6 +543,26 @@ export class DashboardModel implements TimeModel {
       const rowPanels = panel.panels ?? [];
       for (const rowPanel of rowPanels) {
         yield rowPanel;
+      }
+    }
+  }
+
+  /**
+   * Iterates over panels from the original raw dashboard data, including legacy rows.
+   * This is needed to find panel IDs before row upgrade migration runs.
+   */
+  private *rawPanelIterator() {
+    // @ts-expect-error - rows is a legacy property not included in the modern Dashboard schema
+    const rows = this.originalDashboard?.rows;
+
+    if (Array.isArray(rows)) {
+      for (const row of rows) {
+        const rowPanels = row?.panels;
+        if (Array.isArray(rowPanels)) {
+          for (const panel of rowPanels) {
+            yield panel;
+          }
+        }
       }
     }
   }

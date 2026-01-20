@@ -20,11 +20,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
@@ -48,16 +43,6 @@
                 }
               },
               "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistory"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistory"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistory"
                 }
@@ -197,16 +182,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
@@ -264,11 +239,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
@@ -282,11 +252,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
@@ -306,11 +271,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
@@ -322,11 +282,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
@@ -480,11 +435,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -534,11 +484,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
@@ -600,11 +545,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
@@ -622,11 +562,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
@@ -638,11 +573,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
@@ -724,11 +654,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -740,11 +665,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
@@ -842,11 +762,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
@@ -858,11 +773,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
@@ -930,11 +840,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
@@ -992,11 +897,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
@@ -1014,11 +914,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
@@ -1030,11 +925,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
@@ -1132,11 +1022,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
@@ -1148,11 +1033,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
@@ -1214,11 +1094,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
@@ -1237,16 +1112,6 @@
                 }
               },
               "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationquery"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationquery"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationquery"
                 }
@@ -1678,7 +1543,7 @@
         }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
-        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
+        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:<name>', where <name> is the name of a field in a struct, or key in a map 'v:<value>', where <value> is the exact json formatted value of a list item 'i:<index>', where <index> is position of a item in a list 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta": {

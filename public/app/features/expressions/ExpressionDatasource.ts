@@ -106,7 +106,6 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 }
 
 export const instanceSettings: DataSourceInstanceSettings = {
-  id: -100,
   uid: ExpressionDatasourceUID,
   name: ExpressionDatasourceRef.name,
   type: ExpressionDatasourceRef.type,

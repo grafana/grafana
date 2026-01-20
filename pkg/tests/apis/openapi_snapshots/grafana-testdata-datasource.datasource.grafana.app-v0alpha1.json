@@ -2,7 +2,10 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Generates test data in different forms",
-    "title": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1"
+    "title": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
+    "x-grafana-plugin": {
+      "id": "grafana-testdata-datasource"
+    }
   },
   "paths": {
     "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/": {
@@ -17,11 +20,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
@@ -69,8 +67,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryDataResponse"
+          "kind": "QueryDataResponse",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -209,16 +207,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceList"
@@ -230,8 +218,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "post": {
@@ -276,11 +264,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
@@ -294,11 +277,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
                 }
@@ -318,11 +296,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
@@ -338,11 +311,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
@@ -354,8 +322,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -492,11 +460,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -508,8 +471,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -550,11 +513,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
@@ -566,8 +524,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "put": {
@@ -612,11 +570,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
@@ -630,11 +583,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
                 }
@@ -654,11 +602,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
@@ -670,8 +613,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -736,11 +679,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -756,11 +694,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -772,8 +705,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "patch": {
@@ -854,11 +787,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
@@ -874,11 +802,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
@@ -890,8 +813,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -948,8 +871,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "HealthCheckResult"
+          "kind": "HealthCheckResult",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -1006,8 +929,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryDataResponse"
+          "kind": "QueryDataResponse",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -1055,8 +978,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Status"
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -1104,8 +1027,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryDataRequest"
+          "kind": "QueryDataRequest",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -1599,7 +1522,7 @@
         }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
-        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
+        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:<name>', where <name> is the name of a field in a struct, or key in a map 'v:<value>', where <value> is the exact json formatted value of a list item 'i:<index>', where <index> is position of a item in a list 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta": {

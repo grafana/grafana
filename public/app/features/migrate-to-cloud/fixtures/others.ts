@@ -9,7 +9,6 @@ export function wellFormedDatasource(
   const random = Chance(seed);
 
   return {
-    id: random.integer(),
     uid: random.guid(),
     type: random.word(),
     name: random.sentence({ words: 3 }),

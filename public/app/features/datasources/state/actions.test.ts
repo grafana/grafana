@@ -89,7 +89,7 @@ describe('loadDataSource()', () => {
     const dispatch = jest.fn();
     const getState = jest.fn();
 
-    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     const dataSource = await loadDataSource(dataSourceMock.uid)(dispatch, getState, undefined);
 
@@ -110,7 +110,7 @@ describe('loadDataSource()', () => {
     delete win.location;
     win.location = {} as Location;
 
-    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     // Fetch the datasource by ID
     const dataSource = await loadDataSource(id.toString())(dispatch, getState, undefined);
@@ -132,7 +132,7 @@ describe('loadDataSource()', () => {
     delete win.location;
     win.location = {} as Location;
 
-    (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSourceByUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
     // Fetch the datasource by ID
     await loadDataSource(id.toString())(dispatch, getState, undefined);

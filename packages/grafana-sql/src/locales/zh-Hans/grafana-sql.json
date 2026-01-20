@@ -69,6 +69,12 @@
         "placeholder-select-format": "选择格式",
         "run-query": "运行查询"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "按 CTRL/CMD+Return 运行查询",
         "tooltip-collapse": "折叠编辑器",

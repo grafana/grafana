@@ -95,6 +95,7 @@ export function RecentlyViewedDashboards() {
                   showFolderNames={true}
                   locationInfo={foldersByUid[dash.location]}
                   layoutMode="card"
+                  source="browseDashboardsPage_RecentlyViewedCard"
                 />
               </li>
             ))}

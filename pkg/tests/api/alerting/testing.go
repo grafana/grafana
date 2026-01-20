@@ -43,21 +43,11 @@ const defaultAlertmanagerConfigJSON = `
 	"template_files": null,
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email",
+			"receiver": "empty",
 			"group_by": ["grafana_folder", "alertname"]
 		},
 		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"disableResolveMessage": false,
-				"settings": {
-					"addresses": "\u003cexample@email.com\u003e"
-				},
-				"secureFields": {}
-			}]
+			"name": "empty"
 		}]
 	}
 }

@@ -15,11 +15,11 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller    = (*AdvisorAppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider = (*AdvisorAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller    = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider = (*AppInstaller)(nil)
 )
 
-type AdvisorAppInstaller struct {
+type AppInstaller struct {
 	*advisorapp.AdvisorAppInstaller
 }
 
@@ -29,7 +29,7 @@ func ProvideAppInstaller(
 	checkRegistry checkregistry.CheckService,
 	cfg *setting.Cfg,
 	orgService org.Service,
-) (*AdvisorAppInstaller, error) {
+) (*AppInstaller, error) {
 	if err := registerAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
@@ -39,7 +39,7 @@ func ProvideAppInstaller(
 	if err != nil {
 		return nil, err
 	}
-	return &AdvisorAppInstaller{
+	return &AppInstaller{
 		AdvisorAppInstaller: i,
 	}, nil
 }

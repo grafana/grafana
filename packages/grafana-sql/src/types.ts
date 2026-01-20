@@ -50,6 +50,8 @@ export enum QueryFormat {
   Table = 'table',
 }
 
+export type SQLQueryMeta = { valueField?: string; textField?: string };
+
 export interface SQLQuery extends DataQuery {
   alias?: string;
   format?: QueryFormat;
@@ -59,7 +61,10 @@ export interface SQLQuery extends DataQuery {
   sql?: SQLExpression;
   editorMode?: EditorMode;
   rawQuery?: boolean;
+  meta?: SQLQueryMeta;
 }
+
+export type SQLVariableQuery = { query: string } & SQLQuery;
 
 export interface NameValue {
   name: string;
@@ -129,7 +134,7 @@ export interface DB {
   tables: (dataset?: string) => Promise<string[]>;
   fields: (query: SQLQuery, order?: boolean) => Promise<SQLSelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
-  dsID: () => number;
+  dsID: () => number | undefined;
   dispose?: (dsID?: string) => void;
   lookup?: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getEditorLanguageDefinition: () => LanguageDefinition;

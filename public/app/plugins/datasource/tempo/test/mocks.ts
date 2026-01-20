@@ -28,7 +28,6 @@ export function createTempoDatasource(
 ): TempoDatasource {
   const customSettings: DataSourceInstanceSettings<TempoJsonData> = {
     url: 'myloggingurl',
-    id: 0,
     uid: '',
     type: '',
     name: '',

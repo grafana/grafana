@@ -961,6 +961,30 @@ func transformVariableSortToEnum(sort interface{}) dashv2alpha1.DashboardVariabl
 	}
 }
 
+func transformVariableStaticOptionsOrderToEnum(order interface{}) *dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrder {
+	if order == nil {
+		return nil
+	}
+
+	switch v := order.(type) {
+	case string:
+		var value dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrder
+		switch v {
+		case "before":
+			value = dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrderBefore
+		case "after":
+			value = dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrderAfter
+		case "sorted":
+			value = dashv2alpha1.DashboardQueryVariableSpecStaticOptionsOrderSorted
+		default:
+			return nil
+		}
+		return &value
+	default:
+		return nil
+	}
+}
+
 func transformVariables(ctx context.Context, dashboard map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider) ([]dashv2alpha1.DashboardVariableKind, error) {
 	templating, ok := dashboard["templating"].(map[string]interface{})
 	if !ok {
@@ -1262,6 +1286,8 @@ func buildQueryVariable(ctx context.Context, varMap map[string]interface{}, comm
 
 	// Always set options (matching frontend behavior)
 	queryVar.Spec.Options = buildVariableOptions(varMap["options"])
+	queryVar.Spec.StaticOptions = buildVariableOptions(varMap["staticOptions"])
+	queryVar.Spec.StaticOptionsOrder = transformVariableStaticOptionsOrderToEnum(varMap["staticOptionsOrder"])
 
 	if allValue := schemaversion.GetStringValue(varMap, "allValue"); allValue != "" {
 		queryVar.Spec.AllValue = &allValue

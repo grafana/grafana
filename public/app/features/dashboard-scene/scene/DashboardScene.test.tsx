@@ -146,6 +146,43 @@ describe('DashboardScene', () => {
         expect(locationService.getLocation().pathname).toBe('/d/dash-1');
       });
 
+      it('Can discard changes and keep editing', () => {
+        // @ts-expect-error private property used for unit test
+        const changeTracker = scene._changeTracker;
+        const stopSpy = jest.spyOn(changeTracker, 'stopTrackingChanges');
+        const startSpy = jest.spyOn(changeTracker, 'startTrackingChanges');
+
+        // Make a change
+        scene.setState({ title: 'Updated title' });
+        expect(scene.state.isDirty).toBe(true);
+
+        // Put the scene into panel edit to verify we clear it
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        const editPanel = buildPanelEditScene(panel);
+        scene.setState({ editPanel });
+
+        // Add an overlay as well to verify it is cleared
+        scene.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: scene.getRef() }) });
+        expect(scene.state.overlay).toBeDefined();
+
+        scene.discardChangesAndKeepEditing();
+
+        // Still editing, but no longer dirty
+        expect(scene.state.isEditing).toBe(true);
+        expect(scene.state.isDirty).toBe(false);
+
+        // Restored state from when edit mode started
+        expect(scene.state.title).toBe('hello');
+
+        // Clears edit-panel related state
+        expect(scene.state.editPanel).toBeUndefined();
+        expect(scene.state.overlay).toBeUndefined();
+
+        // Resets tracking
+        expect(stopSpy).toHaveBeenCalled();
+        expect(startSpy).toHaveBeenCalled();
+      });
+
       it('Exiting already saved dashboard should not restore initial state', () => {
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);

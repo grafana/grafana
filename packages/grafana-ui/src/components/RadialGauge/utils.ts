@@ -14,8 +14,16 @@ export function getFieldDisplayProcessor(displayValue: FieldDisplay) {
 }
 
 export function getFieldConfigMinMax(fieldDisplay: FieldDisplay) {
-  const min = fieldDisplay.field.min ?? 0;
-  const max = fieldDisplay.field.max ?? 100;
+  let min = fieldDisplay.field.min ?? 0;
+  let max = fieldDisplay.field.max ?? 100;
+
+  // If min and max are equal (can happen for single value fields or if all values are the same)
+  // Then we need to adjust them a bit to avoid division by zero
+  if (min === max) {
+    min -= min * 0.1;
+    max += max * 0.1;
+  }
+
   return [min, max];
 }
 

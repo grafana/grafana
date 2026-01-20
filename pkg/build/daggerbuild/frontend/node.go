@@ -9,7 +9,7 @@ import (
 
 // NodeVersionContainer returns a container whose `stdout` will return the node version from the '.nvmrc' file in the directory 'src'.
 func NodeVersion(d *dagger.Client, src *dagger.Directory) *dagger.Container {
-	return d.Container().From("alpine:3.17").
+	return d.Container().From("alpine:3.23.2").
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
 		WithExec([]string{"cat", ".nvmrc"})

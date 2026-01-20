@@ -196,7 +196,7 @@ func NewAPIBuilder(
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
-		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
+		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering, repoFactory),
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 	}
 
@@ -746,12 +746,24 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	// Validate connections
 	c, ok := obj.(*provisioning.Connection)
 	if ok {
-		conn, err := b.asConnection(ctx, c, a.GetOldObject())
-		if err != nil {
-			return err
+		// Copy previous values if they exist
+		if a.GetOldObject() != nil {
+			if oldConn, ok := a.GetOldObject().(*provisioning.Connection); ok {
+				copyConnectionSecureValues(c, oldConn)
+			}
 		}
 
-		return conn.Validate(ctx)
+		// Structural validation without decryption
+		if list := b.connectionFactory.Validate(ctx, c); len(list) > 0 {
+			return apierrors.NewInvalid(
+				provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
+				c.GetName(), list)
+		}
+
+		// Note: Runtime validation (e.g., checking GitHub API) is skipped during admission
+		// to avoid decrypting secrets. Runtime validation can be done via Test() method if needed.
+
+		return nil
 	}
 
 	// Validate Jobs
@@ -760,9 +772,16 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		return jobsvalidation.ValidateJob(job)
 	}
 
-	repo, err := b.asRepository(ctx, obj, a.GetOldObject())
-	if err != nil {
-		return err
+	r, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return fmt.Errorf("expected repository configuration")
+	}
+
+	// Copy previous values if they exist
+	if a.GetOldObject() != nil {
+		if oldRepo, ok := a.GetOldObject().(*provisioning.Repository); ok {
+			copyRepositorySecureValues(r, oldRepo)
+		}
 	}
 
 	// ALL configuration validations should be done in ValidateRepository -
@@ -770,24 +789,18 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	//
 	// the only time to add configuration checks here is if you need to compare
 	// the incoming change to the current configuration
+	// Note: Structural validation (URL, branch, path, etc.) is now done inside ValidateRepository
 	isCreate := a.GetOperation() == admission.Create
-	list := b.repoValidator.ValidateRepository(repo, isCreate)
-	cfg := repo.Config()
-
+	list := b.repoValidator.ValidateRepository(ctx, r, isCreate)
 	if a.GetOperation() == admission.Update {
-		oldRepo, err := b.asRepository(ctx, a.GetOldObject(), nil)
-		if err != nil {
-			return fmt.Errorf("get old repository for update: %w", err)
-		}
-		oldCfg := oldRepo.Config()
-
-		if cfg.Spec.Type != oldCfg.Spec.Type {
+		oldRepo := a.GetOldObject().(*provisioning.Repository)
+		if r.Spec.Type != oldRepo.Spec.Type {
 			list = append(list, field.Forbidden(field.NewPath("spec", "type"),
 				"Changing repository type is not supported"))
 		}
 
 		// Do not allow changing the sync target once anything has synced successfully
-		if cfg.Spec.Sync.Target != oldCfg.Spec.Sync.Target && len(cfg.Status.Stats) > 0 {
+		if r.Spec.Sync.Target != oldRepo.Spec.Sync.Target && len(oldRepo.Status.Stats) > 0 {
 			list = append(list, field.Forbidden(field.NewPath("spec", "sync", "target"),
 				"Changing sync target after running sync is not supported"))
 		}
@@ -799,7 +812,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	}
 
 	// Exit early if we have already found errors
-	targetError := b.VerifyAgainstExistingRepositories(ctx, cfg)
+	targetError := b.VerifyAgainstExistingRepositories(ctx, r)
 	if targetError != nil {
 		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
 	}
@@ -811,6 +824,37 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 	return apierrors.NewInvalid(
 		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
 		name, list)
+}
+
+// copyRepositorySecureValues copies secure values from old to new repository if they are zero in the new one.
+// This preserves existing secrets during updates when they are not provided in the new object.
+func copyRepositorySecureValues(new, old *provisioning.Repository) {
+	if old == nil || old.Secure.IsZero() {
+		return
+	}
+	if new.Secure.Token.IsZero() {
+		new.Secure.Token = old.Secure.Token
+	}
+	if new.Secure.WebhookSecret.IsZero() {
+		new.Secure.WebhookSecret = old.Secure.WebhookSecret
+	}
+}
+
+// copyConnectionSecureValues copies secure values from old to new connection if they are zero in the new one.
+// This preserves existing secrets during updates when they are not provided in the new object.
+func copyConnectionSecureValues(new, old *provisioning.Connection) {
+	if old == nil || old.Secure.IsZero() {
+		return
+	}
+	if new.Secure.PrivateKey.IsZero() {
+		new.Secure.PrivateKey = old.Secure.PrivateKey
+	}
+	if new.Secure.Token.IsZero() {
+		new.Secure.Token = old.Secure.Token
+	}
+	if new.Secure.ClientSecret.IsZero() {
+		new.Secure.ClientSecret = old.Secure.ClientSecret
+	}
 }
 
 func (b *APIBuilder) VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error {
@@ -981,10 +1025,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
+			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connController, err := controller.NewConnectionController(
 				b.GetClient(),
 				connInformer,
 				connStatusPatcher,
+				connTester,
 			)
 			if err != nil {
 				return err
@@ -1456,14 +1502,8 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old r
 
 	// Copy previous values if they exist
 	if old != nil {
-		o, ok := old.(*provisioning.Repository)
-		if ok && !o.Secure.IsZero() {
-			if r.Secure.Token.IsZero() {
-				r.Secure.Token = o.Secure.Token
-			}
-			if r.Secure.WebhookSecret.IsZero() {
-				r.Secure.WebhookSecret = o.Secure.WebhookSecret
-			}
+		if oldRepo, ok := old.(*provisioning.Repository); ok {
+			copyRepositorySecureValues(r, oldRepo)
 		}
 	}
 
@@ -1482,17 +1522,8 @@ func (b *APIBuilder) asConnection(ctx context.Context, obj runtime.Object, old r
 
 	// Copy previous values if they exist
 	if old != nil {
-		o, ok := old.(*provisioning.Connection)
-		if ok && !o.Secure.IsZero() {
-			if c.Secure.PrivateKey.IsZero() {
-				c.Secure.PrivateKey = o.Secure.PrivateKey
-			}
-			if c.Secure.Token.IsZero() {
-				c.Secure.Token = o.Secure.Token
-			}
-			if c.Secure.ClientSecret.IsZero() {
-				c.Secure.ClientSecret = o.Secure.ClientSecret
-			}
+		if oldConn, ok := old.(*provisioning.Connection); ok {
+			copyConnectionSecureValues(c, oldConn)
 		}
 	}
 
