@@ -17,8 +17,10 @@ import {
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import { pluginExtensionRegistries } from './registry/setup';
+import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
+import { getPluginExtensionRegistries } from './registry/setup';
 import { isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
@@ -38,6 +40,11 @@ jest.mock('./logs/log', () => {
     log: createLogMock(),
   };
 });
+
+jest.mock('./registry/setup', () => ({
+  getPluginExtensionRegistries: jest.fn(),
+}));
+const getPluginExtensionRegistriesMock = jest.mocked(getPluginExtensionRegistries);
 
 async function createRegistries(
   preloadResults: Array<{
@@ -553,10 +560,16 @@ describe('getObservablePluginExtensions()', () => {
   const extensionPointId = 'grafana/dashboard/panel/menu/v1';
   const pluginId = 'grafana-basic-app';
 
-  beforeEach(() => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
-    pluginExtensionRegistries.addedLinksRegistry.register({
+  beforeEach(async () => {
+    getPluginExtensionRegistriesMock.mockResolvedValue({
+      addedLinksRegistry: new AddedLinksRegistry([]),
+      addedComponentsRegistry: new AddedComponentsRegistry([]),
+      addedFunctionsRegistry: new AddedFunctionsRegistry([]),
+      exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    });
+
+    const { addedLinksRegistry, addedComponentsRegistry } = await getPluginExtensionRegistries();
+    addedLinksRegistry.register({
       pluginId,
       configs: [
         {
@@ -569,7 +582,7 @@ describe('getObservablePluginExtensions()', () => {
       ],
     });
 
-    pluginExtensionRegistries.addedComponentsRegistry.register({
+    addedComponentsRegistry.register({
       pluginId,
       configs: [
         {
@@ -597,9 +610,10 @@ describe('getObservablePluginExtensions()', () => {
 
   it('should emit the new state when the registries change', async () => {
     const observable = getObservablePluginExtensions({ extensionPointId }).pipe(take(2));
+    const { addedLinksRegistry } = await getPluginExtensionRegistries();
 
     setTimeout(() => {
-      pluginExtensionRegistries.addedLinksRegistry.register({
+      addedLinksRegistry.register({
         pluginId,
         configs: [
           {
@@ -632,10 +646,16 @@ describe('getObservablePluginLinks()', () => {
   const extensionPointId = 'grafana/dashboard/panel/menu/v1';
   const pluginId = 'grafana-basic-app';
 
-  beforeEach(() => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
-    pluginExtensionRegistries.addedLinksRegistry.register({
+  beforeEach(async () => {
+    getPluginExtensionRegistriesMock.mockResolvedValue({
+      addedLinksRegistry: new AddedLinksRegistry([]),
+      addedComponentsRegistry: new AddedComponentsRegistry([]),
+      addedFunctionsRegistry: new AddedFunctionsRegistry([]),
+      exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    });
+
+    const { addedLinksRegistry, addedComponentsRegistry } = await getPluginExtensionRegistries();
+    addedLinksRegistry.register({
       pluginId,
       configs: [
         {
@@ -648,7 +668,7 @@ describe('getObservablePluginLinks()', () => {
       ],
     });
 
-    pluginExtensionRegistries.addedComponentsRegistry.register({
+    addedComponentsRegistry.register({
       pluginId,
       configs: [
         {
@@ -684,8 +704,9 @@ describe('getObservablePluginLinks()', () => {
   });
 
   it('should be possible to receive the last state of the registry', async () => {
+    const { addedLinksRegistry } = await getPluginExtensionRegistries();
     // Register a new link
-    pluginExtensionRegistries.addedLinksRegistry.register({
+    addedLinksRegistry.register({
       pluginId,
       configs: [
         {
@@ -709,8 +730,12 @@ describe('getObservablePluginLinks()', () => {
   });
 
   it('should receive an empty array if there are no links', async () => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
+    getPluginExtensionRegistriesMock.mockResolvedValue({
+      addedLinksRegistry: new AddedLinksRegistry([]),
+      addedComponentsRegistry: new AddedComponentsRegistry([]),
+      addedFunctionsRegistry: new AddedFunctionsRegistry([]),
+      exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    });
 
     const observable = getObservablePluginLinks({ extensionPointId }).pipe(first());
     const links = await firstValueFrom(observable);
@@ -723,10 +748,16 @@ describe('getObservablePluginComponents()', () => {
   const extensionPointId = 'grafana/dashboard/panel/menu/v1';
   const pluginId = 'grafana-basic-app';
 
-  beforeEach(() => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
-    pluginExtensionRegistries.addedLinksRegistry.register({
+  beforeEach(async () => {
+    getPluginExtensionRegistriesMock.mockResolvedValue({
+      addedLinksRegistry: new AddedLinksRegistry([]),
+      addedComponentsRegistry: new AddedComponentsRegistry([]),
+      addedFunctionsRegistry: new AddedFunctionsRegistry([]),
+      exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    });
+
+    const { addedLinksRegistry, addedComponentsRegistry } = await getPluginExtensionRegistries();
+    addedLinksRegistry.register({
       pluginId,
       configs: [
         {
@@ -739,7 +770,7 @@ describe('getObservablePluginComponents()', () => {
       ],
     });
 
-    pluginExtensionRegistries.addedComponentsRegistry.register({
+    addedComponentsRegistry.register({
       pluginId,
       configs: [
         {
@@ -775,8 +806,9 @@ describe('getObservablePluginComponents()', () => {
   });
 
   it('should be possible to receive the last state of the registry', async () => {
+    const { addedComponentsRegistry } = await getPluginExtensionRegistries();
     // Register a new component
-    pluginExtensionRegistries.addedComponentsRegistry.register({
+    addedComponentsRegistry.register({
       pluginId,
       configs: [
         {
@@ -801,8 +833,12 @@ describe('getObservablePluginComponents()', () => {
   });
 
   it('should receive an empty array if there are no components', async () => {
-    pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry([]);
-    pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry([]);
+    getPluginExtensionRegistriesMock.mockResolvedValue({
+      addedLinksRegistry: new AddedLinksRegistry([]),
+      addedComponentsRegistry: new AddedComponentsRegistry([]),
+      addedFunctionsRegistry: new AddedFunctionsRegistry([]),
+      exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    });
 
     const observable = getObservablePluginComponents({ extensionPointId }).pipe(first());
     const components = await firstValueFrom(observable);
