@@ -127,7 +127,7 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 				user: func() apis.User {
 					return helper.CreateUser("creatorAndTester", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 						{
-							Actions: []string{accesscontrol.ActionAlertingReceiversCreate},
+							Actions: []string{accesscontrol.ActionAlertingReceiversCreate, accesscontrol.ActionAlertingReceiversRead},
 						},
 						{
 							Actions:           []string{accesscontrol.ActionAlertingReceiversTestCreate},
