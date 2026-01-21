@@ -75,7 +75,7 @@ const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'bas
 const stringCmp = (a: VizTooltipItem, b: VizTooltipItem) => collator.compare(`${a.value}`, `${b.value}`);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getDisplayValueString = (value: any, field: Field): { text: string; numeric: number; color?: string } => {
+export const getDisplayValueString = (value: any, field: Field): { text: string; numeric: number; color?: string } => {
   if (Array.isArray(value) && value.length === 0) {
     return { text: '', numeric: NaN };
   }
