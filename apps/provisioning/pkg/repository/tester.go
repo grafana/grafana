@@ -33,13 +33,7 @@ func NewRepositoryTester(validator Validator) RepositoryTester {
 func (t *RepositoryTester) Test(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
 	cfg := repo.Config()
 
-	// Determine if this is a CREATE or UPDATE operation
-	// If the repository has been observed by the controller (ObservedGeneration > 0),
-	// it's an existing repository and we should treat it as UPDATE
-	isCreate := cfg.Status.ObservedGeneration == 0
-
-	// Run validation (this includes additional validators if using AdmissionValidator)
-	errors := t.validator.ValidateRepository(ctx, cfg, isCreate)
+	errors := t.validator.Validate(ctx, cfg)
 	if len(errors) > 0 {
 		rsp := &provisioning.TestResults{
 			Code:    http.StatusUnprocessableEntity,
@@ -56,6 +50,5 @@ func (t *RepositoryTester) Test(ctx context.Context, repo Repository) (*provisio
 		return rsp, nil
 	}
 
-	// Run health check (tests connectivity to the repository)
 	return repo.Test(ctx)
 }

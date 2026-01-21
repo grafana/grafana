@@ -35,9 +35,7 @@ func NewValidationError(list field.ErrorList) *ValidationError {
 // Validator is the interface for repository validation.
 // It validates repository configuration without requiring external service calls.
 type Validator interface {
-	// ValidateRepository validates the repository configuration.
-	// isCreate indicates whether this is a CREATE (true) or UPDATE (false) operation.
-	ValidateRepository(ctx context.Context, cfg *provisioning.Repository, isCreate bool) field.ErrorList
+	Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList
 }
 
 // RepositoryValidator implements Validator for basic repository configuration checks.
@@ -51,14 +49,13 @@ type RepositoryValidator struct {
 // FIXME: The separation of concerns here is not ideal. RepositoryValidator should not depend on Factory,
 // but we need to call Factory.Validate() for structural validation (URL, branch, path, etc.) before
 // doing configuration validation. This coupling was introduced to avoid more extensive refactoring.
-func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.SyncTargetType, allowImageRendering bool, repoFactory Factory) RepositoryValidator {
+func NewValidator(minSyncInterval time.Duration, allowImageRendering bool, repoFactory Factory) RepositoryValidator {
 	// do not allow minsync interval to be less than 10
 	if minSyncInterval <= 10*time.Second {
 		minSyncInterval = 10 * time.Second
 	}
 
 	return RepositoryValidator{
-		allowedTargets:      allowedTargets,
 		allowImageRendering: allowImageRendering,
 		minSyncInterval:     minSyncInterval,
 		repoFactory:         repoFactory,
@@ -67,9 +64,7 @@ func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.S
 
 // ValidateRepository does structural validation (via Factory.Validate) and configuration checks on the repository object.
 // It does not run a health check or compare against existing repositories.
-// isCreate indicates whether this is a CREATE operation (true) or UPDATE operation (false).
-// When isCreate is false, allowedTargets validation is skipped to allow existing repositories to continue working.
-func (v *RepositoryValidator) ValidateRepository(ctx context.Context, cfg *provisioning.Repository, isCreate bool) field.ErrorList {
+func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	var list field.ErrorList
 
 	// FIXME: Structural validation (URL, branch, path, etc.) is done here via Factory.Validate().
@@ -84,12 +79,6 @@ func (v *RepositoryValidator) ValidateRepository(ctx context.Context, cfg *provi
 		if cfg.Spec.Sync.Target == "" {
 			list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
 				"The target type is required when sync is enabled"))
-		} else if isCreate && !slices.Contains(v.allowedTargets, cfg.Spec.Sync.Target) {
-			list = append(list,
-				field.Invalid(
-					field.NewPath("spec", "target"),
-					cfg.Spec.Sync.Target,
-					"sync target is not supported"))
 		}
 
 		if cfg.Spec.Sync.IntervalSeconds < int64(v.minSyncInterval.Seconds()) {
@@ -190,13 +179,15 @@ func FromFieldError(err *field.Error) *provisioning.TestResults {
 type AdmissionValidator struct {
 	validator            Validator
 	additionalValidators []AdditionalValidatorFunc
+	allowedTargets       []provisioning.SyncTargetType
 }
 
 // NewAdmissionValidator creates a new repository admission validator.
 // additionalValidators are called after basic validation passes (e.g., NewExistingRepositoriesValidator).
-func NewAdmissionValidator(validator Validator, additionalValidators ...AdditionalValidatorFunc) *AdmissionValidator {
+func NewAdmissionValidator(validator Validator, allowedTargets []provisioning.SyncTargetType, additionalValidators ...AdditionalValidatorFunc) *AdmissionValidator {
 	return &AdmissionValidator{
 		validator:            validator,
+		allowedTargets:       allowedTargets,
 		additionalValidators: additionalValidators,
 	}
 }
@@ -234,7 +225,7 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	isCreate := a.GetOperation() == admission.Create
 
 	// Admission-specific checks that compare old vs new objects
-	// These cannot be done in ValidateRepository because they need the old object
+	// These cannot be done in Validate because they need the old object or operation type
 	var list field.ErrorList
 	if a.GetOperation() == admission.Update {
 		oldRepo := a.GetOldObject().(*provisioning.Repository)
@@ -250,13 +241,21 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		}
 	}
 
+	if isCreate && !slices.Contains(v.allowedTargets, r.Spec.Sync.Target) {
+		list = append(list,
+			field.Invalid(
+				field.NewPath("spec", "target"),
+				r.Spec.Sync.Target,
+				"sync target is not supported"))
+	}
+
 	// Early exit if admission-specific checks failed
 	if len(list) > 0 {
 		return invalidRepositoryError(a.GetName(), list)
 	}
 
 	// Run base validation
-	list = v.validator.ValidateRepository(ctx, r, isCreate)
+	list = v.validator.Validate(ctx, r)
 	if len(list) > 0 {
 		return invalidRepositoryError(a.GetName(), list)
 	}

@@ -18,7 +18,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-func TestValidateRepository(t *testing.T) {
+func TestValidator_Validate(t *testing.T) {
 	tests := []struct {
 		name          string
 		repository    *provisioning.Repository
@@ -267,11 +267,11 @@ func TestValidateRepository(t *testing.T) {
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
+	validator := NewValidator(10*time.Second, false, mockFactory)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tests validate new configurations, so always pass isCreate=true
-			errors := validator.ValidateRepository(context.Background(), tt.repository, true)
+			errors := validator.Validate(context.Background(), tt.repository)
 			require.Len(t, errors, tt.expectedErrs)
 			if tt.validateError != nil {
 				tt.validateError(t, errors)
@@ -412,12 +412,12 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			mockFactory := NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-			validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{
+			validator := NewValidator(10*time.Second, false, mockFactory)
+
+			admissionValidator := NewAdmissionValidator(&validator, []provisioning.SyncTargetType{
 				provisioning.SyncTargetTypeFolder,
 				provisioning.SyncTargetTypeInstance,
-			}, false, mockFactory)
-
-			admissionValidator := NewAdmissionValidator(&validator, nil)
+			}, nil)
 
 			attr := newAdmissionValidatorTestAttributes(tt.obj, tt.old, tt.operation)
 
@@ -440,8 +440,8 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(&validator, nil)
+	validator := NewValidator(10*time.Second, false, mockFactory)
+	admissionValidator := NewAdmissionValidator(&validator, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, nil)
 
 	oldRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -486,8 +486,8 @@ func TestAdmissionValidator_CallsAdditionalValidators(t *testing.T) {
 		return nil
 	}
 
-	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(&validator, mockValidatorFn)
+	validator := NewValidator(10*time.Second, false, mockFactory)
+	admissionValidator := NewAdmissionValidator(&validator, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, mockValidatorFn)
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -513,8 +513,8 @@ func TestAdmissionValidator_AdditionalValidatorError(t *testing.T) {
 		return field.Forbidden(field.NewPath("spec"), "duplicate repository")
 	}
 
-	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(&validator, mockValidatorFn)
+	validator := NewValidator(10*time.Second, false, mockFactory)
+	admissionValidator := NewAdmissionValidator(&validator, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, mockValidatorFn)
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
