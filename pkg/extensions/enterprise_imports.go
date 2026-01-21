@@ -1,6 +1,11 @@
 //go:build enterprise || pro
 // +build enterprise pro
 
+// NOTE: ensure imports below are actually being used in enterprise
+// there is a wrinkle that this approach avoids, as seen in for e.g. go.opentelemetry.io/proto/otlp, which has no imports at root of the module.
+// When referred to directly, it will keep showing up in go.mod as an indirect even when its direct.
+// this doesn't happen if you refer to a subpath such as go.opentelemetry.io/proto/otlp/collector/logs/v1 (which also will happen to be in your enterprise code).
+
 package extensions
 
 import (
@@ -11,8 +16,12 @@ import (
 	_ "github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
 	_ "github.com/Azure/go-autorest/autorest"
 	_ "github.com/Azure/go-autorest/autorest/adal"
+	_ "github.com/aws/aws-sdk-go-v2/credentials"
+	_ "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	_ "github.com/aws/aws-sdk-go-v2/service/sts"
 	_ "github.com/beevik/etree"
 	_ "github.com/crewjam/saml"
+	_ "github.com/docker/go-connections/nat"
 	_ "github.com/go-jose/go-jose/v4"
 	_ "github.com/gobwas/glob"
 	_ "github.com/googleapis/gax-go/v2"
@@ -28,6 +37,7 @@ import (
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli
 	_ "github.com/spyzhov/ajson"
 	_ "github.com/stretchr/testify/require"
+	_ "github.com/testcontainers/testcontainers-go"
 	_ "gocloud.dev/secrets/awskms"
 	_ "gocloud.dev/secrets/azurekeyvault"
 	_ "gocloud.dev/secrets/gcpkms"
@@ -52,8 +62,7 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
-	_ "github.com/grafana/tempo/pkg/traceql"
-
 	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
 	_ "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
+	_ "github.com/grafana/tempo/pkg/traceql"
 )
