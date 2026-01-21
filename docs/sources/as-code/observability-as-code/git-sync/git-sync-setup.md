@@ -96,8 +96,7 @@ Whenever you connect to a GitHub repository, you need to create a GitHub access 
 To create a GitHub access token:
 
 1. Create a new token using [Create new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new). Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
-1. Under **Permissions**, expand **Repository permissions**.
-1. Set these permissions for Git Sync:
+1. Under **Permissions**, click **Select permissions** and select the following:
    - **Contents**: Read and write permission
    - **Metadata**: Read-only permission
    - **Pull requests**: Read and write permission
@@ -120,7 +119,7 @@ GitHub Apps aren't currently supported.
 Use **Provisioning** to guide you through setting up Git Sync to use a GitHub repository:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Select **Administration** in the left-side menu and then **Provisioning**.
+1. Select **Administration > General > Provisioning** in the left-side menu.
 1. Select **Configure Git Sync**.
 
 To connect your GitHub repository:
